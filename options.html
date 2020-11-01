@@ -2,20 +2,46 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        button {
-            height: 30px;
-            width: 30px;
-            outline: none;
+        .form-input {
             margin: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        #google_api_key {
+            width: 300px;
+        }
+
+        #save {
+            float: right;
+            width: 100px;
         }
     </style>
 </head>
 
 <body>
-    <label for="google_api_key">Google API Key</label>
-    <input id="google_api_key" type="text" />
-    <input id="save" type="button" value="Save" />
+    <div class="container">
+        <h1>WP Translation Filler - Options</h1>
+
+        <div class="form-input">
+            <label for="google_api_key">Google API Key</label>
+            <input id="google_api_key" type="text" value="-api key->" />
+        </div>
+
+        <div class="form-input">
+            <label for="destination_lang">Destination Language</label>
+            <input id="destination_lang" type="text" value="ta" />
+        </div>
+
+        <div class="form-input">
+            <input id="save" type="button" value="Save" />
+        </div>
+    </div>
 </body>
 
 <script src="options.js"></script>
