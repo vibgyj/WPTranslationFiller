@@ -36,7 +36,7 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         loadSet(glossary, data.glossaryZ);
 
         console.log(glossary);
-        validate();
+        validatePage();
     });
 
 function loadSet(glossary, set) {
@@ -45,76 +45,114 @@ function loadSet(glossary, set) {
     }
 }
 
-// let glossary = {
-//     publish: ['வெளியிடு', 'பதிப்பி'],
-//     activate: ['இயக்கு', 'செயல்படுத்து', 'செயற்படுத்து'],
-//     post: ['பதிவு']
-// }
-
-function validate() {
+function validatePage() {
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        let translation = e.querySelector("textarea.foreign-text").innerText;
-        // console.log(original, translation);
+        let textareaElem = e.querySelector("textarea.foreign-text");
+        textareaElem.addEventListener('input', function (e) {
+            validateEntry(e.target);
+        });
+        let translation = textareaElem.innerText;
 
-        let originalWords = original.split(' ');
-        let translationWords = translation.split(' ');
-        // console.log(originalWords, translationWords);
+        var result = validate(original, translation);
+        console.log(result);
 
-        let wordCount = 0;
-        let foundCount = 0;
-        let toolTip = '';
-        for (let oWord of originalWords) {
-            for (let key in glossary) {
-                if (oWord.toLowerCase().includes(key)) {
-                    // console.log('Word found:', key, glossary[key]);
-                    wordCount++;
+        updateStyle(textareaElem, result);
+    }
+}
 
-                    for (let gWord of glossary[key]) {
-                        let isFound = false;
-                        gWord = gWord.substring(0, gWord.length - 1);
-                        for (let tWord of translationWords) {
-                            // console.log(gWord, tWord);
+function updateStyle(textareaElem, result) {
+    let rowId = textareaElem.parentElement.parentElement.parentElement
+        .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
+    let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
+    updateElementStyle(priorityElem, result);
+    let headerElem = document.querySelector('#editor-' + rowId + ' .panel-header');
+    updateElementStyle(headerElem, result);
+}
 
-                            if (tWord.includes(gWord)) {
-                                console.log('Translation found:', gWord, tWord);
-                                isFound = true;
-                                break;
-                            }
-                        }
+function validateEntry(textareaElem) {
+    let translation = textareaElem.value;
+    let original = textareaElem.parentElement.parentElement.parentElement
+        .querySelector("span.original-raw").innerText;
 
-                        if (isFound) {
-                            foundCount++;
-                            console.log('- Translation found:', key, glossary[key]);
-                        } else {
-                            toolTip += `${key} - ${glossary[key]}\n`;
-                            console.log('x Translation not found:', key, glossary[key]);
+    let result = validate(original, translation);
+    console.log(result);
+
+    updateStyle(textareaElem, result);
+}
+
+function updateElementStyle(priorityElem, result) {
+    if (result.wordCount == 0) return;
+
+    if (result.percent == 100) {
+        priorityElem.style.backgroundColor = 'green';
+        return;
+    }
+    else if (result.percent > 66)
+        priorityElem.style.backgroundColor = 'yellow';
+    else if (result.percent > 33)
+        priorityElem.style.backgroundColor = 'orange';
+    else
+        priorityElem.style.backgroundColor = 'red';
+
+    priorityElem.setAttribute('title', result.toolTip);
+}
+
+function validate(original, translation) {
+    let originalWords = original.split(' ');
+    let translationWords = translation.split(' ');
+    // console.log(originalWords, translationWords);
+
+    let wordCount = 0;
+    let foundCount = 0;
+    let toolTip = '';
+    for (let oWord of originalWords) {
+        for (let key in glossary) {
+            if (oWord.toLowerCase().startsWith(key)) {
+                console.log('Word found:', key, glossary[key]);
+                wordCount++;
+
+                let isFound = false;
+                for (let gWord of glossary[key]) {
+                    for (let tWord of translationWords) {
+                        if (taMatch(gWord, tWord)) {
+                            console.log('+ Translation found:', gWord, tWord);
+                            isFound = true;
+                            break;
                         }
                     }
-
-                    break;
                 }
+
+                if (isFound) {
+                    foundCount++;
+                    console.log('- Translation found:', key, glossary[key]);
+                } else {
+                    toolTip += `${key} - ${glossary[key]}\n`;
+                    console.log('x Translation not found:', key, glossary[key]);
+                }
+
+                break;
             }
         }
-
-        let percent = foundCount * 100 / wordCount;
-
-        let rowId = e.parentElement.parentElement.parentElement.parentElement.getAttribute('row');
-        // console.log(rowId, wordCount, foundCount, percent);
-
-        if (wordCount == 0) continue;
-        let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
-        if (percent == 100) {
-            priorityElem.style.backgroundColor = 'green';
-            continue;
-        }
-        else if (percent > 66)
-            priorityElem.style.backgroundColor = 'yellow';
-        else if (percent > 33)
-            priorityElem.style.backgroundColor = 'orange';
-        else
-            priorityElem.style.backgroundColor = 'red';
-
-        priorityElem.setAttribute('title', toolTip);
     }
+
+    let percent = foundCount * 100 / wordCount;
+    console.log("Percent calculation:", wordCount, foundCount, percent);
+
+    return { wordCount, percent, toolTip };
+}
+
+// Language specific matching. todo: get language code as param
+// glossaryWord, translationWord
+function taMatch(gWord, tWord) {
+    let trimSize = gWord.charCodeAt(gWord.length - 1) == '\u0BCD'.charCodeAt(0)
+        ? 2 : 1;
+    let glossaryWord = gWord.substring(0, gWord.length - trimSize);
+    // கோ
+    glossaryWord = glossaryWord.replaceAll("\u0BC7\u0BBE", "\u0BCB");
+    // கொ
+    glossaryWord = glossaryWord.replaceAll("\u0BC6\u0BBE", "\u0BCA");
+
+    console.log('taMatch:', gWord, glossaryWord, tWord);
+    return tWord.startsWith(glossaryWord);
 }

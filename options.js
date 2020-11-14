@@ -85,95 +85,99 @@ file.addEventListener('change', function () {
                 for (let val in value) {
                     value[val] = value[val].replaceAll("\"", "").trim();
                 }
-                // glossary[key] = value;
+
                 let startChar = key.substring(0, 1);
-                console.log(key, startChar);
                 switch (startChar) {
                     case "a":
-                        glossaryA[key] = value;
+                        pushToGlossary(glossaryA, key, value);
                         break;
                     case "b":
-                        glossaryB[key] = value;
+                        pushToGlossary(glossaryB, key, value);
                         break;
                     case "c":
-                        glossaryC[key] = value;
+                        pushToGlossary(glossaryC, key, value);
                         break;
                     case "d":
-                        glossaryD[key] = value;
+                        pushToGlossary(glossaryD, key, value);
                         break;
                     case "e":
-                        glossaryE[key] = value;
+                        pushToGlossary(glossaryE, key, value);
                         break;
                     case "f":
-                        glossaryF[key] = value;
+                        pushToGlossary(glossaryF, key, value);
                         break;
                     case "g":
-                        glossaryG[key] = value;
+                        pushToGlossary(glossaryG, key, value);
                         break;
                     case "h":
-                        glossaryH[key] = value;
+                        pushToGlossary(glossaryH, key, value);
                         break;
                     case "i":
-                        glossaryI[key] = value;
+                        pushToGlossary(glossaryI, key, value);
                         break;
                     case "j":
-                        glossaryJ[key] = value;
+                        pushToGlossary(glossaryJ, key, value);
                         break;
                     case "k":
-                        glossaryK[key] = value;
+                        pushToGlossary(glossaryK, key, value);
                         break;
                     case "l":
-                        glossaryL[key] = value;
+                        pushToGlossary(glossaryL, key, value);
                         break;
                     case "m":
-                        glossaryM[key] = value;
+                        pushToGlossary(glossaryM, key, value);
                         break;
                     case "n":
-                        glossaryN[key] = value;
+                        pushToGlossary(glossaryN, key, value);
                         break;
                     case "o":
-                        glossaryO[key] = value;
+                        pushToGlossary(glossaryO, key, value);
                         break;
                     case "p":
-                        glossaryP[key] = value;
+                        pushToGlossary(glossaryP, key, value);
                         break;
                     case "q":
-                        glossaryQ[key] = value;
+                        pushToGlossary(glossaryQ, key, value);
                         break;
                     case "r":
-                        glossaryR[key] = value;
+                        pushToGlossary(glossaryR, key, value);
                         break;
                     case "s":
-                        glossaryS[key] = value;
+                        pushToGlossary(glossaryS, key, value);
                         break;
                     case "t":
-                        glossaryT[key] = value;
+                        pushToGlossary(glossaryT, key, value);
                         break;
                     case "u":
-                        glossaryU[key] = value;
+                        pushToGlossary(glossaryU, key, value);
                         break;
                     case "v":
-                        glossaryV[key] = value;
+                        pushToGlossary(glossaryV, key, value);
                         break;
                     case "w":
-                        glossaryW[key] = value;
+                        pushToGlossary(glossaryW, key, value);
                         break;
                     case "x":
-                        glossaryX[key] = value;
+                        pushToGlossary(glossaryX, key, value);
                         break;
                     case "y":
-                        glossaryY[key] = value;
+                        pushToGlossary(glossaryY, key, value);
                         break;
                     case "z":
-                        glossaryZ[key] = value;
+                        pushToGlossary(glossaryZ, key, value);
                         break;
                     default:
-                        glossary[key] = value;
+                        pushToGlossary(glossary, key, value);
                         break;
                 }
             }
         }
-        console.log(glossary);
+        console.log(glossaryA);
     };
     reader.readAsText(file);
 });
+
+function pushToGlossary(glossary, key, value) {
+    if (glossary[key] == undefined) glossary[key] = [];
+    glossary[key] = glossary[key].concat(value);
+}

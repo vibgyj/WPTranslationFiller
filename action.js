@@ -10,7 +10,9 @@ function translate(apikey, destlang) {
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
                 var responseObj = JSON.parse(this.responseText);
-                e.querySelector("textarea.foreign-text").innerText = responseObj.data.translations[0].translatedText;
+                var textareaElem = e.querySelector("textarea.foreign-text");
+                textareaElem.innerText = responseObj.data.translations[0].translatedText;
+                validateEntry(textareaElem);
             }
         };
         xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
