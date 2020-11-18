@@ -1,9 +1,8 @@
-chrome.storage.sync.get('apikey', function (data) {
-    let key = data.apikey;
-    translate(key);
+chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
+    translate(data.apikey, data.destlang);
 });
 
-function translate(key) {
+function translate(apikey, destlang) {
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
 
@@ -11,17 +10,18 @@ function translate(key) {
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
                 var responseObj = JSON.parse(this.responseText);
-                console.log(responseObj);
-                e.querySelector("textarea.foreign-text").innerText = responseObj.data.translations[0].translatedText;
+                var textareaElem = e.querySelector("textarea.foreign-text");
+                textareaElem.innerText = responseObj.data.translations[0].translatedText;
+                validateEntry(textareaElem);
             }
         };
-        xhttp.open("POST", "https://translation.googleapis.com/language/translate/v2?key=" + key, true);
+        xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
         xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
 
         requestBody = JSON.stringify({
             "q": original,
             "source": "en",
-            "target": "ta",
+            "target": destlang,
             "format": "text"
         });
         xhttp.send(requestBody);
