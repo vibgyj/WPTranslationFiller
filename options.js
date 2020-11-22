@@ -70,6 +70,7 @@ let glossaryW = [];
 let glossaryX = [];
 let glossaryY = [];
 let glossaryZ = [];
+
 file.addEventListener('change', function () {
     var file = this.files[0];
 

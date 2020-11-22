@@ -38,7 +38,6 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
             // to sory by descending order
             return b.key.length - a.key.length;
         });
-
         console.log(glossary);
         validatePage();
     });
@@ -102,6 +101,7 @@ function updateElementStyle(priorityElem, result) {
 
 function validate(original, translation) {
     let originalWords = original.split(' ');
+
     let wordCount = 0;
     let foundCount = 0;
     let toolTip = '';
@@ -153,5 +153,6 @@ function taMatch(gWord, tWord) {
     glossaryWord = glossaryWord.replaceAll("\u0BC6\u0BBE", "\u0BCA");
 
     console.log('taMatch:', gWord, glossaryWord, tWord);
+  
     return tWord.includes(glossaryWord);
 }
