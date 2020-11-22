@@ -43,33 +43,34 @@ button.addEventListener('click', function () {
 });
 
 let file = document.getElementById('glossary_file');
-let glossary = {};
-let glossaryA = {};
-let glossaryB = {};
-let glossaryC = {};
-let glossaryD = {};
-let glossaryE = {};
-let glossaryF = {};
-let glossaryG = {};
-let glossaryH = {};
-let glossaryI = {};
-let glossaryJ = {};
-let glossaryK = {};
-let glossaryL = {};
-let glossaryM = {};
-let glossaryN = {};
-let glossaryO = {};
-let glossaryP = {};
-let glossaryQ = {};
-let glossaryR = {};
-let glossaryS = {};
-let glossaryT = {};
-let glossaryU = {};
-let glossaryV = {};
-let glossaryW = {};
-let glossaryX = {};
-let glossaryY = {};
-let glossaryZ = {};
+let glossary = [];
+let glossaryA = [];
+let glossaryB = [];
+let glossaryC = [];
+let glossaryD = [];
+let glossaryE = [];
+let glossaryF = [];
+let glossaryG = [];
+let glossaryH = [];
+let glossaryI = [];
+let glossaryJ = [];
+let glossaryK = [];
+let glossaryL = [];
+let glossaryM = [];
+let glossaryN = [];
+let glossaryO = [];
+let glossaryP = [];
+let glossaryQ = [];
+let glossaryR = [];
+let glossaryS = [];
+let glossaryT = [];
+let glossaryU = [];
+let glossaryV = [];
+let glossaryW = [];
+let glossaryX = [];
+let glossaryY = [];
+let glossaryZ = [];
+
 file.addEventListener('change', function () {
     var file = this.files[0];
 
@@ -178,6 +179,11 @@ file.addEventListener('change', function () {
 });
 
 function pushToGlossary(glossary, key, value) {
-    if (glossary[key] == undefined) glossary[key] = [];
-    glossary[key] = glossary[key].concat(value);
+    for (var i in glossary) {
+        if (glossary[i]["key"] == key) {
+            glossary[i]["value"] = glossary[i]["value"].concat(value);
+            return;
+        }
+    }
+    glossary.push({ key: key, value: value });
 }
