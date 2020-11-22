@@ -34,7 +34,7 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         loadSet(glossary, data.glossaryY);
         loadSet(glossary, data.glossaryZ);
 
-        glossary.sort(function(a, b) {
+        glossary.sort(function (a, b) {
             // to sory by descending order
             return b.key.length - a.key.length;
         });
@@ -102,9 +102,6 @@ function updateElementStyle(priorityElem, result) {
 
 function validate(original, translation) {
     let originalWords = original.split(' ');
-    let translationWords = translation.split(' ');
-    // console.log(originalWords, translationWords);
-
     let wordCount = 0;
     let foundCount = 0;
     let toolTip = '';
@@ -118,12 +115,10 @@ function validate(original, translation) {
 
                 let isFound = false;
                 for (let gWord of gItemValue) {
-                    for (let tWord of translationWords) {
-                        if (taMatch(gWord, tWord)) {
-                            console.log('+ Translation found:', gWord, tWord);
-                            isFound = true;
-                            break;
-                        }
+                    if (taMatch(gWord, translation)) {
+                        console.log('+ Translation found:', gWord);
+                        isFound = true;
+                        break;
                     }
                 }
 
@@ -158,5 +153,5 @@ function taMatch(gWord, tWord) {
     glossaryWord = glossaryWord.replaceAll("\u0BC6\u0BBE", "\u0BCA");
 
     console.log('taMatch:', gWord, glossaryWord, tWord);
-    return tWord.startsWith(glossaryWord);
+    return tWord.includes(glossaryWord);
 }
