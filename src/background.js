@@ -9,3 +9,9 @@ chrome.runtime.onInstalled.addListener(function () {
         }]);
     });
 });
+
+function executeTranslate() {
+    chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
+        translatePage(data.apikey, data.destlang);
+    });
+}
