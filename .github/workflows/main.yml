@@ -9,15 +9,15 @@ name: Upload Release Asset
 #     branches: [ master ]
 #   pull_request:
 #     branches: [ master ]
-
-#   # Allows you to run this workflow manually from the Actions tab
-#   workflow_dispatch:
   
 on:
   push:
     # Sequence of patterns matched against refs/tags
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 jobs:
   build:
     name: Upload Chrome Extension Release Asset
@@ -27,7 +27,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Zip Chrome Extension
         run: |
-          zip --junk-paths -r chrome-extension src
+          ls
+          zip --junk-paths -r chrome-extension ./src
       - name: Create Chrome Extension Release
         id: create_release
         uses: actions/create-release@v1
