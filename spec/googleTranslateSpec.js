@@ -10,19 +10,31 @@ describe("Google translation", function() {
   it("should replace placeholders", function() {
     expect(processTranslation("% s")).toEqual("%s");
     expect(processTranslation("% d")).toEqual("%d");
-    expect(processTranslation("% 1 $ s")).toEqual("%1$s");
-    expect(processTranslation("% 2 $ s")).toEqual("%2$s");
-    expect(processTranslation("% 1 $ d")).toEqual("%1$d");
-    expect(processTranslation("% 2 $ d")).toEqual("%2$d");
+
+    var i;
+    for (i = 1; i <= 10; i++) {
+      expect(processTranslation(`% ${i} $ s`)).toEqual(`%${i}$s`);
+    }
+
+    for (i = 1; i <= 10; i++) {
+      expect(processTranslation(`% ${i} $ d`)).toEqual(`%${i}$d`);
+    }
   });
 
   it("should replace all placeholders", function() {
     expect(processTranslation("% s % s")).toEqual("%s %s");
     expect(processTranslation("% d % d")).toEqual("%d %d");
-    expect(processTranslation("% 1 $ s % 1 $ s")).toEqual("%1$s %1$s");
-    expect(processTranslation("% 2 $ s % 2 $ s")).toEqual("%2$s %2$s");
-    expect(processTranslation("% 1 $ d % 1 $ d")).toEqual("%1$d %1$d");
-    expect(processTranslation("% 2 $ d % 2 $ d")).toEqual("%2$d %2$d");
+
+    expect(processTranslation("% s %%")).toEqual("%s%%");
+
+    var i;
+    for (i = 1; i <= 10; i++) {
+      expect(processTranslation(`% ${i} $ s % ${i} $ s`)).toEqual(`%${i}$s %${i}$s`);
+    }
+
+    for (i = 1; i<= 10; i++) {
+      expect(processTranslation(`% ${i} $ d % ${i} $ d`)).toEqual(`%${i}$d %${i}$d`);
+    }
   });
 
   it("should replace html encoding", function() {
@@ -31,7 +43,7 @@ describe("Google translation", function() {
 
   it("should replace all html encoding", function() {
     expect(processTranslation("& # 8220Test& # 8221")).toEqual("&#8220Test&#8221");
-  });  
+  });   
 
   // describe("when song has been paused", function() {
   //   beforeEach(function() {

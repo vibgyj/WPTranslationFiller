@@ -28,12 +28,19 @@ function translatePage(apikey, destlang) {
 }
 
 function processTranslation(translatedText) {
+    translatedText = translatedText.replaceAll("% s %%", "%s%%");
+    
     translatedText = translatedText.replaceAll("% s", "%s");
     translatedText = translatedText.replaceAll("% d", "%d");
-    translatedText = translatedText.replaceAll("% 1 $ s", "%1$s");
-    translatedText = translatedText.replaceAll("% 2 $ s", "%2$s");
-    translatedText = translatedText.replaceAll("% 1 $ d", "%1$d");
-    translatedText = translatedText.replaceAll("% 2 $ d", "%2$d");
+
+    var i;
+    for (i = 1; i <= 10; i++) {
+        translatedText = translatedText.replaceAll(`% ${i} $ s`, `%${i}$s`);
+    }
+
+    for (i = 1; i <= 10; i++) {
+        translatedText = translatedText.replaceAll(`% ${i} $ d`, `%${i}$d`);
+    }
 
     translatedText = translatedText.replaceAll("& # ", "&#");
 
