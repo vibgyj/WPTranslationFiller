@@ -29,14 +29,14 @@ jobs:
         run: |
           ls
           ls src
-          mv src/contentScript.js src/chrome/contentScript.js
-          mv src/googleTranslate.js src/chrome/googleTranslate.js
-          mv src/options.js src/chrome/options.js
-          mv src/options.html src/chrome/options.html
-          mv src/contentScript.js src/firefox/contentScript.js
-          mv src/googleTranslate.js src/firefox/googleTranslate.js
-          mv src/options.js src/firefox/options.js
-          mv src/options.html src/firefox/options.html
+          cp src/contentScript.js src/chrome/contentScript.js
+          cp src/googleTranslate.js src/chrome/googleTranslate.js
+          cp src/options.js src/chrome/options.js
+          cp src/options.html src/chrome/options.html
+          cp src/contentScript.js src/firefox/contentScript.js
+          cp src/googleTranslate.js src/firefox/googleTranslate.js
+          cp src/options.js src/firefox/options.js
+          cp src/options.html src/firefox/options.html
           zip --junk-paths -r chrome-extension ./src/chrome
           zip --junk-paths -r firefox-addon ./src/firefox
       - name: Create Release
