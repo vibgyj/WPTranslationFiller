@@ -1,5 +1,7 @@
 
 function translatePage(apikey, destlang) {
+    console.log("translatePage called.", apikey, destlang);
+
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
 
@@ -25,6 +27,8 @@ function translatePage(apikey, destlang) {
         });
         xhttp.send(requestBody);
     }
+
+    alert("Translation completed.");
 }
 
 function processTranslation(translatedText) {

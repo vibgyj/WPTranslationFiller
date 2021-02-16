@@ -1,4 +1,4 @@
-# Wordpress Translation Filler - Chrome Extension
+# WordPress Translation Filler - Chrome Extension
 
 1. Copy ./src folder or get chrome-extension.zip from the release and extract to a folder.
 1. Open Chrome extensions and enable 'Developer mode'.

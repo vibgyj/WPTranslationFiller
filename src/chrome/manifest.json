@@ -1,21 +1,12 @@
 {
-    "name": "Wordpress Translation Filler",
-    "version": "1.4",
-    "description": "Wordpress Translation Filler",
+    "name": "WordPress Translation Filler",
+    "version": "0.7",
+    "description": "Chrome extension to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
     "permissions": [
         "activeTab",
         "declarativeContent",
         "storage"
     ],
-    "background": {
-        "scripts": [
-            "background.js"
-        ],
-        "persistent": false
-    },
-    "page_action": {
-        "default_popup": "popup.html"
-    },
     "options_page": "options.html",
     "content_scripts": [
         {
@@ -23,6 +14,7 @@
                 "https://translate.wordpress.org/*"
             ],
             "js": [
+                "googleTranslate.js",
                 "contentScript.js"
             ]
         }
