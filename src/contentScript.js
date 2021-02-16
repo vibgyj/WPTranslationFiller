@@ -1,5 +1,23 @@
 console.log('Content script...');
 
+// Add translate button - start
+var translateButton = document.createElement("a");
+translateButton.href = "#";
+translateButton.style = "background: blue; color: white; padding-left: 5px; padding-right: 5px;";
+translateButton.onclick = translateClicked;
+translateButton.innerText = "Translate";
+var divPaging = document.querySelector("div.paging");
+divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
+
+function translateClicked(event) {
+    event.preventDefault();
+    console.log("Translate clicked!");
+    chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
+        translatePage(data.apikey, data.destlang);
+    });
+}
+// Add translation button - end
+
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
     , 'glossaryD', 'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI'
@@ -153,6 +171,6 @@ function taMatch(gWord, tWord) {
     glossaryWord = glossaryWord.replaceAll("\u0BC6\u0BBE", "\u0BCA");
 
     console.log('taMatch:', gWord, glossaryWord, tWord);
-  
+
     return tWord.includes(glossaryWord);
 }

@@ -40,6 +40,8 @@ button.addEventListener('click', function () {
     chrome.storage.sync.set({ glossaryX: glossaryX });
     chrome.storage.sync.set({ glossaryY: glossaryY });
     chrome.storage.sync.set({ glossaryZ: glossaryZ });
+
+    alert("Setting successfully saved.");
 });
 
 let file = document.getElementById('glossary_file');
