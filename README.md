@@ -1,6 +1,6 @@
 # WordPress Translation Filler - Chrome Extension
 
-1. Copy ./src folder or get chrome-extension.zip from the release and extract to a folder.
+1. Get chrome-extension.zip from the release and extract to a folder.
 1. Open Chrome extensions and enable 'Developer mode'.
 1. Then use 'Load Unpacked' button and point to the folder.
 1. Go to extension details and open 'Extension options'.
