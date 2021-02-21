@@ -13,30 +13,30 @@ let replaceVerb = [
     ["Voettekst", "Footer"],
     ["Widget", "widget"]];
 let replacePlaceholders = [
-    ["[E1]", "&#8220;"],
-    ["[E2]", "&#8221;"],
-    ["[E3]", "&#8216;"],
-    ["[E4]", "&#8217;"],
-    ["[E11]", "&ldquo;"],
-    ["[E12]", "&rdquo;"],
-    ["[E13]", "&quot;"],
-    ["[E14]", "("],
-    ["[E15]", ")"],
-    ["[P1]", "%s"],
-    ["[P2]", "%d "],
-    ["[P3]", "%s%%"],
-    ["[P11]", "%1$s"],
-    ["[P12]", "%2$s"],
-    ["[P13]", "%3$s"],
-    ["[P14]", "%4$s"],
-    ["[P15]", "%5$s"],
-    ["[P16]", "%6$s"],
-    ["[P21]", "%1$d"],
-    ["[P22]", "%2$d"],
-    ["[P23]", "%3$d"],
-    ["[P24]", "%4$d"],
-    ["[P25]", "%5$d"],
-    ["[P26]", "%6$d"]];
+    ["[101]", "&#8220;"],
+    ["[102]", "&#8221;"],
+    ["[103]", "&#8216;"],
+    ["[104]", "&#8217;"],
+    ["[105]", "&ldquo;"],
+    ["[106]", "&rdquo;"],
+    ["[107]", "&quot;"],
+    ["[108]", "("],
+    ["[109]", ")"],
+    ["[01]", "%s"],
+    ["[02]", "%d "],
+    ["[03]", "%s%%"],
+    ["[11]", "%1$s"],
+    ["[12]", "%2$s"],
+    ["[13]", "%3$s"],
+    ["[14]", "%4$s"],
+    ["[15]", "%5$s"],
+    ["[16]", "%6$s"],
+    ["[21]", "%1$d"],
+    ["[22]", "%2$d"],
+    ["[23]", "%3$d"],
+    ["[24]", "%4$d"],
+    ["[25]", "%5$d"],
+    ["[26]", "%6$d"]];
 
 function translatePage(apikey, destlang) {
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
@@ -82,10 +82,10 @@ function googleTranslate(original, destlang, e, apikey) {
     });
     console.log("request body", requestBody);
 
-    sendAPIRequest(e, apikey, requestBody);
+    sendAPIRequest(e, destlang, apikey, requestBody);
 }
 
-function sendAPIRequest(e, apikey, requestBody) {
+function sendAPIRequest(e, language, apikey, requestBody) {
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -95,7 +95,7 @@ function sendAPIRequest(e, apikey, requestBody) {
 
             var textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
-            validateEntry(textareaElem);
+            validateEntry(language, textareaElem);
         }
     };
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
