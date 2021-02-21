@@ -3,13 +3,13 @@ console.log('Content script...');
 // Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
-translateButton.style = "background: blue; color: white; padding-left: 5px; padding-right: 5px;";
-translateButton.onclick = translateClicked;
+translateButton.className = "translation-filler-button"
+translateButton.onclick = translatePageClicked;
 translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
 divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
 
-function translateClicked(event) {
+function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
     chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
@@ -57,11 +57,36 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
             return b.key.length - a.key.length;
         });
         console.log(glossary);
+        addTranslateButtons();
         validatePage();
     });
 
 function loadSet(x, set) {
     glossary = glossary.concat(set);
+}
+
+function addTranslateButtons() {
+    for (let e of document.querySelectorAll("tr.editor")) {
+        let rowId = e.getAttribute('row');
+        let panelHeaderActions = e.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
+        // Add translate button
+        let translateButton = document.createElement("button");
+        translateButton.id = `translate-${rowId}`;
+        translateButton.className = "translation-filler-button"
+        translateButton.onclick = translateEntryClicked;
+        translateButton.innerText = "Translate";
+        panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+    }
+}
+
+function translateEntryClicked(event) {
+    event.preventDefault();
+    console.log("Translate Entry clicked!", event);
+    let rowId = event.target.id.split('-')[1];
+    console.log(rowId);
+    chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
+        translateEntry(rowId, data.apikey, data.destlang);
+    });
 }
 
 function validatePage() {
@@ -85,7 +110,7 @@ function updateStyle(textareaElem, result) {
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
     updateElementStyle(priorityElem, result);
-    let headerElem = document.querySelector('#editor-' + rowId + ' .panel-header');
+    let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(headerElem, result);
 }
 
