@@ -25,18 +25,18 @@ let replacePlaceholders = [
     ["[P1]", "%s"],
     ["[P2]", "%d "],
     ["[P3]", "%s%%"],
-    ["[PS1]", "%1$s"],
-    ["[PS2]", "%2$s"],
-    ["[PS3]", "%3$s"],
-    ["[PS4]", "%4$s"],
-    ["[PS5]", "%5$s"],
-    ["[PS6]", "%6$s"],
-    ["[PD1]", "%1$d"],
-    ["[PD2]", "%2$d"],
-    ["[PD3]", "%3$d"],
-    ["[PD4]", "%4$d"],
-    ["[PD5]", "%5$d"],
-    ["[PD6]", "%6$d"]];
+    ["[P11]", "%1$s"],
+    ["[P12]", "%2$s"],
+    ["[P13]", "%3$s"],
+    ["[P14]", "%4$s"],
+    ["[P15]", "%5$s"],
+    ["[P16]", "%6$s"],
+    ["[P21]", "%1$d"],
+    ["[P22]", "%2$d"],
+    ["[P23]", "%3$d"],
+    ["[P24]", "%4$d"],
+    ["[P25]", "%5$d"],
+    ["[P26]", "%6$d"]];
 
 function translatePage(apikey, destlang) {
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
@@ -62,11 +62,23 @@ function translateEntry(rowId, apikey, destlang) {
 function googleTranslate(original, destlang, e, apikey) {
     original = preProcessOriginal(original, replacePlaceholders);
 
+    var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
+    var myArray = myRe.exec(original);
+    // console.log("Contains html.",myArray);
+
+    if (myArray == null) {
+        transtype = "text";
+    }
+    else {
+        transtype = "html";
+    }
+    console.log("format type", transtype);
+
     let requestBody = JSON.stringify({
         "q": original,
         "source": "en",
         "target": destlang,
-        "format": "text"
+        "format": transtype
     });
     console.log("request body", requestBody);
 
