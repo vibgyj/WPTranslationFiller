@@ -1,5 +1,6 @@
 let apikeyTextbox = document.getElementById('google_api_key');
 let destLangTextbox = document.getElementById('destination_lang');
+let postTranslationReplaceTextArea = document.getElementById('post_translation_replace');
 
 chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
     apikeyTextbox.value = data.apikey;
@@ -10,8 +11,14 @@ let button = document.getElementById('save');
 button.addEventListener('click', function () {
     let apikey = apikeyTextbox.value;
     let destlang = destLangTextbox.value;
+    let postTranslationReplace = postTranslationReplaceTextArea.value;
+    console.debug(postTranslationReplace);
 
-    chrome.storage.sync.set({ apikey: apikey, destlang: destlang });
+    chrome.storage.sync.set({
+        apikey: apikey,
+        destlang: destlang,
+        postTranslationReplace: postTranslationReplace
+    });
 
     chrome.storage.sync.set({ glossary: glossary });
     chrome.storage.sync.set({ glossaryA: glossaryA });

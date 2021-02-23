@@ -12,9 +12,12 @@ divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
 function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
-    chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
-        translatePage(data.apikey, data.destlang);
-    });
+    chrome.storage.sync
+        .get(
+            ['apikey', 'destlang', 'postTranslationReplace'],
+            function (data) {
+                translatePage(data.apikey, data.destlang, data.postTranslationReplace);
+            });
 }
 // Add translation button - end
 
@@ -23,7 +26,8 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
     , 'glossaryD', 'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI'
     , 'glossaryJ', 'glossaryK', 'glossaryL', 'glossaryM', 'glossaryN', 'glossaryO'
     , 'glossaryP', 'glossaryQ', 'glossaryR', 'glossaryS', 'glossaryT', 'glossaryU'
-    , 'glossaryV', 'glossaryW', 'glossaryX', 'glossaryY', 'glossaryZ', 'destlang'], function (data) {
+    , 'glossaryV', 'glossaryW', 'glossaryX', 'glossaryY', 'glossaryZ', 'destlang'],
+    function (data) {
         loadSet(glossary, data.glossary);
         loadSet(glossary, data.glossaryA);
         loadSet(glossary, data.glossaryB);
@@ -84,9 +88,10 @@ function translateEntryClicked(event) {
     console.log("Translate Entry clicked!", event);
     let rowId = event.target.id.split('-')[1];
     console.log(rowId);
-    chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
-        translateEntry(rowId, data.apikey, data.destlang);
-    });
+    chrome.storage.sync
+        .get(['apikey', 'destlang', 'postTranslationReplace'], function (data) {
+            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace);
+        });
 }
 
 function validatePage(language) {
@@ -186,7 +191,7 @@ function validate(language, original, translation) {
 
 // Language specific matching.
 function match(language, gWord, tWord) {
-    switch(language) {
+    switch (language) {
         case 'ta':
             return taMatch(gWord, tWord);
         default:

@@ -1,19 +1,29 @@
 // This array is used to replace wrong words and put placeholders back
 // This array should better be build from a file, but for now it does what it needs to do
 // There might be more placeholders needed, and maybe split the array in two, one for verb replacement and one for placeholders
-let replaceVerb = [
-    ["website", "site"],
-    ["plug-in", "plugin"],
-    ["Plug-in", "Plugin"],
-    ["post", "bericht"],
-    ["sjabloon", "template"],
-    ["trefwoorden", "keywords"],
-    ["schuifregelaar", "slider"],
-    ["voltooid", "afgerond"],
-    ["Voettekst", "Footer"],
-    ["Widget", "widget"]];
+let replaceVerb = [];
+    // ["website", "site"],
+    // ["plug-in", "plugin"],
+    // ["Plug-in", "Plugin"],
+    // ["post", "bericht"],
+    // ["sjabloon", "template"],
+    // ["trefwoorden", "keywords"],
+    // ["schuifregelaar", "slider"],
+    // ["voltooid", "afgerond"],
+    // ["Voettekst", "Footer"],
+    // ["Widget", "widget"]];
+function setPostTranslationReplace(postTranslationReplace) {
+    replaceVerb = [];
+    let lines = postTranslationReplace.split('\n');
+    lines.forEach(function(item) {
+        console.debug(item);
+        replaceVerb.push(item.split(','));
+    });
+}
 
-function translatePage(apikey, destlang) {
+function translatePage(apikey, destlang, postTranslationReplace) {
+    setPostTranslationReplace(postTranslationReplace);
+
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         original = googleTranslate(original, destlang, e, apikey);
@@ -24,7 +34,9 @@ function translatePage(apikey, destlang) {
     translateButton.className += " translated";
 }
 
-function translateEntry(rowId, apikey, destlang) {
+function translateEntry(rowId, apikey, destlang, postTranslationReplace) {
+    setPostTranslationReplace(postTranslationReplace);
+
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     let original = e.querySelector("span.original-raw").innerText;
     googleTranslate(original, destlang, e, apikey);
