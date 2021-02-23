@@ -25,6 +25,17 @@
 .panel-header-actions .translation-filler-button {
     width: auto;
     padding: 5px;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .translation-filler-button:focus {
+    color: white;
+}
+
+.panel-header-actions .translation-filler-button:hover {
+    background-color: blue;
+    color: lightgray;
 }
 
 .panel-header-actions .translation-filler-button::before {
@@ -37,5 +48,5 @@
 }
 
 .panel-header-actions .translation-filler-button.translated {
-    color: green;
+    background-color: green;
 }

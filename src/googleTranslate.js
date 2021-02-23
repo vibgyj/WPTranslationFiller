@@ -12,31 +12,6 @@ let replaceVerb = [
     ["voltooid", "afgerond"],
     ["Voettekst", "Footer"],
     ["Widget", "widget"]];
-let replacePlaceholders = [
-    ["[101]", "&#8220;"],
-    ["[102]", "&#8221;"],
-    ["[103]", "&#8216;"],
-    ["[104]", "&#8217;"],
-    ["[105]", "&ldquo;"],
-    ["[106]", "&rdquo;"],
-    ["[107]", "&quot;"],
-    ["[108]", "("],
-    ["[109]", ")"],
-    ["[01]", "%s"],
-    ["[02]", "%d "],
-    ["[03]", "%s%%"],
-    ["[11]", "%1$s"],
-    ["[12]", "%2$s"],
-    ["[13]", "%3$s"],
-    ["[14]", "%4$s"],
-    ["[15]", "%5$s"],
-    ["[16]", "%6$s"],
-    ["[21]", "%1$d"],
-    ["[22]", "%2$d"],
-    ["[23]", "%3$d"],
-    ["[24]", "%4$d"],
-    ["[25]", "%5$d"],
-    ["[26]", "%6$d"]];
 
 function translatePage(apikey, destlang) {
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
@@ -60,10 +35,10 @@ function translateEntry(rowId, apikey, destlang) {
 }
 
 function googleTranslate(original, destlang, e, apikey) {
-    original = preProcessOriginal(original, replacePlaceholders);
+    let originalPreProcessed = preProcessOriginal(original);
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
-    var myArray = myRe.exec(original);
+    var myArray = myRe.exec(originalPreProcessed);
     // console.log("Contains html.",myArray);
 
     if (myArray == null) {
@@ -74,54 +49,238 @@ function googleTranslate(original, destlang, e, apikey) {
     }
     console.log("format type", transtype);
 
-    let requestBody = JSON.stringify({
-        "q": original,
+    let requestBody = {
+        "q": originalPreProcessed,
         "source": "en",
         "target": destlang,
         "format": transtype
-    });
+    };
     console.log("request body", requestBody);
 
-    sendAPIRequest(e, destlang, apikey, requestBody);
+    sendAPIRequest(e, destlang, apikey, requestBody, original);
 }
 
-function sendAPIRequest(e, language, apikey, requestBody) {
+function sendAPIRequest(e, language, apikey, requestBody, original) {
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var responseObj = JSON.parse(this.responseText);
-            var translatedText = postProcessTranslation(
-                responseObj.data.translations[0].translatedText, replaceVerb, replacePlaceholders);
+            let responseObj = JSON.parse(this.responseText);
+            let translatedText = responseObj.data.translations[0].translatedText;
+            console.debug("Translated text: ", translatedText);
 
-            var textareaElem = e.querySelector("textarea.foreign-text");
+            translatedText = postProcessTranslation(
+                original, translatedText, replaceVerb);
+            // translatedText = processPlaceholderSpaces(translatedText, original);
+
+            let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             validateEntry(language, textareaElem);
         }
     };
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
-    xhttp.send(requestBody);
+    xhttp.send(JSON.stringify(requestBody));
 }
 
-function preProcessOriginal(original, replacePlaceholders) {
-    // this function replaces all placeholders before sending to Google to prevent adding blanks
-    for (let i = 0; i < replacePlaceholders.length; i++) {
-        original = original.replaceAll(replacePlaceholders[i][1], replacePlaceholders[i][0]);
+const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
+function preProcessOriginal(original) {
+    const pattern = new RegExp(placeHolderRegex);
+    const matches = original.matchAll(pattern);
+    let index = 0;
+    for(const match of matches) {
+        original = original.replace(match[0], `[${index}]`);
+
+        index++;
     }
 
+    console.debug("After pre-processing:", original);
     return original;
 }
 
-function postProcessTranslation(translatedText, replverb, replacePlaceholders) {
-    // This function replaces the placeholders so they become html entities
+function postProcessTranslation(original, translatedText, replverb) {
+    // replverb contains the verbs to replace
     for (let i = 0; i < replverb.length; i++) {
         translatedText = translatedText.replaceAll(replverb[i][0], replverb[i][1]);
     }
+    
+    // This section replaces the placeholders so they become html entities
+    const pattern = new RegExp(placeHolderRegex);
+    const matches = original.matchAll(pattern);
+    let index = 0;
+    for(const match of matches) {
+        translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
 
-    // replverb contains the verbs to replace
-    for (let i = 0; i < replacePlaceholders.length; i++) {
-        translatedText = translatedText.replaceAll(replacePlaceholders[i][0], replacePlaceholders[i][1]);
+        index++;
     }
 
+    console.debug("After post-processing:", translatedText);
+    return translatedText;
+}
+
+function processPlaceholderSpaces(translatedText, original) {
+    console.log("placeholdercheck original", original);
+    console.log("placeholdercheck translated", translatedText);
+    // Just set to let it run once! 
+    var placehold = [
+        ["/(<.+?>)"]];
+    var i = 0;
+    var placedicttrans = {};
+    // This can be removed as the regex finds all !!!
+    while (i < placehold.length) {
+        var placedicttrans = {};
+        //tocheck = placehold[i][0] ;
+        //console.log("placeholdercheck placeholder tocheck",tocheck);
+        //var check = /%(\d{1,2}\$){0,2}[sd]|&.{1,5};
+        //var check = /em>[a-z]\*/gi ;
+        var check = /%(\d{1,2}\$){0,1}[sd]{1,1}/gi;
+        //var check =placehold[i][0];
+        //var check = /(<.+?>)/g ;
+        console.log('placeholder', check);
+        //var check = /%(\d{1,4}\${0,4})*/gi ;
+        const pattern = new RegExp(check);
+        console.log("placeholdercheck placeholder pattern", pattern);
+        const matches = original.matchAll(pattern);
+        var x = 0;
+        var placedictorg = {};
+        for (const match of matches) {
+            console.log("placeholdercheck match in original", original);
+            console.log("placeholdercheck match in translated", translatedText);
+            console.log(`Found ${match[0]} start=${match.index} end=${match.index + match[0].length}.`);
+            var start = match.index;
+            eindcheck = match[0].length;
+            console.log("placeholdercheck found match:", match[0]);
+            //console.log("placeholdercheck found start:",start);
+            //console.log("placeholdercheck found x:",x);				
+            if (start == 0) {
+                part = original.substring(start, eindcheck + 1);
+                placedictorg[x] = part;
+            }
+            else {
+                part = original.substring(start - 1, start + eindcheck + 1);
+                placedictorg[x] = part;
+            }
+            console.log("placeholdercheck at begin in original line:", '"' + part + '"');
+            x++;
+        }
+        lengte = Object.keys(placedictorg).length;
+        if (lengte > 0) {
+            console.log("placeholdercheck lengte original:", lengte);
+            console.log("placeholdercheck original", original);
+        }
+        var x = 0;
+        var placedicttrans = {};
+        const matchtrans = translatedText.matchAll(pattern);
+        for (const match of matchtrans) {
+            console.log(`Found in trans ${match[0]} start=${match.index} end=${match.index + match[0].length}.`);
+            var start = match.index;
+            console.log("placeholdercheck found in trans:", start);
+            eindcheck = match[0].length;
+            if (start == 0) {
+                part = translatedText.substring(start, eindcheck + 1);
+                placedicttrans[x] = part;
+            }
+            else {
+                part = translatedText.substring(start - 1, start + eindcheck + 1);
+                placedicttrans[x] = part;
+            }
+            console.log("placeholdercheck at begin in trans:", placedicttrans[x]);
+            x++;
+        }
+        var lengte = Object.keys(placedicttrans).length;
+        if (lengte > 0) {
+            console.log("placeholdercheck lengte translated:", lengte);
+            console.log("placeholdercheck translated", translatedText);
+            console.log("placeholdercheck translated");
+        }
+        else {
+            console.log("placeholdercheck lengte 0")
+        }
+        var count = 0;
+        var lengte = Object.keys(placedicttrans).length;
+        if (lengte > 0) {
+            while (count < Object.keys(placedicttrans).length) {
+                console.log("placeholdercheck found them in original:", count, placedictorg[count]);
+                console.log("placeholdercheck found them in", original);
+                console.log("placeholdercheck found them in trans:", count, placedicttrans[count]);
+                console.log("placeholdercheck found them in", translatedText);
+                if (placedictorg[count].startsWith(" ")) {
+                    console.log("placeholdercheck found blank in original at start", count, placedictorg[count]);
+                    console.log("placeholdercheck found blank in original at start", count, placedicttrans[count]);
+                    if (!placedicttrans[count].startsWith(" ")) {
+                        console.log("placeholdercheck not found blank in translated", placedicttrans[count]);
+                        console.log("placeholdercheck not found blank in", translatedText);
+                        replwith = placedicttrans[count].substr(0, 1) + " " + placedicttrans[count].substr(1,)
+                        translatedText = translatedText.replace(placedicttrans[count], replwith);
+                        console.log("placeholdercheck not found blank in but now added", translatedText);
+                        // below is needed after adding a blank otherwise the search is not working for the follwing actions!
+                        //placedicttrans[count]=placedictorg[count];
+                    }
+                    else {
+                        console.log("placeholdercheck found blank in translated at start", placedictorg[count]);
+                    }
+                }
+                else {
+                    console.log("placeholdercheck not found blank at start original", '"' + placedictorg[count] + '"');
+                }
+                if (placedictorg[count].endsWith(" ")) {
+                    console.log("placeholdercheck found blank at end original", '"' + placedictorg[count] + '"');
+                    console.log("placeholdercheck found at end translated", '"' + placedicttrans[count] + '"');
+                    if (!placedicttrans[count].endsWith(" ")) {
+                        console.log("placeholdercheck not found blank at end translated", placedicttrans[count]);
+                        console.log("placeholdercheck not found blank at end", translatedText);
+                        if (translatedText.indexOf((placedicttrans[count])) > 0) {
+                            replwith = placedicttrans[count].substr(1, (placedicttrans[count].length - 1)) + " " + placedicttrans[count].substr((placedicttrans[count].length - 1));
+                            console.log("placeholdercheck replaced end not at beginnen of line", replwith);
+                        }
+                        else {
+                            console.log('length of placeholder', (placedicttrans[count].length), placedicttrans[count]);
+                            replwith = placedicttrans[count].substr(0, (placedicttrans[count].length - 1)) + " " + placedicttrans[count].substr((placedicttrans[count].length - 1));
+                            console.log("placeholdercheck replaced end is at beginnen of line", replwith);
+                        }
+                        console.log("placeholdercheck replaced end", replwith);
+                        translatedText = translatedText.replace(placedicttrans[count], replwith);
+                    }
+                }
+                else {
+                    //It does not seem to end with a blank	
+                    console.log("placeholdercheck not found blank at end", translatedText);
+                    if (placedicttrans[count].endsWith(":")) {
+                        console.log("placeholdercheck found : at end", original);
+                        console.log("placeholdercheck found : at end", translatedText);
+                        replwith = placedictorg[count].substr(0, (placedictorg[count].length));
+                        search = placedicttrans[count].substr(0, (placedicttrans[count].length));
+                        console.log("placeholdercheck search", search);
+                        translatedText = translatedText.replace(search, replwith);
+                        console.log("placeholdercheck not found blank at end but : now blank behind added", replwith);
+                    }
+                    else if (placedictorg[count].endsWith(",")) {
+                        console.log("placeholdercheck not found blank at end original is , instead", '"' + placedictorg[count] + '"');
+                        replwith = placedictorg[count];
+                        search = placedicttrans[count].substr(0, (placedicttrans[count].length));
+                        translatedText = translatedText.replace(search, replwith);
+                    }
+                    else {
+                        console.log("placeholdercheck not found blank at end original and is no : instead", '"' + placedictorg[count] + '"');
+                    }
+                }
+                //Sometimes there is a semicolon that went missing    				     
+                if (placedicttrans[count].endsWith(":")) {
+                    console.log("placeholdercheck not found blank at end original is : instead", '"' + placedictorg[count] + '"');
+                    replwith = placedicttrans[count].substr(0, (placedicttrans[count].length)) + " " + placedicttrans[count].substr((placedicttrans[count].length));
+                    console.log("placeholdercheck replaced end is at beginnen of line", replwith);
+                    // translatedText = translatedText.replace(placedicttrans[count], replwith);
+                }
+                count++;
+            }
+        }
+        i++;
+    }
+    // Last moment repair after fixing the blanks needs to be fixed elsewhere!!!
+    // The dot at the end of the line is sometimes missing so add it
+    if (original.endsWith(".")) {
+        if (!translatedText.endsWith(".")) {
+            translatedText = translatedText + '.';
+        }
+    }
     return translatedText;
 }
