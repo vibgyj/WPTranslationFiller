@@ -70,7 +70,7 @@ function sendAPIRequest(e, language, apikey, requestBody, original) {
 
             translatedText = postProcessTranslation(
                 original, translatedText, replaceVerb);
-            // translatedText = processPlaceholderSpaces(translatedText, original);
+            // translatedText = processPlaceholderSpaces(original, translatedText);
 
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
@@ -117,7 +117,7 @@ function postProcessTranslation(original, translatedText, replverb) {
     return translatedText;
 }
 
-function processPlaceholderSpaces(translatedText, original) {
+function processPlaceholderSpaces(original, translatedText) {
     console.log("placeholdercheck original", original);
     console.log("placeholdercheck translated", translatedText);
     // Just set to let it run once! 
