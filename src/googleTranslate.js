@@ -1,23 +1,14 @@
-// This array is used to replace wrong words and put placeholders back
-// This array should better be build from a file, but for now it does what it needs to do
-// There might be more placeholders needed, and maybe split the array in two, one for verb replacement and one for placeholders
+// This array is used to replace wrong words in translation
 let replaceVerb = [];
-    // ["website", "site"],
-    // ["plug-in", "plugin"],
-    // ["Plug-in", "Plugin"],
-    // ["post", "bericht"],
-    // ["sjabloon", "template"],
-    // ["trefwoorden", "keywords"],
-    // ["schuifregelaar", "slider"],
-    // ["voltooid", "afgerond"],
-    // ["Voettekst", "Footer"],
-    // ["Widget", "widget"]];
+
 function setPostTranslationReplace(postTranslationReplace) {
     replaceVerb = [];
     let lines = postTranslationReplace.split('\n');
-    lines.forEach(function(item) {
-        console.debug(item);
-        replaceVerb.push(item.split(','));
+    lines.forEach(function (item) {
+        // Handle blank lines
+        if (item != "") {
+            replaceVerb.push(item.split(','));
+        }
     });
 }
 
@@ -99,7 +90,7 @@ function preProcessOriginal(original) {
     const pattern = new RegExp(placeHolderRegex);
     const matches = original.matchAll(pattern);
     let index = 0;
-    for(const match of matches) {
+    for (const match of matches) {
         original = original.replace(match[0], `[${index}]`);
 
         index++;
@@ -114,21 +105,40 @@ function postProcessTranslation(original, translatedText, replverb) {
     for (let i = 0; i < replverb.length; i++) {
         translatedText = translatedText.replaceAll(replverb[i][0], replverb[i][1]);
     }
-    
+
     // This section replaces the placeholders so they become html entities
     const pattern = new RegExp(placeHolderRegex);
     const matches = original.matchAll(pattern);
     let index = 0;
-    for(const match of matches) {
+    for (const match of matches) {
         translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
 
         index++;
     }
 
-    console.debug("After post-processing:", translatedText);
+    // Make translation to start with same case (upper/lower) as the original.
+    if (isStartsWithUpperCase(original)) {
+        if (!isStartsWithUpperCase(translatedText))  {
+            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+            console.debug('Applied upper case: ', translatedText);
+        }
+    }
+    else {
+        if (isStartsWithUpperCase(translatedText)) {
+            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+            console.debug('Applied lower case: ', translatedText);
+        }
+    }
+    
     return translatedText;
 }
 
+// Function to check if start of line is capital
+function isStartsWithUpperCase(str) {
+    return str.charAt(0) === str.charAt(0).toUpperCase();
+}
+
+// todo: This function needs to be fixed before being used. It has failing specs.
 function processPlaceholderSpaces(original, translatedText) {
     console.log("placeholdercheck original", original);
     console.log("placeholdercheck translated", translatedText);
