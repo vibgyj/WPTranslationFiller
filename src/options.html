@@ -2,29 +2,43 @@
 <html>
 
 <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         .form-input {
-            margin: 10px;
+            margin: 10px 0;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 500px;
             margin: auto;
+            font-size: 12pt;
         }
 
         #google_api_key {
             width: 300px;
         }
 
-        #post_translation_replace {
-            width: 300px;
-            height: 100px;
+        #text_glossary_file {
+            width: 400px;
+        }
+
+        #text_glossary_file {
+            display: block;
+            font-style: italic;
+        }
+
+        #text_verbs {
+            width: calc(100% - 6px);
+            min-height: 100px;
         }
 
         #save {
             float: right;
-            width: 100px;
+            width: 150px;
+            padding: 5px 0;
         }
     </style>
 </head>
@@ -40,17 +54,18 @@
 
         <div class="form-input">
             <label for="destination_lang">Destination Language</label>
-            <input id="destination_lang" type="text" value="ta" />
+            <input id="destination_lang" type="text" value="nl" />
         </div>
 
         <div class="form-input">
             <label for="glossary_file">Glossary File (csv)</label>
             <input id="glossary_file" type="file" />
+            <span id="text_glossary_file"></span>
         </div>
 
         <div class="form-input">
-            <label for="post_translation_replace">Post Translation Replace</label>
-            <textarea id="post_translation_replace">wrong1,right1
+            <label for="text_verbs">Post Translation Replace</label>
+            <textarea id="text_verbs">wrong1,right1
 wrong2,right2
             </textarea>
         </div>
