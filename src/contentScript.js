@@ -3,18 +3,21 @@ console.log('Content script...');
 // Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
-translateButton.style = "background: blue; color: white; padding-left: 5px; padding-right: 5px;";
-translateButton.onclick = translateClicked;
+translateButton.className = "translation-filler-button"
+translateButton.onclick = translatePageClicked;
 translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
 divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
 
-function translateClicked(event) {
+function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
-    chrome.storage.sync.get(['apikey', 'destlang'], function (data) {
-        translatePage(data.apikey, data.destlang);
-    });
+    chrome.storage.sync
+        .get(
+            ['apikey', 'destlang', 'postTranslationReplace'],
+            function (data) {
+                translatePage(data.apikey, data.destlang, data.postTranslationReplace);
+            });
 }
 // Add translation button - end
 
@@ -23,7 +26,8 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
     , 'glossaryD', 'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI'
     , 'glossaryJ', 'glossaryK', 'glossaryL', 'glossaryM', 'glossaryN', 'glossaryO'
     , 'glossaryP', 'glossaryQ', 'glossaryR', 'glossaryS', 'glossaryT', 'glossaryU'
-    , 'glossaryV', 'glossaryW', 'glossaryX', 'glossaryY', 'glossaryZ'], function (data) {
+    , 'glossaryV', 'glossaryW', 'glossaryX', 'glossaryY', 'glossaryZ', 'destlang'],
+    function (data) {
         loadSet(glossary, data.glossary);
         loadSet(glossary, data.glossaryA);
         loadSet(glossary, data.glossaryB);
@@ -57,23 +61,49 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
             return b.key.length - a.key.length;
         });
         console.log(glossary);
-        validatePage();
+        addTranslateButtons();
+        validatePage(data.destlang);
     });
 
 function loadSet(x, set) {
     glossary = glossary.concat(set);
 }
 
-function validatePage() {
+function addTranslateButtons() {
+    for (let e of document.querySelectorAll("tr.editor")) {
+        let rowId = e.getAttribute('row');
+        let panelHeaderActions = e.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
+        // Add translate button
+        let translateButton = document.createElement("button");
+        translateButton.id = `translate-${rowId}`;
+        translateButton.className = "translation-filler-button"
+        translateButton.onclick = translateEntryClicked;
+        translateButton.innerText = "Translate";
+        panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+    }
+}
+
+function translateEntryClicked(event) {
+    event.preventDefault();
+    console.log("Translate Entry clicked!", event);
+    let rowId = event.target.id.split('-')[1];
+    console.log(rowId);
+    chrome.storage.sync
+        .get(['apikey', 'destlang', 'postTranslationReplace'], function (data) {
+            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace);
+        });
+}
+
+function validatePage(language) {
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         let textareaElem = e.querySelector("textarea.foreign-text");
         textareaElem.addEventListener('input', function (e) {
-            validateEntry(e.target);
+            validateEntry(language, e.target);
         });
         let translation = textareaElem.innerText;
 
-        var result = validate(original, translation);
+        var result = validate(language, original, translation);
         console.log(result);
 
         updateStyle(textareaElem, result);
@@ -85,16 +115,16 @@ function updateStyle(textareaElem, result) {
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
     updateElementStyle(priorityElem, result);
-    let headerElem = document.querySelector('#editor-' + rowId + ' .panel-header');
+    let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(headerElem, result);
 }
 
-function validateEntry(textareaElem) {
+function validateEntry(language, textareaElem) {
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw").innerText;
 
-    let result = validate(original, translation);
+    let result = validate(language, original, translation);
     console.log(result);
 
     updateStyle(textareaElem, result);
@@ -117,7 +147,7 @@ function updateElementStyle(priorityElem, result) {
     priorityElem.setAttribute('title', result.toolTip);
 }
 
-function validate(original, translation) {
+function validate(language, original, translation) {
     let originalWords = original.split(' ');
 
     let wordCount = 0;
@@ -133,7 +163,7 @@ function validate(original, translation) {
 
                 let isFound = false;
                 for (let gWord of gItemValue) {
-                    if (taMatch(gWord, translation)) {
+                    if (match(language, gWord, translation)) {
                         console.log('+ Translation found:', gWord);
                         isFound = true;
                         break;
@@ -159,8 +189,16 @@ function validate(original, translation) {
     return { wordCount, percent, toolTip };
 }
 
-// Language specific matching. todo: get language code as param
-// glossaryWord, translationWord
+// Language specific matching.
+function match(language, gWord, tWord) {
+    switch (language) {
+        case 'ta':
+            return taMatch(gWord, tWord);
+        default:
+            return gWord == tWord;
+    }
+}
+
 function taMatch(gWord, tWord) {
     let trimSize = gWord.charCodeAt(gWord.length - 1) == '\u0BCD'.charCodeAt(0)
         ? 2 : 1;
