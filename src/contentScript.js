@@ -195,7 +195,7 @@ function match(language, gWord, tWord) {
         case 'ta':
             return taMatch(gWord, tWord);
         default:
-            return gWord == tWord;
+            return tWord.includes(gWord);
     }
 }
 
