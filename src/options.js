@@ -4,7 +4,7 @@ let uploadedFile = document.getElementById('text_glossary_file');
 let glossaryFile = document.getElementById('glossary_file');
 let verbsTextbox = document.getElementById('text_verbs');
 
-chrome.storage.sync.get(['apikey', 'destlang', 'filetext', 'glossaryFile', 'postTranslationReplace'], function (data) {
+chrome.storage.sync.get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace'], function (data) {
     apikeyTextbox.value = data.apikey;
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `Uploaded file: ${data.glossaryFile}`;
