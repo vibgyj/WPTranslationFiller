@@ -13,8 +13,10 @@ function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
     chrome.storage.sync
-        .get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
-            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+    .get(
+        ['apikey', 'destlang', 'postTranslationReplace','preTranslationReplace'],
+        function (data) {
+            translatePage(data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
 }
 // Add translation button - end
@@ -85,9 +87,8 @@ function translateEntryClicked(event) {
     event.preventDefault();
     console.log("Translate Entry clicked!", event);
     let rowId = event.target.id.split('-')[1];
-    console.log(rowId);
     chrome.storage.sync
-        .get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
+        .get(['apikey', 'destlang', 'postTranslationReplace','preTranslationReplace'], function (data) {
             translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
     

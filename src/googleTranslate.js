@@ -27,12 +27,12 @@ function setPostTranslationReplace(postTranslationReplace) {
     });
 }
 
-function translatePage(apikey, destlang, postTranslationReplace) {
+function translatePage(apikey, destlang, postTranslationReplace,preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        original = googleTranslate(original, destlang, e, apikey,replaceVerb);
+        original = googleTranslate(original, destlang, e, apikey,replacePreVerb);
     }
 
     // Translation completed
@@ -40,11 +40,13 @@ function translatePage(apikey, destlang, postTranslationReplace) {
     translateButton.className += " translated";
 }
 
-function translateEntry(rowId, apikey, destlang, postTranslationReplace,preTranslationReplace) {
+function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
+    console.debug('translateEntry started!');
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     let original = e.querySelector("span.original-raw").innerText;
+    console.debug('before googletranslate:',replacePreVerb);
     googleTranslate(original, destlang, e, apikey,replacePreVerb);
 
     // Translation completed
