@@ -3,13 +3,15 @@ let destLangTextbox = document.getElementById('destination_lang');
 let uploadedFile = document.getElementById('text_glossary_file');
 let glossaryFile = document.getElementById('glossary_file');
 let verbsTextbox = document.getElementById('text_verbs');
+let preverbsTextbox = document.getElementById('text_pre_verbs');
 
-chrome.storage.sync.get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace'], function (data) {
+chrome.storage.sync.get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
     apikeyTextbox.value = data.apikey;
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `Uploaded file: ${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
-    console.debug("Saved options: ", data);
+    preverbsTextbox.value = data.preTranslationReplace;
+    console.log("Saved options: ", data);
 });
 
 let button = document.getElementById('save');
@@ -17,15 +19,19 @@ button.addEventListener('click', function () {
     let apikey = apikeyTextbox.value;
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
+    let preTranslation = preverbsTextbox.value;
 
-    console.debug('Options: ', apikey, destlang, postTranslation);
+    console.log('Options: ', apikey, destlang, postTranslation,preTranslation);
 
     chrome.storage.sync.set({
         apikey: apikey,
         destlang: destlang,
-        postTranslationReplace: postTranslation
+        postTranslationReplace: postTranslation,
+        preTranslationReplace: preTranslation
+    
     });
-
+    console.log('Options loaded: ', apikey, destlang, postTranslation,preTranslation);
+ 
     if (glossaryFile.value !== "") {
         console.debug('Options: ', glossaryFile);
         chrome.storage.sync.set({ glossaryFile: glossaryFile.value.replace("C:\\fakepath\\", "") });

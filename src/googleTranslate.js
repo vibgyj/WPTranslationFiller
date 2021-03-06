@@ -1,5 +1,20 @@
 // This array is used to replace wrong words in translation
 let replaceVerb = [];
+// This array is used to replace verbs before translation
+// It is also used to force google to translate informal
+// This is done by replacing the formal word for a informal word
+let replacePreVerb = [];
+
+function setPreTranslationReplace(preTranslationReplace) {
+    replacePreVerb = [];
+    let lines = preTranslationReplace.split('\n');    
+    lines.forEach(function (item) {
+        // Handle blank lines
+        if (item != "") {
+        replacePreVerb.push(item.split(','));
+       }
+    });
+}
 
 function setPostTranslationReplace(postTranslationReplace) {
     replaceVerb = [];
@@ -14,10 +29,10 @@ function setPostTranslationReplace(postTranslationReplace) {
 
 function translatePage(apikey, destlang, postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
-
+    setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        original = googleTranslate(original, destlang, e, apikey);
+        original = googleTranslate(original, destlang, e, apikey,replaceVerb);
     }
 
     // Translation completed
@@ -25,20 +40,20 @@ function translatePage(apikey, destlang, postTranslationReplace) {
     translateButton.className += " translated";
 }
 
-function translateEntry(rowId, apikey, destlang, postTranslationReplace) {
+function translateEntry(rowId, apikey, destlang, postTranslationReplace,preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
-
+    setPreTranslationReplace(preTranslationReplace);
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     let original = e.querySelector("span.original-raw").innerText;
-    googleTranslate(original, destlang, e, apikey);
+    googleTranslate(original, destlang, e, apikey,replacePreVerb);
 
     // Translation completed
     let translateButton = document.querySelector(`#translate-${rowId}`);
     translateButton.className += " translated";
 }
 
-function googleTranslate(original, destlang, e, apikey) {
-    let originalPreProcessed = preProcessOriginal(original);
+function googleTranslate(original, destlang, e, apikey, preverbs) {
+    let originalPreProcessed = preProcessOriginal(original,preverbs);
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
@@ -72,13 +87,17 @@ function sendAPIRequest(e, language, apikey, requestBody, original) {
             console.debug("Translated text: ", translatedText);
 
             translatedText = postProcessTranslation(
-                original, translatedText, replaceVerb);
-            // translatedText = processPlaceholderSpaces(original, translatedText);
-
+                original, translatedText,replaceVerb);
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             validateEntry(language, textareaElem);
         }
+        //PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
+		else { 
+            if (this.readyState == 4 && this.status == 400){
+                alert("Error in translation received status 400, maybe a license problem");
+                }
+            }   
     };
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
@@ -86,7 +105,11 @@ function sendAPIRequest(e, language, apikey, requestBody, original) {
 }
 
 const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
-function preProcessOriginal(original) {
+function preProcessOriginal(original, preverbs) {   
+    // prereplverb contains the verbs to replace before translation
+    for (let i = 0; i < preverbs.length; i++) {
+        original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
+    }
     const pattern = new RegExp(placeHolderRegex);
     const matches = original.matchAll(pattern);
     let index = 0;
@@ -95,7 +118,7 @@ function preProcessOriginal(original) {
 
         index++;
     }
-
+    
     console.debug("After pre-processing:", original);
     return original;
 }

@@ -13,11 +13,9 @@ function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
     chrome.storage.sync
-        .get(
-            ['apikey', 'destlang', 'postTranslationReplace'],
-            function (data) {
-                translatePage(data.apikey, data.destlang, data.postTranslationReplace);
-            });
+        .get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
+            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+        });
 }
 // Add translation button - end
 
@@ -89,9 +87,10 @@ function translateEntryClicked(event) {
     let rowId = event.target.id.split('-')[1];
     console.log(rowId);
     chrome.storage.sync
-        .get(['apikey', 'destlang', 'postTranslationReplace'], function (data) {
-            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace);
+        .get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
+            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
+    
 }
 
 function validatePage(language) {
@@ -157,13 +156,13 @@ function validate(language, original, translation) {
         for (let gItem of glossary) {
             let gItemKey = gItem["key"];
             let gItemValue = gItem["value"];
-            if (oWord.toLowerCase().startsWith(gItemKey)) {
+            if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
                 console.log('Word found:', gItemKey, gItemValue);
                 wordCount++;
 
                 let isFound = false;
                 for (let gWord of gItemValue) {
-                    if (match(language, gWord, translation)) {
+                    if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
                         console.log('+ Translation found:', gWord);
                         isFound = true;
                         break;
