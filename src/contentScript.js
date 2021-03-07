@@ -16,7 +16,7 @@ function translatePageClicked(event) {
         .get(
             ['apikey', 'destlang', 'postTranslationReplace'],
             function (data) {
-                translatePage(data.apikey, data.destlang, data.postTranslationReplace);
+                translatePage(data.apikey, data.destlang, data.postTranslationReplace, false);
             });
 }
 // Add translation button - end
@@ -90,7 +90,7 @@ function translateEntryClicked(event) {
     console.log(rowId);
     chrome.storage.sync
         .get(['apikey', 'destlang', 'postTranslationReplace'], function (data) {
-            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace);
+            translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace, false);
         });
 }
 
