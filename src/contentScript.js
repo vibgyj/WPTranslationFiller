@@ -85,13 +85,20 @@ function addTranslateButtons() {
 
 function translateEntryClicked(event) {
     event.preventDefault();
-    console.log("Translate Entry clicked!", event);
+    console.log("Translate Entry clicked!", event);  
     let rowId = event.target.id.split('-')[1];
+    let myrowId = event.target.id.split('-')[2] ;
+    //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+    // So that needs to be added to the base rowId to find it
+    if (myrowId !== undefined){
+       newrowId=rowId.concat("-",myrowId);
+       rowId=newrowId;
+    }
     chrome.storage.sync
         .get(['apikey', 'destlang', 'postTranslationReplace','preTranslationReplace'], function (data) {
             translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
-    
+    console.debug('after translateEntry');
 }
 
 function validatePage(language) {
