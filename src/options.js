@@ -1,3 +1,6 @@
+// This array is used to replace wrong words in translation and is necessary for the export
+let replaceVerb = [];
+
 let apikeyTextbox = document.getElementById('google_api_key');
 let destLangTextbox = document.getElementById('destination_lang');
 let uploadedFile = document.getElementById('text_glossary_file');
@@ -213,3 +216,46 @@ function pushToGlossary(glossary, key, value) {
     }
     glossary.push({ key: key, value: value });
 }
+function export_verbs_csv() {
+    console.debug("Export started:");
+    setPostTranslationReplace(verbsTextbox.value);
+    let arrayData  = []  
+    for (let i = 0; i < replaceVerb.length; i++) {
+          arrayData[i] = { original : replaceVerb[i][0], replacement :  replaceVerb[i][1]};
+         }
+   // let header ="original,replace");
+    let delimiter = ',';
+    let arrayHeader = ["original","replacement"];
+    let header = arrayHeader.join(delimiter) + '\n';
+       let csv = header;
+       arrayData.forEach( obj => {
+           let row = [];
+           for (key in obj) {
+               if (obj.hasOwnProperty(key)) {
+                   row.push(obj[key]);
+               }
+           }
+           csv += row.join(delimiter)+"\n";
+       });
+
+       let csvData = new Blob([csv], { type: 'text/csv' });  
+       let csvUrl = URL.createObjectURL(csvData);
+
+       let hiddenElement = document.createElement('a');
+       hiddenElement.href = csvUrl;
+       hiddenElement.target = '_blank';
+       hiddenElement.download = 'export_verbs.csv';
+       hiddenElement.click();
+   
+   }
+// PSS 08-03-2021 added this to prepare data for export to csv   
+function setPostTranslationReplace(postTranslationReplace) {
+replaceVerb = [];
+let lines = postTranslationReplace.split('\n');
+lines.forEach(function (item) {
+   // Handle blank lines
+   if (item != "") {
+       replaceVerb.push(item.split(','));
+   }
+});
+}		
