@@ -32,7 +32,62 @@ function translatePage(apikey, destlang, postTranslationReplace,preTranslationRe
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        original = googleTranslate(original, destlang, e, apikey,replacePreVerb);
+         // PSS 09-03-2021 added check to see if we need to translate
+         //Needs to be put into a function, because now it is unnessary double code
+        toTranslate = true;
+        // Check if the comment is present, if not then if will block the request for the details name etc.
+        let element = e.querySelector('.source-details__comment');
+        
+        if (element != null){
+           noTranslate = e.querySelector('.source-details__comment p').innerText;
+           noTranslate = noTranslate.trim();
+           console.debug('noTranslate:',noTranslate);
+           toTranslate = false
+           switch(noTranslate){
+               case 'Plugin Name of the plugin':
+                    toTranslate = false;
+                    break;
+               case 'Author of the plugin':
+                     toTranslate = false;  
+                     break;
+                case 'Plugin Name of the plugin Author of the plugin':
+                     toTranslate = false;  
+                     break;
+                case 'Plugin URI of the plugin':
+                     toTranslate = false;
+                     break;   
+                case 'Author URI of the plugin':
+                     toTranslate = false;
+                     break;     
+                case 'Theme Name of the theme':
+                     toTranslate = false;
+                     break;
+                case 'Author of the theme':
+                     toTranslate = false; 
+                     break;   
+                case 'Theme URI of the theme':
+                     toTranslate = false; 
+                     break;    
+                case 'Author URI of the theme':
+                     toTranslate = false; 
+                     break;   
+                default:
+                     toTranslate = true;
+                }
+        }
+        console.debug('before googletranslate:',replacePreVerb);
+        console.debug('before googletranslate do we need to translate:',toTranslate);  
+
+        if (toTranslate){
+            googleTranslate(original, destlang, e, apikey,replacePreVerb);
+            }
+        else {
+            
+            translatedText = original;
+            let textareaElem = e.querySelector("textarea.foreign-text");
+            textareaElem.innerText = translatedText;
+            console.debug('No need to translate copy the original',original);
+        } 
     }
 
     // Translation completed
@@ -48,6 +103,8 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     console.debug('after document querySelector:',e);
     let original = e.querySelector("span.original-raw").innerText;
+    
+   
     //console.debug('after span querySelector:',original);
     // PSS 09-03-2021 added check to see if we need to translate
     toTranslate = true;
