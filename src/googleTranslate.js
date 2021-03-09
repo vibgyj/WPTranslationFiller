@@ -48,8 +48,49 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     console.debug('after document querySelector:',e);
     let original = e.querySelector("span.original-raw").innerText;
-    console.debug('before googletranslate:',replacePreVerb);
-    googleTranslate(original, destlang, e, apikey,replacePreVerb);
+    // PSS 09-03-2021 added function so no translation is done for fixed lines
+    let noTranslate = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+    
+    switch(noTranslate){
+        case 'Plugin Name of the plugin':
+             toTranslate = false;
+             break;
+        case 'Author of the plugin':
+             toTranslate = false;  
+             break;
+        case 'Plugin URI of the plugin':
+             toTranslate = false;
+             break;   
+        case 'Author URI of the plugin':
+             toTranslate = false;
+             break;     
+        case 'Theme Name of the theme':
+             toTranslate = false;
+             break;
+        case 'Author of the theme':
+             toTranslate = false; 
+             break;   
+        case 'Theme URI of the theme':
+             toTranslate = false; 
+             break;    
+        case 'Author URI of the theme ':
+             toTranslate = false; 
+             break;   
+        default:
+            toTranslate = true;
+        }
+
+    if (toTranslate){
+        console.debug('before googletranslate:',replacePreVerb);
+        googleTranslate(original, destlang, e, apikey,replacePreVerb);
+        }
+    else {
+        
+        translatedText = original;
+        let textareaElem = e.querySelector("textarea.foreign-text");
+        textareaElem.innerText = translatedText;
+        console.debug('No need to translate copy the original',original);
+    }    
 
     // Translation completed
     let translateButton = document.querySelector(`#translate-${rowId}`);
