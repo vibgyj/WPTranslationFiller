@@ -160,39 +160,41 @@ function validate(language, original, translation) {
     let wordCount = 0;
     let foundCount = 0;
     let toolTip = '';
-    for (let oWord of originalWords) {
-        for (let gItem of glossary) {
+    console.debug('Translation value:',translation);
+    //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
+    if (translation !==""){
+        for (let oWord of originalWords) {
+            for (let gItem of glossary) {
             let gItemKey = gItem["key"];
             let gItemValue = gItem["value"];
-            if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
-                console.log('Word found:', gItemKey, gItemValue);
-                wordCount++;
+                if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
+                     console.log('Word found:', gItemKey, gItemValue);
+                     wordCount++;
 
-                let isFound = false;
-                for (let gWord of gItemValue) {
-                    if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
-                        console.log('+ Translation found:', gWord);
-                        isFound = true;
-                        break;
+                    let isFound = false;
+                    for (let gWord of gItemValue) {
+                        if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
+                            console.log('+ Translation found:', gWord);
+                            isFound = true;
+                            break;
+                        }
                     }
-                }
 
-                if (isFound) {
-                    foundCount++;
-                    console.log('- Translation found:', gItemKey, gItemValue);
-                } else {
-                    toolTip += `${gItemKey} - ${gItemValue}\n`;
-                    console.log('x Translation not found:', gItemKey, gItemValue);
+                    if (isFound) {
+                        foundCount++;
+                        console.log('- Translation found:', gItemKey, gItemValue);
+                    } else {
+                        toolTip += `${gItemKey} - ${gItemValue}\n`;
+                        console.log('x Translation not found:', gItemKey, gItemValue);
+                    }
+                    break;
                 }
-
-                break;
             }
         }
     }
-
     let percent = foundCount * 100 / wordCount;
     console.log("Percent calculation:", wordCount, foundCount, percent);
-
+    
     return { wordCount, percent, toolTip };
 }
 
