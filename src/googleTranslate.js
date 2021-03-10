@@ -1,4 +1,5 @@
 // This array is used to replace wrong words in translation
+// PSS version 04-03-2021
 let replaceVerb = [];
 // This array is used to replace verbs before translation
 // It is also used to force google to translate informal
@@ -7,12 +8,12 @@ let replacePreVerb = [];
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
-    let lines = preTranslationReplace.split('\n');    
+    let lines = preTranslationReplace.split('\n');
     lines.forEach(function (item) {
         // Handle blank lines
         if (item != "") {
-        replacePreVerb.push(item.split(','));
-       }
+            replacePreVerb.push(item.split(','));
+        }
     });
 }
 
@@ -27,10 +28,11 @@ function setPostTranslationReplace(postTranslationReplace) {
     });
 }
 
+
 function checkComments(comment){
      // PSS 09-03-2021 added check to see if we need to translate
     console.debug('checkComment started comment',comment);
-    toTranslate = false
+    let toTranslate = false;
     switch(comment){
            case 'Plugin Name of the plugin':
                 toTranslate = false;
@@ -50,15 +52,18 @@ function checkComments(comment){
             case 'Theme Name of the theme':
                  toTranslate = false;
                  break;
+			case 'Theme Name of the plugin/theme':
+			     toTranslate = false;
+                 break;	 
             case 'Author of the theme':
-                  toTranslate = false; 
-                  break;   
+                 toTranslate = false; 
+                 break;   
             case 'Theme URI of the theme':
-                  toTranslate = false; 
-                  break;    
+                 toTranslate = false; 
+                 break;    
             case 'Author URI of the theme':
-                  toTranslate = false; 
-                  break;   
+                 toTranslate = false; 
+                 break;   
             default:
                   toTranslate = true;
             }
@@ -69,35 +74,40 @@ function checkComments(comment){
 
 }
 
-function translatePage(apikey, destlang, postTranslationReplace,preTranslationReplace) {
+function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        toTranslate = true;
+        // PSS 09-03-2021 added check to see if we need to translate
+        //Needs to be put into a function, because now it is unnessary double code
+        let toTranslate = true;
         // Check if the comment is present, if not then if will block the request for the details name etc.
         let element = e.querySelector('.source-details__comment');
         
         if (element != null){
-           comment = e.querySelector('.source-details__comment p').innerText;
-           //Need to remove the extra blanks
+           let comment = e.querySelector('.source-details__comment p').innerText;
            comment = comment.trim();
            toTranslate = checkComments(comment);   
            console.debug('comment:',comment);
            toTranslate = checkComments(comment);   
+           
         }
-        console.debug('before googletranslate do we need to translate:',toTranslate);  
+        
 
-        if (toTranslate){
-            googleTranslate(original, destlang, e, apikey,replacePreVerb);
-            }
+        console.debug('before googletranslate:', replacePreVerb);
+        console.debug('before googletranslate do we need to translate:', toTranslate);
+
+        if (toTranslate) {
+            googleTranslate(original, destlang, e, apikey, replacePreVerb);
+        }
         else {
-            
-            translatedText = original;
+
+            let translatedText = original;
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
-            console.debug('No need to translate copy the original',original);
-        } 
+            console.debug('No need to translate copy the original', original);
+        }
     }
 
     // Translation completed
@@ -109,29 +119,34 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     console.debug('translateEntry started!');
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
-    let toTranslate = true;
+
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-    console.debug('after document querySelector:',e);
+    console.debug('after document querySelector:', e);
     let original = e.querySelector("span.original-raw").innerText;
-    // Check if the comment is present, if not then if will block the request for the details name etc.   
+
+
+    //console.debug('after span querySelector:',original);
+    // PSS 09-03-2021 added check to see if we need to translate
+    let toTranslate = true;
+     // Check if the comment is present, if not then if will block the request for the details name etc.   
     let element = e.querySelector('.source-details__comment');
     console.debug('checkComment started element',element);
     if (element != null){
        // Fetch the comment with name
-       comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+       let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
        toTranslate = checkComments(comment);   
-    }   
-    // If no comment is set we need to translate
-    if (toTranslate){
-        googleTranslate(original, destlang, e, apikey,replacePreVerb);
-        }
+    }  
+	
+    if (toTranslate) {
+        googleTranslate(original, destlang, e, apikey, replacePreVerb);
+    }
     else {
-        
-        translatedText = original;
+
+        let translatedText = original;
         let textareaElem = e.querySelector("textarea.foreign-text");
         textareaElem.innerText = translatedText;
-        console.debug('No need to translate copy the original',original);
-    }    
+        console.debug('No need to translate copy the original', original);
+    }
 
     // Translation completed
     let translateButton = document.querySelector(`#translate-${rowId}`);
@@ -139,7 +154,7 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
 }
 
 function googleTranslate(original, destlang, e, apikey, preverbs) {
-    let originalPreProcessed = preProcessOriginal(original,preverbs);
+    let originalPreProcessed = preProcessOriginal(original, preverbs);
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
@@ -160,38 +175,56 @@ function googleTranslate(original, destlang, e, apikey, preverbs) {
         "format": transtype
     };
     console.log("request body", requestBody);
+    //sendAPIRequest(e, destlang, apikey, requestBody, original);
 
-    sendAPIRequest(e, destlang, apikey, requestBody, original);
+    sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed);
 }
 
-function sendAPIRequest(e, language, apikey, requestBody, original) {
+function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed) {
+    console.debug('sendAPIreQuest original_line:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             let responseObj = JSON.parse(this.responseText);
             let translatedText = responseObj.data.translations[0].translatedText;
-            console.debug("Translated text: ", translatedText);
+            console.debug("sendAPIrequest Translated text: ", translatedText);
 
             translatedText = postProcessTranslation(
-                original, translatedText,replaceVerb);
+                original, translatedText, replaceVerb, originalPreProcessed);
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             validateEntry(language, textareaElem);
         }
         //PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
-		else { 
-            if (this.readyState == 4 && this.status == 400){
+        else {
+            if (this.readyState == 4 && this.status == 400) {
                 alert("Error in translation received status 400, maybe a license problem");
-                }
-            }   
+            }
+        }
     };
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
     xhttp.send(JSON.stringify(requestBody));
 }
 
+// PSS 01-30-2021 added this to prevent wrong replacement of searches
+String.prototype.replaceAt = function (str, word, newWord) {
+    console.log("replaceAt:", '"' + word + '"');
+    console.log("replaceAt:", '"' + newWord + '"');
+    if (word[0] === word[0].toUpperCase()) {
+        newWord = newWord[0].toUpperCase() + newWord.slice(1);
+    }
+    console.log("replaceAt:", str.replace(word, newWord));
+    return str.replace(word, newWord);
+};
+
+// Function to check if start of line is capital
+function isStartsWithUpperCase(str) {
+    return str.charAt(0) === str.charAt(0).toUpperCase();
+}
+
 const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
-function preProcessOriginal(original, preverbs) {   
+function preProcessOriginal(original, preverbs) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
@@ -204,30 +237,48 @@ function preProcessOriginal(original, preverbs) {
 
         index++;
     }
-    
+
     console.debug("After pre-processing:", original);
     return original;
 }
 
-function postProcessTranslation(original, translatedText, replverb) {
-    // replverb contains the verbs to replace
-    for (let i = 0; i < replverb.length; i++) {
-        translatedText = translatedText.replaceAll(replverb[i][0], replverb[i][1]);
-    }
 
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed) {
+    console.debug('postProcess before spaces original', original);
+    console.debug('postProcess before spaces translated', translatedText);
+    console.debug('postProcess before spaces translated', originalPreProcessed);
+    // PSS 04-03-2021 moved the processPlaceholderSpaces up because now the raw string with placeholders is used
+    translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
+    console.debug('postProcess after removeSpaces', translatedText);
     // This section replaces the placeholders so they become html entities
-    const pattern = new RegExp(placeHolderRegex);
+
+    //const tocheck = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};{1,2}|&\w{1,6};/gi;
+    // PSS 04-03-2021 new regex because the % was missed, also not used the general variable for it
+    // This can be put back if everything is stabilised
+    const tocheck = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};|&\w{1,6};|%\w*%/gi;
+    console.debug('postProcess pattern:', tocheck);
+    const pattern = new RegExp(tocheck);
+
     const matches = original.matchAll(pattern);
+    console.debug('postProcess matches result', matches);
     let index = 0;
     for (const match of matches) {
         translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
-
+        console.debug('postProcess matches found :', match[0]);
         index++;
     }
 
+    console.debug('postProcess after replacing placeholders', translatedText, 'length of index:', index);
+    // replverb contains the verbs to replace
+    for (let i = 0; i < replaceVerb.length; i++) {
+        translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+    }
+
+    console.debug('postProcess after replacing verbs :', translatedText);
+
     // Make translation to start with same case (upper/lower) as the original.
     if (isStartsWithUpperCase(original)) {
-        if (!isStartsWithUpperCase(translatedText))  {
+        if (!isStartsWithUpperCase(translatedText)) {
             translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
             console.debug('Applied upper case: ', translatedText);
         }
@@ -238,180 +289,138 @@ function postProcessTranslation(original, translatedText, replverb) {
             console.debug('Applied lower case: ', translatedText);
         }
     }
-    
+
     return translatedText;
 }
 
-// Function to check if start of line is capital
-function isStartsWithUpperCase(str) {
-    return str.charAt(0) === str.charAt(0).toUpperCase();
-}
+// PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks
+function processPlaceholderSpaces(originalPreProcessed, translatedText) {
+    if (originalPreProcessed === "") {
+        console.debug('preprocessed empty');
+    }
+    console.debug("processPlaceholderSpaces not translated", originalPreProcessed);
+    console.debug("processPlaceholderSpacesk translated", translatedText);
 
-// todo: This function needs to be fixed before being used. It has failing specs.
-function processPlaceholderSpaces(original, translatedText) {
-    console.log("placeholdercheck original", original);
-    console.log("placeholdercheck translated", translatedText);
-    // Just set to let it run once! 
-    var placehold = [
-        ["/(<.+?>)"]];
-    var i = 0;
+    var placedictorg = {};
     var placedicttrans = {};
-    // This can be removed as the regex finds all !!!
-    while (i < placehold.length) {
-        var placedicttrans = {};
-        //tocheck = placehold[i][0] ;
-        //console.log("placeholdercheck placeholder tocheck",tocheck);
-        //var check = /%(\d{1,2}\$){0,2}[sd]|&.{1,5};
-        //var check = /em>[a-z]\*/gi ;
-        var check = /%(\d{1,2}\$){0,1}[sd]{1,1}/gi;
-        //var check =placehold[i][0];
-        //var check = /(<.+?>)/g ;
-        console.log('placeholder', check);
-        //var check = /%(\d{1,4}\${0,4})*/gi ;
-        const pattern = new RegExp(check);
-        console.log("placeholdercheck placeholder pattern", pattern);
-        const matches = original.matchAll(pattern);
-        var x = 0;
-        var placedictorg = {};
-        for (const match of matches) {
-            console.log("placeholdercheck match in original", original);
-            console.log("placeholdercheck match in translated", translatedText);
-            console.log(`Found ${match[0]} start=${match.index} end=${match.index + match[0].length}.`);
-            var start = match.index;
-            eindcheck = match[0].length;
-            console.log("placeholdercheck found match:", match[0]);
-            //console.log("placeholdercheck found start:",start);
-            //console.log("placeholdercheck found x:",x);				
-            if (start == 0) {
-                part = original.substring(start, eindcheck + 1);
-                placedictorg[x] = part;
-            }
-            else {
-                part = original.substring(start - 1, start + eindcheck + 1);
-                placedictorg[x] = part;
-            }
-            console.log("placeholdercheck at begin in original line:", '"' + part + '"');
-            x++;
-        }
-        lengte = Object.keys(placedictorg).length;
-        if (lengte > 0) {
-            console.log("placeholdercheck lengte original:", lengte);
-            console.log("placeholdercheck original", original);
-        }
-        var x = 0;
-        var placedicttrans = {};
-        const matchtrans = translatedText.matchAll(pattern);
-        for (const match of matchtrans) {
-            console.log(`Found in trans ${match[0]} start=${match.index} end=${match.index + match[0].length}.`);
-            var start = match.index;
-            console.log("placeholdercheck found in trans:", start);
-            eindcheck = match[0].length;
-            if (start == 0) {
-                part = translatedText.substring(start, eindcheck + 1);
-                placedicttrans[x] = part;
-            }
-            else {
-                part = translatedText.substring(start - 1, start + eindcheck + 1);
-                placedicttrans[x] = part;
-            }
-            console.log("placeholdercheck at begin in trans:", placedicttrans[x]);
-            x++;
-        }
-        var lengte = Object.keys(placedicttrans).length;
-        if (lengte > 0) {
-            console.log("placeholdercheck lengte translated:", lengte);
-            console.log("placeholdercheck translated", translatedText);
-            console.log("placeholdercheck translated");
+    var found = 0;
+    var counter = 0;
+    while (counter < 20) {
+        // PSS 03-03-2021 find if the placeholder is present and at which position
+        found = originalPreProcessed.search("[" + counter + "]");
+        console.debug('processPlaceholderSpaces found start:', found, " ", '[' + counter + ']');
+        if (found === -1) {
+            break;
         }
         else {
-            console.log("placeholdercheck lengte 0")
-        }
-        var count = 0;
-        var lengte = Object.keys(placedicttrans).length;
-        if (lengte > 0) {
-            while (count < Object.keys(placedicttrans).length) {
-                console.log("placeholdercheck found them in original:", count, placedictorg[count]);
-                console.log("placeholdercheck found them in", original);
-                console.log("placeholdercheck found them in trans:", count, placedicttrans[count]);
-                console.log("placeholdercheck found them in", translatedText);
-                if (placedictorg[count].startsWith(" ")) {
-                    console.log("placeholdercheck found blank in original at start", count, placedictorg[count]);
-                    console.log("placeholdercheck found blank in original at start", count, placedicttrans[count]);
-                    if (!placedicttrans[count].startsWith(" ")) {
-                        console.log("placeholdercheck not found blank in translated", placedicttrans[count]);
-                        console.log("placeholdercheck not found blank in", translatedText);
-                        replwith = placedicttrans[count].substr(0, 1) + " " + placedicttrans[count].substr(1,)
-                        translatedText = translatedText.replace(placedicttrans[count], replwith);
-                        console.log("placeholdercheck not found blank in but now added", translatedText);
-                        // below is needed after adding a blank otherwise the search is not working for the follwing actions!
-                        //placedicttrans[count]=placedictorg[count];
-                    }
-                    else {
-                        console.log("placeholdercheck found blank in translated at start", placedictorg[count]);
-                    }
-                }
-                else {
-                    console.log("placeholdercheck not found blank at start original", '"' + placedictorg[count] + '"');
-                }
-                if (placedictorg[count].endsWith(" ")) {
-                    console.log("placeholdercheck found blank at end original", '"' + placedictorg[count] + '"');
-                    console.log("placeholdercheck found at end translated", '"' + placedicttrans[count] + '"');
-                    if (!placedicttrans[count].endsWith(" ")) {
-                        console.log("placeholdercheck not found blank at end translated", placedicttrans[count]);
-                        console.log("placeholdercheck not found blank at end", translatedText);
-                        if (translatedText.indexOf((placedicttrans[count])) > 0) {
-                            replwith = placedicttrans[count].substr(1, (placedicttrans[count].length - 1)) + " " + placedicttrans[count].substr((placedicttrans[count].length - 1));
-                            console.log("placeholdercheck replaced end not at beginnen of line", replwith);
-                        }
-                        else {
-                            console.log('length of placeholder', (placedicttrans[count].length), placedicttrans[count]);
-                            replwith = placedicttrans[count].substr(0, (placedicttrans[count].length - 1)) + " " + placedicttrans[count].substr((placedicttrans[count].length - 1));
-                            console.log("placeholdercheck replaced end is at beginnen of line", replwith);
-                        }
-                        console.log("placeholdercheck replaced end", replwith);
-                        translatedText = translatedText.replace(placedicttrans[count], replwith);
-                    }
-                }
-                else {
-                    //It does not seem to end with a blank	
-                    console.log("placeholdercheck not found blank at end", translatedText);
-                    if (placedicttrans[count].endsWith(":")) {
-                        console.log("placeholdercheck found : at end", original);
-                        console.log("placeholdercheck found : at end", translatedText);
-                        replwith = placedictorg[count].substr(0, (placedictorg[count].length));
-                        search = placedicttrans[count].substr(0, (placedicttrans[count].length));
-                        console.log("placeholdercheck search", search);
-                        translatedText = translatedText.replace(search, replwith);
-                        console.log("placeholdercheck not found blank at end but : now blank behind added", replwith);
-                    }
-                    else if (placedictorg[count].endsWith(",")) {
-                        console.log("placeholdercheck not found blank at end original is , instead", '"' + placedictorg[count] + '"');
-                        replwith = placedictorg[count];
-                        search = placedicttrans[count].substr(0, (placedicttrans[count].length));
-                        translatedText = translatedText.replace(search, replwith);
-                    }
-                    else {
-                        console.log("placeholdercheck not found blank at end original and is no : instead", '"' + placedictorg[count] + '"');
-                    }
-                }
-                //Sometimes there is a semicolon that went missing    				     
-                if (placedicttrans[count].endsWith(":")) {
-                    console.log("placeholdercheck not found blank at end original is : instead", '"' + placedictorg[count] + '"');
-                    replwith = placedicttrans[count].substr(0, (placedicttrans[count].length)) + " " + placedicttrans[count].substr((placedicttrans[count].length));
-                    console.log("placeholdercheck replaced end is at beginnen of line", replwith);
-                    // translatedText = translatedText.replace(placedicttrans[count], replwith);
-                }
-                count++;
+            // PSS if at beginning of the line we cannot have a blank before
+            if (found === 1) {
+                let part = originalPreProcessed.substring(found - 1, found + 3);
+                placedictorg[counter] = part;
             }
+            else if (found === (originalPreProcessed.length) - 3) {
+                // PSS if at end of line it is possible that no blank is behind
+                console.debug('found at end of line!!', found);
+                let part = originalPreProcessed.substring(found - 2, found + 2);
+                placedictorg[counter] = part;
+            }
+            else {
+                // PSS we are in the middle
+                let part = originalPreProcessed.substring(found - 2, found + 3);
+                placedictorg[counter] = part;
+            }
+            console.debug("processPlaceholderSpaces at matching in original line:", '"' + part + '"');
         }
-        i++;
+        counter++;
     }
-    // Last moment repair after fixing the blanks needs to be fixed elsewhere!!!
-    // The dot at the end of the line is sometimes missing so add it
-    if (original.endsWith(".")) {
-        if (!translatedText.endsWith(".")) {
-            translatedText = translatedText + '.';
+    var lengteorg = Object.keys(placedictorg).length;
+    if (lengteorg > 0) {
+        counter = 0;
+        while (counter < 20) {
+            found = translatedText.search("[" + counter + "]");
+            console.debug('processPlaceholderSpaces found in translatedText start:', found, " ", '[' + counter + ']');
+            if (found === -1) {
+                break;
+            }
+            else {
+                // PSS if at beginning of the line we cannot have a blank before
+                if (found === 1) {
+                    part = translatedText.substring(found - 1, found + 3);
+                    placedicttrans[counter] = part;
+                }
+                else if (found === (translatedText.length) - 3) {
+                    // PSS if at end of line it is possible that no blank is behind
+                    console.debug('found at end of line!!', found);
+                    part = originalPreProcessed.substring(found - 2, found + 2);
+                    placedictorg[counter] = part;
+                }
+                else {
+                    // PSS we are in the middle	
+                    part = translatedText.substring(found - 2, found + 3);
+                    placedicttrans[counter] = part;
+                }
+                console.debug("processPlaceholderSpaces at matching in translated line:", '"' + part + '"');
+            }
+            counter++;
         }
+        counter = 0;
+        // PSS here we loop through the found placeholders to check if a blank is not present or to much
+        while (counter < (Object.keys(placedicttrans).length)) {
+            console.debug("processPlaceholderSpaces found it in original:", counter, '"' + placedictorg[counter] + '"');
+            console.debug("processPlaceholderSpaces found it in original:", originalPreProcessed);
+            console.debug("processPlaceholderSpaces found it in trans:", counter, '"' + placedicttrans[counter] + '"');
+            console.debug("processPlaceholderSpaces found it in trans", translatedText);
+            orgval = placedictorg[counter];
+            let transval = placedicttrans[counter];
+            if (placedictorg[counter] === placedicttrans[counter]) {
+                console.debug('processPlaceholderSpaces values are equal!');
+            }
+            else {
+                console.debug('processPlaceholderSpaces values are not equal!:', '"' + placedictorg[counter] + '"', " " + '"' + placedicttrans[counter] + '"');
+                console.debug('orgval', '"' + orgval + '"');
+                if (orgval.startsWith(" ")) {
+                    console.debug("processPlaceholderSpaces in org blank before!!!");
+                    if (!(transval.startsWith(" "))) {
+                        console.debug("processPlaceholderSpaces in trans no blank before!!!");
+                        repl = transval.substr(0, 1) + " " + transval.substr(1,);
+                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                    }
+                }
+                else {
+                    transval = placedicttrans[counter];
+                    repl = transval.substr(1,);
+                    console.debug("processPlaceholderSpaces no blank before in org!");
+                    if (transval.startsWith(" ")) {
+                        console.debug("processPlaceholderSpaces apparently blank in front in trans!!!");
+                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        console.debug("processPlaceholderSpaces blank in front removed in trans", translatedText);
+                    }
+
+                }
+                if (!(orgval.endsWith(" "))) {
+                    console.debug("processPlaceholderSpaces apparently in org no blank behind!!!");
+                    console.debug('processPlaceholderSpaces values are not equal!:', '"' + orgval + '"', " ", '"' + transval + '"');
+                    if (transval.endsWith(" ")) {
+                        console.debug("processPlaceholderSpaces in trans blank behind!!!");
+                        console.debug('processPlaceholderSpaces values are not equal!:', orgval, transval);
+                        repl = transval.substring(0, transval.length - 1);
+                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                    }
+                }
+                else {
+                    if (!(transval.endsWith(" "))) {
+                        console.debug("processPlaceholderSpaces no blank behind!!!");
+                        repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
+                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                    }
+                }
+            }
+            counter++;
+        }
+    }
+    else {
+        console.debug("processPlaceholderBlank no placeholders found");
     }
     return translatedText;
 }

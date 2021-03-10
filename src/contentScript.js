@@ -13,11 +13,11 @@ function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
     chrome.storage.sync
-    .get(
-        ['apikey', 'destlang', 'postTranslationReplace','preTranslationReplace'],
-        function (data) {
-            translatePage(data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
-        });
+        .get(
+            ['apikey', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            function (data) {
+                translatePage(data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+            });
 }
 // Add translation button - end
 
@@ -85,17 +85,17 @@ function addTranslateButtons() {
 
 function translateEntryClicked(event) {
     event.preventDefault();
-    console.log("Translate Entry clicked!", event);  
+    console.log("Translate Entry clicked!", event);
     let rowId = event.target.id.split('-')[1];
-    let myrowId = event.target.id.split('-')[2] ;
+    let myrowId = event.target.id.split('-')[2];
     //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
     // So that needs to be added to the base rowId to find it
-    if (myrowId !== undefined){
-       newrowId=rowId.concat("-",myrowId);
-       rowId=newrowId;
+    if (myrowId !== undefined) {
+        newrowId = rowId.concat("-", myrowId);
+        rowId = newrowId;
     }
     chrome.storage.sync
-        .get(['apikey', 'destlang', 'postTranslationReplace','preTranslationReplace'], function (data) {
+        .get(['apikey', 'destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
             translateEntry(rowId, data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
     console.debug('after translateEntry');
@@ -160,16 +160,16 @@ function validate(language, original, translation) {
     let wordCount = 0;
     let foundCount = 0;
     let toolTip = '';
-    console.debug('Translation value:',translation);
+    console.debug('Translation value:', translation);
     //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
-    if (translation !==""){
+    if (translation !== "") {
         for (let oWord of originalWords) {
             for (let gItem of glossary) {
-            let gItemKey = gItem["key"];
-            let gItemValue = gItem["value"];
+                let gItemKey = gItem["key"];
+                let gItemValue = gItem["value"];
                 if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
-                     console.log('Word found:', gItemKey, gItemValue);
-                     wordCount++;
+                    console.log('Word found:', gItemKey, gItemValue);
+                    wordCount++;
 
                     let isFound = false;
                     for (let gWord of gItemValue) {
@@ -194,7 +194,7 @@ function validate(language, original, translation) {
     }
     let percent = foundCount * 100 / wordCount;
     console.log("Percent calculation:", wordCount, foundCount, percent);
-    
+
     return { wordCount, percent, toolTip };
 }
 
