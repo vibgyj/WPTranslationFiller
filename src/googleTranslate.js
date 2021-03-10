@@ -8,12 +8,12 @@ let replacePreVerb = [];
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
-    let lines = preTranslationReplace.split('\n');    
+    let lines = preTranslationReplace.split('\n');
     lines.forEach(function (item) {
         // Handle blank lines
         if (item != "") {
-        replacePreVerb.push(item.split(','));
-       }
+            replacePreVerb.push(item.split(','));
+        }
     });
 }
 
@@ -28,67 +28,67 @@ function setPostTranslationReplace(postTranslationReplace) {
     });
 }
 
-function translatePage(apikey, destlang, postTranslationReplace,preTranslationReplace) {
+function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-         // PSS 09-03-2021 added check to see if we need to translate
-         //Needs to be put into a function, because now it is unnessary double code
+        // PSS 09-03-2021 added check to see if we need to translate
+        //Needs to be put into a function, because now it is unnessary double code
         toTranslate = true;
         // Check if the comment is present, if not then if will block the request for the details name etc.
         let element = e.querySelector('.source-details__comment');
-        
-        if (element != null){
-           noTranslate = e.querySelector('.source-details__comment p').innerText;
-           noTranslate = noTranslate.trim();
-           console.debug('noTranslate:',noTranslate);
-           toTranslate = false
-           switch(noTranslate){
-               case 'Plugin Name of the plugin':
+
+        if (element != null) {
+            noTranslate = e.querySelector('.source-details__comment p').innerText;
+            noTranslate = noTranslate.trim();
+            console.debug('noTranslate:', noTranslate);
+            toTranslate = false
+            switch (noTranslate) {
+                case 'Plugin Name of the plugin':
                     toTranslate = false;
                     break;
-               case 'Author of the plugin':
-                     toTranslate = false;  
-                     break;
+                case 'Author of the plugin':
+                    toTranslate = false;
+                    break;
                 case 'Plugin Name of the plugin Author of the plugin':
-                     toTranslate = false;  
-                     break;
+                    toTranslate = false;
+                    break;
                 case 'Plugin URI of the plugin':
-                     toTranslate = false;
-                     break;   
+                    toTranslate = false;
+                    break;
                 case 'Author URI of the plugin':
-                     toTranslate = false;
-                     break;     
+                    toTranslate = false;
+                    break;
                 case 'Theme Name of the theme':
-                     toTranslate = false;
-                     break;
+                    toTranslate = false;
+                    break;
                 case 'Author of the theme':
-                     toTranslate = false; 
-                     break;   
+                    toTranslate = false;
+                    break;
                 case 'Theme URI of the theme':
-                     toTranslate = false; 
-                     break;    
+                    toTranslate = false;
+                    break;
                 case 'Author URI of the theme':
-                     toTranslate = false; 
-                     break;   
+                    toTranslate = false;
+                    break;
                 default:
-                     toTranslate = true;
-                }
-        }
-        console.debug('before googletranslate:',replacePreVerb);
-        console.debug('before googletranslate do we need to translate:',toTranslate);  
-
-        if (toTranslate){
-            googleTranslate(original, destlang, e, apikey,replacePreVerb);
+                    toTranslate = true;
             }
+        }
+        console.debug('before googletranslate:', replacePreVerb);
+        console.debug('before googletranslate do we need to translate:', toTranslate);
+
+        if (toTranslate) {
+            googleTranslate(original, destlang, e, apikey, replacePreVerb);
+        }
         else {
-            
+
             translatedText = original;
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
-            console.debug('No need to translate copy the original',original);
-        } 
+            console.debug('No need to translate copy the original', original);
+        }
     }
 
     // Translation completed
@@ -100,67 +100,67 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     console.debug('translateEntry started!');
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
-    
+
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-    console.debug('after document querySelector:',e);
+    console.debug('after document querySelector:', e);
     let original = e.querySelector("span.original-raw").innerText;
-    
-   
+
+
     //console.debug('after span querySelector:',original);
     // PSS 09-03-2021 added check to see if we need to translate
     toTranslate = true;
     // Check if the comment is present, if not then if will block the request for the details name etc.
     let element = e.querySelector('.source-details__comment');
-   
-    if (element != null){
-       noTranslate = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
-       console.debug('noTranslate:',noTranslate);
-       toTranslate = false
-       switch(noTranslate){
-           case 'Plugin Name of the plugin':
+
+    if (element != null) {
+        noTranslate = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+        console.debug('noTranslate:', noTranslate);
+        toTranslate = false
+        switch (noTranslate) {
+            case 'Plugin Name of the plugin':
                 toTranslate = false;
                 break;
-           case 'Author of the plugin':
-                 toTranslate = false;  
-                 break;
+            case 'Author of the plugin':
+                toTranslate = false;
+                break;
             case 'Plugin Name of the plugin Author of the plugin':
-                 toTranslate = false;  
-                 break;
+                toTranslate = false;
+                break;
             case 'Plugin URI of the plugin':
-                 toTranslate = false;
-                 break;   
+                toTranslate = false;
+                break;
             case 'Author URI of the plugin':
-                 toTranslate = false;
-                 break;     
+                toTranslate = false;
+                break;
             case 'Theme Name of the theme':
-                 toTranslate = false;
-                 break;
+                toTranslate = false;
+                break;
             case 'Author of the theme':
-                  toTranslate = false; 
-                  break;   
+                toTranslate = false;
+                break;
             case 'Theme URI of the theme':
-                  toTranslate = false; 
-                  break;    
+                toTranslate = false;
+                break;
             case 'Author URI of the theme':
-                  toTranslate = false; 
-                  break;   
+                toTranslate = false;
+                break;
             default:
-                  toTranslate = true;
-            }
-     }
-    console.debug('before googletranslate:',replacePreVerb);
-    console.debug('before googletranslate do we need to translate:',toTranslate);  
-
-    if (toTranslate){
-        googleTranslate(original, destlang, e, apikey,replacePreVerb);
+                toTranslate = true;
         }
+    }
+    console.debug('before googletranslate:', replacePreVerb);
+    console.debug('before googletranslate do we need to translate:', toTranslate);
+
+    if (toTranslate) {
+        googleTranslate(original, destlang, e, apikey, replacePreVerb);
+    }
     else {
-        
+
         translatedText = original;
         let textareaElem = e.querySelector("textarea.foreign-text");
         textareaElem.innerText = translatedText;
-        console.debug('No need to translate copy the original',original);
-    }    
+        console.debug('No need to translate copy the original', original);
+    }
 
     // Translation completed
     let translateButton = document.querySelector(`#translate-${rowId}`);
@@ -168,7 +168,7 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
 }
 
 function googleTranslate(original, destlang, e, apikey, preverbs) {
-    let originalPreProcessed = preProcessOriginal(original,preverbs);
+    let originalPreProcessed = preProcessOriginal(original, preverbs);
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
@@ -204,17 +204,17 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             console.debug("sendAPIrequest Translated text: ", translatedText);
 
             translatedText = postProcessTranslation(
-                original, translatedText,replaceVerb,originalPreProcessed);
+                original, translatedText, replaceVerb, originalPreProcessed);
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             validateEntry(language, textareaElem);
         }
         //PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
-		else { 
-            if (this.readyState == 4 && this.status == 400){
+        else {
+            if (this.readyState == 4 && this.status == 400) {
                 alert("Error in translation received status 400, maybe a license problem");
-                }
-            }   
+            }
+        }
     };
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
@@ -238,7 +238,7 @@ function isStartsWithUpperCase(str) {
 }
 
 const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
-function preProcessOriginal(original, preverbs) {   
+function preProcessOriginal(original, preverbs) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
@@ -251,7 +251,7 @@ function preProcessOriginal(original, preverbs) {
 
         index++;
     }
-    
+
     console.debug("After pre-processing:", original);
     return original;
 }
