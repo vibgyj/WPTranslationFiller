@@ -204,7 +204,7 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             console.debug("sendAPIrequest Translated text: ", translatedText);
 
             translatedText = postProcessTranslation(
-                original, translatedText,replaceVerb);
+                original, translatedText,replaceVerb,originalPreProcessed);
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             validateEntry(language, textareaElem);
@@ -219,6 +219,22 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
     xhttp.send(JSON.stringify(requestBody));
+}
+
+// PSS 01-30-2021 added this to prevent wrong replacement of searches
+String.prototype.replaceAt = function (str, word, newWord) {
+    console.log("replaceAt:", '"' + word + '"');
+    console.log("replaceAt:", '"' + newWord + '"');
+    if (word[0] === word[0].toUpperCase()) {
+        newWord = newWord[0].toUpperCase() + newWord.slice(1)
+    }
+    console.log("replaceAt:", str.replace(word, newWord));
+    return str.replace(word, newWord)
+}
+
+// Function to check if start of line is capital
+function isStartsWithUpperCase(str) {
+    return str.charAt(0) === str.charAt(0).toUpperCase();
 }
 
 const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
