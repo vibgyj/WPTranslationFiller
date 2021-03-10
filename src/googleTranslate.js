@@ -315,18 +315,18 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
         else {
             // PSS if at beginning of the line we cannot have a blank before
             if (found === 1) {
-                let part = originalPreProcessed.substring(found - 1, found + 3);
+                part = originalPreProcessed.substring(found - 1, found + 3);
                 placedictorg[counter] = part;
             }
             else if (found === (originalPreProcessed.length) - 3) {
                 // PSS if at end of line it is possible that no blank is behind
                 console.debug('found at end of line!!', found);
-                let part = originalPreProcessed.substring(found - 2, found + 2);
+                part = originalPreProcessed.substring(found - 2, found + 2);
                 placedictorg[counter] = part;
             }
             else {
                 // PSS we are in the middle
-                let part = originalPreProcessed.substring(found - 2, found + 3);
+                part = originalPreProcessed.substring(found - 2, found + 3);
                 placedictorg[counter] = part;
             }
             console.debug("processPlaceholderSpaces at matching in original line:", '"' + part + '"');
