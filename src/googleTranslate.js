@@ -403,16 +403,22 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                     if (transval.endsWith(" ")) {
                         console.debug("processPlaceholderSpaces in trans blank behind!!!");
                         console.debug('processPlaceholderSpaces values are not equal!:', orgval, transval);
-                        repl = transval.substring(0, transval.length - 1);
-                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
-                        console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                        // 11-03 PSS changed this to prevent removing the blank if the translated is not at the end of the line
+                        if (!found === (originalPreProcessed.length) - 3) {
+                            repl = transval.substring(0, transval.length - 1);
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                         }
                     }
                 }
                 else {
                     if (!(transval.endsWith(" "))) {
                         console.debug("processPlaceholderSpaces no blank behind!!!");
-                        repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
-                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        // 11-03-2021 PSS changed this to prevent removing a blank when at end of line in trans
+                        if (!found === (translatedText.length) - 3) {
+                            repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                         }   
                     }
                 }
             }
