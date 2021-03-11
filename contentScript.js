@@ -93,6 +93,7 @@ function translateEntryClicked(event) {
     if (myrowId !== undefined) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
+        console.debug('Line already translated new rowId:',rowId);
     }
     chrome.storage.sync
         .get(['apikey', 'destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
@@ -161,7 +162,7 @@ function validate(language, original, translation) {
     let foundCount = 0;
     let toolTip = '';
     console.debug('Translation value:', translation);
-//  PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
+    //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
     if (translation !== "") {
         for (let oWord of originalWords) {
             for (let gItem of glossary) {
@@ -181,8 +182,8 @@ function validate(language, original, translation) {
                     }
 
                     if (isFound) {
-                       foundCount++;
-                       console.log('- Translation found:', gItemKey, gItemValue);
+                        foundCount++;
+                        console.log('- Translation found:', gItemKey, gItemValue);
                     } else {
                         toolTip += `${gItemKey} - ${gItemValue}\n`;
                         console.log('x Translation not found:', gItemKey, gItemValue);
