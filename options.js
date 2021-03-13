@@ -218,6 +218,9 @@ function pushToGlossary(glossary, key, value) {
 }
 function export_verbs_csv() {
     console.debug("Export started:");
+    // 13-03-2021 PSS added locale to export filename
+    destlang = destLangTextbox.value;
+    let export_file = 'export_verbs_' +destlang +'.csv'
     setPostTranslationReplace(verbsTextbox.value);
     let arrayData  = []  
     for (let i = 0; i < replaceVerb.length; i++) {
@@ -244,7 +247,7 @@ function export_verbs_csv() {
        let hiddenElement = document.createElement('a');
        hiddenElement.href = csvUrl;
        hiddenElement.target = '_blank';
-       hiddenElement.download = 'export_verbs.csv';
+       hiddenElement.download = export_file;
        hiddenElement.click();
    
    }
