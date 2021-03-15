@@ -408,7 +408,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                             repl = transval.substring(0, transval.length - 1);
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
                             console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
-                         }
+                        }
                     }
                 }
                 else {
@@ -418,7 +418,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         if (!found === (translatedText.length) - 3) {
                             repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
-                         }   
+                        }
                     }
                 }
             }

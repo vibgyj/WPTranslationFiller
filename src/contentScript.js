@@ -163,7 +163,8 @@ function validate(language, original, translation) {
     let toolTip = '';
     console.debug('Translation value:', translation);
     //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
-    if (translation !== "") {
+    if (translation.length >0) {
+        console.debug('validate check the line started');						 
         for (let oWord of originalWords) {
             for (let gItem of glossary) {
                 let gItemKey = gItem["key"];
@@ -193,6 +194,10 @@ function validate(language, original, translation) {
             }
         }
     }
+    else {
+        foundCount = 0;
+        wordCount  = 0;
+         }
     let percent = foundCount * 100 / wordCount;
     console.log("Percent calculation:", wordCount, foundCount, percent);
 
