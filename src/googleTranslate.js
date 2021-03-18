@@ -223,7 +223,7 @@ function isStartsWithUpperCase(str) {
     return str.charAt(0) === str.charAt(0).toUpperCase();
 }
 
-const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
+const placeHolderRegex = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};|&\w{1,6};|%\w*%/gi;
 function preProcessOriginal(original, preverbs) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
@@ -252,7 +252,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     console.debug('postProcess after removeSpaces', translatedText);
     // This section replaces the placeholders so they become html entities
 
-    //const tocheck = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};{1,2}|&\w{1,6};/gi;
     // PSS 04-03-2021 new regex because the % was missed, also not used the general variable for it
     // This can be put back if everything is stabilised
     const tocheck = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};|&\w{1,6};|%\w*%/gi;
