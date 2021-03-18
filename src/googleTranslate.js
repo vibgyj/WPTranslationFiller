@@ -27,7 +27,24 @@ function setPostTranslationReplace(postTranslationReplace) {
         }
     });
 }
+function pretranslate(original){
+	console.debug('Pretranslate with:',original);
+	var prelines = [{orig:'One thought on &ldquo;%1$s&rdquo;', trans:'Eén gedachte over &ldquo;%1$s&rdquo;'},{orig:'%1$s thought on &ldquo;%2$s&rdquo;', trans:'%1$s gedachte over &ldquo;%2$s&rdquo;'}];
+	console.debug('entry 1 :',prelines[0]);
+	var result = prelines.filter( obj => obj.orig === original)[0];
+	console.debug('result:',result);
+	if (result !=undefined){
+       console.log(result['trans']);
+	   transfound = result['trans'];
+	   console.debug('found:',transfound);
+	   translated = transfound;
+	}
+	else {
+		translated = "";
+	}
 
+	return translated;
+}
 
 function checkComments(comment){
      // PSS 09-03-2021 added check to see if we need to translate
@@ -138,7 +155,16 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     }  
 	
     if (toTranslate) {
-        googleTranslate(original, destlang, e, apikey, replacePreVerb);
+		let pretrans = pretranslate(original);
+		if (pretrans === ""){
+           googleTranslate(original, destlang, e, apikey, replacePreVerb);
+		}
+		else {
+			console.debug('Pretranslated:',pretrans);
+			let translatedText = pretrans;
+			let textareaElem = e.querySelector("textarea.foreign-text");
+            textareaElem.innerText = translatedText;
+		}
     }
     else {
 
