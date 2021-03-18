@@ -26,6 +26,7 @@ describe("Google translation - preProcessOriginal", function () {
 
     it("should replace placeholders in original mixed", function () {
         expect(preProcessOriginal("%1$s some &quot; random%d text %l", false)).toEqual("[0] some [1] random[2] text [3]");
+        expect(preProcessOriginal("some random (%1$s) text (PHP %2$s) that failes", false)).toEqual("some random ([0]) text (PHP [1]) that failes");
     });
 
     it("should replace placeholders in original html encoding", function () {
