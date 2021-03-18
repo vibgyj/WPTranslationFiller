@@ -64,5 +64,11 @@ describe("Google translation - processPlaceholderSpaces", function () {
         "some text[0] here [1]",
         "some text [0] here[1]"))
       .toEqual("some text[0] here [1]");
+    // This is one is to show that a blank at the line is added if it is missing in the translation 
+    expect(
+        processPlaceholderSpaces(
+          "Add Products to [0] Category",
+          "Producten toevoegen aan categorie [0]"))
+        .toEqual("Producten toevoegen aan categorie [0] ");  
   });
 });

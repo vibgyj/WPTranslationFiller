@@ -1,6 +1,21 @@
 // This array is used to replace wrong words in translation
 // PSS version 04-03-2021
 let replaceVerb = [];
+// This array is used to replace verbs before translation
+// It is also used to force google to translate informal
+// This is done by replacing the formal word for a informal word
+let replacePreVerb = [];
+
+function setPreTranslationReplace(preTranslationReplace) {
+    replacePreVerb = [];
+    let lines = preTranslationReplace.split('\n');
+    lines.forEach(function (item) {
+        // Handle blank lines
+        if (item != "") {
+            replacePreVerb.push(item.split(','));
+        }
+    });
+}
 
 function setPostTranslationReplace(postTranslationReplace) {
     replaceVerb = [];
@@ -13,12 +28,86 @@ function setPostTranslationReplace(postTranslationReplace) {
     });
 }
 
-function translatePage(apikey, destlang, postTranslationReplace, formal) {
-    setPostTranslationReplace(postTranslationReplace);
 
+function checkComments(comment){
+     // PSS 09-03-2021 added check to see if we need to translate
+    console.debug('checkComment started comment',comment);
+    let toTranslate = false;
+    switch(comment){
+           case 'Plugin Name of the plugin':
+                toTranslate = false;
+                break;
+           case 'Author of the plugin':
+                 toTranslate = false;  
+                 break;
+            case 'Plugin Name of the plugin Author of the plugin':
+                 toTranslate = false;  
+                 break;
+            case 'Plugin URI of the plugin':
+                 toTranslate = false;
+                 break;   
+            case 'Author URI of the plugin':
+                 toTranslate = false;
+                 break;     
+            case 'Theme Name of the theme':
+                 toTranslate = false;
+                 break;
+			case 'Theme Name of the plugin/theme':
+			     toTranslate = false;
+                 break;	 
+            case 'Author of the theme':
+                 toTranslate = false; 
+                 break;   
+            case 'Theme URI of the theme':
+                 toTranslate = false; 
+                 break;    
+            case 'Author URI of the theme':
+                 toTranslate = false; 
+                 break;   
+            default:
+                  toTranslate = true;
+            }
+    
+    
+    console.debug('before googletranslate do we need to translate:',toTranslate);  
+    return toTranslate;
+
+}
+
+function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
+    setPostTranslationReplace(postTranslationReplace);
+    setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        original = googleTranslate(original, destlang, e, apikey, formal);
+        // PSS 09-03-2021 added check to see if we need to translate
+        //Needs to be put into a function, because now it is unnessary double code
+        let toTranslate = true;
+        // Check if the comment is present, if not then if will block the request for the details name etc.
+        let element = e.querySelector('.source-details__comment');
+        
+        if (element != null){
+           let comment = e.querySelector('.source-details__comment p').innerText;
+           comment = comment.trim();
+           toTranslate = checkComments(comment);   
+           console.debug('comment:',comment);
+           toTranslate = checkComments(comment);   
+           
+        }
+        
+
+        console.debug('before googletranslate:', replacePreVerb);
+        console.debug('before googletranslate do we need to translate:', toTranslate);
+
+        if (toTranslate) {
+            googleTranslate(original, destlang, e, apikey, replacePreVerb);
+        }
+        else {
+
+            let translatedText = original;
+            let textareaElem = e.querySelector("textarea.foreign-text");
+            textareaElem.innerText = translatedText;
+            console.debug('No need to translate copy the original', original);
+        }
     }
 
     // Translation completed
@@ -26,20 +115,46 @@ function translatePage(apikey, destlang, postTranslationReplace, formal) {
     translateButton.className += " translated";
 }
 
-function translateEntry(rowId, apikey, destlang, postTranslationReplace, formal) {
+function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTranslationReplace) {
+    console.debug('translateEntry started!');
     setPostTranslationReplace(postTranslationReplace);
+    setPreTranslationReplace(preTranslationReplace);
 
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+    console.debug('after document querySelector:', e);
     let original = e.querySelector("span.original-raw").innerText;
-    googleTranslate(original, destlang, e, apikey, formal);
+
+
+    //console.debug('after span querySelector:',original);
+    // PSS 09-03-2021 added check to see if we need to translate
+    let toTranslate = true;
+     // Check if the comment is present, if not then if will block the request for the details name etc.   
+    let element = e.querySelector('.source-details__comment');
+    console.debug('checkComment started element',element);
+    if (element != null){
+       // Fetch the comment with name
+       let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+       toTranslate = checkComments(comment);   
+    }  
+	
+    if (toTranslate) {
+        googleTranslate(original, destlang, e, apikey, replacePreVerb);
+    }
+    else {
+
+        let translatedText = original;
+        let textareaElem = e.querySelector("textarea.foreign-text");
+        textareaElem.innerText = translatedText;
+        console.debug('No need to translate copy the original', original);
+    }
 
     // Translation completed
     let translateButton = document.querySelector(`#translate-${rowId}`);
     translateButton.className += " translated";
 }
 
-function googleTranslate(original, destlang, e, apikey, formal) {
-    let originalPreProcessed = preProcessOriginal(original, formal);
+function googleTranslate(original, destlang, e, apikey, preverbs) {
+    let originalPreProcessed = preProcessOriginal(original, preverbs);
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
@@ -74,9 +189,8 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             let translatedText = responseObj.data.translations[0].translatedText;
             console.debug("sendAPIrequest Translated text: ", translatedText);
 
-            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
-            // translatedText = processPlaceholderSpaces(original, translatedText);
-
+            translatedText = postProcessTranslation(
+                original, translatedText, replaceVerb, originalPreProcessed);
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             validateEntry(language, textareaElem);
@@ -98,20 +212,23 @@ String.prototype.replaceAt = function (str, word, newWord) {
     console.log("replaceAt:", '"' + word + '"');
     console.log("replaceAt:", '"' + newWord + '"');
     if (word[0] === word[0].toUpperCase()) {
-        newWord = newWord[0].toUpperCase() + newWord.slice(1)
+        newWord = newWord[0].toUpperCase() + newWord.slice(1);
     }
     console.log("replaceAt:", str.replace(word, newWord));
-    return str.replace(word, newWord)
-}
+    return str.replace(word, newWord);
+};
 
 // Function to check if start of line is capital
 function isStartsWithUpperCase(str) {
     return str.charAt(0) === str.charAt(0).toUpperCase();
 }
 
-const placeHolderRegex = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};|&\w{1,6};|%\w*%/gi;
-
-function preProcessOriginal(original, formal) {
+const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
+function preProcessOriginal(original, preverbs) {
+    // prereplverb contains the verbs to replace before translation
+    for (let i = 0; i < preverbs.length; i++) {
+        original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
+    }
     const pattern = new RegExp(placeHolderRegex);
     const matches = original.matchAll(pattern);
     let index = 0;
@@ -120,15 +237,8 @@ function preProcessOriginal(original, formal) {
 
         index++;
     }
-    if (formal) {
-        original = original.replace('Your ', 'Je ');
-        original = original.replace(' your ', ' je ');
-        original = original.replace('You ', 'Je ');
-        original = original.replace(' you ', ' je ');
-    }
-    console.log("After pre-processing:", original);
-    console.log('preProcessOriginal use_formal:', formal);
 
+    console.debug("After pre-processing:", original);
     return original;
 }
 
@@ -261,7 +371,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
             console.debug("processPlaceholderSpaces found it in trans:", counter, '"' + placedicttrans[counter] + '"');
             console.debug("processPlaceholderSpaces found it in trans", translatedText);
             orgval = placedictorg[counter];
-            transval = placedicttrans[counter];
+            let transval = placedicttrans[counter];
             if (placedictorg[counter] === placedicttrans[counter]) {
                 console.debug('processPlaceholderSpaces values are equal!');
             }
@@ -279,7 +389,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                 else {
                     transval = placedicttrans[counter];
                     repl = transval.substr(1,);
-                    console.debug("processPlaceholderSpaces no blank before in org!",);
+                    console.debug("processPlaceholderSpaces no blank before in org!");
                     if (transval.startsWith(" ")) {
                         console.debug("processPlaceholderSpaces apparently blank in front in trans!!!");
                         translatedText = translatedText.replaceAt(translatedText, transval, repl);
@@ -293,16 +403,38 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                     if (transval.endsWith(" ")) {
                         console.debug("processPlaceholderSpaces in trans blank behind!!!");
                         console.debug('processPlaceholderSpaces values are not equal!:', orgval, transval);
-                        repl = transval.substring(0, transval.length - 1);
-                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
-                        console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                        // 11-03 PSS changed this to prevent removing the blank if the translated is not at the end of the line
+                        // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
+                        found = translatedText.search("[" + counter + "]");
+						console.debug('found at:',found);
+                        if (!(found === (originalPreProcessed.length) - 2)) {
+                            repl = transval.substring(0, transval.length - 1);
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                        }
+                        else {
+							repl = transval.substring(0, transval.length ) + " ";
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+						}
                     }
                 }
                 else {
                     if (!(transval.endsWith(" "))) {
                         console.debug("processPlaceholderSpaces no blank behind!!!");
-                        repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
-                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        // 11-03-2021 PSS changed this to prevent removing a blank when at end of line in trans
+                        // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
+                        found = translatedText.search("[" + counter + "]");
+						console.debug('found at:',found);
+						console.debug("length of line:",translatedText.length);
+                        if (!(found === (translatedText.length) - 2)) {
+							console.debug('found at end of line:',found);
+                            repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        }
+						else {
+							repl = transval.substring(0, transval.length ) + " ";
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+						}
                     }
                 }
             }

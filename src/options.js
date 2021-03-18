@@ -1,15 +1,20 @@
+// This array is used to replace wrong words in translation and is necessary for the export
+let replaceVerb = [];
+
 let apikeyTextbox = document.getElementById('google_api_key');
 let destLangTextbox = document.getElementById('destination_lang');
 let uploadedFile = document.getElementById('text_glossary_file');
 let glossaryFile = document.getElementById('glossary_file');
 let verbsTextbox = document.getElementById('text_verbs');
+let preverbsTextbox = document.getElementById('text_pre_verbs');
 
-chrome.storage.sync.get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace'], function (data) {
+chrome.storage.sync.get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
     apikeyTextbox.value = data.apikey;
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `Uploaded file: ${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
-    console.debug("Saved options: ", data);
+    preverbsTextbox.value = data.preTranslationReplace;
+    console.log("Saved options: ", data);
 });
 
 let button = document.getElementById('save');
@@ -17,15 +22,19 @@ button.addEventListener('click', function () {
     let apikey = apikeyTextbox.value;
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
+    let preTranslation = preverbsTextbox.value;
 
-    console.debug('Options: ', apikey, destlang, postTranslation);
+    console.log('Options: ', apikey, destlang, postTranslation,preTranslation);
 
     chrome.storage.sync.set({
         apikey: apikey,
         destlang: destlang,
-        postTranslationReplace: postTranslation
+        postTranslationReplace: postTranslation,
+        preTranslationReplace: preTranslation
+    
     });
-
+    console.log('Options loaded: ', apikey, destlang, postTranslation,preTranslation);
+ 
     if (glossaryFile.value !== "") {
         console.debug('Options: ', glossaryFile);
         chrome.storage.sync.set({ glossaryFile: glossaryFile.value.replace("C:\\fakepath\\", "") });
@@ -207,3 +216,49 @@ function pushToGlossary(glossary, key, value) {
     }
     glossary.push({ key: key, value: value });
 }
+function export_verbs_csv() {
+    console.debug("Export started:");
+    // 13-03-2021 PSS added locale to export filename
+    destlang = destLangTextbox.value;
+    let export_file = 'export_verbs_' +destlang +'.csv'
+    setPostTranslationReplace(verbsTextbox.value);
+    let arrayData  = []  
+    for (let i = 0; i < replaceVerb.length; i++) {
+          arrayData[i] = { original : replaceVerb[i][0], replacement :  replaceVerb[i][1]};
+         }
+   // let header ="original,replace");
+    let delimiter = ',';
+    let arrayHeader = ["original","replacement"];
+    let header = arrayHeader.join(delimiter) + '\n';
+       let csv = header;
+       arrayData.forEach( obj => {
+           let row = [];
+           for (key in obj) {
+               if (obj.hasOwnProperty(key)) {
+                   row.push(obj[key]);
+               }
+           }
+           csv += row.join(delimiter)+"\n";
+       });
+
+       let csvData = new Blob([csv], { type: 'text/csv' });  
+       let csvUrl = URL.createObjectURL(csvData);
+
+       let hiddenElement = document.createElement('a');
+       hiddenElement.href = csvUrl;
+       hiddenElement.target = '_blank';
+       hiddenElement.download = export_file;
+       hiddenElement.click();
+   
+   }
+// PSS 08-03-2021 added this to prepare data for export to csv   
+function setPostTranslationReplace(postTranslationReplace) {
+replaceVerb = [];
+let lines = postTranslationReplace.split('\n');
+lines.forEach(function (item) {
+   // Handle blank lines
+   if (item != "") {
+       replaceVerb.push(item.split(','));
+   }
+});
+}		
