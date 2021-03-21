@@ -27,6 +27,8 @@ function setPostTranslationReplace(postTranslationReplace) {
         }
     });
 }
+
+// 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
 function pretranslate(original){
 	console.debug('Pretranslate with:',original);
 	var prelines = [{orig:'One thought on &ldquo;%1$s&rdquo;', trans:'Eén gedachte over &ldquo;%1$s&rdquo;'},{orig:'%1$s thought on &ldquo;%2$s&rdquo;', trans:'%1$s gedachte over &ldquo;%2$s&rdquo;'}];
@@ -249,7 +251,7 @@ function isStartsWithUpperCase(str) {
     return str.charAt(0) === str.charAt(0).toUpperCase();
 }
 
-const placeHolderRegex = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};|&\w{1,6};|%\w*%/gi;
+const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};|%\w*%/gi;
 function preProcessOriginal(original, preverbs) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
@@ -280,7 +282,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     // PSS 04-03-2021 new regex because the % was missed, also not used the general variable for it
     // This can be put back if everything is stabilised
-    const tocheck = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};|&\w{1,6};|%\w*%/gi;
+    const tocheck = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};|%\w*%/gi;
     console.debug('postProcess pattern:', tocheck);
     const pattern = new RegExp(tocheck);
 
