@@ -5,6 +5,7 @@ describe("Google translation - preProcessOriginal", function () {
         expect(preProcessOriginal("some random text %s", false)).toEqual("some random text [0]");
         expect(preProcessOriginal("%s some random text", false)).toEqual("[0] some random text");
         expect(preProcessOriginal("some random %s text", false)).toEqual("some random [0] text");
+        expect(preProcessOriginal("some random text %1s", false)).toEqual("some random text [0]");
     });
 
     it("should replace placeholders in original %d", function () {
@@ -13,6 +14,7 @@ describe("Google translation - preProcessOriginal", function () {
         expect(preProcessOriginal("some random text %d", false)).toEqual("some random text [0]");
         expect(preProcessOriginal("%d some random text", false)).toEqual("[0] some random text");
         expect(preProcessOriginal("some random %d text", false)).toEqual("some random [0] text");
+        expect(preProcessOriginal("some random text %1d", false)).toEqual("some random text [0]");
     });
 
     it("should replace placeholders in original %l", function () {
@@ -21,7 +23,7 @@ describe("Google translation - preProcessOriginal", function () {
         expect(preProcessOriginal("some random text %l", false)).toEqual("some random text [0]");
         expect(preProcessOriginal("%l some random text", false)).toEqual("[0] some random text");
         expect(preProcessOriginal("some random %l text", false)).toEqual("some random [0] text");
-        expect(preProcessOriginal("some random text %1s", false)).toEqual("some random text [0]");
+        expect(preProcessOriginal("some random text %1l", false)).toEqual("some random text [0]");
     });
 
     it("should replace placeholders in original mixed", function () {
