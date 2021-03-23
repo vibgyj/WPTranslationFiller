@@ -28,48 +28,67 @@ function setPostTranslationReplace(postTranslationReplace) {
     });
 }
 
+// 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
+function pretranslate(original) {
+    console.debug('Pretranslate with:', original);
+    var prelines = [];
+    console.debug('entry 1 :', prelines[0]);
+    var result = prelines.filter(obj => obj.orig === original)[0];
+    console.debug('result:', result);
+    if (result != undefined) {
+        console.log(result['trans']);
+        transfound = result['trans'];
+        console.debug('found:', transfound);
+        translated = transfound;
+    }
+    else {
+        translated = "";
+    }
 
-function checkComments(comment){
-     // PSS 09-03-2021 added check to see if we need to translate
-    console.debug('checkComment started comment',comment);
+    return translated;
+}
+
+function checkComments(comment) {
+    // PSS 09-03-2021 added check to see if we need to translate
+    console.debug('checkComment started comment', comment);
     let toTranslate = false;
-    switch(comment){
-           case 'Plugin Name of the plugin':
-                toTranslate = false;
-                break;
-           case 'Author of the plugin':
-                 toTranslate = false;  
-                 break;
-            case 'Plugin Name of the plugin Author of the plugin':
-                 toTranslate = false;  
-                 break;
-            case 'Plugin URI of the plugin':
-                 toTranslate = false;
-                 break;   
-            case 'Author URI of the plugin':
-                 toTranslate = false;
-                 break;     
-            case 'Theme Name of the theme':
-                 toTranslate = false;
-                 break;
-			case 'Theme Name of the plugin/theme':
-			     toTranslate = false;
-                 break;	 
-            case 'Author of the theme':
-                 toTranslate = false; 
-                 break;   
-            case 'Theme URI of the theme':
-                 toTranslate = false; 
-                 break;    
-            case 'Author URI of the theme':
-                 toTranslate = false; 
-                 break;   
-            default:
-                  toTranslate = true;
-            }
-    
-    
-    console.debug('before googletranslate do we need to translate:',toTranslate);  
+    switch (comment) {
+        case 'Plugin Name of the plugin':
+            toTranslate = false;
+            break;
+        case 'Author of the plugin':
+            toTranslate = false;
+            break;
+        case 'Plugin Name of the plugin Author of the plugin':
+            toTranslate = false;
+            break;
+        case 'Plugin URI of the plugin':
+            toTranslate = false;
+            break;
+        case 'Author URI of the plugin':
+            toTranslate = false;
+            break;
+        case 'Theme Name of the theme':
+            toTranslate = false;
+            break;
+        case 'Theme Name of the plugin/theme':
+            toTranslate = false;
+            break;
+        case 'Author of the theme':
+            toTranslate = false;
+            break;
+        case 'Theme URI of the theme':
+            toTranslate = false;
+            break;
+        case 'Author URI of the theme':
+            toTranslate = false;
+            break;
+        default:
+            toTranslate = true;
+    }
+
+
+    console.debug('before googletranslate do we need to translate:', toTranslate);
     return toTranslate;
 
 }
@@ -84,16 +103,16 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
         let toTranslate = true;
         // Check if the comment is present, if not then if will block the request for the details name etc.
         let element = e.querySelector('.source-details__comment');
-        
-        if (element != null){
-           let comment = e.querySelector('.source-details__comment p').innerText;
-           comment = comment.trim();
-           toTranslate = checkComments(comment);   
-           console.debug('comment:',comment);
-           toTranslate = checkComments(comment);   
-           
+
+        if (element != null) {
+            let comment = e.querySelector('.source-details__comment p').innerText;
+            comment = comment.trim();
+            toTranslate = checkComments(comment);
+            console.debug('comment:', comment);
+            toTranslate = checkComments(comment);
+
         }
-        
+
 
         console.debug('before googletranslate:', replacePreVerb);
         console.debug('before googletranslate do we need to translate:', toTranslate);
@@ -128,17 +147,26 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     //console.debug('after span querySelector:',original);
     // PSS 09-03-2021 added check to see if we need to translate
     let toTranslate = true;
-     // Check if the comment is present, if not then if will block the request for the details name etc.   
+    // Check if the comment is present, if not then if will block the request for the details name etc.   
     let element = e.querySelector('.source-details__comment');
-    console.debug('checkComment started element',element);
-    if (element != null){
-       // Fetch the comment with name
-       let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
-       toTranslate = checkComments(comment);   
-    }  
-	
+    console.debug('checkComment started element', element);
+    if (element != null) {
+        // Fetch the comment with name
+        let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+        toTranslate = checkComments(comment);
+    }
+
     if (toTranslate) {
-        googleTranslate(original, destlang, e, apikey, replacePreVerb);
+        let pretrans = pretranslate(original);
+        if (pretrans === "") {
+            googleTranslate(original, destlang, e, apikey, replacePreVerb);
+        }
+        else {
+            console.debug('Pretranslated:', pretrans);
+            let translatedText = pretrans;
+            let textareaElem = e.querySelector("textarea.foreign-text");
+            textareaElem.innerText = translatedText;
+        }
     }
     else {
 
@@ -223,14 +251,13 @@ function isStartsWithUpperCase(str) {
     return str.charAt(0) === str.charAt(0).toUpperCase();
 }
 
-const placeHolderRegex = /%(\d{1,2}\$)?[sdl]{1}|&#\d{1,4};|&\w{2,6};/gi;
+const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&\w{2,6};|%\w*%/gi);
 function preProcessOriginal(original, preverbs) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
     }
-    const pattern = new RegExp(placeHolderRegex);
-    const matches = original.matchAll(pattern);
+    const matches = original.matchAll(placeHolderRegex);
     let index = 0;
     for (const match of matches) {
         original = original.replace(match[0], `[${index}]`);
@@ -244,23 +271,10 @@ function preProcessOriginal(original, preverbs) {
 
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed) {
-    console.debug('postProcess before spaces original', original);
-    console.debug('postProcess before spaces translated', translatedText);
-    console.debug('postProcess before spaces translated', originalPreProcessed);
-    // PSS 04-03-2021 moved the processPlaceholderSpaces up because now the raw string with placeholders is used
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
-    console.debug('postProcess after removeSpaces', translatedText);
+
     // This section replaces the placeholders so they become html entities
-
-    //const tocheck = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};{1,2}|&\w{1,6};/gi;
-    // PSS 04-03-2021 new regex because the % was missed, also not used the general variable for it
-    // This can be put back if everything is stabilised
-    const tocheck = /%(\d{1,6}\$)?[sdl]{1}|&#\d{1,6};|&\w{1,6};|%\w*%/gi;
-    console.debug('postProcess pattern:', tocheck);
-    const pattern = new RegExp(tocheck);
-
-    const matches = original.matchAll(pattern);
-    console.debug('postProcess matches result', matches);
+    const matches = original.matchAll(placeHolderRegex);
     let index = 0;
     for (const match of matches) {
         translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
@@ -268,13 +282,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         index++;
     }
 
-    console.debug('postProcess after replacing placeholders', translatedText, 'length of index:', index);
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
     }
-
-    console.debug('postProcess after replacing verbs :', translatedText);
 
     // Make translation to start with same case (upper/lower) as the original.
     if (isStartsWithUpperCase(original)) {
@@ -406,16 +417,16 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         // 11-03 PSS changed this to prevent removing the blank if the translated is not at the end of the line
                         // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
                         found = translatedText.search("[" + counter + "]");
-						console.debug('found at:',found);
+                        console.debug('found at:', found);
                         if (!(found === (originalPreProcessed.length) - 2)) {
                             repl = transval.substring(0, transval.length - 1);
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
                             console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
                         }
                         else {
-							repl = transval.substring(0, transval.length ) + " ";
+                            repl = transval.substring(0, transval.length) + " ";
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
-						}
+                        }
                     }
                 }
                 else {
@@ -424,17 +435,17 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         // 11-03-2021 PSS changed this to prevent removing a blank when at end of line in trans
                         // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
                         found = translatedText.search("[" + counter + "]");
-						console.debug('found at:',found);
-						console.debug("length of line:",translatedText.length);
+                        console.debug('found at:', found);
+                        console.debug("length of line:", translatedText.length);
                         if (!(found === (translatedText.length) - 2)) {
-							console.debug('found at end of line:',found);
+                            console.debug('found at end of line:', found);
                             repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
                         }
-						else {
-							repl = transval.substring(0, transval.length ) + " ";
+                        else {
+                            repl = transval.substring(0, transval.length) + " ";
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
-						}
+                        }
                     }
                 }
             }
