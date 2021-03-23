@@ -42,6 +42,52 @@
             padding: 5px 0;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
+    <script type="text/javascript">  
+    $(document).ready(function() {
+
+    // The event listener for the file upload
+    document.getElementById('txtFileUpload').addEventListener('change', upload, false);
+
+    // Method that checks that the browser supports the HTML5 File API
+    function browserSupportFileUpload() {
+        var isCompatible = false;
+        if (window.File && window.FileReader && window.FileList && window.Blob) {
+        isCompatible = true;
+        }
+        return isCompatible;
+    }
+
+    // Method that reads and processes the selected file
+    function upload(evt) {
+        if (!browserSupportFileUpload()) {
+            alert('The File APIs are not fully supported in this browser!');
+            } else {
+                var data = null;
+                var file = evt.target.files[0];
+                var reader = new FileReader();
+                reader.readAsText(file);
+                reader.onload = function(event) {
+                    var csvData = event.target.result;
+                    data = $.csv.toArrays(csvData);
+                    if (data && data.length > 0) {
+                    alert('Imported -' + data.length + '- rows successfully!');
+					for (var line = 1; line < data.length; line++) {
+					    verbsTextbox.value += data[line][0] + ','+ data[line][1] + '\n';
+						}
+					
+                    } else {
+                        alert('No data to import!');
+                    }
+                };
+                reader.onerror = function() {
+                    alert('Unable to read ' + file.fileName);
+                };
+            }
+        }
+    });
+</script>
 </head>
 
 <body>
@@ -79,10 +125,18 @@ wrong2,right2
         </div>
 
         <div class="form-input">
-            <input id="export_verbs" type="button" value="Export verbs" onclick="export_verbs_csv();" />
+		    <fieldset>
+		    <label for="export_verbs">Export post translation verbs</label>
+            <input id="export_verbs" type="button" value="Export" onclick="export_verbs_csv();" />          
+			</fieldset>
+        </div>
+        <div id="dvImportSegments" class="fileupload ">
+            <label>Upload post translation replace CSV File</label>
+             <fieldset>
             
-            </div>
-
+            <input type="file" name="File Upload" id="txtFileUpload" accept=".csv" />
+            </fieldset>
+         </div>
         <div class="form-input">
             <input id="save" type="button" value="Save" />
         </div>
