@@ -9,6 +9,15 @@ translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
 divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
 
+//23-03-2021 PSS added a new button on first page
+var checkButton = document.createElement("a");
+checkButton.href = "#";
+checkButton.className = "check_translation-button"
+checkButton.onclick = checkPageClicked;
+checkButton.innerText = "checkPage";
+var divPaging = document.querySelector("div.paging");
+divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+
 function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
@@ -20,6 +29,17 @@ function translatePageClicked(event) {
             });
 }
 // Add translation button - end
+
+function checkPageClicked(event) {
+    event.preventDefault();
+    console.log("Checkpage clicked!");
+    chrome.storage.sync
+        .get(
+            ['apikey', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            function (data) {
+                checkPage(data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+            });
+}
 
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
@@ -149,6 +169,10 @@ function updateElementStyle(priorityElem, result) {
         priorityElem.style.backgroundColor = 'yellow';
     else if (result.percent > 33)
         priorityElem.style.backgroundColor = 'orange';
+        
+    else if (result.percent == 10)
+        priorityElem.style.backgroundColor = 'purple';	
+		    
     else
         priorityElem.style.backgroundColor = 'red';
 

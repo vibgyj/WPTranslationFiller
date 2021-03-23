@@ -92,6 +92,52 @@ function checkComments(comment) {
     return toTranslate;
 
 }
+// 23-03-2021 PSS added function to check for wrong verbs
+function checkPage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
+    setPostTranslationReplace(postTranslationReplace);
+    //setPreTranslationReplace(preTranslationReplace);
+	let countreplaced =0;
+    for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+        let original = e.querySelector("span.original-raw").innerText;
+        
+        // Fetch the translations
+        let element = e.querySelector('.source-details__comment');
+        let textareaElem = e.querySelector("textarea.foreign-text");
+        translatedText = textareaElem.innerText ;
+		//console.debug('Translated text to check:',translatedText);
+		let replaced=false;
+        // replverb contains the verbs to replace
+        for (let i = 0; i < replaceVerb.length; i++) {
+			   if (translatedText.includes(replaceVerb[i][0])){
+				   //console.debug('Word in line found',replaceVerb[i][0]);
+				   translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);  
+				   countreplaced++ ;
+				   replaced=true;
+			   }
+			   
+			  
+        }
+        textareaElem.innerText = translatedText;
+		//console.debug('Translated text checked:',translatedText);
+		if (replaced){
+		   let wordCount= countreplaced;
+		   let percent = 10 ;
+		   let toolTip='';
+		   result={wordCount,percent,toolTip};
+		   updateStyle(textareaElem, result);
+		}
+		replaced = false;
+		
+    }
+	
+	//var myForm = document.getElementById('translation-actions');
+    //myForm.submit();
+    alert('Replace verbs done! '+countreplaced);
+    // Translation replacement completed
+    let checkButton = document.querySelector(".paging a.translation-filler-button");
+    checkButton.className += "Ready";
+}
+
 
 function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
@@ -417,11 +463,15 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         // 11-03 PSS changed this to prevent removing the blank if the translated is not at the end of the line
                         // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
                         found = translatedText.search("[" + counter + "]");
+                        //23-03-2021 PSS added another improvement to the end of the line 
+                        foundorg= originalPreProcessed.search("[" + counter + "]");
                         console.debug('found at:', found);
                         if (!(found === (originalPreProcessed.length) - 2)) {
-                            repl = transval.substring(0, transval.length - 1);
-                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
-                            console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                            if (foundorg===found){
+                               repl = transval.substring(0, transval.length - 1);
+                               translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                               console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                            }
                         }
                         else {
                             repl = transval.substring(0, transval.length) + " ";
