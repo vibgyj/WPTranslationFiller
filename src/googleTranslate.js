@@ -27,9 +27,11 @@ function setPostTranslationReplace(postTranslationReplace) {
         }
     });
 }
+
+// 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
 function pretranslate(original) {
     console.debug('Pretranslate with:', original);
-    var prelines = [{ orig: 'One thought on &ldquo;%1$s&rdquo;', trans: 'Eén gedachte over &ldquo;%1$s&rdquo;' }, { orig: '%1$s thought on &ldquo;%2$s&rdquo;', trans: '%1$s gedachte over &ldquo;%2$s&rdquo;' }];
+    var prelines = [];
     console.debug('entry 1 :', prelines[0]);
     var result = prelines.filter(obj => obj.orig === original)[0];
     console.debug('result:', result);
