@@ -18,7 +18,7 @@ describe("Google translation - postProcessTranslation", function () {
         expect(
             postProcessTranslation(
                 "Save your API Key you have received by email or you can get it on your %1$sImagify account page%2$s.",
-                "Save your API Key you have received by email or you can get it on your [0]Imagify account page[1].", [], 'Save your API Key you have received by email or you can get it on your [0]Imagify account page[1].'))
+                "Save your API Key you have received by email or you can get it on your [0]Imagify account page [1].", [], 'Save your API Key you have received by email or you can get it on your [0]Imagify account page[1].'))
             .toEqual("Save your API Key you have received by email or you can get it on your %1$sImagify account page%2$s.");
     });
     
@@ -26,7 +26,7 @@ describe("Google translation - postProcessTranslation", function () {
         expect(
             postProcessTranslation(
                 "No files yet. Do you want to %1$sscan your selected folders%3$s for new files or launch a %2$sbulk optimization%3$s directly?",
-                "No files yet. Do you want to [0]scan your selected folders[1] for new files or launch a [2]bulk optimization[3] directly?", [], 'No files yet. Do you want to [0]scan your selected folders[1] for new files or launch a [2]bulk optimization[3] directly?'))
+                "No files yet. Do you want to [0]scan your selected folders[1] for new files or launch a [2] bulk optimization [3] directly?", [], 'No files yet. Do you want to [0]scan your selected folders[1] for new files or launch a [2]bulk optimization[3] directly?'))
             .toEqual("No files yet. Do you want to %1$sscan your selected folders%3$s for new files or launch a %2$sbulk optimization%3$s directly?");
     });
 
