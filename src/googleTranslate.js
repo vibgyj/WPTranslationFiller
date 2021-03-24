@@ -440,9 +440,14 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                 if (orgval.startsWith(" ")) {
                     console.debug("processPlaceholderSpaces in org blank before!!!");
                     if (!(transval.startsWith(" "))) {
-                        console.debug("processPlaceholderSpaces in trans no blank before!!!");
-                        repl = transval.substr(0, 1) + " " + transval.substr(1,);
-                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        // 24-03-2021 PSS found another problem when the placeholder is at the start of the line
+                        found = translatedText.search("[" + counter + "]");
+                        console.debug('processPlaceholderSpaces found at :', found);
+                        if (found != 1){
+                           console.debug("processPlaceholderSpaces in trans no blank before!!!");
+                           repl = transval.substr(0, 1) + " " + transval.substr(1,);
+                           translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        }
                     }
                 }
                 else {
