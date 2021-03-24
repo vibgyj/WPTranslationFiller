@@ -467,11 +467,11 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         foundorg= originalPreProcessed.search("[" + counter + "]");
                         console.debug('found at:', found);
                         if (!(found === (originalPreProcessed.length) - 2)) {
-                            if (foundorg===found){
+                            //if (foundorg===found){
                                repl = transval.substring(0, transval.length - 1);
                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
                                console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
-                            }
+                            //}
                         }
                         else {
                             repl = transval.substring(0, transval.length) + " ";
