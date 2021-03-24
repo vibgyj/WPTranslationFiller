@@ -93,7 +93,7 @@ function checkComments(comment) {
 
 }
 // 23-03-2021 PSS added function to check for wrong verbs
-function checkPage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
+function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     //setPreTranslationReplace(preTranslationReplace);
 	let countreplaced =0;
@@ -408,8 +408,10 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                 else if (found === (translatedText.length) - 3) {
                     // PSS if at end of line it is possible that no blank is behind
                     console.debug('found at end of line!!', found);
-                    part = originalPreProcessed.substring(found - 2, found + 2);
-                    placedictorg[counter] = part;
+                    // 24-03-2021 find typo was placedictorg instead of placedicttrans
+                    part = translatedText.substring(found - 2, found + 2);
+                    console.debug('found string at end of line:',part)
+                    placedicttrans[counter] = part;
                 }
                 else {
                     // PSS we are in the middle	

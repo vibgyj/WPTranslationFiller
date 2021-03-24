@@ -37,7 +37,7 @@ function checkPageClicked(event) {
         .get(
             ['apikey', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
             function (data) {
-                checkPage(data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+                checkPage(data.postTranslationReplace);
             });
 }
 
