@@ -254,6 +254,7 @@ function googleTranslate(original, destlang, e, apikey, preverbs) {
     sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed);
 }
 
+
 function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed) {
     console.debug('sendAPIreQuest original_line:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
@@ -267,9 +268,14 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
                 original, translatedText, replaceVerb, originalPreProcessed);
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
+            // PSS 25-03-2021 Fixed problem with description box issue #13
+            textareaElem.style.height = 'auto';
+            textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
+            textareaElem.style.overflow = 'auto' ;
+
             validateEntry(language, textareaElem);
         }
-        //PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
+        // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
             if (this.readyState == 4 && this.status == 400) {
                 alert("Error in translation received status 400, maybe a license problem");

@@ -80,7 +80,7 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
             // to sory by descending order
             return b.key.length - a.key.length;
         });
-        console.log(glossary);
+        //console.log(glossary);
         addTranslateButtons();
         validatePage(data.destlang);
     });
