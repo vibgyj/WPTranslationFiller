@@ -132,10 +132,10 @@ function checkPage(postTranslationReplace) {
 	
 	//var myForm = document.getElementById('translation-actions');
     //myForm.submit();
-    alert('Replace verbs done! '+countreplaced);
+    alert('Replace verbs done '+countreplaced +' replaced');
     // Translation replacement completed
-    let checkButton = document.querySelector(".paging a.translation-filler-button");
-    checkButton.className += "Ready";
+    let checkButton = document.querySelector(".paging a.check_translation-button");
+    checkButton.className += " ready";
 }
 
 

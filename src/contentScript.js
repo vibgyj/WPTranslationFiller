@@ -14,7 +14,7 @@ var checkButton = document.createElement("a");
 checkButton.href = "#";
 checkButton.className = "check_translation-button"
 checkButton.onclick = checkPageClicked;
-checkButton.innerText = "checkPage";
+checkButton.innerText = "CheckPage";
 var divPaging = document.querySelector("div.paging");
 divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
 
