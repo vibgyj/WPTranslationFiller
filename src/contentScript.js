@@ -222,7 +222,14 @@ function validate(language, original, translation) {
         foundCount = 0;
         wordCount  = 0;
          }
-    let percent = foundCount * 100 / wordCount;
+    // 27-03-2021 PSS added this to prevent devision by zero      
+    if (wordCount !=0){
+       percent = foundCount * 100 / wordCount;
+       }
+    else {  
+       console.debug('Validate found no wordCount!');  
+       percent = 0;    
+       }
     console.log("Percent calculation:", wordCount, foundCount, percent);
 
     return { wordCount, percent, toolTip };
