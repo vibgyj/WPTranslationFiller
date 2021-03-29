@@ -262,18 +262,18 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
         if (this.readyState == 4 && this.status == 200) {
             let responseObj = JSON.parse(this.responseText);
             let translatedText = responseObj.data.translations[0].translatedText;
-            console.debug("sendAPIrequest Translated text: ", translatedText);
-
-            translatedText = postProcessTranslation(
-                original, translatedText, replaceVerb, originalPreProcessed);
-            let textareaElem = e.querySelector("textarea.foreign-text");
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
+            console.debug('sendAPIRequest translatedText:',translatedText);
+            textareaElem = e.querySelector("textarea.foreign-text.autosize");
             textareaElem.innerText = translatedText;
+            // PSS 29-03-2021 Added populating the value of the property to retranslate
+            textareaElem.value = translatedText;
             // PSS 25-03-2021 Fixed problem with description box issue #13
             textareaElem.style.height = 'auto';
             textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
             textareaElem.style.overflow = 'auto' ;
+            validateEntry(language,textareaElem);
 
-            validateEntry(language, textareaElem);
         }
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
@@ -353,7 +353,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
 
-    return translatedText;
+return translatedText;
 }
 
 // PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks
@@ -362,7 +362,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
         console.debug('preprocessed empty');
     }
     console.debug("processPlaceholderSpaces not translated", originalPreProcessed);
-    console.debug("processPlaceholderSpacesk translated", translatedText);
+    console.debug("processPlaceholderSpaces translated", translatedText);
 
     var placedictorg = {};
     var placedicttrans = {};
@@ -516,7 +516,8 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
         }
     }
     else {
-        console.debug("processPlaceholderBlank no placeholders found");
+        console.debug("processPlaceholderBlank no placeholders found",translatedText);
+        return translatedText;
     }
-    return translatedText;
+return translatedText;
 }
