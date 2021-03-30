@@ -264,9 +264,10 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             let translatedText = responseObj.data.translations[0].translatedText;
             translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
             console.debug('sendAPIRequest translatedText:',translatedText);
-            textareaElem = e.querySelector("textarea.foreign-text.autosize");
+            textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
-            // PSS 29-03-2021 Added populating the value of the property to retranslate
+            // PSS 29-03-2021 Added populating the value of the property to retranslate            
+            textareaElem.innerText = translatedText;
             textareaElem.value = translatedText;
             // PSS 25-03-2021 Fixed problem with description box issue #13
             textareaElem.style.height = 'auto';
@@ -315,6 +316,9 @@ function preProcessOriginal(original, preverbs) {
         original = original.replace(match[0], `[${index}]`);
 
         index++;
+    }
+    if (index===0){
+        console.debug("preProcessOriginal no placeholders found index === 0 ");
     }
 
     console.debug("After pre-processing:", original);
@@ -517,7 +521,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     }
     else {
         console.debug("processPlaceholderBlank no placeholders found",translatedText);
-        return translatedText;
+        //return translatedText;
     }
 return translatedText;
 }
