@@ -36,7 +36,7 @@ function pretranslate(original) {
     var result = prelines.filter(obj => obj.orig === original)[0];
     console.debug('result:', result);
     if (result != undefined) {
-        console.log(result['trans']);
+        console.debug(result['trans']);
         transfound = result['trans'];
         console.debug('found:', transfound);
         translated = transfound;
@@ -232,15 +232,13 @@ function googleTranslate(original, destlang, e, apikey, preverbs) {
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
-    // console.log("Contains html.",myArray);
-
     if (myArray == null) {
         transtype = "text";
     }
     else {
         transtype = "html";
     }
-    console.log("format type", transtype);
+    console.debug("format type", transtype);
 
     let requestBody = {
         "q": originalPreProcessed,
@@ -248,7 +246,7 @@ function googleTranslate(original, destlang, e, apikey, preverbs) {
         "target": destlang,
         "format": transtype
     };
-    console.log("request body", requestBody);
+    console.debug("request body", requestBody);
     //sendAPIRequest(e, destlang, apikey, requestBody, original);
 
     sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed);
@@ -290,12 +288,12 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
 
 // PSS 01-30-2021 added this to prevent wrong replacement of searches
 String.prototype.replaceAt = function (str, word, newWord) {
-    console.log("replaceAt:", '"' + word + '"');
-    console.log("replaceAt:", '"' + newWord + '"');
+    console.debug("replaceAt:", '"' + word + '"');
+    console.debug("replaceAt:", '"' + newWord + '"');
     if (word[0] === word[0].toUpperCase()) {
         newWord = newWord[0].toUpperCase() + newWord.slice(1);
     }
-    console.log("replaceAt:", str.replace(word, newWord));
+    console.debug("replaceAt:", str.replace(word, newWord));
     return str.replace(word, newWord);
 };
 
