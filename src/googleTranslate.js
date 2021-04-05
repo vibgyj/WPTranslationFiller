@@ -165,7 +165,8 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
 
         if (toTranslate) {
             googleTranslate(original, destlang, e, apikey, replacePreVerb);
-        }
+
+        }   
         else {
 
             let translatedText = original;
@@ -272,7 +273,7 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
             textareaElem.style.overflow = 'auto' ;
             validateEntry(language,textareaElem);
-
+            
         }
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
@@ -354,7 +355,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             console.debug('Applied lower case: ', translatedText);
         }
     }
-
+    
 return translatedText;
 }
 
