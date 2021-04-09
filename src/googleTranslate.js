@@ -206,7 +206,7 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     if (toTranslate) {
         let pretrans = pretranslate(original);
         if (pretrans === "") {
-            googleTranslate(original, destlang, e, apikey, replacePreVerb);
+            googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId);
         }
         else {
             console.debug('Pretranslated:', pretrans);
@@ -230,7 +230,8 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
        plural = checkplural.innerText;
        console.debug('checkplural content element', plural);
        let translatedText=plural;
-       //translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb);
+       // PSS 09-04-2021 This needs to be improved so it translates the plural line
+       //translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,rowId);
        //console.debug('checkplural:', translatedText);
     }
     
@@ -241,7 +242,7 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     translateButton.className += " translated";
 }
 
-function googleTranslate(original, destlang, e, apikey, preverbs) {
+function googleTranslate(original, destlang, e, apikey, preverbs,rowId) {
     let originalPreProcessed = preProcessOriginal(original, preverbs);
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
@@ -263,12 +264,12 @@ function googleTranslate(original, destlang, e, apikey, preverbs) {
     console.debug("request body", requestBody);
     //sendAPIRequest(e, destlang, apikey, requestBody, original);
 
-    translatedText=sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed);
+    translatedText=sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed,rowId);
     console.debug('after sendAPIRequest:',translatedText);
 }
 
 
-function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed) {
+function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed,rowId) {
     console.debug('sendAPIreQuest original_line:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
@@ -281,12 +282,17 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             // PSS 29-03-2021 Added populating the value of the property to retranslate            
-            textareaElem.innerText = translatedText;
             textareaElem.value = translatedText;
             //PSS 25-03-2021 Fixed problem with description box issue #13
             textareaElem.style.height = 'auto';
             textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
             textareaElem.style.overflow = 'auto' ;
+            // PSS 09-04-2021 added populating plural text, but it needs improvement as it now puts the text of single into it
+            console.debug('Row plural:',rowId);
+            textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+            textareaElem1.innerText = translatedText;
+            console.debug("plural newtext:",textareaElem1.innerText);
+            textareaElem1.value = translatedText; 
             validateEntry(language,textareaElem);
             
         }
