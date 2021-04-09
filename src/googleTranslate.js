@@ -222,7 +222,20 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
         textareaElem.innerText = translatedText;
         console.debug('No need to translate copy the original', original);
     }
+    let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
 
+    checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
+    console.debug('checkplural started element', checkplural);
+    if (checkplural != null) {
+       plural = checkplural.innerText;
+       console.debug('checkplural content element', plural);
+       let translatedText=plural;
+       //translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb);
+       //console.debug('checkplural:', translatedText);
+    }
+    
+    
+    
     // Translation completed
     let translateButton = document.querySelector(`#translate-${rowId}`);
     translateButton.className += " translated";
@@ -250,7 +263,8 @@ function googleTranslate(original, destlang, e, apikey, preverbs) {
     console.debug("request body", requestBody);
     //sendAPIRequest(e, destlang, apikey, requestBody, original);
 
-    sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed);
+    translatedText=sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed);
+    console.debug('after sendAPIRequest:',translatedText);
 }
 
 
@@ -262,13 +276,14 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             let responseObj = JSON.parse(this.responseText);
             let translatedText = responseObj.data.translations[0].translatedText;
             translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
+            
             console.debug('sendAPIRequest translatedText:',translatedText);
             textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
             // PSS 29-03-2021 Added populating the value of the property to retranslate            
             textareaElem.innerText = translatedText;
             textareaElem.value = translatedText;
-            // PSS 25-03-2021 Fixed problem with description box issue #13
+            //PSS 25-03-2021 Fixed problem with description box issue #13
             textareaElem.style.height = 'auto';
             textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
             textareaElem.style.overflow = 'auto' ;
@@ -327,7 +342,7 @@ function preProcessOriginal(original, preverbs) {
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed) {
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
-
+    console.debug("after processPLaceholderSpaces",translatedText);
     // This section replaces the placeholders so they become html entities
     const matches = original.matchAll(placeHolderRegex);
     let index = 0;
@@ -336,12 +351,12 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         console.debug('postProcess matches found :', match[0]);
         index++;
     }
-
+    
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
     }
-
+    console.debug("after replace verbs",translatedText);
     // Make translation to start with same case (upper/lower) as the original.
     if (isStartsWithUpperCase(original)) {
         if (!isStartsWithUpperCase(translatedText)) {
@@ -520,7 +535,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     }
     else {
         console.debug("processPlaceholderBlank no placeholders found",translatedText);
-        //return translatedText;
+        return translatedText;
     }
 return translatedText;
 }
