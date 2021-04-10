@@ -37,7 +37,7 @@ function pretranslate(original) {
     console.debug('result:', result);
     if (result != undefined) {
         console.debug(result['trans']);
-        transfound = result['trans'];
+        var transfound = result['trans'];
         console.debug('found:', transfound);
         translated = transfound;
     }
@@ -97,6 +97,7 @@ function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     //setPreTranslationReplace(preTranslationReplace);
 	let countreplaced =0;
+    var translatedText;
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         
@@ -168,13 +169,13 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
             let transtype="single";
             googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
             // 10-04-2021 PSS added translation of plural into translatePage
-            rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
+            let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
             let row = rowfound.split('_')[1]; 
             let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
             checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
             console.debug("translatePage checkplural:",checkplural);
             if (checkplural != null) {
-              plural = checkplural.innerText;
+              let plural = checkplural.innerText;
               transtype="plural";
               translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,row,transtype);
               console.debug('translatePage checkplural:', translatedText);
@@ -232,10 +233,10 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
         console.debug('No need to translate copy the original', original);
     }
     let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-    checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
+    let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
     console.debug('checkplural started element', checkplural);
     if (checkplural != null) {
-       plural = checkplural.innerText;
+       let plural = checkplural.innerText;
        let transtype="plural";
        console.debug('checkplural content element', plural);
        translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,rowId,transtype);
@@ -280,8 +281,9 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
         if (this.readyState == 4 && this.status == 200) {
             let responseObj = JSON.parse(this.responseText);
             let translatedText = responseObj.data.translations[0].translatedText;
+            console.debug('sendAPIRequest result before postProces:',translatedText);
             translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
-            console.debug('sendAPIRequest translatedText:',translatedText);
+            console.debug('sendAPIRequest translatedText after postProces:',translatedText);
             if (transtype == "single"){
                textareaElem = e.querySelector("textarea.foreign-text");
                textareaElem.innerText = translatedText;
@@ -447,7 +449,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                     console.debug('found at end of line!!', found);
                     // 24-03-2021 find typo was placedictorg instead of placedicttrans
                     part = translatedText.substring(found - 2, found + 2);
-                    console.debug('found string at end of line:',part)
+                    console.debug('found string at end of line:',part);
                     placedicttrans[counter] = part;
                 }
                 else {
