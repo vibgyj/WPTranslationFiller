@@ -143,6 +143,9 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+        console.debug('translatePage content:',e);
+        let rowId= e.querySelector("row");
+        console.debug("row:",rowId);
         let original = e.querySelector("span.original-raw").innerText;
         // PSS 09-03-2021 added check to see if we need to translate
         //Needs to be put into a function, because now it is unnessary double code
@@ -158,22 +161,31 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
             toTranslate = checkComments(comment);
 
         }
-
-
         console.debug('before googletranslate:', replacePreVerb);
         console.debug('before googletranslate do we need to translate:', toTranslate);
 
         if (toTranslate) {
-            googleTranslate(original, destlang, e, apikey, replacePreVerb);
-
+            let transtype="single";
+            googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
+            // 10-04-2021 PSS added translation of plural into translatePage
+            rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
+            let row = rowfound.split('_')[1]; 
+            let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+            checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
+            console.debug("translatePage checkplural:",checkplural);
+            if (checkplural != null) {
+              plural = checkplural.innerText;
+              transtype="plural";
+              translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,row,transtype);
+              console.debug('translatePage checkplural:', translatedText);
+            }
         }   
         else {
-
             let translatedText = original;
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
-            console.debug('No need to translate copy the original', original);
-        }
+            console.debug('translatePage No need to translate copy the original', original);
+            }
     }
 
     // Translation completed
@@ -189,9 +201,6 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     console.debug('after document querySelector:', e);
     let original = e.querySelector("span.original-raw").innerText;
-
-
-    //console.debug('after span querySelector:',original);
     // PSS 09-03-2021 added check to see if we need to translate
     let toTranslate = true;
     // Check if the comment is present, if not then if will block the request for the details name etc.   
@@ -202,11 +211,11 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
         let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
         toTranslate = checkComments(comment);
     }
-
     if (toTranslate) {
         let pretrans = pretranslate(original);
         if (pretrans === "") {
-            googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId);
+            let transtype = 'single';
+            googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
         }
         else {
             console.debug('Pretranslated:', pretrans);
@@ -223,53 +232,48 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
         console.debug('No need to translate copy the original', original);
     }
     let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-
     checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
     console.debug('checkplural started element', checkplural);
     if (checkplural != null) {
        plural = checkplural.innerText;
+       let transtype="plural";
        console.debug('checkplural content element', plural);
-       let translatedText=plural;
-       // PSS 09-04-2021 This needs to be improved so it translates the plural line
-       //translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,rowId);
-       //console.debug('checkplural:', translatedText);
+       translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,rowId,transtype);
+       console.debug('checkplural:', translatedText);
     }
-    
-    
-    
+       
     // Translation completed
     let translateButton = document.querySelector(`#translate-${rowId}`);
     translateButton.className += " translated";
 }
 
-function googleTranslate(original, destlang, e, apikey, preverbs,rowId) {
+function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype) {
     let originalPreProcessed = preProcessOriginal(original, preverbs);
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
     if (myArray == null) {
-        transtype = "text";
+        trntype = "text";
     }
     else {
-        transtype = "html";
+        trntype = "html";
     }
-    console.debug("format type", transtype);
+    console.debug("format type", trntype);
 
     let requestBody = {
         "q": originalPreProcessed,
         "source": "en",
         "target": destlang,
-        "format": transtype
+        "format": trntype
     };
     console.debug("request body", requestBody);
     //sendAPIRequest(e, destlang, apikey, requestBody, original);
-
-    translatedText=sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed,rowId);
-    console.debug('after sendAPIRequest:',translatedText);
+    translatedText=sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed,rowId,transtype);
+    console.debug('after sendAPIRequest:',translatedText,transtype);
 }
 
 
-function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed,rowId) {
+function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed,rowId,transtype) {
     console.debug('sendAPIreQuest original_line:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
@@ -277,22 +281,25 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             let responseObj = JSON.parse(this.responseText);
             let translatedText = responseObj.data.translations[0].translatedText;
             translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
-            
             console.debug('sendAPIRequest translatedText:',translatedText);
-            textareaElem = e.querySelector("textarea.foreign-text");
-            textareaElem.innerText = translatedText;
-            // PSS 29-03-2021 Added populating the value of the property to retranslate            
-            textareaElem.value = translatedText;
-            //PSS 25-03-2021 Fixed problem with description box issue #13
-            textareaElem.style.height = 'auto';
-            textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
-            textareaElem.style.overflow = 'auto' ;
-            // PSS 09-04-2021 added populating plural text, but it needs improvement as it now puts the text of single into it
+            if (transtype == "single"){
+               textareaElem = e.querySelector("textarea.foreign-text");
+               textareaElem.innerText = translatedText;
+               // PSS 29-03-2021 Added populating the value of the property to retranslate            
+               textareaElem.value = translatedText;
+               //PSS 25-03-2021 Fixed problem with description box issue #13
+               textareaElem.style.height = 'auto';
+               textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
+               textareaElem.style.overflow = 'auto' ;
+            }
+            else {
+            // PSS 09-04-2021 added populating plural text
             console.debug('Row plural:',rowId);
             textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
             textareaElem1.innerText = translatedText;
             console.debug("plural newtext:",textareaElem1.innerText);
             textareaElem1.value = translatedText; 
+            }
             validateEntry(language,textareaElem);
             
         }
