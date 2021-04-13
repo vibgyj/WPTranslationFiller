@@ -145,8 +145,10 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         console.debug('translatePage content:',e);
-        let rowId= e.querySelector("row");
-        console.debug("row:",rowId);
+        let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
+        let row = rowfound.split('_')[1]; 
+        
+        console.debug("translatePage row:",row);
         let original = e.querySelector("span.original-raw").innerText;
         // PSS 09-03-2021 added check to see if we need to translate
         //Needs to be put into a function, because now it is unnessary double code
@@ -167,10 +169,9 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
 
         if (toTranslate) {
             let transtype="single";
-            googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
+            googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
             // 10-04-2021 PSS added translation of plural into translatePage
-            let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
-            let row = rowfound.split('_')[1]; 
+            
             let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
             checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
             console.debug("translatePage checkplural:",checkplural);
@@ -287,12 +288,19 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             if (transtype == "single"){
                textareaElem = e.querySelector("textarea.foreign-text");
                textareaElem.innerText = translatedText;
+               // PSS 13-04-2021 added populating the preview field issue #64
+               let g = document.querySelector('td.translation');
+               let previewElem = g.innerText; 
+               console.debug('Text preview:',previewElem,rowId);
+               let preview =  document.querySelector('#preview-'+rowId+' td.translation');
+               preview.innerText = translatedText;
                // PSS 29-03-2021 Added populating the value of the property to retranslate            
                textareaElem.value = translatedText;
                //PSS 25-03-2021 Fixed problem with description box issue #13
                textareaElem.style.height = 'auto';
                textareaElem.style.height = textareaElem.scrollHeight + 'px'; 
-               textareaElem.style.overflow = 'auto' ;
+               // PSS 13-04-2021 removed the line below as it clears the content if you edit after use of translate button
+              // textareaElem.style.overflow = 'auto' ;
             }
             else {
             // PSS 09-04-2021 added populating plural text
