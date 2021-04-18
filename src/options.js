@@ -31,7 +31,6 @@ button.addEventListener('click', function () {
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation
-    
     });
     console.log('Options loaded: ', apikey, destlang, postTranslation,preTranslation);
  

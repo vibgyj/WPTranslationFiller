@@ -5,46 +5,67 @@ let replaceVerb = [];
 // It is also used to force google to translate informal
 // This is done by replacing the formal word for a informal word
 let replacePreVerb = [];
+//
+// Define your database
+//
+var result="";
+var db ="";
+dexieOpen();
+
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
-    let lines = preTranslationReplace.split('\n');
-    lines.forEach(function (item) {
+    if (preTranslationReplace != undefined){
+       let lines = preTranslationReplace.split('\n');
+       lines.forEach(function (item) {
         // Handle blank lines
         if (item != "") {
             replacePreVerb.push(item.split(','));
-        }
-    });
+          }
+       });
+    }
 }
+
 
 function setPostTranslationReplace(postTranslationReplace) {
     replaceVerb = [];
-    let lines = postTranslationReplace.split('\n');
-    lines.forEach(function (item) {
-        // Handle blank lines
-        if (item != "") {
+    if (postTranslationReplace != undefined){
+       let lines = postTranslationReplace.split('\n');
+       lines.forEach(function (item) {
+         // Handle blank lines
+         if (item != "") {
             replaceVerb.push(item.split(','));
-        }
-    });
+           }
+        });
+    }
 }
 
 // 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
-function pretranslate(original) {
-    console.debug('Pretranslate with:', original);
-    var prelines = [];
-    console.debug('entry 1 :', prelines[0]);
-    var result = prelines.filter(obj => obj.orig === original)[0];
-    console.debug('result:', result);
-    if (result != undefined) {
-        console.debug(result['trans']);
-        var transfound = result['trans'];
-        console.debug('found:', transfound);
-        translated = transfound;
+// 18-04-2021 PSS now the function retrieves the data from the local database if present
+async function pretranslate(original) {
+    console.debug('pretranslate with:', original);
+    var trns = "";
+    res = listRec(original).then(function(v){
+        console.debug('answ:',v);
+        translated=v;
+        return trns;   
+    });
+    console.log('resultaat trns:',res);
+    await res.then(function(ts){
+    //    console.debug('promise:',ts)
+    //    translat = ts;
+    });
+    console.debug('res:',translated);
+    if (typeof  translated === undefined){
+        translated = 'notFound';
+       }
+    else if (typeof translated === 'object') {
+        translated = 'notFound';  
     }
     else {
-        translated = "";
+        console.debug('pretranslate line found:',translated);
+        //translated = res;   
     }
-
     return translated;
 }
 
@@ -195,7 +216,7 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
     translateButton.className += " translated";
 }
 
-function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTranslationReplace) {
+async function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTranslationReplace) {
     console.debug('translateEntry started!');
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
@@ -214,8 +235,9 @@ function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTran
         toTranslate = checkComments(comment);
     }
     if (toTranslate) {
-        let pretrans = pretranslate(original);
-        if (pretrans === "") {
+        let pretrans = await pretranslate(original);
+        console.debug('pretranslate result:',pretrans);
+        if (pretrans === "notFound") {
             let transtype = 'single';
             googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
         }
@@ -562,3 +584,73 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     }
 return translatedText;
 }
+
+function dexieOpen(){
+            console.debug("Dexie dbstart:");
+            
+            db = new Dexie('transl');
+            console.log("Database exists",db);
+            db.version(2).stores({
+                originals: '++id,original, translation'
+            });
+            console.debug("Database stores",db);
+            db.open().then(function (db) {
+                // Database opened successfully
+                console.debug('Database is open!');
+            }).catch (function (err) {
+                console.debug('Error opening database',err);
+            });
+}   
+
+function getTrans(org){
+	console.debug("getTrans request:",org);
+    let trans ='noTrans';
+	db.originals.where("original").equalsIgnoreCase(org)
+          .each(original => {  
+		  trans = original.translation;
+		  console.log('getTrans result:',trans);
+          }).catch (function (err) {
+            console.log("getTrans error:", err.message);
+        });
+}
+
+function addRec(){
+    console.debug("Dexie db started:");
+    // Add some records   
+	result = db.originals.add({original:"This is line one",translation:"Dit is regel een"});
+	result = db.originals.add({original:"Comments are closed.",translation:"Reacties zijn gesloten."});
+    result = db.originals.add({original:"Pages:",translation:"Pagina's"});
+	console.debug('result of adding',result);
+    return;
+} 
+
+async function listRecord(trans){
+    //new Promise((resolve,reject)=>{
+    const trns = await db.originals.get({original:trans});
+    if (trns != null){
+       console.debug('listRec result raw:',trns.translation); 
+       trnsFound = trns.translation;
+    }
+    else {
+        console.debug('not found local');
+        trnsFound = "notFound";
+
+    }
+    //alert('record v ' + v.translation ); 
+    return trnsFound;
+  // });
+//});
+}
+      
+async function listRec(trans){
+      console.debug('caller',trans);
+      const d = await listRecord(trans);
+      //alert('record list ',d  ); 
+      return d;
+      //Promise.catch((error) => {
+      //  console.error(error);
+     // });       
+}  
+
+
+//addRec();
