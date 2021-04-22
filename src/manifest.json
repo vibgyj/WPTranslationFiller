@@ -8,16 +8,18 @@
         "browser_style": true
     },
     "permissions": [
+        "activeTab",
         "storage",
         "https://translation.googleapis.com/*"
     ],
     "content_scripts": [
         {
             "matches": [
-                "https://translate.wordpress.org/*"
+                "https://translate.wordpress.org/*",
+				"<all_urls>"
             ],
             "js": [
-                "dexie.js",
+			    "dexie.js",
                 "googleTranslate.js",
                 "contentScript.js"
             ],

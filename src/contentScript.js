@@ -2,8 +2,9 @@ console.log('Content script...');
 
 // PSS added this one to be able to see if the Details button is clicked
 const el = document.getElementById("translations");
-el.addEventListener("click", checkbuttonClick);
-
+if (el != null){
+  el.addEventListener("click", checkbuttonClick);
+}
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
@@ -11,8 +12,9 @@ translateButton.className = "translation-filler-button"
 translateButton.onclick = translatePageClicked;
 translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
-divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
-
+if (divPaging != null){
+   divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
+}
 //23-03-2021 PSS added a new button on first page
 var checkButton = document.createElement("a");
 checkButton.href = "#";
@@ -20,8 +22,9 @@ checkButton.className = "check_translation-button"
 checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
 var divPaging = document.querySelector("div.paging");
-divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
-
+if (divPaging != null){
+   divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+}
 
 function translatePageClicked(event) {
     event.preventDefault();
@@ -100,20 +103,49 @@ function addTranslateButtons() {
         let rowId = e.getAttribute('row');
         let panelHeaderActions = e.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
         // Add translate button
-        let translateButton = document.createElement("button");
+        let translateButton = document.createElement("my-button");
         //console.debug('addTranslateButtons rowId:',rowId);
         translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-entry-button"
+        translateButton.className = "translation-entry-my-button"
         translateButton.onclick = translateEntryClicked;
         translateButton.innerText = "Translate";
         panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+
+        // Add addtranslate button
+        let addTranslateButton = document.createElement("my-button");
+        //console.debug('addTranslateButtons rowId:',rowId);
+        addTranslateButton.id = `translate-${rowId}`;
+        addTranslateButton.className = "addtranslation-entry-my-button"
+        addTranslateButton.onclick = addtranslateEntryClicked;
+        addTranslateButton.innerText = "Add Translation";
+        panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
     }
 }
 
+
+function addtranslateEntryClicked(event){
+    if (event != undefined){ 
+        event.preventDefault();
+       console.debug("add translation clicked");
+       console.log("addtranslateEntry clicked!", event);
+       let rowId = event.target.id.split('-')[1];
+       console.log("addtranslate Entry clicked rowId", rowId);
+       let myrowId = event.target.id.split('-')[2];
+       //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+       // So that needs to be added to the base rowId to find it
+       if (myrowId !== undefined) {
+        newrowId = rowId.concat("-", myrowId);
+        rowId = newrowId;
+        console.debug('Line already translated new rowId:',rowId);
+       
+       }
+       addTransline(rowId); 
+    }   
+}
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 function checkbuttonClick(event){
    if (event != undefined){ 
-      event.preventDefault();
+      //event.preventDefault(); caused a problem within the single page enttry
   
       //console.debug('checkbuttonClick',event);
       let action = event.target.textContent ;

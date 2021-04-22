@@ -66,7 +66,7 @@
     background: green;
 }
 
-.paging a.translation-entry-button::before {
+.paging a.translation-entry-my-button::before {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
@@ -75,23 +75,23 @@
     width: 28px;
 }
 
-.panel-header-actions .translation-entry-button {
+.panel-header-actions .translation-entry-my-button {
     width: auto;
     padding: 5px;
     background-color: blue;
     color: white;
 }
 
-.panel-header-actions .translation-entry-button:focus {
+.panel-header-actions .translation-entry-my-button:focus {
     color: white;
 }
 
-.panel-header-actions .translation-entry-button:hover {
+.panel-header-actions .translation-entry-my-button:hover {
     background-color: blue;
     color: lightgray;
 }
 
-.panel-header-actions .translation-entry-button::before {
+.panel-header-actions .translation-entry-my-button::before {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
@@ -100,7 +100,7 @@
     width: 28px;
 }
 
-.panel-header-actions .translation-entry-button.translated {
+.panel-header-actions .translation-entry-my-button.translated {
     background-color: green;
 }
 
@@ -131,7 +131,7 @@
 
 .panel-header-actions .check_translation-button {
     width: auto;
-    padding: 5px;
+    padding: 11x;
     background-color: blue;
     color: white;
 }
@@ -157,4 +157,64 @@
 .panel-header-actions .check_translation-button.ready {
     background-color: green;
 }
+
+
+
+.paging a.addtranslation-entry-my-button {
+    background: blue;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.addtranslation-entry-my-button {
+    color: lightgray;
+}
+
+.paging a.addtranslation-entry-my-button.ready {
+    background: green;
+}
+
+.paging a.addtranslation-entry-my-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions my-button{
+	margin:5px;
+}
+
+.panel-header-actions .addtranslation-entry-my-button {
+    width: auto;
+    padding: 5px;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .addtranslation-entry-my-button:focus {
+    color: white;
+}
+
+.panel-header-actions .addtranslation-entry-my-button:hover {
+    background-color: blue;
+    color: lightgray;
+}
+
+.panel-header-actions .addtranslation-entry-my-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .addtranslation-entry-my-button.ready {
+    background-color: green;
+}
+
 

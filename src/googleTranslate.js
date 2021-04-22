@@ -8,10 +8,23 @@ let replacePreVerb = [];
 //
 // Define your database
 //
-var result="";
-var db ="";
-dexieOpen();
 
+
+var async = Dexie.async; 
+var openDexieNotification = "False";
+//dexieOpen();
+var result="";
+const db = new Dexie('transl');
+console.debug("Dexie dbstart:");
+//let db = new Dexie("'transl'");
+//console.log("Version", db.verno)
+console.log("Database exists" , db);
+var dat = db.version(1).stores({
+originals: "source, translation"
+})       
+
+//db.open();
+//addRec();
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
@@ -26,7 +39,6 @@ function setPreTranslationReplace(preTranslationReplace) {
     }
 }
 
-
 function setPostTranslationReplace(postTranslationReplace) {
     replaceVerb = [];
     if (postTranslationReplace != undefined){
@@ -39,27 +51,24 @@ function setPostTranslationReplace(postTranslationReplace) {
         });
     }
 }
-
 // 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
 // 18-04-2021 PSS now the function retrieves the data from the local database if present
 async function pretranslate(original) {
     console.debug('pretranslate with:', original);
     var trns = "";
-    res = listRec(original).then(function(v){
+    
+    res = await listRec(original).then(function(v){
         console.debug('answ:',v);
         translated=v;
         return trns;   
+    }).catch (function (err) {
+        console.debug('Error retrieving pretrans',err.message);
     });
     console.log('resultaat trns:',res);
-    await res.then(function(ts){
-    //    console.debug('promise:',ts)
-    //    translat = ts;
-    });
-    console.debug('res:',translated);
-    if (typeof  translated === undefined){
+    if (typeof  translated == 'undefined'){
         translated = 'notFound';
        }
-    else if (typeof translated === 'object') {
+    else if (typeof translated == 'Object') {
         translated = 'notFound';  
     }
     else {
@@ -585,27 +594,36 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
 return translatedText;
 }
 
-function dexieOpen(){
+async function dexieOpen(){
             console.debug("Dexie dbstart:");
-            
+            //let db = new Dexie("'transl'");
+            //console.log("Version", db.verno);
             db = new Dexie('transl');
             console.log("Database exists",db);
-            db.version(2).stores({
-                originals: '++id,original, translation'
-            });
-            console.debug("Database stores",db);
-            db.open().then(function (db) {
-                // Database opened successfully
-                console.debug('Database is open!');
-            }).catch (function (err) {
-                console.debug('Error opening database',err);
+            db.version(1).stores({
+                originals: 'source, translation'
+            }).then           
+            db.open().then(function () {
+                //console.debug("database version",db.vern);
+                console.log("Database is open");
+            }).catch(Dexie.OpenFailedError, function (e) {
+                // Failed with OpenFailedError
+                console.error ("open failed due to: " + e.inner);
+            }).catch(Error, function (e) {
+                // Any other error derived from standard Error
+                console.error ("Error: " + e.message);
+            }).catch(function (e) {
+                // Other error such as a string was thrown
+                console.error (e.inner);
             });
 }   
+
+
 
 function getTrans(org){
 	console.debug("getTrans request:",org);
     let trans ='noTrans';
-	db.originals.where("original").equalsIgnoreCase(org)
+	db.originals.where("source").equalsIgnoreCase(org)
           .each(original => {  
 		  trans = original.translation;
 		  console.log('getTrans result:',trans);
@@ -617,40 +635,50 @@ function getTrans(org){
 function addRec(){
     console.debug("Dexie db started:");
     // Add some records   
-	result = db.originals.add({original:"This is line one",translation:"Dit is regel een"});
-	result = db.originals.add({original:"Comments are closed.",translation:"Reacties zijn gesloten."});
-    result = db.originals.add({original:"Pages:",translation:"Pagina's"});
+	result = db.originals.add({source:"This is line one",translation:"Dit is regel een"});
+	result = db.originals.add({source:"Comments are closed.",translation:"Reacties zijn gesloten."});
+    result = db.originals.add({source:"Pages:",translation:"Pagina's"});
+    result = db.originals.add({source:"Basic:",translation:"Basis"});
 	console.debug('result of adding',result);
     return;
 } 
 
 async function listRecord(trans){
-    //new Promise((resolve,reject)=>{
-    const trns = await db.originals.get({original:trans});
-    if (trns != null){
-       console.debug('listRec result raw:',trns.translation); 
-       trnsFound = trns.translation;
-    }
-    else {
-        console.debug('not found local');
-        trnsFound = "notFound";
-
-    }
-    //alert('record v ' + v.translation ); 
-    return trnsFound;
-  // });
-//});
+   return db.originals.get({source:trans}).then(trns => {
+          if (trns != null){
+             console.debug('listRec result raw:',trns.translation);
+             var trnsFound = trns.translation; 
+          }
+          else {
+              trnsFound = 'notFound';
+          }  
+          return trnsFound;
+   }).catch (function (err) {console.debug("listRecord error:",err)
+   });     
 }
       
 async function listRec(trans){
       console.debug('caller',trans);
-      const d = await listRecord(trans);
+      const d = listRecord(trans);
       //alert('record list ',d  ); 
-      return d;
-      //Promise.catch((error) => {
-      //  console.error(error);
-     // });       
-}  
-
-
-//addRec();
+      return d;       
+}
+function addTransline(rowId){
+    console.debug("Add translation line to database",rowId);
+    let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+    console.debug('after document querySelector:', e);
+    var orig = e.querySelector("span.original-raw").innerText;
+    let textareaElem = e.querySelector("textarea.foreign-text");
+    var addTrans = textareaElem.value;
+    if (addTrans === ""){
+        alert("No translation to store!");
+    }
+    else {
+         console.debug('Translated text to add to database:',addTrans);
+         console.debug('Original text to add to database:',orig);
+         db.originals.add({source:orig, translation: addTrans});
+         alert('Translation added: ' +addTrans  );
+   
+    }
+    return;
+}
