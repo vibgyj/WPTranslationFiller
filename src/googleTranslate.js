@@ -9,19 +9,20 @@ let replacePreVerb = [];
 // Define your database
 //
 
-
 var async = Dexie.async; 
 var openDexieNotification = "False";
 //dexieOpen();
 var result="";
-const db = new Dexie('transl');
-console.debug("Dexie dbstart:");
-//let db = new Dexie("'transl'");
-//console.log("Version", db.verno)
-console.log("Database exists" , db);
-var dat = db.version(1).stores({
-originals: "source, translation"
-})       
+var res="";
+if (typeof db != 'undefined') {
+   console.debug('Typeof: ' + typeof db); 
+   res= dexieOpen();
+   console.debug('Open database:',res); 
+}
+else {
+ res = dexieCreate();
+ console.debug('Create database:',res); 
+}
 
 //db.open();
 //addRec();
@@ -594,31 +595,34 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
 return translatedText;
 }
 
-async function dexieOpen(){
-            console.debug("Dexie dbstart:");
-            //let db = new Dexie("'transl'");
+async function dexieCreate(){
+    db = new Dexie('transl');
+            console.debug("Dexie dbscreate:");
             //console.log("Version", db.verno);
-            db = new Dexie('transl');
             console.log("Database exists",db);
             db.version(1).stores({
                 originals: 'source, translation'
-            }).then           
-            db.open().then(function () {
-                //console.debug("database version",db.vern);
-                console.log("Database is open");
-            }).catch(Dexie.OpenFailedError, function (e) {
-                // Failed with OpenFailedError
-                console.error ("open failed due to: " + e.inner);
-            }).catch(Error, function (e) {
-                // Any other error derived from standard Error
-                console.error ("Error: " + e.message);
-            }).catch(function (e) {
-                // Other error such as a string was thrown
-                console.error (e.inner);
-            });
+            })                     
 }   
 
-
+async function dexieOpen(){
+    db = new Dexie('transl');
+    db.open().then(function (res) {
+        //console.debug("database version",db.vern);
+        console.log("Database is open",res);
+        return true;
+    }).catch(Dexie.OpenFailedError, function (e) {
+        // Failed with OpenFailedError
+        console.error ("open failed due to: " + e.inner);
+    }).catch(Error, function (e) {
+        // Any other error derived from standard Error
+        console.error ("Error: " + e.message);
+    }).catch(function (e) {
+        // Other error such as a string was thrown
+        console.error (e.inner);
+    });
+       return false;
+}
 
 function getTrans(org){
 	console.debug("getTrans request:",org);
@@ -644,6 +648,8 @@ function addRec(){
 } 
 
 async function listRecord(trans){
+    //var trnsFound = db.originals.get({source:trans});
+    //console.debug("listRecord found:",trnsFound);
    return db.originals.get({source:trans}).then(trns => {
           if (trns != null){
              console.debug('listRec result raw:',trns.translation);
@@ -666,7 +672,6 @@ async function listRec(trans){
 function addTransline(rowId){
     console.debug("Add translation line to database",rowId);
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-    console.debug('after document querySelector:', e);
     var orig = e.querySelector("span.original-raw").innerText;
     let textareaElem = e.querySelector("textarea.foreign-text");
     var addTrans = textareaElem.value;

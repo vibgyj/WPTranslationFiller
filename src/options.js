@@ -1,3 +1,4 @@
+document.getElementById("exportverbs").addEventListener("click", export_verbs_csv);
 // This array is used to replace wrong words in translation and is necessary for the export
 let replaceVerb = [];
 
@@ -248,16 +249,54 @@ function export_verbs_csv() {
        hiddenElement.target = '_blank';
        hiddenElement.download = export_file;
        hiddenElement.click();
+       alert('Export verbs ready');
    
    }
 // PSS 08-03-2021 added this to prepare data for export to csv   
 function setPostTranslationReplace(postTranslationReplace) {
-replaceVerb = [];
-let lines = postTranslationReplace.split('\n');
-lines.forEach(function (item) {
-   // Handle blank lines
-   if (item != "") {
+     replaceVerb = [];
+     let lines = postTranslationReplace.split('\n');
+     lines.forEach(function (item) {
+     // Handle blank lines
+     if (item != "") {
        replaceVerb.push(item.split(','));
+       }
+    });
+}
+
+var obj_csv = {
+size:0,
+dataFile:[]
+    };
+
+let input = document.getElementById('importPost');
+input.addEventListener('change', function () {   
+if (input.files && input.files[0]) {
+    let reader = new FileReader();
+        reader.readAsBinaryString(input.files[0]);
+    reader.onload = function (e) {
+    console.log(e);
+    obj_csv.size = e.total;
+    obj_csv.dataFile = e.target.result
+    //console.log(obj_csv.dataFile)
+    document.getElementById('text_verbs').value = "";
+    parseData(obj_csv.dataFile)               
+    }
    }
 });
-}		
+     
+function parseData(data){
+    let csvData = [];
+    let lbreak = data.split("\n");
+    let counter= 0;
+    lbreak.forEach(res => {
+        csvData.push(res.split(","));
+        if (counter >0){
+            verbsTextbox.value += res.split(",")+'\n';
+        }
+        ++counter;
+        //console.debug("counter:",counter);
+    });
+    //console.table(csvData);
+    alert('Import ready');
+}

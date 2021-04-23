@@ -3,7 +3,10 @@
 
 <head> 
    <!-- <meta http-equiv= "Content-Security-Policy: default-src https://cdnjs.cloudflare.com; child-src 'unsafe-inline'; object-src 'unsafe-inline';script-src-elem 'unsafe-inline'" > -->
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+   <!-- <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'unsafe-inline' https://* 'unsafe-inline'; script-src 'unsafe-inline' https://* 'unsafe-inline' 'unsafe-eval'" /> -->
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script> 
+   <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <meta content="utf-8" http-equiv="encoding">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -42,52 +45,7 @@
             padding: 5px 0;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
-    <script>  
-    $(document).ready(function() {
-
-    // The event listener for the file upload
-    document.getElementById('txtFileUpload').addEventListener('change', upload, false);
-
-    // Method that checks that the browser supports the HTML5 File API
-    function browserSupportFileUpload() {
-        var isCompatible = false;
-        if (window.File && window.FileReader && window.FileList && window.Blob) {
-        isCompatible = true;
-        }
-        return isCompatible;
-    }
-
-    // Method that reads and processes the selected file
-    function upload(evt) {
-        if (!browserSupportFileUpload()) {
-            alert('The File APIs are not fully supported in this browser!');
-            } else {
-                var data = null;
-                var file = evt.target.files[0];
-                var reader = new FileReader();
-                reader.readAsText(file);
-                reader.onload = function(event) {
-                    var csvData = event.target.result;
-                    data = $.csv.toArrays(csvData);
-                    if (data && data.length > 0) {
-                    alert('Imported -' + data.length + '- rows successfully!');
-					for (var line = 1; line < data.length; line++) {
-					    verbsTextbox.value += data[line][0] + ','+ data[line][1] + '\n';
-						}
-					
-                    } else {
-                        alert('No data to import!');
-                    }
-                };
-                reader.onerror = function() {
-                    alert('Unable to read ' + file.fileName);
-                };
-            }
-        }
-    });
-</script>
+    
 </head>
 
 <body>
@@ -127,14 +85,14 @@ wrong2,right2
         <div class="form-input">
 		    <fieldset>
 		    <label for="export_verbs">Export post translation verbs</label>
-            <input id="export_verbs" type="button" value="Export" onclick="export_verbs_csv();" />          
+            <button id="exportverbs">Export verbs</button>  
+                   
 			</fieldset>
         </div>
         <div id="dvImportSegments" class="fileupload ">
             <label>Upload post translation replace CSV File</label>
              <fieldset>
-            
-            <input type="file" name="File Upload" id="txtFileUpload" accept=".csv" />
+                <input id="importPost" type="file" />     
             </fieldset>
          </div>
         <div class="form-input">
@@ -142,7 +100,5 @@ wrong2,right2
         </div>
     </div>
 </body>
-
-<script src="options.js"></script>
-
+<script type="text/javascript" src="options.js"></script>
 </html>
