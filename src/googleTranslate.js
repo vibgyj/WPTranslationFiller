@@ -5,27 +5,9 @@ let replaceVerb = [];
 // It is also used to force google to translate informal
 // This is done by replacing the formal word for a informal word
 let replacePreVerb = [];
-//
-// Define your database
-//
-
-var async = Dexie.async; 
-var openDexieNotification = "False";
-//dexieOpen();
+// 06-05-2021 PSS These vars can probably removed after testen
 var result="";
 var res="";
-if (typeof db != 'undefined') {
-   console.debug('Typeof: ' + typeof db); 
-   res= dexieOpen();
-   console.debug('Open database:',res); 
-}
-else {
- res = dexieCreate();
- console.debug('Create database:',res); 
-}
-
-//db.open();
-//addRec();
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
@@ -56,23 +38,26 @@ function setPostTranslationReplace(postTranslationReplace) {
 // 18-04-2021 PSS now the function retrieves the data from the local database if present
 async function pretranslate(original) {
     console.debug('pretranslate with:', original);
-    var trns = "";
+    var translated = "";
     
     res = await listRec(original).then(function(v){
         console.debug('answ:',v);
         translated=v;
-        return trns;   
     }).catch (function (err) {
         console.debug('Error retrieving pretrans',err.message);
     });
-    console.log('resultaat trns:',res);
+    console.log('resultaat translate:',translated);
     if (typeof  translated == 'undefined'){
         translated = 'notFound';
        }
     else if (typeof translated == 'Object') {
         translated = 'notFound';  
     }
-    else {
+    else if (translated == ''){
+		translated = 'notFound';
+	}
+	else 
+		{
         console.debug('pretranslate line found:',translated);
         //translated = res;   
     }
@@ -117,11 +102,8 @@ function checkComments(comment) {
         default:
             toTranslate = true;
     }
-
-
     console.debug('before googletranslate do we need to translate:', toTranslate);
     return toTranslate;
-
 }
 // 23-03-2021 PSS added function to check for wrong verbs
 function checkPage(postTranslationReplace) {
@@ -161,7 +143,6 @@ function checkPage(postTranslationReplace) {
 		replaced = false;
 		
     }
-	
 	//var myForm = document.getElementById('translation-actions');
     //myForm.submit();
     alert('Replace verbs done '+countreplaced +' replaced');
@@ -169,16 +150,13 @@ function checkPage(postTranslationReplace) {
     let checkButton = document.querySelector(".paging a.check_translation-button");
     checkButton.className += " ready";
 }
-
-
 function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         console.debug('translatePage content:',e);
         let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
-        let row = rowfound.split('_')[1]; 
-        
+        let row = rowfound.split('_')[1];
         console.debug("translatePage row:",row);
         let original = e.querySelector("span.original-raw").innerText;
         // PSS 09-03-2021 added check to see if we need to translate
@@ -186,18 +164,15 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
         let toTranslate = true;
         // Check if the comment is present, if not then if will block the request for the details name etc.
         let element = e.querySelector('.source-details__comment');
-
         if (element != null) {
             let comment = e.querySelector('.source-details__comment p').innerText;
             comment = comment.trim();
             toTranslate = checkComments(comment);
             console.debug('comment:', comment);
             toTranslate = checkComments(comment);
-
         }
         console.debug('before googletranslate:', replacePreVerb);
         console.debug('before googletranslate do we need to translate:', toTranslate);
-
         if (toTranslate) {
             let transtype="single";
             googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
@@ -245,9 +220,10 @@ async function translateEntry(rowId, apikey, destlang, postTranslationReplace, p
         toTranslate = checkComments(comment);
     }
     if (toTranslate) {
-        let pretrans = await pretranslate(original);
+        let pretrans = await findTransline(original);
+        //let pretrans = await pretranslate(original);
         console.debug('pretranslate result:',pretrans);
-        if (pretrans === "notFound") {
+        if (pretrans == "notFound") {
             let transtype = 'single';
             googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
         }
@@ -593,97 +569,4 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
         return translatedText;
     }
 return translatedText;
-}
-
-async function dexieCreate(){
-    db = new Dexie('transl');
-            console.debug("Dexie dbscreate:");
-            //console.log("Version", db.verno);
-            console.log("Database exists",db);
-            db.version(1).stores({
-                originals: 'source, translation'
-            })                     
-}   
-
-async function dexieOpen(){
-    db = new Dexie('transl');
-    db.open().then(function (res) {
-        //console.debug("database version",db.vern);
-        console.log("Database is open",res);
-        return true;
-    }).catch(Dexie.OpenFailedError, function (e) {
-        // Failed with OpenFailedError
-        console.error ("open failed due to: " + e.inner);
-    }).catch(Error, function (e) {
-        // Any other error derived from standard Error
-        console.error ("Error: " + e.message);
-    }).catch(function (e) {
-        // Other error such as a string was thrown
-        console.error (e.inner);
-    });
-       return false;
-}
-
-function getTrans(org){
-	console.debug("getTrans request:",org);
-    let trans ='noTrans';
-	db.originals.where("source").equalsIgnoreCase(org)
-          .each(original => {  
-		  trans = original.translation;
-		  console.log('getTrans result:',trans);
-          }).catch (function (err) {
-            console.log("getTrans error:", err.message);
-        });
-}
-
-function addRec(){
-    console.debug("Dexie db started:");
-    // Add some records   
-	result = db.originals.add({source:"This is line one",translation:"Dit is regel een"});
-	result = db.originals.add({source:"Comments are closed.",translation:"Reacties zijn gesloten."});
-    result = db.originals.add({source:"Pages:",translation:"Pagina's"});
-    result = db.originals.add({source:"Basic:",translation:"Basis"});
-	console.debug('result of adding',result);
-    return;
-} 
-
-async function listRecord(trans){
-    //var trnsFound = db.originals.get({source:trans});
-    //console.debug("listRecord found:",trnsFound);
-   return db.originals.get({source:trans}).then(trns => {
-          if (trns != null){
-             console.debug('listRec result raw:',trns.translation);
-             var trnsFound = trns.translation; 
-          }
-          else {
-              trnsFound = 'notFound';
-          }  
-          return trnsFound;
-   }).catch (function (err) {console.debug("listRecord error:",err)
-   });     
-}
-      
-async function listRec(trans){
-      console.debug('caller',trans);
-      const d = listRecord(trans);
-      //alert('record list ',d  ); 
-      return d;       
-}
-function addTransline(rowId){
-    console.debug("Add translation line to database",rowId);
-    let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-    var orig = e.querySelector("span.original-raw").innerText;
-    let textareaElem = e.querySelector("textarea.foreign-text");
-    var addTrans = textareaElem.value;
-    if (addTrans === ""){
-        alert("No translation to store!");
-    }
-    else {
-         console.debug('Translated text to add to database:',addTrans);
-         console.debug('Original text to add to database:',orig);
-         db.originals.add({source:orig, translation: addTrans});
-         alert('Translation added: ' +addTrans  );
-   
-    }
-    return;
 }

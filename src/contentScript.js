@@ -1,4 +1,16 @@
 console.log('Content script...');
+// PSS added jsStore to be able to store and retrieve default translations
+var jsstoreCon = new JsStore.Connection();
+var db =getDbSchema() ;
+var isDbCreated = jsstoreCon.initDb(db);
+
+if (!isDbCreated){
+console.debug('Database is not created, so we create one', isDbCreated);
+}
+else{
+	console.debug("Database is present");
+}
+console.debug("jsStore opened:",jsstoreCon);
 
 // PSS added this one to be able to see if the Details button is clicked
 const el = document.getElementById("translations");
@@ -145,8 +157,7 @@ function addtranslateEntryClicked(event){
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 function checkbuttonClick(event){
    if (event != undefined){ 
-      //event.preventDefault(); caused a problem within the single page enttry
-  
+      //event.preventDefault(); caused a problem within the single page enttry  
       //console.debug('checkbuttonClick',event);
       let action = event.target.textContent ;
       //console.debug('action',action);
@@ -250,7 +261,6 @@ function updateElementStyle(priorityElem, result) {
 
 function validate(language, original, translation) {
     let originalWords = original.split(' ');
-
     let wordCount = 0;
     let foundCount = 0;
     let toolTip = '';
