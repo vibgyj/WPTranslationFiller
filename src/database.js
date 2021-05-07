@@ -139,6 +139,9 @@ async function convPromise(trans){
 
 async function addTransline(rowId){
     console.debug("Add translation line to database",rowId);
+    // 07-05-2021 PSS added language read from config to store in database
+    chrome.storage.sync.get(['destlang'], function (data) {
+    language = data.destlang;
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     var orig = e.querySelector("span.original-raw").innerText;
     let textareaElem = e.querySelector("textarea.foreign-text");
@@ -149,8 +152,10 @@ async function addTransline(rowId){
     else {
          console.debug('Translated text to add to database:',addTrans);
          console.debug('Original text to add to database:',orig);
-		 addTransDb(orig,addTrans,"NL");
-    }
+         console.debug("addTransline Language:",language);
+		     addTransDb(orig,addTrans,language);
+      }
+    });
     return;
 }
 
