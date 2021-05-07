@@ -150,7 +150,7 @@ function checkPage(postTranslationReplace) {
     let checkButton = document.querySelector(".paging a.check_translation-button");
     checkButton.className += " ready";
 }
-function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
+async function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
@@ -174,8 +174,18 @@ function translatePage(apikey, destlang, postTranslationReplace, preTranslationR
         console.debug('before googletranslate:', replacePreVerb);
         console.debug('before googletranslate do we need to translate:', toTranslate);
         if (toTranslate) {
-            let transtype="single";
-            googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
+            let pretrans = await findTransline(original);
+            // 07-05-2021 PSS added pretranslate in pages
+            if (pretrans == "notFound") {
+               let transtype="single";
+               googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
+            }
+            else {
+                console.debug('Pretranslated:', pretrans);
+                let translatedText = pretrans;
+                let textareaElem = e.querySelector("textarea.foreign-text");
+                textareaElem.innerText = translatedText;
+            }
             // 10-04-2021 PSS added translation of plural into translatePage
             
             let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
