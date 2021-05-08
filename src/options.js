@@ -228,7 +228,7 @@ function export_verbs_csv() {
          }
    // let header ="original,replace");
     let delimiter = ',';
-    let arrayHeader = ["original","replacement"];
+    let arrayHeader = ["original","translation", "country"];
     let header = arrayHeader.join(delimiter) + '\n';
        let csv = header;
        arrayData.forEach( obj => {

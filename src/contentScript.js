@@ -38,6 +38,30 @@ if (divPaging != null){
    divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
 }
 
+//07-05-2021 PSS added a new button on first page
+var exportButton = document.createElement("a");
+exportButton.href = "#";
+exportButton.className = "export_translation-button"
+exportButton.onclick = exportPageClicked;
+exportButton.innerText = "Export";
+var divPaging = document.querySelector("div.paging");
+if (divPaging != null){
+   divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
+}
+
+//07-05-2021 PSS added a new button on first page
+var importButton = document.createElement("input");
+importButton.href = "#";
+importButton.id = "ImportDb" ;
+importButton.type = "file";
+importButton.className = "import_translation-button"
+importButton.onclick = importPageClicked;
+importButton.innerText = "Import";
+var divPaging = document.querySelector("div.paging");
+if (divPaging != null){
+   divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+}
+
 function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
@@ -48,6 +72,7 @@ function translatePageClicked(event) {
                 translatePage(data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
             });
 }
+
 // Add translation button - end
 
 function checkPageClicked(event) {
@@ -60,7 +85,67 @@ function checkPageClicked(event) {
                 checkPage(data.postTranslationReplace);
             });
 }
-
+function exportPageClicked(event) {
+    event.preventDefault();
+    console.log("Exportpage clicked!");
+    res= dbExport();
+}
+// 08-05-2021 PSS added import of records into local database
+async function importPageClicked(event) {
+    //event.preventDefault();
+    var obj_csv = {
+        size:0,
+        dataFile:[]
+            };
+        
+    let input = document.getElementById('ImportDb');   
+    console.log("Importpage clicked!", input);
+    input.addEventListener('change', function () {   
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+                reader.readAsBinaryString(input.files[0]);
+            reader.onload = function (e) {
+            console.log(e);
+            obj_csv.size = e.total;
+            obj_csv.dataFile = e.target.result
+            //console.log(obj_csv.dataFile)
+            //File is imported to process it
+            parseDataBase(obj_csv.dataFile)               
+            }
+           }
+        });
+    // Create an input element    
+    //res= dbImport(event);
+}
+async function parseDataBase(data){
+    let csvData = [];
+    let lbreak = data.split("\n");
+    let counter= 0;
+    // To make sure we can manipulate the data store it into an array
+    lbreak.forEach(res => {
+        csvData.push(res.split(","));
+        ++counter;
+        //console.debug("counter:",counter);
+    });
+    if (counter >0){
+        //console.debug('data:',csvData);
+        var arrayLength = csvData.length;
+         for (var i = 0; i < arrayLength; i++) {
+        if (i > 1){
+            // Store it into the database
+            //console.log(csvData[i][0],csvData[i][1],csvData[i][2]);
+            //Prevent adding empty line
+            if (csvData[i][0] != ''){
+               res= await addTransDb(csvData[i][0],csvData[i][1],csvData[i][2]);
+               console.debug('parseDataBase:',res);
+            }
+        }
+    }
+        
+    }
+    //console.table(csvData);
+    alert('Import ready');
+}
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
     , 'glossaryD', 'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI'

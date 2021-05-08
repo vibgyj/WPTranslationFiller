@@ -49,6 +49,7 @@ async function addTransDb(source,translation,country) {
 	count = await countTransline(source);
 	console.debug('Result after count:',count);
 	if (count =='0') {
+        reslt = "Inserted";
         var transl = {source,translation,country};
         try {
            var noOfDataInserted = await jsstoreCon.insert({
@@ -57,20 +58,26 @@ async function addTransDb(source,translation,country) {
            });
 		   console.debug('Result insert:',noOfDataInserted);
         if (noOfDataInserted === 1) {
-			alert("Record added");
+          reslt ="Inserted";
+          console.debug('addTransDb record added');
+			//alert("Record added");
         }
 		else if (noOfDataInserted != 1){
 			alert("Record not added!!");
+      reslt="Record not added";
 		}
     } catch (ex) {
         alert(ex.message);
        }
 	}
 	else{
-		res = updateTransDb(source,translation,country);
-		console.debug('Record present so update it',res);
-		alert("Record updated!!");
+		updateTransDb(source,translation,country);
+		console.debug('addTransDb record present so update it',res);
+		//alert("Record updated!!");
+    reslt="updated";
+    console.debug('addTransDb record present so update it',reslt);
 	}
+  return reslt;
 }
 
 async function updateTransDb(orig,trans,cntry) {
@@ -153,11 +160,60 @@ async function addTransline(rowId){
          console.debug('Translated text to add to database:',addTrans);
          console.debug('Original text to add to database:',orig);
          console.debug("addTransline Language:",language);
-		     addTransDb(orig,addTrans,language);
+		     var res = addTransDb(orig,addTrans,language);
+         alert("addTransline record added/updated to database ");
       }
     });
     return;
 }
+async function dbExport(){
+  //alert("database export");
+  const trans = await jsstoreCon.select({
+    from: "Translation"
+  });
+    destlang ='nl';
+    let export_file = 'export_database_' +destlang +'.csv'
+    let arrayData  = [] 
+    i = 1;
+    trans.forEach(function (trans) {
+    console.debug('results:',trans.source,trans.translation,trans.country);
+    arrayData[i] = { original : trans.source, translation : trans.translation, country : trans.country};
+    i++; 
+  });    
+  let delimiter = ',';
+    let arrayHeader = ["original","translation", "country"];
+    let header = arrayHeader.join(delimiter) + '\n';
+       let csv = header;
+       arrayData.forEach( obj => {
+           let row = [];
+           for (key in obj) {
+               if (obj.hasOwnProperty(key)) {
+                   row.push(obj[key]);
+               }
+           }
+           csv += row.join(delimiter)+"\n";
+       });
+
+       let csvData = new Blob([csv], { type: 'text/csv' });  
+       let csvUrl = URL.createObjectURL(csvData);
+
+       let hiddenElement = document.createElement('a');
+       hiddenElement.href = csvUrl;
+       hiddenElement.target = '_blank';
+       hiddenElement.download = export_file;
+       hiddenElement.click();
+       alert('Export database ready');
+
+}
+async function dbImport(event){
+  
+
+    
+  alert("database import");
+  return;
+}
+
+
 
 async function tryPersistWithoutPromtingUser() {
   if (!navigator.storage || !navigator.storage.persisted) {
