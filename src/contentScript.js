@@ -20,7 +20,7 @@ if (el != null){
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
-translateButton.className = "translation-filler-button"
+translateButton.className = "translation-filler-button";
 translateButton.onclick = translatePageClicked;
 translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
@@ -30,7 +30,7 @@ if (divPaging != null){
 //23-03-2021 PSS added a new button on first page
 var checkButton = document.createElement("a");
 checkButton.href = "#";
-checkButton.className = "check_translation-button"
+checkButton.className = "check_translation-button";
 checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
 var divPaging = document.querySelector("div.paging");
@@ -41,7 +41,7 @@ if (divPaging != null){
 //07-05-2021 PSS added a new button on first page
 var exportButton = document.createElement("a");
 exportButton.href = "#";
-exportButton.className = "export_translation-button"
+exportButton.className = "export_translation-button";
 exportButton.onclick = exportPageClicked;
 exportButton.innerText = "Export";
 var divPaging = document.querySelector("div.paging");
@@ -54,7 +54,7 @@ var importButton = document.createElement("input");
 importButton.href = "#";
 importButton.id = "ImportDb" ;
 importButton.type = "file";
-importButton.className = "import_translation-button"
+importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
 var divPaging = document.querySelector("div.paging");
@@ -85,10 +85,12 @@ function checkPageClicked(event) {
                 checkPage(data.postTranslationReplace);
             });
 }
+
 function exportPageClicked(event) {
     event.preventDefault();
     console.log("Exportpage clicked!");
     res= dbExport();
+    
 }
 // 08-05-2021 PSS added import of records into local database
 async function importPageClicked(event) {
@@ -107,11 +109,11 @@ async function importPageClicked(event) {
             reader.onload = function (e) {
             console.log(e);
             obj_csv.size = e.total;
-            obj_csv.dataFile = e.target.result
+            obj_csv.dataFile = e.target.result;
             //console.log(obj_csv.dataFile)
             //File is imported to process it
-            parseDataBase(obj_csv.dataFile)               
-            }
+            parseDataBase(obj_csv.dataFile);           
+            };
            }
         });
     // Create an input element    
@@ -203,7 +205,7 @@ function addTranslateButtons() {
         let translateButton = document.createElement("my-button");
         //console.debug('addTranslateButtons rowId:',rowId);
         translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-entry-my-button"
+        translateButton.className = "translation-entry-my-button";
         translateButton.onclick = translateEntryClicked;
         translateButton.innerText = "Translate";
         panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
@@ -212,7 +214,7 @@ function addTranslateButtons() {
         let addTranslateButton = document.createElement("my-button");
         //console.debug('addTranslateButtons rowId:',rowId);
         addTranslateButton.id = `translate-${rowId}`;
-        addTranslateButton.className = "addtranslation-entry-my-button"
+        addTranslateButton.className = "addtranslation-entry-my-button";
         addTranslateButton.onclick = addtranslateEntryClicked;
         addTranslateButton.innerText = "Add Translation";
         panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
@@ -258,7 +260,7 @@ function checkbuttonClick(event){
             //console.debug('panelheader actions:',panelHeaderActions);
             let translateButton = document.createElement("button");
             translateButton.id = `translate-${rowId}`;
-            translateButton.className = "translation-entry-button"
+            translateButton.className = "translation-entry-button";
             translateButton.onclick = translateEntryClicked;
             translateButton.innerText = "Translate";
             result = panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);

@@ -202,6 +202,8 @@ async function dbExport(){
        hiddenElement.target = '_blank';
        hiddenElement.download = export_file;
        hiddenElement.click();
+       let exportButton = document.querySelector(".paging a.export_translation-button");
+       exportButton.className += " ready";
        alert('Export database ready');
 
 }

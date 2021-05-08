@@ -25,7 +25,7 @@ button.addEventListener('click', function () {
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
 
-    console.log('Options: ', apikey, destlang, postTranslation,preTranslation);
+    console.debug('Options: ', apikey, destlang, postTranslation,preTranslation);
 
     chrome.storage.sync.set({
         apikey: apikey,
@@ -33,7 +33,7 @@ button.addEventListener('click', function () {
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation
     });
-    console.log('Options loaded: ', apikey, destlang, postTranslation,preTranslation);
+    console.debug('Options loaded: ', apikey, destlang, postTranslation,preTranslation);
  
     if (glossaryFile.value !== "") {
         console.debug('Options: ', glossaryFile);
@@ -102,9 +102,9 @@ let glossaryZ = [];
 
 file.addEventListener('change', function () {
     var file = this.files[0];
-
+    var entry = "";
     var reader = new FileReader();
-    reader.onload = function (progressEvent) {
+    reader.onload = function () {
         var lines = this.result.split('\n');
         // don't read first(header) and last(empty) lines
         for (var line = 1; line < lines.length - 1; line++) {
@@ -113,7 +113,9 @@ file.addEventListener('change', function () {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
                 let value = entry[1].split('/');
                 for (let val in value) {
-                    value[val] = value[val].replaceAll("\"", "").trim();
+                    if (value !=""){
+                       value[val] = value[val].replaceAll("\"", "").trim();
+                    }
                 }
 
                 let startChar = key.substring(0, 1);
@@ -209,8 +211,8 @@ file.addEventListener('change', function () {
 
 function pushToGlossary(glossary, key, value) {
     for (var i in glossary) {
-        if (glossary[i]["key"] == key) {
-            glossary[i]["value"] = glossary[i]["value"].concat(value);
+        if (glossary[i].key == key) {
+            glossary[i].value = glossary[i].value.concat(value);
             return;
         }
     }
@@ -219,10 +221,10 @@ function pushToGlossary(glossary, key, value) {
 function export_verbs_csv() {
     console.debug("Export started:");
     // 13-03-2021 PSS added locale to export filename
-    destlang = destLangTextbox.value;
-    let export_file = 'export_verbs_' +destlang +'.csv'
+    var destlang = destLangTextbox.value;
+    let export_file = 'export_verbs_' +destlang +'.csv';
     setPostTranslationReplace(verbsTextbox.value);
-    let arrayData  = []  
+    let arrayData  = [];  
     for (let i = 0; i < replaceVerb.length; i++) {
           arrayData[i] = { original : replaceVerb[i][0], replacement :  replaceVerb[i][1]};
          }
@@ -233,7 +235,7 @@ function export_verbs_csv() {
        let csv = header;
        arrayData.forEach( obj => {
            let row = [];
-           for (key in obj) {
+           for (var key in obj) {
                if (obj.hasOwnProperty(key)) {
                    row.push(obj[key]);
                }
@@ -277,11 +279,11 @@ if (input.files && input.files[0]) {
     reader.onload = function (e) {
     console.log(e);
     obj_csv.size = e.total;
-    obj_csv.dataFile = e.target.result
+    obj_csv.dataFile = e.target.result;
     //console.log(obj_csv.dataFile)
     document.getElementById('text_verbs').value = "";
-    parseData(obj_csv.dataFile)               
-    }
+    parseData(obj_csv.dataFile);             
+    };
    }
 });
      
