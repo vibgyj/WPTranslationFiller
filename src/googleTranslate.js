@@ -384,12 +384,14 @@ function preProcessOriginal(original, preverbs) {
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed) {
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     console.debug("after processPLaceholderSpaces",translatedText);
+    // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
+    translatedText = translatedText.replaceAll('  ]', ']');
+                                                  
     // This section replaces the placeholders so they become html entities
     const matches = original.matchAll(placeHolderRegex);
     let index = 0;
     for (const match of matches) {
         translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
-        console.debug('postProcess matches found :', match[0]);
         index++;
     }
     
