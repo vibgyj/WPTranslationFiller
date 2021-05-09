@@ -12,6 +12,10 @@ else{
 }
 console.debug("jsStore opened:",jsstoreCon);
 
+//09-05-2021 PSS added fileselector for silent selection of file
+var fileSelector = document.createElement('input');
+fileSelector.setAttribute('type', 'file');
+
 // PSS added this one to be able to see if the Details button is clicked
 const el = document.getElementById("translations");
 if (el != null){
@@ -49,11 +53,13 @@ if (divPaging != null){
    divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
 }
 
+
 //07-05-2021 PSS added a new button on first page
-var importButton = document.createElement("input");
+var importButton = document.createElement("a");
 importButton.href = "#";
-importButton.id = "ImportDb" ;
-importButton.type = "file";
+importButton.id = "ImportDb";
+//importButton.type = "file";
+//importButton.style="display: none";
 importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
@@ -61,6 +67,7 @@ var divPaging = document.querySelector("div.paging");
 if (divPaging != null){
    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
+
 
 function translatePageClicked(event) {
     event.preventDefault();
@@ -93,32 +100,47 @@ function exportPageClicked(event) {
     
 }
 // 08-05-2021 PSS added import of records into local database
-async function importPageClicked(event) {
-    //event.preventDefault();
-    var obj_csv = {
-        size:0,
-        dataFile:[]
-            };
+async function importPageClicked(event) { 
+    
+    fileSelector.click();
+    fileSelector.addEventListener('change', (event) => {   
+       fileList = event.target.files;
+       console.debug("filelist:",fileList);
+       const file = fileList[0];
+       var obj_csv = {
+       size:0,
+       dataFile:[]
+          };
         
-    let input = document.getElementById('ImportDb');   
-    console.log("Importpage clicked!", input);
-    input.addEventListener('change', function () {   
-        if (input.files && input.files[0]) {
-            let reader = new FileReader();
-                reader.readAsBinaryString(input.files[0]);
-            reader.onload = function (e) {
-            console.log(e);
-            obj_csv.size = e.total;
-            obj_csv.dataFile = e.target.result;
-            //console.log(obj_csv.dataFile)
-            //File is imported to process it
-            parseDataBase(obj_csv.dataFile);           
-            };
+        console.debug("File extension:",file.type);
+        console.log("Importpage clicked!", fileList[0].name);
+        // 09-05-2021 PSS added check for proper import type
+        if (file.type == "application/vnd.ms-excel"){ 
+           if (fileList[0]) {
+              let reader = new FileReader();
+              reader.readAsBinaryString(fileList[0]);
+              reader.onload = function (e) {
+              console.log("functions started:",e);
+              obj_csv.size = e.total;
+              obj_csv.dataFile = e.target.result;
+              //console.log(obj_csv.dataFile)
+              //File is imported so process it
+              parseDataBase(obj_csv.dataFile); 
+              let importButton = document.querySelector(".paging a.import_translation-button");
+              importButton.className += " ready";
+              alert('Import ready');          
            }
-        });
-    // Create an input element    
-    //res= dbImport(event);
+        }
+       
+    }
+    else {
+        // File is wrong type so do not process it
+        alert("File is not csv!!");
+    }
+    }); 
+   
 }
+    
 async function parseDataBase(data){
     let csvData = [];
     let lbreak = data.split("\n");
@@ -135,7 +157,6 @@ async function parseDataBase(data){
          for (var i = 0; i < arrayLength; i++) {
         if (i > 1){
             // Store it into the database
-            //console.log(csvData[i][0],csvData[i][1],csvData[i][2]);
             //Prevent adding empty line
             if (csvData[i][0] != ''){
                res= await addTransDb(csvData[i][0],csvData[i][1],csvData[i][2]);
@@ -145,8 +166,6 @@ async function parseDataBase(data){
     }
         
     }
-    //console.table(csvData);
-    alert('Import ready');
 }
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'

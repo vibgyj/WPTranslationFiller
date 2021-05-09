@@ -1,0 +1,18 @@
+<html>
+<h2>button to upload</h2>
+<script>
+var fileSelector = document.createElement('input');
+fileSelector.setAttribute('type', 'file');
+
+var selectDialogueLink = document.createElement('a');
+selectDialogueLink.setAttribute('href', '');
+selectDialogueLink.innerText = "Select File";
+
+selectDialogueLink.onclick = function () {
+     fileSelector.click();
+     return false;
+}
+
+document.body.appendChild(selectDialogueLink);
+</script>
+</html>

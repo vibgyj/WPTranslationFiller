@@ -1,7 +1,6 @@
 res=initStoragePersistence();
 console.debug('Is database persistent:',res);
 
-
 async function initDb() {
     var isDbCreated = await jsstoreCon.initDb(getDbSchema());
     if (isDbCreated) {
@@ -207,15 +206,6 @@ async function dbExport(){
        alert('Export database ready');
 
 }
-async function dbImport(event){
-  
-
-    
-  alert("database import");
-  return;
-}
-
-
 
 async function tryPersistWithoutPromtingUser() {
   if (!navigator.storage || !navigator.storage.persisted) {
