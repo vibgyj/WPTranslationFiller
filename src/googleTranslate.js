@@ -185,6 +185,13 @@ async function translatePage(apikey, destlang, postTranslationReplace, preTransl
                 let translatedText = pretrans;
                 let textareaElem = e.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
+                // PSS 10-05-2021 added populating the preview field issue #68
+               let g = document.querySelector('td.translation');
+               let previewElem = g.innerText; 
+               console.debug('Text preview:',previewElem,row);
+               let preview =  document.querySelector('#preview-'+row+' td.translation');
+               preview.innerText = translatedText;
+                document.getElementById('translate-' + row).checked = true;
             }
             // 10-04-2021 PSS added translation of plural into translatePage
             
@@ -239,6 +246,7 @@ async function translateEntry(rowId, apikey, destlang, postTranslationReplace, p
         }
         else {
             console.debug('Pretranslated:', pretrans);
+            document.getElementById('translate-' + rowId).checked = true;
             let translatedText = pretrans;
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;
