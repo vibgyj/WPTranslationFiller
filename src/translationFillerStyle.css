@@ -326,5 +326,19 @@
 
 
 
-
-
+.addtranslation-entry-my-checkbox{
+  display: inline-block;
+  vertical-align: middle;
+  width: 25px;
+  height: 25px;
+  padding-left: 35px;
+  margin-top: 5px;
+  margin-bottom: 12px;
+  
+  font-size: 22px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+}

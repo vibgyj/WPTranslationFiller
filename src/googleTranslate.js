@@ -191,7 +191,8 @@ async function translatePage(apikey, destlang, postTranslationReplace, preTransl
                console.debug('Text preview:',previewElem,row);
                let preview =  document.querySelector('#preview-'+row+' td.translation');
                preview.innerText = translatedText;
-                document.getElementById('translate-' + row).checked = true;
+               document.getElementById('translate-' + row).checked = true;
+               document.getElementById('translate-' + row).disabled = true;
             }
             // 10-04-2021 PSS added translation of plural into translatePage
             
@@ -243,10 +244,13 @@ async function translateEntry(rowId, apikey, destlang, postTranslationReplace, p
         if (pretrans == "notFound") {
             let transtype = 'single';
             googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
+            document.getElementById('translate-' + rowId).checked = false;
         }
         else {
             console.debug('Pretranslated:', pretrans);
             document.getElementById('translate-' + rowId).checked = true;
+            document.getElementById('translate-' + rowId).disabled = true;
+            
             let translatedText = pretrans;
             let textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = translatedText;

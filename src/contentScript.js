@@ -238,10 +238,14 @@ function addTranslateButtons() {
         addTranslateButton.innerText = "Add Translation";
         panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
 
-        let transPresent = document.createElement("INPUT");
+        let transPresent = document.createElement("input");
         transPresent.id = `translate-${rowId}`;
         transPresent.className = "addtranslation-entry-my-checkbox";
         transPresent.setAttribute("type", "checkbox");
+        transPresent.disabled = "true";
+        //document.getElementById('translate-' + rowId).disabled = true;
+
+
         panelHeaderActions.insertBefore(transPresent, panelHeaderActions.childNodes[0]);
         
     }
