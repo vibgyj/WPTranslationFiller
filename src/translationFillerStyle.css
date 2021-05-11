@@ -326,19 +326,19 @@
 
 
 
-.addtranslation-entry-my-checkbox{
-  display: inline-block;
-  vertical-align: middle;
-  width: 25px;
-  height: 25px;
-  padding-left: 35px;
-  margin-top: 5px;
-  margin-bottom: 12px;
-  
-  font-size: 22px;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  
+.translocal-entry-local-button {
+    display: inline-block;
+    vertical-align: middle;
+    background: darkcyan;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom : 10px;
+    height: 28px;
+    font: normal 16px/1 'dashicons';
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }

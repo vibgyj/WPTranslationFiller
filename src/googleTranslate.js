@@ -177,8 +177,9 @@ async function translatePage(apikey, destlang, postTranslationReplace, preTransl
             let pretrans = await findTransline(original);
             // 07-05-2021 PSS added pretranslate in pages
             if (pretrans == "notFound") {
-               let transtype="single";
-               googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
+                let transtype = "single";
+                document.getElementById("translate-" + row).style.visibility = 'hide';
+                googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
             }
             else {
                 console.debug('Pretranslated:', pretrans);
@@ -191,8 +192,7 @@ async function translatePage(apikey, destlang, postTranslationReplace, preTransl
                console.debug('Text preview:',previewElem,row);
                let preview =  document.querySelector('#preview-'+row+' td.translation');
                preview.innerText = translatedText;
-               document.getElementById('translate-' + row).checked = true;
-               document.getElementById('translate-' + row).disabled = true;
+                document.getElementById("translate-" + row).style.visibility = 'visible';
             }
             // 10-04-2021 PSS added translation of plural into translatePage
             
@@ -244,12 +244,16 @@ async function translateEntry(rowId, apikey, destlang, postTranslationReplace, p
         if (pretrans == "notFound") {
             let transtype = 'single';
             googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
-            document.getElementById('translate-' + rowId).checked = false;
+            document.getElementById("translate-" + rowId).style.visibility = 'hide';
         }
         else {
             console.debug('Pretranslated:', pretrans);
-            document.getElementById('translate-' + rowId).checked = true;
-            document.getElementById('translate-' + rowId).disabled = true;
+            //document.getElementById('translate-' + rowId).checked = true;
+            //document.getElementById('translate-' + rowId).disabled = true;
+            let zoeken = "translate-" + rowId + '.translocal-entry-my-button';
+            console.debug("zoek naar: " + zoeken);
+            document.getElementById("translate-" + rowId).style.visibility = 'visible';
+            
             
             let translatedText = pretrans;
             let textareaElem = e.querySelector("textarea.foreign-text");
