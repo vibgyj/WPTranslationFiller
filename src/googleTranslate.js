@@ -289,10 +289,10 @@ function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
     if (myArray == null) {
-        trntype = "text";
+        var trntype = "text";
     }
     else {
-        trntype = "html";
+        var trntype = "html";
     }
     console.debug("format type", trntype);
 
@@ -556,7 +556,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         //23-03-2021 PSS added another improvement to the end of the line 
                         foundorg= originalPreProcessed.search("[" + counter + "]");
                         console.debug('found at:', found);
-                        if (!(found === (originalPreProcessed.length) - 2)) {
+                        if (found != (originalPreProcessed.length) - 2) {
                             //if (foundorg===found){
                                repl = transval.substring(0, transval.length - 1);
                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
@@ -577,7 +577,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         found = translatedText.search("[" + counter + "]");
                         console.debug('found at:', found);
                         console.debug("length of line:", translatedText.length);
-                        if (!(found === (translatedText.length) - 2)) {
+                        if (found != (translatedText.length) - 2) {
                             console.debug('found at end of line:', found);
                             repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
