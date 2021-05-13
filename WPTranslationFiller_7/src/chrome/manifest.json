@@ -1,0 +1,39 @@
+{
+    "manifest_version": 2,
+    "name": "WordPress Translation Filler",
+    "version": "0.9.2",
+    "description": "Chrome extension to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
+    "content_security_policy":"script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js https://languagetool.org/*; object-src 'self'",
+    "background": {
+        "scripts": ["dropzone.js","jsstore.js","jsstore.worker.js"]
+        },
+    "permissions": [
+        "declarativeContent",
+        "storage",
+		"activeTab",
+		"tabs",
+        "https://translation.googleapis.com/*",
+		"https://translate.wordpress.org/*",
+		"https://api.languagetoolplus.com/*"
+    ],
+    "options_page": "options.html",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://translate.wordpress.org/*",
+                "https://cdnjs.cloudflare.com/*"
+            ],
+            "js": [
+                "jsstore.js",
+			    "jsstore.worker.js",
+			    "database.js",
+                "googleTranslate.js",
+                "dropzone.js",
+                "contentScript.js"
+            ],
+            "css": [
+                "translationFillerStyle.css"
+            ]
+        }
+    ]
+}
