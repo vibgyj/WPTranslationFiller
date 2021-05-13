@@ -1,0 +1,344 @@
+local.paging a.translation-filler-button {
+    background: blue;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.translation-filler-button:hover {
+    color: lightgray;
+}
+
+.paging a.translation-filler-button.translated {
+    background: green;
+}
+
+.paging a.translation-filler-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .translation-filler-button {
+    width: auto;
+    padding: 5px;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .translation-filler-button:focus {
+    color: white;
+}
+
+.panel-header-actions .translation-filler-button:hover {
+    background-color: blue;
+    color: lightgray;
+}
+
+.panel-header-actions .translation-filler-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .translation-filler-button.translated {
+    background-color: green;
+}
+
+.paging a.translation-filler-button {
+    background: blue;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.translation-filler-button:hover {
+    color: lightgray;
+}
+
+.paging a.translation-filler-button.translated {
+    background: green;
+}
+
+.paging a.translation-entry-my-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .translation-entry-my-button {
+    width: auto;
+    padding: 5px;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .translation-entry-my-button:focus {
+    color: white;
+}
+
+.panel-header-actions .translation-entry-my-button:hover {
+    background-color: blue;
+    color: lightgray;
+}
+
+.panel-header-actions .translation-entry-my-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .translation-entry-my-button.translated {
+    background-color: green;
+}
+
+
+.paging a.check_translation-button {
+    background: blue;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.check_translation-button {
+    color: lightgray;
+}
+
+.paging a.check_translation-button.ready {
+    background: green;
+}
+
+.paging a.check_translation-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .check_translation-button {
+    width: auto;
+    padding: 11x;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .check_translation-button:focus {
+    color: white;
+}
+
+.panel-header-actions .check_translation-button:hover {
+    background-color: blue;
+    color: lightgray;
+}
+
+.panel-header-actions .check_translation-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .check_translation-button.ready {
+    background-color: green;
+}
+
+
+
+.paging a.addtranslation-entry-my-button {
+    background: blue;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.addtranslation-entry-my-button {
+    color: lightgray;
+}
+
+.paging a.addtranslation-entry-my-button.ready {
+    background: green;
+}
+
+.paging a.addtranslation-entry-my-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions my-button{
+	margin:5px;
+}
+
+.panel-header-actions .addtranslation-entry-my-button {
+    width: auto;
+    padding: 5px;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .addtranslation-entry-my-button:focus {
+    color: white;
+}
+
+.panel-header-actions .addtranslation-entry-my-button:hover {
+    background-color: blue;
+    color: lightgray;
+}
+
+.panel-header-actions .addtranslation-entry-my-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .addtranslation-entry-my-button.ready {
+    background-color: green;
+}
+
+
+.paging a.export_translation-button {
+    background: darkcyan;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.export_translation-button {
+    color: lightgray;
+}
+
+.paging a.export_translation-button.ready {
+    background: green;
+}
+
+.paging a.export_translation-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .export_translation-button {
+    width: auto;
+    padding: 11x;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .export_translation-button:focus {
+    color: white;
+}
+
+.panel-header-actions .export_translation-button:hover {
+    background-color: blue;
+    color: lightgray;
+}
+
+.panel-header-actions .export_translation-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .export_translation-button.ready {
+    background-color: green;
+}
+
+.paging a.import_translation-button {
+    background: darkcyan;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.import_translation-button {
+    color: lightgray;
+}
+
+.paging a.import_translation-button.ready {
+    background: green;
+}
+
+.paging a.import_translation-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .import_translation-button {
+    width: auto;
+    padding: 11x;
+    background-color: blue;
+    color: white;
+}
+
+.panel-header-actions .import_translation-button:focus {
+    color: white;
+}
+
+.panel-header-actions .import_translation-button:hover {
+    background-color: blue;
+    color: lightgray;
+}
+
+.panel-header-actions .import_translation-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.panel-header-actions .import_translation-button.ready {
+    background-color: green;
+}
+
+
+
+.translocal-entry-local-button {
+    display: inline-block;
+    vertical-align: middle;
+    background: darkcyan;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom : 10px;
+    height: 28px;
+    font: normal 16px/1 'dashicons';
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
