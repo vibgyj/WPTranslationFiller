@@ -31,7 +31,7 @@ describe("Google translation - preProcessOriginal", function () {
         expect(preProcessOriginal("some random (%1$s) text (PHP %2$s) that failes", false)).toEqual("some random ([0]) text (PHP [1]) that failes");
         expect(preProcessOriginal("some %1$s random %2$s text %3$s to %4$s be %5$s in %6$s good %7$s order %8$s", false)).toEqual("some [0] random [1] text [2] to [3] be [4] in [5] good [6] order [7]");
         expect(preProcessOriginal("some %1$srandom%1$s text %1$sto%1$s be %1$sin%1$s good %1$sorder%1$s", false)).toEqual("some [0]random[1] text [2]to[3] be [4]in[5] good [6]order[7]");
-
+        expect(preProcessOriginal("No files yet. Do you want to %1$sscan your selected folders%3$s for new files or launch a %2$sbulk optimization%3$s directly?",false)).toEqual('No files yet. Do you want to [0]scan your selected folders[1] for new files or launch a [2]bulk optimization[3] directly?');
     });
 
     it("should replace placeholders in original html encoding", function () {

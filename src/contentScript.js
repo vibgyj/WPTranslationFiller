@@ -1,6 +1,9 @@
 console.log('Content script...');
+// PSS added this one to be able to see if the Details button is clicked
+const el = document.getElementById("translations");
+el.addEventListener("click", checkbuttonClick);
 
-// Add translate button - start
+//Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
 translateButton.className = "translation-filler-button"
@@ -8,6 +11,15 @@ translateButton.onclick = translatePageClicked;
 translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
 divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
+
+//23-03-2021 PSS added a new button on first page
+var checkButton = document.createElement("a");
+checkButton.href = "#";
+checkButton.className = "check_translation-button"
+checkButton.onclick = checkPageClicked;
+checkButton.innerText = "CheckPage";
+var divPaging = document.querySelector("div.paging");
+divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
 
 function translatePageClicked(event) {
     event.preventDefault();
@@ -20,6 +32,17 @@ function translatePageClicked(event) {
             });
 }
 // Add translation button - end
+
+function checkPageClicked(event) {
+    event.preventDefault();
+    console.log("Checkpage clicked!");
+    chrome.storage.sync
+        .get(
+            ['apikey', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            function (data) {
+                checkPage(data.postTranslationReplace);
+            });
+}
 
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
@@ -60,9 +83,10 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
             // to sory by descending order
             return b.key.length - a.key.length;
         });
-        console.log(glossary);
+        //console.log(glossary);
         addTranslateButtons();
         validatePage(data.destlang);
+        checkbuttonClick();
     });
 
 function loadSet(x, set) {
@@ -75,18 +99,47 @@ function addTranslateButtons() {
         let panelHeaderActions = e.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
         // Add translate button
         let translateButton = document.createElement("button");
+        //console.debug('addTranslateButtons rowId:',rowId);
         translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-filler-button"
+        translateButton.className = "translation-entry-button"
         translateButton.onclick = translateEntryClicked;
         translateButton.innerText = "Translate";
         panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
     }
 }
 
+// 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
+function checkbuttonClick(event){
+   event.preventDefault();
+   //console.debug('checkbuttonClick',event);
+   let action = event.target.textContent ;
+   //console.debug('action',action);
+   if (action == 'Details'){
+       //alert('you clicked me!!');
+       let rowId = event.target.parentElement.parentElement.getAttribute('row');
+       //console.debug('parentelement rowId: ',rowId); 
+       let translateButton = document.querySelector(`#translate-${rowId}`);
+       console.debug('Translatebutton:',translateButton);
+       if (translateButton=== null){
+        //alert('No translate button!!');
+        let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
+        //console.debug('panelheader actions:',panelHeaderActions);
+        let translateButton = document.createElement("button");
+        translateButton.id = `translate-${rowId}`;
+        translateButton.className = "translation-entry-button"
+        translateButton.onclick = translateEntryClicked;
+        translateButton.innerText = "Translate";
+        result = panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+        
+       }
+   }
+}
+
 function translateEntryClicked(event) {
     event.preventDefault();
     console.log("Translate Entry clicked!", event);
     let rowId = event.target.id.split('-')[1];
+    console.log("Translate Entry clicked rowId", rowId);
     let myrowId = event.target.id.split('-')[2];
     //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
     // So that needs to be added to the base rowId to find it
@@ -149,6 +202,10 @@ function updateElementStyle(priorityElem, result) {
         priorityElem.style.backgroundColor = 'yellow';
     else if (result.percent > 33)
         priorityElem.style.backgroundColor = 'orange';
+        
+    else if (result.percent == 10)
+        priorityElem.style.backgroundColor = 'purple';	
+		    
     else
         priorityElem.style.backgroundColor = 'red';
 
@@ -198,7 +255,14 @@ function validate(language, original, translation) {
         foundCount = 0;
         wordCount  = 0;
          }
-    let percent = foundCount * 100 / wordCount;
+    // 27-03-2021 PSS added this to prevent devision by zero      
+    if (wordCount !=0){
+       percent = foundCount * 100 / wordCount;
+       }
+    else {  
+       console.debug('Validate found no wordCount!');  
+       percent = 0;    
+       }
     console.log("Percent calculation:", wordCount, foundCount, percent);
 
     return { wordCount, percent, toolTip };
