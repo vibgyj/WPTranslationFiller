@@ -13,11 +13,12 @@
     },
     "permissions": [
         "storage",
-		"activeTab",
-		"tabs",
+		    "activeTab",
+		    "tabs",
         "https://translation.googleapis.com/*",
-		"https://translate.wordpress.org/*",
-		"https://api.languagetoolplus.com/*"
+        "https://api.deepl.com/*",
+		    "https://translate.wordpress.org/*",
+		    "https://api.languagetoolplus.com/*"
          ],
         "content_scripts": [
         {

@@ -15,7 +15,6 @@
                 "https://translate.wordpress.org/*"
             ],
             "js": [
-                "dexie.min.js",
                 "googleTranslate.js",
                 "contentScript.js"
             ],

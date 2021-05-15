@@ -180,7 +180,12 @@ async function translatePage(apikey, apikeyDeepl,transSelect,destlang, postTrans
             if (pretrans == "notFound") {
                 let transtype = "single";
                 document.getElementById("translate-" + row).style.visibility = 'hide';
-                googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
+                if (transSelect = "google") {
+                    googleTranslate(original, destlang, e, apikey, replacePreVerb, row, transtype);
+                }
+                else if (transSelect == "deepl") {
+                    deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                }
             }
             else {
                 console.debug('Pretranslated:', pretrans);
@@ -202,9 +207,14 @@ async function translatePage(apikey, apikeyDeepl,transSelect,destlang, postTrans
             console.debug("translatePage checkplural:",checkplural);
             if (checkplural != null) {
               let plural = checkplural.innerText;
-              transtype="plural";
-              translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,row,transtype);
-              console.debug('translatePage checkplural:', translatedText);
+                transtype = "plural";
+                if (transSelect == "google") {
+                    translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
+                    console.debug('translatePage checkplural:', translatedText);
+                }
+                else if (transSelect == "deepl") {
+                    deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                }
             }
         }   
         else {
@@ -284,7 +294,7 @@ async function translateEntry(rowId, apikey,apikeyDeepl,transSelect, destlang, p
             translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, rowId, transtype);
         }
         else if (transSelect == "deepl") {
-            deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+            translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
         }
         console.debug('checkplural:', translatedText);
     }
@@ -299,7 +309,8 @@ async function translateEntry(rowId, apikey,apikeyDeepl,transSelect, destlang, p
 }
 
 function deepLTranslate(original, destlang, e, apikeyDeepl, preverbs, rowId, transtype) {
-    let originalPreProcessed = preProcessOriginal(original, preverbs);
+    let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
+    console.debug('deeplTranslate result of preProcessOriginal:', originalPreProcessed);
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
     if (myArray == null) {
@@ -308,24 +319,17 @@ function deepLTranslate(original, destlang, e, apikeyDeepl, preverbs, rowId, tra
     else {
         var trntype = "html";
     }
-    let requestBody = {
-        "q": originalPreProcessed,
-        "source": "en",
-        "target": destlang,
-        "format": trntype
-    };
+   
     console.debug("deepLTranslate format type", trntype);
-    //res = POST "api.deepl.com/v2/translate?auth_key=e6a3c2a1-af47-41e3-7df8-7e92cd1d5e8d&text=original&target_lang=NL";
-    translatedText = sendAPIRequest(e, destlang, apikeyDeepl, requestBody, original, originalPreProcessed, rowId, transtype); 
+    translatedText = sendAPIRequestDeepl(e, destlang, apikeyDeepl, original, originalPreProcessed, rowId, transtype); 
 
-    //res = https://api.deepl.com/v2/translate?auth_key=e6a3c2a1-af47-41e3-7df8-7e92cd1d5e8d&text='+original+'&source_lang=en&target_lang=nl&preserve_formatting=1&split_sentences=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines';
-    console.debug('result deepl:', res);
+    console.debug('result deepl:', translatedText);
     //translatedText = original;
     //textareaElem = e.querySelector("textarea.foreign-text");
     //textareaElem.innerText = translatedText;
 }
 function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype) {
-    let originalPreProcessed = preProcessOriginal(original, preverbs);
+    let originalPreProcessed = preProcessOriginal(original, preverbs,'google');
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
@@ -349,6 +353,78 @@ function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype
     console.debug('after sendAPIRequest:',translatedText,transtype);
 }
 
+function sendAPIRequestDeepl(e, language, apikey, original, originalPreProcessed, rowId, transtype) {
+    console.debug('sendAPIreQuest original_line:', originalPreProcessed);
+    xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        
+        console.debug("Deepl translation:", this.response);
+        responseObj = this.response;
+        
+        console.debug("Deepl ready state:", this.readyState);
+        if (this.readyState == 4) {
+            //responseObj = xhttp.response;
+            responseObj = this.response;
+            //alert(responseObj.translations[0].text);
+            translatedText = responseObj.translations[0].text;
+            console.debug("inside:", translatedText);
+            //let responseObj = JSON.parse(this.translations);
+            //let translatedText = responseObj.data.translations[0].translatedText;
+            console.debug('sendAPIRequest result before postProces:', translatedText);
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed,"deepl");
+            console.debug('sendAPIRequest translatedText after postProces:', translatedText);
+            if (transtype == "single") {
+                textareaElem = e.querySelector("textarea.foreign-text");
+                textareaElem.innerText = translatedText;
+                // PSS 13-04-2021 added populating the preview field issue #64
+                let g = document.querySelector('td.translation');
+                let previewElem = g.innerText;
+                console.debug('Text preview:', previewElem, rowId);
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                preview.innerText = translatedText;
+                // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                textareaElem.value = translatedText;
+                //PSS 25-03-2021 Fixed problem with description box issue #13
+                textareaElem.style.height = 'auto';
+                textareaElem.style.height = textareaElem.scrollHeight + 'px';
+                // PSS 13-04-2021 removed the line below as it clears the content if you edit after use of translate button
+                // textareaElem.style.overflow = 'auto' ;
+            }
+            else {
+                // PSS 09-04-2021 added populating plural text
+                console.debug('Row plural:', rowId);
+                textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                textareaElem1.innerText = translatedText;
+                console.debug("plural newtext:", textareaElem1.innerText);
+                textareaElem1.value = translatedText;
+            }
+            validateEntry(language, textareaElem);
+
+        }
+        // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
+        else {
+            console.debug("issue with licence:", this.status);
+            if (this.readyState == 4 && this.status == 400) {
+                alert("Error in translation received status 400, maybe a license problem");
+            }
+            else if (this.readyState == 2 && this.status == 403) {
+                alert("Error in translation received status 403, authorisation refused");
+            }
+        }
+    };
+    
+    
+    //let xhttp = new XMLHttpRequest();
+    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikey + "&text=" + originalPreProcessed +"&target_lang=NL&preserve_formatting=1&split_sentences=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+    xhttp.responseType = 'json';
+    xhttp.send();
+   
+    xhttp.onload = function () {
+       let responseObj = xhttp.response;
+    };
+
+}
+
 
 function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed,rowId,transtype) {
     console.debug('sendAPIreQuest original_line:', originalPreProcessed);
@@ -357,8 +433,8 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
         if (this.readyState == 4 && this.status == 200) {
             let responseObj = JSON.parse(this.responseText);
             let translatedText = responseObj.data.translations[0].translatedText;
-            console.debug('sendAPIRequest result before postProces:',translatedText);
-            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
+            console.debug('sendAPIRequest result before postProces:', translatedText);
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google");
             console.debug('sendAPIRequest translatedText after postProces:',translatedText);
             if (transtype == "single"){
                textareaElem = e.querySelector("textarea.foreign-text");
@@ -417,41 +493,65 @@ function isStartsWithUpperCase(str) {
 }
 
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&\w{2,6};|%\w*%/gi);
-function preProcessOriginal(original, preverbs) {
+function preProcessOriginal(original, preverbs,translator) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
     }
-    const matches = original.matchAll(placeHolderRegex);
-    let index = 0;
-    for (const match of matches) {
-        original = original.replace(match[0], `[${index}]`);
+    // 15-05-2021 PSS added check for translator
+    if (translator == 'google') {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            original = original.replace(match[0], `[${index}]`);
 
-        index++;
+            index++;
+        }
+        if (index === 0) {
+            console.debug("preProcessOriginal no placeholders found index === 0 ");
+        }
     }
-    if (index===0){
-        console.debug("preProcessOriginal no placeholders found index === 0 ");
-    }
+    else if (translator == 'deepl') {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            original = original.replace(match[0], `<x>${index}</x>`);
 
+            index++;
+        }
+        if (index === 0) {
+            console.debug("preProcessOriginal no placeholders found index === 0 ");
+        }
+    }
     console.debug("After pre-processing:", original);
     return original;
 }
 
 
-function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed) {
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed,translator) {
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     console.debug("after processPLaceholderSpaces",translatedText);
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll('  ]', ']');
                                                   
     // This section replaces the placeholders so they become html entities
-    const matches = original.matchAll(placeHolderRegex);
-    let index = 0;
-    for (const match of matches) {
-        translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
-        index++;
+    if (translator == "google") {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
+            index++;
+        }
     }
-    
+    else if (translator == "deepl") {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            translatedText = translatedText.replaceAll(`<x>${index}</x>`, match[0]);
+            index++;
+        }
+
+    }
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);

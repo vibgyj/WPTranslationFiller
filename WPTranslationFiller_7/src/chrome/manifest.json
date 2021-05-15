@@ -10,11 +10,12 @@
     "permissions": [
         "declarativeContent",
         "storage",
-		"activeTab",
-		"tabs",
+		    "activeTab",
+         "tabs",
+        "https://api.deepl.com/*",
         "https://translation.googleapis.com/*",
-		"https://translate.wordpress.org/*",
-		"https://api.languagetoolplus.com/*"
+		    "https://translate.wordpress.org/*",
+		    "https://api.languagetoolplus.com/*"
     ],
     "options_page": "options.html",
     "content_scripts": [
