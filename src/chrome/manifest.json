@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "WordPress Translation Filler",
-    "version": "0.9.2",
+    "version": "1.1.0",
     "description": "Chrome extension to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
     "content_security_policy":"script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js https://languagetool.org/*; object-src 'self'",
     "background": {
