@@ -304,33 +304,6 @@ function checkbuttonClick(event){
     }
 }
 
-// 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
-function checkbuttonClick(event){
-   event.preventDefault();
-   //console.debug('checkbuttonClick',event);
-   let action = event.target.textContent ;
-   //console.debug('action',action);
-   if (action == 'Details'){
-       //alert('you clicked me!!');
-       let rowId = event.target.parentElement.parentElement.getAttribute('row');
-       //console.debug('parentelement rowId: ',rowId); 
-       let translateButton = document.querySelector(`#translate-${rowId}`);
-       console.debug('Translatebutton:',translateButton);
-       if (translateButton=== null){
-        //alert('No translate button!!');
-        let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
-        //console.debug('panelheader actions:',panelHeaderActions);
-        let translateButton = document.createElement("button");
-        translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-entry-button"
-        translateButton.onclick = translateEntryClicked;
-        translateButton.innerText = "Translate";
-        result = panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
-        
-       }
-   }
-}
-
 function translateEntryClicked(event) {
     event.preventDefault();
     console.log("Translate Entry clicked!", event);
