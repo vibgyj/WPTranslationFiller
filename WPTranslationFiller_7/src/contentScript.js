@@ -224,7 +224,7 @@ function addTranslateButtons() {
         let translateButton = document.createElement("my-button");
         //console.debug('addTranslateButtons rowId:',rowId);
         translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-entry-my-button";
+        translateButton.className = "translation-entry-my-buttoncheckpage";
         translateButton.onclick = translateEntryClicked;
         translateButton.innerText = "Translate";
         panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);

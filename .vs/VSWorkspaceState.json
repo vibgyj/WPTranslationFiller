@@ -2,7 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\WPTranslationFiller_7",
-    "\\WPTranslationFiller_7\\src"
+    "\\WPTranslationFiller_7\\src",
+    "\\WPTranslationFiller_7\\src\\chrome"
   ],
   "SelectedNode": "\\WPTranslationFiller_7\\src\\googleTranslate.js",
   "PreviewInSolutionExplorer": false
