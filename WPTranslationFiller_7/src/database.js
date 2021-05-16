@@ -45,7 +45,7 @@ async function addTransDb(source,translation,country) {
 	console.debug('Add record:',source,translation,country);
 	//found = findTransline(source);
 	//console.debug('Result after find:',found);
-	count = await countTransline(source);
+	count = await countTransline(source,country);
 	console.debug('Result after count:',count);
 	if (count =='0') {
         reslt = "Inserted";
@@ -89,7 +89,8 @@ async function updateTransDb(orig,trans,cntry) {
                 country: transl.cntry             
             },
             where: {
-                source: transl.orig
+                source: transl.orig,
+                country :transl.cntry
             }
         });
         console.log(`data updated ${noOfDataUpdated}`);
@@ -99,25 +100,27 @@ async function updateTransDb(orig,trans,cntry) {
     }
 }
 
-async function countTransline(orig){
+async function countTransline(orig,cntry){
 console.debug("count started");
 const results = await jsstoreCon.count({
     from: "Translation",
     where: {
-        source: orig      
+        source: orig,
+        country: cntry
     }
 })
 console.debug("count amount:",results);
 return results;
 }
 
-async function findTransline(orig){
+async function findTransline(orig,cntry){
 	var trans = 'notFound';
-	console.debug("Find line started:",orig);
+	console.debug("Find line started:",orig,cntry);
 	const results = await jsstoreCon.select({
     from: "Translation",
     where: {
-        source: orig      
+        source: orig,
+        country: cntry
     }
 }).then((value) => {
   if (value !=""){	

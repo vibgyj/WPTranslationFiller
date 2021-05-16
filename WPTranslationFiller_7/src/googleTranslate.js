@@ -109,7 +109,7 @@ function checkComments(comment) {
 function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     console.debug("CheckPage:", postTranslationReplace.length);
-    // 15-05-2021 PSS added fix for issue #73
+    // 15-05-2021 PSS added fix for issue #73add
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
         let countreplaced = 0;
@@ -160,6 +160,7 @@ function checkPage(postTranslationReplace) {
 }
 async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTranslationReplace, preTranslationReplace) {
     // 15-05-2021 PSS added fix for issue #73
+    // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
     if (postTranslationReplace.length != 0) {
         if (preTranslationReplace != 0) {
             setPostTranslationReplace(postTranslationReplace);
@@ -187,16 +188,19 @@ async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTra
                 console.debug('before googletranslate:', replacePreVerb);
                 console.debug('before googletranslate do we need to translate:', toTranslate);
                 if (toTranslate) {
-                    let pretrans = await findTransline(original);
+                    let pretrans = await findTransline(original,destlang);
                     // 07-05-2021 PSS added pretranslate in pages
                     if (pretrans == "notFound") {
                         let transtype = "single";
-                        document.getElementById("translate-" + row).style.visibility = 'hide';
-                        if (transSelect = "google") {
+                        document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'hide';
+                        if (transSelect == "google") {
                             googleTranslate(original, destlang, e, apikey, replacePreVerb, row, transtype);
+                            console.debug("translatePage google translation:",original);
                         }
                         else if (transSelect == "deepl") {
-                            deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                            console.debug('translatePage apikey:', apikeyDeepl);
+                            deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
+                            console.debug("translatePage deepl translation:",original);
                         }
                     }
                     else {
@@ -210,7 +214,7 @@ async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTra
                         console.debug('Text preview:', previewElem, row);
                         let preview = document.querySelector('#preview-' + row + ' td.translation');
                         preview.innerText = translatedText;
-                        document.getElementById("translate-" + row).style.visibility = 'visible';
+                        document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
                     }
                     // 10-04-2021 PSS added translation of plural into translatePage
 
@@ -250,14 +254,15 @@ async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTra
     }
 }
 
-async function translateEntry(rowId, apikey,apikeyDeepl,transSelect, destlang, postTranslationReplace, preTranslationReplace) {
+async function translateEntry(rowId, apikey, apikeyDeepl, transSelect, destlang, postTranslationReplace, preTranslationReplace) {
+    //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     console.debug('translateEntry started!');
     // 15-05-2021 PSS added fix for issue #73
     if (postTranslationReplace.length != 0) {
         if (preTranslationReplace != 0) {
            setPostTranslationReplace(postTranslationReplace);
            setPreTranslationReplace(preTranslationReplace);
-           console.debug("Deepl:" , apikeyDeepl , "TransSelect:" , transSelect);
+           console.debug("Deepl:" , apikeyDeepl , "TransSelect:" , transSelect,"RowId:",rowId);
 
           let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
           console.debug('after document querySelector:', e);
@@ -273,7 +278,7 @@ async function translateEntry(rowId, apikey,apikeyDeepl,transSelect, destlang, p
             toTranslate = checkComments(comment);
            }
           if (toTranslate) {
-              let pretrans = await findTransline(original);
+              let pretrans = await findTransline(original,destlang);
               //let pretrans = await pretranslate(original);
               console.debug('pretranslate result:',pretrans);
               if (pretrans == "notFound") {
@@ -285,18 +290,19 @@ async function translateEntry(rowId, apikey,apikeyDeepl,transSelect, destlang, p
                       deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
                       console.debug('translatedEntry deepl translation:', translatedText);
                   }
-                  document.getElementById("translate-" + rowId).style.visibility = 'hide';
+                  document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'hide';
               }
               else {
                     console.debug('Pretranslated:', pretrans);
                     //document.getElementById('translate-' + rowId).checked = true;
                     //document.getElementById('translate-' + rowId).disabled = true;
-                    let zoeken = "translate-" + rowId + '.translocal-entry-my-button';
-                    console.debug("zoek naar: " + zoeken);
-                    document.getElementById("translate-" + rowId).style.visibility = 'visible';         
+                          
                     let translatedText = pretrans;
                     let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
+                    let zoeken = "translate-" + rowId + '"-translocal-entry-local-button';
+                    console.debug("zoek naar: " + zoeken);  
+                    document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'visible'; 
                     }
           }
           else {
@@ -325,7 +331,7 @@ async function translateEntry(rowId, apikey,apikeyDeepl,transSelect, destlang, p
            }
        
            // Translation completed
-           let translateButton = document.querySelector(`#translate-${rowId}.translation-entry-my-button`);
+           let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
            console.debug('translateButton entry:', translateButton);
             translateButton.className += " translated";
         }

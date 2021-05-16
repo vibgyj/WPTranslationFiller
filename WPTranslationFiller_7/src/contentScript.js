@@ -17,6 +17,7 @@ var fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');
 
 // PSS added this one to be able to see if the Details button is clicked
+// 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
 if (el != null){
   el.addEventListener("click", checkbuttonClick);
@@ -74,7 +75,7 @@ function translatePageClicked(event) {
     console.log("Translate clicked!");
     chrome.storage.sync
         .get(
-            ['apikey', ' apikeyDeepl' , 'transSelect', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            ['apikey', 'apikeyDeepl' , 'transSelect', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
             function (data) {
                 translatePage(data.apikey, data.apikeyDeepl, data.transSelect, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
             });
@@ -217,29 +218,30 @@ function loadSet(x, set) {
 }
 
 function addTranslateButtons() {
+    //16 - 06 - 2021 PSS fixed this function addTranslateButtons to prevent double buttons issue #74
     for (let e of document.querySelectorAll("tr.editor")) {
         let rowId = e.getAttribute('row');
         let panelHeaderActions = e.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
         // Add translate button
         let translateButton = document.createElement("my-button");
         //console.debug('addTranslateButtons rowId:',rowId);
-        translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-entry-my-buttoncheckpage";
+        translateButton.id = `translate-${rowId}-translation-entry-my-button`;
+        translateButton.className = "translation-entry-my-button";
         translateButton.onclick = translateEntryClicked;
         translateButton.innerText = "Translate";
         panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
 
         // Add addtranslate button
         let addTranslateButton = document.createElement("my-button");
-        //console.debug('addTranslateButtons rowId:',rowId);
-        addTranslateButton.id = `translate-${rowId}`;
+        console.debug('addTranslateButtons rowId:',rowId);
+        addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
         addTranslateButton.className = "addtranslation-entry-my-button";
         addTranslateButton.onclick = addtranslateEntryClicked;
         addTranslateButton.innerText = "Add Translation";
         panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
 
         let TranslocalButton = document.createElement("local-button");
-        TranslocalButton.id = `translate-${rowId}`;
+        TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
         TranslocalButton.className = "translocal-entry-local-button";
         TranslocalButton.innerText = "Local";
         TranslocalButton.style.visibility = 'hidden';
@@ -258,16 +260,17 @@ function addtranslateEntryClicked(event){
        let myrowId = event.target.id.split('-')[2];
        //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
        // So that needs to be added to the base rowId to find it
-       if (myrowId !== undefined) {
+       if (myrowId !== undefined && myrowId !="addtranslation") {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
-        console.debug('Line already translated new rowId:',rowId);
+        console.debug('Line already translated new rowId:'+ rowId);
        
        }
        addTransline(rowId); 
     }   
 }
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
+// 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 function checkbuttonClick(event){
    if (event != undefined){ 
       //event.preventDefault(); caused a problem within the single page enttry  
@@ -278,18 +281,24 @@ function checkbuttonClick(event){
          //alert('you clicked me!!');
          let rowId = event.target.parentElement.parentElement.getAttribute('row');
          //console.debug('parentelement rowId: ',rowId); 
-         let translateButton = document.querySelector(`#translate-${rowId}`);
+          let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
          console.debug('Translatebutton:',translateButton);
-         if (translateButton=== null){
+         if (translateButton == null){
             //alert('No translate button!!');
             let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
             //console.debug('panelheader actions:',panelHeaderActions);
             let translateButton = document.createElement("button");
-            translateButton.id = `translate-${rowId}`;
-            translateButton.className = "translation-entry-button";
+             translateButton.id = `translate-${rowId}-translation-entry-my-button`;
+            translateButton.className = "translation-entry-my-button";
             translateButton.onclick = translateEntryClicked;
             translateButton.innerText = "Translate";
             result = panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+            let TranslocalButton = document.createElement("local-button");
+            TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
+            TranslocalButton.className = "translocal-entry-local-button";
+            TranslocalButton.innerText = "Local";
+            TranslocalButton.style.visibility = 'hidden';
+            panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
             }
         }   
     }
@@ -303,7 +312,7 @@ function translateEntryClicked(event) {
     let myrowId = event.target.id.split('-')[2];
     //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
     // So that needs to be added to the base rowId to find it
-    if (myrowId !== undefined) {
+    if (myrowId != undefined && myrowId != 'translation') {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
         console.debug('Line already translated new rowId:',rowId);
