@@ -110,7 +110,7 @@ function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     console.debug("CheckPage:", postTranslationReplace.length);
     // 15-05-2021 PSS added fix for issue #73add
-    if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
+    //if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
         let countreplaced = 0;
         var translatedText;
@@ -153,20 +153,21 @@ function checkPage(postTranslationReplace) {
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
         checkButton.className += " ready";
-    }
-    else {
+    //}
+    //else {
         alert("Your postreplacement verbs is empty!!");
-    }
+      //  }
 }
-async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTranslationReplace, preTranslationReplace) {
+
+async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTranslationReplace, preTranslationReplace) {
     // 15-05-2021 PSS added fix for issue #73
     // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
-    if (postTranslationReplace.length != 0) {
-        if (preTranslationReplace != 0) {
+    if (typeof postTranslationReplace != 'undefined' && postTranslationReplace.length != 0) {
+        if (typeof preTranslationReplace != 'undefined' && preTranslationReplace.length != 0) {
             setPostTranslationReplace(postTranslationReplace);
             setPreTranslationReplace(preTranslationReplace);
 
-            console.debug("Deepl:" + apikeyDeepl + "TransSelect:" + transSelect);
+            console.debug("Deepl:" + apikeyDeepl + "Transsel:" + transsel);
             for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                 console.debug('translatePage content:', e);
                 let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
@@ -193,11 +194,11 @@ async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTra
                     if (pretrans == "notFound") {
                         let transtype = "single";
                         document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'hide';
-                        if (transSelect == "google") {
+                        if (transsel == "google") {
                             googleTranslate(original, destlang, e, apikey, replacePreVerb, row, transtype);
                             console.debug("translatePage google translation:",original);
                         }
-                        else if (transSelect == "deepl") {
+                        else if (transsel == "deepl") {
                             console.debug('translatePage apikey:', apikeyDeepl);
                             deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
                             console.debug("translatePage deepl translation:",original);
@@ -224,11 +225,11 @@ async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTra
                     if (checkplural != null) {
                         let plural = checkplural.innerText;
                         transtype = "plural";
-                        if (transSelect == "google") {
+                        if (transsel == "google") {
                             translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
                             console.debug('translatePage checkplural:', translatedText);
                         }
-                        else if (transSelect == "deepl") {
+                        else if (transsel == "deepl") {
                             deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
                         }
                     }
@@ -251,10 +252,11 @@ async function translatePage(apikey, apikeyDeepl, transSelect, destlang, postTra
     }
     else {
         alert("Your postreplace verbs are not populated add at least on line!!");
-    }
+        }
 }
 
-async function translateEntry(rowId, apikey, apikeyDeepl, transSelect, destlang, postTranslationReplace, preTranslationReplace) {
+
+async function translateEntry(rowId, apikey, apikeyDeepl, transsel, destlang, postTranslationReplace, preTranslationReplace) {
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     console.debug('translateEntry started!');
     // 15-05-2021 PSS added fix for issue #73
@@ -262,7 +264,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, transSelect, destlang,
         if (preTranslationReplace != 0) {
            setPostTranslationReplace(postTranslationReplace);
            setPreTranslationReplace(preTranslationReplace);
-           console.debug("Deepl:" , apikeyDeepl , "TransSelect:" , transSelect,"RowId:",rowId);
+           console.debug("Deepl:" , apikeyDeepl , "Transsel:" , transsel,"RowId:",rowId);
 
           let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
           console.debug('after document querySelector:', e);
@@ -283,10 +285,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, transSelect, destlang,
               console.debug('pretranslate result:',pretrans);
               if (pretrans == "notFound") {
                  let transtype = 'single';
-                 if (transSelect == "google") {
+                 if (transsel == "google") {
                      googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype);
                   }
-                  else if (transSelect == "deepl") {
+                  else if (transsel == "deepl") {
                       deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
                       console.debug('translatedEntry deepl translation:', translatedText);
                   }
@@ -318,10 +320,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, transSelect, destlang,
              let plural = checkplural.innerText;
              let transtype = "plural";
              console.debug('checkplural content element', plural);
-             if (transSelect == "google") {
+             if (transsel == "google") {
                  translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, rowId, transtype);
              }
-             else if (transSelect == "deepl") {
+             else if (transsel == "deepl") {
                   translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
              }
           console.debug('checkplural:', translatedText);

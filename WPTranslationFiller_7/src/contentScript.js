@@ -75,9 +75,28 @@ function translatePageClicked(event) {
     console.log("Translate clicked!");
     chrome.storage.sync
         .get(
-            ['apikey', 'apikeyDeepl' , 'transSelect', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            ['apikey', 'apikeyDeepl' , 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
             function (data) {
-                translatePage(data.apikey, data.apikeyDeepl, data.transSelect, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+                console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.transSelect, data.destlang);
+                if (typeof data.apikey != 'undefined' && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.transsel == "deepl") {
+                    console.debug("apikey present");
+                    if (data.destlang != 'undefined') {
+                        if (data.transsel != 'undefined') {
+
+                            translatePage(data.apikey, data.apikeyDeepl, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+                        }
+                        else {
+                            alert("You need to set the translator API");
+                        }
+                    }
+                    else {
+                        console.debug("parameter destlang:", data.destlang);
+                        alert("You need to set the parameter for Destination language");
+                    }
+                }
+                else {
+                        alert("No apikey set!" +"google:" +data.apikey+" transsel "+data.transsel + "Deepl:"+ data.apikeyDeepl + " transsel:"+data.transsel);
+                    }
             });
 }
 
@@ -202,14 +221,19 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         loadSet(glossary, data.glossaryX);
         loadSet(glossary, data.glossaryY);
         loadSet(glossary, data.glossaryZ);
-
+        if (typeof data.glossary == 'undefined') {
+            alert("Your glossary is not loaded because no file is loaded!!");
+        }
         glossary.sort(function (a, b) {
             // to sory by descending order
             return b.key.length - a.key.length;
+            
         });
         //console.log(glossary);
         addTranslateButtons();
-        validatePage(data.destlang);
+        if (glossary.length > 0) {
+            validatePage(data.destlang);
+        }
         checkbuttonClick();
     });
 
@@ -386,55 +410,59 @@ function validate(language, original, translation) {
     let wordCount = 0;
     let foundCount = 0;
     let toolTip = '';
-    console.debug('Translation value:', translation);
-    //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
-    if (translation.length >0) {
-        console.debug('validate check the line started');						 
-        for (let oWord of originalWords) {
-            for (let gItem of glossary) {
-                let gItemKey = gItem["key"];
-                let gItemValue = gItem["value"];
-                if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
-                    console.log('Word found:', gItemKey, gItemValue);
-                    wordCount++;
+    // 17-05-2021 PSS added check to prevent errors with empty glossary be aware that if the glossary gets more entries the amount needs to be adepted
+    if (glossary.length > 27) {
+        //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
+        if (translation.length > 0) {
+            console.debug('validate check the line started');
 
-                    let isFound = false;
-                    for (let gWord of gItemValue) {
-                        if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
-                            console.log('+ Translation found:', gWord);
-                            isFound = true;
-                            break;
+            for (let oWord of originalWords) {
+                for (let gItem of glossary) {
+                    let gItemKey = gItem["key"];
+                    let gItemValue = gItem["value"];
+                    if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
+                        console.log('Word found:', gItemKey, gItemValue);
+                        wordCount++;
+
+                        let isFound = false;
+                        for (let gWord of gItemValue) {
+                            if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
+                                console.log('+ Translation found:', gWord);
+                                isFound = true;
+                                break;
+                            }
                         }
-                    }
 
-                    if (isFound) {
-                        foundCount++;
-                        console.log('- Translation found:', gItemKey, gItemValue);
-                    } else {
-                        toolTip += `${gItemKey} - ${gItemValue}\n`;
-                        console.log('x Translation not found:', gItemKey, gItemValue);
+                        if (isFound) {
+                            foundCount++;
+                            console.log('- Translation found:', gItemKey, gItemValue);
+                        } else {
+                            toolTip += `${gItemKey} - ${gItemValue}\n`;
+                            console.log('x Translation not found:', gItemKey, gItemValue);
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
+        else {
+            foundCount = 0;
+            wordCount = 0;
+        }
     }
-    else {
-        foundCount = 0;
-        wordCount  = 0;
-         }
-    // 27-03-2021 PSS added this to prevent devision by zero      
-    if (wordCount !=0){
-       percent = foundCount * 100 / wordCount;
-       }
-    else {  
-       console.debug('Validate found no wordCount!');  
-       percent = 0;    
-       }
-    console.log("Percent calculation:", wordCount, foundCount, percent);
+        // 27-03-2021 PSS added this to prevent devision by zero      
+        if (wordCount != 0) {
+            percent = foundCount * 100 / wordCount;
+        }
+        else {
+            console.debug('Validate found no wordCount!');
+            percent = 0;
+        }
+        console.log("Percent calculation:", wordCount, foundCount, percent);
 
-    return { wordCount, percent, toolTip };
+        return { wordCount, percent, toolTip };
 }
+
 
 // Language specific matching.
 function match(language, gWord, tWord) {
