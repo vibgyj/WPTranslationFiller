@@ -91,7 +91,7 @@ button.addEventListener('click', function () {
         chrome.storage.sync.set({ glossaryZ: glossaryZ });
     }
 
-    alert("Setting successfully saved.");
+    alert("Settings successfully saved.\nPlease make sure that you enter values\nin Destination Language and select a Glossary File\nand enter values in Post Translation Replace ");
 });
 
 let file = document.getElementById('glossary_file');

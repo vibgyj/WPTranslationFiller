@@ -298,25 +298,29 @@ function addtranslateEntryClicked(event){
 function checkbuttonClick(event){
    if (event != undefined){ 
       //event.preventDefault(); caused a problem within the single page enttry  
-      //console.debug('checkbuttonClick',event);
       let action = event.target.textContent ;
       //console.debug('action',action);
       if (action == 'Details'){
-         //alert('you clicked me!!');
          let rowId = event.target.parentElement.parentElement.getAttribute('row');
-         //console.debug('parentelement rowId: ',rowId); 
           let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
          console.debug('Translatebutton:',translateButton);
          if (translateButton == null){
-            //alert('No translate button!!');
             let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
-            //console.debug('panelheader actions:',panelHeaderActions);
-            let translateButton = document.createElement("button");
-             translateButton.id = `translate-${rowId}-translation-entry-my-button`;
+            let translateButton = document.createElement("my-button");
+            translateButton.id = `translate-${rowId}-translation-entry-my-button`;
             translateButton.className = "translation-entry-my-button";
             translateButton.onclick = translateEntryClicked;
             translateButton.innerText = "Translate";
-            result = panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+            panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+            // Add addtranslate button
+            let addTranslateButton = document.createElement("my-button");
+            console.debug('addTranslateButtons rowId:', rowId);
+            addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
+            addTranslateButton.className = "addtranslation-entry-my-button";
+            addTranslateButton.onclick = addtranslateEntryClicked;
+            addTranslateButton.innerText = "Add Translation";
+            panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
+
             let TranslocalButton = document.createElement("local-button");
             TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
             TranslocalButton.className = "translocal-entry-local-button";
@@ -332,18 +336,19 @@ function translateEntryClicked(event) {
     event.preventDefault();
     console.log("Translate Entry clicked!", event);
     let rowId = event.target.id.split('-')[1];
-    console.log("Translate Entry clicked rowId", rowId);
+    //console.log("Translate Entry clicked rowId", rowId);
     let myrowId = event.target.id.split('-')[2];
     //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
     // So that needs to be added to the base rowId to find it
-    if (myrowId != undefined && myrowId != 'translation') {
+    console.log("translateEntryClicked myrowId:", myrowId);
+    if (typeof myrowId != 'undefined' && myrowId != 'translation') {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
         console.debug('Line already translated new rowId:',rowId);
     }
     chrome.storage.sync
-        .get(['apikey', 'apikeyDeepl','transSelect','destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.transSelect, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+        .get(['apikey', 'apikeyDeepl','transsel','destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
     console.debug('after translateEntry');
 }

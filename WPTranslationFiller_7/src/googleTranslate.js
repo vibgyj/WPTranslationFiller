@@ -211,7 +211,6 @@ async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTransl
                         textareaElem.innerText = translatedText;
                         // PSS 10-05-2021 added populating the preview field issue #68
                         let g = document.querySelector('td.translation');
-                        let previewElem = g.innerText;
                         console.debug('Text preview:', previewElem, row);
                         let preview = document.querySelector('#preview-' + row + ' td.translation');
                         preview.innerText = translatedText;
@@ -238,6 +237,8 @@ async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTransl
                     let translatedText = original;
                     let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
+                    let preview = document.querySelector('#preview-' + row + ' td.translation');
+                    preview.innerText = translatedText;
                     console.debug('translatePage No need to translate copy the original', original);
                 }
             }
@@ -453,7 +454,7 @@ function sendAPIRequestDeepl(e, language, apikey, original, originalPreProcessed
     
     
     //let xhttp = new XMLHttpRequest();
-    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikey + "&text=" + originalPreProcessed +"&target_lang=NL&preserve_formatting=1&split_sentences=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikey + "&text=" + originalPreProcessed +"&target_lang=NL&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
     xhttp.responseType = 'json';
     xhttp.send();
    
