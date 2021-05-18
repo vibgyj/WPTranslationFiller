@@ -68,16 +68,6 @@ if (divPaging != null){
    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
-
-//23-03-2021 PSS added a new button on first page
-var checkButton = document.createElement("a");
-checkButton.href = "#";
-checkButton.className = "check_translation-button"
-checkButton.onclick = checkPageClicked;
-checkButton.innerText = "CheckPage";
-var divPaging = document.querySelector("div.paging");
-divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
-
 function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
