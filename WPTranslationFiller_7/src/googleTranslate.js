@@ -110,7 +110,7 @@ function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     console.debug("CheckPage:", postTranslationReplace.length);
     // 15-05-2021 PSS added fix for issue #73add
-    //if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
+    if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
         let countreplaced = 0;
         var translatedText;
@@ -153,10 +153,10 @@ function checkPage(postTranslationReplace) {
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
         checkButton.className += " ready";
-    //}
-    //else {
+    }
+    else {
         alert("Your postreplacement verbs is empty!!");
-      //  }
+        }
 }
 
 async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTranslationReplace, preTranslationReplace) {
@@ -392,7 +392,7 @@ function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype
     console.debug('after sendAPIRequest:',translatedText,transtype);
 }
 
-function sendAPIRequestDeepl(e, language, apikey, original, originalPreProcessed, rowId, transtype) {
+function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProcessed, rowId, transtype) {
     console.debug('sendAPIreQuest original_line:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
@@ -454,7 +454,9 @@ function sendAPIRequestDeepl(e, language, apikey, original, originalPreProcessed
     
     
     //let xhttp = new XMLHttpRequest();
-    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikey + "&text=" + originalPreProcessed +"&target_lang=NL&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+    language = language.toUpperCase();
+    console.debug("Target_lang:", language);
+    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
     xhttp.responseType = 'json';
     xhttp.send();
    

@@ -29,7 +29,9 @@ translateButton.className = "translation-filler-button";
 translateButton.onclick = translatePageClicked;
 translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
-if (divPaging != null){
+// 1-05-2021 PSS fix for issue #75 do not show the buttons on project page
+var divProjects = document.querySelector('div.projects');
+if (divPaging != null && divProjects  == null){
    divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
 }
 //23-03-2021 PSS added a new button on first page
@@ -39,10 +41,10 @@ checkButton.className = "check_translation-button";
 checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
 var divPaging = document.querySelector("div.paging");
-if (divPaging != null){
+var divProjects = document.querySelector('div.projects');
+if (divPaging != null && divProjects == null){
    divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
 }
-
 //07-05-2021 PSS added a new button on first page
 var exportButton = document.createElement("a");
 exportButton.href = "#";
@@ -50,7 +52,8 @@ exportButton.className = "export_translation-button";
 exportButton.onclick = exportPageClicked;
 exportButton.innerText = "Export";
 var divPaging = document.querySelector("div.paging");
-if (divPaging != null){
+var divProjects = document.querySelector('div.projects');
+if (divPaging != null && divProjects == null){
    divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
 }
 
@@ -65,7 +68,8 @@ importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
 var divPaging = document.querySelector("div.paging");
-if (divPaging != null){
+var divProjects = document.querySelector('div.projects');
+if (divPaging != null && divProjects == null){
    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
