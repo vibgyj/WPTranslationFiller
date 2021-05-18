@@ -1,25 +1,72 @@
 console.log('Content script...');
+// PSS added jsStore to be able to store and retrieve default translations
+var jsstoreCon = new JsStore.Connection();
+var db =getDbSchema() ;
+var isDbCreated = jsstoreCon.initDb(db);
+
+if (!isDbCreated){
+console.debug('Database is not created, so we create one', isDbCreated);
+}
+else{
+	console.debug("Database is present");
+}
+console.debug("jsStore opened:",jsstoreCon);
+
+//09-05-2021 PSS added fileselector for silent selection of file
+var fileSelector = document.createElement('input');
+fileSelector.setAttribute('type', 'file');
+
 // PSS added this one to be able to see if the Details button is clicked
 const el = document.getElementById("translations");
-el.addEventListener("click", checkbuttonClick);
-
+if (el != null){
+  el.addEventListener("click", checkbuttonClick);
+}
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
-translateButton.className = "translation-filler-button"
+translateButton.className = "translation-filler-button";
 translateButton.onclick = translatePageClicked;
 translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
-divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
-
+if (divPaging != null){
+   divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
+}
 //23-03-2021 PSS added a new button on first page
 var checkButton = document.createElement("a");
 checkButton.href = "#";
-checkButton.className = "check_translation-button"
+checkButton.className = "check_translation-button";
 checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
 var divPaging = document.querySelector("div.paging");
-divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+if (divPaging != null){
+   divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+}
+
+//07-05-2021 PSS added a new button on first page
+var exportButton = document.createElement("a");
+exportButton.href = "#";
+exportButton.className = "export_translation-button";
+exportButton.onclick = exportPageClicked;
+exportButton.innerText = "Export";
+var divPaging = document.querySelector("div.paging");
+if (divPaging != null){
+   divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
+}
+
+
+//07-05-2021 PSS added a new button on first page
+var importButton = document.createElement("a");
+importButton.href = "#";
+importButton.id = "ImportDb";
+//importButton.type = "file";
+//importButton.style="display: none";
+importButton.className = "import_translation-button";
+importButton.onclick = importPageClicked;
+importButton.innerText = "Import";
+var divPaging = document.querySelector("div.paging");
+if (divPaging != null){
+   divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+}
 
 function translatePageClicked(event) {
     event.preventDefault();
@@ -31,6 +78,7 @@ function translatePageClicked(event) {
                 translatePage(data.apikey, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
             });
 }
+
 // Add translation button - end
 
 function checkPageClicked(event) {
@@ -44,6 +92,80 @@ function checkPageClicked(event) {
             });
 }
 
+function exportPageClicked(event) {
+    event.preventDefault();
+    console.log("Exportpage clicked!");
+    res= dbExport();
+    
+}
+// 08-05-2021 PSS added import of records into local database
+async function importPageClicked(event) { 
+    
+    fileSelector.click();
+    fileSelector.addEventListener('change', (event) => {   
+       fileList = event.target.files;
+       console.debug("filelist:",fileList);
+       const file = fileList[0];
+       var obj_csv = {
+       size:0,
+       dataFile:[]
+          };
+        
+        console.debug("File extension:",file.type);
+        console.log("Importpage clicked!", fileList[0].name);
+        // 09-05-2021 PSS added check for proper import type
+        if (file.type == "application/vnd.ms-excel"){ 
+           if (fileList[0]) {
+              let reader = new FileReader();
+              reader.readAsBinaryString(fileList[0]);
+              reader.onload = function (e) {
+              console.log("functions started:",e);
+              obj_csv.size = e.total;
+              obj_csv.dataFile = e.target.result;
+              //console.log(obj_csv.dataFile)
+              //File is imported so process it
+              parseDataBase(obj_csv.dataFile); 
+              let importButton = document.querySelector(".paging a.import_translation-button");
+              importButton.className += " ready";
+              alert('Import ready');          
+           }
+        }
+       
+    }
+    else {
+        // File is wrong type so do not process it
+        alert("File is not csv!!");
+    }
+    }); 
+   
+}
+    
+async function parseDataBase(data){
+    let csvData = [];
+    let lbreak = data.split("\n");
+    let counter= 0;
+    // To make sure we can manipulate the data store it into an array
+    lbreak.forEach(res => {
+        csvData.push(res.split(","));
+        ++counter;
+        //console.debug("counter:",counter);
+    });
+    if (counter >0){
+        //console.debug('data:',csvData);
+        var arrayLength = csvData.length;
+         for (var i = 0; i < arrayLength; i++) {
+        if (i > 1){
+            // Store it into the database
+            //Prevent adding empty line
+            if (csvData[i][0] != ''){
+               res= await addTransDb(csvData[i][0],csvData[i][1],csvData[i][2]);
+               console.debug('parseDataBase:',res);
+            }
+        }
+    }
+        
+    }
+}
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
     , 'glossaryD', 'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI'
@@ -98,41 +220,78 @@ function addTranslateButtons() {
         let rowId = e.getAttribute('row');
         let panelHeaderActions = e.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
         // Add translate button
-        let translateButton = document.createElement("button");
+        let translateButton = document.createElement("my-button");
         //console.debug('addTranslateButtons rowId:',rowId);
         translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-entry-button"
+        translateButton.className = "translation-entry-my-button";
         translateButton.onclick = translateEntryClicked;
         translateButton.innerText = "Translate";
         panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+
+        // Add addtranslate button
+        let addTranslateButton = document.createElement("my-button");
+        //console.debug('addTranslateButtons rowId:',rowId);
+        addTranslateButton.id = `translate-${rowId}`;
+        addTranslateButton.className = "addtranslation-entry-my-button";
+        addTranslateButton.onclick = addtranslateEntryClicked;
+        addTranslateButton.innerText = "Add Translation";
+        panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
+
+        let TranslocalButton = document.createElement("local-button");
+        TranslocalButton.id = `translate-${rowId}`;
+        TranslocalButton.className = "translocal-entry-local-button";
+        TranslocalButton.innerText = "Local";
+        TranslocalButton.style.visibility = 'hidden';
+        panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
     }
 }
 
+
+function addtranslateEntryClicked(event){
+    if (event != undefined){ 
+        event.preventDefault();
+       console.debug("add translation clicked");
+       console.log("addtranslateEntry clicked!", event);
+       let rowId = event.target.id.split('-')[1];
+       console.log("addtranslate Entry clicked rowId", rowId);
+       let myrowId = event.target.id.split('-')[2];
+       //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+       // So that needs to be added to the base rowId to find it
+       if (myrowId !== undefined) {
+        newrowId = rowId.concat("-", myrowId);
+        rowId = newrowId;
+        console.debug('Line already translated new rowId:',rowId);
+       
+       }
+       addTransline(rowId); 
+    }   
+}
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 function checkbuttonClick(event){
-   event.preventDefault();
-   //console.debug('checkbuttonClick',event);
-   let action = event.target.textContent ;
-   //console.debug('action',action);
-   if (action == 'Details'){
-       //alert('you clicked me!!');
-       let rowId = event.target.parentElement.parentElement.getAttribute('row');
-       //console.debug('parentelement rowId: ',rowId); 
-       let translateButton = document.querySelector(`#translate-${rowId}`);
-       console.debug('Translatebutton:',translateButton);
-       if (translateButton=== null){
-        //alert('No translate button!!');
-        let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
-        //console.debug('panelheader actions:',panelHeaderActions);
-        let translateButton = document.createElement("button");
-        translateButton.id = `translate-${rowId}`;
-        translateButton.className = "translation-entry-button"
-        translateButton.onclick = translateEntryClicked;
-        translateButton.innerText = "Translate";
-        result = panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
-        
-       }
-   }
+   if (event != undefined){ 
+      //event.preventDefault(); caused a problem within the single page enttry  
+      //console.debug('checkbuttonClick',event);
+      let action = event.target.textContent ;
+      //console.debug('action',action);
+      if (action == 'Details'){
+         //alert('you clicked me!!');
+         let rowId = event.target.parentElement.parentElement.getAttribute('row');
+         //console.debug('parentelement rowId: ',rowId); 
+         let translateButton = document.querySelector(`#translate-${rowId}`);
+         console.debug('Translatebutton:',translateButton);
+         if (translateButton=== null){
+            //alert('No translate button!!');
+            let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
+            //console.debug('panelheader actions:',panelHeaderActions);
+            let translateButton = document.createElement("button");
+            translateButton.id = `translate-${rowId}`;
+            translateButton.className = "translation-entry-button";
+            translateButton.onclick = translateEntryClicked;
+            translateButton.innerText = "Translate";
+            result = panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+            }
+        }   
+    }
 }
 
 function translateEntryClicked(event) {
@@ -214,7 +373,6 @@ function updateElementStyle(priorityElem, result) {
 
 function validate(language, original, translation) {
     let originalWords = original.split(' ');
-
     let wordCount = 0;
     let foundCount = 0;
     let toolTip = '';

@@ -1,24 +1,35 @@
 {
     "manifest_version": 2,
     "name": "WordPress Translation Filler",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "description": "Firefox addon to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
+    "background": {
+        "scripts": ["jsstore.js","jsstore.worker.js"]
+        },
     "options_ui": {
         "page": "options.html",
         "browser_style": true
     },
     "permissions": [
         "storage",
-        "https://translation.googleapis.com/*"
+		"activeTab",
+		"tabs",
+        "https://translation.googleapis.com/*",
+		"https://translate.wordpress.org/*",
+		"https://api.languagetoolplus.com/*"
     ],
     "content_scripts": [
         {
             "matches": [
-                "https://translate.wordpress.org/*"
+                "https://translate.wordpress.org/*",
+                "https://cdnjs.cloudflare.com/*"
             ],
             "js": [
-                "googleTranslate.js",
-                "contentScript.js"
+                "jsstore.js",
+			    "jsstore.worker.js",
+			    "database.js",
+		        "contentScript.js",
+			    "googleTranslate.js"
             ],
             "css": [
                 "translationFillerStyle.css"
