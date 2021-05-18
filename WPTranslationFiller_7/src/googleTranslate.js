@@ -211,7 +211,7 @@ async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTransl
                         textareaElem.innerText = translatedText;
                         // PSS 10-05-2021 added populating the preview field issue #68
                         let g = document.querySelector('td.translation');
-                        console.debug('Text preview:', previewElem, row);
+                        //console.debug('Text preview:', previewElem, row);
                         let preview = document.querySelector('#preview-' + row + ' td.translation');
                         preview.innerText = translatedText;
                         document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
