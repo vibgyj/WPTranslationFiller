@@ -34,36 +34,12 @@ jobs:
           cp src/options.js src/chrome/options.js
           cp src/options.html src/chrome/options.html
           cp src/translationFillerStyle.css src/chrome/translationFillerStyle.css
-          cp src/jsstore.js src/chrome/jsstore.js
-          cp src/jsstore.worker.js src/chrome/jsstore.worker.js
-          cp src/database.js src/chrome/database.js
-          cp src/consistency.js src/chrome/consistency.js
-          cp src/cute-alert.js src/chrome/cute-alert.js
-          cp src/jsdiff.js src/chrome/jsdiff.js
-          mkdir src/chrome/img
-          cp src/img/error.svg src/chrome/img/error.svg
-          cp src/img/info.svg src/chrome/img/info.svg
-          cp src/img/question.svg src/chrome/img/question.svg
-          cp src/img/success.svg src/chrome/img/success.svg
-          cp src/img/warning.svg src/chrome/img/warning.svg
-          zip --junk-paths -r chrome-extension ./src/chrome
           cp src/contentScript.js src/firefox/contentScript.js
           cp src/googleTranslate.js src/firefox/googleTranslate.js
           cp src/options.js src/firefox/options.js
           cp src/options.html src/firefox/options.html
           cp src/translationFillerStyle.css src/firefox/translationFillerStyle.css
-          cp src/jsstore.js src/firefox/jsstore.js
-          cp src/jsstore.worker.js src/firefox/jsstore.worker.js
-          cp src/database.js src/firefox/database.js
-          cp src/consistency.js src/firefox/consistency.js
-          cp src/cute-alert.js src/firefox/cute-alert.js
-          cp src/jsdiff.js src/firefox/jsdiff.js
-          mkdir src/firefox/img
-          cp src/img/error.svg src/firefox/img/error.svg
-          cp src/img/info.svg src/firefox/img/info.svg
-          cp src/img/question.svg src/firefox/img/question.svg
-          cp src/img/success.svg src/firefox/img/success.svg
-          cp src/img/warning.svg src/firefox/img/warning.svg
+          zip --junk-paths -r chrome-extension ./src/chrome
           zip --junk-paths -r firefox-addon ./src/firefox
       - name: Create Release
         id: create_release
