@@ -79,15 +79,15 @@ function translatePageClicked(event) {
     console.log("Translate clicked!");
     chrome.storage.sync
         .get(
-            ['apikey', 'apikeyDeepl' , 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            ['apikey', 'apikeyDeepl' , 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
             function (data) {
-                console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.transSelect, data.destlang);
-                if (typeof data.apikey != 'undefined' && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.transsel == "deepl") {
+                console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
+                if (typeof data.apikey != 'undefined' && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.transsel == "deepl" || typeof data.apikeyMicrosoft != 'undefined' && data.transsel == "microsoft") {
                     console.debug("apikey present");
                     if (data.destlang != 'undefined') {
                         if (data.transsel != 'undefined') {
 
-                            translatePage(data.apikey, data.apikeyDeepl, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
                         }
                         else {
                             alert("You need to set the translator API");
@@ -351,8 +351,8 @@ function translateEntryClicked(event) {
         console.debug('Line already translated new rowId:',rowId);
     }
     chrome.storage.sync
-        .get(['apikey', 'apikeyDeepl','transsel','destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+        .get(['apikey', 'apikeyDeepl','apikeyMicrosoft','transsel','destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
     console.debug('after translateEntry');
 }

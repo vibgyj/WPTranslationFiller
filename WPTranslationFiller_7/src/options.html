@@ -24,6 +24,9 @@
         #deepl_api_key {
             width: 300px;
         }
+        #microsoft_api_key {
+            width: 300px;
+        }
 
         #text_glossary_file {
             display: block;
@@ -58,56 +61,61 @@
             <label for="deepl_api_key">Deepl API Key&nbsp;&nbsp;</label>
             <input id="deepl_api_key" type="text" value="-api key->" />
         </div>
+        <div class="form-input">
+            <label for="microsoft_api_key">Microsoft API Key&nbsp;&nbsp;</label>
+            <input id="microsoft_api_key" type="text" value="-api key->" />
+        </div>
         <div class="form-select">
             <label for="translator">Select a translator:</label>
             <select name="transsel" id="transselect">
                 <option value="deepl">Deepl</option>
                 <option value="google">Google</option>
+                <option value="microsoft">Microsoft</option>
             </select>
-            </div>
-            <br>
-            <br>
-            <div class="form-input">
-                <label for="destination_lang">Destination Language</label>
-                <input id="destination_lang" type="text" value="nl" />
-            </div>
-            <div class="form-input">
-                <label for="glossary_file">Glossary File (csv)</label>
-                <input id="glossary_file" type="file" />
-                <span id="text_glossary_file"></span>
-            </div>
-            <div class="form-input">
-                <label for="text_pre_verbs">Pre Translation Replace</label>
-                <textarea id="text_pre_verbs">Your,Je
+        </div>
+        <br>
+        <br>
+        <div class="form-input">
+            <label for="destination_lang">Destination Language</label>
+            <input id="destination_lang" type="text" value="nl" />
+        </div>
+        <div class="form-input">
+            <label for="glossary_file">Glossary File (csv)</label>
+            <input id="glossary_file" type="file" />
+            <span id="text_glossary_file"></span>
+        </div>
+        <div class="form-input">
+            <label for="text_pre_verbs">Pre Translation Replace</label>
+            <textarea id="text_pre_verbs">Your,Je
 You,Je
             </textarea>
-            </div>
-            <div class="form-input">
-                <label for="text_verbs">Post Translation Replace</label>
-                <textarea id="text_verbs">wrong1,right1
+        </div>
+        <div class="form-input">
+            <label for="text_verbs">Post Translation Replace</label>
+            <textarea id="text_verbs">wrong1,right1
 wrong2,right2
             </textarea>
-            </div>
-            <div class="form-input">
-                <label for="export_verbs">
-                    Export post translation verbs
-                    <fieldset>
-                        <button id="exportverbs">Export verbs</button>
-                    </fieldset>
-                </label>
-            </div>
-            <div id="dvImportSegments" class="fileupload ">
-                <label>
-                    Upload post translation replace CSV File
-                    <fieldset>
-                        <input id="importPost" type="file" />
-                    </fieldset>
-                </label>
-            </div>
-            <div class="form-input">
-                <input id="save" type="button" value="Save" />
-            </div>
         </div>
+        <div class="form-input">
+            <label for="export_verbs">
+                Export post translation verbs
+                <fieldset>
+                    <button id="exportverbs">Export verbs</button>
+                </fieldset>
+            </label>
+        </div>
+        <div id="dvImportSegments" class="fileupload ">
+            <label>
+                Upload post translation replace CSV File
+                <fieldset>
+                    <input id="importPost" type="file" />
+                </fieldset>
+            </label>
+        </div>
+        <div class="form-input">
+            <input id="save" type="button" value="Save" />
+        </div>
+    </div>
 </body>
 <script type="text/javascript" src="options.js"></script>
 </html>

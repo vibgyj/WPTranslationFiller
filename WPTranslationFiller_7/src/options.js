@@ -4,6 +4,7 @@ let replaceVerb = [];
 
 let apikeyTextbox = document.getElementById('google_api_key');
 let apikeydeeplTextbox = document.getElementById('deepl_api_key');
+let apikeymicrosoftTextbox = document.getElementById('microsoft_api_key');
 let transselectBox = document.getElementById('transselect');
 let destLangTextbox = document.getElementById('destination_lang');
 let uploadedFile = document.getElementById('text_glossary_file');
@@ -11,9 +12,10 @@ let glossaryFile = document.getElementById('glossary_file');
 let verbsTextbox = document.getElementById('text_verbs');
 let preverbsTextbox = document.getElementById('text_pre_verbs');
 
-chrome.storage.sync.get(['apikey','apikeyDeepl','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
+chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
+    apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -33,6 +35,7 @@ let button = document.getElementById('save');
 button.addEventListener('click', function () {
     let apikey = apikeyTextbox.value;
     let apikeyDeepl = apikeydeeplTextbox.value;
+    let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     if (typeof transselectBox.value == 'undefined') {
          transsel = "google";
     }
@@ -46,17 +49,18 @@ button.addEventListener('click', function () {
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
     
-    console.debug('Options saved: ', apikey, apikeyDeepl,transsel,destlang, postTranslation,preTranslation);
+    console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation);
 
     chrome.storage.sync.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
+        apikeyMicrosoft:apikeyMicrosoft,
         transsel: transsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation
     });
-    console.debug('Options save: ', apikey, apikeyDeepl,transsel,destlang, postTranslation,preTranslation);
+    console.debug('Options save: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation);
  
     if (glossaryFile.value !== "") {
         console.debug('Options: ', glossaryFile);

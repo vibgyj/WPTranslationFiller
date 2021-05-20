@@ -159,7 +159,7 @@ function checkPage(postTranslationReplace) {
         }
 }
 
-async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTranslationReplace, preTranslationReplace) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace) {
     // 15-05-2021 PSS added fix for issue #73
     // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
     if (typeof postTranslationReplace != 'undefined' && postTranslationReplace.length != 0) {
@@ -203,6 +203,10 @@ async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTransl
                             deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
                             console.debug("translatePage deepl translation:",original);
                         }
+                        else if (transsel == "microsoft") {
+                            microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
+                            console.debug('translatedEntry microsoft translation:', original);
+                        }
                     }
                     else {
                         console.debug('Pretranslated:', pretrans);
@@ -229,7 +233,11 @@ async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTransl
                             console.debug('translatePage checkplural:', translatedText);
                         }
                         else if (transsel == "deepl") {
-                            deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                            deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                        }
+                        else if (transsel == "microsoft") {
+                            console.debug('translatePage checkplural microsoft:', translatedText);
+                            microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
                         }
                     }
                 }
@@ -257,7 +265,7 @@ async function translatePage(apikey, apikeyDeepl, transsel, destlang, postTransl
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, transsel, destlang, postTranslationReplace, preTranslationReplace) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace) {
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     console.debug('translateEntry started!');
     // 15-05-2021 PSS added fix for issue #73
@@ -265,7 +273,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, transsel, destlang, po
         if (preTranslationReplace != 0) {
            setPostTranslationReplace(postTranslationReplace);
            setPreTranslationReplace(preTranslationReplace);
-           console.debug("Deepl:" , apikeyDeepl , "Transsel:" , transsel,"RowId:",rowId);
+           console.debug("Microsoft:" , apikeyMicrosoft , "Transsel:" , transsel,"RowId:",rowId);
 
           let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
           console.debug('after document querySelector:', e);
@@ -292,6 +300,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, transsel, destlang, po
                   else if (transsel == "deepl") {
                       deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
                       console.debug('translatedEntry deepl translation:', translatedText);
+                  }
+                  else if (transsel == "microsoft") {
+                     microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
+                     console.debug('translatedEntry microsoft translation:', translatedText);
                   }
                   document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'hide';
               }
@@ -325,7 +337,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, transsel, destlang, po
                  translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, rowId, transtype);
              }
              else if (transsel == "deepl") {
-                  translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                  translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+              }
+             else if (transsel == "microsoft") {
+                 microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
+                 console.debug('translatedEntry microsoft translation:', translatedText);
              }
           console.debug('checkplural:', translatedText);
           }
@@ -363,6 +379,27 @@ function deepLTranslate(original, destlang, e, apikeyDeepl, preverbs, rowId, tra
     translatedText = sendAPIRequestDeepl(e, destlang, apikeyDeepl, original, originalPreProcessed, rowId, transtype); 
 
     console.debug('result deepl:', translatedText);
+    //translatedText = original;
+    //textareaElem = e.querySelector("textarea.foreign-text");
+    //textareaElem.innerText = translatedText;
+}
+
+function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype) {
+    let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
+    console.debug('microsoftTranslate result of preProcessOriginal:', originalPreProcessed);
+    var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
+    var myArray = myRe.exec(originalPreProcessed);
+    if (myArray == null) {
+        var trntype = "text";
+    }
+    else {
+        var trntype = "html";
+    }
+
+    console.debug("microsoft Translate format type", trntype);
+    translatedText = sendAPIRequestMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype);
+
+    console.debug('result Microsoft:', translatedText);
     //translatedText = original;
     //textareaElem = e.querySelector("textarea.foreign-text");
     //textareaElem.innerText = translatedText;
@@ -455,14 +492,120 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
     
     //let xhttp = new XMLHttpRequest();
     language = language.toUpperCase();
-    console.debug("Target_lang:", language);
-    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+    //console.debug("Target_lang:", language);
+    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
     xhttp.responseType = 'json';
     xhttp.send();
    
     xhttp.onload = function () {
        let responseObj = xhttp.response;
     };
+
+}
+
+function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype) {
+    console.debug('sendAPIreQuest original_line:', originalPreProcessed);
+    xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+
+        console.debug("Microsoft translation response:", this.response);
+        restrans = this.response;
+        let responseObj = this.response.error;    
+        console.debug("Response error object:", responseObj);
+        if (typeof responseObj != 'undefined') {
+            myfault = responseObj.code;
+            //console.debug("Microsoft myfault:", myfault);
+        }
+        else {
+            var myfault = 0;
+            //console.debug("Microsoft myfault:", myfault);
+        };
+        //console.debug("Microsoft readyState:", this.readyState);
+        if (this.readyState == 4 && myfault == 0) { 
+            //console.debug('Restrans:', restrans);
+            translatedText = restrans[0].translations[0].text;
+            //console.debug('sendAPIRequest result before postProces:', translatedText);
+            // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl");
+            //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
+            if (transtype == "single") {
+                textareaElem = e.querySelector("textarea.foreign-text");
+                textareaElem.innerText = translatedText;
+                // PSS 13-04-2021 added populating the preview field issue #64
+                let g = document.querySelector('td.translation');
+                let previewElem = g.innerText;
+                console.debug('Text preview:', previewElem, rowId);
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                preview.innerText = translatedText;
+                // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                textareaElem.value = translatedText;
+                //PSS 25-03-2021 Fixed problem with description box issue #13
+                textareaElem.style.height = 'auto';
+                textareaElem.style.height = textareaElem.scrollHeight + 'px';
+                // PSS 13-04-2021 removed the line below as it clears the content if you edit after use of translate button
+                // textareaElem.style.overflow = 'auto' ;
+            }
+            else {
+                // PSS 09-04-2021 added populating plural text
+                console.debug('Row plural:', rowId);
+                textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                textareaElem1.innerText = translatedText;
+                console.debug("plural newtext:", textareaElem1.innerText);
+                textareaElem1.value = translatedText;
+            }
+            validateEntry(language, textareaElem);
+
+        }
+        // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
+        else {
+            if (this.readyState == 4 && myfault == 400000) {
+                alert("Error in translation received status 400000, One of the request inputs is not valid.");
+            }
+            
+             else if (this.readyState == 4 && myfault == 400036) {
+                 alert("Error in translation received status 400036, The target language is not valid.");
+            }
+            else if (this.readyState == 4 && myfault == 400074) {
+                alert("Error in translation received status 400074, The body of the request is not valid JSON.");
+            }
+            else if (this.readyState == 4 && myfault == 403000) {
+                alert("Error in translation received status 403, authorisation refused");
+            }
+            else if (this.readyState = 4 && myfault == 401000) {
+                alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
+            }
+        }
+    };
+
+
+    //let xhttp = new XMLHttpRequest();
+    let requestBody = [
+        {
+            'text': original
+        }
+        ];
+
+    console.debug("apikey:", apikeyMicrosoft);
+    language = language.toUpperCase();
+    //console.debug("Target_lang:", language);
+    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to="+language);
+    
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.setRequestHeader('Ocp-Apim-Subscription-Key', apikeyMicrosoft);
+    xhttp.setRequestHeader('Content-Length', 10);
+
+    xhttp.responseType = 'json';
+    xhttp.send(JSON.stringify(requestBody));
+    //xhttp.onload = function () {
+    //    let responseObj = xhttp.response.error;
+    //    console.debug("response direct:", xhttp.response);
+    //    console.debug("response error:", xhttp.response.error); 
+   //     myerror = xhttp.response.error;
+     //   console.debug("myerror:", myerror.code);
+     //   console.debug("myerror tekst:", myerror.message);
+
+   // };
+    
 
 }
 
