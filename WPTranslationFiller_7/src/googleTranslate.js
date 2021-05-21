@@ -230,14 +230,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         transtype = "plural";
                         if (transsel == "google") {
                             translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
-                            console.debug('translatePage checkplural:', translatedText);
+                            console.debug('translatePage checkplural google:', translatedText);
                         }
                         else if (transsel == "deepl") {
-                            deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                            deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
+                            console.debug('translatePage checkplural deepl:', translatedText);
                         }
                         else if (transsel == "microsoft") {
                             console.debug('translatePage checkplural microsoft:', translatedText);
-                            microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
+                            microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
                         }
                     }
                 }
