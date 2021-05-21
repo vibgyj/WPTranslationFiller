@@ -390,14 +390,14 @@ function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, ro
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
     if (myArray == null) {
-        var trntype = "text";
+        var trntype = "plain";
     }
     else {
         var trntype = "html";
     }
 
     console.debug("microsoft Translate format type", trntype);
-    translatedText = sendAPIRequestMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype);
+    translatedText = sendAPIRequestMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype,trntype);
 
     console.debug('result Microsoft:', translatedText);
     //translatedText = original;
@@ -486,6 +486,9 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
             else if (this.readyState == 2 && this.status == 403) {
                 alert("Error in translation received status 403, authorisation refused");
             }
+            else {
+                alert("Error in translation receive code:", this.status);
+            }
         }
     };
     
@@ -503,7 +506,7 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
 
 }
 
-function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype) {
+function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype,trntype) {
     console.debug('sendAPIreQuest original_line:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
@@ -581,31 +584,21 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
     //let xhttp = new XMLHttpRequest();
     let requestBody = [
         {
-            'text': original
+            'text': originalPreProcessed
         }
         ];
 
     console.debug("apikey:", apikeyMicrosoft);
     language = language.toUpperCase();
     //console.debug("Target_lang:", language);
-    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to="+language);
-    
-    xhttp.setRequestHeader("Content-Type", "application/json");
+    translen = originalPreProcessed.length;
+    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to="+language+"&textype="+trntype);   
+    xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
     xhttp.setRequestHeader('Ocp-Apim-Subscription-Key', apikeyMicrosoft);
-    xhttp.setRequestHeader('Content-Length', 10);
+    xhttp.setRequestHeader('Content-Length', translen);
 
     xhttp.responseType = 'json';
     xhttp.send(JSON.stringify(requestBody));
-    //xhttp.onload = function () {
-    //    let responseObj = xhttp.response.error;
-    //    console.debug("response direct:", xhttp.response);
-    //    console.debug("response error:", xhttp.response.error); 
-   //     myerror = xhttp.response.error;
-     //   console.debug("myerror:", myerror.code);
-     //   console.debug("myerror tekst:", myerror.message);
-
-   // };
-    
 
 }
 
