@@ -386,8 +386,9 @@ function deepLTranslate(original, destlang, e, apikeyDeepl, preverbs, rowId, tra
 }
 
 function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype) {
-    let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
+    let originalPreProcessed = preProcessOriginal(original, preverbs, 'microsoft');
     console.debug('microsoftTranslate result of preProcessOriginal:', originalPreProcessed);
+    //var myRe = |(\</?([a-zA-Z]+[1-6]?)(\s[^>]*)?(\s?/)?\>|)/gm;
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
     if (myArray == null) {
@@ -585,7 +586,7 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
     //let xhttp = new XMLHttpRequest();
     let requestBody = [
         {
-            'text': originalPreProcessed
+         'text': originalPreProcessed
         }
         ];
 
@@ -593,7 +594,7 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
     language = language.toUpperCase();
     //console.debug("Target_lang:", language);
     translen = originalPreProcessed.length;
-    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to="+language+"&textype="+trntype);   
+    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to=" + language + "&textype=" + trntype);   
     xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
     xhttp.setRequestHeader('Ocp-Apim-Subscription-Key', apikeyMicrosoft);
     xhttp.setRequestHeader('Content-Length', translen);
@@ -685,7 +686,7 @@ function preProcessOriginal(original, preverbs,translator) {
 
             index++;
         }
-        if (index === 0) {
+        if (index == 0) {
             console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
     }
@@ -697,7 +698,20 @@ function preProcessOriginal(original, preverbs,translator) {
 
             index++;
         }
-        if (index === 0) {
+        if (index == 0) {
+            console.debug("preProcessOriginal no placeholders found index === 0 ");
+        }
+    }
+    else if (translator == 'microsoft') {
+        // const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        console.debug("We do nothing");
+        //for (const match of matches) {
+        //   original = original.replace(match[0], `<x>${index}</x>`);
+
+        //  index++;
+        //}
+        if (index == 0) {
             console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
     }
