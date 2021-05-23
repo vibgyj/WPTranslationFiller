@@ -253,19 +253,23 @@ function addTranslateButtons() {
         // Add translate button
         let translateButton = document.createElement("my-button");
         //console.debug('addTranslateButtons rowId:',rowId);
+        importButton.href = "#";
         translateButton.id = `translate-${rowId}-translation-entry-my-button`;
         translateButton.className = "translation-entry-my-button";
         translateButton.onclick = translateEntryClicked;
         translateButton.innerText = "Translate";
+        translateButton.style.cursor = "pointer";
         panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
 
         // Add addtranslate button
         let addTranslateButton = document.createElement("my-button");
-        console.debug('addTranslateButtons rowId:',rowId);
+        console.debug('addTranslateButtons rowId:', rowId);
+        importButton.href = "#";
         addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
         addTranslateButton.className = "addtranslation-entry-my-button";
         addTranslateButton.onclick = addtranslateEntryClicked;
         addTranslateButton.innerText = "Add Translation";
+        addTranslateButton.style.cursor = "pointer";
         panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
 
         let TranslocalButton = document.createElement("local-button");
