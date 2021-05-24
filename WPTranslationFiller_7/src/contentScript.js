@@ -348,7 +348,7 @@ function translateEntryClicked(event) {
     let myrowId = event.target.id.split('-')[2];
     //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
     // So that needs to be added to the base rowId to find it
-    console.log("translateEntryClicked myrowId:", myrowId);
+    //console.log("translateEntryClicked myrowId:", myrowId);
     if (typeof myrowId != 'undefined' && myrowId != 'translation') {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;

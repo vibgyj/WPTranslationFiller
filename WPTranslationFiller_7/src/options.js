@@ -140,7 +140,7 @@ file.addEventListener('change', function () {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
                 let value = entry[1].split('/');
                 for (let val in value) {
-                    if (value !=""){
+                    if (value != ""){
                        value[val] = value[val].replaceAll("\"", "").trim();
                     }
                 }
@@ -249,25 +249,25 @@ function export_verbs_csv() {
     console.debug("Export started:");
     // 13-03-2021 PSS added locale to export filename
     var destlang = destLangTextbox.value;
-    let export_file = 'export_verbs_' +destlang +'.csv';
+    let export_file = 'export_verbs_' + destlang + '.csv';
     setPostTranslationReplace(verbsTextbox.value);
-    let arrayData  = [];  
+    let arrayData = [];  
     for (let i = 0; i < replaceVerb.length; i++) {
-          arrayData[i] = { original : replaceVerb[i][0], replacement :  replaceVerb[i][1]};
+          arrayData[i] = { original: replaceVerb[i][0], replacement:  replaceVerb[i][1] };
          }
    // let header ="original,replace");
     let delimiter = ',';
-    let arrayHeader = ["original","translation", "country"];
+    let arrayHeader = ["original", "translation", "country"];
     let header = arrayHeader.join(delimiter) + '\n';
        let csv = header;
-       arrayData.forEach( obj => {
+       arrayData.forEach(obj => {
            let row = [];
            for (var key in obj) {
                if (obj.hasOwnProperty(key)) {
                    row.push(obj[key]);
                }
            }
-           csv += row.join(delimiter)+"\n";
+           csv += row.join(delimiter) + "\n";
        });
 
        let csvData = new Blob([csv], { type: 'text/csv' });  
@@ -294,8 +294,8 @@ function setPostTranslationReplace(postTranslationReplace) {
 }
 
 var obj_csv = {
-size:0,
-dataFile:[]
+    size:0,
+    dataFile:[]
     };
 
 let input = document.getElementById('importPost');
@@ -304,25 +304,25 @@ if (input.files && input.files[0]) {
     let reader = new FileReader();
         // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
         reader.readAsText(input.files[0]);
-    reader.onload = function (e) {
-    console.log(e);
-    obj_csv.size = e.total;
-    obj_csv.dataFile = e.target.result;
-    //console.log(obj_csv.dataFile)
-    document.getElementById('text_verbs').value = "";
-    parseData(obj_csv.dataFile);             
+        reader.onload = function (e) {
+        console.log(e);
+        obj_csv.size = e.total;
+        obj_csv.dataFile = e.target.result;
+       //console.log(obj_csv.dataFile)
+       document.getElementById('text_verbs').value = "";
+       parseData(obj_csv.dataFile);             
     };
    }
 });
      
-function parseData(data){
+function parseData(data) {
     let csvData = [];
     let lbreak = data.split("\n");
-    let counter= 0;
+    let counter = 0;
     lbreak.forEach(res => {
         csvData.push(res.split(","));
-        if (counter >0){
-            verbsTextbox.value += res.split(",")+'\n';
+        if (counter >0) {
+            verbsTextbox.value += res.split(",") + '\n';
         }
         ++counter;
         //console.debug("counter:",counter);
