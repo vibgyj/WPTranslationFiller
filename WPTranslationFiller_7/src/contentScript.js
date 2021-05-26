@@ -165,7 +165,8 @@ async function importPageClicked(event) {
    
 }
     
-async function parseDataBase(data){
+async function parseDataBase(data) {
+    alert("Import is started wait for the result");
     let csvData = [];
     let lbreak = data.split("\n");
     let counter= 0;
@@ -187,8 +188,8 @@ async function parseDataBase(data){
                console.debug('parseDataBase:',res);
             }
         }
-    }
-        
+      }
+        alert('Import ready records imported:' + i);
     }
 }
 let glossary = [];

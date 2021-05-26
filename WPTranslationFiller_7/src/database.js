@@ -41,7 +41,7 @@ function getDbSchema() {
     }
     return db;
 }
-async function addTransDb(source,translation,country) {
+async function addTransDb(orig,trans,cntry) {
 	console.debug('Add record:',source,translation,country);
 	//found = findTransline(source);
 	//console.debug('Result after find:',found);
@@ -49,7 +49,7 @@ async function addTransDb(source,translation,country) {
 	console.debug('Result after count:',count);
 	if (count =='0') {
         reslt = "Inserted";
-        var transl = { source: source, translation: translation, country: country };
+        var transl = { source: orig, translation: trans, country: cntry };
         try {
            var noOfDataInserted = await jsstoreCon.insert({
             into: 'Translation',
