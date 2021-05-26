@@ -49,7 +49,7 @@ async function addTransDb(source,translation,country) {
 	console.debug('Result after count:',count);
 	if (count =='0') {
         reslt = "Inserted";
-        var transl = {source,translation,country};
+        var transl = { source: source, translation: translation, country: country };
         try {
            var noOfDataInserted = await jsstoreCon.insert({
             into: 'Translation',
