@@ -432,7 +432,7 @@ function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype
 }
 
 function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProcessed, rowId, transtype) {
-    console.debug('sendAPIreQuest original_line:', originalPreProcessed);
+    console.debug('sendAPIreQuest original_line Deepl:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         
@@ -509,7 +509,8 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
 }
 
 function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype,trntype) {
-    console.debug('sendAPIreQuest original_line:', originalPreProcessed);
+    console.debug('sendAPIreQuest original_line Microsoft:', original); 
+    console.debug("format type", trntype);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
 
@@ -590,23 +591,20 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
         }
         ];
 
-    console.debug("apikey:", apikeyMicrosoft);
+    console.debug("apikey:", apikeyMicrosoft, "textType:",trntype);
     language = language.toUpperCase();
-    //console.debug("Target_lang:", language);
     translen = originalPreProcessed.length;
-    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to=" + language + "&textype=" + trntype);   
+    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&textType=" + trntype + "&from=en&to=" + language);
     xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
     xhttp.setRequestHeader('Ocp-Apim-Subscription-Key', apikeyMicrosoft);
     xhttp.setRequestHeader('Content-Length', translen);
-
     xhttp.responseType = 'json';
     xhttp.send(JSON.stringify(requestBody));
-
 }
 
 
 function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed,rowId,transtype) {
-    console.debug('sendAPIreQuest original_line:', originalPreProcessed);
+    console.debug('translateEntry original_line Google:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
