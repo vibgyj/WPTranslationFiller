@@ -720,7 +720,7 @@ function preProcessOriginal(original, preverbs,translator) {
 }
 
 
-function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed,    translator) {
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator) {
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     console.debug("after processPLaceholderSpaces",translatedText);
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
