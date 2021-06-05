@@ -267,6 +267,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
 
 
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace) {
+    let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+    console.debug('translateButton entry:', translateButton);
+    translateButton.className += " started";
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     console.debug('translateEntry started!');
     // 15-05-2021 PSS added fix for issue #73
@@ -352,8 +355,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
        
            // Translation completed
            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-           console.debug('translateButton entry:', translateButton);
+            console.debug('translateButton entry:', translateButton);
+            //classList.remove(translateButton.className += " started");
             translateButton.className += " translated";
+            
         }
         else {
             alert("Your pretranslate replace verbs are not populated add at least on line!!");
@@ -404,7 +409,7 @@ function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, ro
     console.debug('result Microsoft:', translatedText);
     //translatedText = original;
     //textareaElem = e.querySelector("textarea.foreign-text");
-    //textareaElem.innerText = translatedText;
+    //textareaElem.innerText = translatedText;  
 }
 function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype) {
     let originalPreProcessed = preProcessOriginal(original, preverbs,'google');
@@ -508,7 +513,7 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
 
 }
 
-function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype,trntype) {
+function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype, trntype) {
     console.debug('sendAPIreQuest original_line Microsoft:', original); 
     console.debug("format type", trntype);
     xhttp = new XMLHttpRequest();
