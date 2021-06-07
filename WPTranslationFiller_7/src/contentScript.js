@@ -11,7 +11,6 @@ else{
 	console.debug("Database is present");
 }
 console.debug("jsStore opened:",jsstoreCon);
-
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');

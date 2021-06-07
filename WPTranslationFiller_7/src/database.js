@@ -41,11 +41,12 @@ function getDbSchema() {
     }
     return db;
 }
-async function addTransDb(orig,trans,cntry) {
-	console.debug('Add record:',source,translation,country);
+async function addTransDb(orig, trans, cntry) {
+    // 05-06-2021 PSS fixed a problem with wrong var names
+	console.debug('Add record:',orig,trans,cntry);
 	//found = findTransline(source);
 	//console.debug('Result after find:',found);
-	count = await countTransline(source,country);
+	count = await countTransline(orig,cntry);
 	console.debug('Result after count:',count);
 	if (count =='0') {
         reslt = "Inserted";

@@ -91,6 +91,16 @@ local.paging a.translation-filler-button {
     color: lightgray;
 }
 
+    .panel-header-actions .translation-entry-my-button.started {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: button-loading-spinner 1s ease infinite;
+    }
+
 .panel-header-actions .translation-entry-my-button::before {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
@@ -100,9 +110,10 @@ local.paging a.translation-filler-button {
     width: 28px;
 }
 
-.panel-header-actions .translation-entry-my-button.translated {
-    background-color: green;
-}
+    .panel-header-actions .translation-entry-my-button.translated {
+        animation:none;
+        background-color: green;
+    }
 
 
 .paging a.check_translation-button {
@@ -341,4 +352,14 @@ local.paging a.translation-filler-button {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+
+    to {
+        transform: rotate(1turn);
+    }
 }
