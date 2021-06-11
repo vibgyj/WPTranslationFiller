@@ -4,6 +4,10 @@
     "\\WPTranslationFiller_7",
     "\\WPTranslationFiller_7\\src"
   ],
+<<<<<<< HEAD
+  "SelectedNode": "\\WPTranslationFiller_7\\src\\database.js",
+=======
   "SelectedNode": "\\WPTranslationFiller_7\\src\\contentScript.js",
+>>>>>>> 025e66b92d528b2dd3afd40e2da18dd5bb7105c4
   "PreviewInSolutionExplorer": false
 }

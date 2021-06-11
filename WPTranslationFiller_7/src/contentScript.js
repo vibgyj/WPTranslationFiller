@@ -381,9 +381,11 @@ function updateStyle(textareaElem, result) {
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
-    updateElementStyle(priorityElem, result);
+    updateElementStyle(priorityElem, result,'False');
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(headerElem, result);
+    updateElementStyle(headerElem, result,'False');
+    let OldTrans = fetchOld(priorityElem,result,'https://translate.wordpress.org/projects/wp-plugins/awesome-support/dev/nl/default/?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D='+rowId+'&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc');
+    
 }
 
 function validateEntry(language, textareaElem) {
@@ -397,9 +399,16 @@ function validateEntry(language, textareaElem) {
     updateStyle(textareaElem, result);
 }
 
-function updateElementStyle(priorityElem, result) {
+function updateElementStyle(priorityElem, result,oldstring) {
+    if (oldstring == 'True') {
+        var text = document.createTextNode('⇈');
+        priorityElem.style.color = 'darkblue';
+        priorityElem.style.fontWeight = "900";
+        
+        priorityElem.appendChild(text);
+        }
     if (result.wordCount == 0) return;
-
+    
     if (result.percent == 100) {
         priorityElem.style.backgroundColor = 'green';
         return;
@@ -499,4 +508,31 @@ function taMatch(gWord, tWord) {
     console.log('taMatch:', gWord, glossaryWord, tWord);
 
     return tWord.includes(glossaryWord);
+}
+
+// 11-06-2021 PSS added function to mark that existing translation is present
+async function fetchOld(priorityElem,result,url) {
+    console.debug("Fetch URL started with :", url);
+        fetch(url, {
+            headers: new Headers({
+                'User-agent': 'Mozilla/4.0 Custom User Agent'
+            })
+        })
+            .then(response => response.text())
+            .then(data => {
+                //console.log(data);
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(data, 'text/html');
+                //console.log("html:", doc);
+                var table = doc.getElementById("translations");
+                //console.log("Table count:", table);
+                var tbodyRowCount = table.tBodies[0].rows.length;
+                console.log("Table count:", tbodyRowCount);
+                if (tbodyRowCount > 2) {
+                    updateElementStyle(priorityElem, result, 'True');
+                }
+                
+            }).catch(error => console.error(error));
+    
+        
 }

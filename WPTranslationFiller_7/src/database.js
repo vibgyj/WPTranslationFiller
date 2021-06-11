@@ -71,7 +71,7 @@ async function addTransDb(orig, trans, cntry) {
        }
 	}
 	else{
-		updateTransDb(source,translation,country);
+		updateTransDb(org,trans,cntry);
 		console.debug('addTransDb record present so update it',res);
 		//alert("Record updated!!");
     reslt="updated";
