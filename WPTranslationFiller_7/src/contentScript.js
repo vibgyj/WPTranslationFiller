@@ -375,10 +375,8 @@ function validatePage(language) {
             validateEntry(language, e.target);
         });
         let translation = textareaElem.innerText;
-
         var result = validate(language, original, translation);
         console.log(result);
-
         updateStyle(textareaElem, result, newurl);
     }
 }
@@ -390,11 +388,13 @@ function updateStyle(textareaElem, result, newurl) {
     updateElementStyle(priorityElem, result,'False');
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(headerElem, result, 'False');
-    console.debug('Row to find:', rowId);
+    //console.debug('Row to find:', rowId);
     let row = rowId.split('-')[0];
-    console.debug('Row splitted:', row);
-    let OldTrans = fetchOld(priorityElem,result,newurl+'?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D='+row+'&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc');
-    
+    //console.debug('Row splitted:', row);
+    // 12-06-2021 PSS do not fetch old if within the translation
+    if (typeof newurl != 'undefined') {
+        let OldTrans = fetchOld(priorityElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc');
+    }
 }
 
 function validateEntry(language, textareaElem) {
@@ -403,8 +403,7 @@ function validateEntry(language, textareaElem) {
         .querySelector("span.original-raw").innerText;
 
     let result = validate(language, original, translation);
-    console.log(result);
-
+    //console.log(result);
     updateStyle(textareaElem, result);
 }
 
@@ -490,7 +489,6 @@ function validate(language, original, translation) {
             percent = 0;
         }
         console.log("Percent calculation:", wordCount, foundCount, percent);
-
         return { wordCount, percent, toolTip };
 }
 
@@ -521,7 +519,6 @@ function taMatch(gWord, tWord) {
 
 // 11-06-2021 PSS added function to mark that existing translation is present
 async function fetchOld(priorityElem,result,url) {
-    console.debug("Fetch URL started with :", url);
         fetch(url, {
             headers: new Headers({
                 'User-agent': 'Mozilla/4.0 Custom User Agent'
@@ -534,14 +531,9 @@ async function fetchOld(priorityElem,result,url) {
                 var doc = parser.parseFromString(data, 'text/html');
                 //console.log("html:", doc);
                 var table = doc.getElementById("translations");
-                //console.log("Table count:", table);
                 var tbodyRowCount = table.tBodies[0].rows.length;
-                console.log("Table count:", tbodyRowCount);
                 if (tbodyRowCount > 2) {
                     updateElementStyle(priorityElem, result, 'True');
-                }
-                
+                }       
             }).catch(error => console.error(error));
-    
-        
 }
