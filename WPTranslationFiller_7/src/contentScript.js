@@ -362,6 +362,12 @@ function translateEntryClicked(event) {
 }
 
 function validatePage(language) {
+    // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
+    let f = document.getElementsByClassName('breadcrumb');   
+    console.debug('Breadcrumb found;', f[0]);
+    let url = f[0].firstChild.baseURI;
+    let newurl = url.split('?')[0];
+
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         let textareaElem = e.querySelector("textarea.foreign-text");
@@ -373,18 +379,21 @@ function validatePage(language) {
         var result = validate(language, original, translation);
         console.log(result);
 
-        updateStyle(textareaElem, result);
+        updateStyle(textareaElem, result, newurl);
     }
 }
 
-function updateStyle(textareaElem, result) {
+function updateStyle(textareaElem, result, newurl) {
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
     updateElementStyle(priorityElem, result,'False');
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(headerElem, result,'False');
-    let OldTrans = fetchOld(priorityElem,result,'https://translate.wordpress.org/projects/wp-plugins/awesome-support/dev/nl/default/?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D='+rowId+'&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc');
+    updateElementStyle(headerElem, result, 'False');
+    console.debug('Row to find:', rowId);
+    let row = rowId.split('-')[0];
+    console.debug('Row splitted:', row);
+    let OldTrans = fetchOld(priorityElem,result,newurl+'?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D='+row+'&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc');
     
 }
 
