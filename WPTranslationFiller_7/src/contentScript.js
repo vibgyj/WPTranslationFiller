@@ -308,10 +308,25 @@ function checkbuttonClick(event){
       //event.preventDefault(); caused a problem within the single page enttry  
       let action = event.target.textContent ;
       //console.debug('action',action);
-      if (action == 'Details'){
+       if (action == 'Details') {
+
          let rowId = event.target.parentElement.parentElement.getAttribute('row');
-          let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-         console.debug('Translatebutton:',translateButton);
+         let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+
+         // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
+         let f = document.getElementsByClassName('breadcrumb');
+         console.debug('Breadcrumb found;', f[0]);
+         let url = f[0].firstChild.baseURI;
+         let newurl = url.split('?')[0];
+         
+           if (typeof newurl != 'undefined') {
+               url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
+               var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=500,left=600,top=0";
+               console.debug('url found:', url);
+               window.open(url, "_blank", windowFeatures);
+           }
+           
+         //console.debug('Translatebutton:',translateButton);
          if (translateButton == null){
             let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
             let translateButton = document.createElement("my-button");
