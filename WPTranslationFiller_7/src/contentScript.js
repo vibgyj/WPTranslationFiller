@@ -314,16 +314,18 @@ function checkbuttonClick(event){
          let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
 
          // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
-         let f = document.getElementsByClassName('breadcrumb');
+           let f = document.getElementsByClassName('breadcrumb');
+           console.debug( )
          console.debug('Breadcrumb found;', f[0]);
          let url = f[0].firstChild.baseURI;
          let newurl = url.split('?')[0];
          
            if (typeof newurl != 'undefined') {
                url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
-               var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=500,left=600,top=0";
+               var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                console.debug('url found:', url);
                window.open(url, "_blank", windowFeatures);
+               fetchOldRec(url);
            }
            
          //console.debug('Translatebutton:',translateButton);
@@ -530,6 +532,38 @@ function taMatch(gWord, tWord) {
     console.log('taMatch:', gWord, glossaryWord, tWord);
 
     return tWord.includes(glossaryWord);
+}
+// 14-06-2021 PSS added fetch old records to show in meta if present
+async function fetchOldRec(url) {
+    fetch(url, {
+        headers: new Headers({
+            'User-agent': 'Mozilla/4.0 Custom User Agent'
+        })
+    })
+        .then(response => response.text())
+        .then(data => {
+            //console.log(data);
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(data, 'text/html');
+            console.log("html:", doc);
+            var table = doc.getElementById("translations");
+            console.debug('table:', table);
+            let tr = table.rows;
+            console.debug('table:', tr);
+            var tbodyRowCount = table.tBodies[0].rows.length;
+            console.debug('rowcount:', tbodyRowCount);
+            rowContent = table.rows[tbodyRowCount-3];
+            console.debug('tablecontent:', rowContent);
+            origText = rowContent.innerHTML;
+            
+            orig = rowContent.getElementsByClassName('original-text');
+            console.debug('Orig found:', orig[0].innerText);
+            orig = rowContent.getElementsByClassName('translation-text');
+            console.debug('Trans found:', orig[0].innerText);
+            if (tbodyRowCount > 2) {
+                //updateElementStyle(priorityElem, result, 'True');
+            }
+        }).catch(error => console.error(error));
 }
 
 // 11-06-2021 PSS added function to mark that existing translation is present
