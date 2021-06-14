@@ -68,7 +68,6 @@ if (divPaging != null){
    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
-
 function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
