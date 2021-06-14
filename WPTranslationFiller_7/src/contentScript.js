@@ -322,10 +322,10 @@ function checkbuttonClick(event){
          
            if (typeof newurl != 'undefined') {
                url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
-               var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+               
                console.debug('url found:', url);
-               window.open(url, "_blank", windowFeatures);
-               fetchOldRec(url);
+               //rowsFound = fetchOld('','',url,'True');
+               fetchOldRec(url,rowId);
            }
            
          //console.debug('Translatebutton:',translateButton);
@@ -410,7 +410,7 @@ function updateStyle(textareaElem, result, newurl) {
     //console.debug('Row splitted:', row);
     // 12-06-2021 PSS do not fetch old if within the translation
     if (typeof newurl != 'undefined') {
-        let OldTrans = fetchOld(priorityElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc');
+        fetchOld(priorityElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc','False');
     }
 }
 
@@ -534,7 +534,8 @@ function taMatch(gWord, tWord) {
     return tWord.includes(glossaryWord);
 }
 // 14-06-2021 PSS added fetch old records to show in meta if present
-async function fetchOldRec(url) {
+// 14-06-2021 PSS added the old translation into the metabox, and draw lines between the translations
+async function fetchOldRec(url,rowId) {
     fetch(url, {
         headers: new Headers({
             'User-agent': 'Mozilla/4.0 Custom User Agent'
@@ -552,23 +553,49 @@ async function fetchOldRec(url) {
             console.debug('table:', tr);
             var tbodyRowCount = table.tBodies[0].rows.length;
             console.debug('rowcount:', tbodyRowCount);
-            rowContent = table.rows[tbodyRowCount-3];
-            console.debug('tablecontent:', rowContent);
-            origText = rowContent.innerHTML;
-            
-            orig = rowContent.getElementsByClassName('original-text');
-            console.debug('Orig found:', orig[0].innerText);
-            orig = rowContent.getElementsByClassName('translation-text');
-            console.debug('Trans found:', orig[0].innerText);
             if (tbodyRowCount > 2) {
-                //updateElementStyle(priorityElem, result, 'True');
+                 rowContent = table.rows[tbodyRowCount-3];
+                 console.debug('tablecontent:', rowContent);
+                 orig = rowContent.getElementsByClassName('original-text');
+                 console.debug('Orig found:', orig[0].innerText);
+                 trans = rowContent.getElementsByClassName('translation-text');
+                console.debug('Trans found:', trans[0].innerText);
+
+                var separator1 = document.createElement('div');
+                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+                separator1.appendChild(document.createTextNode(""));
+                var separator2 = document.createElement('div');
+                separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                separator2.appendChild(document.createTextNode(""));
+
+                var element1 = document.createElement('div');
+                element1.style.cssText = 'padding-left:10px;background:lightgrey';
+                element1.appendChild(document.createTextNode('Previous translation exists'));
+                
+                var element2 = document.createElement('div');
+                element2.style.cssText = 'padding-left:10px;background:lightgrey';
+                element2.appendChild(document.createTextNode(orig[0].innerText));
+                
+                var element3 = document.createElement('div');
+                element3.style.cssText = 'padding-left:10px;background:lightgrey';
+                element3.appendChild(document.createTextNode(trans[0].innerText));
+                
+                let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                metaElem.appendChild(element1);
+                metaElem.appendChild(separator1);
+                metaElem.appendChild(element2);
+                metaElem.appendChild(separator2);
+                metaElem.appendChild(element3);
+                //metaElem.style.color = 'darkblue';
+                metaElem.style.fontWeight = "900";
+                
             }
         }).catch(error => console.error(error));
 }
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(priorityElem,result,url) {
-        fetch(url, {
+async function fetchOld(priorityElem, result, url,single) {
+        const data =fetch(url, {
             headers: new Headers({
                 'User-agent': 'Mozilla/4.0 Custom User Agent'
             })
@@ -580,9 +607,15 @@ async function fetchOld(priorityElem,result,url) {
                 var doc = parser.parseFromString(data, 'text/html');
                 //console.log("html:", doc);
                 var table = doc.getElementById("translations");
-                var tbodyRowCount = table.tBodies[0].rows.length;
-                if (tbodyRowCount > 2) {
+                const tbodyRowCount = table.tBodies[0].rows.length;
+                //console.debug('tbodyRowCount:', tbodyRowCount)
+                if (tbodyRowCount > 2 && single == 'False') {
                     updateElementStyle(priorityElem, result, 'True');
-                }       
-            }).catch(error => console.error(error));
+                }
+                else if (tbodyRowCount > 2 && single == 'True') {
+                    var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+                    window.open(url, "_blank", windowFeatures);
+                }
+            })
+            .catch(error => console.error(error));
 }
