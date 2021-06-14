@@ -34,12 +34,18 @@ jobs:
           cp src/options.js src/chrome/options.js
           cp src/options.html src/chrome/options.html
           cp src/translationFillerStyle.css src/chrome/translationFillerStyle.css
+          cp src/jsstore.js src/chrome/jsstore.js
+          cp src/jsstore.worker.js src/chrome/jsstore.worker.js
+          cp src/database.js src/chrome/database.js
+          zip --junk-paths -r chrome-extension ./src/chrome
           cp src/contentScript.js src/firefox/contentScript.js
           cp src/googleTranslate.js src/firefox/googleTranslate.js
           cp src/options.js src/firefox/options.js
           cp src/options.html src/firefox/options.html
           cp src/translationFillerStyle.css src/firefox/translationFillerStyle.css
-          zip --junk-paths -r chrome-extension ./src/chrome
+          cp src/jsstore.js src/firefox/jsstore.js
+          cp src/jsstore.worker.js src/firefox/jsstore.worker.js
+          cp src/database.js src/firefox/database.js
           zip --junk-paths -r firefox-addon ./src/firefox
       - name: Create Release
         id: create_release
