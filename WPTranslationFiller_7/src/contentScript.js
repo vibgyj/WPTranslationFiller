@@ -562,22 +562,27 @@ async function fetchOldRec(url,rowId) {
                 console.debug('Trans found:', trans[0].innerText);
 
                 var separator1 = document.createElement('div');
+                separator1.setAttribute('id', 'translator_sep');
                 separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
                 separator1.appendChild(document.createTextNode(""));
                 var separator2 = document.createElement('div');
+                separator2.setAttribute('id', 'translator_sep');
                 separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
                 separator2.appendChild(document.createTextNode(""));
 
                 var element1 = document.createElement('div');
-                element1.style.cssText = 'padding-left:10px;background:lightgrey';
+                element1.setAttribute('id', 'translator_div');             
+                element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element1.appendChild(document.createTextNode('Previous translation exists'));
                 
                 var element2 = document.createElement('div');
-                element2.style.cssText = 'padding-left:10px;background:lightgrey';
+                element2.setAttribute('id', 'translator_div');
+                element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element2.appendChild(document.createTextNode(orig[0].innerText));
                 
                 var element3 = document.createElement('div');
-                element3.style.cssText = 'padding-left:10px;background:lightgrey';
+                element3.setAttribute('id', 'translator_div');  
+                element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element3.appendChild(document.createTextNode(trans[0].innerText));
                 
                 let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
