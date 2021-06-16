@@ -554,34 +554,40 @@ async function fetchOldRec(url,rowId) {
             var tbodyRowCount = table.tBodies[0].rows.length;
             console.debug('rowcount:', tbodyRowCount);
             if (tbodyRowCount > 2) {
-                 rowContent = table.rows[tbodyRowCount-3];
-                 console.debug('tablecontent:', rowContent);
-                 orig = rowContent.getElementsByClassName('original-text');
-                 console.debug('Orig found:', orig[0].innerText);
-                 trans = rowContent.getElementsByClassName('translation-text');
-                console.debug('Trans found:', trans[0].innerText);
-
+                // 16-06-2021 The below code fixes issue  #82
+                let translateorigsep = document.getElementById(`translator_sep1`);
+                if (translateorigsep != null){
+                    document.getElementById("translator_sep1").remove();
+                    document.getElementById("translator_sep2").remove();
+                    document.getElementById("translator_div1").remove();
+                    document.getElementById("translator_div2").remove();
+                    document.getElementById("translator_div3").remove();
+                }
+                
+                rowContent = table.rows[tbodyRowCount-3];
+                orig = rowContent.getElementsByClassName('original-text');
+                trans = rowContent.getElementsByClassName('translation-text');
                 var separator1 = document.createElement('div');
-                separator1.setAttribute('id', 'translator_sep');
+                separator1.setAttribute('id', 'translator_sep1');
                 separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
                 separator1.appendChild(document.createTextNode(""));
                 var separator2 = document.createElement('div');
-                separator2.setAttribute('id', 'translator_sep');
+                separator2.setAttribute('id', 'translator_sep2');
                 separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
                 separator2.appendChild(document.createTextNode(""));
 
                 var element1 = document.createElement('div');
-                element1.setAttribute('id', 'translator_div');             
+                element1.setAttribute('id', 'translator_div1');             
                 element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element1.appendChild(document.createTextNode('Previous translation exists'));
                 
                 var element2 = document.createElement('div');
-                element2.setAttribute('id', 'translator_div');
+                element2.setAttribute('id', 'translator_div2');
                 element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element2.appendChild(document.createTextNode(orig[0].innerText));
                 
                 var element3 = document.createElement('div');
-                element3.setAttribute('id', 'translator_div');  
+                element3.setAttribute('id', 'translator_div3');  
                 element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element3.appendChild(document.createTextNode(trans[0].innerText));
                 
