@@ -21,6 +21,10 @@ const el = document.getElementById("translations");
 if (el != null){
   el.addEventListener("click", checkbuttonClick);
 }
+const el1 = document.getElementById("translations");
+if (el1 != null) {
+    el1.addEventListener("click", checkactionClick);
+}
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
@@ -301,13 +305,28 @@ function addtranslateEntryClicked(event){
        addTransline(rowId); 
     }   
 }
+
+// 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
+function checkactionClick(event) {
+    if (event != undefined) {
+
+        let action = event.target.textContent;
+        console.debug('check action', action);
+        const firstLink = event.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+        console.debug("first link:", firstLink);
+             
+        console.debug("firstlink row:", firstLink.getAttribute('row'));
+        
+    }
+        
+}
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 function checkbuttonClick(event){
    if (event != undefined){ 
       //event.preventDefault(); caused a problem within the single page enttry  
       let action = event.target.textContent ;
-      //console.debug('action',action);
+      console.debug('action',action);
        if (action == 'Details') {
 
          let rowId = event.target.parentElement.parentElement.getAttribute('row');

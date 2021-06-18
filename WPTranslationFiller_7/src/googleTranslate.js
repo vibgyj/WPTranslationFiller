@@ -494,7 +494,9 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                 alert("Error in translation received status 403, authorisation refused");
             }
             else {
-                alert("Error in translation receive code:", this.status);
+                // 18-06-2021 PSS fixed an alert at the wrong time issue #83
+                console.debug("Status received:", this.status);
+                //alert("Error in translation receive code:", this.status);
             }
         }
     };
