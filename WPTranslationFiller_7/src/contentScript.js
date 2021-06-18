@@ -309,14 +309,32 @@ function addtranslateEntryClicked(event){
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
 function checkactionClick(event) {
     if (event != undefined) {
-
-        let action = event.target.textContent;
+        let action = event.target.textContent;  
         console.debug('check action', action);
-        const firstLink = event.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
-        console.debug("first link:", firstLink);
-             
-        console.debug("firstlink row:", firstLink.getAttribute('row'));
-        
+        if (action == '+ Approve' || action == '− Reject' || action == '~ Fuzzy'){      
+            const firstLink = event.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+            //console.debug("first link:", firstLink);     
+            console.debug("firstlink row:", firstLink.getAttribute('row'));
+            // 18-06-2021 PSS added searching for previous translations issue  #84
+            if (typeof firstlink != null){
+                const nextLink = firstLink.nextElementSibling;
+                const newRowId = nextLink.getAttribute('row');
+                console.debug("nextlink row:", newRowId);
+                // Find the project to use in the link
+                let f = document.getElementsByClassName('breadcrumb');
+                console.debug()
+                console.debug('Breadcrumb found;', f[0]);
+                let url = f[0].firstChild.baseURI;
+                let newurl = url.split('?')[0];
+                if (typeof newurl != 'undefined') {
+                    // find the prev/old translations if present
+                    url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + newRowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
+                    console.debug('url found:', url);
+                    //rowsFound = fetchOld('','',url,'True');
+                    fetchOldRec(url, newRowId);
+                }
+            }
+        }
     }
         
 }
