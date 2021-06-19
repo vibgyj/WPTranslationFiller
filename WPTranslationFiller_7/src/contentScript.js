@@ -309,9 +309,11 @@ function addtranslateEntryClicked(event){
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
 function checkactionClick(event) {
     if (event != undefined) {
-        let action = event.target.textContent;  
-        console.debug('check action', action);
-        if (action == '+ Approve' || action == '− Reject' || action == '~ Fuzzy'){      
+        //let action = event.target.textContent;
+        // 19-06-2021 PSS changed the type to classname to prevent possible translation issue
+        let classname = event.target.getAttribute("class");
+        console.debug('check action', ":" + classname + ":");
+        if (classname == 'approve' || classname == 'reject' || classname == 'fuzzy' || classname == 'translation-actions__save with-tooltip'){
             const firstLink = event.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
             //console.debug("first link:", firstLink);     
             console.debug("firstlink row:", firstLink.getAttribute('row'));
