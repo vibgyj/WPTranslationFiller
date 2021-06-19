@@ -160,6 +160,9 @@ function checkPage(postTranslationReplace) {
 }
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace) {
+    // 19-06-2021 PSS added animated button for translation at translatePage
+    let translateButton = document.querySelector(".paging a.translation-filler-button");
+    translateButton.className += " started";
     // 15-05-2021 PSS added fix for issue #73
     // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
     if (typeof postTranslationReplace != 'undefined' && postTranslationReplace.length != 0) {

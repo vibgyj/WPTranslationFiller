@@ -62,9 +62,20 @@ local.paging a.translation-filler-button {
     color: lightgray;
 }
 
-.paging a.translation-filler-button.translated {
-    background: green;
+.paging a.translation-filler-button.started {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: button-loading-spinner 1s ease infinite;
 }
+
+    .paging a.translation-filler-button.translated {
+        animation: none;
+        background: green;
+    }
 
 .paging a.translation-entry-my-button::before {
     content: '\f326';
@@ -91,7 +102,7 @@ local.paging a.translation-filler-button {
     color: lightgray;
 }
 
-    .panel-header-actions .translation-entry-my-button.started {
+.panel-header-actions .translation-entry-my-button.started {
         content: "";
         display: inline-block;
         margin: auto;
@@ -99,7 +110,7 @@ local.paging a.translation-filler-button {
         border-top-color: #ffffff;
         border-radius: 50%;
         animation: button-loading-spinner 1s ease infinite;
-    }
+}
 
 .panel-header-actions .translation-entry-my-button::before {
     content: '\f326';
