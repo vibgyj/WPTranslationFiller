@@ -189,14 +189,18 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     console.debug('comment:', comment);
                     toTranslate = checkComments(comment);
                 }
-                console.debug('before googletranslate:', replacePreVerb);
-                console.debug('before googletranslate do we need to translate:', toTranslate);
+                console.debug('before translate:', replacePreVerb);
+                console.debug('before translate do we need to translate:', toTranslate);
                 if (toTranslate) {
-                    let pretrans = await findTransline(original,destlang);
+                    let pretrans = await findTransline(original, destlang);
+                    console.debug("Pretrans found:", pretrans);
                     // 07-05-2021 PSS added pretranslate in pages
                     if (pretrans == "notFound") {
                         let transtype = "single";
-                        document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'hide';
+                        // 20-06-2021 PSS fixed that translation stopped when the page already is completely translated issue #85
+                        if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
+                            document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'hide';
+                        }
                         if (transsel == "google") {
                             googleTranslate(original, destlang, e, apikey, replacePreVerb, row, transtype);
                             console.debug("translatePage google translation:",original);
@@ -220,28 +224,33 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         let g = document.querySelector('td.translation');
                         //console.debug('Text preview:', previewElem, row);
                         let preview = document.querySelector('#preview-' + row + ' td.translation');
+                        console.debug('pretranslated:', g,row,rowfound);
                         preview.innerText = translatedText;
-                        document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
+                        if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
+                            document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
+                        }
                     }
                     // 10-04-2021 PSS added translation of plural into translatePage
 
                     let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                    checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
-                    console.debug("translatePage checkplural:", checkplural);
-                    if (checkplural != null) {
-                        let plural = checkplural.innerText;
-                        transtype = "plural";
-                        if (transsel == "google") {
-                            translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
-                            console.debug('translatePage checkplural google:', translatedText);
-                        }
-                        else if (transsel == "deepl") {
-                            deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
-                            console.debug('translatePage checkplural deepl:', translatedText);
-                        }
-                        else if (transsel == "microsoft") {
-                            console.debug('translatePage checkplural microsoft:', translatedText);
-                            microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
+                    if (f != null) {
+                       checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
+                       console.debug("translatePage checkplural:", checkplural);
+                        if (checkplural != null) {
+                            let plural = checkplural.innerText;
+                            transtype = "plural";
+                            if (transsel == "google") {
+                                translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
+                                console.debug('translatePage checkplural google:', translatedText);
+                            }
+                            else if (transsel == "deepl") {
+                                deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
+                                console.debug('translatePage checkplural deepl:', translatedText);
+                            }
+                            else if (transsel == "microsoft") {
+                                console.debug('translatePage checkplural microsoft:', translatedText);
+                                microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
+                            }
                         }
                     }
                 }
