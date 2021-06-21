@@ -234,10 +234,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
 
                     let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                     if (f != null) {
-                        checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
-                        let plural = checkplural.innerText;
-                        console.debug("translatePage checkplural:", plural);
+                        checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);        
                         if (checkplural != null) {
+                            let plural = checkplural.innerText;
+                            console.debug("translatePage checkplural:", plural);
                             let pretrans = await findTransline(plural, destlang);
                             console.debug('translatePage pretranslate result:', pretrans);
                             if (pretrans == "notFound") {
@@ -251,8 +251,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     console.debug('translatePage checkplural deepl:', translatedText);
                                 }
                                 else if (transsel == "microsoft") {
-                                    console.debug('translatePage checkplural microsoft:', translatedText);
                                     microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
+                                    console.debug('translatePage checkplural microsoft:', translatedText);
                                 }
                             }
                             else {
@@ -263,6 +263,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 textareaElem1.innerText = translatedText;
                                 console.debug("plural newtext:", textareaElem1.innerText);
                                 textareaElem1.value = translatedText;
+                                let g = document.querySelector('td.translation');
+                                let preview = document.querySelector('#preview-' + row + ' td.translation');
+                                console.debug("current preview:", preview.innerText);
+                                let nwline = "\n";
+                                preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
                                 document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
                                 console.debug("translatedEntry plural finished");
                             }
@@ -524,6 +529,11 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                 textareaElem1.innerText = translatedText;
                 console.debug("plural newtext:", textareaElem1.innerText);
                 textareaElem1.value = translatedText;
+                let g = document.querySelector('td.translation');            
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                console.debug("current preview:", preview.innerText);
+                let nwline = "\n";
+                preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
             }
             validateEntry(language, textareaElem);
 
@@ -609,6 +619,11 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
                 textareaElem1.innerText = translatedText;
                 console.debug("plural newtext:", textareaElem1.innerText);
                 textareaElem1.value = translatedText;
+                let g = document.querySelector('td.translation');
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                console.debug("current preview:", preview.innerText);
+                let nwline = "\n";
+                preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
             }
             validateEntry(language, textareaElem);
 
@@ -688,14 +703,11 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             textareaElem1.innerText = translatedText;
             console.debug("plural newtext:",textareaElem1.innerText);
             textareaElem1.value = translatedText;
-            //let preview2 = document.querySelector('#preview-' + rowId + ' td.translation');
-            
-            //var separator1 = document.createElement('tr');
-            //separator1.setAttribute('id', 'foreign_sep1');
-            //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
-            //separator1.appendChild(document.createTextNode(""));           
-            //preview2.appendChild(separator1);
-            //preview2.innerText = 'test';
+            let g = document.querySelector('td.translation');
+            let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+            console.debug("current preview:", preview.innerText);
+            let nwline = "\n";
+            preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
             }
             validateEntry(language,textareaElem);
             
