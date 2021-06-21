@@ -290,9 +290,9 @@ function addtranslateEntryClicked(event){
     if (event != undefined){ 
         event.preventDefault();
        console.debug("add translation clicked");
-       console.log("addtranslateEntry clicked!", event);
+        console.log("addtranslateEntry clicked!", event, 'target:',event.target.id);
        let rowId = event.target.id.split('-')[1];
-       console.log("addtranslate Entry clicked rowId", rowId);
+       console.log("addtranslateEntry clicked rowId", rowId);
        let myrowId = event.target.id.split('-')[2];
        //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
        // So that needs to be added to the base rowId to find it

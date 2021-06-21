@@ -71,7 +71,7 @@ async function addTransDb(orig, trans, cntry) {
        }
 	}
 	else{
-		updateTransDb(org,trans,cntry);
+		updateTransDb(orig,trans,cntry);
 		console.debug('addTransDb record present so update it',res);
 		//alert("Record updated!!");
     reslt="updated";
@@ -160,12 +160,25 @@ async function addTransline(rowId){
         alert("No translation to store!");
     }
     else {
-         console.debug('Translated text to add to database:',addTrans);
-         console.debug('Original text to add to database:',orig);
-         console.debug("addTransline Language:",language);
-		     var res = addTransDb(orig,addTrans,language);
+        console.debug('addTransline translated text to add to database:',addTrans);
+        console.debug('addTransline original text to add to database:',orig);
+        console.debug("addTransline Language:",language);
+        var res = addTransDb(orig, addTrans, language);
+        console.debug('addTransline res add to database:', res);
+        let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+        let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
+        console.debug("addTransline checkplural:", checkplural)
+        // 21-06-2021 PSS fixed the problem with no storing of plurals into the datase issue #87
+        if (checkplural != null) {
+            let plural = checkplural.innerText;
+            console.debug('addTransline checkplural content element', plural);
+            textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
+            console.debug("addTransline add plural translated", textareaElem1);
+            addTrans = textareaElem1.value;
+            res = addTransDb(plural, addTrans, language);
+            }
          alert("addTransline record added/updated to database ");
-      }
+        }
     });
     return;
 }

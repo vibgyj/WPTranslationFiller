@@ -234,23 +234,39 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
 
                     let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                     if (f != null) {
-                       checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
-                       console.debug("translatePage checkplural:", checkplural);
+                        checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
+                        let plural = checkplural.innerText;
+                        console.debug("translatePage checkplural:", plural);
                         if (checkplural != null) {
-                            let plural = checkplural.innerText;
-                            transtype = "plural";
-                            if (transsel == "google") {
-                                translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
-                                console.debug('translatePage checkplural google:', translatedText);
+                            let pretrans = await findTransline(plural, destlang);
+                            console.debug('translatePage pretranslate result:', pretrans);
+                            if (pretrans == "notFound") {
+                                transtype = "plural";
+                                if (transsel == "google") {
+                                    translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
+                                    console.debug('translatePage checkplural google:', translatedText);
+                                }
+                                else if (transsel == "deepl") {
+                                    deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
+                                    console.debug('translatePage checkplural deepl:', translatedText);
+                                }
+                                else if (transsel == "microsoft") {
+                                    console.debug('translatePage checkplural microsoft:', translatedText);
+                                    microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
+                                }
                             }
-                            else if (transsel == "deepl") {
-                                deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
-                                console.debug('translatePage checkplural deepl:', translatedText);
+                            else {
+                                // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
+                                let translatedText = pretrans;
+                                console.debug('translatedpage plural:', translatedText);
+                                textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
+                                textareaElem1.innerText = translatedText;
+                                console.debug("plural newtext:", textareaElem1.innerText);
+                                textareaElem1.value = translatedText;
+                                document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
+                                console.debug("translatedEntry plural finished");
                             }
-                            else if (transsel == "microsoft") {
-                                console.debug('translatePage checkplural microsoft:', translatedText);
-                                microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
-                            }
+
                         }
                     }
                 }
@@ -348,20 +364,36 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
           if (checkplural != null) {
              let plural = checkplural.innerText;
              let transtype = "plural";
+             let pretrans = await findTransline(plural, destlang);
+             //let pretrans = await pretranslate(original);
+             console.debug('pretranslate result plural:', pretrans);
              console.debug('checkplural content element', plural);
-             if (transsel == "google") {
-                 translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, rowId, transtype);
+             if (pretrans == "notFound") {
+                  if (transsel == "google") {
+                      translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, rowId, transtype);
+                  }
+                  else if (transsel == "deepl") {
+                      translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                      console.debug('translatedEntry deepl translation:', translatedText);
+                  }
+                  else if (transsel == "microsoft") {
+                      translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
+                      console.debug('translatedEntry microsoft translation:', translatedText);
+                  }
              }
-             else if (transsel == "deepl") {
-                  translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
-              }
-             else if (transsel == "microsoft") {
-                 microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
-                 console.debug('translatedEntry microsoft translation:', translatedText);
-             }
-          console.debug('checkplural:', translatedText);
-          }
-          else {
+             else {
+                  let translatedText = pretrans;
+                  console.debug('translatedEntry plural:', translatedText);
+                  // 21-06-2021 PSS fixed not populating plural issue #86
+                  textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
+                  textareaElem1.innerText = translatedText;
+                  console.debug("plural newtext:", textareaElem1.innerText);
+                  textareaElem1.value = translatedText;
+                  document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'visible';
+                  console.debug("translatedEntry plural finished");
+               }
+        }
+        else {
                console.debug('checkplural null');
            }
        
@@ -655,7 +687,15 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
             textareaElem1.innerText = translatedText;
             console.debug("plural newtext:",textareaElem1.innerText);
-            textareaElem1.value = translatedText; 
+            textareaElem1.value = translatedText;
+            //let preview2 = document.querySelector('#preview-' + rowId + ' td.translation');
+            
+            //var separator1 = document.createElement('tr');
+            //separator1.setAttribute('id', 'foreign_sep1');
+            //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+            //separator1.appendChild(document.createTextNode(""));           
+            //preview2.appendChild(separator1);
+            //preview2.innerText = 'test';
             }
             validateEntry(language,textareaElem);
             
@@ -756,10 +796,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replaceAll(`<x>${index}</x>`, match[0]);
+            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
-
+        // 21-06-2021 PSS added debug statement to find an issue with replacing placeholders
+        console.debug('Deepl after removing placeholders:', translatedText);
     }
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
