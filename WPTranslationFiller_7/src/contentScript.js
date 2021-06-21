@@ -594,7 +594,8 @@ async function fetchOldRec(url,rowId) {
             console.debug('rowcount:', tbodyRowCount);
             if (tbodyRowCount > 2) {
                 // 16-06-2021 The below code fixes issue  #82
-                let translateorigsep = document.getElementById(`translator_sep1`);
+                let translateorigsep = document.getElementById('translator_sep1');
+                console.debug("Did we find a separator:", translateorigsep);
                 if (translateorigsep != null){
                     document.getElementById("translator_sep1").remove();
                     document.getElementById("translator_sep2").remove();

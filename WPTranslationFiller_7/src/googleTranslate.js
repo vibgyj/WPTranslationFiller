@@ -131,8 +131,6 @@ function checkPage(postTranslationReplace) {
                     countreplaced++;
                     replaced = true;
                 }
-
-
             }
             textareaElem.innerText = translatedText;
             //console.debug('Translated text checked:',translatedText);
@@ -265,9 +263,18 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 textareaElem1.value = translatedText;
                                 let g = document.querySelector('td.translation');
                                 let preview = document.querySelector('#preview-' + row + ' td.translation');
-                                console.debug("current preview:", preview.innerText);
-                                let nwline = "\n";
-                                preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
+                                //console.debug("current preview:", preview.innerText);
+                                // 21-06-2021 PSS added a dotted line into the preview cell if plural is present #88
+                                var separator1 = document.createElement('div');
+                                separator1.setAttribute('id', 'translator_sep1');
+                                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                                separator1.appendChild(document.createTextNode(""));
+                                preview.appendChild(separator1);
+                                var element1 = document.createElement('div');
+                                element1.setAttribute('id', 'translator_div1');
+                                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                                element1.appendChild(document.createTextNode("\n" + translatedText));
+                                preview.appendChild(element1);
                                 document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
                                 console.debug("translatedEntry plural finished");
                             }
@@ -531,9 +538,19 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                 textareaElem1.value = translatedText;
                 let g = document.querySelector('td.translation');            
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                console.debug("current preview:", preview.innerText);
-                let nwline = "\n";
-                preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
+                //console.debug("current preview:", preview.innerText);
+                // 21-06-2021 PSS added a dotted line into the preview cell if plural is present #88
+                var separator1 = document.createElement('div');
+                separator1.setAttribute('id', 'translator_sep1');
+                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                separator1.appendChild(document.createTextNode(""));
+                preview.appendChild(separator1);
+                var element1 = document.createElement('div');
+                element1.setAttribute('id', 'translator_div1');
+                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                element1.appendChild(document.createTextNode("\n"+ translatedText));
+                preview.appendChild(element1);
+               
             }
             validateEntry(language, textareaElem);
 
@@ -559,7 +576,7 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
     //let xhttp = new XMLHttpRequest();
     language = language.toUpperCase();
     //console.debug("Target_lang:", language);
-    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
     xhttp.responseType = 'json';
     xhttp.send();
    
@@ -622,8 +639,16 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
                 let g = document.querySelector('td.translation');
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
                 console.debug("current preview:", preview.innerText);
-                let nwline = "\n";
-                preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
+                var separator1 = document.createElement('div');
+                separator1.setAttribute('id', 'translator_sep1');
+                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                separator1.appendChild(document.createTextNode(""));
+                preview.appendChild(separator1);
+                var element1 = document.createElement('div');
+                element1.setAttribute('id', 'translator_div1');
+                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                element1.appendChild(document.createTextNode("\n" + translatedText));
+                preview.appendChild(element1);
             }
             validateEntry(language, textareaElem);
 
@@ -697,17 +722,25 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
               // textareaElem.style.overflow = 'auto' ;
             }
             else {
-            // PSS 09-04-2021 added populating plural text
-            console.debug('Row plural:',rowId);
-            textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
-            textareaElem1.innerText = translatedText;
-            console.debug("plural newtext:",textareaElem1.innerText);
-            textareaElem1.value = translatedText;
-            let g = document.querySelector('td.translation');
-            let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-            console.debug("current preview:", preview.innerText);
-            let nwline = "\n";
-            preview.innerText = preview.innerText.concat(nwline) + ".......................................\n" + translatedText;
+                 // PSS 09-04-2021 added populating plural text
+                 console.debug('Row plural:',rowId);
+                 textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                 textareaElem1.innerText = translatedText;
+                 console.debug("plural newtext:",textareaElem1.innerText);
+                 textareaElem1.value = translatedText;
+                 let g = document.querySelector('td.translation');
+                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                 console.debug("current preview:", preview.innerText);
+                 var separator1 = document.createElement('div');
+                 separator1.setAttribute('id', 'translator_sep1');
+                 separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                 separator1.appendChild(document.createTextNode(""));
+                 preview.appendChild(separator1);
+                 var element1 = document.createElement('div');
+                 element1.setAttribute('id', 'translator_div1');
+                 //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                 element1.appendChild(document.createTextNode("\n" + translatedText));
+                 preview.appendChild(element1);
             }
             validateEntry(language,textareaElem);
             
