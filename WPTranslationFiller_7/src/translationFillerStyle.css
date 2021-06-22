@@ -374,3 +374,17 @@ local.paging a.translation-filler-button {
         transform: rotate(1turn);
     }
 }
+
+.trans_exists_div {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 11px;
+    margin-top:10px;
+    padding: 1px 5px;
+    margin-left: .2em;
+    background-color: #036fa2;
+    border-radius: 5px;
+    display: block;
+    width: fit-content;
+}

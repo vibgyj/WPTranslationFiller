@@ -313,9 +313,11 @@ function checkactionClick(event) {
         // 19-06-2021 PSS changed the type to classname to prevent possible translation issue
         let classname = event.target.getAttribute("class");
         console.debug('check action', ":" + classname + ":");
-        if (classname == 'approve' || classname == 'reject' || classname == 'fuzzy' || classname == 'translation-actions__save with-tooltip'){
-            const firstLink = event.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
-            //console.debug("first link:", firstLink);     
+        if (classname == 'approve' || classname == 'reject' || classname == 'fuzzy') {     
+            // here we go back to the previous entry in the table to find the previous rowId    
+            const firstLink = event.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;    
+            //console.debug("eventparent:", event.target.parentNode);
+            //console.debug("started find rows",firstlink);     
             console.debug("firstlink row:", firstLink.getAttribute('row'));
             // 18-06-2021 PSS added searching for previous translations issue  #84
             if (typeof firstlink != null){
@@ -344,11 +346,11 @@ function checkactionClick(event) {
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 function checkbuttonClick(event){
    if (event != undefined){ 
-      //event.preventDefault(); caused a problem within the single page enttry  
-      let action = event.target.textContent ;
-      console.debug('action',action);
-       if (action == 'Details') {
-
+        //event.preventDefault(); caused a problem within the single page enttry  
+       let action = event.target.textContent ;
+       //console.debug('action', action);
+       // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
+       if (action == 'Details' || action == '✓Details') {
          let rowId = event.target.parentElement.parentElement.getAttribute('row');
          let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
 
@@ -357,15 +359,14 @@ function checkbuttonClick(event){
            console.debug( )
          console.debug('Breadcrumb found;', f[0]);
          let url = f[0].firstChild.baseURI;
-         let newurl = url.split('?')[0];
-         
-           if (typeof newurl != 'undefined') {
+         let newurl = url.split('?')[0];         
+         if (typeof newurl != 'undefined') {
                url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
                
                console.debug('url found:', url);
                //rowsFound = fetchOld('','',url,'True');
                fetchOldRec(url,rowId);
-           }
+         }
            
          //console.debug('Translatebutton:',translateButton);
          if (translateButton == null){
@@ -426,54 +427,65 @@ function validatePage(language) {
 
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        let textareaElem = e.querySelector("textarea.foreign-text");
+        let textareaElem = e.querySelector('textarea.foreign-text');
         textareaElem.addEventListener('input', function (e) {
             validateEntry(language, e.target);
         });
         let translation = textareaElem.innerText;
         var result = validate(language, original, translation);
+        
         console.log(result);
         updateStyle(textareaElem, result, newurl);
     }
 }
 
 function updateStyle(textareaElem, result, newurl) {
+    
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
     let priorityElem = document.querySelector('#preview-' + rowId + ' .checkbox');
+    originalElem = document.querySelector('#preview-' + rowId + ' .original');
     console.debug('found checkbox row:', priorityElem);
     //let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
-    updateElementStyle(priorityElem, result,'False');
+    let origElem =  updateElementStyle(priorityElem, result,'False',originalElem);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(headerElem, result, 'False');
+    updateElementStyle(headerElem, result, 'False',originalElem);
     //console.debug('Row to find:', rowId);
     let row = rowId.split('-')[0];
     //console.debug('Row splitted:', row);
     // 12-06-2021 PSS do not fetch old if within the translation
     if (typeof newurl != 'undefined') {
-        fetchOld(priorityElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc','False');
+        fetchOld(priorityElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc','False',originalElem);
     }
 }
 
 function validateEntry(language, textareaElem) {
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
-        .querySelector("span.original-raw").innerText;
-
-    let result = validate(language, original, translation);
+        .querySelector("span.original-raw");
+    let originalText = original.innerText;
+    let result = validate(language, originalText,translation);
     //console.log(result);
-    updateStyle(textareaElem, result);
+    updateStyle(textareaElem, result,original);
 }
 
-function updateElementStyle(priorityElem, result,oldstring) {
+function updateElementStyle(priorityElem, result, oldstring, originalElem) {
+    
     if (oldstring == 'True') {
-        var text = document.createTextNode('⇈');
-        priorityElem.style.color = 'darkblue';
-        priorityElem.style.fontWeight = "900";
-        
-        priorityElem.appendChild(text);
+       // var text = document.createTextNode('⇈');
+        //priorityElem.style.color = 'darkblue';
+        //priorityElem.style.fontWeight = "900";   
+       // priorityElem.appendChild(text);
+        // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
+        if (originalElem != undefined) {
+            var element1 = document.createElement('div');
+            element1.setAttribute('class', 'trans_exists_div');
+            //element1.style.cssText = 'padding-left:0px; padding-top:20px';
+            element1.appendChild(document.createTextNode("Current existing string!"));
+            originalElem.appendChild(element1);     
         }
+    }
     if (result.wordCount == 0) return;
     
     if (result.percent == 100) {
@@ -577,7 +589,8 @@ function taMatch(gWord, tWord) {
 }
 // 14-06-2021 PSS added fetch old records to show in meta if present
 // 14-06-2021 PSS added the old translation into the metabox, and draw lines between the translations
-async function fetchOldRec(url,rowId) {
+async function fetchOldRec(url, rowId) {
+    console.debug("fetchOldRec started");
     fetch(url, {
         headers: new Headers({
             'User-agent': 'Mozilla/4.0 Custom User Agent'
@@ -588,11 +601,11 @@ async function fetchOldRec(url,rowId) {
             //console.log(data);
             var parser = new DOMParser();
             var doc = parser.parseFromString(data, 'text/html');
-            console.log("html:", doc);
+            //console.log("html:", doc);
             var table = doc.getElementById("translations");
-            console.debug('table:', table);
+            //console.debug('table:', table);
             let tr = table.rows;
-            console.debug('table:', tr);
+            //console.debug('table:', tr);
             var tbodyRowCount = table.tBodies[0].rows.length;
             console.debug('rowcount:', tbodyRowCount);
             if (tbodyRowCount > 2) {
@@ -648,7 +661,7 @@ async function fetchOldRec(url,rowId) {
 }
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(priorityElem, result, url,single) {
+async function fetchOld(priorityElem, result, url,single,originalElem) {
         const data =fetch(url, {
             headers: new Headers({
                 'User-agent': 'Mozilla/4.0 Custom User Agent'
@@ -664,7 +677,7 @@ async function fetchOld(priorityElem, result, url,single) {
                 const tbodyRowCount = table.tBodies[0].rows.length;
                 //console.debug('tbodyRowCount:', tbodyRowCount)
                 if (tbodyRowCount > 2 && single == 'False') {
-                    updateElementStyle(priorityElem, result, 'True');
+                    updateElementStyle(priorityElem, result, 'True', originalElem);
                 }
                 else if (tbodyRowCount > 2 && single == 'True') {
                     var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
