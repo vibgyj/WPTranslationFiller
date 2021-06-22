@@ -440,7 +440,10 @@ function validatePage(language) {
 function updateStyle(textareaElem, result, newurl) {
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
-    let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
+    // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
+    let priorityElem = document.querySelector('#preview-' + rowId + ' .checkbox');
+    console.debug('found checkbox row:', priorityElem);
+    //let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
     updateElementStyle(priorityElem, result,'False');
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(headerElem, result, 'False');
