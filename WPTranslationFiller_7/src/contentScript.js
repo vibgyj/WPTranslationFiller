@@ -320,20 +320,19 @@ function checkactionClick(event) {
             //console.debug("started find rows",firstlink);     
             console.debug("firstlink row:", firstLink.getAttribute('row'));
             // 18-06-2021 PSS added searching for previous translations issue  #84
-            if (typeof firstlink != null){
+            if (typeof firstLink != null){
                 const nextLink = firstLink.nextElementSibling;
                 const newRowId = nextLink.getAttribute('row');
                 console.debug("nextlink row:", newRowId);
                 // Find the project to use in the link
                 let f = document.getElementsByClassName('breadcrumb');
-                console.debug()
-                console.debug('Breadcrumb found;', f[0]);
+                //console.debug('Breadcrumb found;', f[0]);
                 let url = f[0].firstChild.baseURI;
                 let newurl = url.split('?')[0];
                 if (typeof newurl != 'undefined') {
                     // find the prev/old translations if present
                     url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + newRowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
-                    console.debug('url found:', url);
+                    console.debug('checkActionClick url found:', url);
                     //rowsFound = fetchOld('','',url,'True');
                     fetchOldRec(url, newRowId);
                 }
@@ -356,14 +355,14 @@ function checkbuttonClick(event){
 
          // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
            let f = document.getElementsByClassName('breadcrumb');
-           console.debug( )
-         console.debug('Breadcrumb found;', f[0]);
+         //console.debug('Breadcrumb found;', f[0]);
          let url = f[0].firstChild.baseURI;
-         let newurl = url.split('?')[0];         
+         let newurl = url.split('?')[0];
+           console.debug("checkbutton:", newurl);
          if (typeof newurl != 'undefined') {
                url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
                
-               console.debug('url found:', url);
+               console.debug('checkbuttonClick url found:', url);
                //rowsFound = fetchOld('','',url,'True');
                fetchOldRec(url,rowId);
          }
@@ -421,15 +420,16 @@ function translateEntryClicked(event) {
 function validatePage(language) {
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName('breadcrumb');   
-    console.debug('Breadcrumb found;', f[0]);
+    //console.debug('Breadcrumb found;', f[0]);
     let url = f[0].firstChild.baseURI;
+    console.debug('ValidatePage url:', url);
     let newurl = url.split('?')[0];
-
+     
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         let textareaElem = e.querySelector('textarea.foreign-text');
         textareaElem.addEventListener('input', function (e) {
-            validateEntry(language, e.target);
+            validateEntry(language, e.target,newurl);
         });
         let translation = textareaElem.innerText;
         var result = validate(language, original, translation);
@@ -440,7 +440,7 @@ function validatePage(language) {
 }
 
 function updateStyle(textareaElem, result, newurl) {
-    
+    console.debug('updateStyle:', newurl);
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
@@ -460,14 +460,16 @@ function updateStyle(textareaElem, result, newurl) {
     }
 }
 
-function validateEntry(language, textareaElem) {
+function validateEntry(language, textareaElem, newurl) {
+    // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
+    console.debug('validateEntry:',newurl);
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
     let result = validate(language, originalText,translation);
     //console.log(result);
-    updateStyle(textareaElem, result,original);
+    updateStyle(textareaElem, result,newurl);
 }
 
 function updateElementStyle(priorityElem, result, oldstring, originalElem) {
@@ -590,7 +592,7 @@ function taMatch(gWord, tWord) {
 // 14-06-2021 PSS added fetch old records to show in meta if present
 // 14-06-2021 PSS added the old translation into the metabox, and draw lines between the translations
 async function fetchOldRec(url, rowId) {
-    console.debug("fetchOldRec started");
+    console.debug("fetchOldRec started",url);
     fetch(url, {
         headers: new Headers({
             'User-agent': 'Mozilla/4.0 Custom User Agent'
@@ -661,8 +663,9 @@ async function fetchOldRec(url, rowId) {
 }
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(priorityElem, result, url,single,originalElem) {
-        const data =fetch(url, {
+async function fetchOld(priorityElem, result, url, single, originalElem) {
+    console.debug('FetchOld url:', url,originalElem);
+        const data = fetch(url, {
             headers: new Headers({
                 'User-agent': 'Mozilla/4.0 Custom User Agent'
             })
@@ -674,14 +677,16 @@ async function fetchOld(priorityElem, result, url,single,originalElem) {
                 var doc = parser.parseFromString(data, 'text/html');
                 //console.log("html:", doc);
                 var table = doc.getElementById("translations");
-                const tbodyRowCount = table.tBodies[0].rows.length;
-                //console.debug('tbodyRowCount:', tbodyRowCount)
-                if (tbodyRowCount > 2 && single == 'False') {
-                    updateElementStyle(priorityElem, result, 'True', originalElem);
-                }
-                else if (tbodyRowCount > 2 && single == 'True') {
-                    var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
-                    window.open(url, "_blank", windowFeatures);
+                if (table != undefined) {
+                    const tbodyRowCount = table.tBodies[0].rows.length;
+                    //console.debug('tbodyRowCount:', tbodyRowCount)
+                    if (tbodyRowCount > 2 && single == 'False') {
+                        updateElementStyle(priorityElem, result, 'True', originalElem);
+                    }
+                    else if (tbodyRowCount > 2 && single == 'True') {
+                        var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+                        window.open(url, "_blank", windowFeatures);
+                    }
                 }
             })
             .catch(error => console.error(error));
