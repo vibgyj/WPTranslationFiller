@@ -592,6 +592,11 @@ function taMatch(gWord, tWord) {
 // 14-06-2021 PSS added fetch old records to show in meta if present
 // 14-06-2021 PSS added the old translation into the metabox, and draw lines between the translations
 async function fetchOldRec(url, rowId) {
+    // 23-06-2021 PSS added original translation to show in Meta
+    let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+    let original = e.querySelector('#editor-' + rowId + ' .foreign-text').textContent;
+    console.debug('after document querySelector:', e);
+    console.debug("fetchOldRec original:", original);
     console.debug("fetchOldRec started",url);
     fetch(url, {
         headers: new Headers({
@@ -617,9 +622,12 @@ async function fetchOldRec(url, rowId) {
                 if (translateorigsep != null){
                     document.getElementById("translator_sep1").remove();
                     document.getElementById("translator_sep2").remove();
+                    document.getElementById("translator_sep3").remove();
                     document.getElementById("translator_div1").remove();
                     document.getElementById("translator_div2").remove();
                     document.getElementById("translator_div3").remove();
+                    document.getElementById("translator_div4").remove();
+                    document.getElementById("translator_div5").remove();
                 }
                 
                 rowContent = table.rows[tbodyRowCount-3];
@@ -633,6 +641,14 @@ async function fetchOldRec(url, rowId) {
                 separator2.setAttribute('id', 'translator_sep2');
                 separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
                 separator2.appendChild(document.createTextNode(""));
+                var separator3 = document.createElement('div');
+                separator3.setAttribute('id', 'translator_sep3');
+                separator3.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                separator3.appendChild(document.createTextNode(""));
+                var separator4 = document.createElement('div');
+                separator4.setAttribute('id', 'translator_sep4');
+                separator4.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                separator4.appendChild(document.createTextNode(""));
 
                 var element1 = document.createElement('div');
                 element1.setAttribute('id', 'translator_div1');             
@@ -648,6 +664,17 @@ async function fetchOldRec(url, rowId) {
                 element3.setAttribute('id', 'translator_div3');  
                 element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element3.appendChild(document.createTextNode(trans[0].innerText));
+
+                // 23-06-2021 PSS added the current translation below the old to be able to mark the differences
+                var element4 = document.createElement('div');
+                element4.setAttribute('id', 'translator_div4');
+                element4.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                element4.appendChild(document.createTextNode('Current translation'));
+
+                var element5 = document.createElement('div');
+                element5.setAttribute('id', 'translator_div5');
+                element5.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                element5.appendChild(document.createTextNode(original));
                 
                 let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
                 metaElem.appendChild(element1);
@@ -655,6 +682,11 @@ async function fetchOldRec(url, rowId) {
                 metaElem.appendChild(element2);
                 metaElem.appendChild(separator2);
                 metaElem.appendChild(element3);
+                metaElem.appendChild(separator3);
+                metaElem.appendChild(separator3);
+                metaElem.appendChild(element4);
+                metaElem.appendChild(separator4);
+                metaElem.appendChild(element5);
                 //metaElem.style.color = 'darkblue';
                 metaElem.style.fontWeight = "900";
                 
