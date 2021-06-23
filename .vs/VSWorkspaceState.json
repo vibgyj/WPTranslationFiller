@@ -2,9 +2,10 @@
   "ExpandedNodes": [
     "",
     "\\WPTranslationFiller_7",
+    "\\WPTranslationFiller_7\\src",
     "\\WPTranslationFiller_7\\src\\chrome",
     "\\WPTranslationFiller_7\\src\\firefox"
   ],
-  "SelectedNode": "\\WPTranslationFiller_7",
+  "SelectedNode": "\\WPTranslationFiller_7\\src\\contentScript.js",
   "PreviewInSolutionExplorer": false
 }

@@ -559,10 +559,10 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
         else {
             console.debug("issue with licence:", this.status);
             if (this.readyState == 4 && this.status == 400) {
-                alert("Error in translation received status 400, maybe a license problem");
+                alert("Error in translation received status 400, maybe a license problem.\n\nClick on OK until all records are processed!!!");
             }
             else if (this.readyState == 2 && this.status == 403) {
-                alert("Error in translation received status 403, authorisation refused");
+                alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
             }
             else {
                 // 18-06-2021 PSS fixed an alert at the wrong time issue #83
@@ -656,20 +656,25 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
             if (this.readyState == 4 && myfault == 400000) {
-                alert("Error in translation received status 400000, One of the request inputs is not valid.");
+                alert("Error in translation received status 400000, One of the request inputs is not valid.\n\nClick on OK until all records are processed!!!");
+                return False;
             }
             
              else if (this.readyState == 4 && myfault == 400036) {
-                 alert("Error in translation received status 400036, The target language is not valid.");
+                alert("Error in translation received status 400036, The target language is not valid.\n\nClick on OK until all records are processed!!!");
+                return False;
             }
             else if (this.readyState == 4 && myfault == 400074) {
-                alert("Error in translation received status 400074, The body of the request is not valid JSON.");
+                alert("Error in translation received status 400074, The body of the request is not valid JSON.\n\nClick on OK until all records are processed!!!");
+                return False;
             }
             else if (this.readyState == 4 && myfault == 403000) {
-                alert("Error in translation received status 403, authorisation refused");
+                alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
+                return False;
             }
             else if (this.readyState = 4 && myfault == 401000) {
-                alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
+                alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.\n\nClick on OK until all records are processed!!!");
+                return False;
             }
         }
     };
@@ -748,7 +753,7 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
             if (this.readyState == 4 && this.status == 400) {
-                alert("Error in translation received status 400, maybe a license problem");
+                alert("Error in translation received status 400, maybe a license problem\n\nClick on OK until all records are processed!!!");
             }
         }
     };

@@ -444,11 +444,11 @@ function updateStyle(textareaElem, result, newurl) {
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
-    let priorityElem = document.querySelector('#preview-' + rowId + ' .checkbox');
+    let checkElem = document.querySelector('#preview-' + rowId + ' .checkbox');
     originalElem = document.querySelector('#preview-' + rowId + ' .original');
-    console.debug('found checkbox row:', priorityElem);
+    console.debug('found checkbox row:', checkElem);
     //let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
-    let origElem =  updateElementStyle(priorityElem, result,'False',originalElem);
+    let origElem =  updateElementStyle(checkElem, result,'False',originalElem);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(headerElem, result, 'False',originalElem);
     //console.debug('Row to find:', rowId);
@@ -456,7 +456,7 @@ function updateStyle(textareaElem, result, newurl) {
     //console.debug('Row splitted:', row);
     // 12-06-2021 PSS do not fetch old if within the translation
     if (typeof newurl != 'undefined') {
-        fetchOld(priorityElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc','False',originalElem);
+        fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc','False',originalElem);
     }
 }
 
@@ -472,7 +472,7 @@ function validateEntry(language, textareaElem, newurl) {
     updateStyle(textareaElem, result,newurl);
 }
 
-function updateElementStyle(priorityElem, result, oldstring, originalElem) {
+function updateElementStyle(checkElem, result, oldstring, originalElem) {
     
     if (oldstring == 'True') {
        // var text = document.createTextNode('⇈');
@@ -491,21 +491,21 @@ function updateElementStyle(priorityElem, result, oldstring, originalElem) {
     if (result.wordCount == 0) return;
     
     if (result.percent == 100) {
-        priorityElem.style.backgroundColor = 'green';
+        checkElem.style.backgroundColor = 'green';
         return;
     }
     else if (result.percent > 66)
-        priorityElem.style.backgroundColor = 'yellow';
+        checkElem.style.backgroundColor = 'yellow';
     else if (result.percent > 33)
-        priorityElem.style.backgroundColor = 'orange';
+        checkElem.style.backgroundColor = 'orange';
         
     else if (result.percent == 10)
-        priorityElem.style.backgroundColor = 'purple';	
+        checkElem.style.backgroundColor = 'purple';	
 		    
     else
-        priorityElem.style.backgroundColor = 'red';
+        checkElem.style.backgroundColor = 'red';
 
-    priorityElem.setAttribute('title', result.toolTip);
+    checkElem.setAttribute('title', result.toolTip);
 }
 
 function validate(language, original, translation) {
@@ -663,7 +663,7 @@ async function fetchOldRec(url, rowId) {
 }
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(priorityElem, result, url, single, originalElem) {
+async function fetchOld(checkElem, result, url, single, originalElem) {
     console.debug('FetchOld url:', url,originalElem);
         const data = fetch(url, {
             headers: new Headers({
@@ -681,7 +681,7 @@ async function fetchOld(priorityElem, result, url, single, originalElem) {
                     const tbodyRowCount = table.tBodies[0].rows.length;
                     //console.debug('tbodyRowCount:', tbodyRowCount)
                     if (tbodyRowCount > 2 && single == 'False') {
-                        updateElementStyle(priorityElem, result, 'True', originalElem);
+                        updateElementStyle(checkElem, result, 'True', originalElem);
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {
                         var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
