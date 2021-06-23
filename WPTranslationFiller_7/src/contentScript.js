@@ -597,7 +597,11 @@ async function fetchOldRec(url, rowId) {
     let original = e.querySelector('#editor-' + rowId + ' .foreign-text').textContent;
     console.debug('after document querySelector:', e);
     console.debug("fetchOldRec original:", original);
-    console.debug("fetchOldRec started",url);
+    console.debug("fetchOldRec started", url);
+
+    var result = original;
+    var diffType = "diffWords";
+
     fetch(url, {
         headers: new Headers({
             'User-agent': 'Mozilla/4.0 Custom User Agent'
@@ -665,16 +669,17 @@ async function fetchOldRec(url, rowId) {
                 element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
                 element3.appendChild(document.createTextNode(trans[0].innerText));
 
-                // 23-06-2021 PSS added the current translation below the old to be able to mark the differences
+                // 23-06-2021 PSS added the current translation below the old to be able to mark the differences issue #92                
+
                 var element4 = document.createElement('div');
                 element4.setAttribute('id', 'translator_div4');
                 element4.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element4.appendChild(document.createTextNode('Current translation'));
+                element4.appendChild(document.createTextNode('Difference in translation!'));
 
                 var element5 = document.createElement('div');
                 element5.setAttribute('id', 'translator_div5');
                 element5.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element5.appendChild(document.createTextNode(original));
+                element5.appendChild(document.createTextNode(""));
                 
                 let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
                 metaElem.appendChild(element1);
@@ -687,6 +692,15 @@ async function fetchOldRec(url, rowId) {
                 metaElem.appendChild(element4);
                 metaElem.appendChild(separator4);
                 metaElem.appendChild(element5);
+                // Strings are retrieved and compared
+                var oldStr = trans[0].innerText;
+                var newStr = original;
+                var changes = JsDiff[diffType](oldStr, newStr);
+                //console.debug("fetchOldRec diff:", changes);
+                
+                var result = document.getElementById('translator_div5');
+                result.innerHTML = JsDiff.convertChangesToXML(changes);
+
                 //metaElem.style.color = 'darkblue';
                 metaElem.style.fontWeight = "900";
                 

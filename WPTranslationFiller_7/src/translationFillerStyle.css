@@ -380,11 +380,22 @@ local.paging a.translation-filler-button {
     font-weight: 600;
     color: #ffffff;
     font-size: 11px;
-    margin-top:10px;
+    margin-top: 10px;
     padding: 1px 5px;
     margin-left: .2em;
     background-color: #036fa2;
     border-radius: 5px;
-    display: block;
-    width: fit-content;
+    display: inline;
+}
+
+del {
+    text-decoration: none;
+    color: #b30000;
+    background: #fadad7;
+}
+
+ins {
+    background: #eaf2c2;
+    color: #406619;
+    text-decoration: none;
 }

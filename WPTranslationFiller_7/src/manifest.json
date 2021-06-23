@@ -27,7 +27,8 @@
             "jsstore.worker.js",
             "database.js",
             "contentScript.js",
-            "googleTranslate.js"
+            "googleTranslate.js",
+            "jsdiff.js"
           ],         
             "matches": [
                 "https://translate.wordpress.org/*"

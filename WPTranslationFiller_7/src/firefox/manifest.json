@@ -4,7 +4,7 @@
     "version": "1.2.3",
     "description": "Firefox addon to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
     "background": {
-        "scripts": ["jsstore.js","jsstore.worker.js"]
+      "scripts": [ "jsstore.js", "jsstore.worker.js", "jsdiff.js"]
         },
     "options_ui": {
         "page": "options.html",
@@ -25,13 +25,14 @@
                 "https://translate.wordpress.org/*",
                 "https://cdnjs.cloudflare.com/*"
             ],
-            "js": [
-                "jsstore.js",
-			    "jsstore.worker.js",
-			    "database.js",
-		      "contentScript.js",
-			    "googleTranslate.js"
-            ],
+          "js": [
+            "jsstore.js",
+            "jsstore.worker.js",
+            "database.js",
+            "contentScript.js",
+            "googleTranslate.js",
+            "jsdiff.js"
+          ],
             "css": [
                 "translationFillerStyle.css"
             ]

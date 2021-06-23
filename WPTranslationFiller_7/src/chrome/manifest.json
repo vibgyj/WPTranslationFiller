@@ -4,7 +4,7 @@
     "version": "1.2.3",
     "description": "Chrome extension to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
     "background": {
-        "scripts": ["jsstore.js","jsstore.worker.js"]
+      "scripts": [ "jsstore.js", "jsstore.worker.js", "jsdiff.js"]
         },
   "permissions": [
     "declarativeContent",
@@ -23,13 +23,14 @@
             "matches": [
                 "https://translate.wordpress.org/*"
             ],
-            "js": [
-                "jsstore.js",
-			          "jsstore.worker.js",
-			          "database.js",
-                "googleTranslate.js",
-                "contentScript.js"
-            ],
+          "js": [
+            "jsstore.js",
+            "jsstore.worker.js",
+            "database.js",
+            "googleTranslate.js",
+            "contentScript.js",
+            "jsdiff.js"
+          ],
             "css": [
                 "translationFillerStyle.css"
             ]
