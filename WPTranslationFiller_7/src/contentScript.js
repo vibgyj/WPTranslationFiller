@@ -440,7 +440,7 @@ function validatePage(language) {
 }
 
 function updateStyle(textareaElem, result, newurl) {
-    console.debug('updateStyle:', newurl);
+    //console.debug('updateStyle:', newurl);
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
@@ -462,7 +462,7 @@ function updateStyle(textareaElem, result, newurl) {
 
 function validateEntry(language, textareaElem, newurl) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
-    console.debug('validateEntry:',newurl);
+    //console.debug('validateEntry:',newurl);
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
