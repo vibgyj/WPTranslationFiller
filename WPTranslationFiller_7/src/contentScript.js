@@ -622,7 +622,7 @@ async function fetchOldRec(url, rowId) {
             if (tbodyRowCount > 2) {
                 // 16-06-2021 The below code fixes issue  #82
                 let translateorigsep = document.getElementById('translator_sep1');
-                console.debug("Did we find a separator:", translateorigsep);
+                //console.debug("Did we find a separator:", translateorigsep);
                 if (translateorigsep != null){
                     document.getElementById("translator_sep1").remove();
                     document.getElementById("translator_sep2").remove();
@@ -679,7 +679,7 @@ async function fetchOldRec(url, rowId) {
                 var element5 = document.createElement('div');
                 element5.setAttribute('id', 'translator_div5');
                 element5.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element5.appendChild(document.createTextNode(""));
+                //element5.appendChild(document.createTextNode(""));
                 
                 let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
                 metaElem.appendChild(element1);
@@ -692,14 +692,16 @@ async function fetchOldRec(url, rowId) {
                 metaElem.appendChild(element4);
                 metaElem.appendChild(separator4);
                 metaElem.appendChild(element5);
+
                 // Strings are retrieved and compared
                 var oldStr = trans[0].innerText;
                 var newStr = original;
                 var changes = JsDiff[diffType](oldStr, newStr);
                 //console.debug("fetchOldRec diff:", changes);
-                
-                var result = document.getElementById('translator_div5');
-                result.innerHTML = JsDiff.convertChangesToXML(changes);
+                element5.innerHTML = JsDiff.convertChangesToXML(changes);
+                metaElem.appendChild(element5);
+                //var result = document.getElementById('translator_div5');
+                //result.innerHTML = JsDiff.convertChangesToXML(changes);
 
                 //metaElem.style.color = 'darkblue';
                 metaElem.style.fontWeight = "900";

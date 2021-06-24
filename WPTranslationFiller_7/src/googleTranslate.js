@@ -591,19 +591,25 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
     console.debug("format type", trntype);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
-
-        console.debug("Microsoft translation response:", this.response);
-        restrans = this.response;
-        let responseObj = this.response.error;    
-        console.debug("Response error object:", responseObj);
-        if (typeof responseObj != 'undefined') {
-            myfault = responseObj.code;
-            //console.debug("Microsoft myfault:", myfault);
+        // 24-06-2021 PSS fixed an error in Chrome with type null message
+        result = this.response;
+        if (result != null) {
+            console.debug("Microsoft translation response:", this.response);
+            restrans = this.response;
+            let responseObj = this.response.error;
+            console.debug("Response error object:", responseObj);
+            if (typeof responseObj != 'undefined') {
+                myfault = responseObj.code;
+                //console.debug("Microsoft myfault:", myfault);
+            }
+            else {
+                var myfault = 0;
+                //console.debug("Microsoft myfault:", myfault);
+            };
         }
         else {
-            var myfault = 0;
-            //console.debug("Microsoft myfault:", myfault);
-        };
+            myfault = 'noResponse';
+        }
         //console.debug("Microsoft readyState:", this.readyState);
         if (this.readyState == 4 && myfault == 0) { 
             //console.debug('Restrans:', restrans);
@@ -655,26 +661,22 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
         }
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
+            
             if (this.readyState == 4 && myfault == 400000) {
                 alert("Error in translation received status 400000, One of the request inputs is not valid.\n\nClick on OK until all records are processed!!!");
-                return False;
             }
             
              else if (this.readyState == 4 && myfault == 400036) {
                 alert("Error in translation received status 400036, The target language is not valid.\n\nClick on OK until all records are processed!!!");
-                return False;
             }
             else if (this.readyState == 4 && myfault == 400074) {
                 alert("Error in translation received status 400074, The body of the request is not valid JSON.\n\nClick on OK until all records are processed!!!");
-                return False;
-            }
+                                }
             else if (this.readyState == 4 && myfault == 403000) {
                 alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
-                return False;
             }
             else if (this.readyState = 4 && myfault == 401000) {
                 alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.\n\nClick on OK until all records are processed!!!");
-                return False;
             }
         }
     };
@@ -693,7 +695,7 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
     xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&textType=" + trntype + "&from=en&to=" + language);
     xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
     xhttp.setRequestHeader('Ocp-Apim-Subscription-Key', apikeyMicrosoft);
-    xhttp.setRequestHeader('Content-Length', translen);
+    //xhttp.setRequestHeader('Content-Length', translen);
     xhttp.responseType = 'json';
     xhttp.send(JSON.stringify(requestBody));
 }
