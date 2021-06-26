@@ -399,3 +399,20 @@ ins {
     color: #406619;
     text-decoration: none;
 }
+table.translations th.filler_status {
+    width: 2em !important;
+    text-align: center;
+    display :none;
+}
+table.translations tr.row_filler_status {
+    width: 2em !important;
+    text-align: right;
+    display:none;
+}
+table.translations th.priority, table.translations td.priority {
+    width: 2em !important;
+    display: table-cell !important;
+}
+table.translations th.original, table.translations th.translation {
+    width: 40% !important;
+}

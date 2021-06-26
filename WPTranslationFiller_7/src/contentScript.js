@@ -319,6 +319,7 @@ function checkactionClick(event) {
             //console.debug("eventparent:", event.target.parentNode);
             //console.debug("started find rows",firstlink);     
             console.debug("firstlink row:", firstLink.getAttribute('row'));
+
             // 18-06-2021 PSS added searching for previous translations issue  #84
             if (typeof firstLink != null){
                 const nextLink = firstLink.nextElementSibling;
@@ -424,10 +425,24 @@ function validatePage(language) {
     let url = f[0].firstChild.baseURI;
     console.debug('ValidatePage url:', url);
     let newurl = url.split('?')[0];
-     
+    var tr = document.getElementById('translations').tHead.children[0]
+    console.debug("children:", tr);
+    // 26-06-2021 PSS set  the visibillity of the Priority column back to open
+    trprio = tr.children[1];
+    console.debug("sibling:", trprio);
+    trprio.style.display = "table-cell";
+    trprio.innerHTML = 'Qual';
+    var all_col = document.getElementsByClassName("priority");
+    for (var i = 0; i < all_col.length; i++) {
+        all_col[i].style.display = "table-cell";
+    }
+    
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         let textareaElem = e.querySelector('textarea.foreign-text');
+        let rowId = textareaElem.parentElement.parentElement.parentElement
+            .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
+
         textareaElem.addEventListener('input', function (e) {
             validateEntry(language, e.target,newurl);
         });
@@ -443,14 +458,15 @@ function updateStyle(textareaElem, result, newurl) {
     //console.debug('updateStyle:', newurl);
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
-    // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
-    let checkElem = document.querySelector('#preview-' + rowId + ' .checkbox');
+    
     originalElem = document.querySelector('#preview-' + rowId + ' .original');
-    console.debug('found checkbox row:', checkElem);
+    // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
+    let checkElem = document.querySelector('#preview-' + rowId + ' .priority');
+    //let checkElem = document.querySelector('#preview-' + rowId + ' .row_filler_status');
     //let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
     let origElem =  updateElementStyle(checkElem, result,'False',originalElem);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(headerElem, result, 'False',originalElem);
+    updateElementStyle(checkElem, headerElem, result, 'False', originalElem);
     //console.debug('Row to find:', rowId);
     let row = rowId.split('-')[0];
     //console.debug('Row splitted:', row);
@@ -472,38 +488,68 @@ function validateEntry(language, textareaElem, newurl) {
     updateStyle(textareaElem, result,newurl);
 }
 
-function updateElementStyle(checkElem, result, oldstring, originalElem) {
-    
+function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem) {
+    console.debug("updateElementStyle params:", oldstring, originalElem);
     if (oldstring == 'True') {
-       // var text = document.createTextNode('⇈');
-        //priorityElem.style.color = 'darkblue';
-        //priorityElem.style.fontWeight = "900";   
-       // priorityElem.appendChild(text);
         // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
         if (originalElem != undefined) {
+            console.debug("Add current string:", originalElem);
             var element1 = document.createElement('div');
             element1.setAttribute('class', 'trans_exists_div');
             //element1.style.cssText = 'padding-left:0px; padding-top:20px';
             element1.appendChild(document.createTextNode("Current existing string!"));
-            originalElem.appendChild(element1);     
+            originalElem.appendChild(element1);
         }
-    }
-    if (result.wordCount == 0) return;
-    
-    if (result.percent == 100) {
-        checkElem.style.backgroundColor = 'green';
+        else {
+            console.debug("updateElementStyle empty!:", originalElem);
+        }
+       }
+    if (typeof result.wordCount == "undefined") {
+        console.debug('updateElemStyle wordCount undefined!:');
         return;
     }
-    else if (result.percent > 66)
+    if (result.wordCount == 0) {
+        console.debug("updateElementStyle wordcount:", result.wordCount);
+        return;
+    }
+    
+    if (result.percent == 100) {
+        //checkElem.style.backgroundColor = 'green';
+        //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = '100';
+        checkElem.style.backgroundColor = 'green';
+        headerElem.style.backgroundColor = 'green';
+       
+    }
+    else if (result.percent > 66) {
+        //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = '66';
         checkElem.style.backgroundColor = 'yellow';
-    else if (result.percent > 33)
+        headerElem.style.backgroundColor = 'yellow';
+    }
+    else if (result.percent > 33) {
+        //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = '33';
         checkElem.style.backgroundColor = 'orange';
-        
-    else if (result.percent == 10)
-        checkElem.style.backgroundColor = 'purple';	
-		    
-    else
+        headerElem.style.backgroundColor = 'orange';
+    }
+
+    else if (result.percent == 10) {
+       //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = 'Mod';
+        checkElem.style.backgroundColor = 'purple';
+        headerElem.style.backgroundColor = 'purple';
+    }
+
+    else {
+        //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = '0';
         checkElem.style.backgroundColor = 'red';
+        console.debug('result.percent:', result.percent);
+        //if (result.wordCount !=0){
+          headerElem.style.backgroundColor = 'red';
+        //}
+    }
 
     checkElem.setAttribute('title', result.toolTip);
 }
@@ -591,6 +637,7 @@ function taMatch(gWord, tWord) {
 }
 // 14-06-2021 PSS added fetch old records to show in meta if present
 // 14-06-2021 PSS added the old translation into the metabox, and draw lines between the translations
+// 22-06-2021 PSS added functionality to show differences in the translations
 async function fetchOldRec(url, rowId) {
     // 23-06-2021 PSS added original translation to show in Meta
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
@@ -657,7 +704,7 @@ async function fetchOldRec(url, rowId) {
                 var element1 = document.createElement('div');
                 element1.setAttribute('id', 'translator_div1');             
                 element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element1.appendChild(document.createTextNode('Previous translation exists'));
+                element1.appendChild(document.createTextNode('Previous existing translation'));
                 
                 var element2 = document.createElement('div');
                 element2.setAttribute('id', 'translator_div2');
@@ -729,7 +776,7 @@ async function fetchOld(checkElem, result, url, single, originalElem) {
                     const tbodyRowCount = table.tBodies[0].rows.length;
                     //console.debug('tbodyRowCount:', tbodyRowCount)
                     if (tbodyRowCount > 2 && single == 'False') {
-                        updateElementStyle(checkElem, result, 'True', originalElem);
+                        updateElementStyle(checkElem, "", result, 'True', originalElem);
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {
                         var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
