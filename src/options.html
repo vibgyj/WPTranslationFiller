@@ -4,8 +4,6 @@
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <meta content="utf-8" http-equiv="encoding">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
     <style>
         .form-input {
             margin: 10px 0;
@@ -18,6 +16,13 @@
         }
 
         #google_api_key {
+            width: 300px;
+        }
+
+        #deepl_api_key {
+            width: 300px;
+        }
+        #microsoft_api_key {
             width: 300px;
         }
 
@@ -51,6 +56,24 @@
             <input id="google_api_key" type="text" value="-api key->" />
         </div>
         <div class="form-input">
+            <label for="deepl_api_key">Deepl API Key&nbsp;&nbsp;</label>
+            <input id="deepl_api_key" type="text" value="-api key->" />
+        </div>
+        <div class="form-input">
+            <label for="microsoft_api_key">Microsoft API Key&nbsp;&nbsp;</label>
+            <input id="microsoft_api_key" type="text" value="-api key->" />
+        </div>
+        <div class="form-select">
+            <label for="translator">Select a translator:</label>
+            <select name="transsel" id="transselect">
+                <option value="deepl">Deepl</option>
+                <option value="google">Google</option>
+                <option value="microsoft">Microsoft</option>
+            </select>
+        </div>
+        <br>
+        <br>
+        <div class="form-input">
             <label for="destination_lang">Destination Language</label>
             <input id="destination_lang" type="text" value="nl" />
         </div>
@@ -72,19 +95,21 @@ wrong2,right2
             </textarea>
         </div>
         <div class="form-input">
-            <label for="export_verbs">Export post translation verbs
-		    <fieldset>
-            <button id="exportverbs">Export verbs</button>              
-			</fieldset>
+            <label for="export_verbs">
+                Export post translation verbs
+                <fieldset>
+                    <button id="exportverbs">Export verbs</button>
+                </fieldset>
             </label>
         </div>
         <div id="dvImportSegments" class="fileupload ">
-            <label>Upload post translation replace CSV File
-             <fieldset>
-                <input id="importPost" type="file" />     
-             </fieldset>
+            <label>
+                Upload post translation replace CSV File
+                <fieldset>
+                    <input id="importPost" type="file" />
+                </fieldset>
             </label>
-         </div>
+        </div>
         <div class="form-input">
             <input id="save" type="button" value="Save" />
         </div>

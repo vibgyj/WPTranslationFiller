@@ -3,38 +3,65 @@ document.getElementById("exportverbs").addEventListener("click", export_verbs_cs
 let replaceVerb = [];
 
 let apikeyTextbox = document.getElementById('google_api_key');
+let apikeydeeplTextbox = document.getElementById('deepl_api_key');
+let apikeymicrosoftTextbox = document.getElementById('microsoft_api_key');
+let transselectBox = document.getElementById('transselect');
 let destLangTextbox = document.getElementById('destination_lang');
 let uploadedFile = document.getElementById('text_glossary_file');
 let glossaryFile = document.getElementById('glossary_file');
 let verbsTextbox = document.getElementById('text_verbs');
 let preverbsTextbox = document.getElementById('text_pre_verbs');
 
-chrome.storage.sync.get(['apikey', 'destlang', 'glossaryFile', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
+chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
     apikeyTextbox.value = data.apikey;
+    apikeydeeplTextbox.value = data.apikeyDeepl;
+    apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
+    if (data.transsel == "") {
+        transselectBox.value = "google";
+    }
+    else {
+        transselectBox.value = data.transsel;
+    }
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `Uploaded file: ${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
-    console.log("Saved options: ", data);
+    console.log("Read options: ", data);
+    console.debug("type of transSelect:", typeof data.transsel);
 });
+
 
 let button = document.getElementById('save');
 button.addEventListener('click', function () {
     let apikey = apikeyTextbox.value;
+    let apikeyDeepl = apikeydeeplTextbox.value;
+    let apikeyMicrosoft = apikeymicrosoftTextbox.value;
+    if (typeof transselectBox.value == 'undefined') {
+         transsel = "google";
+    }
+    else if (transselectBox.value == "") {
+        transsel = '"google';
+    }
+    else {
+        transsel = transselectBox.value;
+    }
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
-
-    console.debug('Options: ', apikey, destlang, postTranslation, preTranslation);
+    
+    console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation);
 
     chrome.storage.sync.set({
         apikey: apikey,
+        apikeyDeepl: apikeyDeepl,
+        apikeyMicrosoft:apikeyMicrosoft,
+        transsel: transsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation
     });
-    console.debug('Options loaded: ', apikey, destlang, postTranslation, preTranslation);
-
+    console.debug('Options save: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation);
+ 
     if (glossaryFile.value !== "") {
         console.debug('Options: ', glossaryFile);
         chrome.storage.sync.set({ glossaryFile: glossaryFile.value.replace("C:\\fakepath\\", "") });
@@ -68,7 +95,7 @@ button.addEventListener('click', function () {
         chrome.storage.sync.set({ glossaryZ: glossaryZ });
     }
 
-    alert("Setting successfully saved.");
+    alert("Settings successfully saved.\nPlease make sure that you enter values\nin Destination Language and select a Glossary File\nand enter values in Post Translation Replace ");
 });
 
 let file = document.getElementById('glossary_file');
@@ -113,8 +140,8 @@ file.addEventListener('change', function () {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
                 let value = entry[1].split('/');
                 for (let val in value) {
-                    if (value != "") {
-                        value[val] = value[val].replaceAll("\"", "").trim();
+                    if (value != ""){
+                       value[val] = value[val].replaceAll("\"", "").trim();
                     }
                 }
 
@@ -224,76 +251,77 @@ function export_verbs_csv() {
     var destlang = destLangTextbox.value;
     let export_file = 'export_verbs_' + destlang + '.csv';
     setPostTranslationReplace(verbsTextbox.value);
-    let arrayData = [];
+    let arrayData = [];  
     for (let i = 0; i < replaceVerb.length; i++) {
-        arrayData[i] = { original: replaceVerb[i][0], replacement: replaceVerb[i][1] };
-    }
-    // let header ="original,replace");
+          arrayData[i] = { original: replaceVerb[i][0], replacement:  replaceVerb[i][1] };
+         }
+   // let header ="original,replace");
     let delimiter = ',';
     let arrayHeader = ["original", "translation", "country"];
     let header = arrayHeader.join(delimiter) + '\n';
-    let csv = header;
-    arrayData.forEach(obj => {
-        let row = [];
-        for (var key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                row.push(obj[key]);
-            }
-        }
-        csv += row.join(delimiter) + "\n";
-    });
+       let csv = header;
+       arrayData.forEach(obj => {
+           let row = [];
+           for (var key in obj) {
+               if (obj.hasOwnProperty(key)) {
+                   row.push(obj[key]);
+               }
+           }
+           csv += row.join(delimiter) + "\n";
+       });
 
-    let csvData = new Blob([csv], { type: 'text/csv' });
-    let csvUrl = URL.createObjectURL(csvData);
+       let csvData = new Blob([csv], { type: 'text/csv' });  
+       let csvUrl = URL.createObjectURL(csvData);
 
-    let hiddenElement = document.createElement('a');
-    hiddenElement.href = csvUrl;
-    hiddenElement.target = '_blank';
-    hiddenElement.download = export_file;
-    hiddenElement.click();
-    alert('Export verbs ready');
-}
-
+       let hiddenElement = document.createElement('a');
+       hiddenElement.href = csvUrl;
+       hiddenElement.target = '_blank';
+       hiddenElement.download = export_file;
+       hiddenElement.click();
+       alert('Export verbs ready');
+   
+   }
 // PSS 08-03-2021 added this to prepare data for export to csv   
 function setPostTranslationReplace(postTranslationReplace) {
-    replaceVerb = [];
-    let lines = postTranslationReplace.split('\n');
-    lines.forEach(function (item) {
-        // Handle blank lines
-        if (item != "") {
-            replaceVerb.push(item.split(','));
-        }
+     replaceVerb = [];
+     let lines = postTranslationReplace.split('\n');
+     lines.forEach(function (item) {
+     // Handle blank lines
+     if (item != "") {
+       replaceVerb.push(item.split(','));
+       }
     });
 }
 
 var obj_csv = {
-    size: 0,
-    dataFile: []
-};
+    size:0,
+    dataFile:[]
+    };
 
 let input = document.getElementById('importPost');
-input.addEventListener('change', function () {
-    if (input.files && input.files[0]) {
-        let reader = new FileReader();
-        reader.readAsBinaryString(input.files[0]);
+input.addEventListener('change', function () {   
+if (input.files && input.files[0]) {
+    let reader = new FileReader();
+        // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
+        reader.readAsText(input.files[0]);
         reader.onload = function (e) {
-            console.log(e);
-            obj_csv.size = e.total;
-            obj_csv.dataFile = e.target.result;
-            //console.log(obj_csv.dataFile)
-            document.getElementById('text_verbs').value = "";
-            parseData(obj_csv.dataFile);
-        };
-    }
+        console.log(e);
+        obj_csv.size = e.total;
+        obj_csv.dataFile = e.target.result;
+       //console.log(obj_csv.dataFile)
+       document.getElementById('text_verbs').value = "";
+       parseData(obj_csv.dataFile);             
+    };
+   }
 });
-
+     
 function parseData(data) {
     let csvData = [];
     let lbreak = data.split("\n");
     let counter = 0;
     lbreak.forEach(res => {
         csvData.push(res.split(","));
-        if (counter > 0) {
+        if (counter >0) {
             verbsTextbox.value += res.split(",") + '\n';
         }
         ++counter;
