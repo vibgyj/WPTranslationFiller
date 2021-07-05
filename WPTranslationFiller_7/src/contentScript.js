@@ -85,7 +85,7 @@ function translatePageClicked(event) {
     console.log("Translate clicked!");
     chrome.storage.sync
         .get(
-            ['apikey', 'apikeyDeepl' , 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            ['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace', 'showHistory', 'showTransDiff'],
             function (data) {
                 console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
                 if (typeof data.apikey != 'undefined' && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.transsel == "deepl" || typeof data.apikeyMicrosoft != 'undefined' && data.transsel == "microsoft") {
@@ -243,7 +243,15 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         //console.log(glossary);
         addTranslateButtons();
         if (glossary.length > 0) {
-            validatePage(data.destlang);
+            chrome.storage.sync.get(['showHistory'], function (data) {
+                console.debug("param showHistory:", data.showHistory);
+                
+                if (data.showHistory != 'null') {
+
+                    validatePage(data.destlang, data.showHistory);
+                }
+                    });
+                
         }
         checkbuttonClick();
     });
@@ -312,12 +320,7 @@ function addtranslateEntryClicked(event){
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
 function checkactionClick(event) {
     if (event != undefined) {
-        // 30-06-2021 PSS added fetch status from local storage
-        // Necessary to prevent showing old translation exist if started from link "Translation history"
-        chrome.storage.sync.set({ 'noOldTrans': 'True' }, function () {
-            // Notify that we saved.
-            // alert('Settings saved');
-        });
+       
         //let action = event.target.textContent;
         // 19-06-2021 PSS changed the type to classname to prevent possible translation issue
         let classname = event.target.getAttribute("class");
@@ -349,22 +352,14 @@ function checkactionClick(event) {
                 }
             }
         }
-        //else {
-            // Necessary to prevent showing old translation exist if started from link "Translation history"
-          //  chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
-                // Notify that we saved.
-                // alert('Settings saved');
-            //});
-       // }
-
     }
-    else {
+    //else {
         // Necessary to prevent showing old translation exist if started from link "Translation history"
-        chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+        //chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
             // Notify that we saved.
             // alert('Settings saved');
-        });
-    }
+       // });
+   // }
         
 }
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
@@ -374,12 +369,19 @@ function checkbuttonClick(event){
         //event.preventDefault(); caused a problem within the single page enttry  
        let action = event.target.textContent ;
        console.debug('checkbuttonClick action', action);
+       // 30-06-2021 PSS added fetch status from local storage
+       // Necessary to prevent showing old translation exist if started from link "Translation history"
+      
       // alert(action);
        // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
        if (action == 'Details' || action == '✓Details') {
            let rowId = event.target.parentElement.parentElement.getAttribute('row');
            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-
+           // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
+           chrome.storage.sync.set({ 'noOldTrans': 'True' }, function () {
+               // Notify that we saved.
+               // alert('Settings saved');
+           });
            // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
            let f = document.getElementsByClassName('breadcrumb');
            //console.debug('Breadcrumb found;', f[0]);
@@ -420,17 +422,7 @@ function checkbuttonClick(event){
                TranslocalButton.innerText = "Local";
                TranslocalButton.style.visibility = 'hidden';
                panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
-               chrome.storage.sync.set({ 'noOldTrans': 'True' }, function () {
-                   // Notify that we saved.
-                   // alert('Settings saved');
-               });
            }
-       }
-       else {
-           chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
-               // Notify that we saved.
-               // alert('Settings saved');
-           });
        }
     }
 }
@@ -456,19 +448,7 @@ function translateEntryClicked(event) {
     console.debug('after translateEntry');
 }
 
-function validatePage(language) {
-    // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
-    chrome.storage.sync.get(['noOldTrans'], function (data) {
-         console.debug("param getOldTrans:", data.noOldTrans);
-         single = data.noOldTrans;
-        if (data.noOldTrans != 'True') {
-        // Save it using the Chrome extension storage API.
-        chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
-            // Notify that we saved.
-            // alert('Settings saved');
-        });
-        }
-    });
+function validatePage(language, showHistory) {
     
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName('breadcrumb');   
@@ -503,7 +483,7 @@ function validatePage(language) {
         var result = validate(language, original, translation);
         console.log(result);
         console.debug('validatePage updateStyle url:', newurl);
-        updateStyle(textareaElem, result, newurl);
+        updateStyle(textareaElem, result, newurl, showHistory);
     }
     // 30-06-2021 PSS set fetch status from local storage
     chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
@@ -512,7 +492,7 @@ function validatePage(language) {
     });
 }
 
-function updateStyle(textareaElem, result, newurl) {
+function updateStyle(textareaElem, result, newurl, showHistory) {
     //console.debug('updateStyle:', newurl);
     
     let rowId = textareaElem.parentElement.parentElement.parentElement
@@ -531,12 +511,15 @@ function updateStyle(textareaElem, result, newurl) {
     //console.debug('Row splitted:', row);
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
-    if (newurl.substring(1,9) != 'undefined') {
-        fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'False', originalElem);
-    }
-    else {
-        fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'True', originalElem);
-    }
+    // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
+            if (showHistory == true) {
+                if (newurl.substring(1, 9) != 'undefined') {
+                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'False', originalElem);
+                }
+                else {
+                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'True', originalElem);
+                }
+            }
 }
 
 function validateEntry(language, textareaElem, newurl) {
@@ -548,7 +531,7 @@ function validateEntry(language, textareaElem, newurl) {
     let originalText = original.innerText;
     let result = validate(language, originalText,translation);
     //console.log(result);
-    updateStyle(textareaElem, result,newurl);
+    updateStyle(textareaElem, result, newurl, showHistory);
 }
 
 function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz) {
@@ -556,7 +539,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     if (oldstring == 'True') {
         // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
         if (originalElem != undefined) {
-            console.debug("Add current string:", originalElem);
+           // console.debug("Add current string:", originalElem);
             var element1 = document.createElement('div');
             element1.setAttribute('class', 'trans_exists_div');
             //element1.style.cssText = 'padding-left:0px; padding-top:20px';
@@ -901,31 +884,30 @@ async function fetchOld(checkElem, result, url, single, originalElem) {
                 if (table != undefined) {
                     const tbodyRowCount = table.tBodies[0].rows.length;
                     //console.debug('tbodyRowCount:', tbodyRowCount)
-                    if (tbodyRowCount > 2 && single == 'False') {
-                        // 04-07-2021 PSS added counter to message for existing translations
-                        var rejected = table.querySelectorAll('tr.preview.status-rejected');
-                        var waiting = table.querySelectorAll('tr.preview.status-waiting');
-                        var fuzzy = table.querySelectorAll('tr.preview.status-fuzzy');
-                        
-                        if (waiting.length != 0) {
-                            wait = " Waiting:" + waiting.length;
-                        }
-                        else {
-                            wait = "";
-                        }
-                        if (rejected.length != 0) {
-                            rejec = " Rejected:" + rejected.length;
-                        }
-                        else {
-                            rejec = "";
-                        }
-                        if (fuzzy.length != 0) {
-                           fuz = " Fuzzy:" + fuzzy.length;
-                        }
-                        else {
-                            fuz = "";
-                        }
+                    // 04-07-2021 PSS added counter to message for existing translations
+                    var rejected = table.querySelectorAll('tr.preview.status-rejected');
+                    var waiting = table.querySelectorAll('tr.preview.status-waiting');
+                    var fuzzy = table.querySelectorAll('tr.preview.status-fuzzy');
 
+                    if (waiting.length != 0) {
+                        wait = " Waiting:" + waiting.length;
+                    }
+                    else {
+                        wait = "";
+                    }
+                    if (rejected.length != 0) {
+                        rejec = " Rejected:" + rejected.length;
+                    }
+                    else {
+                        rejec = "";
+                    }
+                    if (fuzzy.length != 0) {
+                        fuz = " Fuzzy:" + fuzzy.length;
+                    }
+                    else {
+                        fuz = "";
+                    }
+                    if (tbodyRowCount > 2 && single == 'False') {
                         updateElementStyle(checkElem, "", result, 'True', originalElem, wait, rejec, fuz);
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {
