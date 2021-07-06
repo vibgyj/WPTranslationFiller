@@ -297,12 +297,18 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
             translateButton.className += " translated";
      }
      else {
-             alert("Your pretranslate replace verbs are not populated add at least on line!!");
+            alert("Your pretranslate replace verbs are not populated add at least on line!!");
+            // 07-07-2021 Fix for issue #98
+            translateButton = document.querySelector(".paging a.translation-filler-button");
+            translateButton.className += " after_error";
             }
     }
     else {
         alert("Your postreplace verbs are not populated add at least on line!!");
-        }
+        // 07-07-2021 Fix for issue #98
+        translateButton = document.querySelector(".paging a.translation-filler-button");
+        translateButton.className += " after_error";
+    }
 }
 
 
@@ -411,17 +417,19 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
        
            // Translation completed
            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-            console.debug('translateButton entry:', translateButton);
-            //classList.remove(translateButton.className += " started");
             translateButton.className += " translated";
             
         }
         else {
             alert("Your pretranslate replace verbs are not populated add at least on line!!");
+            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+            translateButton.className += " translated_error";
         }
     }
     else {
         alert("Your postreplace verbs are not populated add at least on line!!");
+        let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+        translateButton.className += " translated_error";
     }
 }
 

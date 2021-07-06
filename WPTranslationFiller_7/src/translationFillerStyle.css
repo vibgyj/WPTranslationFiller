@@ -72,6 +72,10 @@ local.paging a.translation-filler-button {
         animation: button-loading-spinner 1s ease infinite;
 }
 
+    .paging a.translation-filler-button.after_error {
+        animation: none;
+        background: blue;
+    }
     .paging a.translation-filler-button.translated {
         animation: none;
         background: green;
@@ -124,6 +128,11 @@ local.paging a.translation-filler-button {
     .panel-header-actions .translation-entry-my-button.translated {
         animation:none;
         background-color: green;
+    }
+
+    .panel-header-actions .translation-entry-my-button.translated_error {
+        animation: none;
+        background-color: blue;
     }
 
 
