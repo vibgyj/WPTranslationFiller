@@ -1,4 +1,30 @@
 console.log('Content script...');
+
+//function addListener(event, obj, fn) {
+//    if (obj.addEventListener) {
+//        obj.addEventListener(event, fn, false);   // modern browsers
+//    } else {
+//        obj.attachEvent("on" + event, fn);          // older versions of IE
+//    }
+//}
+
+//addListener('load', window, function (_event) {
+//    chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+//        console.debug("Content script set flag for noOldTrans back to False")
+//        // alert('Settings saved');
+//    });
+//});
+
+// 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
+window.onbeforeunload = function () {
+    return switchoff();
+}
+
+function switchoff() {
+    chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+        console.debug("Content script set flag for noOldTrans back to False")
+    });
+}
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
 var db =getDbSchema() ;
@@ -348,7 +374,15 @@ function checkactionClick(event) {
                     url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + newRowId;
                     console.debug('checkActionClick url found:', url);
                     //rowsFound = fetchOld('','',url,'True');
-                    fetchOldRec(url, newRowId);
+                    chrome.storage.sync.get(['showTransDiff'], function (data) {
+                        console.debug("param showTransDiff:", data.showTransDiff);
+
+                        if (data.showTransDiff != 'null') {
+
+                            fetchOldRec(url, newRowId);
+                        }
+                    });
+                    
                 }
             }
         }
@@ -395,7 +429,14 @@ function checkbuttonClick(event){
                url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + rowId;
                console.debug('checkbuttonClick url found:', url);
                //rowsFound = fetchOld('','',url,'True');
-               fetchOldRec(url, rowId);
+
+               chrome.storage.sync.get(['showTransDiff'], function (data) {
+                   if (data.showTransDiff != 'null') {
+                       if (data.showTransDiff == true) {
+                           fetchOldRec(url, rowId);
+                       }
+                   }
+               });
            }
 
            //console.debug('Translatebutton:',translateButton);
@@ -477,7 +518,7 @@ function validatePage(language, showHistory) {
        
         textareaElem.addEventListener('input', function (e) {
             console.debug("eventlistener:", newurl);
-        validateEntry(language, e.target,newurl);
+        validateEntry(language, e.target,newurl,showHistory);
         });
         let translation = textareaElem.innerText;
         var result = validate(language, original, translation);
@@ -522,7 +563,7 @@ function updateStyle(textareaElem, result, newurl, showHistory) {
             }
 }
 
-function validateEntry(language, textareaElem, newurl) {
+function validateEntry(language, textareaElem, newurl, showHistory) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     //console.debug('validateEntry:',newurl);
     let translation = textareaElem.value;
