@@ -575,7 +575,7 @@ function validateEntry(language, textareaElem, newurl, showHistory) {
     updateStyle(textareaElem, result, newurl, showHistory);
 }
 
-function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz) {
+function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old) {
     //console.debug("updateElementStyle params:", oldstring, originalElem);
     if (oldstring == 'True') {
         // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
@@ -584,7 +584,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             var element1 = document.createElement('div');
             element1.setAttribute('class', 'trans_exists_div');
             //element1.style.cssText = 'padding-left:0px; padding-top:20px';
-            element1.appendChild(document.createTextNode("Existing string(s)! " + wait + " " + rejec + " " + fuz));
+            element1.appendChild(document.createTextNode("Existing string(s)! " + current + " " + wait + " " + rejec + " " + fuz + " " + old));
             originalElem.appendChild(element1);
         }
         else {
@@ -759,6 +759,10 @@ async function fetchOldRec(url, rowId) {
             newurl = url.replace("mystat", "current");
             console.debug("fetchOldRec fuzzy after replace to current:", newurl);
             break;
+        case 'old':
+            newurl = url.replace("mystat", "current");
+            console.debug("fetchOldRec old after replace to current:", newurl);
+            break;
 
     }
     
@@ -929,7 +933,14 @@ async function fetchOld(checkElem, result, url, single, originalElem) {
                     var rejected = table.querySelectorAll('tr.preview.status-rejected');
                     var waiting = table.querySelectorAll('tr.preview.status-waiting');
                     var fuzzy = table.querySelectorAll('tr.preview.status-fuzzy');
-
+                    var current = table.querySelectorAll('tr.preview.status-current');
+                    var old = table.querySelectorAll('tr.preview.status-old');
+                    if (current.length != 0) {
+                        current = " Current:" + current.length;
+                    }
+                    else {
+                        current = "";
+                    }
                     if (waiting.length != 0) {
                         wait = " Waiting:" + waiting.length;
                     }
@@ -948,11 +959,17 @@ async function fetchOld(checkElem, result, url, single, originalElem) {
                     else {
                         fuz = "";
                     }
+                    if (old.length != 0) {
+                        old = " Old:" + old.length;
+                    }
+                    else {
+                        old = "";
+                    }
                     if (tbodyRowCount > 2 && single == 'False') {
-                        updateElementStyle(checkElem, "", result, 'True', originalElem, wait, rejec, fuz);
+                        updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old);
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {
-                        updateElementStyle(checkElem, "", result, 'False', originalElem, wait, rejec, fuz);
+                        updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old);
                         //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                         //window.open(url, "_blank", windowFeatures);
                     }
