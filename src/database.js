@@ -41,15 +41,16 @@ function getDbSchema() {
     }
     return db;
 }
-async function addTransDb(source,translation,country) {
-	console.debug('Add record:',source,translation,country);
+async function addTransDb(orig, trans, cntry) {
+    // 05-06-2021 PSS fixed a problem with wrong var names
+	console.debug('Add record:',orig,trans,cntry);
 	//found = findTransline(source);
 	//console.debug('Result after find:',found);
-	count = await countTransline(source);
+	count = await countTransline(orig,cntry);
 	console.debug('Result after count:',count);
 	if (count =='0') {
         reslt = "Inserted";
-        var transl = {source,translation,country};
+        var transl = { source: orig, translation: trans, country: cntry };
         try {
            var noOfDataInserted = await jsstoreCon.insert({
             into: 'Translation',
@@ -70,7 +71,7 @@ async function addTransDb(source,translation,country) {
        }
 	}
 	else{
-		updateTransDb(source,translation,country);
+		updateTransDb(orig,trans,cntry);
 		console.debug('addTransDb record present so update it',res);
 		//alert("Record updated!!");
     reslt="updated";
@@ -89,7 +90,8 @@ async function updateTransDb(orig,trans,cntry) {
                 country: transl.cntry             
             },
             where: {
-                source: transl.orig
+                source: transl.orig,
+                country :transl.cntry
             }
         });
         console.log(`data updated ${noOfDataUpdated}`);
@@ -99,25 +101,27 @@ async function updateTransDb(orig,trans,cntry) {
     }
 }
 
-async function countTransline(orig){
+async function countTransline(orig,cntry){
 console.debug("count started");
 const results = await jsstoreCon.count({
     from: "Translation",
     where: {
-        source: orig      
+        source: orig,
+        country: cntry
     }
 })
 console.debug("count amount:",results);
 return results;
 }
 
-async function findTransline(orig){
+async function findTransline(orig,cntry){
 	var trans = 'notFound';
-	console.debug("Find line started:",orig);
+	console.debug("Find line started:",orig,cntry);
 	const results = await jsstoreCon.select({
     from: "Translation",
     where: {
-        source: orig      
+        source: orig,
+        country: cntry
     }
 }).then((value) => {
   if (value !=""){	
@@ -156,12 +160,25 @@ async function addTransline(rowId){
         alert("No translation to store!");
     }
     else {
-         console.debug('Translated text to add to database:',addTrans);
-         console.debug('Original text to add to database:',orig);
-         console.debug("addTransline Language:",language);
-		     var res = addTransDb(orig,addTrans,language);
+        console.debug('addTransline translated text to add to database:',addTrans);
+        console.debug('addTransline original text to add to database:',orig);
+        console.debug("addTransline Language:",language);
+        var res = addTransDb(orig, addTrans, language);
+        console.debug('addTransline res add to database:', res);
+        let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+        let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
+        console.debug("addTransline checkplural:", checkplural)
+        // 21-06-2021 PSS fixed the problem with no storing of plurals into the datase issue #87
+        if (checkplural != null) {
+            let plural = checkplural.innerText;
+            console.debug('addTransline checkplural content element', plural);
+            textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
+            console.debug("addTransline add plural translated", textareaElem1);
+            addTrans = textareaElem1.value;
+            res = addTransDb(plural, addTrans, language);
+            }
          alert("addTransline record added/updated to database ");
-      }
+        }
     });
     return;
 }

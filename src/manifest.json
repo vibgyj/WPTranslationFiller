@@ -1,37 +1,49 @@
 {
-    "manifest_version": 2,
-    "name": "WordPress Translation Filler",
-    "version": "1.2.3",
-    "description": "Chrome extension to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
-    "background": {
-        "scripts": ["jsstore.js","jsstore.worker.js"]
-        },
-    "permissions": [
-        "declarativeContent",
-        "storage",
-		"activeTab",
-		"tabs",
-        "https://translation.googleapis.com/*",
-		"https://translate.wordpress.org/*",
-		"https://api.languagetoolplus.com/*"
-    ],
-    "options_page": "options.html",
-    "content_scripts": [
-        {
-            "matches": [
-                "https://translate.wordpress.org/*",
-                "https://cdnjs.cloudflare.com/*"
-            ],
-            "js": [
-                "jsstore.js",
-			    "jsstore.worker.js",
-			    "database.js",
-                "googleTranslate.js",
-                "contentScript.js"
-            ],
-            "css": [
-                "translationFillerStyle.css"
-            ]
-        }
+  "manifest_version": 2,
+  "name": "WordPress Translation Filler",
+  "version": "1.3.1",
+  "description": "Firefox addon to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
+  "background": {
+    "scripts": [
+      "jsstore.js",
+      "jsstore.worker.js"
     ]
+  },
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "https://translation.googleapis.com/*",
+    "https://api.deepl.com/*",
+    "https://translate.wordpress.org/*",
+    "https://api.languagetoolplus.com/*",
+    "https://api.cognitive.microsofttranslator.com/*"
+  ],
+  "content_scripts": [
+    {
+      "js": [
+        "jsstore.js",
+        "jsstore.worker.js",
+        "database.js",
+        "contentScript.js",
+        "googleTranslate.js"
+      ],
+      "matches": [
+        "https://translate.wordpress.org/*"
+      ],
+      "css": [
+        "translationFillerStyle.css"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{1f70acc7-00c6-4bdf-96a1-c97a19a6884a}",
+      "strict_min_version": "57.0"
+    }
+  }
 }
