@@ -512,9 +512,9 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
         if (this.readyState == 4) {
             //responseObj = xhttp.response;
             responseObj = this.response;
-            //alert(responseObj.translations[0].text);
+           // alert(responseObj.translations[0].text);
             translatedText = responseObj.translations[0].text;
-            console.debug("inside:", translatedText);
+            //console.debug("inside:", translatedText);
             //let responseObj = JSON.parse(this.translations);
             //let translatedText = responseObj.data.translations[0].translatedText;
             console.debug('sendAPIRequest result before postProces:', translatedText);
@@ -565,19 +565,19 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
         }
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
-            console.debug("issue with licence:", this.status);
+      //      console.debug("issue with licence:", this.status);
             if (this.readyState == 4 && this.status == 400) {
-                alert("Error in translation received status 400, maybe a license problem.\n\nClick on OK until all records are processed!!!");
+               alert("Error in translation received status 400, maybe a license problem.\n\nClick on OK until all records are processed!!!");
             }
             else if (this.readyState == 2 && this.status == 403) {
                 alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
             }
             else {
                 // 18-06-2021 PSS fixed an alert at the wrong time issue #83
-                console.debug("Status received:", this.status);
-                //alert("Error in translation receive code:", this.status);
-            }
-        }
+                 console.debug("Status received:", this.status);
+               // alert("Error in translation receive code:", this.status);
+                }
+       }
     };
     
     

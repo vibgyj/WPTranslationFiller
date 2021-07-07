@@ -759,139 +759,140 @@ async function fetchOldRec(url, rowId) {
             newurl = url.replace("mystat", "current");
             console.debug("fetchOldRec old after replace to current:", newurl);
             break;
-
+        case 'untranslated':
+            newurl = url.replace("mystat", "untranslated");
+            console.debug("fetchOldRec untranslated after replace to current:", newurl);
+            break;
     }
-    
-    //console.debug('after document querySelector:', e);
-    //console.debug("fetchOldRec original:", original);
-    //console.debug("fetchOldRec started", url);
+    // fix for issue #99
+    if (status != 'untranslated') {
+        console.debug("fetchOldrec original:", newurl, rowId, original);
+        var diffType = "diffWords";
 
-    console.debug("fetchOldrec original:", newurl,rowId,original);
-    var diffType = "diffWords";
-
-    fetch(newurl, {
-        headers: new Headers({
-            'User-agent': 'Mozilla/4.0 Custom User Agent'
+        fetch(newurl, {
+            headers: new Headers({
+                'User-agent': 'Mozilla/4.0 Custom User Agent'
+            })
         })
-    })
-        .then(response => response.text())
-        .then(data => {
-            //console.log(data);
-            var parser = new DOMParser();
-            var doc = parser.parseFromString(data, 'text/html');
-            //console.log("html:", doc);
-            var table = doc.getElementById("translations");
-            //console.debug('table:', table);
-            let tr = table.rows;
-            console.debug('table:', tr);
-            var tbodyRowCount = table.tBodies[0].rows.length;
-            console.debug('rowcount:', tbodyRowCount);
-            if (tbodyRowCount >1) {
-                // 16-06-2021 The below code fixes issue  #82
-                let translateorigsep = document.getElementById('translator_sep1');
-                //console.debug("Did we find a separator:", translateorigsep);
-                if (translateorigsep != null){
-                    document.getElementById("translator_sep1").remove();
-                    document.getElementById("translator_sep2").remove();
-                    document.getElementById("translator_sep3").remove();
-                    document.getElementById("translator_div1").remove();
-                    document.getElementById("translator_div2").remove();
-                    document.getElementById("translator_div3").remove();
-                    document.getElementById("translator_div4").remove();
-                    document.getElementById("translator_div5").remove();
+            .then(response => response.text())
+            .then(data => {
+                //console.log(data);
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(data, 'text/html');
+                //console.log("html:", doc);
+                var table = doc.getElementById("translations");
+                //console.debug('table:', table);
+                let tr = table.rows;
+                console.debug('table:', tr);
+                var tbodyRowCount = table.tBodies[0].rows.length;
+                console.debug('rowcount:', tbodyRowCount);
+                if (tbodyRowCount > 1) {
+                    // 16-06-2021 The below code fixes issue  #82
+                    let translateorigsep = document.getElementById('translator_sep1');
+                    //console.debug("Did we find a separator:", translateorigsep);
+                    if (translateorigsep != null) {
+                        document.getElementById("translator_sep1").remove();
+                        document.getElementById("translator_sep2").remove();
+                        document.getElementById("translator_sep3").remove();
+                        document.getElementById("translator_div1").remove();
+                        document.getElementById("translator_div2").remove();
+                        document.getElementById("translator_div3").remove();
+                        document.getElementById("translator_div4").remove();
+                        document.getElementById("translator_div5").remove();
+                    }
+
+                    rowContent = table.rows[tbodyRowCount - 1];
+
+                    orig = rowContent.getElementsByClassName('original-text');
+                    trans = rowContent.getElementsByClassName('translation-text');
+                    var separator1 = document.createElement('div');
+                    separator1.setAttribute('id', 'translator_sep1');
+                    separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+                    separator1.appendChild(document.createTextNode(""));
+                    var separator2 = document.createElement('div');
+                    separator2.setAttribute('id', 'translator_sep2');
+                    separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                    separator2.appendChild(document.createTextNode(""));
+                    var separator3 = document.createElement('div');
+                    separator3.setAttribute('id', 'translator_sep3');
+                    separator3.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                    separator3.appendChild(document.createTextNode(""));
+                    var separator4 = document.createElement('div');
+                    separator4.setAttribute('id', 'translator_sep4');
+                    separator4.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                    separator4.appendChild(document.createTextNode(""));
+
+                    var element1 = document.createElement('div');
+                    element1.setAttribute('id', 'translator_div1');
+                    element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element1.appendChild(document.createTextNode('Previous existing translation'));
+
+                    var element2 = document.createElement('div');
+                    element2.setAttribute('id', 'translator_div2');
+                    element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element2.appendChild(document.createTextNode(orig[0].innerText));
+
+                    var element3 = document.createElement('div');
+                    element3.setAttribute('id', 'translator_div3');
+                    element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element3.appendChild(document.createTextNode(trans[0].innerText));
+
+                    // 23-06-2021 PSS added the current translation below the old to be able to mark the differences issue #92                
+
+                    var element4 = document.createElement('div');
+                    element4.setAttribute('id', 'translator_div4');
+                    element4.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+
+
+                    var element5 = document.createElement('div');
+                    element5.setAttribute('id', 'translator_div5');
+                    element5.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    //element5.appendChild(document.createTextNode(""));
+
+                    let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                    metaElem.appendChild(element1);
+                    metaElem.appendChild(separator1);
+                    metaElem.appendChild(element2);
+                    metaElem.appendChild(separator2);
+                    metaElem.appendChild(element3);
+                    metaElem.appendChild(separator3);
+                    metaElem.appendChild(separator3);
+                    metaElem.appendChild(element4);
+                    metaElem.appendChild(separator4);
+                    metaElem.appendChild(element5);
+
+                    // Strings are retrieved and compared
+                    var oldStr = trans[0].innerText;
+                    var newStr = original;
+                    console.debug("old", oldStr);
+                    console.debug("new:", newStr);
+                    //var diffType = "diffWords";
+                    var diffType = "diffWords";
+                    var changes = JsDiff[diffType](oldStr, newStr);
+                    console.debug("content of changes:", changes);
+                    //console.debug("fetchOldRec diff:", changes);
+
+                    if (oldStr.length != newStr.length) {
+                        textdif = '  ->Length not equal!';
+                    }
+                    else {
+                        textdif = '';
+                    }
+                    if (oldStr == newStr) {
+                        element4.appendChild(document.createTextNode('New translation is the same'));
+                    }
+                    else {
+                        element4.appendChild(document.createTextNode('New translation difference!'));
+                    }
+                    element5.innerHTML = JsDiff.convertChangesToXML(changes) + textdif;
+                    metaElem.appendChild(element5);
+
+                    //metaElem.style.color = 'darkblue';
+                    metaElem.style.fontWeight = "900";
+
                 }
-
-                rowContent = table.rows[tbodyRowCount - 1];
-                
-                orig = rowContent.getElementsByClassName('original-text');
-                trans = rowContent.getElementsByClassName('translation-text');
-                var separator1 = document.createElement('div');
-                separator1.setAttribute('id', 'translator_sep1');
-                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
-                separator1.appendChild(document.createTextNode(""));
-                var separator2 = document.createElement('div');
-                separator2.setAttribute('id', 'translator_sep2');
-                separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
-                separator2.appendChild(document.createTextNode(""));
-                var separator3 = document.createElement('div');
-                separator3.setAttribute('id', 'translator_sep3');
-                separator3.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
-                separator3.appendChild(document.createTextNode(""));
-                var separator4 = document.createElement('div');
-                separator4.setAttribute('id', 'translator_sep4');
-                separator4.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
-                separator4.appendChild(document.createTextNode(""));
-
-                var element1 = document.createElement('div');
-                element1.setAttribute('id', 'translator_div1');             
-                element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element1.appendChild(document.createTextNode('Previous existing translation'));
-                
-                var element2 = document.createElement('div');
-                element2.setAttribute('id', 'translator_div2');
-                element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element2.appendChild(document.createTextNode(orig[0].innerText));
-                
-                var element3 = document.createElement('div');
-                element3.setAttribute('id', 'translator_div3');  
-                element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element3.appendChild(document.createTextNode(trans[0].innerText));
-
-                // 23-06-2021 PSS added the current translation below the old to be able to mark the differences issue #92                
-
-                var element4 = document.createElement('div');
-                element4.setAttribute('id', 'translator_div4');
-                element4.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                
-
-                var element5 = document.createElement('div');
-                element5.setAttribute('id', 'translator_div5');
-                element5.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                //element5.appendChild(document.createTextNode(""));
-                
-                let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
-                metaElem.appendChild(element1);
-                metaElem.appendChild(separator1);
-                metaElem.appendChild(element2);
-                metaElem.appendChild(separator2);
-                metaElem.appendChild(element3);
-                metaElem.appendChild(separator3);
-                metaElem.appendChild(separator3);
-                metaElem.appendChild(element4);
-                metaElem.appendChild(separator4);
-                metaElem.appendChild(element5);
-
-                // Strings are retrieved and compared
-                var oldStr = trans[0].innerText;
-                var newStr = original;
-                console.debug("old" , oldStr);
-                console.debug("new:", newStr);
-                //var diffType = "diffWords";
-                var diffType = "diffWords";
-                var changes = JsDiff[diffType](oldStr, newStr);
-                console.debug("content of changes:", changes);
-                //console.debug("fetchOldRec diff:", changes);
-                
-                if (oldStr.length != newStr.length) {
-                    textdif = '  ->Length not equal!';
-                }
-                else {
-                    textdif = '';
-                }
-                if (oldStr == newStr) {
-                    element4.appendChild(document.createTextNode('New translation is the same'));
-                }
-                else {
-                    element4.appendChild(document.createTextNode('New translation difference!'));
-                }
-                element5.innerHTML = JsDiff.convertChangesToXML(changes)+textdif;
-                metaElem.appendChild(element5);
-
-                //metaElem.style.color = 'darkblue';
-                metaElem.style.fontWeight = "900";
-                
-            }
-        }).catch(error => console.error(error));
+            }).catch(error => console.error(error));
+    }
 }
 
 // 11-06-2021 PSS added function to mark that existing translation is present
