@@ -270,14 +270,10 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         addTranslateButtons();
         if (glossary.length > 0) {
             chrome.storage.sync.get(['showHistory'], function (data) {
-                console.debug("param showHistory:", data.showHistory);
-                
                 if (data.showHistory != 'null') {
-
                     validatePage(data.destlang, data.showHistory);
                 }
                     });
-                
         }
         checkbuttonClick();
     });

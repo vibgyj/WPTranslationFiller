@@ -74,7 +74,7 @@ local.paging a.translation-filler-button {
 
     .paging a.translation-filler-button.after_error {
         animation: none;
-        background: blue;
+        background: red;
     }
     .paging a.translation-filler-button.translated {
         animation: none;
@@ -132,7 +132,7 @@ local.paging a.translation-filler-button {
 
     .panel-header-actions .translation-entry-my-button.translated_error {
         animation: none;
-        background-color: blue;
+        background-color: red;
     }
 
 
