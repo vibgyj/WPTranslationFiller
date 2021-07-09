@@ -162,7 +162,7 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .check_translation-button {
     width: auto;
-    padding: 11x;
+    padding: 11px;
     background-color: blue;
     color: white;
 }
@@ -275,7 +275,7 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .export_translation-button {
     width: auto;
-    padding: 11x;
+    padding: 11px;
     background-color: blue;
     color: white;
 }
@@ -328,7 +328,7 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .import_translation-button {
     width: auto;
-    padding: 11x;
+    padding: 11px;
     background-color: blue;
     color: white;
 }
