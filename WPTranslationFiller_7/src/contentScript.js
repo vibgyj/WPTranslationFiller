@@ -204,7 +204,8 @@ async function parseDataBase(data) {
     let counter= 0;
     // To make sure we can manipulate the data store it into an array
     lbreak.forEach(res => {
-        csvData.push(res.split(","));
+        // 09-07-2021 PSS altered the separator issue #104
+        csvData.push(res.split("|"));
         ++counter;
         //console.debug("counter:",counter);
     });

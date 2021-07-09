@@ -73,7 +73,7 @@ async function addTransDb(orig, trans, cntry) {
 	else{
 		res =updateTransDb(orig,trans,cntry);
 		console.debug('addTransDb record present so update it',trans," ",res);
-		alert("Record updated!!",res);
+		//alert("Record updated!!",res);
         reslt="updated";
         console.debug('addTransDb record present so update it',reslt);
 	}
@@ -97,7 +97,7 @@ async function updateTransDb(orig,trans,cntry) {
         console.log(`data updated ${noOfDataUpdated}`);
         
     } catch (ex) {
-        alert(ex.message);
+        alert(ex.message,"record:",orig);
     }
 }
 
@@ -209,8 +209,9 @@ async function dbExport(){
     console.debug('results:',trans.source,trans.translation,trans.country);
     arrayData[i] = { original : trans.source, translation : trans.translation, country : trans.country};
     i++; 
-  });    
-  let delimiter = ',';
+    });
+    // 09-07-2021 PSS altered the separator issue #104
+  let delimiter = '|';
     let arrayHeader = ["original","translation", "country"];
     let header = arrayHeader.join(delimiter) + '\n';
        let csv = header;
