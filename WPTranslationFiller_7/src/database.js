@@ -180,9 +180,12 @@ async function addTransline(rowId){
                 let row = rowId.split('-')[0];
                 console.debug('rowId plural:', row)
                 textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
-                textareaElem1.innerText = translatedText;
-                textareaElem1.value = translatedText;
-                console.debug('existing plural text:', translatedText);
+                console.debug("current not null translatedText", textareaElem1.value);
+                addTrans = textareaElem1.value;
+                res = addTransDb(plural, addTrans, language);
+                //textareaElem1.innerText = translatedText;
+                //textareaElem1.value = translatedText;
+                //console.debug('existing plural text:', translatedText);
             }
             else {
                 textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");

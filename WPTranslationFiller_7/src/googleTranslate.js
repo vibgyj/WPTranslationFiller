@@ -528,6 +528,10 @@ function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype
 }
 
 function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProcessed, rowId, transtype) {
+    // PSS 09-07-2021 additional fix for issue #102 plural not updated
+    let h= document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+    var current = h.querySelector('span.panel-header__bubble');
+    console.debug("sendAPIRequestDeepl status:", current);
     console.debug('sendAPIreQuest original_line Deepl:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
@@ -566,26 +570,36 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
             }
             else {
                 // PSS 09-04-2021 added populating plural text
-                console.debug('Row plural:', rowId);
-                textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
-                textareaElem1.innerText = translatedText;
-                console.debug("plural newtext:", textareaElem1.innerText);
-                textareaElem1.value = translatedText;
-                let g = document.querySelector('td.translation');            
-                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                //console.debug("current preview:", preview.innerText);
-                // 21-06-2021 PSS added a dotted line into the preview cell if plural is present #88
-                var separator1 = document.createElement('div');
-                separator1.setAttribute('id', 'translator_sep1');
-                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
-                separator1.appendChild(document.createTextNode(""));
-                preview.appendChild(separator1);
-                var element1 = document.createElement('div');
-                element1.setAttribute('id', 'translator_div1');
-                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element1.appendChild(document.createTextNode("\n"+ translatedText));
-                preview.appendChild(element1);
-               
+                // PSS 09-07-2021 additional fix for issue #102 plural not updated
+                if (current != 'null' && current == 'current' && current =='waiting') {
+                    let row = rowId.split('-')[0];
+                    console.debug('rowId plural:', row)
+                    textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
+                    textareaElem1.innerText = translatedText;
+                    textareaElem1.value = translatedText;
+                    console.debug('existing plural text:', translatedText);
+                }
+                else {
+                    console.debug('Row plural:', rowId);
+                    textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                    textareaElem1.innerText = translatedText;
+                    console.debug("plural newtext:", textareaElem1.innerText);
+                    textareaElem1.value = translatedText;
+                    let g = document.querySelector('td.translation');
+                    let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                    //console.debug("current preview:", preview.innerText);
+                    // 21-06-2021 PSS added a dotted line into the preview cell if plural is present #88
+                    var separator1 = document.createElement('div');
+                    separator1.setAttribute('id', 'translator_sep1');
+                    separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                    separator1.appendChild(document.createTextNode(""));
+                    preview.appendChild(separator1);
+                    var element1 = document.createElement('div');
+                    element1.setAttribute('id', 'translator_div1');
+                    //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element1.appendChild(document.createTextNode("\n" + translatedText));
+                    preview.appendChild(element1);
+                }
             }
             validateEntry(language, textareaElem);
 
@@ -622,8 +636,14 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
 }
 
 function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype, trntype) {
+    // PSS 09-07-2021 additional fix for issue #102 plural not updated
+    let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+    var current = h.querySelector('span.panel-header__bubble');
+    console.debug("sendAPIRequestMicrosoft status:", current);
+    
+    //console.debug('plural rowId:', rowId);
     console.debug('sendAPIreQuest original_line Microsoft:', original); 
-    console.debug("format type", trntype);
+    //console.debug("format type", trntype);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         // 24-06-2021 PSS fixed an error in Chrome with type null message
@@ -672,24 +692,35 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
             }
             else {
                 // PSS 09-04-2021 added populating plural text
-                console.debug('Row plural:', rowId);
-                textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
-                textareaElem1.innerText = translatedText;
-                console.debug("plural newtext:", textareaElem1.innerText);
-                textareaElem1.value = translatedText;
-                let g = document.querySelector('td.translation');
-                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                console.debug("current preview:", preview.innerText);
-                var separator1 = document.createElement('div');
-                separator1.setAttribute('id', 'translator_sep1');
-                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
-                separator1.appendChild(document.createTextNode(""));
-                preview.appendChild(separator1);
-                var element1 = document.createElement('div');
-                element1.setAttribute('id', 'translator_div1');
-                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element1.appendChild(document.createTextNode("\n" + translatedText));
-                preview.appendChild(element1);
+                // PSS 09-07-2021 additional fix for issue #102 plural not updated
+                if (current != 'null' && current == 'current' && current == 'waiting') {
+                    let row = rowId.split('-')[0];
+                    console.debug('rowId plural:', row)
+                    textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
+                    textareaElem1.innerText = translatedText;
+                    textareaElem1.value = translatedText;
+                    console.debug('existing plural text:', translatedText);
+                }
+                else {
+                    console.debug('Row plural:', rowId);
+                    textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                    textareaElem1.innerText = translatedText;
+                    console.debug("plural newtext:", textareaElem1.innerText);
+                    textareaElem1.value = translatedText;
+                    let g = document.querySelector('td.translation');
+                    let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                    console.debug("current preview:", preview.innerText);
+                    var separator1 = document.createElement('div');
+                    separator1.setAttribute('id', 'translator_sep1');
+                    separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                    separator1.appendChild(document.createTextNode(""));
+                    preview.appendChild(separator1);
+                    var element1 = document.createElement('div');
+                    element1.setAttribute('id', 'translator_div1');
+                    //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element1.appendChild(document.createTextNode("\n" + translatedText));
+                    preview.appendChild(element1);
+                }
             }
             validateEntry(language, textareaElem);
 
@@ -738,6 +769,8 @@ function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, origina
 
 function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed,rowId,transtype) {
     console.debug('sendAPIRequest original_line Google:', originalPreProcessed);
+    let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+    var current = h.querySelector('span.panel-header__bubble');
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -765,24 +798,35 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
             }
             else {
                  // PSS 09-04-2021 added populating plural text
-                 console.debug('Row plural:',rowId);
-                 textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
-                 textareaElem1.innerText = translatedText;
-                 console.debug("plural newtext:",textareaElem1.innerText);
-                 textareaElem1.value = translatedText;
-                 let g = document.querySelector('td.translation');
-                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                 console.debug("current preview:", preview.innerText);
-                 var separator1 = document.createElement('div');
-                 separator1.setAttribute('id', 'translator_sep1');
-                 separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
-                 separator1.appendChild(document.createTextNode(""));
-                 preview.appendChild(separator1);
-                 var element1 = document.createElement('div');
-                 element1.setAttribute('id', 'translator_div1');
-                 //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                 element1.appendChild(document.createTextNode("\n" + translatedText));
-                 preview.appendChild(element1);
+                // PSS 09-07-2021 additional fix for issue #102 plural not updated
+                if (current != 'null' && current == 'current' && current == 'waiting') {
+                    let row = rowId.split('-')[0];
+                    console.debug('rowId plural:', row)
+                    textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
+                    textareaElem1.innerText = translatedText;
+                    textareaElem1.value = translatedText;
+                    console.debug('existing plural text:', translatedText);
+                }
+                else {
+                    console.debug('Row plural:', rowId);
+                    textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                    textareaElem1.innerText = translatedText;
+                    console.debug("plural newtext:", textareaElem1.innerText);
+                    textareaElem1.value = translatedText;
+                    let g = document.querySelector('td.translation');
+                    let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                    console.debug("current preview:", preview.innerText);
+                    var separator1 = document.createElement('div');
+                    separator1.setAttribute('id', 'translator_sep1');
+                    separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                    separator1.appendChild(document.createTextNode(""));
+                    preview.appendChild(separator1);
+                    var element1 = document.createElement('div');
+                    element1.setAttribute('id', 'translator_div1');
+                    //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element1.appendChild(document.createTextNode("\n" + translatedText));
+                    preview.appendChild(element1);
+                }
             }
             validateEntry(language,textareaElem);
             
