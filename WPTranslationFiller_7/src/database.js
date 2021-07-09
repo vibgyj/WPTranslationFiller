@@ -224,8 +224,8 @@ async function dbExport(){
            }
            csv += row.join(delimiter)+"\n";
        });
-
-       let csvData = new Blob([csv], { type: 'text/csv' });  
+       // 09-07-2021 The export of the database does convert characters #105
+       let csvData = new Blob([csv], { type: 'text/csv;charset=utf-8' });  
        let csvUrl = URL.createObjectURL(csvData);
 
        let hiddenElement = document.createElement('a');
