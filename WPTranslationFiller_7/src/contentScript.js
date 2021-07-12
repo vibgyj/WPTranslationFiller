@@ -1,20 +1,5 @@
 console.log('Content script...');
 
-//function addListener(event, obj, fn) {
-//    if (obj.addEventListener) {
-//        obj.addEventListener(event, fn, false);   // modern browsers
-//    } else {
-//        obj.attachEvent("on" + event, fn);          // older versions of IE
-//    }
-//}
-
-//addListener('load', window, function (_event) {
-//    chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
-//        console.debug("Content script set flag for noOldTrans back to False")
-//        // alert('Settings saved');
-//    });
-//});
-
 // 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
 window.onbeforeunload = function () {
     return switchoff();
@@ -40,6 +25,7 @@ console.debug("jsStore opened:",jsstoreCon);
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');
+
 
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
@@ -319,7 +305,6 @@ function addTranslateButtons() {
     }
 }
 
-
 function addtranslateEntryClicked(event){
     if (event != undefined){ 
         event.preventDefault();
@@ -539,11 +524,27 @@ function updateStyle(textareaElem, result, newurl, showHistory) {
     originalElem = document.querySelector('#preview-' + rowId + ' .original');
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
     let checkElem = document.querySelector('#preview-' + rowId + ' .priority');
-    //let checkElem = document.querySelector('#preview-' + rowId + ' .row_filler_status');
-    //let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
-    let origElem =  updateElementStyle(checkElem, result,'False',originalElem);
+    let saveButton = document.querySelector('#preview-' + rowId + ' .save-button');
+    // we need to take care that the save button is not added twice
+    console.debug('divSafe:', saveButton);
+    if (saveButton == null) {
+        var separator1 = document.createElement('div');
+        separator1.setAttribute('id', 'checkElem_save');
+        //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+        checkElem.appendChild(separator1);
+
+        let SavelocalButton = document.createElement('button');
+        SavelocalButton.id = "save-button";
+        SavelocalButton.className = "save-button";
+        SavelocalButton.onclick = savetranslateEntryClicked;
+        SavelocalButton.innerText = "Save";
+        SavelocalButton.ariaLabel = "Save and approve translation";
+        checkElem.appendChild(SavelocalButton);
+    }
+
+    let origElem =  updateElementStyle(checkElem, result,'False',originalElem,"","","","","",rowId);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(checkElem, headerElem, result, 'False', originalElem);
+    updateElementStyle(checkElem, headerElem, result, 'False', originalElem, "", "", "", "", "", rowId);
     //console.debug('Row to find:', rowId);
     let row = rowId.split('-')[0];
     //console.debug('Row splitted:', row);
@@ -572,9 +573,12 @@ function validateEntry(language, textareaElem, newurl, showHistory) {
     updateStyle(textareaElem, result, newurl, showHistory);
 }
 
-function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old) {
+
+function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId) {
+    
     //console.debug("updateElementStyle params:", oldstring, originalElem);
     if (oldstring == 'True') {
+
         // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
         if (originalElem != undefined) {
            // console.debug("Add current string:", originalElem);
@@ -592,6 +596,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         console.debug('updateElemStyle wordCount undefined!:');
         return;
     }
+   
     if (result.wordCount == 0) {
         console.debug("updateElementStyle wordcount:", result.wordCount);
         return;
@@ -642,10 +647,48 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = 'red';
         }
+
         //}
     }
+    
+    var separator1 = document.createElement('div');
+    separator1.setAttribute('id', 'checkElem_save');
+    //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+    checkElem.appendChild(separator1);
+
+    // we need to add the save button again after updating the element
+    let SavelocalButton = document.createElement('button');
+    SavelocalButton.id = "save-button";
+    SavelocalButton.className = "save-button";
+    SavelocalButton.onclick = savetranslateEntryClicked;
+    SavelocalButton.innerText = "Save";
+    SavelocalButton.ariaLabel = "Save and approve translation";
+    checkElem.appendChild(SavelocalButton);
 
     checkElem.setAttribute('title', result.toolTip);
+}
+
+
+
+function savetranslateEntryClicked(event) {
+    //event.preventDefault();   
+    //console.debug("Save button clicked 1!");
+    myrow = event.target.parentElement.parentElement;
+    rowId = myrow.attributes.row.value;
+    //console.debug("Row event:", rowId);
+    // we take care that we can save the record by opening the editor save the record and close the editor again
+    let open_editor = document.querySelector(`#preview-${rowId} td.actions .edit`);
+    let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+    let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
+    open_editor.click();
+    glotpress_save.click();
+    glotpress_close.click();
+    // here we disable the button after the click
+    let SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');  
+    console.debug('savebutton res:', SavelocalButton);
+    SavelocalButton.className += " ready";
+    SavelocalButton.disabled = true;
+    SavelocalButton.style.cursor = "none"
 }
 
 function validate(language, original, translation) {
@@ -734,6 +777,7 @@ function taMatch(gWord, tWord) {
 // 22-06-2021 PSS added functionality to show differences in the translations
 async function fetchOldRec(url, rowId) {
     // 23-06-2021 PSS added original translation to show in Meta
+    console.debug('fetchOldRec:', rowId);
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     let original = e.querySelector('#editor-' + rowId + ' .foreign-text').textContent;
     let status = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerHTML;
@@ -790,7 +834,7 @@ async function fetchOldRec(url, rowId) {
                 if (tbodyRowCount > 1) {
                     // 16-06-2021 The below code fixes issue  #82
                     let translateorigsep = document.getElementById('translator_sep1');
-                    //console.debug("Did we find a separator:", translateorigsep);
+                    console.debug("Did we find a separator:", translateorigsep);
                     if (translateorigsep != null) {
                         document.getElementById("translator_sep1").remove();
                         document.getElementById("translator_sep2").remove();
@@ -818,6 +862,7 @@ async function fetchOldRec(url, rowId) {
                     separator3.setAttribute('id', 'translator_sep3');
                     separator3.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
                     separator3.appendChild(document.createTextNode(""));
+
                     var separator4 = document.createElement('div');
                     separator4.setAttribute('id', 'translator_sep4');
                     separator4.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
@@ -851,45 +896,47 @@ async function fetchOldRec(url, rowId) {
                     //element5.appendChild(document.createTextNode(""));
 
                     let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
-                    metaElem.appendChild(element1);
-                    metaElem.appendChild(separator1);
-                    metaElem.appendChild(element2);
-                    metaElem.appendChild(separator2);
-                    metaElem.appendChild(element3);
-                    metaElem.appendChild(separator3);
-                    metaElem.appendChild(separator3);
-                    metaElem.appendChild(element4);
-                    metaElem.appendChild(separator4);
-                    metaElem.appendChild(element5);
+                    if (metaElem != null) {
+                        metaElem.appendChild(element1);
+                        metaElem.appendChild(separator1);
+                        metaElem.appendChild(element2);
+                        metaElem.appendChild(separator2);
+                        metaElem.appendChild(element3);
+                        metaElem.appendChild(separator3);
+                        metaElem.appendChild(separator3);
+                        metaElem.appendChild(element4);
+                        metaElem.appendChild(separator4);
+                        metaElem.appendChild(element5);
 
-                    // Strings are retrieved and compared
-                    var oldStr = trans[0].innerText;
-                    var newStr = original;
-                    console.debug("old", oldStr);
-                    console.debug("new:", newStr);
-                    //var diffType = "diffWords";
-                    var diffType = "diffWords";
-                    var changes = JsDiff[diffType](oldStr, newStr);
-                    console.debug("content of changes:", changes);
-                    //console.debug("fetchOldRec diff:", changes);
+                        // Strings are retrieved and compared
+                        var oldStr = trans[0].innerText;
+                        var newStr = original;
+                        console.debug("old", oldStr);
+                        console.debug("new:", newStr);
+                        //var diffType = "diffWords";
+                        var diffType = "diffWords";
+                        var changes = JsDiff[diffType](oldStr, newStr);
+                        console.debug("content of changes:", changes);
+                        //console.debug("fetchOldRec diff:", changes);
 
-                    if (oldStr.length != newStr.length) {
-                        textdif = '  ->Length not equal!';
-                    }
-                    else {
-                        textdif = '';
-                    }
-                    if (oldStr == newStr) {
-                        element4.appendChild(document.createTextNode('New translation is the same'));
-                    }
-                    else {
-                        element4.appendChild(document.createTextNode('New translation difference!'));
-                    }
-                    element5.innerHTML = JsDiff.convertChangesToXML(changes) + textdif;
-                    metaElem.appendChild(element5);
+                        if (oldStr.length != newStr.length) {
+                            textdif = '  ->Length not equal!';
+                        }
+                        else {
+                            textdif = '';
+                        }
+                        if (oldStr == newStr) {
+                            element4.appendChild(document.createTextNode('New translation is the same'));
+                        }
+                        else {
+                            element4.appendChild(document.createTextNode('New translation difference!'));
+                        }
+                        element5.innerHTML = JsDiff.convertChangesToXML(changes) + textdif;
+                        metaElem.appendChild(element5);
 
-                    //metaElem.style.color = 'darkblue';
-                    metaElem.style.fontWeight = "900";
+                        //metaElem.style.color = 'darkblue';
+                        metaElem.style.fontWeight = "900";
+                    }
 
                 }
             }).catch(error => console.error(error));
@@ -964,10 +1011,10 @@ async function fetchOld(checkElem, result, url, single, originalElem) {
                         old = "";
                     }
                     if (tbodyRowCount > 2 && single == 'False') {
-                        updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old);
+                        updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old,"n.v.t.");
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {
-                        updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old);
+                        updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old,"n.v.t.");
                         //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                         //window.open(url, "_blank", windowFeatures);
                     }

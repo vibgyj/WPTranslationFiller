@@ -531,7 +531,7 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     let h= document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     var current = h.querySelector('span.panel-header__bubble');
-    console.debug("sendAPIRequestDeepl status:", current);
+    console.debug("sendAPIRequestDeepl status:", current,rowId);
     console.debug('sendAPIreQuest original_line Deepl:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
@@ -562,6 +562,30 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                 preview.innerText = translatedText;
                 // PSS 29-03-2021 Added populating the value of the property to retranslate            
                 textareaElem.value = translatedText;
+
+                current.innerText = 'waiting';
+                current.value = 'waiting';
+                // <span class="panel-header__bubble panel-header__bubble--waiting">waiting</span>
+               // let status = document.querySelector(`#editor-${rowId} div.editor-panel__right dd`);
+               // console.debug('current status:', status.innerText);
+               // status.innerText = 'waiting';
+               // var element1 = document.createElement('dl');
+               // element2.setAttribute('id', 'translator_div2');
+               // element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                
+                //status.appendChild(element1);
+               // element1 = document.createElement('dd');
+               // element1.appendChild(document.createTextNode("Added: 2021-07-10 12:11:04 UTC"));
+               // status.appendChild(element1);
+
+                // #editor-12092611-86541306.editor.status-waiting.priority-normal.no-warnings.has-translations
+                // #editor-12078274.editor.untranslated.priority-normal.no-warnings.no-translations
+                //document.querySelector(`#editor-${rowId}`).className = "editor.status-waiting.priority-normal.no-warnings.has-translations";
+                //res = document.querySelector(`#editor-${rowId}`);
+                //res.style.cssText = 'display:table-row;'
+               // res = document.querySelector(`#preview-${rowId}`).className = "editor.status-waiting.priority-normal.no-warnings.has-translations";
+               // res = document.querySelector(`#preview-${rowId}`);
+               // res.style.cssText = 'display:table-row;'
                 //PSS 25-03-2021 Fixed problem with description box issue #13
                 textareaElem.style.height = 'auto';
                 textareaElem.style.height = textareaElem.scrollHeight + 'px';
