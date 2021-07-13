@@ -563,8 +563,8 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                 // PSS 29-03-2021 Added populating the value of the property to retranslate            
                 textareaElem.value = translatedText;
 
-                current.innerText = 'waiting';
-                current.value = 'waiting';
+                current.innerText = 'transFill';
+                current.value = 'transFill';
                 // <span class="panel-header__bubble panel-header__bubble--waiting">waiting</span>
                // let status = document.querySelector(`#editor-${rowId} div.editor-panel__right dd`);
                // console.debug('current status:', status.innerText);

@@ -419,39 +419,31 @@ table.translations tr.row_filler_status {
     display:none;
 }
 table.translations th.priority, table.translations td.priority {
-    width: 2em !important;
+    padding :0px !important;
+    width: 3em !important;
     display: table-cell !important;
     font-size: 14px !important;
 }
 table.translations th.original, table.translations th.translation {
     width: 40% !important;
+    
 }
 button.save-button {
-    font-size: 12px;
+    font-size: 12px !important;
     height: 20px;
     line-height: 1;
     margin-top: 10px !important;
+    margin: 0px !important;
     padding: 0px 2px !important;
-    background: #0085ba;
+    background: #0085ba !important;
     border-color: #0073aa #006799 #006799;
     box-shadow: 0 1px 0 #006799;
-    color: #fff;
+    color: #fff !important;
     text-decoration: none;
     text-shadow: 0 -1px 1px #006799, 1px 0 1px #006799, 0 1px 1px #006799, -1px 0 1px #006799;
     margin-left: 0px;
 }
 
 button.save-button.ready {
-    font-size: 12px;
-    height: 20px;
-    line-height: 1;
-    margin-top: 10px !important;
-    padding: 0px 2px !important;
-    background: green !important;
-    border-color: #0073aa #006799 #006799;
-    box-shadow: 0 1px 0 #006799;
-    color: green !important;
-    text-decoration: none;
-    text-shadow: 0 -1px 1px #006799, 1px 0 1px #006799, 0 1px 1px #006799, -1px 0 1px #006799;
-    margin-left: 0px;
+    display:none;
 }
