@@ -408,10 +408,13 @@ function check() {
     result.innerHTML = JsDiff.convertChangesToXML(changes);
 }
 
-a.onkeyup = b.onkeyup =
-    a.onpaste = a.onchange =
-    b.onpaste = b.onchange = check;
-check();
+if (b != null) {
+    console.debug("value b:",);
+    a.onkeyup = b.onkeyup =
+        a.onpaste = a.onchange =
+        b.onpaste = b.onchange = check;
+    check();
+}
 
 var radio = document.getElementsByName('diff_type');
 for (var i = 0; i < radio.length; i++) {

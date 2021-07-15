@@ -1,5 +1,5 @@
 console.debug('Content script...');
-
+gd_wait_table_alter();
 // 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
 window.onbeforeunload = function () {
     return switchoff();
@@ -341,30 +341,32 @@ function checkactionClick(event) {
             //console.debug("firstlink row:", firstLink.getAttribute('row'));
 
             // 18-06-2021 PSS added searching for previous translations issue  #84
-            if (typeof firstLink != null) {
+            if (firstLink != null) {
                 const nextLink = firstLink.nextElementSibling;
-                const newRowId = nextLink.getAttribute('row');
-                //console.debug("nextlink row:", newRowId);
-                // Find the project to use in the link
-                let f = document.getElementsByClassName('breadcrumb');
-                //console.debug('Breadcrumb found;', f[0]);
-                let url = f[0].firstChild.baseURI;
-                let newurl = url.split('?')[0];
-                if (typeof newurl != 'undefined') {
-                    // find the prev/old translations if present
-                    //url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + newRowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
-                    url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + newRowId;
-                    //console.debug('checkActionClick url found:', url);
-                    //rowsFound = fetchOld('','',url,'True');
-                    chrome.storage.sync.get(['showTransDiff'], function (data) {
-                        //console.debug("param showTransDiff:", data.showTransDiff);
+                if (nextLink != null) {
+                    const newRowId = nextLink.getAttribute('row');
+                    //console.debug("nextlink row:", newRowId);
+                    // Find the project to use in the link
+                    let f = document.getElementsByClassName('breadcrumb');
+                    //console.debug('Breadcrumb found;', f[0]);
+                    let url = f[0].firstChild.baseURI;
+                    let newurl = url.split('?')[0];
+                    if (typeof newurl != 'undefined') {
+                        // find the prev/old translations if present
+                        //url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + newRowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
+                        url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + newRowId;
+                        //console.debug('checkActionClick url found:', url);
+                        //rowsFound = fetchOld('','',url,'True');
+                        chrome.storage.sync.get(['showTransDiff'], function (data) {
+                            //console.debug("param showTransDiff:", data.showTransDiff);
 
-                        if (data.showTransDiff != 'null') {
+                            if (data.showTransDiff != 'null') {
 
-                            fetchOldRec(url, newRowId);
-                        }
-                    });
-                    
+                                fetchOldRec(url, newRowId);
+                            }
+                        });
+
+                    }
                 }
             }
         }
@@ -524,8 +526,8 @@ function updateStyle(textareaElem, result, newurl, showHistory) {
         separator1.setAttribute('id', 'checkElem_save');
         //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
         checkElem.appendChild(separator1);
-        let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-        var current = h.querySelector('span.panel-header__bubble');
+        let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+        var current = myrec.querySelector('span.panel-header__bubble');
         //console.debug("updateStyle Status:", current.innerText);
         let SavelocalButton = document.createElement('button');
         SavelocalButton.id = "save-button";
@@ -543,7 +545,11 @@ function updateStyle(textareaElem, result, newurl, showHistory) {
             SavelocalButton.innerText = ("Save");
             checkElem.title = "Save the string";
         }
-        SavelocalButton.ariaLabel = "Save and approve translation";
+        else if (current.innerText == 'fuzzy') {
+            SavelocalButton.innerText = ("Rej");
+            checkElem.title = "Reject the string";
+        }
+        //SavelocalButton.ariaLabel = "Save and approve translation";
         checkElem.appendChild(SavelocalButton);
     }
     
@@ -577,37 +583,66 @@ function validateEntry(language, textareaElem, newurl, showHistory) {
 function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId) {
     
     if (typeof rowId != 'undefined') {
+        //console.debug("updateElementStyle start:", rowId);
         let SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
         if (SavelocalButton == 'null') {
             SavelocalButton = document.createElement('button');
             SavelocalButton.id = "save-button";
             SavelocalButton.className = "save-button";
-            SavelocalButton.onclick = savetranslateEntryClicked;
-            let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-            var current = h.querySelector('span.panel-header__bubble');
-            //console.debug('updateElementStyle status:', current.InnerText);
-            if (current.innerText == 'unstranslated') {
-                SavelocalButton.innerText = "Empt";
-                checkElem.title = "No translation";
-            }
-            else if (current.innerText == 'waiting') {
-                SavelocalButton.innerText = "Appr";
-                checkElem.title = "Approve the string";
-            }
-            else if (current.innerText == 'transFill'){
-                SavelocalButton.innerText = "Save";
-                checkElem.title = "Save the string";
+            let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            if (myrec != "null") {
+                var current = myrec.querySelector('span.panel-header__bubble');
+                //console.debug("updateElementStyle:",rowId);
+                //console.debug('updateElementStyle status:', current.InnerText);
+                if (current.innerText == 'transFill') {
+                    SavelocalButton.innerText = "Save";
+                    checkElem.title = "Save the string";
+                }
+                else if (current.innerText == 'waiting') {
+                    SavelocalButton.innerText = "Appr";
+                    checkElem.title = "Approve the string";
+                }
+                else if (current.innerText == 'untranslated') {
+                    SavelocalButton.innerText = "Empt";
+                    checkElem.title = "No translation";
 
-            }
+                }
 
-            SavelocalButton.title = "Save and approve translation";
-            checkElem.appendChild(SavelocalButton);
+                SavelocalButton.title = "Save and approve translation";
+                checkElem.appendChild(SavelocalButton);
+            }
         }
         else {
-            //console.debug('SavelocalButton != null');
-            //if (SavelocalButton.innerText == "Empty") {
-              //  SavelocalButton.innerText = "Empty";
-            //}
+            let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            //console.debug("currec:", myrec);
+            if (myrec != "null") {
+                //console.debug("current === null");
+            }
+            else {
+
+                current = myrec.querySelector('span.panel-header__bubble');
+                SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+                if (current.innerText == 'transFill') {
+                    SavelocalButton.innerText = "Save";
+                    checkElem.title = "Save the string";
+                }
+                else if (current.innerText == 'waiting') {
+                    SavelocalButton.innerText = "Appr";
+                    checkElem.title = "Approve the string";
+                }
+                else if (current.innerText == 'untranslated') {
+                    SavelocalButton.innerText = "Empt";
+                    checkElem.title = "No translation";
+
+                }
+                else {
+                    console.debug("no current text found");
+                }
+                //console.debug('SavelocalButton != null');
+                //if (SavelocalButton.innerText == "Empty") {
+                //  SavelocalButton.innerText = "Empty";
+                //}
+            }
          }
         
     }
@@ -646,8 +681,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 }
                 else {
                     SavelocalButton.innerText = "Appr";
+                    checkElem.title = "Approve the string";
                 }
-            }  
+            }
+            else {
+                console.debug("no current found!");
+            }
         }
         //console.debug('updateElemStyle wordCount undefined!:');
         return;
@@ -727,12 +766,10 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         checkElem.innerHTML = '0';
         checkElem.style.backgroundColor = 'red';
         //console.debug('result.percent:', result.percent);
-        //if (result.wordCount !=0){
+        
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = 'red';
         }
-
-        //}
     }
     
     var separator1 = document.createElement('div');
@@ -762,12 +799,20 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             SavelocalButton.style.cursor = "none";
             checkElem.title = "Save the string";
         }
+        else if (current.innerText == 'fuzzy') {
+            SavelocalButton.innerText = ("Rej");
+            checkElem.title = "Reject the string";
+        }
+        else {
+            console.debug("no current found!");
+        }
     }
     else {
         SavelocalButton.innerText = "Appr";
+        checkElem.title = "Approve the string";
     }
     
-    SavelocalButton.ariaLabel = "Save and approve translation";
+    //SavelocalButton.ariaLabel = "Save and approve translation";
     checkElem.appendChild(SavelocalButton);
     newline = '\n';
     missingverbs = 'Missing verbs \n';
@@ -794,18 +839,29 @@ function savetranslateEntryClicked(event) {
     if (current.innerText != 'Empty' && current.innerText != 'untranslated'){
         if (current.innerText == 'transFill') {
             let open_editor = document.querySelector(`#preview-${rowId} td.actions .edit`);
+            console.debug('glotpress_open_editor:', rowId, open_editor);
             let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-            let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
-            open_editor.click();
+            console.debug('glotpress_save:', rowId,glotpress_save);
+            let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`).nextElementSibling.nextElementSibling;
+            console.debug('glotpress_close:', rowId, glotpress_close);
+            let prevrow = document.querySelector(`#preview-${rowId}`);
+            console.debug('prevrow:', glotpress_close);
+            open_editor.click();         
             glotpress_save.click();
-            glotpress_close.click();
-            let prevrow = document.querySelector(`#preview-${rowId}.preview.status-transFill`);
+            
+            //glotpress_close.click();
+            //newrow = glotpress_close.parentElement.parentElement;
+            //gd_auto_hide_next_editor(newrow);
+            
+            prevrow = document.querySelector(`#preview-${rowId}.preview.status-transFill`);
             if (prevrow != null ) {
                 prevrow.style.backgroundColor = "#b5e1b9";
             }
             else {
                 prevrow = document.querySelector(`#preview-${rowId}.preview.untranslated`);
-                prevrow.style.backgroundColor = "#b5e1b9";
+                if (prevrow != null) {
+                    prevrow.style.backgroundColor = "#b5e1b9";
+                }
             }
         }
         if (current.innerText == 'waiting') {
@@ -815,18 +871,27 @@ function savetranslateEntryClicked(event) {
             glotpress_open.click();
             glotpress_approve.click();
             glotpress_close.click();
-            let prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
+            prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
             prevrow.style.backgroundColor = "#b5e1b9";
         }
+        if (current.innerText == 'fuzzy') {
+            let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
+            let glotpress_reject = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .reject`);
+            let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
+            glotpress_open.click();          
+            glotpress_reject.click();
+            glotpress_close.click();
+            
+            prevrow = document.querySelector(`#preview-${rowId}.preview.status-fuzzy`);
+            console.debug("Rejected:", prevrow);
+            prevrow.style.backgroundColor = "#eb9090";     
+        }
 
+        let SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+        SavelocalButton.className += " ready";
+        SavelocalButton.disabled = true;
+        SavelocalButton.display = "none";
     }
-    // here we disable the button after the click
-    let SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');  
-    //console.debug('savebutton res:', SavelocalButton);
-    SavelocalButton.className += " ready";
-    SavelocalButton.disabled = true;
-    SavelocalButton.display = "none"
-
 }
 
 function validate(language, original, translation) {
@@ -1121,7 +1186,7 @@ async function fetchOld(checkElem, result, url, single, originalElem,row) {
                     var fuzzy = table.querySelectorAll('tr.preview.status-fuzzy');
                     var current = table.querySelectorAll('tr.preview.status-current');
                     var old = table.querySelectorAll('tr.preview.status-old');
-                    if (current.length != 0) {
+                    if (typeof current != 'null' && current.length != 0) {
                         current = " Current:" + current.length;
                     }
                     else {
@@ -1162,4 +1227,60 @@ async function fetchOld(checkElem, result, url, single, originalElem,row) {
                 }
             }).catch(error => console.error(error));
        
+}
+
+// The code below is taken from the free add-on GlotDict
+// All the credits go to the authors of GlotDict
+// It is modified to get the results needed by  WordPress Translation Filler
+
+function gd_auto_hide_next_editor(editor) {
+    var preview = editor.nextElementSibling;
+    if (!preview) {
+        return;
     }
+    var next_editor = preview.nextElementSibling;
+    if (next_editor != null) {
+        var next_preview = next_editor.previousElementSibling;
+    }
+    if (!next_editor || !next_preview || !next_editor.classList.contains('editor') || !next_preview.classList.contains('preview')) {
+        return;
+    }
+    next_editor.style.display = 'none';
+    next_preview.style.display = 'table-row';
+}
+//
+function gd_wait_table_alter() {
+    if (document.querySelector('#translations tbody') !== null) {
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
+                mutation.addedNodes.forEach(function (addedNode) {
+                    if (addedNode.nodeType !== 1) {
+                        return;
+                    }
+                    //console.debug("INSIDE");
+                    //if (addedNode.classList.contains('editor') && mutation.previousSibling && !mutation.previousSibling.matches('.editor.untranslated')) {
+                    if (addedNode.classList.contains('editor')) {
+                       // console.debug("Hide next editor");
+                        gd_auto_hide_next_editor(addedNode);
+                    }
+                    if (is_pte && addedNode.classList.contains('preview')) {
+                        //gd_add_column_buttons(addedNode);
+                        console.debug("addedNode:", addedNode);
+                        gd_auto_hide_next_editor(addedNode);
+                    }
+                    if (addedNode.classList.contains('preview')) {
+                        // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
+                    }
+                });
+                //gd_add_meta();
+            });
+        });
+
+        observer.observe(document.querySelector('#translations tbody'), {
+            attributes: true,
+            childList: true,
+            characterData: true
+        });
+    }
+}
