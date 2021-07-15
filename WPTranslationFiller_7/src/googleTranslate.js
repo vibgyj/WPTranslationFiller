@@ -188,6 +188,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     toTranslate = checkComments(comment);
                     console.debug('comment:', comment);
                     toTranslate = checkComments(comment);
+                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                    var current = currec.querySelector('span.panel-header__bubble');
+                    current.innerText = 'transFill';
+                    current.value = 'transFill';
                 }
                // console.debug('before translate:', replacePreVerb);
                // console.debug('before translate do we need to translate:', toTranslate);

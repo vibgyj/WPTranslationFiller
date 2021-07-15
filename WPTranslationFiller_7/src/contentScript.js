@@ -479,22 +479,26 @@ function validatePage(language, showHistory) {
     //console.debug('ValidatePage url:', url);
     let newurl = url.split('?')[0];
     console.debug("validatePage newurl:", newurl);
-    var tr = document.getElementById('translations').tHead.children[0]
-    // 26-06-2021 PSS set  the visibillity of the Priority column back to open
-    trprio = tr.children[1];
-    //console.debug("sibling:", trprio);
-    trprio.style.display = "table-cell";
-    trprio.innerHTML = 'Qual';
-    var all_col = document.getElementsByClassName("priority");
-    for (var i = 0; i < all_col.length; i++) {
-        all_col[i].style.display = "table-cell";
+    var divProjects = document.querySelector('div.projects');
+    // We to set the priority column only to visible if we are in the project
+    if (divProjects != null) {
+        var tr = document.getElementById('translations').tHead.children[0]
+        // 26-06-2021 PSS set  the visibillity of the Priority column back to open
+        trprio = tr.children[1];
+        //console.debug("sibling:", trprio);
+        trprio.style.display = "table-cell";
+        trprio.innerHTML = 'Qual';
+        var all_col = document.getElementsByClassName("priority");
+        for (var i = 0; i < all_col.length; i++) {
+            all_col[i].style.display = "table-cell";
+        }
     }
     
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         let textareaElem = e.querySelector('textarea.foreign-text');
         textareaElem.addEventListener('input', function (e) {
-            console.debug("eventlistener:", newurl);
+         //console.debug("eventlistener:", newurl);
         validateEntry(language, e.target,newurl,showHistory);
         });
         let translation = textareaElem.innerText;
