@@ -480,12 +480,14 @@ function validatePage(language, showHistory) {
     let newurl = url.split('?')[0];
     console.debug("validatePage newurl:", newurl);
     var divProjects = document.querySelector('div.projects');
-    // We to set the priority column only to visible if we are in the project
-    if (divProjects != null) {
-        var tr = document.getElementById('translations').tHead.children[0]
+    // We to set the priority column only to visible if we are in the project 
+    // PSS divProjects can be present but trhead is empty if it is not a project
+    var tr = document.getElementById('translations');
+     if (tr != null) {
+        trhead = tr.tHead.children[0]
         // 26-06-2021 PSS set  the visibillity of the Priority column back to open
-        trprio = tr.children[1];
-        //console.debug("sibling:", trprio);
+        trprio = trhead.children[1];
+        console.debug("sibling:");
         trprio.style.display = "table-cell";
         trprio.innerHTML = 'Qual';
         var all_col = document.getElementsByClassName("priority");
