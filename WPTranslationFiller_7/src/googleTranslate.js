@@ -108,7 +108,7 @@ function checkComments(comment) {
 // 23-03-2021 PSS added function to check for wrong verbs
 function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
-    console.debug("CheckPage:", postTranslationReplace.length);
+    //console.debug("CheckPage:", postTranslationReplace.length);
     // 15-05-2021 PSS added fix for issue #73add
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
@@ -116,7 +116,7 @@ function checkPage(postTranslationReplace) {
         var translatedText;
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
             let original = e.querySelector("span.original-raw").innerText;
-
+            
             // Fetch the translations
             let element = e.querySelector('.source-details__comment');
             let textareaElem = e.querySelector("textarea.foreign-text");
@@ -133,7 +133,18 @@ function checkPage(postTranslationReplace) {
                 }
             }
             textareaElem.innerText = translatedText;
-            //console.debug('Translated text checked:',translatedText);
+            textareaElem.value = translatedText;
+            // PSS 22-07-2021 fix for the preview text is not updated #109
+            let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
+            let row = rowfound.split('-')[1];
+            let newrow = rowfound.split('-')[2];
+            if (newrow != 'undefined') {
+                newrowId = row.concat("-", newrow);
+            }
+            
+            let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
+            preview.innerText = translatedText;
+           
             if (replaced) {
                 let wordCount = countreplaced;
                 let percent = 10;
@@ -189,9 +200,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     console.debug('comment:', comment);
                     toTranslate = checkComments(comment);
                     let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                    var current = currec.querySelector('span.panel-header__bubble');
-                    current.innerText = 'transFill';
-                    current.value = 'transFill';
+                    if (currec != null) {
+                        var current = currec.querySelector('span.panel-header__bubble');
+                        current.innerText = 'transFill';
+                        current.value = 'transFill';
+                    }
                 }
                // console.debug('before translate:', replacePreVerb);
                // console.debug('before translate do we need to translate:', toTranslate);
@@ -226,13 +239,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         textareaElem.innerText = translatedText;
                         textareaElem.value = translatedText;
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                        var current = currec.querySelector('span.panel-header__bubble');
-                        current.innerText = 'transFill';
-                        current.value = 'transFill';
+                        if (currec != null) {
+                            var current = currec.querySelector('span.panel-header__bubble');
+                            current.innerText = 'transFill';
+                            current.value = 'transFill';
+                        }
                         validateEntry(destlang, textareaElem);
                         // PSS 10-05-2021 added populating the preview field issue #68
-                        let g = document.querySelector('td.translation');
-                        let previewElem = g.innerText;
+                        //let g = document.querySelector('td.translation');
+                        //let previewElem = g.innerText;
                         //console.debug('Text preview:', previewElem, row);
                         let preview = document.querySelector('#preview-' + row + ' td.translation');
                         if (preview != null) {
@@ -268,8 +283,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                             }
                             else {
-                                current.innerText = 'transFill';
-                                current.value = 'transFill';
+                                if (current != null) {
+                                    current.innerText = 'transFill';
+                                    current.value = 'transFill';
+                                }
                                 // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
                                 let translatedText = pretrans;
                                // console.debug('translatedpage plural:', translatedText);
@@ -545,8 +562,12 @@ function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype
 
 function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProcessed, rowId, transtype) {
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    let h= document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-    var current = h.querySelector('span.panel-header__bubble');
+    let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+    //console.debug("h in deepl request:", h);
+    if (h != null) {
+        var current = h.querySelector('span.panel-header__bubble');
+    }
+
    // console.debug("sendAPIRequestDeepl status:", current,rowId);
    // console.debug('sendAPIreQuest original_line Deepl:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
@@ -578,30 +599,11 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                 preview.innerText = translatedText;
                 // PSS 29-03-2021 Added populating the value of the property to retranslate            
                 textareaElem.value = translatedText;
-
-                current.innerText = 'transFill';
-                current.value = 'transFill';
-                // <span class="panel-header__bubble panel-header__bubble--waiting">waiting</span>
-               // let status = document.querySelector(`#editor-${rowId} div.editor-panel__right dd`);
-               // console.debug('current status:', status.innerText);
-               // status.innerText = 'waiting';
-               // var element1 = document.createElement('dl');
-               // element2.setAttribute('id', 'translator_div2');
-               // element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                
-                //status.appendChild(element1);
-               // element1 = document.createElement('dd');
-               // element1.appendChild(document.createTextNode("Added: 2021-07-10 12:11:04 UTC"));
-               // status.appendChild(element1);
-
-                // #editor-12092611-86541306.editor.status-waiting.priority-normal.no-warnings.has-translations
-                // #editor-12078274.editor.untranslated.priority-normal.no-warnings.no-translations
-                //document.querySelector(`#editor-${rowId}`).className = "editor.status-waiting.priority-normal.no-warnings.has-translations";
-                //res = document.querySelector(`#editor-${rowId}`);
-                //res.style.cssText = 'display:table-row;'
-               // res = document.querySelector(`#preview-${rowId}`).className = "editor.status-waiting.priority-normal.no-warnings.has-translations";
-               // res = document.querySelector(`#preview-${rowId}`);
-               // res.style.cssText = 'display:table-row;'
+                if (current != 'undefined') {
+                    current.innerText = 'transFill';
+                    current.value = 'transFill';
+                }
+               
                 //PSS 25-03-2021 Fixed problem with description box issue #13
                 textareaElem.style.height = 'auto';
                 textareaElem.style.height = textareaElem.scrollHeight + 'px';
@@ -617,8 +619,10 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                     textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
                     textareaElem1.innerText = translatedText;
                     textareaElem1.value = translatedText;
-                    current.innerText = 'transFill';
-                    current.value = 'transFill';
+                    if (current != 'undefined') {
+                        current.innerText = 'transFill';
+                        current.value = 'transFill';
+                    }
                    // console.debug('existing plural text:', translatedText);
                 }
                 else {
@@ -627,8 +631,10 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
                     textareaElem1.innerText = translatedText;
                     console.debug("plural newtext:", textareaElem1.innerText);
                     textareaElem1.value = translatedText;
-                    current.innerText = 'transFill';
-                    current.value = 'transFill';
+                    if (current != 'undefined') {
+                        current.innerText = 'transFill';
+                        current.value = 'transFill';
+                    }
                     let g = document.querySelector('td.translation');
                     let preview = document.querySelector('#preview-' + rowId + ' td.translation');
                     //console.debug("current preview:", preview.innerText);

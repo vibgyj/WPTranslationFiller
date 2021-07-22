@@ -487,7 +487,6 @@ function validatePage(language, showHistory) {
         trhead = tr.tHead.children[0]
         // 26-06-2021 PSS set  the visibillity of the Priority column back to open
         trprio = trhead.children[1];
-        console.debug("sibling:");
         trprio.style.display = "table-cell";
         trprio.innerHTML = 'Qual';
         var all_col = document.getElementsByClassName("priority");
@@ -529,7 +528,7 @@ function updateStyle(textareaElem, result, newurl, showHistory) {
         // check for the status of the record
         
         var separator1 = document.createElement('div');
-        separator1.setAttribute('id', 'checkElem_save');
+        separator1.setAttribute('class', 'checkElem_save');
         //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
         checkElem.appendChild(separator1);
         let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -590,7 +589,8 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     
     if (typeof rowId != 'undefined') {
         //console.debug("updateElementStyle start:", rowId);
-        let SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+        var SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+        
         if (SavelocalButton == 'null') {
             SavelocalButton = document.createElement('button');
             SavelocalButton.id = "save-button";
@@ -627,7 +627,8 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             else {
 
                 current = myrec.querySelector('span.panel-header__bubble');
-                SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+                //SavelocalButton = document.querySelector('#preview-' + rowId);
+                console.debug('SavelocalButton:', SavelocalButton,rowId);
                 if (current.innerText == 'transFill') {
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
@@ -758,14 +759,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             checkElem.title = "Approve the string";
         }
     }
-    else if (result.percent == 10) {
-       //checkElem.style.cssText = 'padding-left:0px; text-align: right';
-        checkElem.innerHTML = 'Mod';
-        checkElem.style.backgroundColor = 'purple';
-        if (typeof headerElem.style != "undefined") {
-            headerElem.style.backgroundColor = 'purple';
-        }
-    }
+    
 
     else {
         //checkElem.style.cssText = 'padding-left:0px; text-align: right';
@@ -776,10 +770,10 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = 'red';
         }
-    }
+      }
     
     var separator1 = document.createElement('div');
-    separator1.setAttribute('id', 'checkElem_save');
+    separator1.setAttribute('class', 'checkElem_save');
     //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
     checkElem.appendChild(separator1);
 
@@ -789,6 +783,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     SavelocalButton.className = "save-button";
     SavelocalButton.onclick = savetranslateEntryClicked;
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+   
     if (h != null) {
         current = h.querySelector('span.panel-header__bubble');
         if (current.innerText == 'transFill') {
@@ -812,10 +807,22 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         else {
             console.debug("no current found!");
         }
+        // 22-07-2021 PSS fix for wrong button text "Apply" #108 This needs to be investigated to check if the others also need to be moved down
+        if (result.percent == 10) {
+            //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+            checkElem.innerHTML = 'Mod';
+            checkElem.style.backgroundColor = 'purple';
+            if (typeof headerElem.style != "undefined") {
+                headerElem.style.backgroundColor = 'purple';
+                SavelocalButton.innerText = "Save";
+                checkElem.title = "Save the string";
+            }
+        }
     }
     else {
-        SavelocalButton.innerText = "Appr";
-        checkElem.title = "Approve the string";
+        //console.debug('h', h);
+        //SavelocalButton.innerText = "Appr";
+        //checkElem.title = "Approve the string";
     }
     
     //SavelocalButton.ariaLabel = "Save and approve translation";
