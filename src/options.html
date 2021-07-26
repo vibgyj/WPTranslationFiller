@@ -21,6 +21,13 @@
             width: 300px;
         }
 
+        #deepl_api_key {
+            width: 300px;
+        }
+        #microsoft_api_key {
+            width: 300px;
+        }
+
         #text_glossary_file {
             display: block;
             font-style: italic;
@@ -51,6 +58,24 @@
             <input id="google_api_key" type="text" value="-api key->" />
         </div>
         <div class="form-input">
+            <label for="deepl_api_key">Deepl API Key&nbsp;&nbsp;</label>
+            <input id="deepl_api_key" type="text" value="-api key->" />
+        </div>
+        <div class="form-input">
+            <label for="microsoft_api_key">Microsoft API Key&nbsp;&nbsp;</label>
+            <input id="microsoft_api_key" type="text" value="-api key->" />
+        </div>
+        <div class="form-select">
+            <label for="translator">Select a translator:</label>
+            <select name="transsel" id="transselect">
+                <option value="deepl">Deepl</option>
+                <option value="google">Google</option>
+                <option value="microsoft">Microsoft</option>
+            </select>
+        </div>
+        <br>
+        <br>
+        <div class="form-input">
             <label for="destination_lang">Destination Language</label>
             <input id="destination_lang" type="text" value="nl" />
         </div>
@@ -72,19 +97,21 @@ wrong2,right2
             </textarea>
         </div>
         <div class="form-input">
-            <label for="export_verbs">Export post translation verbs
-		    <fieldset>
-            <button id="exportverbs">Export verbs</button>              
-			</fieldset>
+            <label for="export_verbs">
+                Export post translation verbs
+                <fieldset>
+                    <button id="exportverbs">Export verbs</button>
+                </fieldset>
             </label>
         </div>
         <div id="dvImportSegments" class="fileupload ">
-            <label>Upload post translation replace CSV File
-             <fieldset>
-                <input id="importPost" type="file" />     
-             </fieldset>
+            <label>
+                Upload post translation replace CSV File
+                <fieldset>
+                    <input id="importPost" type="file" />
+                </fieldset>
             </label>
-         </div>
+        </div>
         <div class="form-input">
             <input id="save" type="button" value="Save" />
         </div>

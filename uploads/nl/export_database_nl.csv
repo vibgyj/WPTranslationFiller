@@ -1,0 +1,106 @@
+original,translation,country
+Frontend Event Submission,Inzending van frontend-evenement,NL
+Booking Notification,Boeking kennisgeving,NL
+Fluent,Vloeiend,NL
+IP restriction,IP beperking,NL
+You can get a free one at %s,Je kunt er een gratis krijgen op %s,NL
+Custom Fonts,Aangepaste lettertypen,NL
+Add New,Nieuwe toevoegen,NL
+New Font,Nieuw lettertype,NL
+Edit Font,Bewerk lettertype,NL
+View Font,Bewerk lettertype,NL
+All Fonts,Alle lettertypen,NL
+Search Fonts,Zoek lettertypen,NL
+Source,Bron,NL
+Font File,Lettertype bestand,NL
+Dark Mode,Donkere modus,NL
+Enable Dark Mode,Schakel donkere modus in,NL
+Border,Rand,NL
+archive,archief,NL
+barcode,barcode,NL
+Sticky Bar,Sticky balk,NL
+View the Tutorial,Bekijk de tutorial,NL
+Search for: %s,Zoeken naar: %s,NL
+Installing Plugin: %s,Plugin installeren: %s,NL
+Updating Plugin: %s,Plugin aan het updaten: %s,NL
+Comments are closed.,Reacties zijn gesloten.,NL
+Search...,Zoeken...,nl
+Home,Home,nl
+It seems we can&rsquo;t find what you&rsquo;re looking for. Perhaps searching can help.,Het lijkt erop dat we niet kunnen vinden wat je zoekt. Misschien kan zoeken helpen.,nl
+Sorry, but nothing matched your search terms. Please try again with some different keywords.,Er kwam niets kwam overeen met je zoektermen. Probeer het opnieuw met een aantal andere keywords.,nl
+Continue reading<span class="screen-reader-text"> "%s"</span>,Lees verder <span class="screen-reader-text">%s</span>,nl
+Page,Pagina,nl
+Leave a Comment<span class="screen-reader-text"> on %s</span>,Laat een reactie achter <span class="screen-reader-text">op %s</span>,nl
+Install Required Plugins,Installeer vereiste plugins,nl
+This theme recommends the following plugin: %1$s.,Dit thema beveelt de volgende plugin aan: %1$s.,nl
+The following plugin needs to be updated to its latest version to ensure maximum compatibility with this theme: %1$s.,De volgende plugin moet worden geüpdatet naar de nieuwste versie om maximale compatibiliteit met dit thema te garanderen: %1$s.,nl
+There is an update available for: %1$s.,Er is een update beschikbaar voor: %1$s.,nl
+The following recommended plugin is currently inactive: %1$s.,De volgende aanbevolen plugin is momenteel inactief: %1$s.,nl
+Begin installing plugin,Begin met het installeren van de plugin,nl
+Begin activating plugin,Begin met het activeren van de plugin,nl
+Return to Required Plugins Installer,Keer terug naar het vereiste installatieprogramma voor plugins,nl
+Return to the Dashboard,Keer terug naar het dashboard,nl
+Plugin activated successfully.,Plugin succesvol geactiveerd.,nl
+The following plugin was activated successfully:,De volgende plugin is succesvol geactiveerd:,nl
+No action taken. Plugin %1$s was already active.,Geen actie ondernomen. Plugin %1$s was al actief.,nl
+All plugins installed and activated successfully. %1$s,Alle plugins zijn succesvol geïnstalleerd en geactiveerd. %1$s,nl
+Dismiss this notice,Negeer deze melding,nl
+There are one or more required or recommended plugins to install, update or activate.,Er zijn een of meer vereiste of aanbevolen plugins om te installeren, te updaten of te activeren.,nl
+Please contact the administrator of this site for help.,Neem voor hulp contact op met de beheerder van deze site.,nl
+This plugin needs to be updated to be compatible with your theme.,Deze plugin moet worden geüpdatet om compatibel te zijn met je thema.,nl
+Update Required,Update vereist,nl
+The remote plugin package does not contain a folder with the desired slug and renaming did not work.,Het remote plugin pakket bevat geen folder met de gewenste slug en het hernoemen werkte niet.,nl
+Please contact the plugin provider and ask them to package their plugin according to the WordPress guidelines.,Neem contact op met de plugin provider en vraag hen om hun plugin te verpakken volgens de WordPress richtlijnen.,nl
+The remote plugin package consists of more than one file, but the files are not packaged in a folder.,Het remote plugin pakket bestaat uit meer dan één bestand, maar de bestanden zijn niet verpakt in een map.,nl
+and,en,nl
+TGMPA v%s,TGMPA v%s,nl
+Required,Vereist,nl
+Recommended,Aanbevolen,nl
+WordPress Repository,WordPress repository,nl
+External Source,Externe bron,nl
+Pre-Packaged,Pre-packaged,nl
+Not Installed,Niet geïnstalleerd,nl
+Installed But Not Activated,Geïnstalleerd maar niet geactiveerd,nl
+Active,Actief,nl
+Enable,Inschakelen,nl
+Disable,Uitschakelen,nl
+Layout,Lay-out,nl
+Normal,Normaal,nl
+Display Title,Toon titel,nl
+Export,Export,nl
+Import,Import,nl
+Uploading...,Uploaden...,nl
+Fullwidth,Volledige breedte,nl
+Reset,Reset,nl
+Icon Size,Pictogram grootte,nl
+Align,Uitlijnen,nl
+Left,Links,nl
+Right,Rechts,nl
+Visibility,Zichtbaarheid,nl
+Desktop,Desktop,nl
+Mobile,Mobiel,nl
+android,android,nl
+backspace,backspace,nl
+Search Results for: %s,Zoekresultaten voor: %s,nl
+This theme requires the following plugin: %1$s.,Dit thema vereist de volgende plugin: %1$s.,nl
+The following required plugin is currently inactive: %1$s.,De volgende vereiste plugin is momenteel inactief: %1$s.,nl
+%1$s, %2$s,%1$s, %2$s,nl
+Updating Plugin %1$s (%2$d/%3$d),Plugin %1$s (%2$d/%3$d) updaten,nl
+An error occurred while installing %1$s: <strong>%2$s</strong>.,Er is een fout opgetreden tijdens het installeren van %1$s: <strong>%2$s</strong>.,nl
+The installation of %1$s failed.,De installatie van %1$s is mislukt.,nl
+%1$s installed and activated successfully.,%1$s succesvol geïnstalleerd en geactiveerd.,nl
+Installing and Activating Plugin %1$s (%2$d/%3$d),Plugin installeren en activeren %1$s (%2$d/%3$d),nl
+%1$s installed successfully.,%1$s is succesvol geïnstalleerd.,nl
+Installing Plugin %1$s (%2$d/%3$d),Plugin %1$s (%2$d/%3$d) installeren,nl
+Ready to publish your first post? <a href="%1$s">Get started here</a>.,Klaar om je eerste bericht te publiceren? <a href="%1$s">Ga hier aan de slag</a>.,nl
+Footer Widget %d,Footer widget %d,nl
+%d item,%d item,nl
+PayPal ,PayPal,nl
+Facebook,Facebook,nl
+Choose,Kies,nl
+Skip to content,Ga naar de inhoud,nl
+Single Post,Enkelvoudig bericht,nl
+Header Background Color,Header achtergrondkleur,nl
+Footer Background Color,Footer achtergrondkleur,nl
+Coupon Code ,Waardebon code,nl
+Button Background Color,Knop achtergrondkleur,nl
