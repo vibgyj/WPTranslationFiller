@@ -7,7 +7,8 @@ let replaceVerb = [];
 let replacePreVerb = [];
 // 06-05-2021 PSS These vars can probably removed after testen
 var result="";
-var res="";
+var res = "";
+
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
@@ -321,8 +322,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
                     let preview = document.querySelector('#preview-' + row + ' td.translation');
-                    preview.innerText = translatedText;
-                   // console.debug('translatePage No need to translate copy the original', original);
+                    if (preview != null) {
+                        preview.innerText = translatedText;
+                        // console.debug('translatePage No need to translate copy the original', original);
+                    }
                 }
             }
 

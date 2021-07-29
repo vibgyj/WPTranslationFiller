@@ -1,4 +1,5 @@
 console.debug('Content script...');
+/// PSS added function from GlotDict to save records in editor
 gd_wait_table_alter();
 // 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
 window.onbeforeunload = function () {
@@ -26,6 +27,70 @@ console.debug("jsStore opened:",jsstoreCon);
 var fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');
 
+
+// PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
+
+document.addEventListener("keydown", function (event) {
+
+    if (event.altKey && (event.key === 'r' || event.key === 'R')) {
+        
+        event.preventDefault();
+        const queryString = window.location.search;      
+        const urlParams = new URLSearchParams(queryString);
+        const wrongverb = urlParams.get('wrongverb');
+        const replverb = urlParams.get('replverb');
+        var search = wrongverb;
+        var repl = replverb;
+        var e;
+        var textareaElem;
+        var translatedText;
+        var replaced = false
+        //myrow = event.target.parentElement.parentElement;
+        //rowId = myrow.attributes.row.value;
+        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+            console.debug("e:", e);
+            let original = e.querySelector("span.original-raw").innerText;
+            console.debug("original:", original);
+            // Fetch the translations
+            let element = e.querySelector('.source-details__comment');
+            textareaElem = e.querySelector("textarea.foreign-text");
+            console.debug('elem:', textareaElem);
+            translatedText = textareaElem.value;
+            console.debug('Translated text to check:', translatedText);
+            let replaced = false;
+            // replverb contains the verbs to replace
+            console.debug("translatedText before:", translatedText);
+            if (translatedText.includes(search)) {
+                console.debug('Word in line found', search);
+                translatedText = translatedText.replaceAll(search, repl);
+                replaced = true;
+                textareaElem.innerText = translatedText;
+                textareaElem.value = translatedText;
+                let glotpress_open = document.querySelector(`td.actions .edit`);
+                let glotpress_save = document.querySelector(`div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+
+                //let glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
+                let glotpress_close = document.querySelector(`div.editor-panel__left .panel-header-actions__cancel`);
+                glotpress_open.click();
+                glotpress_save.click();
+                //glotpress_approve.click();
+
+                //glotpress_close.click();
+                setTimeout(() => { glotpress_close.click(); }, 1500);
+
+            }
+            else {
+                console.debug("not found:", search);
+                alert("Verb not found: " + search);
+            }
+            if (replaced == true) {
+                setTimeout(() => { window.close(); }, 1000);
+            }
+        }
+        
+    }
+    
+});
 
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
@@ -91,7 +156,6 @@ if (divPaging != null && divProjects == null){
    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
-
 function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
@@ -146,8 +210,10 @@ async function importPageClicked(event) {
     
     fileSelector.click();
     fileSelector.addEventListener('change', (event) => {   
-       fileList = event.target.files;
-       console.debug("filelist:",fileList);
+        fileList = event.target.files;
+        const arrayFiles = Array.from(event.target.files)
+        console.debug("filelist:", arrayFiles);
+       console.debug("filelist:",fileList[0]);
        const file = fileList[0];
        var obj_csv = {
        size:0,
@@ -820,9 +886,9 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
     else {
-        //console.debug('h', h);
-        //SavelocalButton.innerText = "Appr";
-        //checkElem.title = "Approve the string";
+        console.debug('h', h);
+        SavelocalButton.innerText = "Appr";
+        checkElem.title = "Approve the string";
     }
     
     //SavelocalButton.ariaLabel = "Save and approve translation";
@@ -1130,12 +1196,12 @@ async function fetchOldRec(url, rowId) {
                         // Strings are retrieved and compared
                         var oldStr = trans[0].innerText;
                         var newStr = original;
-                        console.debug("old", oldStr);
-                        console.debug("new:", newStr);
+                        //console.debug("old", oldStr);
+                        //console.debug("new:", newStr);
                         //var diffType = "diffWords";
                         var diffType = "diffWords";
                         var changes = JsDiff[diffType](oldStr, newStr);
-                        console.debug("content of changes:", changes);
+                        //console.debug("content of changes:", changes);
                         //console.debug("fetchOldRec diff:", changes);
 
                         if (oldStr.length != newStr.length) {
