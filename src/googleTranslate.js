@@ -1,5 +1,5 @@
 // This array is used to replace wrong words in translation
-// PSS version 04-03-2021
+// PSS version 12-05-2021
 let replaceVerb = [];
 // This array is used to replace verbs before translation
 // It is also used to force google to translate informal
@@ -50,7 +50,7 @@ async function pretranslate(original) {
     if (typeof  translated == 'undefined'){
         translated = 'notFound';
        }
-    else if (typeof translated == 'Object') {
+    else if (typeof translated == 'object') {
         translated = 'notFound';  
     }
     else if (translated == ''){
@@ -108,183 +108,367 @@ function checkComments(comment) {
 // 23-03-2021 PSS added function to check for wrong verbs
 function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
-    //setPreTranslationReplace(preTranslationReplace);
-	let countreplaced =0;
-    var translatedText;
-    for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        let original = e.querySelector("span.original-raw").innerText;
-        
-        // Fetch the translations
-        let element = e.querySelector('.source-details__comment');
-        let textareaElem = e.querySelector("textarea.foreign-text");
-        translatedText = textareaElem.innerText ;
-		//console.debug('Translated text to check:',translatedText);
-		let replaced=false;
-        // replverb contains the verbs to replace
-        for (let i = 0; i < replaceVerb.length; i++) {
-			   if (translatedText.includes(replaceVerb[i][0])){
-				   //console.debug('Word in line found',replaceVerb[i][0]);
-				   translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);  
-				   countreplaced++ ;
-				   replaced=true;
-			   }
-			   
-			  
-        }
-        textareaElem.innerText = translatedText;
-		//console.debug('Translated text checked:',translatedText);
-		if (replaced){
-		   let wordCount= countreplaced;
-		   let percent = 10 ;
-		   let toolTip='';
-		   result={wordCount,percent,toolTip};
-		   updateStyle(textareaElem, result);
-		}
-		replaced = false;
-		
-    }
-	//var myForm = document.getElementById('translation-actions');
-    //myForm.submit();
-    alert('Replace verbs done '+countreplaced +' replaced');
-    // Translation replacement completed
-    let checkButton = document.querySelector(".paging a.check_translation-button");
-    checkButton.className += " ready";
-}
-async function translatePage(apikey, destlang, postTranslationReplace, preTranslationReplace) {
-    setPostTranslationReplace(postTranslationReplace);
-    setPreTranslationReplace(preTranslationReplace);
-    for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        console.debug('translatePage content:',e);
-        let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
-        let row = rowfound.split('_')[1];
-        console.debug("translatePage row:",row);
-        let original = e.querySelector("span.original-raw").innerText;
-        // PSS 09-03-2021 added check to see if we need to translate
-        //Needs to be put into a function, because now it is unnessary double code
-        let toTranslate = true;
-        // Check if the comment is present, if not then if will block the request for the details name etc.
-        let element = e.querySelector('.source-details__comment');
-        if (element != null) {
-            let comment = e.querySelector('.source-details__comment p').innerText;
-            comment = comment.trim();
-            toTranslate = checkComments(comment);
-            console.debug('comment:', comment);
-            toTranslate = checkComments(comment);
-        }
-        console.debug('before googletranslate:', replacePreVerb);
-        console.debug('before googletranslate do we need to translate:', toTranslate);
-        if (toTranslate) {
-            let pretrans = await findTransline(original);
-            // 07-05-2021 PSS added pretranslate in pages
-            if (pretrans == "notFound") {
-                let transtype = "single";
-                document.getElementById("translate-" + row).style.visibility = 'hide';
-                googleTranslate(original, destlang, e, apikey, replacePreVerb,row,transtype);
-            }
-            else {
-                console.debug('Pretranslated:', pretrans);
-                let translatedText = pretrans;
-                let textareaElem = e.querySelector("textarea.foreign-text");
-                textareaElem.innerText = translatedText;
-                // PSS 10-05-2021 added populating the preview field issue #68
-               let g = document.querySelector('td.translation');
-               let previewElem = g.innerText; 
-               console.debug('Text preview:',previewElem,row);
-               let preview =  document.querySelector('#preview-'+row+' td.translation');
-               preview.innerText = translatedText;
-                document.getElementById("translate-" + row).style.visibility = 'visible';
-            }
-            // 10-04-2021 PSS added translation of plural into translatePage
-            
-            let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-            checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);
-            console.debug("translatePage checkplural:",checkplural);
-            if (checkplural != null) {
-              let plural = checkplural.innerText;
-              transtype="plural";
-              translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,row,transtype);
-              console.debug('translatePage checkplural:', translatedText);
-            }
-        }   
-        else {
-            let translatedText = original;
-            let textareaElem = e.querySelector("textarea.foreign-text");
-            textareaElem.innerText = translatedText;
-            console.debug('translatePage No need to translate copy the original', original);
-            }
-    }
+    console.debug("CheckPage:", postTranslationReplace.length);
+    // 15-05-2021 PSS added fix for issue #73add
+    if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
+        //setPreTranslationReplace(preTranslationReplace);
+        let countreplaced = 0;
+        var translatedText;
+        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+            let original = e.querySelector("span.original-raw").innerText;
 
-    // Translation completed
+            // Fetch the translations
+            let element = e.querySelector('.source-details__comment');
+            let textareaElem = e.querySelector("textarea.foreign-text");
+            translatedText = textareaElem.innerText;
+            //console.debug('Translated text to check:',translatedText);
+            let replaced = false;
+            // replverb contains the verbs to replace
+            for (let i = 0; i < replaceVerb.length; i++) {
+                if (translatedText.includes(replaceVerb[i][0])) {
+                    //console.debug('Word in line found',replaceVerb[i][0]);
+                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                    countreplaced++;
+                    replaced = true;
+                }
+            }
+            textareaElem.innerText = translatedText;
+            //console.debug('Translated text checked:',translatedText);
+            if (replaced) {
+                let wordCount = countreplaced;
+                let percent = 10;
+                let toolTip = '';
+                result = { wordCount, percent, toolTip };
+                updateStyle(textareaElem, result);
+            }
+            replaced = false;
+
+        }
+
+        //var myForm = document.getElementById('translation-actions');
+        //myForm.submit();
+        alert('Replace verbs done ' + countreplaced + ' replaced');
+        // Translation replacement completed
+        let checkButton = document.querySelector(".paging a.check_translation-button");
+        checkButton.className += " ready";
+    }
+    else {
+        alert("Your postreplacement verbs is empty!!");
+        }
+}
+
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace) {
+    // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".paging a.translation-filler-button");
-    translateButton.className += " translated";
+    translateButton.className += " started";
+    // 15-05-2021 PSS added fix for issue #73
+    // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
+    if (typeof postTranslationReplace != 'undefined' && postTranslationReplace.length != 0) {
+        if (typeof preTranslationReplace != 'undefined' && preTranslationReplace.length != 0) {
+            setPostTranslationReplace(postTranslationReplace);
+            setPreTranslationReplace(preTranslationReplace);
+
+            console.debug("Deepl:" + apikeyDeepl + "Transsel:" + transsel);
+            for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+                console.debug('translatePage content:', e);
+                let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
+                let row = rowfound.split('_')[1];
+                console.debug("translatePage row:", row);
+                let original = e.querySelector("span.original-raw").innerText;
+                // PSS 09-03-2021 added check to see if we need to translate
+                //Needs to be put into a function, because now it is unnessary double code
+                let toTranslate = true;
+                // Check if the comment is present, if not then if will block the request for the details name etc.
+                let element = e.querySelector('.source-details__comment');
+                if (element != null) {
+                    let comment = e.querySelector('.source-details__comment p').innerText;
+                    comment = comment.trim();
+                    toTranslate = checkComments(comment);
+                    console.debug('comment:', comment);
+                    toTranslate = checkComments(comment);
+                }
+                console.debug('before translate:', replacePreVerb);
+                console.debug('before translate do we need to translate:', toTranslate);
+                if (toTranslate) {
+                    let pretrans = await findTransline(original, destlang);
+                    console.debug("Pretrans found:", pretrans);
+                    // 07-05-2021 PSS added pretranslate in pages
+                    if (pretrans == "notFound") {
+                        let transtype = "single";
+                        // 20-06-2021 PSS fixed that translation stopped when the page already is completely translated issue #85
+                        if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
+                            document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'hide';
+                        }
+                        if (transsel == "google") {
+                            googleTranslate(original, destlang, e, apikey, replacePreVerb, row, transtype);
+                            console.debug("translatePage google translation:",original);
+                        }
+                        else if (transsel == "deepl") {
+                            console.debug('translatePage apikey:', apikeyDeepl);
+                            deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
+                            console.debug("translatePage deepl translation:",original);
+                        }
+                        else if (transsel == "microsoft") {
+                            microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
+                            console.debug('translatedEntry microsoft translation:', original);
+                        }
+                    }
+                    else {
+                        console.debug('Pretranslated:', pretrans);
+                        let translatedText = pretrans;
+                        let textareaElem = e.querySelector("textarea.foreign-text");
+                        textareaElem.innerText = translatedText;
+                        // PSS 10-05-2021 added populating the preview field issue #68
+                        let g = document.querySelector('td.translation');
+                        //console.debug('Text preview:', previewElem, row);
+                        let preview = document.querySelector('#preview-' + row + ' td.translation');
+                        console.debug('pretranslated:', g,row,rowfound);
+                        preview.innerText = translatedText;
+                        if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
+                            document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
+                        }
+                    }
+                    // 10-04-2021 PSS added translation of plural into translatePage
+
+                    let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                    if (f != null) {
+                        checkplural = f.querySelector(`#editor-${row} .source-string__plural span.original`);        
+                        if (checkplural != null) {
+                            let plural = checkplural.innerText;
+                            console.debug("translatePage checkplural:", plural);
+                            let pretrans = await findTransline(plural, destlang);
+                            console.debug('translatePage pretranslate result:', pretrans);
+                            if (pretrans == "notFound") {
+                                transtype = "plural";
+                                if (transsel == "google") {
+                                    translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, row, transtype);
+                                    console.debug('translatePage checkplural google:', translatedText);
+                                }
+                                else if (transsel == "deepl") {
+                                    deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype);
+                                    console.debug('translatePage checkplural deepl:', translatedText);
+                                }
+                                else if (transsel == "microsoft") {
+                                    microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype);
+                                    console.debug('translatePage checkplural microsoft:', translatedText);
+                                }
+                            }
+                            else {
+                                // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
+                                let translatedText = pretrans;
+                                console.debug('translatedpage plural:', translatedText);
+                                textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
+                                textareaElem1.innerText = translatedText;
+                                console.debug("plural newtext:", textareaElem1.innerText);
+                                textareaElem1.value = translatedText;
+                                let g = document.querySelector('td.translation');
+                                let preview = document.querySelector('#preview-' + row + ' td.translation');
+                                //console.debug("current preview:", preview.innerText);
+                                // 21-06-2021 PSS added a dotted line into the preview cell if plural is present #88
+                                var separator1 = document.createElement('div');
+                                separator1.setAttribute('id', 'translator_sep1');
+                                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                                separator1.appendChild(document.createTextNode(""));
+                                preview.appendChild(separator1);
+                                var element1 = document.createElement('div');
+                                element1.setAttribute('id', 'translator_div1');
+                                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                                element1.appendChild(document.createTextNode("\n" + translatedText));
+                                preview.appendChild(element1);
+                                document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = 'visible';
+                                console.debug("translatedEntry plural finished");
+                            }
+
+                        }
+                    }
+                }
+                else {
+                    let translatedText = original;
+                    let textareaElem = e.querySelector("textarea.foreign-text");
+                    textareaElem.innerText = translatedText;
+                    let preview = document.querySelector('#preview-' + row + ' td.translation');
+                    preview.innerText = translatedText;
+                    console.debug('translatePage No need to translate copy the original', original);
+                }
+            }
+
+            // Translation completed
+            let translateButton = document.querySelector(".paging a.translation-filler-button");
+            translateButton.className += " translated";
+     }
+     else {
+             alert("Your pretranslate replace verbs are not populated add at least on line!!");
+            }
+    }
+    else {
+        alert("Your postreplace verbs are not populated add at least on line!!");
+        }
 }
 
-async function translateEntry(rowId, apikey, destlang, postTranslationReplace, preTranslationReplace) {
-    console.debug('translateEntry started!');
-    setPostTranslationReplace(postTranslationReplace);
-    setPreTranslationReplace(preTranslationReplace);
 
-    let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-    console.debug('after document querySelector:', e);
-    let original = e.querySelector("span.original-raw").innerText;
-    // PSS 09-03-2021 added check to see if we need to translate
-    let toTranslate = true;
-    // Check if the comment is present, if not then if will block the request for the details name etc.   
-    let element = e.querySelector('.source-details__comment');
-    console.debug('checkComment started element', element);
-    if (element != null) {
-        // Fetch the comment with name
-        let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
-        toTranslate = checkComments(comment);
-    }
-    if (toTranslate) {
-        let pretrans = await findTransline(original);
-        //let pretrans = await pretranslate(original);
-        console.debug('pretranslate result:',pretrans);
-        if (pretrans == "notFound") {
-            let transtype = 'single';
-            googleTranslate(original, destlang, e, apikey, replacePreVerb,rowId,transtype);
-            document.getElementById("translate-" + rowId).style.visibility = 'hide';
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace) {
+    let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+    console.debug('translateButton entry:', translateButton);
+    translateButton.className += " started";
+    //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
+    console.debug('translateEntry started!');
+    // 15-05-2021 PSS added fix for issue #73
+    if (postTranslationReplace.length != 0) {
+        if (preTranslationReplace != 0) {
+           setPostTranslationReplace(postTranslationReplace);
+           setPreTranslationReplace(preTranslationReplace);
+           console.debug("Microsoft:" , apikeyMicrosoft , "Transsel:" , transsel,"RowId:",rowId);
+
+          let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+          console.debug('after document querySelector:', e);
+          let original = e.querySelector("span.original-raw").innerText;
+          // PSS 09-03-2021 added check to see if we need to translate
+          let toTranslate = true;
+          // Check if the comment is present, if not then if will block the request for the details name etc.   
+          let element = e.querySelector('.source-details__comment');
+          console.debug('checkComment started element', element);
+          if (element != null) {
+             // Fetch the comment with name
+            let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+            toTranslate = checkComments(comment);
+           }
+          if (toTranslate) {
+              let pretrans = await findTransline(original,destlang);
+              //let pretrans = await pretranslate(original);
+              console.debug('pretranslate result:',pretrans);
+              if (pretrans == "notFound") {
+                 let transtype = 'single';
+                 if (transsel == "google") {
+                     googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype);
+                  }
+                  else if (transsel == "deepl") {
+                      deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                      console.debug('translatedEntry deepl translation:', translatedText);
+                  }
+                  else if (transsel == "microsoft") {
+                     microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
+                     console.debug('translatedEntry microsoft translation:', translatedText);
+                  }
+                  document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'hide';
+              }
+              else {
+                    console.debug('Pretranslated:', pretrans);
+                    //document.getElementById('translate-' + rowId).checked = true;
+                    //document.getElementById('translate-' + rowId).disabled = true;
+                          
+                    let translatedText = pretrans;
+                    let textareaElem = e.querySelector("textarea.foreign-text");
+                    textareaElem.innerText = translatedText;
+                    let zoeken = "translate-" + rowId + '"-translocal-entry-local-button';
+                    console.debug("zoek naar: " + zoeken);  
+                    document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'visible'; 
+                    }
+          }
+          else {
+               let translatedText = original;
+               let textareaElem = e.querySelector("textarea.foreign-text");
+               textareaElem.innerText = translatedText;
+               console.debug('No need to translate copy the original', original);
+               }
+          let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+          let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
+          console.debug('checkplural started element', checkplural);
+          if (checkplural != null) {
+             let plural = checkplural.innerText;
+             let transtype = "plural";
+             let pretrans = await findTransline(plural, destlang);
+             //let pretrans = await pretranslate(original);
+             console.debug('pretranslate result plural:', pretrans);
+             console.debug('checkplural content element', plural);
+             if (pretrans == "notFound") {
+                  if (transsel == "google") {
+                      translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb, rowId, transtype);
+                  }
+                  else if (transsel == "deepl") {
+                      translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype);
+                      console.debug('translatedEntry deepl translation:', translatedText);
+                  }
+                  else if (transsel == "microsoft") {
+                      translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype);
+                      console.debug('translatedEntry microsoft translation:', translatedText);
+                  }
+             }
+             else {
+                  let translatedText = pretrans;
+                  console.debug('translatedEntry plural:', translatedText);
+                  // 21-06-2021 PSS fixed not populating plural issue #86
+                  textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
+                  textareaElem1.innerText = translatedText;
+                  console.debug("plural newtext:", textareaElem1.innerText);
+                  textareaElem1.value = translatedText;
+                  document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'visible';
+                  console.debug("translatedEntry plural finished");
+               }
         }
         else {
-            console.debug('Pretranslated:', pretrans);
-            //document.getElementById('translate-' + rowId).checked = true;
-            //document.getElementById('translate-' + rowId).disabled = true;
-            let zoeken = "translate-" + rowId + '.translocal-entry-my-button';
-            console.debug("zoek naar: " + zoeken);
-            document.getElementById("translate-" + rowId).style.visibility = 'visible';
+               console.debug('checkplural null');
+           }
+       
+           // Translation completed
+           let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+            console.debug('translateButton entry:', translateButton);
+            //classList.remove(translateButton.className += " started");
+            translateButton.className += " translated";
             
-            
-            let translatedText = pretrans;
-            let textareaElem = e.querySelector("textarea.foreign-text");
-            textareaElem.innerText = translatedText;
+        }
+        else {
+            alert("Your pretranslate replace verbs are not populated add at least on line!!");
         }
     }
     else {
-
-        let translatedText = original;
-        let textareaElem = e.querySelector("textarea.foreign-text");
-        textareaElem.innerText = translatedText;
-        console.debug('No need to translate copy the original', original);
+        alert("Your postreplace verbs are not populated add at least on line!!");
     }
-    let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-    let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
-    console.debug('checkplural started element', checkplural);
-    if (checkplural != null) {
-       let plural = checkplural.innerText;
-       let transtype="plural";
-       console.debug('checkplural content element', plural);
-       translatedText = googleTranslate(plural, destlang, f, apikey, replacePreVerb,rowId,transtype);
-       console.debug('checkplural:', translatedText);
-    }
-       
-    // Translation completed
-    let translateButton = document.querySelector(`#translate-${rowId}`);
-    translateButton.className += " translated";
 }
 
+function deepLTranslate(original, destlang, e, apikeyDeepl, preverbs, rowId, transtype) {
+    let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
+    console.debug('deeplTranslate result of preProcessOriginal:', originalPreProcessed);
+    var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
+    var myArray = myRe.exec(originalPreProcessed);
+    if (myArray == null) {
+        var trntype = "text";
+    }
+    else {
+        var trntype = "html";
+    }
+   
+    console.debug("deepLTranslate format type", trntype);
+    translatedText = sendAPIRequestDeepl(e, destlang, apikeyDeepl, original, originalPreProcessed, rowId, transtype); 
+
+    console.debug('result deepl:', translatedText);
+    //translatedText = original;
+    //textareaElem = e.querySelector("textarea.foreign-text");
+    //textareaElem.innerText = translatedText;
+}
+
+function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype) {
+    let originalPreProcessed = preProcessOriginal(original, preverbs, 'microsoft');
+    console.debug('microsoftTranslate result of preProcessOriginal:', originalPreProcessed);
+    //var myRe = |(\</?([a-zA-Z]+[1-6]?)(\s[^>]*)?(\s?/)?\>|)/gm;
+    var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
+    var myArray = myRe.exec(originalPreProcessed);
+    if (myArray == null) {
+        var trntype = "plain";
+    }
+    else {
+        var trntype = "html";
+    }
+
+    console.debug("microsoft Translate format type", trntype);
+    translatedText = sendAPIRequestMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype,trntype);
+
+    console.debug('result Microsoft:', translatedText);
+    //translatedText = original;
+    //textareaElem = e.querySelector("textarea.foreign-text");
+    //textareaElem.innerText = translatedText;  
+}
 function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype) {
-    let originalPreProcessed = preProcessOriginal(original, preverbs);
+    let originalPreProcessed = preProcessOriginal(original, preverbs,'google');
 
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
@@ -308,16 +492,217 @@ function googleTranslate(original, destlang, e, apikey, preverbs,rowId,transtype
     console.debug('after sendAPIRequest:',translatedText,transtype);
 }
 
+function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProcessed, rowId, transtype) {
+    console.debug('sendAPIreQuest original_line Deepl:', originalPreProcessed);
+    xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        
+        console.debug("Deepl translation:", this.response);
+        responseObj = this.response;
+        
+        console.debug("Deepl ready state:", this.readyState);
+        if (this.readyState == 4) {
+            //responseObj = xhttp.response;
+            responseObj = this.response;
+            //alert(responseObj.translations[0].text);
+            translatedText = responseObj.translations[0].text;
+            console.debug("inside:", translatedText);
+            //let responseObj = JSON.parse(this.translations);
+            //let translatedText = responseObj.data.translations[0].translatedText;
+            console.debug('sendAPIRequest result before postProces:', translatedText);
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed,"deepl");
+            console.debug('sendAPIRequest translatedText after postProces:', translatedText);
+            if (transtype == "single") {
+                textareaElem = e.querySelector("textarea.foreign-text");
+                textareaElem.innerText = translatedText;
+                // PSS 13-04-2021 added populating the preview field issue #64
+                let g = document.querySelector('td.translation');
+                let previewElem = g.innerText;
+                console.debug('Text preview:', previewElem, rowId);
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                preview.innerText = translatedText;
+                // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                textareaElem.value = translatedText;
+                //PSS 25-03-2021 Fixed problem with description box issue #13
+                textareaElem.style.height = 'auto';
+                textareaElem.style.height = textareaElem.scrollHeight + 'px';
+                // PSS 13-04-2021 removed the line below as it clears the content if you edit after use of translate button
+                // textareaElem.style.overflow = 'auto' ;
+            }
+            else {
+                // PSS 09-04-2021 added populating plural text
+                console.debug('Row plural:', rowId);
+                textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                textareaElem1.innerText = translatedText;
+                console.debug("plural newtext:", textareaElem1.innerText);
+                textareaElem1.value = translatedText;
+                let g = document.querySelector('td.translation');            
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                //console.debug("current preview:", preview.innerText);
+                // 21-06-2021 PSS added a dotted line into the preview cell if plural is present #88
+                var separator1 = document.createElement('div');
+                separator1.setAttribute('id', 'translator_sep1');
+                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                separator1.appendChild(document.createTextNode(""));
+                preview.appendChild(separator1);
+                var element1 = document.createElement('div');
+                element1.setAttribute('id', 'translator_div1');
+                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                element1.appendChild(document.createTextNode("\n"+ translatedText));
+                preview.appendChild(element1);
+               
+            }
+            validateEntry(language, textareaElem);
+
+        }
+        // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
+        else {
+            console.debug("issue with licence:", this.status);
+            if (this.readyState == 4 && this.status == 400) {
+                alert("Error in translation received status 400, maybe a license problem");
+            }
+            else if (this.readyState == 2 && this.status == 403) {
+                alert("Error in translation received status 403, authorisation refused");
+            }
+            else {
+                // 18-06-2021 PSS fixed an alert at the wrong time issue #83
+                console.debug("Status received:", this.status);
+                //alert("Error in translation receive code:", this.status);
+            }
+        }
+    };
+    
+    
+    //let xhttp = new XMLHttpRequest();
+    language = language.toUpperCase();
+    //console.debug("Target_lang:", language);
+    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+    xhttp.responseType = 'json';
+    xhttp.send();
+   
+    xhttp.onload = function () {
+       let responseObj = xhttp.response;
+    };
+
+}
+
+function sendAPIRequestMicrosoft(e, language, apikeyMicrosoft, original, originalPreProcessed, rowId, transtype, trntype) {
+    console.debug('sendAPIreQuest original_line Microsoft:', original); 
+    console.debug("format type", trntype);
+    xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+
+        console.debug("Microsoft translation response:", this.response);
+        restrans = this.response;
+        let responseObj = this.response.error;    
+        console.debug("Response error object:", responseObj);
+        if (typeof responseObj != 'undefined') {
+            myfault = responseObj.code;
+            //console.debug("Microsoft myfault:", myfault);
+        }
+        else {
+            var myfault = 0;
+            //console.debug("Microsoft myfault:", myfault);
+        };
+        //console.debug("Microsoft readyState:", this.readyState);
+        if (this.readyState == 4 && myfault == 0) { 
+            //console.debug('Restrans:', restrans);
+            translatedText = restrans[0].translations[0].text;
+            //console.debug('sendAPIRequest result before postProces:', translatedText);
+            // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl");
+            //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
+            if (transtype == "single") {
+                textareaElem = e.querySelector("textarea.foreign-text");
+                textareaElem.innerText = translatedText;
+                // PSS 13-04-2021 added populating the preview field issue #64
+                let g = document.querySelector('td.translation');
+                let previewElem = g.innerText;
+                console.debug('Text preview:', previewElem, rowId);
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                preview.innerText = translatedText;
+                // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                textareaElem.value = translatedText;
+                //PSS 25-03-2021 Fixed problem with description box issue #13
+                textareaElem.style.height = 'auto';
+                textareaElem.style.height = textareaElem.scrollHeight + 'px';
+                // PSS 13-04-2021 removed the line below as it clears the content if you edit after use of translate button
+                // textareaElem.style.overflow = 'auto' ;
+            }
+            else {
+                // PSS 09-04-2021 added populating plural text
+                console.debug('Row plural:', rowId);
+                textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                textareaElem1.innerText = translatedText;
+                console.debug("plural newtext:", textareaElem1.innerText);
+                textareaElem1.value = translatedText;
+                let g = document.querySelector('td.translation');
+                let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                console.debug("current preview:", preview.innerText);
+                var separator1 = document.createElement('div');
+                separator1.setAttribute('id', 'translator_sep1');
+                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                separator1.appendChild(document.createTextNode(""));
+                preview.appendChild(separator1);
+                var element1 = document.createElement('div');
+                element1.setAttribute('id', 'translator_div1');
+                //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                element1.appendChild(document.createTextNode("\n" + translatedText));
+                preview.appendChild(element1);
+            }
+            validateEntry(language, textareaElem);
+
+        }
+        // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
+        else {
+            if (this.readyState == 4 && myfault == 400000) {
+                alert("Error in translation received status 400000, One of the request inputs is not valid.");
+            }
+            
+             else if (this.readyState == 4 && myfault == 400036) {
+                 alert("Error in translation received status 400036, The target language is not valid.");
+            }
+            else if (this.readyState == 4 && myfault == 400074) {
+                alert("Error in translation received status 400074, The body of the request is not valid JSON.");
+            }
+            else if (this.readyState == 4 && myfault == 403000) {
+                alert("Error in translation received status 403, authorisation refused");
+            }
+            else if (this.readyState = 4 && myfault == 401000) {
+                alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
+            }
+        }
+    };
+
+
+    //let xhttp = new XMLHttpRequest();
+    let requestBody = [
+        {
+         'text': originalPreProcessed
+        }
+        ];
+
+    console.debug("apikey:", apikeyMicrosoft, "textType:",trntype);
+    language = language.toUpperCase();
+    translen = originalPreProcessed.length;
+    xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&textType=" + trntype + "&from=en&to=" + language);
+    xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+    xhttp.setRequestHeader('Ocp-Apim-Subscription-Key', apikeyMicrosoft);
+    xhttp.setRequestHeader('Content-Length', translen);
+    xhttp.responseType = 'json';
+    xhttp.send(JSON.stringify(requestBody));
+}
+
 
 function sendAPIRequest(e, language, apikey, requestBody, original, originalPreProcessed,rowId,transtype) {
-    console.debug('sendAPIreQuest original_line:', originalPreProcessed);
+    console.debug('translateEntry original_line Google:', originalPreProcessed);
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             let responseObj = JSON.parse(this.responseText);
             let translatedText = responseObj.data.translations[0].translatedText;
-            console.debug('sendAPIRequest result before postProces:',translatedText);
-            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed);
+            console.debug('sendAPIRequest result before postProces:', translatedText);
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google");
             console.debug('sendAPIRequest translatedText after postProces:',translatedText);
             if (transtype == "single"){
                textareaElem = e.querySelector("textarea.foreign-text");
@@ -337,12 +722,25 @@ function sendAPIRequest(e, language, apikey, requestBody, original, originalPreP
               // textareaElem.style.overflow = 'auto' ;
             }
             else {
-            // PSS 09-04-2021 added populating plural text
-            console.debug('Row plural:',rowId);
-            textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
-            textareaElem1.innerText = translatedText;
-            console.debug("plural newtext:",textareaElem1.innerText);
-            textareaElem1.value = translatedText; 
+                 // PSS 09-04-2021 added populating plural text
+                 console.debug('Row plural:',rowId);
+                 textareaElem1 = e.querySelector("textarea#translation_" + rowId + "_1");
+                 textareaElem1.innerText = translatedText;
+                 console.debug("plural newtext:",textareaElem1.innerText);
+                 textareaElem1.value = translatedText;
+                 let g = document.querySelector('td.translation');
+                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                 console.debug("current preview:", preview.innerText);
+                 var separator1 = document.createElement('div');
+                 separator1.setAttribute('id', 'translator_sep1');
+                 separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px dotted grey;';
+                 separator1.appendChild(document.createTextNode(""));
+                 preview.appendChild(separator1);
+                 var element1 = document.createElement('div');
+                 element1.setAttribute('id', 'translator_div1');
+                 //element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                 element1.appendChild(document.createTextNode("\n" + translatedText));
+                 preview.appendChild(element1);
             }
             validateEntry(language,textareaElem);
             
@@ -376,41 +774,79 @@ function isStartsWithUpperCase(str) {
 }
 
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&\w{2,6};|%\w*%/gi);
-function preProcessOriginal(original, preverbs) {
+function preProcessOriginal(original, preverbs,translator) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
     }
-    const matches = original.matchAll(placeHolderRegex);
-    let index = 0;
-    for (const match of matches) {
-        original = original.replace(match[0], `[${index}]`);
+    // 15-05-2021 PSS added check for translator
+    if (translator == 'google') {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            original = original.replace(match[0], `[${index}]`);
 
-        index++;
+            index++;
+        }
+        if (index == 0) {
+            console.debug("preProcessOriginal no placeholders found index === 0 ");
+        }
     }
-    if (index===0){
-        console.debug("preProcessOriginal no placeholders found index === 0 ");
-    }
+    else if (translator == 'deepl') {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            original = original.replace(match[0], `<x>${index}</x>`);
 
+            index++;
+        }
+        if (index == 0) {
+            console.debug("preProcessOriginal no placeholders found index === 0 ");
+        }
+    }
+    else if (translator == 'microsoft') {
+        // const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        console.debug("We do nothing");
+        //for (const match of matches) {
+        //   original = original.replace(match[0], `<x>${index}</x>`);
+
+        //  index++;
+        //}
+        if (index == 0) {
+            console.debug("preProcessOriginal no placeholders found index === 0 ");
+        }
+    }
     console.debug("After pre-processing:", original);
     return original;
 }
 
 
-function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed) {
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator) {
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     console.debug("after processPLaceholderSpaces",translatedText);
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll('  ]', ']');
                                                   
     // This section replaces the placeholders so they become html entities
-    const matches = original.matchAll(placeHolderRegex);
-    let index = 0;
-    for (const match of matches) {
-        translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
-        index++;
+    if (translator == "google") {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
+            index++;
+        }
     }
-    
+    else if (translator == "deepl") {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 0;
+        for (const match of matches) {
+            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
+            index++;
+        }
+        // 21-06-2021 PSS added debug statement to find an issue with replacing placeholders
+        console.debug('Deepl after removing placeholders:', translatedText);
+    }
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
