@@ -70,6 +70,9 @@ function checkComments(comment) {
     console.debug('checkComment started comment', comment);
     let toTranslate = false;
     switch (comment) {
+        case 'Plugin name.':
+            toTranslate = false;
+            break;
         case 'Plugin Name of the plugin':
             toTranslate = false;
             break;
