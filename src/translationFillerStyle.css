@@ -72,6 +72,10 @@ local.paging a.translation-filler-button {
         animation: button-loading-spinner 1s ease infinite;
 }
 
+    .paging a.translation-filler-button.after_error {
+        animation: none;
+        background: red;
+    }
     .paging a.translation-filler-button.translated {
         animation: none;
         background: green;
@@ -126,6 +130,11 @@ local.paging a.translation-filler-button {
         background-color: green;
     }
 
+    .panel-header-actions .translation-entry-my-button.translated_error {
+        animation: none;
+        background-color: red;
+    }
+
 
 .paging a.check_translation-button {
     background: blue;
@@ -153,7 +162,7 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .check_translation-button {
     width: auto;
-    padding: 11x;
+    padding: 11px;
     background-color: blue;
     color: white;
 }
@@ -266,7 +275,7 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .export_translation-button {
     width: auto;
-    padding: 11x;
+    padding: 11px;
     background-color: blue;
     color: white;
 }
@@ -319,7 +328,7 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .import_translation-button {
     width: auto;
-    padding: 11x;
+    padding: 11px;
     background-color: blue;
     color: white;
 }
@@ -373,4 +382,68 @@ local.paging a.translation-filler-button {
     to {
         transform: rotate(1turn);
     }
+}
+
+.trans_exists_div {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 11px;
+    margin-top: 10px;
+    padding: 1px 5px;
+    margin-left: .2em;
+    background-color: #036fa2;
+    border-radius: 5px;
+    display: inline;
+}
+
+del {
+    text-decoration: none;
+    color: #b30000;
+    background: #fadad7;
+}
+
+ins {
+    background: #eaf2c2;
+    color: #406619;
+    text-decoration: none;
+}
+table.translations th.filler_status {
+    width: 2em !important;
+    text-align: center;
+    display :none;
+}
+table.translations tr.row_filler_status {
+    width: 2em !important;
+    text-align: right;
+    display:none;
+}
+table.translations th.priority, table.translations td.priority {
+    padding :0px !important;
+    width: 3em !important;
+    display: table-cell !important;
+    font-size: 14px !important;
+}
+table.translations th.original, table.translations th.translation {
+    width: 40% !important;
+    
+}
+button.save-button {
+    font-size: 12px !important;
+    height: 20px;
+    line-height: 1;
+    margin-top: 10px !important;
+    margin: 0px !important;
+    padding: 0px 2px !important;
+    background: #0085ba !important;
+    border-color: #0073aa #006799 #006799;
+    box-shadow: 0 1px 0 #006799;
+    color: #fff !important;
+    text-decoration: none;
+    text-shadow: 0 -1px 1px #006799, 1px 0 1px #006799, 0 1px 1px #006799, -1px 0 1px #006799;
+    margin-left: 0px;
+}
+
+button.save-button.ready {
+    display:none;
 }
