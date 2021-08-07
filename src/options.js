@@ -11,8 +11,12 @@ let uploadedFile = document.getElementById('text_glossary_file');
 let glossaryFile = document.getElementById('glossary_file');
 let verbsTextbox = document.getElementById('text_verbs');
 let preverbsTextbox = document.getElementById('text_pre_verbs');
+let showHistCheckbox = document.getElementById('show-history');
+let showDiffCheckbox = document.getElementById('comp-translations');
+console.debug("Diff:", showDiffCheckbox);
+console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace'], function (data) {
+chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace','showHistory', 'showTransDiff'], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
@@ -26,8 +30,29 @@ chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'd
     uploadedFile.innerText = `Uploaded file: ${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
+    if (data.showHistory != 'null') {
+        console.debug(data.showHistory);
+        if (data.showHistory == true) {
+            showHistCheckbox.checked = true;
+            //document.getElementById('show-history').checked = true;
+        }
+        else {
+            showHistCheckbox.checked = false;
+            //document.getElementById('show-history').checked = false;
+        }
+    }
+    
+    if (data.showTransDiff != 'null') {
+        if (data.showTransDiff == true) {
+            showDiffCheckbox.checked = true;
+           // document.getElementById('comp-translations').checked = true;
+        }
+        else {
+            showDiffCheckbox.checked = false;
+            //document.getElementById('comp-translations').checked = false;
+        }
+    }
     console.log("Read options: ", data);
-    console.debug("type of transSelect:", typeof data.transsel);
 });
 
 
@@ -48,9 +73,24 @@ button.addEventListener('click', function () {
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
+    if (document.querySelector('#show-history:checked') !== null) {
+        console.debug('diff:', document.querySelector('#show-history:checked'));
+        let Hist = document.querySelector('#show-history:checked');
+        showHist = Hist.checked;
+        }
+    else {
+        showHist = 'false';
+    }
+    if (document.querySelector('#comp-translations:checked') !== null) {   
+        console.debug('diff:', document.querySelector('#comp-translations:checked'));
+        let showDiff = document.querySelector('#comp-translations:checked');
+        showDifference = showDiff.checked;
+    }
+    else {
+        showDifference = 'false';
+    }
     
-    console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation);
-
+    
     chrome.storage.sync.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
@@ -58,9 +98,11 @@ button.addEventListener('click', function () {
         transsel: transsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,
-        preTranslationReplace: preTranslation
+        preTranslationReplace: preTranslation,
+        showHistory: showHist,
+        showTransDiff: showDifference
     });
-    console.debug('Options save: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation);
+    console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  
     if (glossaryFile.value !== "") {
         console.debug('Options: ', glossaryFile);

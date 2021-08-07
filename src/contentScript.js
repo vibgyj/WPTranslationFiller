@@ -1,4 +1,16 @@
-console.log('Content script...');
+console.debug('Content script...');
+/// PSS added function from GlotDict to save records in editor
+gd_wait_table_alter();
+// 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
+window.onbeforeunload = function () {
+    return switchoff();
+}
+
+function switchoff() {
+    chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+        console.debug("Content script set flag for noOldTrans back to False");
+    });
+}
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
 var db =getDbSchema() ;
@@ -15,16 +27,103 @@ console.debug("jsStore opened:",jsstoreCon);
 var fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');
 
+
+// PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
+
+document.addEventListener("keydown", function (event) {
+
+    if (event.altKey && (event.key === 'r' || event.key === 'R')) {
+        
+        event.preventDefault();
+        const queryString = window.location.search;      
+        const urlParams = new URLSearchParams(queryString);
+        const wrongverb = urlParams.get('wrongverb');
+        const replverb = urlParams.get('replverb');
+        var search = wrongverb;
+        var repl = replverb;
+        var e;
+        var textareaElem;
+        var translatedText;
+        var replaced = false
+        //myrow = event.target.parentElement.parentElement;
+        //rowId = myrow.attributes.row.value;
+        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+            console.debug("e:", e);
+            let original = e.querySelector("span.original-raw").innerText;
+            console.debug("original:", original);
+            // Fetch the translations
+            let element = e.querySelector('.source-details__comment');
+            textareaElem = e.querySelector("textarea.foreign-text");
+            console.debug('elem:', textareaElem);
+            translatedText = textareaElem.value;
+            console.debug('Translated text to check:', translatedText);
+            let replaced = false;
+            
+            console.debug("translatedText before:", translatedText);
+
+            // PSS 09-03-2021 added check to see if we need to translate
+            let toTranslate = true;
+            // Check if the comment is present, if not then it will block the request for the details name etc.   
+            
+            console.debug('checkComment started element', element);
+            if (element != null) {
+                // Fetch the comment with name
+                let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+                toTranslate = checkComments(comment);
+            }
+            if (toTranslate == true) {
+                if (translatedText.includes(search)) {
+                    console.debug('Word in line found', search);
+                    translatedText = translatedText.replaceAll(search, repl);
+                    replaced = true;
+                    textareaElem.innerText = translatedText;
+                    textareaElem.value = translatedText;
+                    let glotpress_open = document.querySelector(`td.actions .edit`);
+                    let glotpress_save = document.querySelector(`div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+
+                    //let glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
+                    let glotpress_close = document.querySelector(`div.editor-panel__left .panel-header-actions__cancel`);
+                    glotpress_open.click();
+                    glotpress_save.click();
+                    //glotpress_approve.click();
+
+                    //glotpress_close.click();
+                    setTimeout(() => { glotpress_close.click(); }, 1500);
+
+                }
+                else {
+                    console.debug("not found:", search);
+                    alert("Verb not found: " + search);
+                    replaced = false;
+                    break;
+                    }
+            }
+            else {
+              alert("The name of plugin/theme/url do not need to be replaced");
+             replaced = false;
+            }
+            if (replaced == true) {
+                setTimeout(() => { window.close(); }, 1000);
+            }
+        }
+        
+    }
+    
+});
+
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
 if (el != null){
   el.addEventListener("click", checkbuttonClick);
 }
-const el1 = document.getElementById("translations");
-if (el1 != null) {
-    el1.addEventListener("click", checkactionClick);
+
+
+const el3 = document.getElementById("translations");
+if (el3 != null) {
+    el3.addEventListener("click", checkactionClick);
 }
+
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
@@ -76,13 +175,12 @@ if (divPaging != null && divProjects == null){
    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
-
 function translatePageClicked(event) {
     event.preventDefault();
     console.log("Translate clicked!");
     chrome.storage.sync
         .get(
-            ['apikey', 'apikeyDeepl' , 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
+            ['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace', 'showHistory', 'showTransDiff'],
             function (data) {
                 console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
                 if (typeof data.apikey != 'undefined' && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.transsel == "deepl" || typeof data.apikeyMicrosoft != 'undefined' && data.transsel == "microsoft") {
@@ -131,8 +229,10 @@ async function importPageClicked(event) {
     
     fileSelector.click();
     fileSelector.addEventListener('change', (event) => {   
-       fileList = event.target.files;
-       console.debug("filelist:",fileList);
+        fileList = event.target.files;
+        const arrayFiles = Array.from(event.target.files)
+        console.debug("filelist:", arrayFiles);
+       console.debug("filelist:",fileList[0]);
        const file = fileList[0];
        var obj_csv = {
        size:0,
@@ -175,7 +275,8 @@ async function parseDataBase(data) {
     let counter= 0;
     // To make sure we can manipulate the data store it into an array
     lbreak.forEach(res => {
-        csvData.push(res.split(","));
+        // 09-07-2021 PSS altered the separator issue #104
+        csvData.push(res.split("|"));
         ++counter;
         //console.debug("counter:",counter);
     });
@@ -240,7 +341,11 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         //console.log(glossary);
         addTranslateButtons();
         if (glossary.length > 0) {
-            validatePage(data.destlang);
+            chrome.storage.sync.get(['showHistory'], function (data) {
+                if (data.showHistory != 'null') {
+                    validatePage(data.destlang, data.showHistory);
+                }
+                    });
         }
         checkbuttonClick();
     });
@@ -267,7 +372,7 @@ function addTranslateButtons() {
 
         // Add addtranslate button
         let addTranslateButton = document.createElement("my-button");
-        console.debug('addTranslateButtons rowId:', rowId);
+        //console.debug('addTranslateButtons rowId:', rowId);
         importButton.href = "#";
         addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
         addTranslateButton.className = "addtranslation-entry-my-button";
@@ -285,21 +390,20 @@ function addTranslateButtons() {
     }
 }
 
-
 function addtranslateEntryClicked(event){
     if (event != undefined){ 
         event.preventDefault();
-       console.debug("add translation clicked");
-        console.log("addtranslateEntry clicked!", event, 'target:',event.target.id);
+       //console.debug("add translation clicked");
+        //console.log("addtranslateEntry clicked!", event, 'target:',event.target.id);
        let rowId = event.target.id.split('-')[1];
-       console.log("addtranslateEntry clicked rowId", rowId);
+      // console.log("addtranslateEntry clicked rowId", rowId);
        let myrowId = event.target.id.split('-')[2];
        //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
        // So that needs to be added to the base rowId to find it
        if (myrowId !== undefined && myrowId !="addtranslation") {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
-        console.debug('Line already translated new rowId:'+ rowId);
+        //console.debug('Line already translated new rowId:'+ rowId);
        
        }
        addTransline(rowId); 
@@ -309,90 +413,125 @@ function addtranslateEntryClicked(event){
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
 function checkactionClick(event) {
     if (event != undefined) {
+       
         //let action = event.target.textContent;
         // 19-06-2021 PSS changed the type to classname to prevent possible translation issue
         let classname = event.target.getAttribute("class");
-        console.debug('check action', ":" + classname + ":");
-        if (classname == 'approve' || classname == 'reject' || classname == 'fuzzy' || classname == 'translation-actions__save with-tooltip'){
+        //console.debug('check action', ":" + classname + ":");
+        if (classname == 'approve' || classname == 'reject' || classname == 'fuzzy' || classname == 'dashicons dashicons - backup') {
+            // here we go back to the previous entry in the table to find the previous rowId    
             const firstLink = event.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
-            //console.debug("first link:", firstLink);     
-            console.debug("firstlink row:", firstLink.getAttribute('row'));
+            //console.debug("eventparent:", event.target.parentNode);
+            //console.debug("started find rows",firstlink);     
+            //console.debug("firstlink row:", firstLink.getAttribute('row'));
+
             // 18-06-2021 PSS added searching for previous translations issue  #84
-            if (typeof firstlink != null){
+            if (firstLink != null) {
                 const nextLink = firstLink.nextElementSibling;
-                const newRowId = nextLink.getAttribute('row');
-                console.debug("nextlink row:", newRowId);
-                // Find the project to use in the link
-                let f = document.getElementsByClassName('breadcrumb');
-                console.debug()
-                console.debug('Breadcrumb found;', f[0]);
-                let url = f[0].firstChild.baseURI;
-                let newurl = url.split('?')[0];
-                if (typeof newurl != 'undefined') {
-                    // find the prev/old translations if present
-                    url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + newRowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
-                    console.debug('url found:', url);
-                    //rowsFound = fetchOld('','',url,'True');
-                    fetchOldRec(url, newRowId);
+                if (nextLink != null) {
+                    const newRowId = nextLink.getAttribute('row');
+                    //console.debug("nextlink row:", newRowId);
+                    // Find the project to use in the link
+                    let f = document.getElementsByClassName('breadcrumb');
+                    //console.debug('Breadcrumb found;', f[0]);
+                    let url = f[0].firstChild.baseURI;
+                    let newurl = url.split('?')[0];
+                    if (typeof newurl != 'undefined') {
+                        // find the prev/old translations if present
+                        //url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + newRowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
+                        url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + newRowId;
+                        //console.debug('checkActionClick url found:', url);
+                        //rowsFound = fetchOld('','',url,'True');
+                        chrome.storage.sync.get(['showTransDiff'], function (data) {
+                            //console.debug("param showTransDiff:", data.showTransDiff);
+
+                            if (data.showTransDiff != 'null') {
+
+                                fetchOldRec(url, newRowId);
+                            }
+                        });
+
+                    }
                 }
             }
         }
     }
+    //else {
+        // Necessary to prevent showing old translation exist if started from link "Translation history"
+        //chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+            // Notify that we saved.
+            // alert('Settings saved');
+       // });
+   // }
         
 }
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 function checkbuttonClick(event){
    if (event != undefined){ 
-      //event.preventDefault(); caused a problem within the single page enttry  
-      let action = event.target.textContent ;
-      console.debug('action',action);
-       if (action == 'Details') {
-
-         let rowId = event.target.parentElement.parentElement.getAttribute('row');
-         let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-
-         // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
+        //event.preventDefault(); caused a problem within the single page enttry  
+       let action = event.target.textContent ;
+       //console.debug('checkbuttonClick action', action);
+       // 30-06-2021 PSS added fetch status from local storage
+       // Necessary to prevent showing old translation exist if started from link "Translation history"
+      
+      // alert(action);
+       // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
+       if (action == 'Details' || action == '✓Details') {
+           let rowId = event.target.parentElement.parentElement.getAttribute('row');
+           let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+           // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
+           chrome.storage.sync.set({ 'noOldTrans': 'True' }, function () {
+               // Notify that we saved.
+               // alert('Settings saved');
+           });
+           // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
            let f = document.getElementsByClassName('breadcrumb');
-           console.debug( )
-         console.debug('Breadcrumb found;', f[0]);
-         let url = f[0].firstChild.baseURI;
-         let newurl = url.split('?')[0];
-         
+           let url = f[0].firstChild.baseURI;
+           let newurl = url.split('?')[0];
+           console.debug("checkbutton:", newurl);
            if (typeof newurl != 'undefined') {
-               url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
-               
-               console.debug('url found:', url);
+               // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
+               // Fetch only the current string to compaire with the waiting string
+               //url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
+               url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + rowId;
+               console.debug('checkbuttonClick url found:', url);
                //rowsFound = fetchOld('','',url,'True');
-               fetchOldRec(url,rowId);
-           }
-           
-         //console.debug('Translatebutton:',translateButton);
-         if (translateButton == null){
-            let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
-            let translateButton = document.createElement("my-button");
-            translateButton.id = `translate-${rowId}-translation-entry-my-button`;
-            translateButton.className = "translation-entry-my-button";
-            translateButton.onclick = translateEntryClicked;
-            translateButton.innerText = "Translate";
-            panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
-            // Add addtranslate button
-            let addTranslateButton = document.createElement("my-button");
-            console.debug('addTranslateButtons rowId:', rowId);
-            addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
-            addTranslateButton.className = "addtranslation-entry-my-button";
-            addTranslateButton.onclick = addtranslateEntryClicked;
-            addTranslateButton.innerText = "Add Translation";
-            panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
 
-            let TranslocalButton = document.createElement("local-button");
-            TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
-            TranslocalButton.className = "translocal-entry-local-button";
-            TranslocalButton.innerText = "Local";
-            TranslocalButton.style.visibility = 'hidden';
-            panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
-            }
-        }   
+               chrome.storage.sync.get(['showTransDiff'], function (data) {
+                   if (data.showTransDiff != 'null') {
+                       if (data.showTransDiff == true) {
+                           fetchOldRec(url, rowId);
+                       }
+                   }
+               });
+           }
+
+           if (translateButton == null) {
+               let panelHeaderActions = document.querySelector('#editor-' + rowId + ' .panel-header .panel-header-actions');
+               let translateButton = document.createElement("my-button");
+               translateButton.id = `translate-${rowId}-translation-entry-my-button`;
+               translateButton.className = "translation-entry-my-button";
+               translateButton.onclick = translateEntryClicked;
+               translateButton.innerText = "Translate";
+               panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+               // Add addtranslate button
+               let addTranslateButton = document.createElement("my-button");
+               console.debug('addTranslateButtons rowId:', rowId);
+               addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
+               addTranslateButton.className = "addtranslation-entry-my-button";
+               addTranslateButton.onclick = addtranslateEntryClicked;
+               addTranslateButton.innerText = "Add Translation";
+               panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
+
+               let TranslocalButton = document.createElement("local-button");
+               TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
+               TranslocalButton.className = "translocal-entry-local-button";
+               TranslocalButton.innerText = "Local";
+               TranslocalButton.style.visibility = 'hidden';
+               panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
+           }
+       }
     }
 }
 
@@ -404,7 +543,6 @@ function translateEntryClicked(event) {
     let myrowId = event.target.id.split('-')[2];
     //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
     // So that needs to be added to the base rowId to find it
-    //console.log("translateEntryClicked myrowId:", myrowId);
     if (typeof myrowId != 'undefined' && myrowId != 'translation') {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
@@ -417,78 +555,441 @@ function translateEntryClicked(event) {
     console.debug('after translateEntry');
 }
 
-function validatePage(language) {
+function validatePage(language, showHistory) {
+    
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName('breadcrumb');   
-    console.debug('Breadcrumb found;', f[0]);
+    //console.debug('Breadcrumb found;', f[0]);
     let url = f[0].firstChild.baseURI;
+    //console.debug('ValidatePage url:', url);
     let newurl = url.split('?')[0];
-
+    console.debug("validatePage newurl:", newurl);
+    var divProjects = document.querySelector('div.projects');
+    // We to set the priority column only to visible if we are in the project 
+    // PSS divProjects can be present but trhead is empty if it is not a project
+    var tr = document.getElementById('translations');
+     if (tr != null) {
+        trhead = tr.tHead.children[0]
+        // 26-06-2021 PSS set  the visibillity of the Priority column back to open
+        trprio = trhead.children[1];
+        trprio.style.display = "table-cell";
+        trprio.innerHTML = 'Qual';
+        var all_col = document.getElementsByClassName("priority");
+        for (var i = 0; i < all_col.length; i++) {
+            all_col[i].style.display = "table-cell";
+        }
+    }
+    
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        let textareaElem = e.querySelector("textarea.foreign-text");
+        let textareaElem = e.querySelector('textarea.foreign-text');
         textareaElem.addEventListener('input', function (e) {
-            validateEntry(language, e.target);
+         //console.debug("eventlistener:", newurl);
+        validateEntry(language, e.target,newurl,showHistory);
         });
         let translation = textareaElem.innerText;
         var result = validate(language, original, translation);
-        console.log(result);
-        updateStyle(textareaElem, result, newurl);
+        updateStyle(textareaElem, result, newurl, showHistory);
     }
+    // 30-06-2021 PSS set fetch status from local storage
+    chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+        // Notify that we saved.
+       // alert('Settings saved');
+    });
 }
 
-function updateStyle(textareaElem, result, newurl) {
+function updateStyle(textareaElem, result, newurl, showHistory) {  
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
-    let priorityElem = document.querySelector('#preview-' + rowId + ' .priority');
-    updateElementStyle(priorityElem, result,'False');
-    let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(headerElem, result, 'False');
-    //console.debug('Row to find:', rowId);
-    let row = rowId.split('-')[0];
-    //console.debug('Row splitted:', row);
-    // 12-06-2021 PSS do not fetch old if within the translation
-    if (typeof newurl != 'undefined') {
-        fetchOld(priorityElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc','False');
+    
+    originalElem = document.querySelector('#preview-' + rowId + ' .original');
+    // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
+    let checkElem = document.querySelector('#preview-' + rowId + ' .priority');
+    
+    let saveButton = document.querySelector('#preview-' + rowId + ' .save-button');
+    // we need to take care that the save button is not added twice
+    //console.debug('divSafe:', saveButton);
+    if (saveButton == null) {
+        // check for the status of the record
+        
+        var separator1 = document.createElement('div');
+        separator1.setAttribute('class', 'checkElem_save');
+        //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+        checkElem.appendChild(separator1);
+        let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+        var current = myrec.querySelector('span.panel-header__bubble');
+        //console.debug("updateStyle Status:", current.innerText);
+        let SavelocalButton = document.createElement('button');
+        SavelocalButton.id = "save-button";
+        SavelocalButton.className = "save-button";
+        SavelocalButton.onclick = savetranslateEntryClicked;
+        if (current.innerText == 'untranslated') {
+            SavelocalButton.innerText = "Empt";
+            checkElem.title = "No translation";
+        }
+        else if (current.innerText == 'waiting') {
+            SavelocalButton.innerText = "Appr";
+            checkElem.title = "Approve the string";
+        }
+        else if (current.innerText == 'transFill'){
+            SavelocalButton.innerText = ("Save");
+            checkElem.title = "Save the string";
+        }
+        else if (current.innerText == 'fuzzy') {
+            SavelocalButton.innerText = ("Rej");
+            checkElem.title = "Reject the string";
+        }
+        //SavelocalButton.ariaLabel = "Save and approve translation";
+        checkElem.appendChild(SavelocalButton);
     }
+    
+    let origElem =  updateElementStyle(checkElem, result,'False',originalElem,"","","","","",rowId);
+    let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
+    updateElementStyle(checkElem, headerElem, result, 'False', originalElem, "", "", "", "", "", rowId);
+    let row = rowId.split('-')[0];
+    // 12-06-2021 PSS do not fetch old if within the translation
+    // 01-07-2021 fixed a problem causing an undefined error
+    // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
+            if (showHistory == true) {
+                if (newurl.substring(1, 9) != 'undefined') {
+                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'False', originalElem,row);
+                }
+                else {
+                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'True', originalElem,row);
+                }
+            }
 }
 
-function validateEntry(language, textareaElem) {
+function validateEntry(language, textareaElem, newurl, showHistory) {
+    // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
-        .querySelector("span.original-raw").innerText;
-
-    let result = validate(language, original, translation);
-    //console.log(result);
-    updateStyle(textareaElem, result);
+        .querySelector("span.original-raw");
+    let originalText = original.innerText;
+    let result = validate(language, originalText,translation);
+    updateStyle(textareaElem, result, newurl, showHistory);
 }
 
-function updateElementStyle(priorityElem, result,oldstring) {
-    if (oldstring == 'True') {
-        var text = document.createTextNode('⇈');
-        priorityElem.style.color = 'darkblue';
-        priorityElem.style.fontWeight = "900";
-        
-        priorityElem.appendChild(text);
-        }
-    if (result.wordCount == 0) return;
+function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId) {
     
-    if (result.percent == 100) {
-        priorityElem.style.backgroundColor = 'green';
+    if (typeof rowId != 'undefined') {
+        //console.debug("updateElementStyle start:", rowId);
+        var SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+        
+        if (SavelocalButton == 'null') {
+            SavelocalButton = document.createElement('button');
+            SavelocalButton.id = "save-button";
+            SavelocalButton.className = "save-button";
+            let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            if (myrec != "null") {
+                var current = myrec.querySelector('span.panel-header__bubble');
+                //console.debug("updateElementStyle:",rowId);
+                //console.debug('updateElementStyle status:', current.InnerText);
+                if (current.innerText == 'transFill') {
+                    SavelocalButton.innerText = "Save";
+                    checkElem.title = "Save the string";
+                }
+                else if (current.innerText == 'waiting') {
+                    SavelocalButton.innerText = "Appr";
+                    checkElem.title = "Approve the string";
+                }
+                else if (current.innerText == 'untranslated') {
+                    SavelocalButton.innerText = "Empt";
+                    checkElem.title = "No translation";
+
+                }
+
+                SavelocalButton.title = "Save and approve translation";
+                checkElem.appendChild(SavelocalButton);
+            }
+        }
+        else {
+            let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            //console.debug("currec:", myrec);
+            if (myrec != "null") {
+                //console.debug("current === null");
+            }
+            else {
+
+                current = myrec.querySelector('span.panel-header__bubble');
+                //SavelocalButton = document.querySelector('#preview-' + rowId);
+                console.debug('SavelocalButton:', SavelocalButton,rowId);
+                if (current.innerText == 'transFill') {
+                    SavelocalButton.innerText = "Save";
+                    checkElem.title = "Save the string";
+                }
+                else if (current.innerText == 'waiting') {
+                    SavelocalButton.innerText = "Appr";
+                    checkElem.title = "Approve the string";
+                }
+                else if (current.innerText == 'untranslated') {
+                    SavelocalButton.innerText = "Empt";
+                    checkElem.title = "No translation";
+
+                }
+                else {
+                    console.debug("no current text found");
+                }
+                //console.debug('SavelocalButton != null');
+                //if (SavelocalButton.innerText == "Empty") {
+                //  SavelocalButton.innerText = "Empty";
+                //}
+            }
+         }
+        
+    }
+    //console.debug("updateElementStyle params:", oldstring, originalElem);
+    if (oldstring == 'True') {
+
+        // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
+        if (originalElem != undefined) {
+            var element1 = document.createElement('div');
+            element1.setAttribute('class', 'trans_exists_div');
+            //element1.style.cssText = 'padding-left:0px; padding-top:20px';
+            element1.appendChild(document.createTextNode("Existing string(s)! " + current + " " + wait + " " + rejec + " " + fuz + " " + old));
+            originalElem.appendChild(element1);
+        }
+        else {
+            console.debug("updateElementStyle empty!:", originalElem);
+        }
+    }
+    if (typeof result.wordCount == "undefined") {
+        SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+        if (SavelocalButton != null) {
+            let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            if (h != null) {
+                current = h.querySelector('span.panel-header__bubble');
+                if (current.innerText == 'transFill') {
+                    SavelocalButton.innerText = "Save";
+                    SavelocalButton.title = "Save the string";
+                }
+                else if (current.innerText == 'waiting') {
+                    SavelocalButton.innerText = "Appr";
+                    checkElem.title = "Approve the string";
+                }
+                else if (current.innerText == 'current') {
+                    SavelocalButton.innerText = "Curr";
+                    checkElem.title = "Save the string";
+                }
+                else {
+                    SavelocalButton.innerText = "Appr";
+                    checkElem.title = "Approve the string";
+                }
+            }
+            else {
+                console.debug("no current found!");
+            }
+        }
+        //console.debug('updateElemStyle wordCount undefined!:');
         return;
     }
-    else if (result.percent > 66)
-        priorityElem.style.backgroundColor = 'yellow';
-    else if (result.percent > 33)
-        priorityElem.style.backgroundColor = 'orange';
-        
-    else if (result.percent == 10)
-        priorityElem.style.backgroundColor = 'purple';	
-		    
-    else
-        priorityElem.style.backgroundColor = 'red';
+   
+    if (result.wordCount == 0) {
+        SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+        let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+        if (h != null) {
+            current = h.querySelector('span.panel-header__bubble');
+            //console.debug("wordCount=0:", current.innerText);
+            if (current.innerText == 'transFill') {
+                SavelocalButton.innerText = "Save";
+                checkElem.title = "Save the string";
+            }
+            else if (current.innerText == 'waiting') {
+                SavelocalButton.innerText = "Appr";
+                checkElem.title = "Approve the string";
+            }
+            else if (current.innerText == 'current') {
+                SavelocalButton.innerText = "Curr";
+                checkElem.title = "Save the string";
+            }
+            else if (current.innerText == 'notranslation') {
+                checkElem.title = "No translation";
+            }
+            //console.debug("updateElementStyle wordcount:", result.wordCount);
+            return;
+        }
+    }
+    
+    if (result.percent == 100) {
+        checkElem.innerHTML = '100';
+        if (current.innerText == 'transFill') {
+            checkElem.title = "Save the string";
+        }
+        checkElem.style.backgroundColor = 'green';
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = 'green';
+            if (current.innerText == 'transFill') {
+                checkElem.title = "Save the string";
+            }
+            else if (current.innerText == 'waiting') {
+                checkElem.title = "Approve the string";
+            }
+        }  
+    }
+    else if (result.percent > 66) {
+        //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = '66';
+        checkElem.style.backgroundColor = 'yellow';
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = 'yellow';
+            checkElem.title = "Approve the string";
+        }
+    }
+    else if (result.percent > 33) {
+        //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = '33';
+        checkElem.style.backgroundColor = 'orange';
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = 'orange';
+            checkElem.title = "Approve the string";
+        }
+    }
+    
 
-    priorityElem.setAttribute('title', result.toolTip);
+    else {
+        //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+        checkElem.innerHTML = '0';
+        checkElem.style.backgroundColor = 'red';
+        //console.debug('result.percent:', result.percent);
+        
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = 'red';
+        }
+      }
+    
+    var separator1 = document.createElement('div');
+    separator1.setAttribute('class', 'checkElem_save');
+    //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+    checkElem.appendChild(separator1);
+
+    // we need to add the save button again after updating the element  
+    SavelocalButton = document.createElement('button');
+    SavelocalButton.id = "save-button";
+    SavelocalButton.className = "save-button";
+    SavelocalButton.onclick = savetranslateEntryClicked;
+    let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+   
+    if (h != null) {
+        current = h.querySelector('span.panel-header__bubble');
+        if (current.innerText == 'transFill') {
+            SavelocalButton.innerText = "Save";
+            checkElem.title = "Save the string";
+        }
+        else if (current.innerText == 'waiting') {
+            SavelocalButton.innerText = "Appr";
+            checkElem.title = "Approve the string";
+        }
+        else if (current.innerText == 'current') {
+            SavelocalButton.innerText = "Curr";
+            SavelocalButton.disabled = true;
+            SavelocalButton.style.cursor = "none";
+            checkElem.title = "Save the string";
+        }
+        else if (current.innerText == 'fuzzy') {
+            SavelocalButton.innerText = ("Rej");
+            checkElem.title = "Reject the string";
+        }
+        else {
+            console.debug("no current found!");
+        }
+        // 22-07-2021 PSS fix for wrong button text "Apply" #108 This needs to be investigated to check if the others also need to be moved down
+        if (result.percent == 10) {
+            //checkElem.style.cssText = 'padding-left:0px; text-align: right';
+            checkElem.innerHTML = 'Mod';
+            checkElem.style.backgroundColor = 'purple';
+            if (typeof headerElem.style != "undefined") {
+                headerElem.style.backgroundColor = 'purple';
+                SavelocalButton.innerText = "Save";
+                checkElem.title = "Save the string";
+            }
+        }
+    }
+    else {
+        console.debug('h', h);
+        SavelocalButton.innerText = "Appr";
+        checkElem.title = "Approve the string";
+    }
+    
+    //SavelocalButton.ariaLabel = "Save and approve translation";
+    checkElem.appendChild(SavelocalButton);
+    newline = '\n';
+    missingverbs = 'Missing verbs \n';
+    if (result.toolTip != "") {
+        newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+    }
+    else {
+        newtitle = checkElem.title;
+    }
+    checkElem.setAttribute('title', newtitle);
+    //checkElem.setAttribute('title', result.toolTip);
+}
+
+function savetranslateEntryClicked(event) {
+    //event.preventDefault();   
+    //console.debug("Save button clicked 1!");
+    myrow = event.target.parentElement.parentElement;
+    rowId = myrow.attributes.row.value;
+    // Determine status of record
+    let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+    var current = h.querySelector('span.panel-header__bubble');
+    console.debug("savetranslateEntry current :", current.innerText);
+    // we take care that we can save the record by opening the editor save the record and close the editor again
+    if (current.innerText != 'Empty' && current.innerText != 'untranslated'){
+        if (current.innerText == 'transFill') {
+            let open_editor = document.querySelector(`#preview-${rowId} td.actions .edit`);
+            console.debug('glotpress_open_editor:', rowId, open_editor);
+            let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+            console.debug('glotpress_save:', rowId,glotpress_save);
+            let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`).nextElementSibling.nextElementSibling;
+            console.debug('glotpress_close:', rowId, glotpress_close);
+            let prevrow = document.querySelector(`#preview-${rowId}`);
+            console.debug('prevrow:', glotpress_close);
+            open_editor.click();         
+            glotpress_save.click();
+            
+            //glotpress_close.click();
+            //newrow = glotpress_close.parentElement.parentElement;
+            //gd_auto_hide_next_editor(newrow);
+            
+            prevrow = document.querySelector(`#preview-${rowId}.preview.status-transFill`);
+            if (prevrow != null ) {
+                prevrow.style.backgroundColor = "#b5e1b9";
+            }
+            else {
+                prevrow = document.querySelector(`#preview-${rowId}.preview.untranslated`);
+                if (prevrow != null) {
+                    prevrow.style.backgroundColor = "#b5e1b9";
+                }
+            }
+        }
+        if (current.innerText == 'waiting') {
+            let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
+            let glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
+            let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
+            glotpress_open.click();
+            glotpress_approve.click();
+            glotpress_close.click();
+            prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
+            prevrow.style.backgroundColor = "#b5e1b9";
+        }
+        if (current.innerText == 'fuzzy') {
+            let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
+            let glotpress_reject = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .reject`);
+            let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
+            glotpress_open.click();          
+            glotpress_reject.click();
+            glotpress_close.click();
+            
+            prevrow = document.querySelector(`#preview-${rowId}.preview.status-fuzzy`);
+            console.debug("Rejected:", prevrow);
+            prevrow.style.backgroundColor = "#eb9090";     
+        }
+
+        let SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
+        SavelocalButton.className += " ready";
+        SavelocalButton.disabled = true;
+        SavelocalButton.display = "none";
+    }
 }
 
 function validate(language, original, translation) {
@@ -500,20 +1001,20 @@ function validate(language, original, translation) {
     if (glossary.length > 27) {
         //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
         if (translation.length > 0) {
-            console.debug('validate check the line started');
+            //console.debug('validate check the line started');
 
             for (let oWord of originalWords) {
                 for (let gItem of glossary) {
                     let gItemKey = gItem["key"];
                     let gItemValue = gItem["value"];
                     if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
-                        console.log('Word found:', gItemKey, gItemValue);
+                        //console.log('Word found:', gItemKey, gItemValue);
                         wordCount++;
 
                         let isFound = false;
                         for (let gWord of gItemValue) {
                             if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
-                                console.log('+ Translation found:', gWord);
+                                //console.log('+ Translation found:', gWord);
                                 isFound = true;
                                 break;
                             }
@@ -521,10 +1022,10 @@ function validate(language, original, translation) {
 
                         if (isFound) {
                             foundCount++;
-                            console.log('- Translation found:', gItemKey, gItemValue);
+                           // console.log('- Translation found:', gItemKey, gItemValue);
                         } else {
                             toolTip += `${gItemKey} - ${gItemValue}\n`;
-                            console.log('x Translation not found:', gItemKey, gItemValue);
+                            //console.log('x Translation not found:', gItemKey, gItemValue);
                         }
                         break;
                     }
@@ -541,10 +1042,10 @@ function validate(language, original, translation) {
             percent = foundCount * 100 / wordCount;
         }
         else {
-            console.debug('Validate found no wordCount!');
+            //console.debug('Validate found no wordCount!');
             percent = 0;
         }
-        console.log("Percent calculation:", wordCount, foundCount, percent);
+        //console.log("Percent calculation:", wordCount, foundCount, percent);
         return { wordCount, percent, toolTip };
 }
 
@@ -574,79 +1075,47 @@ function taMatch(gWord, tWord) {
 }
 // 14-06-2021 PSS added fetch old records to show in meta if present
 // 14-06-2021 PSS added the old translation into the metabox, and draw lines between the translations
-async function fetchOldRec(url,rowId) {
-    fetch(url, {
-        headers: new Headers({
-            'User-agent': 'Mozilla/4.0 Custom User Agent'
-        })
-    })
-        .then(response => response.text())
-        .then(data => {
-            //console.log(data);
-            var parser = new DOMParser();
-            var doc = parser.parseFromString(data, 'text/html');
-            console.log("html:", doc);
-            var table = doc.getElementById("translations");
-            console.debug('table:', table);
-            let tr = table.rows;
-            console.debug('table:', tr);
-            var tbodyRowCount = table.tBodies[0].rows.length;
-            console.debug('rowcount:', tbodyRowCount);
-            if (tbodyRowCount > 2) {
-                // 16-06-2021 The below code fixes issue  #82
-                let translateorigsep = document.getElementById('translator_sep1');
-                console.debug("Did we find a separator:", translateorigsep);
-                if (translateorigsep != null){
-                    document.getElementById("translator_sep1").remove();
-                    document.getElementById("translator_sep2").remove();
-                    document.getElementById("translator_div1").remove();
-                    document.getElementById("translator_div2").remove();
-                    document.getElementById("translator_div3").remove();
-                }
-                
-                rowContent = table.rows[tbodyRowCount-3];
-                orig = rowContent.getElementsByClassName('original-text');
-                trans = rowContent.getElementsByClassName('translation-text');
-                var separator1 = document.createElement('div');
-                separator1.setAttribute('id', 'translator_sep1');
-                separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
-                separator1.appendChild(document.createTextNode(""));
-                var separator2 = document.createElement('div');
-                separator2.setAttribute('id', 'translator_sep2');
-                separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
-                separator2.appendChild(document.createTextNode(""));
+// 22-06-2021 PSS added functionality to show differences in the translations
+async function fetchOldRec(url, rowId) {
+    // 23-06-2021 PSS added original translation to show in Meta
+    //console.debug('fetchOldRec:', rowId);
+    let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+    let original = e.querySelector('#editor-' + rowId + ' .foreign-text').textContent;
+    let status = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerHTML;
+    //console.debug('fetchOldRec status:', status);
+    switch (status) {
+        case 'current':
+            newurl = url.replace("mystat", "waiting");
+            //console.debug("fetchOldRec after replace to waiting:", newurl);
+            break;
+        case 'waiting':
+            //console.debug("fetchOldRec before replace to current:", url);
+            newurl = url.replace("mystat", "current");
+            //console.debug("fetchOldRec after replace to current:", newurl);
+            break;
+        case 'rejected':
+            newurl = url.replace("mystat", "current");
+            //console.debug("fetchOldRec rejected after replace to current:", newurl);
+            break;
+        case 'fuzzy':
+            newurl = url.replace("mystat", "current");
+            //console.debug("fetchOldRec fuzzy after replace to current:", newurl);
+            break;
+        case 'old':
+            newurl = url.replace("mystat", "current");
+            //console.debug("fetchOldRec old after replace to current:", newurl);
+            break;
+        case 'untranslated':
+            newurl = url.replace("mystat", "untranslated");
+            //console.debug("fetchOldRec untranslated after replace to current:", newurl);
+            break;
+    }
+    // fix for issue #99
+    if (status != 'untranslated' && typeof newurl != 'undefined') {
+        //console.debug("fetchOldrec original:", newurl, rowId, original);
+        var diffType = "diffWords";
 
-                var element1 = document.createElement('div');
-                element1.setAttribute('id', 'translator_div1');             
-                element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element1.appendChild(document.createTextNode('Previous translation exists'));
-                
-                var element2 = document.createElement('div');
-                element2.setAttribute('id', 'translator_div2');
-                element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element2.appendChild(document.createTextNode(orig[0].innerText));
-                
-                var element3 = document.createElement('div');
-                element3.setAttribute('id', 'translator_div3');  
-                element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                element3.appendChild(document.createTextNode(trans[0].innerText));
-                
-                let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
-                metaElem.appendChild(element1);
-                metaElem.appendChild(separator1);
-                metaElem.appendChild(element2);
-                metaElem.appendChild(separator2);
-                metaElem.appendChild(element3);
-                //metaElem.style.color = 'darkblue';
-                metaElem.style.fontWeight = "900";
-                
-            }
-        }).catch(error => console.error(error));
-}
-
-// 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(priorityElem, result, url,single) {
-        const data =fetch(url, {
+        fetch(newurl, {
             headers: new Headers({
                 'User-agent': 'Mozilla/4.0 Custom User Agent'
             })
@@ -658,15 +1127,258 @@ async function fetchOld(priorityElem, result, url,single) {
                 var doc = parser.parseFromString(data, 'text/html');
                 //console.log("html:", doc);
                 var table = doc.getElementById("translations");
-                const tbodyRowCount = table.tBodies[0].rows.length;
-                //console.debug('tbodyRowCount:', tbodyRowCount)
-                if (tbodyRowCount > 2 && single == 'False') {
-                    updateElementStyle(priorityElem, result, 'True');
+                //console.debug('table:', table);
+                let tr = table.rows;
+                //console.debug('table:', tr);
+                var tbodyRowCount = table.tBodies[0].rows.length;
+                //console.debug('rowcount:', tbodyRowCount);
+                if (tbodyRowCount > 1) {
+                    // 16-06-2021 The below code fixes issue  #82
+                    let translateorigsep = document.getElementById('translator_sep1');
+                   // console.debug("Did we find a separator:", translateorigsep);
+                    if (translateorigsep != null) {
+                        document.getElementById("translator_sep1").remove();
+                        document.getElementById("translator_sep2").remove();
+                        document.getElementById("translator_sep3").remove();
+                        document.getElementById("translator_div1").remove();
+                        document.getElementById("translator_div2").remove();
+                        document.getElementById("translator_div3").remove();
+                        document.getElementById("translator_div4").remove();
+                        document.getElementById("translator_div5").remove();
+                    }
+
+                    rowContent = table.rows[tbodyRowCount - 1];
+
+                    orig = rowContent.getElementsByClassName('original-text');
+                    trans = rowContent.getElementsByClassName('translation-text');
+
+                    var separator1 = document.createElement('div');
+                    separator1.setAttribute('id', 'translator_sep1');
+                    separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
+                    separator1.appendChild(document.createTextNode(""));
+
+                    var separator2 = document.createElement('div');
+                    separator2.setAttribute('id', 'translator_sep2');
+                    separator2.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                    separator2.appendChild(document.createTextNode(""));
+
+                    var separator3 = document.createElement('div');
+                    separator3.setAttribute('id', 'translator_sep3');
+                    separator3.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                    separator3.appendChild(document.createTextNode(""));
+
+                    var separator4 = document.createElement('div');
+                    separator4.setAttribute('id', 'translator_sep4');
+                    separator4.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px #C4C4C4;';
+                    separator4.appendChild(document.createTextNode(""));
+
+                    var element1 = document.createElement('div');
+                    element1.setAttribute('id', 'translator_div1');
+                    element1.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element1.appendChild(document.createTextNode('Previous existing translation'));
+
+                    var element2 = document.createElement('div');
+                    element2.setAttribute('id', 'translator_div2');
+                    element2.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element2.appendChild(document.createTextNode(orig[0].innerText));
+
+                    var element3 = document.createElement('div');
+                    element3.setAttribute('id', 'translator_div3');
+                    element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    element3.appendChild(document.createTextNode(trans[0].innerText));
+
+                    // 23-06-2021 PSS added the current translation below the old to be able to mark the differences issue #92                
+
+                    var element4 = document.createElement('div');
+                    element4.setAttribute('id', 'translator_div4');
+                    element4.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+
+
+                    var element5 = document.createElement('div');
+                    element5.setAttribute('id', 'translator_div5');
+                    element5.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
+                    //element5.appendChild(document.createTextNode(""));
+
+                    let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                    if (metaElem != null) {
+                        metaElem.appendChild(element1);
+                        metaElem.appendChild(separator1);
+                        metaElem.appendChild(element2);
+                        metaElem.appendChild(separator2);
+                        metaElem.appendChild(element3);
+                        metaElem.appendChild(separator3);
+                        metaElem.appendChild(separator3);
+                        metaElem.appendChild(element4);
+                        metaElem.appendChild(separator4);
+                        metaElem.appendChild(element5);
+
+                        // Strings are retrieved and compared
+                        var oldStr = trans[0].innerText;
+                        var newStr = original;
+                        //console.debug("old", oldStr);
+                        //console.debug("new:", newStr);
+                        //var diffType = "diffWords";
+                        var diffType = "diffWords";
+                        var changes = JsDiff[diffType](oldStr, newStr);
+                        //console.debug("content of changes:", changes);
+                        //console.debug("fetchOldRec diff:", changes);
+
+                        if (oldStr.length != newStr.length) {
+                            textdif = '  ->Length not equal!';
+                        }
+                        else {
+                            textdif = '';
+                        }
+                        if (oldStr == newStr) {
+                            element4.appendChild(document.createTextNode('New translation is the same'));
+                        }
+                        else {
+                            element4.appendChild(document.createTextNode('New translation difference!'));
+                        }
+                        element5.innerHTML = JsDiff.convertChangesToXML(changes) + textdif;
+                        metaElem.appendChild(element5);
+
+                        //metaElem.style.color = 'darkblue';
+                        metaElem.style.fontWeight = "900";
+                    }
+
                 }
-                else if (tbodyRowCount > 2 && single == 'True') {
-                    var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
-                    window.open(url, "_blank", windowFeatures);
+            }).catch(error => console.error(error));
+    }
+}
+
+// 11-06-2021 PSS added function to mark that existing translation is present
+async function fetchOld(checkElem, result, url, single, originalElem,row) {
+    // 30-06-2021 PSS added fetch status from local storage
+    chrome.storage.sync
+        .get(
+            ['noOldTrans'],
+            function (data) {
+                //console.debug("fetchOld param getOldTrans:", data.noOldTrans);
+                single = data.noOldTrans;
+            });
+    
+              //console.debug("single:", single);
+              //console.debug('FetchOld url:', url, originalElem);
+              const data = fetch(url, {
+              headers: new Headers({
+                'User-agent': 'Mozilla/4.0 Custom User Agent'
+                 })
+              })
+            .then(response => response.text())
+            .then(data => {
+                //console.log(data);
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(data, 'text/html');
+                //console.log("html:", doc);
+                var table = doc.getElementById("translations");
+                let tr = table.rows;
+                //console.debug('table:', tr);
+                
+                if (table != undefined) {
+                    const tbodyRowCount = table.tBodies[0].rows.length;
+                    //console.debug('tbodyRowCount:', tbodyRowCount)
+                    // 04-07-2021 PSS added counter to message for existing translations
+                    var rejected = table.querySelectorAll('tr.preview.status-rejected');
+                    var waiting = table.querySelectorAll('tr.preview.status-waiting');
+                    var fuzzy = table.querySelectorAll('tr.preview.status-fuzzy');
+                    var current = table.querySelectorAll('tr.preview.status-current');
+                    var old = table.querySelectorAll('tr.preview.status-old');
+                    if (typeof current != 'null' && current.length != 0) {
+                        current = " Current:" + current.length;
+                    }
+                    else {
+                        current = "";
+                    }
+                    if (waiting.length != 0) {
+                        wait = " Waiting:" + waiting.length;
+                    }
+                    else {
+                        wait = "";
+                    }
+                    if (rejected.length != 0) {
+                        rejec = " Rejected:" + rejected.length;
+                    }
+                    else {
+                        rejec = "";
+                    }
+                    if (fuzzy.length != 0) {
+                        fuz = " Fuzzy:" + fuzzy.length;
+                    }
+                    else {
+                        fuz = "";
+                    }
+                    if (old.length != 0) {
+                        old = " Old:" + old.length;
+                    }
+                    else {
+                        old = "";
+                    }
+                    if (tbodyRowCount > 2 && single == 'False') {
+                        updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old,row);
+                    }
+                    else if (tbodyRowCount > 2 && single == 'True') {
+                        updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old,row);
+                        //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+                        //window.open(url, "_blank", windowFeatures);
+                    }
                 }
-            })
-            .catch(error => console.error(error));
+            }).catch(error => console.error(error));
+       
+}
+
+// The code below is taken from the free add-on GlotDict
+// All the credits go to the authors of GlotDict
+// It is modified to get the results needed by  WordPress Translation Filler
+
+function gd_auto_hide_next_editor(editor) {
+    var preview = editor.nextElementSibling;
+    if (!preview) {
+        return;
+    }
+    var next_editor = preview.nextElementSibling;
+    if (next_editor != null) {
+        var next_preview = next_editor.previousElementSibling;
+    }
+    if (!next_editor || !next_preview || !next_editor.classList.contains('editor') || !next_preview.classList.contains('preview')) {
+        return;
+    }
+    next_editor.style.display = 'none';
+    next_preview.style.display = 'table-row';
+}
+//
+function gd_wait_table_alter() {
+    if (document.querySelector('#translations tbody') !== null) {
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
+                mutation.addedNodes.forEach(function (addedNode) {
+                    if (addedNode.nodeType !== 1) {
+                        return;
+                    }
+                    //console.debug("INSIDE");
+                    //if (addedNode.classList.contains('editor') && mutation.previousSibling && !mutation.previousSibling.matches('.editor.untranslated')) {
+                    if (addedNode.classList.contains('editor')) {
+                       // console.debug("Hide next editor");
+                        gd_auto_hide_next_editor(addedNode);
+                    }
+                    if (is_pte && addedNode.classList.contains('preview')) {
+                        //gd_add_column_buttons(addedNode);
+                        console.debug("addedNode:", addedNode);
+                        gd_auto_hide_next_editor(addedNode);
+                    }
+                    if (addedNode.classList.contains('preview')) {
+                        // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
+                    }
+                });
+                //gd_add_meta();
+            });
+        });
+
+        observer.observe(document.querySelector('#translations tbody'), {
+            attributes: true,
+            childList: true,
+            characterData: true
+        });
+    }
 }
