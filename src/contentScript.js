@@ -27,7 +27,15 @@ console.debug("jsStore opened:",jsstoreCon);
 var fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');
 
+// PSS 31-07-2021 added new function to scrape consistency tool
+document.addEventListener("keydown", function (event) {
 
+    if (event.altKey && (event.key === 'c' || event.key === 'C')) {
+
+        event.preventDefault();
+        scrapeconsistency();
+    }
+});
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 
 document.addEventListener("keydown", function (event) {
@@ -68,8 +76,13 @@ document.addEventListener("keydown", function (event) {
             console.debug('checkComment started element', element);
             if (element != null) {
                 // Fetch the comment with name
-                let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
-                toTranslate = checkComments(comment);
+                if (typeof rowId != 'undefined') {
+                    let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+                    toTranslate = checkComments(comment);
+                }
+                else {
+                    toTranslate == true;
+                }
             }
             if (toTranslate == true) {
                 if (translatedText.includes(search)) {
