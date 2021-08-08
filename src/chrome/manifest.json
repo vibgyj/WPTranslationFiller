@@ -28,6 +28,7 @@
         "https://cdnjs.cloudflare.com/*"
       ],
       "js": [
+        "scrapeweb.js",
         "jsstore.js",
         "jsstore.worker.js",
         "database.js",
