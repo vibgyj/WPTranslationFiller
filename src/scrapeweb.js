@@ -3,7 +3,9 @@ function scrapeconsistency() {
 	var wind;
 	wind = "myWindow";
 	var locale = "nl";
-	var myWindow = window.open("","_blanc");
+	// 09-08-2021 PSS fixed problem with not opening new windows in Chrome issue #114
+	var consistsWindow = window.open("https://translate.wordpress.org/consistency/?search=&set=nl%2Fdefault","https://translate.wordpress.org/consistency/?search=&set=nl%2Fdefault");
+	var myWindow = window.open("", "_blanc");
 	
 	//myWindow.focus();
 	
@@ -130,7 +132,7 @@ function scrapeconsistency() {
 	s.setAttribute('text', "Submit");
 	
 	s.onclick = function() {
-        startsearch(myWindow,currentLocation,locale);
+        startsearch(myWindow,currentLocation,locale,consistsWindow);
 };
 	
 	var SavelocalButton = myWindow.document.createElement('button');
@@ -139,7 +141,7 @@ function scrapeconsistency() {
         SavelocalButton.className = "return-button";
 		SavelocalButton.innerText = "Close window";
         SavelocalButton.onclick = function() {
-        submitClicked(myWindow);
+			submitClicked(myWindow, consistsWindow);
 };
     
     const br = myWindow.document.createElement("br");
@@ -160,6 +162,9 @@ function scrapeconsistency() {
     
     myWindow.document.getElementsByTagName('body')[0].appendChild(f);
 	//myWindow.document.getElementById("submit-consist").focus();
+	const para = myWindow.document.createElement("p");
+	const node = myWindow.document.createTextNode("-->Please be patient it can sometimes take a bit before the result windows are opened!");
+	myWindow.document.getElementsByTagName('body')[0].appendChild(node);
 	
 	var dv1 = myWindow.document.createElement('div');
 	dv1.setAttribute('id', "dbox");
@@ -169,24 +174,24 @@ function scrapeconsistency() {
 	dv2.setAttribute('id', "dboxm");
 	dv2.setAttribute('class', "dboxm");
 	dv2.setAttribute('text', "text");
+	dv2.setAttribute("display", "none");
 	myWindow.document.getElementById('dbox').appendChild(dv2);
 	
 		
 }
 
 
-function submitClicked(myWindow)
+function submitClicked(myWindow, consistsWindow)
 {
-	//alert("are you sure?");
+	consistsWindow.close();
 	myWindow.close();
 }
 
-function startsearch(myWindow,curloc,locale) {
+function startsearch(myWindow,curloc,locale,consistsWindow) {
 	 
-	 event.preventDefault();
-	 var box = myWindow.document.getElementById('dbox'),
-      boxm = myWindow.document.getElementById('dboxm');
-      console.debug("boxes:",box,boxm);
+	event.preventDefault();
+	//var box = myWindow.document.getElementById('dbox'),
+    //boxm = myWindow.document.getElementById('dboxm');
 	
 	var searchverb = myWindow.document.getElementById("myForm").elements.namedItem("searchfor").value;
 	var replverb = myWindow.document.getElementById("myForm").elements.namedItem("replverb").value;
@@ -209,8 +214,8 @@ function startsearch(myWindow,curloc,locale) {
         return response.text();
         })
         .then(function(html) {
-			var box = myWindow.document.getElementById('dbox'),
-             boxm = myWindow.document.getElementById('dboxm');
+			//var box = myWindow.document.getElementById('dbox'),
+            // boxm = myWindow.document.getElementById('dboxm');
 			 //console.debug("boxes:",box,boxm);
 			 
              // Initialize the DOM parser
@@ -235,45 +240,35 @@ function startsearch(myWindow,curloc,locale) {
 		   var replace_links = '';
 		   for(var i = 1; i < Rows-2; i++) {
 					
-			   rowCount++;
-               let myrow = mytablebody.getElementsByTagName("tr")[rowCount];
-			   //console.debug("myRow:",myrow);
-			  
+			    rowCount++;
+                let myrow = mytablebody.getElementsByTagName("tr")[rowCount];
 				var mycel1 = myrow.getElementsByTagName("td")[0];
 				if (mycel1 != undefined){
-				var orgtext=mycel1.childNodes[0].innerText;
-				var mycel11=mycel1.childNodes[2];
-				var myceltext12=mycel11.getElementsByTagName("a");
-				var myorglink= myceltext12.item(0).href;
-				var textorglink= myorglink.innerText;
-		        var mycel2 = myrow.getElementsByTagName("td")[1];
-			    var transtext=mycel2.childNodes[0].innerText;
-				var myceltext3=mycel2.childNodes[2];
-				var myceltext4=myceltext3.getElementsByTagName("a");
-				var mylink= myceltext4.item(0).href;
-		        //console.debug('Row:',myrow);
-			    //console.debug('Cells:',mycel1);
-				//console.debug('project:',myorglink);
-				//console.debug('orgtext:',orgtext);
-			    //console.debug('Cells:',mycel2);
-				console.debug('Translated:',transtext);
-				//console.debug('Celltext3:',myceltext3);
-				//console.debug('Link:',mylink);
-				//console.debug('Orglink:',myorglink);
-				if (transtext == wrongverb) {
-					let isFound = myorglink.search("dev");
-					if (isFound == -1) {
-						-i;
-						replCount++;
-						// Max25 windows will be opened
-						if (replCount <25){
-						newWindow = window.open(mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb, mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb);
-						replace_links += mylink + '\n';
-						
-						}
-					}	
-				}
-				else{
+					var orgtext=mycel1.childNodes[0].innerText;
+					var mycel11=mycel1.childNodes[2];
+					var myceltext12=mycel11.getElementsByTagName("a");
+					var myorglink= myceltext12.item(0).href;
+					var textorglink= myorglink.innerText;
+					var mycel2 = myrow.getElementsByTagName("td")[1];
+					var transtext=mycel2.childNodes[0].innerText;
+					var myceltext3=mycel2.childNodes[2];
+					var myceltext4=myceltext3.getElementsByTagName("a");
+					var mylink= myceltext4.item(0).href;
+					//console.debug('Translated:',transtext);
+				
+					if (transtext == wrongverb) {
+						let isFound = myorglink.search("dev");
+						if (isFound == -1) {
+							-i;
+							replCount++;
+							// Max25 windows will be opened
+							if (replCount <25){
+							newWindow = window.open(mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb, mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb);
+							replace_links += mylink + '\n';	
+							}
+						}	
+					}
+					else{
 						-i;
 					}
 				}
@@ -282,18 +277,14 @@ function startsearch(myWindow,curloc,locale) {
 		    if (replCount == 0){
 			   console.debug("mywindow:", myWindow);
 			   myWindow.alert("No records to replace!");
-			   //dbox("No records to replace!", box,boxm);
-			   //alert("No records to replace!!");
 		    }
 		    console.debug("Search ended:");
 		    if (replCount != 0) {
 			   var current_date = new Date();
                wptf_download( '[' + current_date.toLocaleString( [], { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' } ) +' wptf replace log.txt]',replace_links,myWindow);
-			   
-		       // dbox("Search ready!", box,boxm);
-		myWindow.alert("search ended\nClose this window if you are ready");
-		//submitClicked(myWindow);
-		}
+			}
+			consistsWindow.close();
+			myWindow.alert("search ended\nClose this window if you are ready");
         })
         .catch(function(err) {  
          console.log('Failed to fetch page: ', err); 
@@ -318,15 +309,9 @@ function startsearch(myWindow,curloc,locale) {
 		//var existingWin = window.open('', 'SelectWin');
 		//console.debug("curwin:",existingWin);
 		//console.debug('div:',myWindow.document.querySelector(".swal2-container"))
+		myWindow.alert("missing fieldvalue!");
+		consistsWindow.close();
 		
-		//Swal.fire({
-  //icon: 'error',
-  //title: 'Oops...',
-  //text: 'Something went wrong!',
- // footer: '<a href="">Why do I have this issue?</a>',
- // target: myWindow.document.querySelector(".dbox")});
-		dbox("Missing fieldvalue!", box,boxm);
-		//myWindow.alert("missing fieldvalue!");
 	}
 	
 }
@@ -348,9 +333,9 @@ function dbox(msg, box,boxm) {
         element.setAttribute( 'href', 'data:text/plain;charset=utf-8,' + encodeURIComponent( text ) );
         element.setAttribute( 'download', filename );
         element.style.display = 'none';
-        document.body.appendChild( element );
+        myWindow.document.body.appendChild( element );
         element.click();
-        document.body.removeChild( element );
+        myWindow.document.body.removeChild( element );
       }
 	
 
