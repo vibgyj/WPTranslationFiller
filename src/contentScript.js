@@ -918,7 +918,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
     else {
-        console.debug('h', h);
+       // console.debug('h', h);
         SavelocalButton.innerText = "Appr";
         checkElem.title = "Approve the string";
     }
@@ -928,6 +928,8 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     newline = '\n';
     missingverbs = 'Missing verbs \n';
     if (result.toolTip != "") {
+        // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
+        headerElem.setAttribute('title', headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip))
         newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
     }
     else {
