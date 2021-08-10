@@ -46,6 +46,8 @@ function scrapeconsistency() {
       box-shadow: 0 1px 0 #006799;
       color: #fff !important;
       }
+
+      /** This one below can be removed **/
       #dbox {
       /* (A1) CENTER ON PAGE */
       position: relative;
@@ -63,15 +65,55 @@ function scrapeconsistency() {
      }
 	
 	 h3 {
-		color: #0085ba; 
+		color: #0085ba;  
+        width: 100%;
 	 }
+
+     /**header of the script showing WordPress.org**/
 	 #wptf_head{
 		 background:lightgrey !important;
+         margin: auto;
+         width: 50%;
 	 }
 	 a { text-decoration: none;
         color:white;
-       font-size:32;	
+       font-size:32;     
+        width: 100%;
       	   }
+     /**container decoration**/
+     paranode { text-decoration: none;
+        color:black;
+        width: 100%;
+      	   }
+     #wptf_container {
+        margin: auto;
+        width: 50%;
+      	   }
+
+     /**main container of pling**/
+
+    .custom .box{
+     background:#333 !important;
+     color:#fff !important;
+     width: 50% !important;
+     }
+
+     /**title of the alert**/
+     .custom .title{
+     background:#64B5F6 ! important;
+     color:#fff !important;
+     }
+
+     /**content of the alert**/
+     .custom .content{
+     color:#fff !important;
+     }
+
+     /**ok button**/
+     .custom .btn{
+     background:#333 !important;
+     color:#fff !important;
+     }
     `;
      myWindow.document.head.appendChild(style);
 	//myWindow.focus();
@@ -88,7 +130,7 @@ function scrapeconsistency() {
     a.title = "WordPress.org";                   
     // Set the href property.
     a.href = "https://www.wordpress.org"; 				
-    // Append the anchor element to the body.               
+    // Append the anchor element to my head.               
     myWindow.document.getElementById('wptf_head').appendChild(a);
 	myWindow.document.getElementById('wptf_head').innerHTML +=
 	"<h3>Enter verbs for Search, Wrong verb, Replace verb</h3>";
@@ -159,12 +201,21 @@ function scrapeconsistency() {
 
 //and some more input elements here
 //and dont forget to add a submit button
-    
-    myWindow.document.getElementsByTagName('body')[0].appendChild(f);
+	var container = myWindow.document.createElement('div');
+	container.setAttribute('id', "wptf_container");
+	myWindow.document.getElementsByTagName('body')[0].appendChild(container);
+	myWindow.document.getElementById('wptf_container').appendChild(f);
+	//myWindow.document.getElementsByTagName('body')[0].appendChild(f);
+
+	var paradiv = myWindow.document.createElement('div');
+	paradiv.id = "paradiv";
+	myWindow.document.getElementById('wptf_container').appendChild(paradiv);
+	//myWindow.document.getElementsByTagName('body')[0].appendChild(paradiv);
 	//myWindow.document.getElementById("submit-consist").focus();
 	const para = myWindow.document.createElement("p");
-	const node = myWindow.document.createTextNode("-->Please be patient it can sometimes take a bit before the result windows are opened!");
-	myWindow.document.getElementsByTagName('body')[0].appendChild(node);
+	const paranode = myWindow.document.createTextNode("-->Please be patient it can sometimes take a bit before the result windows are opened!");
+	myWindow.document.getElementById('paradiv').appendChild(paranode);
+	//myWindow.document.getElementsByTagName('body')[0].appendChild(paranode);
 	
 	var dv1 = myWindow.document.createElement('div');
 	dv1.setAttribute('id', "dbox");
@@ -179,7 +230,6 @@ function scrapeconsistency() {
 	
 		
 }
-
 
 function submitClicked(myWindow, consistsWindow)
 {
@@ -309,13 +359,16 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
 		//var existingWin = window.open('', 'SelectWin');
 		//console.debug("curwin:",existingWin);
 		//console.debug('div:',myWindow.document.querySelector(".swal2-container"))
-		myWindow.alert("missing fieldvalue!");
+		// 10-08-201 PSS new custom alert box "Add a custom alert box #116"
+		Pling("Missing fieldvalue", "Alert","custom", myWindow);
+		//myWindow.alert("missing fieldvalue!");
 		consistsWindow.close();
 		
 	}
 	
 }
 
+// This will be removed if we are going to use pling.js as custom alert
 function dbox(msg, box,boxm) {
 	
   // (B1) GET ELEMENTS
@@ -338,5 +391,4 @@ function dbox(msg, box,boxm) {
         myWindow.document.body.removeChild( element );
       }
 	
-
 

@@ -30,6 +30,7 @@
         "https://cdnjs.cloudflare.com/*"
       ],
       "js": [
+        "pling.js",
         "scrapeweb.js",
         "jsstore.js",
         "jsstore.worker.js",
