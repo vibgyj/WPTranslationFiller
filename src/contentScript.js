@@ -927,15 +927,20 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     checkElem.appendChild(SavelocalButton);
     newline = '\n';
     missingverbs = 'Missing verbs \n';
+    // 11-08-2021 PSS added aditional code to prevent duplicate missing verbs in individual translation
+    headerElem.title = "";
     if (result.toolTip != "") {
         // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
-        headerElem.setAttribute('title', headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip))
+        headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
         newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
     }
     else {
         newtitle = checkElem.title;
+        headertitle = headerElem.title;
     }
     checkElem.setAttribute('title', newtitle);
+    // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
+    headerElem.setAttribute('title', headertitle);
     //checkElem.setAttribute('title', result.toolTip);
 }
 
@@ -1039,8 +1044,10 @@ function validate(language, original, translation) {
                             foundCount++;
                            // console.log('- Translation found:', gItemKey, gItemValue);
                         } else {
-                            toolTip += `${gItemKey} - ${gItemValue}\n`;
-                            //console.log('x Translation not found:', gItemKey, gItemValue);
+                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))){
+                                toolTip += `${gItemKey} - ${gItemValue}\n`;
+                                //console.log('x Translation not found:', gItemKey, gItemValue);
+                            }
                         }
                         break;
                     }

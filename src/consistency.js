@@ -47,23 +47,6 @@ function scrapeconsistency() {
       color: #fff !important;
       }
 
-      /** This one below can be removed **/
-      #dbox {
-      /* (A1) CENTER ON PAGE */
-      position: relative;
-      top: 40%; left: 50%;
-      transform: translate(-50%);
-      /* (A2) DIMENSIONS */
-      width: 400px;
-      padding: 10px;
-      /* (A3) COLORS */
-      color: #333;
-      border: 1px solid #c52828;
-      background: #ffebe1;
-      /* (A4) HIDE */
-     display: none;
-     }
-	
 	 h3 {
 		color: #0085ba;  
         width: 100%;
@@ -113,6 +96,8 @@ function scrapeconsistency() {
      .custom .btn{
      background:#333 !important;
      color:#fff !important;
+	 font-size:18 !important;
+     border:2px solid rgba(1000, 1000, 1000, 0.50) !important;
      }
     `;
      myWindow.document.head.appendChild(style);
@@ -216,18 +201,6 @@ function scrapeconsistency() {
 	const paranode = myWindow.document.createTextNode("-->Please be patient it can sometimes take a bit before the result windows are opened!");
 	myWindow.document.getElementById('paradiv').appendChild(paranode);
 	//myWindow.document.getElementsByTagName('body')[0].appendChild(paranode);
-	
-	var dv1 = myWindow.document.createElement('div');
-	dv1.setAttribute('id', "dbox");
-	dv1.setAttribute('class', "dbox");
-	myWindow.document.getElementsByTagName('body')[0].appendChild(dv1);
-	var dv2 = myWindow.document.createElement('div');
-	dv2.setAttribute('id', "dboxm");
-	dv2.setAttribute('class', "dboxm");
-	dv2.setAttribute('text', "text");
-	dv2.setAttribute("display", "none");
-	myWindow.document.getElementById('dbox').appendChild(dv2);
-	
 		
 }
 
@@ -240,8 +213,6 @@ function submitClicked(myWindow, consistsWindow)
 function startsearch(myWindow,curloc,locale,consistsWindow) {
 	 
 	event.preventDefault();
-	//var box = myWindow.document.getElementById('dbox'),
-    //boxm = myWindow.document.getElementById('dboxm');
 	
 	var searchverb = myWindow.document.getElementById("myForm").elements.namedItem("searchfor").value;
 	var replverb = myWindow.document.getElementById("myForm").elements.namedItem("replverb").value;
@@ -325,8 +296,9 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
             }
             console.debug("Replcount:", replCount);
 		    if (replCount == 0){
-			   console.debug("mywindow:", myWindow);
-			   myWindow.alert("No records to replace!");
+				console.debug("mywindow:", myWindow);
+				Pling("No records to replace!", "Alert", "custom", myWindow);
+			   //myWindow.alert("No records to replace!");
 		    }
 		    console.debug("Search ended:");
 		    if (replCount != 0) {
@@ -334,32 +306,23 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
                wptf_download( '[' + current_date.toLocaleString( [], { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' } ) +' wptf replace log.txt]',replace_links,myWindow);
 			}
 			consistsWindow.close();
-			myWindow.alert("search ended\nClose this window if you are ready");
+			//Pling("search ended\nClose this window if you are ready", "Alert", "custom", myWindow);
+			//myWindow.alert("search ended\nClose this window if you are ready");
         })
         .catch(function(err) {  
-         console.log('Failed to fetch page: ', err); 
-         myWindow.alert( "Failed to fetch the page error:"+err)	;	
+			console.log('Failed to fetch page: ', err);
+			Pling("Failed to fetch the page error:" + err, "Alert", "custom", myWindow);
+            //myWindow.alert( "Failed to fetch the page error:"+err)	;	
         });
 		}	
 	    else{
-			
-		    myWindow.alert( "OK cancelled no replacements!");
+			Pling("OK cancelled no replacements!", "Alert", "custom", myWindow);
+		    //myWindow.alert( "OK cancelled no replacements!");
 	     }
 	}
 	
 	else {
 		event.preventDefault();
-		console.debug('missing box:',myWindow.document.getElementById("dbox") );
-		console.debug('missing dboxm:',myWindow.document.querySelector(".dboxm") );
-		
-		//console.debug('missing body:', myWindow.document.getElementsByTagName("body"));
-		//kind=myWindow.document.getElementsByTagName("body");
-		//laatstekind=kind[0].lastChild;
-		//console.debug('laatste kind:',laatstekind);
-		//var existingWin = window.open('', 'SelectWin');
-		//console.debug("curwin:",existingWin);
-		//console.debug('div:',myWindow.document.querySelector(".swal2-container"))
-		// 10-08-201 PSS new custom alert box "Add a custom alert box #116"
 		Pling("Missing fieldvalue", "Alert","custom", myWindow);
 		//myWindow.alert("missing fieldvalue!");
 		consistsWindow.close();
@@ -368,18 +331,6 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
 	
 }
 
-// This will be removed if we are going to use pling.js as custom alert
-function dbox(msg, box,boxm) {
-	
-  // (B1) GET ELEMENTS
-  //var box = myWindow.document.getElementById('dbox'),
-  //boxm = myWindow.document.getElementById('dboxm');
-  //console.debug("boxes:",box,boxm);
-  // (B2) SHOW/HIDE
-  boxm.innerHTML = (msg === undefined) ? "" : msg ;
-  box.style.display = (msg === undefined) ? "none" : "block";
-  
-  }
   
   function wptf_download( filename, text,myWindow) {
         var element = myWindow.document.createElement( 'a' );

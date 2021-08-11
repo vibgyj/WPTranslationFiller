@@ -31,7 +31,7 @@
       ],
       "js": [
         "pling.js",
-        "scrapeweb.js",
+        "consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
         "database.js",
