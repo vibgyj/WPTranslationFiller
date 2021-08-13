@@ -676,7 +676,7 @@ function sendAPIRequestDeepl(e, language, apikeyDeepl, original, originalPreProc
             
             else {
                 // 18-06-2021 PSS fixed an alert at the wrong time issue #83
-                 console.debug("Status received:", this.status,this.readyState);
+                // console.debug("Status received:", this.status,this.readyState);
                // alert("Error in translation receive code:", this.status);
                 }
        }

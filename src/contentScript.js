@@ -931,8 +931,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     headerElem.title = "";
     if (result.toolTip != "") {
         // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
-        headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
-        newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+        console.debug('newline:' + newline + 'missingverbs:' + missingverbs + 'Tooltip:' + result.toolTip);
+        if (typeof headerElem.title != 'undefined') {
+            headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+            newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+        }
     }
     else {
         newtitle = checkElem.title;
@@ -940,7 +943,10 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     }
     checkElem.setAttribute('title', newtitle);
     // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
-    headerElem.setAttribute('title', headertitle);
+    if (typeof headerElem.title != 'undefined') {
+        console.debug("title:", headerElem.title);
+        headerElem.setAttribute('title', headertitle);
+    }
     //checkElem.setAttribute('title', result.toolTip);
 }
 
