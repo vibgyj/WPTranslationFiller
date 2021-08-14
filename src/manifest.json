@@ -40,12 +40,10 @@
         "database.js",
         "contentScript.js",
         "googleTranslate.js",
-        "jsdiff.js",
+        "jsdiff.js"
       ],
       "css": [
-        "translationFillerStyle.css",
-        "style.css"
-
+        "translationFillerStyle.css"
       ]      
     }
   ],

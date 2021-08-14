@@ -199,10 +199,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 let element = e.querySelector('.source-details__comment');
                 if (element != null) {
                     let comment = e.querySelector('.source-details__comment p').innerText;
-                    comment = comment.trim();
-                    toTranslate = checkComments(comment);
-                    console.debug('comment:', comment);
-                    toTranslate = checkComments(comment);
+                    //comment = comment.trim();
+                    //toTranslate = checkComments(comment);
+                    //console.debug('comment:', comment);
+                    toTranslate = checkComments(comment.trim());
                     let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                     if (currec != null) {
                         var current = currec.querySelector('span.panel-header__bubble');
@@ -383,7 +383,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
           if (element != null) {
              // Fetch the comment with name
             let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
-            toTranslate = checkComments(comment);
+              toTranslate = checkComments(comment.trim());
            }
           if (toTranslate) {
               let pretrans = await findTransline(original,destlang);

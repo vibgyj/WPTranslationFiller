@@ -595,14 +595,47 @@ function validatePage(language, showHistory) {
     
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
+        
         let textareaElem = e.querySelector('textarea.foreign-text');
+        let rowId = textareaElem.parentElement.parentElement.parentElement
+            .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
+        console.debug('row:', rowId);
         textareaElem.addEventListener('input', function (e) {
          //console.debug("eventlistener:", newurl);
         validateEntry(language, e.target,newurl,showHistory);
         });
+        let element = e.querySelector('.source-details__comment');
+        let toTranslate = false;
+        let showName = false;
+        if (element != null) {
+            // Fetch the comment with name
+            let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+            if (comment != null) {
+                toTranslate = checkComments(comment.trim());
+            }
+            else {
+                toTranslate = true;
+            }
+        }
+        else {
+            toTranslate = true;
+        }
+        if (toTranslate == false) {
+            console.debug("Need to mark no translate:", toTranslate);
+            showName = true;
+        }
+        else {
+            showName = false;
+        }
         let translation = textareaElem.innerText;
+        if (original != translation && showName == true) {
+            nameDiff = true;
+        }
+        else {
+            nameDiff = false;
+        }
         var result = validate(language, original, translation);
-        updateStyle(textareaElem, result, newurl, showHistory);
+        updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff);
     }
     // 30-06-2021 PSS set fetch status from local storage
     chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
@@ -611,7 +644,7 @@ function validatePage(language, showHistory) {
     });
 }
 
-function updateStyle(textareaElem, result, newurl, showHistory) {  
+function updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff) {  
     let rowId = textareaElem.parentElement.parentElement.parentElement
         .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
     
@@ -656,9 +689,9 @@ function updateStyle(textareaElem, result, newurl, showHistory) {
         checkElem.appendChild(SavelocalButton);
     }
     
-    let origElem =  updateElementStyle(checkElem, result,'False',originalElem,"","","","","",rowId);
+    //let origElem =  updateElementStyle(checkElem, result,'False',originalElem,"","","","","",rowId,showName);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(checkElem, headerElem, result, 'False', originalElem, "", "", "", "", "", rowId);
+    updateElementStyle(checkElem, headerElem, result, 'False', originalElem, "", "", "", "", "", rowId,showName,nameDiff);
     let row = rowId.split('-')[0];
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
@@ -679,11 +712,12 @@ function validateEntry(language, textareaElem, newurl, showHistory) {
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
-    let result = validate(language, originalText,translation);
+    let result = validate(language, originalText, translation);
+    
     updateStyle(textareaElem, result, newurl, showHistory);
 }
 
-function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId) {
+function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId,showName,nameDiff) {
     
     if (typeof rowId != 'undefined') {
         //console.debug("updateElementStyle start:", rowId);
@@ -751,7 +785,24 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
          }
         
     }
-    //console.debug("updateElementStyle params:", oldstring, originalElem);
+    // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author
+    if (showName == true) {
+        if (originalElem != undefined) {
+            //console.debug('namediv:', nameDiff);
+            var element1 = document.createElement('div');
+            if (nameDiff == true) {
+                element1.setAttribute('class', 'trans_name_div_true');
+                element1.appendChild(document.createTextNode("Difference in URL, name of theme or plugin or author!"));
+            }
+            else {
+                element1.setAttribute('class', 'trans_name_div');
+                element1.appendChild(document.createTextNode("URL, name of theme or plugin or author!"));
+            }
+            //element1.style.cssText = 'padding-left:0px; padding-top:20px';
+            originalElem.appendChild(element1);
+        }
+    }
+
     if (oldstring == 'True') {
 
         // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
