@@ -67,9 +67,12 @@ async function pretranslate(original) {
 
 function checkComments(comment) {
     // PSS 09-03-2021 added check to see if we need to translate
-    console.debug('checkComment started comment', comment);
+    //console.debug('checkComment started comment', comment);
     let toTranslate = false;
     switch (comment) {
+        case 'Plugin Name of the plugin/theme':
+            toTranslate = false;
+            break;
         case 'Plugin name.':
             toTranslate = false;
             break;
@@ -106,7 +109,7 @@ function checkComments(comment) {
         default:
             toTranslate = true;
     }
-    console.debug('before googletranslate do we need to translate:', toTranslate);
+    //console.debug('before googletranslate do we need to translate:', toTranslate);
     return toTranslate;
 }
 // 23-03-2021 PSS added function to check for wrong verbs
@@ -184,14 +187,25 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
             setPostTranslationReplace(postTranslationReplace);
             setPreTranslationReplace(preTranslationReplace);
 
-            console.debug("Deepl:" + apikeyDeepl + "Transsel:" + transsel);
+            //console.debug("Deepl:" + apikeyDeepl + "Transsel:" + transsel);
             for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                 
+               
                 //console.debug('translatePage content:', e);
                 let rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
                 let row = rowfound.split('_')[1];
                 //console.debug("translatePage row:", row);
                 let original = e.querySelector("span.original-raw").innerText;
+                // 14-08-2021 PSS we need to put the status back of the label after translating
+                let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+                if (transname != null) {
+                    transname.className = "trans_name_div";
+                    transname.innerText = 'URL, name of theme or plugin or author!';
+                    current = document.querySelector(`#preview-${row} .priority button.save-button`);
+                    current.innerText = "Save";
+                    
+                }
+
                 // PSS 09-03-2021 added check to see if we need to translate
                 //Needs to be put into a function, because now it is unnessary double code
                 let toTranslate = true;
@@ -199,9 +213,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 let element = e.querySelector('.source-details__comment');
                 if (element != null) {
                     let comment = e.querySelector('.source-details__comment p').innerText;
-                    //comment = comment.trim();
-                    //toTranslate = checkComments(comment);
-                    //console.debug('comment:', comment);
                     toTranslate = checkComments(comment.trim());
                     let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                     if (currec != null) {
@@ -298,7 +309,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 textareaElem1.innerText = translatedText;
                               //  console.debug("plural newtext:", textareaElem1.innerText);
                                 textareaElem1.value = translatedText;
-                                let g = document.querySelector('td.translation');
+                                //let g = document.querySelector('td.translation');
                                 let preview = document.querySelector('#preview-' + row + ' td.translation');
                                 //console.debug("current preview:", preview.innerText);
                                 // 21-06-2021 PSS added a dotted line into the preview cell if plural is present #88

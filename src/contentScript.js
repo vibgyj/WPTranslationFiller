@@ -1,4 +1,4 @@
-console.debug('Content script...');
+//console.debug('Content script...');
 /// PSS added function from GlotDict to save records in editor
 gd_wait_table_alter();
 // 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
@@ -17,12 +17,12 @@ var db =getDbSchema() ;
 var isDbCreated = jsstoreCon.initDb(db);
 
 if (!isDbCreated){
-console.debug('Database is not created, so we create one', isDbCreated);
+//console.debug('Database is not created, so we create one', isDbCreated);
 }
 else{
 	console.debug("Database is present");
 }
-console.debug("jsStore opened:",jsstoreCon);
+//console.debug("jsStore opened:",jsstoreCon);
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement('input');
 fileSelector.setAttribute('type', 'file');
@@ -56,15 +56,15 @@ document.addEventListener("keydown", function (event) {
         //myrow = event.target.parentElement.parentElement;
         //rowId = myrow.attributes.row.value;
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-            console.debug("e:", e);
+            //console.debug("e:", e);
             let original = e.querySelector("span.original-raw").innerText;
-            console.debug("original:", original);
+            //console.debug("original:", original);
             // Fetch the translations
             let element = e.querySelector('.source-details__comment');
             textareaElem = e.querySelector("textarea.foreign-text");
-            console.debug('elem:', textareaElem);
+            //console.debug('elem:', textareaElem);
             translatedText = textareaElem.value;
-            console.debug('Translated text to check:', translatedText);
+            //console.debug('Translated text to check:', translatedText);
             let replaced = false;
             
             console.debug("translatedText before:", translatedText);
@@ -73,7 +73,7 @@ document.addEventListener("keydown", function (event) {
             let toTranslate = true;
             // Check if the comment is present, if not then it will block the request for the details name etc.   
             
-            console.debug('checkComment started element', element);
+            //console.debug('checkComment started element', element);
             if (element != null) {
                 // Fetch the comment with name
                 if (typeof rowId != 'undefined') {
@@ -86,7 +86,7 @@ document.addEventListener("keydown", function (event) {
             }
             if (toTranslate == true) {
                 if (translatedText.includes(search)) {
-                    console.debug('Word in line found', search);
+                    //console.debug('Word in line found', search);
                     translatedText = translatedText.replaceAll(search, repl);
                     replaced = true;
                     textareaElem.innerText = translatedText;
@@ -105,7 +105,7 @@ document.addEventListener("keydown", function (event) {
 
                 }
                 else {
-                    console.debug("not found:", search);
+                    //console.debug("not found:", search);
                     alert("Verb not found: " + search);
                     replaced = false;
                     break;
@@ -190,14 +190,14 @@ if (divPaging != null && divProjects == null){
 
 function translatePageClicked(event) {
     event.preventDefault();
-    console.log("Translate clicked!");
+   // console.log("Translate clicked!");
     chrome.storage.sync
         .get(
             ['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace', 'showHistory', 'showTransDiff'],
             function (data) {
-                console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
+               // console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
                 if (typeof data.apikey != 'undefined' && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.transsel == "deepl" || typeof data.apikeyMicrosoft != 'undefined' && data.transsel == "microsoft") {
-                    console.debug("apikey present");
+                    //console.debug("apikey present");
                     if (data.destlang != 'undefined') {
                         if (data.transsel != 'undefined') {
 
@@ -208,7 +208,7 @@ function translatePageClicked(event) {
                         }
                     }
                     else {
-                        console.debug("parameter destlang:", data.destlang);
+                       // console.debug("parameter destlang:", data.destlang);
                         alert("You need to set the parameter for Destination language");
                     }
                 }
@@ -233,7 +233,7 @@ function checkPageClicked(event) {
 
 function exportPageClicked(event) {
     event.preventDefault();
-    console.log("Exportpage clicked!");
+    //console.log("Exportpage clicked!");
     res= dbExport();
     
 }
@@ -244,16 +244,16 @@ async function importPageClicked(event) {
     fileSelector.addEventListener('change', (event) => {   
         fileList = event.target.files;
         const arrayFiles = Array.from(event.target.files)
-        console.debug("filelist:", arrayFiles);
-       console.debug("filelist:",fileList[0]);
+       // console.debug("filelist:", arrayFiles);
+       //console.debug("filelist:",fileList[0]);
        const file = fileList[0];
        var obj_csv = {
        size:0,
        dataFile:[]
           };
         
-        console.debug("File extension:",file.type);
-        console.log("Importpage clicked!", fileList[0].name);
+        //console.debug("File extension:",file.type);
+        //console.log("Importpage clicked!", fileList[0].name);
         // 09-05-2021 PSS added check for proper import type
         if (file.type == "application/vnd.ms-excel"){ 
            if (fileList[0]) {
@@ -502,13 +502,13 @@ function checkbuttonClick(event){
            let f = document.getElementsByClassName('breadcrumb');
            let url = f[0].firstChild.baseURI;
            let newurl = url.split('?')[0];
-           console.debug("checkbutton:", newurl);
+           //console.debug("checkbutton:", newurl);
            if (typeof newurl != 'undefined') {
                // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
                // Fetch only the current string to compaire with the waiting string
                //url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
                url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + rowId;
-               console.debug('checkbuttonClick url found:', url);
+               //console.debug('checkbuttonClick url found:', url);
                //rowsFound = fetchOld('','',url,'True');
 
                chrome.storage.sync.get(['showTransDiff'], function (data) {
@@ -576,7 +576,7 @@ function validatePage(language, showHistory) {
     let url = f[0].firstChild.baseURI;
     //console.debug('ValidatePage url:', url);
     let newurl = url.split('?')[0];
-    console.debug("validatePage newurl:", newurl);
+    //console.debug("validatePage newurl:", newurl);
     var divProjects = document.querySelector('div.projects');
     // We to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project
@@ -599,7 +599,7 @@ function validatePage(language, showHistory) {
         let textareaElem = e.querySelector('textarea.foreign-text');
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
-        console.debug('row:', rowId);
+       
         textareaElem.addEventListener('input', function (e) {
          //console.debug("eventlistener:", newurl);
         validateEntry(language, e.target,newurl,showHistory);
@@ -621,7 +621,7 @@ function validatePage(language, showHistory) {
             toTranslate = true;
         }
         if (toTranslate == false) {
-            console.debug("Need to mark no translate:", toTranslate);
+            //console.debug("Need to mark no translate:", toTranslate);
             showName = true;
         }
         else {
@@ -792,10 +792,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             var element1 = document.createElement('div');
             if (nameDiff == true) {
                 element1.setAttribute('class', 'trans_name_div_true');
+                element1.setAttribute('id', 'trans_name_div_true');
                 element1.appendChild(document.createTextNode("Difference in URL, name of theme or plugin or author!"));
             }
             else {
                 element1.setAttribute('class', 'trans_name_div');
+                element1.setAttribute('id', 'trans_name_div');
                 element1.appendChild(document.createTextNode("URL, name of theme or plugin or author!"));
             }
             //element1.style.cssText = 'padding-left:0px; padding-top:20px';
@@ -982,7 +984,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     headerElem.title = "";
     if (result.toolTip != "") {
         // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
-        console.debug('newline:' + newline + 'missingverbs:' + missingverbs + 'Tooltip:' + result.toolTip);
+        //console.debug('newline:' + newline + 'missingverbs:' + missingverbs + 'Tooltip:' + result.toolTip);
         if (typeof headerElem.title != 'undefined') {
             headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
             newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
@@ -995,7 +997,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     checkElem.setAttribute('title', newtitle);
     // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
     if (typeof headerElem.title != 'undefined') {
-        console.debug("title:", headerElem.title);
         headerElem.setAttribute('title', headertitle);
     }
     //checkElem.setAttribute('title', result.toolTip);
@@ -1003,24 +1004,23 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
 
 function savetranslateEntryClicked(event) {
     //event.preventDefault();   
-    //console.debug("Save button clicked 1!");
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
     // Determine status of record
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     var current = h.querySelector('span.panel-header__bubble');
-    console.debug("savetranslateEntry current :", current.innerText);
+    //console.debug("savetranslateEntry current :", current.innerText);
     // we take care that we can save the record by opening the editor save the record and close the editor again
     if (current.innerText != 'Empty' && current.innerText != 'untranslated'){
         if (current.innerText == 'transFill') {
             let open_editor = document.querySelector(`#preview-${rowId} td.actions .edit`);
-            console.debug('glotpress_open_editor:', rowId, open_editor);
+           // console.debug('glotpress_open_editor:', rowId, open_editor);
             let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-            console.debug('glotpress_save:', rowId,glotpress_save);
+            //console.debug('glotpress_save:', rowId,glotpress_save);
             let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`).nextElementSibling.nextElementSibling;
-            console.debug('glotpress_close:', rowId, glotpress_close);
+           // console.debug('glotpress_close:', rowId, glotpress_close);
             let prevrow = document.querySelector(`#preview-${rowId}`);
-            console.debug('prevrow:', glotpress_close);
+           // console.debug('prevrow:', glotpress_close);
             open_editor.click();         
             glotpress_save.click();
             
@@ -1058,7 +1058,7 @@ function savetranslateEntryClicked(event) {
             glotpress_close.click();
             
             prevrow = document.querySelector(`#preview-${rowId}.preview.status-fuzzy`);
-            console.debug("Rejected:", prevrow);
+            //console.debug("Rejected:", prevrow);
             prevrow.style.backgroundColor = "#eb9090";     
         }
 
@@ -1443,7 +1443,7 @@ function gd_wait_table_alter() {
                     }
                     if (is_pte && addedNode.classList.contains('preview')) {
                         //gd_add_column_buttons(addedNode);
-                        console.debug("addedNode:", addedNode);
+                        //console.debug("addedNode:", addedNode);
                         gd_auto_hide_next_editor(addedNode);
                     }
                     if (addedNode.classList.contains('preview')) {
