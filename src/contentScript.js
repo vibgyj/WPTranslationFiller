@@ -572,13 +572,11 @@ function validatePage(language, showHistory) {
     
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName('breadcrumb');   
-    //console.debug('Breadcrumb found;', f[0]);
     let url = f[0].firstChild.baseURI;
-    //console.debug('ValidatePage url:', url);
     let newurl = url.split('?')[0];
-    //console.debug("validatePage newurl:", newurl);
+    
     var divProjects = document.querySelector('div.projects');
-    // We to set the priority column only to visible if we are in the project 
+    // We need to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project
     var tr = document.getElementById('translations');
      if (tr != null) {
@@ -601,8 +599,7 @@ function validatePage(language, showHistory) {
             .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
        
         textareaElem.addEventListener('input', function (e) {
-         //console.debug("eventlistener:", newurl);
-        validateEntry(language, e.target,newurl,showHistory);
+        validateEntry(language, e.target,newurl,showHistory,rowId);
         });
         let element = e.querySelector('.source-details__comment');
         let toTranslate = false;
@@ -635,7 +632,7 @@ function validatePage(language, showHistory) {
             nameDiff = false;
         }
         var result = validate(language, original, translation);
-        updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff);
+        updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff,rowId);
     }
     // 30-06-2021 PSS set fetch status from local storage
     chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
@@ -644,51 +641,56 @@ function validatePage(language, showHistory) {
     });
 }
 
-function updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff) {  
-    let rowId = textareaElem.parentElement.parentElement.parentElement
-        .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
-    
+function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId) {
+    if (typeof rowId == 'undefined') {
+        let rowId = textareaElem.parentElement.parentElement.parentElement
+           .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
+        
+    }
     originalElem = document.querySelector('#preview-' + rowId + ' .original');
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
     let checkElem = document.querySelector('#preview-' + rowId + ' .priority');
     
-    let saveButton = document.querySelector('#preview-' + rowId + ' .save-button');
+    var saveButton = document.querySelector('#preview-' + rowId + ' .save-button');
     // we need to take care that the save button is not added twice
-    //console.debug('divSafe:', saveButton);
-    if (saveButton == null) {
-        // check for the status of the record
-        
-        var separator1 = document.createElement('div');
-        separator1.setAttribute('class', 'checkElem_save');
-        //separator1.style.cssText = 'width:100%; display:block; height:1px; border-bottom: 1px solid grey;';
-        checkElem.appendChild(separator1);
-        let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-        var current = myrec.querySelector('span.panel-header__bubble');
-        //console.debug("updateStyle Status:", current.innerText);
-        let SavelocalButton = document.createElement('button');
-        SavelocalButton.id = "save-button";
-        SavelocalButton.className = "save-button";
-        SavelocalButton.onclick = savetranslateEntryClicked;
-        if (current.innerText == 'untranslated') {
-            SavelocalButton.innerText = "Empt";
-            checkElem.title = "No translation";
+   
+    if (typeof checkElem == 'object') {
+        if (saveButton == null) {
+            // check for the status of the record
+            var separator1 = document.createElement('div');
+            separator1.setAttribute('class', 'checkElem_save');
+            checkElem.appendChild(separator1);
+            let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            var current = myrec.querySelector('span.panel-header__bubble');
+            let SavelocalButton = document.createElement('button');
+            SavelocalButton.id = "save-button";
+            SavelocalButton.className = "save-button";
+            SavelocalButton.onclick = savetranslateEntryClicked;
+            if (current.innerText == 'untranslated') {
+                SavelocalButton.innerText = "Empt";
+                checkElem.title = "No translation";
+            }
+            else if (current.innerText == 'waiting') {
+                SavelocalButton.innerText = "Appr";
+                checkElem.title = "Approve the string";
+            }
+            else if (current.innerText == 'transFill') {
+                SavelocalButton.innerText = ("Save");
+                checkElem.title = "Save the string";
+            }
+            else if (current.innerText == 'fuzzy') {
+                SavelocalButton.innerText = ("Rej");
+                checkElem.title = "Reject the string";
+            }
+            //SavelocalButton.ariaLabel = "Save and approve translation";
+            checkElem.appendChild(SavelocalButton);
         }
-        else if (current.innerText == 'waiting') {
-            SavelocalButton.innerText = "Appr";
-            checkElem.title = "Approve the string";
-        }
-        else if (current.innerText == 'transFill'){
-            SavelocalButton.innerText = ("Save");
+        else {
+            console.debug("Savebutton not null!");
+            saveButton.innerText = ("Save");
             checkElem.title = "Save the string";
         }
-        else if (current.innerText == 'fuzzy') {
-            SavelocalButton.innerText = ("Rej");
-            checkElem.title = "Reject the string";
-        }
-        //SavelocalButton.ariaLabel = "Save and approve translation";
-        checkElem.appendChild(SavelocalButton);
     }
-    
     //let origElem =  updateElementStyle(checkElem, result,'False',originalElem,"","","","","",rowId,showName);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(checkElem, headerElem, result, 'False', originalElem, "", "", "", "", "", rowId,showName,nameDiff);
@@ -706,23 +708,21 @@ function updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff
             }
 }
 
-function validateEntry(language, textareaElem, newurl, showHistory) {
+function validateEntry(language, textareaElem, newurl, showHistory,rowId) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
     let result = validate(language, originalText, translation);
-    
-    updateStyle(textareaElem, result, newurl, showHistory);
+    // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId
+    updateStyle(textareaElem, result, newurl, showHistory,"True","",rowId);
 }
 
 function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId,showName,nameDiff) {
     
     if (typeof rowId != 'undefined') {
-        //console.debug("updateElementStyle start:", rowId);
         var SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
-        
         if (SavelocalButton == 'null') {
             SavelocalButton = document.createElement('button');
             SavelocalButton.id = "save-button";
@@ -730,8 +730,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (myrec != "null") {
                 var current = myrec.querySelector('span.panel-header__bubble');
-                //console.debug("updateElementStyle:",rowId);
-                //console.debug('updateElementStyle status:', current.InnerText);
                 if (current.innerText == 'transFill') {
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
@@ -743,23 +741,18 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 else if (current.innerText == 'untranslated') {
                     SavelocalButton.innerText = "Empt";
                     checkElem.title = "No translation";
-
                 }
-
                 SavelocalButton.title = "Save and approve translation";
                 checkElem.appendChild(SavelocalButton);
             }
         }
         else {
             let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-            //console.debug("currec:", myrec);
             if (myrec != "null") {
                 //console.debug("current === null");
             }
             else {
-
                 current = myrec.querySelector('span.panel-header__bubble');
-                //SavelocalButton = document.querySelector('#preview-' + rowId);
                 console.debug('SavelocalButton:', SavelocalButton,rowId);
                 if (current.innerText == 'transFill') {
                     SavelocalButton.innerText = "Save";
@@ -782,13 +775,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 //  SavelocalButton.innerText = "Empty";
                 //}
             }
-         }
-        
+         } 
     }
     // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author
     if (showName == true) {
         if (originalElem != undefined) {
-            //console.debug('namediv:', nameDiff);
             var element1 = document.createElement('div');
             if (nameDiff == true) {
                 element1.setAttribute('class', 'trans_name_div_true');
@@ -844,12 +835,14 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
             else {
                 console.debug("no current found!");
+                //SavelocalButton.innerText = "Save";
+                //SavelocalButton.title = "Save the string";
             }
         }
         //console.debug('updateElemStyle wordCount undefined!:');
         return;
     }
-   
+    console.debug("updateElementStyle wordcount:", result.wordCount);
     if (result.wordCount == 0) {
         SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
         let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -868,10 +861,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 SavelocalButton.innerText = "Curr";
                 checkElem.title = "Save the string";
             }
-            else if (current.innerText == 'notranslation') {
-                checkElem.title = "No translation";
+            else if (current.innerText == 'untranslated') {
+               // SavelocalButton.innerText = "Save";
+                checkElem.title = "Save the string";
             }
-            //console.debug("updateElementStyle wordcount:", result.wordCount);
+            
             return;
         }
     }
@@ -957,6 +951,8 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
         else {
             console.debug("no current found!");
+            SavelocalButton.innerText = "Save";
+            checkElem.title = "Save the string";
         }
         // 22-07-2021 PSS fix for wrong button text "Apply" #108 This needs to be investigated to check if the others also need to be moved down
         if (result.percent == 10) {

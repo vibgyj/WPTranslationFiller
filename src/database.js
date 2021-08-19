@@ -1,5 +1,4 @@
 res=initStoragePersistence();
-console.debug('Is database persistent:',res);
 
 async function initDb() {
     var isDbCreated = await jsstoreCon.initDb(getDbSchema());
