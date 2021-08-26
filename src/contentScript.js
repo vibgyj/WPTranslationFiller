@@ -682,11 +682,15 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
                 SavelocalButton.innerText = ("Rej");
                 checkElem.title = "Reject the string";
             }
+            else if (current.innerText == 'current') {
+                SavelocalButton.innerText = ("Curr");
+                checkElem.title = "Current string";
+            }
             //SavelocalButton.ariaLabel = "Save and approve translation";
             checkElem.appendChild(SavelocalButton);
         }
         else {
-            console.debug("Savebutton not null!");
+            //console.debug("Savebutton not null!");
             saveButton.innerText = ("Save");
             checkElem.title = "Save the string";
         }
@@ -700,10 +704,10 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
             if (showHistory == true) {
                 if (newurl.substring(1, 9) != 'undefined') {
-                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'False', originalElem,row);
+                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'False', originalElem,row,rowId);
                 }
                 else {
-                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'True', originalElem,row);
+                    fetchOld(checkElem, result, newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + row + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc', 'True', originalElem,row,rowId);
                 }
             }
 }
@@ -738,6 +742,10 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     SavelocalButton.innerText = "Appr";
                     checkElem.title = "Approve the string";
                 }
+                else if (current.innerText == 'current') {
+                    SavelocalButton.innerText = "Curr";
+                    checkElem.title = "Current translation";
+                }
                 else if (current.innerText == 'untranslated') {
                     SavelocalButton.innerText = "Empt";
                     checkElem.title = "No translation";
@@ -765,6 +773,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 else if (current.innerText == 'untranslated') {
                     SavelocalButton.innerText = "Empt";
                     checkElem.title = "No translation";
+
+                }
+                else if (current.innerText == 'current') {
+                    SavelocalButton.innerText = "Curr";
+                    checkElem.title = "Current translation";
 
                 }
                 else {
@@ -842,7 +855,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         //console.debug('updateElemStyle wordCount undefined!:');
         return;
     }
-    console.debug("updateElementStyle wordcount:", result.wordCount);
+    //console.debug("updateElementStyle wordcount:", result.wordCount);
     if (result.wordCount == 0) {
         SavelocalButton = document.querySelector('#preview-' + rowId + ' .save-button');
         let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -883,6 +896,9 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
             else if (current.innerText == 'waiting') {
                 checkElem.title = "Approve the string";
+            }
+            else if (current.innerText == 'current') {
+                checkElem.title = "Current string";
             }
         }  
     }
@@ -927,10 +943,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     SavelocalButton.id = "save-button";
     SavelocalButton.className = "save-button";
     SavelocalButton.onclick = savetranslateEntryClicked;
-    let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-   
-    if (h != null) {
-        current = h.querySelector('span.panel-header__bubble');
+    //#editor - 8188612 - 87485455 span.panel - header__bubble
+   // let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+    current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+    if (current != null) {
+        //current = h.querySelector('span.panel-header__bubble');
         if (current.innerText == 'transFill') {
             SavelocalButton.innerText = "Save";
             checkElem.title = "Save the string";
@@ -966,11 +983,14 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
         }
     }
-    else {
+    //else {
        // console.debug('h', h);
-        SavelocalButton.innerText = "Appr";
-        checkElem.title = "Approve the string";
-    }
+        //SavelocalButton.innerText = "Appr";
+     //   console.debug('current innertext:', current.innerText);
+     //   if (current.innerText != 'current') {
+          //  checkElem.title = "Approve the string";
+     //   }
+    //}
     
     //SavelocalButton.ariaLabel = "Save and approve translation";
     checkElem.appendChild(SavelocalButton);
@@ -1323,7 +1343,7 @@ async function fetchOldRec(url, rowId) {
 }
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(checkElem, result, url, single, originalElem,row) {
+async function fetchOld(checkElem, result, url, single, originalElem,row,rowId) {
     // 30-06-2021 PSS added fetch status from local storage
     chrome.storage.sync
         .get(
@@ -1390,10 +1410,12 @@ async function fetchOld(checkElem, result, url, single, originalElem,row) {
                         old = "";
                     }
                     if (tbodyRowCount > 2 && single == 'False') {
-                        updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old,row);
+                        console.debug('1414:', row);
+                        updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old,rowId,"","");
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {
-                        updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old,row);
+                        console.debug('1418:', row);
+                        updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old,rowId,"","");
                         //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                         //window.open(url, "_blank", windowFeatures);
                     }
