@@ -165,7 +165,8 @@ function checkPage(postTranslationReplace) {
                     }
                     
                     // Enhencement issue #123
-                    previewNewText = translatedText.replaceAll(replaceVerb[i][0], "<mark>" + replaceVerb[i][1] + "</mark>");
+                    previewNewText = translatedText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
+                    //previewNewText = translatedText.replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
                     translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                     
                     repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] +"\n";
