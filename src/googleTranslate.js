@@ -150,6 +150,8 @@ function checkPage(postTranslationReplace) {
             translatedText = textareaElem.innerText;
             // Enhencement issue #123
             previewNewText = textareaElem.innerText;
+            // Need to replace the existing html before replacing the verbs! issue #124
+            previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
             //console.debug('Translated text to check:',translatedText);
             let replaced = false;
             // replverb contains the verbs to replace
@@ -165,8 +167,7 @@ function checkPage(postTranslationReplace) {
                     }
                     
                     // Enhencement issue #123
-                    previewNewText = translatedText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
-                    //previewNewText = translatedText.replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
+                    previewNewText = previewNewText.replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
                     translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                     
                     repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] +"\n";
