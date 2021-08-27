@@ -148,6 +148,8 @@ function checkPage(postTranslationReplace) {
             let element = e.querySelector('.source-details__comment');
             let textareaElem = e.querySelector("textarea.foreign-text");
             translatedText = textareaElem.innerText;
+            // Enhencement issue #123
+            previewNewText = textareaElem.innerText;
             //console.debug('Translated text to check:',translatedText);
             let replaced = false;
             // replverb contains the verbs to replace
@@ -161,8 +163,11 @@ function checkPage(postTranslationReplace) {
                         //console.debug("Previous state:", prevstate);
                         current.innerText = "transFill";
                     }
-                    //console.debug('Word in line found',replaceVerb[i][0]);
+                    
+                    // Enhencement issue #123
+                    previewNewText = translatedText.replaceAll(replaceVerb[i][0], "<mark>" + replaceVerb[i][1] + "</mark>");
                     translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                    
                     repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] +"\n";
                     countreplaced++;
                     replaced = true;
@@ -184,7 +189,8 @@ function checkPage(postTranslationReplace) {
                         row = newrowId;
                     }
                     let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
-                    preview.innerText = translatedText;
+                    // Enhencement issue #123
+                    preview.innerHTML = previewNewText;
                 }
             }
             if (replaced) {
