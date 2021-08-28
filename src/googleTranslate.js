@@ -135,48 +135,53 @@ function checkPage(postTranslationReplace) {
                 rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
                 let row = rowfound.split('_')[1];
             }
-            // Check if it is a plural
-            let pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) small`);
-            //console.debug("TranslatePage plural present:", pluralpresent, row);
-            if (pluralpresent != null) {
-                transtype = "plural";
-            }
-            else {
-                transtype = "single";
-            }
-            // Fetch the translations
-            let element = e.querySelector('.source-details__comment');
-            let textareaElem = e.querySelector("textarea.foreign-text");
-            translatedText = textareaElem.innerText;
-            // Enhencement issue #123
-            previewNewText = textareaElem.innerText;
-            // Need to replace the existing html before replacing the verbs! issue #124
-            previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-            //console.debug('Translated text to check:',translatedText);
-            let replaced = false;
-            // replverb contains the verbs to replace
-            
-            for (let i = 0; i < replaceVerb.length; i++) {
-                if (translatedText.includes(replaceVerb[i][0])) {
-                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                    if (currec != null) {
-                        var current = currec.querySelector('span.panel-header__bubble');
-                        var prevstate = current.innerText;
-                        //console.debug("Previous state:", prevstate);
-                        current.innerText = "transFill";
-                    }
-                    
-                    // Enhencement issue #123
-                    previewNewText = previewNewText.replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
-                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-                    
-                    repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] +"\n";
-                    countreplaced++;
-                    replaced = true;
+            // 30-08-2021 PSS fix for issue # 125
+            let comment = record.querySelector('.source-details__comment p').innerText;
+            comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+            toTranslate = checkComments(comment.trim());
+            if (toTranslate) {
+                // Check if it is a plural
+                let pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) small`);
+                //console.debug("TranslatePage plural present:", pluralpresent, row);
+                if (pluralpresent != null) {
+                    transtype = "plural";
                 }
+                else {
+                    transtype = "single";
+                }
+                // Fetch the translations
+                let element = e.querySelector('.source-details__comment');
+                let textareaElem = e.querySelector("textarea.foreign-text");
+                translatedText = textareaElem.innerText;
+                // Enhencement issue #123
+                previewNewText = textareaElem.innerText;
+                // Need to replace the existing html before replacing the verbs! issue #124
+                previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                //console.debug('Translated text to check:',translatedText);
+                let replaced = false;
+                // replverb contains the verbs to replace
+
+                for (let i = 0; i < replaceVerb.length; i++) {
+                    if (translatedText.includes(replaceVerb[i][0])) {
+                        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                        if (currec != null) {
+                            var current = currec.querySelector('span.panel-header__bubble');
+                            var prevstate = current.innerText;
+                            //console.debug("Previous state:", prevstate);
+                            current.innerText = "transFill";
+                        }
+
+                        // Enhencement issue #123
+                        previewNewText = previewNewText.replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
+                        translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+
+                        repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] + "\n";
+                        countreplaced++;
+                        replaced = true;
+                    }
+                }
+
             }
-            
-                
             
             // PSS 22-07-2021 fix for the preview text is not updated #109
             if (replaced) {
