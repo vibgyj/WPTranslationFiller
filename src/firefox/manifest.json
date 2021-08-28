@@ -1,8 +1,11 @@
 {
   "manifest_version": 2,
   "name": "WordPress Translation Filler",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Firefox addon to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
+  "web_accessible_resources": [
+    "/img/*"
+  ],
   "background": {
     "scripts": [
       "jsstore.js",
@@ -30,6 +33,8 @@
         "https://cdnjs.cloudflare.com/*"
       ],
       "js": [
+        "cute-alert.js",
+        "consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
         "database.js",
