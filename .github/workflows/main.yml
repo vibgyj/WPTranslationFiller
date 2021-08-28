@@ -39,6 +39,7 @@ jobs:
           cp src/database.js src/chrome/database.js
           cp src/consistency.js src/chrome/consistency.js
           cp src/cute-alert.js src/chrome/cute-alert.js
+          mkdir src/chrome/img
           cp src/img/error.svg src/chrome/img/error.svg
           cp src/img/info.svg src/chrome/img/info.svg
           cp src/img/question.svg src/chrome/img/question.svg
@@ -55,6 +56,7 @@ jobs:
           cp src/database.js src/firefox/database.js
           cp src/consistency.js src/firefox/consistency.js
           cp src/cute-alert.js src/firefox/cute-alert.js
+          mkdir src/firefox/img
           cp src/img/error.svg src/firefox/img/error.svg
           cp src/img/info.svg src/firefox/img/info.svg
           cp src/img/question.svg src/firefox/img/question.svg
