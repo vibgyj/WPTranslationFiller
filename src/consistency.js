@@ -1,8 +1,9 @@
-function scrapeconsistency() {
+function scrapeconsistency(locale) {
 	var currentLocation = window.location;
 	var wind;
 	wind = "myWindow";
-	var locale = "nl";
+	//console.debug("Locale:", locale);
+	//var locale = "nl";
 	// 09-08-2021 PSS fixed problem with not opening new windows in Chrome issue #114
 	var consistsWindow = window.open("https://translate.wordpress.org/consistency/?search=&set=nl%2Fdefault","https://translate.wordpress.org/consistency/?search=&set=nl%2Fdefault");
 	var myWindow = window.open("", "_blanc");
@@ -568,7 +569,7 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
 	var searchverb = myWindow.document.getElementById("myForm").elements.namedItem("searchfor").value;
 	var replverb = myWindow.document.getElementById("myForm").elements.namedItem("replverb").value;
 	var wrongverb = myWindow.document.getElementById("myForm").elements.namedItem("wrongverb").value;
-	console.debug("search:",searchverb,"  ",replverb,"  ",wrongverb);
+	//console.debug("search:",searchverb,"  ",replverb,"  ",wrongverb);
 	if (searchverb && replverb && wrongverb !=null){
 		var search_url= 'https://translate.wordpress.org/consistency/?search=' + searchverb + '&set=' + locale +'%2Fdefault&project=&search_case_sensitive=1';
 		//console.debug("Searchfor:",search_url);
@@ -579,7 +580,7 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
 		confirm_msg = 'A log of replaced translations will be downloaded.\n';
 		confirm_msg += 'Before downloading the file the windows will be opened!\n';
 		confirm_msg += 'The records will be replaced are you sure to continue?';
-		console.debug("myWindow:", myWindow);
+		//console.debug("myWindow:", myWindow);
 		cuteAlert({
 			type: "question",
 			title: "Create a back-up for check afterwards",
@@ -658,7 +659,7 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
 						}
 						//console.debug("Replcount:", replCount);
 						if (replCount == 0) {
-							console.debug("mywindow:", myWindow);
+							//console.debug("mywindow:", myWindow);
 							cuteAlert({
 								type: "info",
 								title: "Message",
@@ -676,7 +677,7 @@ function startsearch(myWindow,curloc,locale,consistsWindow) {
 						consistsWindow.close();
 					})
 					.catch(function (err) {
-						console.log('Failed to fetch page: ', err);
+						//console.log('Failed to fetch page: ', err);
 						cuteAlert({
 							type: "error",
 							title: "Message",

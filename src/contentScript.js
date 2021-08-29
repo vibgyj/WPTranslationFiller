@@ -29,11 +29,16 @@ fileSelector.setAttribute('type', 'file');
 
 // PSS 31-07-2021 added new function to scrape consistency tool
 document.addEventListener("keydown", function (event) {
-    console.debug("key pressed", event);
-    if (event.altKey && event.shiftKey && (event.key === '&' || event.key === 'C')) {
+    //console.debug("key pressed", event);
+    if (event.altKey && event.shiftKey && (event.key === '&')) {
 
         event.preventDefault();
-        scrapeconsistency();
+        chrome.storage.sync
+            .get(
+                ['destlang'],
+                function (data) {
+                    scrapeconsistency(data.destlang);
+                });
     }
 });
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
@@ -238,7 +243,7 @@ function exportPageClicked(event) {
     
 }
 // 08-05-2021 PSS added import of records into local database
-async function importPageClicked(event) { 
+function importPageClicked(event) { 
     
     fileSelector.click();
     fileSelector.addEventListener('change', (event) => {   
@@ -268,7 +273,7 @@ async function importPageClicked(event) {
               parseDataBase(obj_csv.dataFile); 
               let importButton = document.querySelector(".paging a.import_translation-button");
               importButton.className += " ready";
-              alert('Import ready');          
+              //alert('Import is running please wait');          
            }
         }
        
