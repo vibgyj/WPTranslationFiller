@@ -1415,7 +1415,7 @@ async function fetchOld(checkElem, result, url, single, originalElem,row,rowId) 
                         old = "";
                     }
                     if (tbodyRowCount > 2 && single == 'False') {
-                        console.debug('1414:', row);
+                       // console.debug('1414:', row);
                         updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old,rowId,"","");
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {

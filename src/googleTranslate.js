@@ -137,9 +137,15 @@ function checkPage(postTranslationReplace) {
                 let row = rowfound.split('_')[1];
             }
             // 30-08-2021 PSS fix for issue # 125
-            let comment = e.querySelector('.source-details__comment p').innerText;
-            comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-            toTranslate = checkComments(comment.trim());
+            let precomment = e.querySelector('.source-details__comment p');
+            if (precomment != null) {
+                comment = precomment.innerText;
+                comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                toTranslate = checkComments(comment.trim());
+            }
+            else {
+                toTranslate = true;
+            }
             if (toTranslate) {
                 // Check if it is a plural
                 let pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) small`);
@@ -209,7 +215,7 @@ function checkPage(postTranslationReplace) {
         }
         //var myForm = document.getElementById('translation-actions');
         //myForm.submit();
-        alert('Replace verbs done ' + countreplaced + ' replaced' + '\nwords: ' + repl_verb);
+        alert('Replace verbs done ' + countreplaced + ' replaced' + ' words\n' + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
         checkButton.className += " ready";
