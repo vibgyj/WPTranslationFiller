@@ -117,6 +117,7 @@ function checkPage(postTranslationReplace) {
     setPostTranslationReplace(postTranslationReplace);
     //console.debug("CheckPage:", postTranslationReplace.length);
     // 15-05-2021 PSS added fix for issue #73add
+    var replaced = false;
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
         let countreplaced = 0;
@@ -136,7 +137,7 @@ function checkPage(postTranslationReplace) {
                 let row = rowfound.split('_')[1];
             }
             // 30-08-2021 PSS fix for issue # 125
-            let comment = record.querySelector('.source-details__comment p').innerText;
+            let comment = e.querySelector('.source-details__comment p').innerText;
             comment = comment.replace(/(\r\n|\n|\r)/gm, "");
             toTranslate = checkComments(comment.trim());
             if (toTranslate) {
@@ -158,7 +159,7 @@ function checkPage(postTranslationReplace) {
                 // Need to replace the existing html before replacing the verbs! issue #124
                 previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                 //console.debug('Translated text to check:',translatedText);
-                let replaced = false;
+                replaced = false;
                 // replverb contains the verbs to replace
 
                 for (let i = 0; i < replaceVerb.length; i++) {
@@ -180,39 +181,32 @@ function checkPage(postTranslationReplace) {
                         replaced = true;
                     }
                 }
-
-            }
-            
-            // PSS 22-07-2021 fix for the preview text is not updated #109
-            if (replaced) {
-                textareaElem.innerText = translatedText;
-                textareaElem.value = translatedText;
-                if (transtype == "single") {
-                    let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
-                    let row = rowfound.split('-')[1];
-                    let newrow = rowfound.split('-')[2];
-                    if (newrow != 'undefined') {
-                        newrowId = row.concat("-", newrow);
-                        row = newrowId;
+                // PSS 22-07-2021 fix for the preview text is not updated #109
+                if (replaced) {
+                    textareaElem.innerText = translatedText;
+                    textareaElem.value = translatedText;
+                    if (transtype == "single") {
+                        let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
+                        let row = rowfound.split('-')[1];
+                        let newrow = rowfound.split('-')[2];
+                        if (newrow != 'undefined') {
+                            newrowId = row.concat("-", newrow);
+                            row = newrowId;
+                        }
+                        let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
+                        // Enhencement issue #123
+                        preview.innerHTML = previewNewText;
                     }
-                    let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
-                    // Enhencement issue #123
-                    preview.innerHTML = previewNewText;
+                    let wordCount = countreplaced;
+                    let percent = 10;
+                    let toolTip = '';
+                    result = { wordCount, percent, toolTip };
+                    //console.debug('googletranslate row:', rowfound);
+                    updateStyle(textareaElem, result, "", true, false, false, row);
                 }
-            }
-            if (replaced) {
-               // console.debug("replaced:", repl_verb);
-                let wordCount = countreplaced;
-                let percent = 10;
-                let toolTip = '';
-                result = { wordCount, percent, toolTip };
-                //console.debug('googletranslate row:', rowfound);
-                updateStyle(textareaElem, result, "", true, false, false, row);
-            }
-            replaced = false;
 
+            }
         }
-
         //var myForm = document.getElementById('translation-actions');
         //myForm.submit();
         alert('Replace verbs done ' + countreplaced + ' replaced' + '\nwords: ' + repl_verb);
