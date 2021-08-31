@@ -1,17 +1,23 @@
 //console.debug('Content script...');
 /// PSS added function from GlotDict to save records in editor
 gd_wait_table_alter();
-// 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
-window.onbeforeunload = function () {
-    return switchoff();
-}
 
-function switchoff() {
+
+// 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
+function setToOff() {
     //var key = 'noOldTrans', OldTrans = { val: false }; 
-    chrome.storage.sync.set({'noOldTrans': 'False' }, function () {
+    chrome.storage.sync.set({
+        'noOldTrans': 'False'
+    }, function () {
         console.debug("Content script set flag for noOldTrans back to False");
     });
 }
+
+window.onbeforeunload = function () {
+    return setToOff();
+}
+
+
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
 var db =getDbSchema() ;

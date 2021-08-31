@@ -121,7 +121,9 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                             textareaElem1.value = translatedText;
                             // Select the first li
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                         if (plural_line == 2) {
                             //console.debug("deepl row: ", rowId, transtype, plural_line);
@@ -132,7 +134,9 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                             textareaElem1.value = translatedText;
                             // Select the second li
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                     }
                     else {
@@ -144,7 +148,9 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                         else {
                             //populate plural line if  already translated
@@ -153,7 +159,9 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                     }
                 }

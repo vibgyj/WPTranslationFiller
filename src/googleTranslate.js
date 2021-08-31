@@ -771,7 +771,9 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                             textareaElem1.value = translatedText;
                             // Select the first li
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                         if (plural_line == 2) {
                             //console.debug("deepl row: ", rowId, transtype, plural_line);
@@ -782,7 +784,9 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                             textareaElem1.value = translatedText;
                             // Select the second li
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                     }
                     else {
@@ -795,7 +799,9 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                             textareaElem1.value = translatedText;
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
                            // console.debug("Existing record plural_line 1:", translatedText);
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                         else {
                             //populate plural line if  already translated
@@ -803,7 +809,9 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                     }
                 }
@@ -949,7 +957,9 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                             textareaElem1.value = translatedText;
                             // Select the first li
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                         if (plural_line == 2) {
                             //console.debug("deepl row: ", rowId, transtype, plural_line);
@@ -960,7 +970,9 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                             textareaElem1.value = translatedText;
                             // Select the second li
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                     }
                     else {
@@ -973,7 +985,9 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                             textareaElem1.value = translatedText;
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
                             //console.debug("Existing record plural_line 1:", translatedText);
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                         else {
                             //populate plural line if  already translated
@@ -982,7 +996,9 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
-                            previewElem.innerText = translatedText;
+                            if (previewElem != null) {
+                                previewElem.innerText = translatedText;
+                            }
                         }
                     }
                 }
