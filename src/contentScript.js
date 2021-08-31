@@ -7,7 +7,8 @@ window.onbeforeunload = function () {
 }
 
 function switchoff() {
-    chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+    //var key = 'noOldTrans', OldTrans = { val: false }; 
+    chrome.storage.sync.set({'noOldTrans': 'False' }, function () {
         console.debug("Content script set flag for noOldTrans back to False");
     });
 }

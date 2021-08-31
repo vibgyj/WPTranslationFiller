@@ -36,6 +36,7 @@
         "jsstore.js",
         "jsstore.worker.js",
         "database.js",
+        "deeplTranslate.js",
         "googleTranslate.js",
         "contentScript.js",
         "jsdiff.js"
