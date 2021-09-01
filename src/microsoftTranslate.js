@@ -1,7 +1,7 @@
 
 /**
  * This file includes all functions for translating with the Microsoft API
- * It depends on googleTranslate for additional translation functions
+ * It depends on commonTranslate for additional translation functions
  */
 
 function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype, plural_line) {

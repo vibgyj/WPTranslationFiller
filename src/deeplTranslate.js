@@ -1,6 +1,6 @@
 /**
  * This file includes all functions for translating with the deepL API
- * It depends on googleTranslate for additional translation functions
+ * It depends on commonTranslate for additional translation functions
  */
 
 function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line) {
