@@ -38,6 +38,7 @@
         "database.js",
         "deeplTranslate.js",
         "googleTranslate.js",
+        "microsoftTranslate.js",
         "contentScript.js",
         "jsdiff.js"
       ],

@@ -38,8 +38,10 @@
         "jsstore.js",
         "jsstore.worker.js",
         "database.js",
-        "contentScript.js",
+        "deeplTranslate.js",
+        "microsoftTranslate.js",
         "googleTranslate.js",
+        "contentScript.js",
         "jsdiff.js"
       ],
       "css": [
