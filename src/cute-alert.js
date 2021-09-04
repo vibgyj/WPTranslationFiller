@@ -8,7 +8,7 @@ function cuteAlert({
   confirmText = "OK",
   cancelText = "Cancel",
   myWindow = "",
-  closeStyle,
+  closeStyle
 }) {
     return new Promise((resolve) => {
         console.debug("window:", myWindow);
