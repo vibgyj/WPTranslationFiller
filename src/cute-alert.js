@@ -7,13 +7,26 @@ function cuteAlert({
   buttonText = "OK",
   confirmText = "OK",
   cancelText = "Cancel",
-  myWindow ="",
+  myWindow = "",
   closeStyle,
 }) {
     return new Promise((resolve) => {
         console.debug("window:", myWindow);
+        var body;
         setInterval(() => { }, 5000);
-        const body = myWindow.document.getElementById("wptf_container");
+        if (typeof myWindow != 'string') {
+            body = myWindow.document.getElementById("wptf_container");
+            console.debug("body:", body);
+            if (body == null) {
+                body = document.getElementById("wordpress-org");
+                console.debug("document:", document);
+            }
+        }
+        else {
+            console.debug("myWindow not defined!");
+            body = document.getElementById('wordpress-org');
+            //const body = document.getElementsByClassName("logged-in");
+        }
         //const body = myWindow.document.getElementsByTagName("body");
         console.debug("bodyresult:", body);
         const scripts = myWindow.document.getElementsByTagName("script");

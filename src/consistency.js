@@ -7,6 +7,7 @@ function scrapeconsistency(locale) {
 	// 09-08-2021 PSS fixed problem with not opening new windows in Chrome issue #114
 	var consistsWindow = window.open("https://translate.wordpress.org/consistency/?search=&set=" + locale + "%2Fdefault","https://translate.wordpress.org/consistency/?search=&set=" + locale + "%2Fdefault");
 	var myWindow = window.open("", "_blanc");
+	//console.debug('myWindow:', myWindow);
 	var meta = document.createElement('meta');
 	meta.setAttribute('name', 'viewport');
 	meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
