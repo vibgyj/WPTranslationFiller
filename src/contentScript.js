@@ -415,7 +415,7 @@ document.addEventListener("keydown", function (event) {
                 ['destlang'],
                 function (data) {
                     var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
-                    console.debug("Is PTE ?", is_pte);
+                    // issue #133 block non PTE/GTE users from using this function
                     if (is_pte) {
                         scrapeconsistency(data.destlang);
                     }
@@ -440,84 +440,98 @@ document.addEventListener("keydown", function (event) {
     if (event.altKey && (event.key === 'r' || event.key === 'R')) {
         
         event.preventDefault();
-        const queryString = window.location.search;      
-        const urlParams = new URLSearchParams(queryString);
-        const wrongverb = urlParams.get('wrongverb');
-        const replverb = urlParams.get('replverb');
-        var search = wrongverb;
-        var repl = replverb;
-        var e;
-        var textareaElem;
-        var translatedText;
-        var replaced = false
-        //myrow = event.target.parentElement.parentElement;
-        //rowId = myrow.attributes.row.value;
-        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-            //console.debug("e:", e);
-            let original = e.querySelector("span.original-raw").innerText;
-            //console.debug("original:", original);
-            // Fetch the translations
-            let element = e.querySelector('.source-details__comment');
-            textareaElem = e.querySelector("textarea.foreign-text");
-            //console.debug('elem:', textareaElem);
-            translatedText = textareaElem.value;
-            //console.debug('Translated text to check:', translatedText);
-            let replaced = false;
-            
-            console.debug("translatedText before:", translatedText);
+        var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
+        // issue #133 block non PTE/GTE users from using this function
+        if (is_pte) {
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const wrongverb = urlParams.get('wrongverb');
+            const replverb = urlParams.get('replverb');
+            var search = wrongverb;
+            var repl = replverb;
+            var e;
+            var textareaElem;
+            var translatedText;
+            var replaced = false
+            //myrow = event.target.parentElement.parentElement;
+            //rowId = myrow.attributes.row.value;
+            for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+                //console.debug("e:", e);
+                let original = e.querySelector("span.original-raw").innerText;
+                //console.debug("original:", original);
+                // Fetch the translations
+                let element = e.querySelector('.source-details__comment');
+                textareaElem = e.querySelector("textarea.foreign-text");
+                //console.debug('elem:', textareaElem);
+                translatedText = textareaElem.value;
+                //console.debug('Translated text to check:', translatedText);
+                let replaced = false;
 
-            // PSS 09-03-2021 added check to see if we need to translate
-            let toTranslate = true;
-            // Check if the comment is present, if not then it will block the request for the details name etc.   
-            
-            //console.debug('checkComment started element', element);
-            if (element != null) {
-                // Fetch the comment with name
-                if (typeof rowId != 'undefined') {
-                    let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
-                    toTranslate = checkComments(comment);
-                }
-                else {
-                    toTranslate == true;
-                }
-            }
-            if (toTranslate == true) {
-                if (translatedText.includes(search)) {
-                    //console.debug('Word in line found', search);
-                    translatedText = translatedText.replaceAll(search, repl);
-                    replaced = true;
-                    textareaElem.innerText = translatedText;
-                    textareaElem.value = translatedText;
-                    let glotpress_open = document.querySelector(`td.actions .edit`);
-                    let glotpress_save = document.querySelector(`div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+                console.debug("translatedText before:", translatedText);
 
-                    //let glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
-                    let glotpress_close = document.querySelector(`div.editor-panel__left .panel-header-actions__cancel`);
-                    glotpress_open.click();
-                    glotpress_save.click();
-                    //glotpress_approve.click();
+                // PSS 09-03-2021 added check to see if we need to translate
+                let toTranslate = true;
+                // Check if the comment is present, if not then it will block the request for the details name etc.   
 
-                    //glotpress_close.click();
-                    setTimeout(() => { glotpress_close.click(); }, 1500);
-
-                }
-                else {
-                    //console.debug("not found:", search);
-                    alert("Verb not found: " + search);
-                    replaced = false;
-                    break;
+                //console.debug('checkComment started element', element);
+                if (element != null) {
+                    // Fetch the comment with name
+                    if (typeof rowId != 'undefined') {
+                        let comment = e.querySelector('#editor-' + rowId + ' .source-details__comment p').innerText;
+                        toTranslate = checkComments(comment);
                     }
+                    else {
+                        toTranslate == true;
+                    }
+                }
+                if (toTranslate == true) {
+                    if (translatedText.includes(search)) {
+                        //console.debug('Word in line found', search);
+                        translatedText = translatedText.replaceAll(search, repl);
+                        replaced = true;
+                        textareaElem.innerText = translatedText;
+                        textareaElem.value = translatedText;
+                        let glotpress_open = document.querySelector(`td.actions .edit`);
+                        let glotpress_save = document.querySelector(`div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+
+                        //let glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
+                        let glotpress_close = document.querySelector(`div.editor-panel__left .panel-header-actions__cancel`);
+                        glotpress_open.click();
+                        glotpress_save.click();
+                        //glotpress_approve.click();
+                        //glotpress_close.click();
+                        setTimeout(() => { glotpress_close.click(); }, 1500);
+
+                    }
+                    else {
+                        //console.debug("not found:", search);
+                        alert("Verb not found: " + search);
+                        replaced = false;
+                        break;
+                    }
+                }
+                else {
+                    alert("The name of plugin/theme/url do not need to be replaced");
+                    replaced = false;
+                }
+                if (replaced == true) {
+                    setTimeout(() => { window.close(); }, 1000);
+                }
             }
-            else {
-              alert("The name of plugin/theme/url do not need to be replaced");
-             replaced = false;
-            }
-            if (replaced == true) {
-                setTimeout(() => { window.close(); }, 1000);
-            }
+
         }
-        
-    }
+        else {
+            var myWindow = window.self;
+            cuteAlert({
+                type: "error",
+                title: "Message",
+                message: "You do not have permissions to start this function!",
+                buttonText: "OK",
+                myWindow: myWindow,
+                closeStyle: "alert-close",
+            });
+        }
+        }
     
 });
 
