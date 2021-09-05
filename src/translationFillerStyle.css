@@ -476,3 +476,11 @@ button.save-button {
 button.save-button.ready {
     display:none;
 }
+
+table.translations tr.preview.has-glotdict th + .priority + .original::before {
+    margin-left: calc(-0.5em - 45px)!important;
+}
+
+table.translations tr.preview.has-glotdict.has-warnings th+.priority+.original::before {
+    margin-left: calc(-.5em - 48px)!important;
+}
