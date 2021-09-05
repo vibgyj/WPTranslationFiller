@@ -453,6 +453,15 @@ table.translations th.priority, table.translations td.priority {
     display: table-cell !important;
     font-size: 14px !important;
 }
+
+/** The change below is for issue# 137 modification in GlotDict*/
+table.translations tr.preview.has-glotdict th + .priority + .original::before {
+    margin-left: calc(-0.5em - 45px) !important;
+}
+/** The change below is for issue# 137 modification in GlotDict*/
+table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
+    margin-left: calc(-.5em - 48px) !important;
+}
 table.translations th.original, table.translations th.translation {
     width: 40% !important;
     

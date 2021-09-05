@@ -236,25 +236,53 @@ function translatePageClicked(event) {
         .get(
             ['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace', 'showHistory', 'showTransDiff'],
             function (data) {
-               // console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
-                if (typeof data.apikey != 'undefined' && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.transsel == "deepl" || typeof data.apikeyMicrosoft != 'undefined' && data.transsel == "microsoft") {
-                    //console.debug("apikey present");
-                    if (data.destlang != 'undefined') {
+                console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
+                console.debug("type of data.apikeyMicrosoft:", typeof data.apikeyMicrosoft);
+                if (typeof data.apikey != 'undefined' && data.apikey !="" && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.apikeyDeepl !="" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != 'undefined' && data.apikeyMicrosoft !="" && data.transsel == "microsoft") {
+                    console.debug("type of data.destlang:",typeof data.destlang);
+                    if (data.destlang != 'undefined' && data.destlang != null && data.destlang !="") {
                         if (data.transsel != 'undefined') {
 
                             translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
                         }
                         else {
-                            alert("You need to set the translator API");
+                            var myWindow = window.self;
+                            cuteAlert({
+                                type: "error",
+                                title: "Message",
+                                message: "You need to set the translator API",
+                                buttonText: "OK",
+                                myWindow: myWindow,
+                                closeStyle: "alert-close",
+                            });
+                           // alert("You need to set the translator API");
                         }
                     }
                     else {
                        // console.debug("parameter destlang:", data.destlang);
-                        alert("You need to set the parameter for Destination language");
+                        var myWindow = window.self;
+                        cuteAlert({
+                            type: "error",
+                            title: "Message",
+                            message: "You need to set the parameter for Destination language",
+                            buttonText: "OK",
+                            myWindow: myWindow,
+                            closeStyle: "alert-close",
+                        });
+                        //alert("You need to set the parameter for Destination language");
                     }
                 }
                 else {
-                        alert("No apikey set!" +"google:" +data.apikey+" transsel "+data.transsel + "Deepl:"+ data.apikeyDeepl + " transsel:"+data.transsel);
+                    var myWindow = window.self;
+                    mess = "For " + data.transsel + " no apikey is set!" ;
+                    cuteAlert({
+                        type: "error",
+                        title: "Message",
+                        message: mess,
+                        buttonText: "OK",
+                        myWindow: myWindow,
+                        closeStyle: "alert-close",
+                    });
                     }
             });
 }
@@ -316,7 +344,15 @@ function importPageClicked(event) {
     }
     else {
         // File is wrong type so do not process it
-        alert("File is not csv!!");
+            var myWindow = window.self;
+            cuteAlert({
+                type: "error",
+                title: "Message",
+                message: "File is not a csv!",
+                buttonText: "OK",
+                myWindow: myWindow,
+                closeStyle: "alert-close",
+            });
     }
     }); 
    
@@ -346,8 +382,17 @@ async function parseDataBase(data) {
                console.debug('parseDataBase:',res);
             }
         }
-      }
-        alert('Import ready records imported:' + i);
+        }
+        var myWindow = window.self;
+        cuteAlert({
+            type: "info",
+            title: "Message",
+            message: "Import is ready rcords imported"+i,
+            buttonText: "OK",
+            myWindow: myWindow,
+            closeStyle: "alert-close",
+        });
+        //alert('Import ready records imported:' + i);
     }
 }
 let glossary = [];
