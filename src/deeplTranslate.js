@@ -15,7 +15,7 @@ function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId
     //else {
     //    var trntype = "html";
     // }
-    translatedText = sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line);
+    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line);
 }
 
 function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line) {
@@ -27,6 +27,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     var current = "";
     var prevstate = "";
     var pluralpresent = "";
+    
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
 
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
@@ -37,8 +38,8 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
         //console.debug("Deepl translation:", this.response);
         responseObj = this.response;
 
-        // console.debug("Deepl ready state:", this.readyState);
-        if (this.readyState == 4) {
+        // console.debug("Deepl this ready state:", this.readyState, "this status:",this.status, "Response:",this.response);
+        if (this.readyState == 4 && this.status != 400 ) {
             //responseObj = xhttp.response;
             responseObj = this.response;
 
@@ -47,13 +48,11 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
             translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl");
             //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
             if (transtype == "single") {
-                //  console.debug("sendAPIRequest single:");
                 textareaElem = record.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
                 current.innerText = 'transFill';
                 current.value = 'transFill';
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                // console.debug("is pure single:", preview.innerText);
                 preview.innerText = translatedText;
                 validateEntry(language, textareaElem, "", "", rowId);
             }
@@ -68,7 +67,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                     //textareaElem1.innerText = translatedText;
                     //textareaElem1.value = translatedText;
                     //console.debug('existing plural text:', translatedText);
-                }
+                   }
                 else {
                     //console.debug("Deepl plural_line in plural:", plural_line, rowId,translatedText);
                     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
@@ -170,20 +169,16 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 current.value = 'transFill';
                 validateEntry(language, textareaElem1, "", "", rowId);
             }
+            
         }
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
-            if (this.readyState == 3 && this.status == 400) {
-                alert("Error in translation received status 400 with readyState == 3, probably language not supported.\n\nClick on OK until all records are processed!!!");
-            }
-            //      console.debug("issue with licence:", this.status);
-            if (this.readyState == 4 && this.status == 400) {
-                alert("Error in translation received status 400, maybe a license problem.\n\nClick on OK until all records are processed!!!");
+            if (this.response != null && this.response.message == "\"Value for 'target_lang' not supported.\"") {              
+                alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
             }
             else if (this.readyState == 2 && this.status == 403) {
                 alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
             }
-
             else {
                 // 18-06-2021 PSS fixed an alert at the wrong time issue #83
                 // console.debug("Status received:", this.status,this.readyState);

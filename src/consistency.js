@@ -16,14 +16,11 @@ function scrapeconsistency(locale) {
 	myWindow.document.getElementsByTagName('head')[0].appendChild(meta);
 	//myWindow.focus();
     var link = document.createElement("link");
-
     link.type = "text/css";
     link.rel = "stylesheet";
 	link.href = chrome.extension.getURL('cute-alert.css');
-
     myWindow.document.getElementsByTagName('head')[0].appendChild(link);
 
-	
 	const style = myWindow.document.createElement('style');
     style.innerHTML = `
       input.searchfor {
@@ -83,7 +80,7 @@ function scrapeconsistency(locale) {
         color:black;
         width: 100%;
       	   }
-     #wptf_container {
+     #container {
         margin: auto;
         width: 50%;
       	   }
@@ -166,12 +163,12 @@ function scrapeconsistency(locale) {
 	f.appendChild(SavelocalButton);
 	
 	var container = myWindow.document.createElement('div');
-	container.setAttribute('id', "wptf_container");
+	container.setAttribute('id', "container");
 	myWindow.document.getElementsByTagName('body')[0].appendChild(container);
-	myWindow.document.getElementById('wptf_container').appendChild(f);
+	myWindow.document.getElementById('container').appendChild(f);
 	var paradiv = myWindow.document.createElement('div');
 	paradiv.id = "paradiv";
-	myWindow.document.getElementById('wptf_container').appendChild(paradiv);
+	myWindow.document.getElementById('container').appendChild(paradiv);
 	const para = myWindow.document.createElement("p");
 	const paranode = myWindow.document.createTextNode("-->Please be patient it can sometimes take a bit before the result windows are opened!");
 	myWindow.document.getElementById('paradiv').appendChild(paranode);	
@@ -183,153 +180,180 @@ function submitClicked(myWindow, consistsWindow)
 	myWindow.close();
 }
 
-function startsearch(myWindow,curloc,locale,consistsWindow) {
-	 
+function startsearch(myWindow, curloc, locale, consistsWindow) {
+
 	event.preventDefault();
-	
+
 	var searchverb = myWindow.document.getElementById("myForm").elements.namedItem("searchfor").value;
 	var replverb = myWindow.document.getElementById("myForm").elements.namedItem("replverb").value;
 	var wrongverb = myWindow.document.getElementById("myForm").elements.namedItem("wrongverb").value;
 	//console.debug("search:",searchverb,"  ",replverb,"  ",wrongverb);
-	if (searchverb && replverb && wrongverb !=null){
-		var search_url= 'https://translate.wordpress.org/consistency/?search=' + searchverb + '&set=' + locale +'%2Fdefault&project=&search_case_sensitive=1';
-		//console.debug("Searchfor:",search_url);
-		const myInit = {
-        redirect: "error"
-         };
-		
-		confirm_msg = 'A log of replaced translations will be downloaded.\n';
-		confirm_msg += 'Before downloading the file the windows will be opened!\n';
-		confirm_msg += 'The records will be replaced are you sure to continue?';
-		//console.debug("myWindow:", myWindow);
-		cuteAlert({
-			type: "question",
-			title: "Create a back-up for check afterwards",
-			message: "To proceed it is necessary to create a back-up!",
-			confirmText: "Yes proceed",
-			cancelText: "No stop",
-			closeStyle: "",
-			myWindow : myWindow,
-		}).then((e) => {
+	if (typeof locale != 'undefined' && locale != "") {
+		if (searchverb && replverb && wrongverb != null) {
+			var search_url = 'https://translate.wordpress.org/consistency/?search=' + searchverb + '&set=' + locale + '%2Fdefault&project=&search_case_sensitive=1';
+			//console.debug("Searchfor:",search_url);
+			const myInit = {
+				redirect: "error"
+			};
 
-			if (e == "confirm") {
-				cuteToast({
-					type: "info",
-					message: "Please wait while data is fetched",
-					timer: 5000,
-					myWindow,
-				});
-				fetch(search_url, myInit)
-					.then(function (response) {
-						// When the page is loaded convert it to text
-						return response.text();
-					})
-					.then(function (html) {
-						// Initialize the DOM parser
-						//console.debug("html:",html);
-						var parser = new DOMParser();
+			confirm_msg = 'A log of replaced translations will be downloaded.\n';
+			confirm_msg += 'Before downloading the file the windows will be opened!\n';
+			confirm_msg += 'The records will be replaced are you sure to continue?';
+			//console.debug("myWindow:", myWindow);
+			cuteAlert({
+				type: "question",
+				title: "Create a back-up for check afterwards",
+				message: "To proceed it is necessary to create a back-up!",
+				confirmText: "Yes proceed",
+				cancelText: "No stop",
+				closeStyle: "",
+				myWindow: myWindow,
+			}).then((e) => {
 
-						// Parse the text
-						var doc = parser.parseFromString(html, "text/html");
+				if (e == "confirm") {
+					cuteToast({
+						type: "info",
+						message: "Please wait while data is fetched",
+						timer: 5000,
+						myWindow,
+					});
+					fetch(search_url, myInit)
+						.then(function (response) {
+							// When the page is loaded convert it to text
+							return response.text();
+						})
+						.then(function (html) {
+							// Initialize the DOM parser
+							//console.debug("html:",html);
+							var parser = new DOMParser();
 
-						// console.debug(doc);
-						//var trs = doc.getElementsByTagName("tr");
-						var table = doc.getElementById("consistency-table");
-						var mytable = doc.getElementsByTagName("table")[0];
-						var mytablebody = mytable.getElementsByTagName("tbody")[0];
-						var Rows = mytable.rows.length;
-						var rowCount = 0;
-						var replCount = 0;
-						if (Rows > 500) {
-							Rows = 500;
-						}
-						var replace_links = '';
-						for (var i = 1; i < Rows - 2; i++) {
-							rowCount++;
-							let myrow = mytablebody.getElementsByTagName("tr")[rowCount];
-							var mycel1 = myrow.getElementsByTagName("td")[0];
-							if (mycel1 != undefined) {
-								var orgtext = mycel1.childNodes[0].innerText;
-								var mycel11 = mycel1.childNodes[2];
-								var myceltext12 = mycel11.getElementsByTagName("a");
-								var myorglink = myceltext12.item(0).href;
-								var textorglink = myorglink.innerText;
-								var mycel2 = myrow.getElementsByTagName("td")[1];
-								var transtext = mycel2.childNodes[0].innerText;
-								var myceltext3 = mycel2.childNodes[2];
-								var myceltext4 = myceltext3.getElementsByTagName("a");
-								var mylink = myceltext4.item(0).href;
-								//console.debug('Translated:',transtext);
+							// Parse the text
+							var doc = parser.parseFromString(html, "text/html");
 
-								if (transtext == wrongverb) {
-									let isFound = myorglink.search("dev");
-									if (isFound == -1) {
-										-i;
-										replCount++;
-										// Max25 windows will be opened
-										if (replCount < 25) {
-											newWindow = window.open(mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb, mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb);
-											replace_links += mylink + '\n';
+							// console.debug(doc);
+							//var trs = doc.getElementsByTagName("tr");
+							var table = doc.getElementById("consistency-table");
+							var mytable = doc.getElementsByTagName("table")[0];
+							console.debug("myTable:", mytable);
+							if (typeof mytable != 'undefined') {
+								var mytablebody = mytable.getElementsByTagName("tbody")[0];
+								var Rows = mytable.rows.length;
+								var rowCount = 0;
+								var replCount = 0;
+								if (Rows > 500) {
+									Rows = 500;
+								}
+								var replace_links = '';
+								for (var i = 1; i < Rows - 2; i++) {
+									rowCount++;
+									let myrow = mytablebody.getElementsByTagName("tr")[rowCount];
+									var mycel1 = myrow.getElementsByTagName("td")[0];
+									if (mycel1 != undefined) {
+										var orgtext = mycel1.childNodes[0].innerText;
+										var mycel11 = mycel1.childNodes[2];
+										var myceltext12 = mycel11.getElementsByTagName("a");
+										var myorglink = myceltext12.item(0).href;
+										var textorglink = myorglink.innerText;
+										var mycel2 = myrow.getElementsByTagName("td")[1];
+										var transtext = mycel2.childNodes[0].innerText;
+										var myceltext3 = mycel2.childNodes[2];
+										var myceltext4 = myceltext3.getElementsByTagName("a");
+										var mylink = myceltext4.item(0).href;
+										//console.debug('Translated:',transtext);
+
+										if (transtext == wrongverb) {
+											let isFound = myorglink.search("dev");
+											if (isFound == -1) {
+												-i;
+												replCount++;
+												// Max25 windows will be opened
+												if (replCount < 25) {
+													newWindow = window.open(mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb, mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb);
+													replace_links += mylink + '\n';
+												}
+											}
+										}
+										else {
+											-i;
 										}
 									}
 								}
-								else {
-									-i;
+								//console.debug("Replcount:", replCount);
+								if (replCount == 0) {
+									//console.debug("mywindow:", myWindow);
+									cuteAlert({
+										type: "info",
+										title: "Message",
+										message: "OK no records to replace!",
+										buttonText: "OK",
+										myWindow: myWindow,
+										closeStyle: "alert-close",
+									});
 								}
+								//console.debug("Search ended:");
+								if (replCount != 0) {
+									var current_date = new Date();
+									wptf_download('[' + current_date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' wptf replace log.txt]', replace_links, myWindow);
+								}
+								consistsWindow.close();
 							}
-						}
-						//console.debug("Replcount:", replCount);
-						if (replCount == 0) {
-							//console.debug("mywindow:", myWindow);
+							else {
+								cuteAlert({
+									type: "error",
+									title: "Message",
+									message: "No records found!",
+									buttonText: "OK",
+									myWindow: myWindow,
+									closeStyle: "alert-close",
+								});
+							}
+						})
+						.catch(function (err) {
+							console.log('Failed to fetch page: ', err);
 							cuteAlert({
-								type: "info",
+								type: "error",
 								title: "Message",
-								message: "OK no records to replace!",
+								message: "Missing fieldvalue" + err,
 								buttonText: "OK",
 								myWindow: myWindow,
 								closeStyle: "alert-close",
 							});
-						}
-						//console.debug("Search ended:");
-						if (replCount != 0) {
-							var current_date = new Date();
-							wptf_download('[' + current_date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' wptf replace log.txt]', replace_links, myWindow);
-						}
-						consistsWindow.close();
-					})
-					.catch(function (err) {
-						//console.log('Failed to fetch page: ', err);
-						cuteAlert({
-							type: "error",
-							title: "Message",
-							message: "Missing fieldvalue" +err,
-							buttonText: "OK",
-							myWindow: myWindow,
-							closeStyle: "alert-close",
-						});	
+						});
+				}
+				else {
+					cuteAlert({
+						type: "info",
+						title: "Message",
+						message: "OK cancelled no replacements!",
+						buttonText: "OK",
+						myWindow: myWindow,
+						closeStyle: "alert-close",
 					});
-			}
-			else {
-				cuteAlert({
-					type: "info",
-					title: "Message",
-					message: "OK cancelled no replacements!",
-					buttonText: "OK",
-					myWindow: myWindow,
-					closeStyle: "alert-close",
-				});
-			}
-		});
+				}
+			});
+		}
+		else {
+			event.preventDefault();
+			cuteAlert({
+				type: "error",
+				title: "Message",
+				message: "Missing fieldvalue",
+				buttonText: "OK",
+				myWindow: myWindow,
+				closeStyle: "alert-close",
+			});
+			consistsWindow.close();
+		}
+
 	}
 	else {
-		event.preventDefault();
 		cuteAlert({
 			type: "error",
 			title: "Message",
-			message: "Missing fieldvalue",
+			message: "Locale option not set!!",
 			buttonText: "OK",
 			myWindow: myWindow,
-			closeStyle:"alert-close",
+			closeStyle: "alert-close",
 		});
 		consistsWindow.close();
 	}

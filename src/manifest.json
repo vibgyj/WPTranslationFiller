@@ -5,7 +5,8 @@
   "description": "Chrome extension to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
   "web_accessible_resources": [
     "//cute-alert.css",
-    "/img/*"
+    "img/*",
+    "//cute-alert.js"
   ],
   "background": {
     "scripts": [

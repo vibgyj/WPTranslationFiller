@@ -66,9 +66,7 @@ document.addEventListener("keydown", function (event) {
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 
 document.addEventListener("keydown", function (event) {
-
-    if (event.altKey && (event.key === 'r' || event.key === 'R')) {
-        
+    if (event.altKey && (event.key === 'r' || event.key === 'R')) {  
         event.preventDefault();
         var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
         // issue #133 block non PTE/GTE users from using this function
@@ -97,7 +95,7 @@ document.addEventListener("keydown", function (event) {
                 //console.debug('Translated text to check:', translatedText);
                 let replaced = false;
 
-                console.debug("translatedText before:", translatedText);
+               // console.debug("translatedText before:", translatedText);
 
                 // PSS 09-03-2021 added check to see if we need to translate
                 let toTranslate = true;
@@ -135,14 +133,31 @@ document.addEventListener("keydown", function (event) {
                     }
                     else {
                         //console.debug("not found:", search);
-                        alert("Verb not found: " + search);
+                        var myWindow = window.self;
+                        cuteAlert({
+                            type: "error",
+                            title: "Message",
+                            message: "Verb not found!" + search,
+                            buttonText: "OK",
+                            myWindow: myWindow,
+                            closeStyle: "alert-close",
+                        });
                         replaced = false;
                         break;
                     }
                 }
                 else {
-                    alert("The name of plugin/theme/url do not need to be replaced");
-                    replaced = false;
+                     var myWindow = window.self;
+                     cuteAlert({
+                     type: "error",
+                     title: "Message",
+                     message: "The name of plugin/theme/url do not need to be replaced!",
+                     buttonText: "OK",
+                     myWindow: myWindow,
+                     closeStyle: "alert-close",
+                     });
+                     replaced = false;
+                    
                 }
                 if (replaced == true) {
                     setTimeout(() => { window.close(); }, 1000);
@@ -236,10 +251,10 @@ function translatePageClicked(event) {
         .get(
             ['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace', 'showHistory', 'showTransDiff'],
             function (data) {
-                console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
-                console.debug("type of data.apikeyMicrosoft:", typeof data.apikeyMicrosoft);
+                //console.debug('Parameters read:', data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang);
+                //console.debug("type of data.apikeyMicrosoft:", typeof data.apikeyMicrosoft);
                 if (typeof data.apikey != 'undefined' && data.apikey !="" && data.transsel == 'google' || typeof data.apikeyDeepl != 'undefined' && data.apikeyDeepl !="" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != 'undefined' && data.apikeyMicrosoft !="" && data.transsel == "microsoft") {
-                    console.debug("type of data.destlang:",typeof data.destlang);
+                   // console.debug("type of data.destlang:",typeof data.destlang);
                     if (data.destlang != 'undefined' && data.destlang != null && data.destlang !="") {
                         if (data.transsel != 'undefined') {
 
@@ -255,7 +270,6 @@ function translatePageClicked(event) {
                                 myWindow: myWindow,
                                 closeStyle: "alert-close",
                             });
-                           // alert("You need to set the translator API");
                         }
                     }
                     else {
@@ -269,7 +283,6 @@ function translatePageClicked(event) {
                             myWindow: myWindow,
                             closeStyle: "alert-close",
                         });
-                        //alert("You need to set the parameter for Destination language");
                     }
                 }
                 else {
@@ -291,7 +304,7 @@ function translatePageClicked(event) {
 
 function checkPageClicked(event) {
     event.preventDefault();
-    console.log("Checkpage clicked!");
+    //console.log("Checkpage clicked!");
     chrome.storage.sync
         .get(
             ['apikey', 'destlang', 'postTranslationReplace', 'preTranslationReplace'],
@@ -329,7 +342,7 @@ function importPageClicked(event) {
               let reader = new FileReader();
               reader.readAsBinaryString(fileList[0]);
               reader.onload = function (e) {
-              console.log("functions started:",e);
+              //console.log("functions started:",e);
               obj_csv.size = e.total;
               obj_csv.dataFile = e.target.result;
               //console.log(obj_csv.dataFile)
@@ -359,7 +372,16 @@ function importPageClicked(event) {
 }
     
 async function parseDataBase(data) {
-    alert("Import is started wait for the result");
+    var myWindow = window.self;
+    cuteAlert({
+        type: "info",
+        title: "Message",
+        message: "Import is started wait for the result",
+        buttonText: "OK",
+        myWindow: myWindow,
+        closeStyle: "alert-close",
+    });
+    
     let csvData = [];
     let lbreak = data.split("\n");
     let counter= 0;
@@ -379,7 +401,7 @@ async function parseDataBase(data) {
             //Prevent adding empty line
             if (csvData[i][0] != ''){
                res= await addTransDb(csvData[i][0],csvData[i][1],csvData[i][2]);
-               console.debug('parseDataBase:',res);
+               //console.debug('parseDataBase:',res);
             }
         }
         }
@@ -387,12 +409,11 @@ async function parseDataBase(data) {
         cuteAlert({
             type: "info",
             title: "Message",
-            message: "Import is ready rcords imported"+i,
+            message: "Import is ready rcords imported: "+i,
             buttonText: "OK",
             myWindow: myWindow,
             closeStyle: "alert-close",
         });
-        //alert('Import ready records imported:' + i);
     }
 }
 let glossary = [];
@@ -594,9 +615,6 @@ function checkbuttonClick(event){
                // Fetch only the current string to compaire with the waiting string
                //url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
                url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + rowId;
-               //console.debug('checkbuttonClick url found:', url);
-               //rowsFound = fetchOld('','',url,'True');
-
                chrome.storage.sync.get(['showTransDiff'], function (data) {
                    if (data.showTransDiff != 'null') {
                        if (data.showTransDiff == true) {
@@ -616,7 +634,7 @@ function checkbuttonClick(event){
                panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
                // Add addtranslate button
                let addTranslateButton = document.createElement("my-button");
-               console.debug('addTranslateButtons rowId:', rowId);
+               //console.debug('addTranslateButtons rowId:', rowId);
                addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
                addTranslateButton.className = "addtranslation-entry-my-button";
                addTranslateButton.onclick = addtranslateEntryClicked;
@@ -636,7 +654,7 @@ function checkbuttonClick(event){
 
 function translateEntryClicked(event) {
     event.preventDefault();
-    console.log("Translate Entry clicked!", event);
+    //console.log("Translate Entry clicked!", event);
     let rowId = event.target.id.split('-')[1];
     //console.log("Translate Entry clicked rowId", rowId);
     let myrowId = event.target.id.split('-')[2];
@@ -645,13 +663,13 @@ function translateEntryClicked(event) {
     if (typeof myrowId != 'undefined' && myrowId != 'translation') {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
-        console.debug('Line already translated new rowId:',rowId);
+        //console.debug('Line already translated new rowId:',rowId);
     }
     chrome.storage.sync
         .get(['apikey', 'apikeyDeepl','apikeyMicrosoft','transsel','destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
             translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
-    console.debug('after translateEntry');
+    //console.debug('after translateEntry');
 }
 
 function validatePage(language, showHistory) {
@@ -847,7 +865,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
             else {
                 current = myrec.querySelector('span.panel-header__bubble');
-                console.debug('SavelocalButton:', SavelocalButton,rowId);
+                //console.debug('SavelocalButton:', SavelocalButton,rowId);
                 if (current.innerText == 'transFill') {
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
@@ -1053,7 +1071,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             checkElem.title = "Reject the string";
         }
         else {
-            console.debug("no current found!");
+            //console.debug("no current found!");
             SavelocalButton.innerText = "Save";
             checkElem.title = "Save the string";
         }
@@ -1069,14 +1087,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
         }
     }
-    //else {
-       // console.debug('h', h);
-        //SavelocalButton.innerText = "Appr";
-     //   console.debug('current innertext:', current.innerText);
-     //   if (current.innerText != 'current') {
-          //  checkElem.title = "Approve the string";
-     //   }
-    //}
     
     //SavelocalButton.ariaLabel = "Save and approve translation";
     checkElem.appendChild(SavelocalButton);
@@ -1250,7 +1260,7 @@ function taMatch(gWord, tWord) {
     // கொ
     glossaryWord = glossaryWord.replaceAll("\u0BC6\u0BBE", "\u0BCA");
 
-    console.log('taMatch:', gWord, glossaryWord, tWord);
+    //console.log('taMatch:', gWord, glossaryWord, tWord);
 
     return tWord.includes(glossaryWord);
 }
@@ -1500,7 +1510,6 @@ async function fetchOld(checkElem, result, url, single, originalElem,row,rowId) 
                         updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old,rowId,"","");
                     }
                     else if (tbodyRowCount > 2 && single == 'True') {
-                        console.debug('1418:', row);
                         updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old,rowId,"","");
                         //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                         //window.open(url, "_blank", windowFeatures);

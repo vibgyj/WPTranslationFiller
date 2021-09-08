@@ -1,3 +1,22 @@
+var scriptElm = document.createElement('script');
+scriptElm.src = chrome.extension.getURL('cute-alert.js');
+document.body.appendChild(scriptElm);
+
+//var meta = document.createElement('meta');
+//meta.setAttribute('name', 'viewport');
+//meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+//meta.setAttribute('Content-Type', 'image/svg+xml');
+//document.getElementsByTagName('head')[0].appendChild(meta);
+//myWindow.focus();
+var link = document.createElement("link");
+
+link.type = "text/css";
+link.rel = "stylesheet";
+link.href = chrome.extension.getURL('cute-alert.css');
+
+document.getElementsByTagName('head')[0].appendChild(link);
+
+
 document.getElementById("exportverbs").addEventListener("click", export_verbs_csv);
 // This array is used to replace wrong words in translation and is necessary for the export
 let replaceVerb = [];
@@ -13,8 +32,8 @@ let verbsTextbox = document.getElementById('text_verbs');
 let preverbsTextbox = document.getElementById('text_pre_verbs');
 let showHistCheckbox = document.getElementById('show-history');
 let showDiffCheckbox = document.getElementById('comp-translations');
-console.debug("Diff:", showDiffCheckbox);
-console.debug("Hist:", showHistCheckbox);
+//console.debug("Diff:", showDiffCheckbox);
+//console.debug("Hist:", showHistCheckbox);
 
 chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace','showHistory', 'showTransDiff'], function (data) {
     apikeyTextbox.value = data.apikey;
@@ -52,7 +71,7 @@ chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'd
             //document.getElementById('comp-translations').checked = false;
         }
     }
-    console.log("Read options: ", data);
+    //console.log("Read options: ", data);
 });
 
 
@@ -74,7 +93,7 @@ button.addEventListener('click', function () {
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
     if (document.querySelector('#show-history:checked') !== null) {
-        console.debug('diff:', document.querySelector('#show-history:checked'));
+        //console.debug('diff:', document.querySelector('#show-history:checked'));
         let Hist = document.querySelector('#show-history:checked');
         showHist = Hist.checked;
         }
@@ -82,7 +101,7 @@ button.addEventListener('click', function () {
         showHist = 'false';
     }
     if (document.querySelector('#comp-translations:checked') !== null) {   
-        console.debug('diff:', document.querySelector('#comp-translations:checked'));
+        //console.debug('diff:', document.querySelector('#comp-translations:checked'));
         let showDiff = document.querySelector('#comp-translations:checked');
         showDifference = showDiff.checked;
     }
@@ -102,10 +121,10 @@ button.addEventListener('click', function () {
         showHistory: showHist,
         showTransDiff: showDifference
     });
-    console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
+    //console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  
     if (glossaryFile.value !== "") {
-        console.debug('Options: ', glossaryFile);
+        //console.debug('Options: ', glossaryFile);
         chrome.storage.sync.set({ glossaryFile: glossaryFile.value.replace("C:\\fakepath\\", "") });
 
         chrome.storage.sync.set({ glossary: glossary });
@@ -136,8 +155,15 @@ button.addEventListener('click', function () {
         chrome.storage.sync.set({ glossaryY: glossaryY });
         chrome.storage.sync.set({ glossaryZ: glossaryZ });
     }
-
-    alert("Settings successfully saved.\nPlease make sure that you enter values\nin Destination Language and select a Glossary File\nand enter values in Post Translation Replace ");
+    var myWindow = window.self;
+    cuteAlert({
+        type: "info",
+        title: "Message",
+        message: "Settings successfully saved.\nPlease make sure that you enter values\nin Destination Language and select a Glossary File\nand enter values in Post Translation Replace",
+        buttonText: "OK",
+        myWindow: myWindow,
+        closeStyle: "alert-close",
+    });
 });
 
 let file = document.getElementById('glossary_file');
@@ -273,7 +299,7 @@ file.addEventListener('change', function () {
                 }
             }
         }
-        console.log(glossaryA);
+        //console.log(glossaryA);
     };
     reader.readAsText(file);
 });
@@ -288,7 +314,7 @@ function pushToGlossary(glossary, key, value) {
     glossary.push({ key: key, value: value });
 }
 function export_verbs_csv() {
-    console.debug("Export started:");
+    //console.debug("Export started:");
     // 13-03-2021 PSS added locale to export filename
     var destlang = destLangTextbox.value;
     let export_file = 'export_verbs_' + destlang + '.csv';
@@ -320,8 +346,15 @@ function export_verbs_csv() {
        hiddenElement.target = '_blank';
        hiddenElement.download = export_file;
        hiddenElement.click();
-       alert('Export verbs ready');
-   
+       var myWindow = window.self;
+       cuteAlert({
+        type: "info",
+        title: "Message",
+        message: "Export verbs ready",
+        buttonText: "OK",
+        myWindow: myWindow,
+        closeStyle: "alert-close",
+    });
    }
 // PSS 08-03-2021 added this to prepare data for export to csv   
 function setPostTranslationReplace(postTranslationReplace) {
@@ -347,7 +380,7 @@ if (input.files && input.files[0]) {
         // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
         reader.readAsText(input.files[0]);
         reader.onload = function (e) {
-        console.log(e);
+        //console.log(e);
         obj_csv.size = e.total;
         obj_csv.dataFile = e.target.result;
        //console.log(obj_csv.dataFile)
@@ -370,5 +403,14 @@ function parseData(data) {
         //console.debug("counter:",counter);
     });
     //console.table(csvData);
-    alert('Import ready');
+    var myWindow = window.self;
+    cuteAlert({
+        type: "info",
+        title: "Message",
+        message: "Import ready",
+        buttonText: "OK",
+        myWindow: myWindow,
+        closeStyle: "alert-close",
+    });
+    
 }

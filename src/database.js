@@ -155,8 +155,16 @@ async function addTransline(rowId){
     var orig = e.querySelector("span.original-raw").innerText;
     let textareaElem = e.querySelector("textarea.foreign-text");
     var addTrans = textareaElem.value;
-    if (addTrans === ""){
-        alert("No translation to store!");
+        if (addTrans === "") {
+            var myWindow = window.self;
+            cuteAlert({
+                type: "info",
+                title: "Message",
+                message: "No translation to store!",
+                buttonText: "OK",
+                myWindow: myWindow,
+                closeStyle: "alert-close",
+            });
     }
     else {
         console.debug('addTransline translated text to add to database:',addTrans);
@@ -193,7 +201,15 @@ async function addTransline(rowId){
                 res = addTransDb(plural, addTrans, language);
             }
             }
-         alert("addTransline record added/updated to database ");
+            var myWindow = window.self;
+            cuteAlert({
+                type: "info",
+                title: "Message",
+                message: "addTransline record added/updated to database",
+                buttonText: "OK",
+                myWindow: myWindow,
+                closeStyle: "alert-close",
+            });
         }
     });
     return;
@@ -237,7 +253,15 @@ async function dbExport(){
        hiddenElement.click();
        let exportButton = document.querySelector(".paging a.export_translation-button");
        exportButton.className += " ready";
-       alert('Export database ready');
+       var myWindow = window.self;
+       cuteAlert({
+         type: "info",
+         title: "Message",
+         message: "Export database ready" + "<br>" + "Save the file!",
+         buttonText: "OK",
+         myWindow: myWindow,
+         closeStyle: "alert-close",
+    });
 
 }
 
