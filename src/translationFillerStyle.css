@@ -453,10 +453,11 @@ table.translations th.priority, table.translations td.priority {
     display: table-cell !important;
     font-size: 14px !important;
 }
-
-table.translations tr.preview.has-glotdict .original::before {
+/**
+tr.preview.has-glotdict .original::before {
     display: none !important;
 }
+    **/
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict th + .priority + .original::before {
     margin-left: calc(-0.5em - 45px) !important;

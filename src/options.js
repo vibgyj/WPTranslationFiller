@@ -32,10 +32,11 @@ let verbsTextbox = document.getElementById('text_verbs');
 let preverbsTextbox = document.getElementById('text_pre_verbs');
 let showHistCheckbox = document.getElementById('show-history');
 let showDiffCheckbox = document.getElementById('comp-translations');
+let showGlotCheckbox = document.getElementById('show-glotDictGlos');
 //console.debug("Diff:", showDiffCheckbox);
 //console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace','showHistory', 'showTransDiff'], function (data) {
+chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace','showHistory', 'showTransDiff', 'glotDictGlos'], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
@@ -68,6 +69,16 @@ chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'd
         }
         else {
             showDiffCheckbox.checked = false;
+            //document.getElementById('comp-translations').checked = false;
+        }
+    }
+    if (data.glotDictGlos != 'null') {
+        if (data.glotDictGlos == true) {
+            showGlotCheckbox.checked = true;
+            // document.getElementById('comp-translations').checked = true;
+        }
+        else {
+            showGlotCheckbox.checked = false;
             //document.getElementById('comp-translations').checked = false;
         }
     }
@@ -109,7 +120,14 @@ button.addEventListener('click', function () {
         showDifference = 'false';
     }
     
-    
+    if (document.querySelector('#show-glotDictGlos:checked') !== null) {
+        //console.debug('diff:', document.querySelector('#comp-translations:checked'));
+        let showGlos = document.querySelector('#show-glotDictGlos:checked');
+        showDictGlosLine = showGlos.checked;
+    }
+    else {
+        showDictGlosLine = 'false';
+    }
     chrome.storage.sync.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
@@ -119,7 +137,8 @@ button.addEventListener('click', function () {
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation,
         showHistory: showHist,
-        showTransDiff: showDifference
+        showTransDiff: showDifference,
+        glotDictGlos: showDictGlosLine
     });
     //console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  

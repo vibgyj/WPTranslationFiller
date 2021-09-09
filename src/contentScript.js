@@ -3,6 +3,34 @@
 /// PSS added function from GlotDict to save records in editor
 gd_wait_table_alter();
 
+// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
+chrome.storage.sync
+    .get(
+        ['glotDictGlos'],
+        function (data) {
+            let showGlosLine = data.glotDictGlos;
+            if (showGlosLine == 'false') {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                 tr.preview.has-glotdict .original::before {
+                 display: none !important;
+                }
+                 `;
+                document.head.appendChild(style);
+            }
+            else {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                tr.preview.has-glotdict .original::before {
+                width: 5px !important;
+                }
+                 `;
+                document.head.appendChild(style);
+            }
+
+        });
+
+
 // 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
 function setToOff() {
     //var key = 'noOldTrans', OldTrans = { val: false }; 
@@ -179,6 +207,8 @@ document.addEventListener("keydown", function (event) {
         }
     
 });
+
+
 
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
