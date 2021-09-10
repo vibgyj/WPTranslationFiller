@@ -59,20 +59,34 @@ async function addTransDb(orig, trans, cntry) {
         if (noOfDataInserted == 1) {
           reslt ="Inserted";
           console.debug('addTransDb record added');
-			//alert("Record added");
         }
-		else if (noOfDataInserted != 1){
-			alert("Record not added!!");
+        else if (noOfDataInserted != 1) {
+            var myWindow = window.self;
+            cuteAlert({
+                type: "error",
+                title: "Message",
+                message: "Record not added!!",
+                buttonText: "OK",
+                myWindow: myWindow,
+                closeStyle: "alert-close",
+            });
             reslt="Record not added";
 		}
-    } catch (ex) {
-        alert(ex.message);
+        } catch (ex) {
+            var myWindow = window.self;
+            cuteAlert({
+                type: "error",
+                title: "Message",
+                message: "Error: " + ex.message,
+                buttonText: "OK",
+                myWindow: myWindow,
+                closeStyle: "alert-close",
+            });
        }
 	}
 	else{
 		res =updateTransDb(orig,trans,cntry);
 		console.debug('addTransDb record present so update it',trans," ",res);
-		//alert("Record updated!!",res);
         reslt="updated";
         console.debug('addTransDb record present so update it',reslt);
 	}
@@ -96,7 +110,15 @@ async function updateTransDb(orig,trans,cntry) {
         console.log(`data updated ${noOfDataUpdated}`);
         
     } catch (ex) {
-        alert(ex.message,"record:",orig);
+        var myWindow = window.self;
+        cuteAlert({
+            type: "error",
+            title: "Message",
+            message: "Error: " + ex.message + "record: " + orig,
+            buttonText: "OK",
+            myWindow: myWindow,
+            closeStyle: "alert-close",
+        });
     }
 }
 
@@ -215,7 +237,6 @@ async function addTransline(rowId){
     return;
 }
 async function dbExport(){
-  //alert("database export");
   const trans = await jsstoreCon.select({
     from: "Translation"
   });

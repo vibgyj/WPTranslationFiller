@@ -1406,7 +1406,10 @@ async function fetchOldRec(url, rowId) {
                     var element3 = document.createElement('div');
                     element3.setAttribute('id', 'translator_div3');
                     element3.style.cssText = 'padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey';
-                    element3.appendChild(document.createTextNode(trans[0].innerText));
+                    // If within editor you have no translation
+                    if (trans[0] != 'undefined') {
+                        element3.appendChild(document.createTextNode(trans[0].innerText));
+                    }
 
                     // 23-06-2021 PSS added the current translation below the old to be able to mark the differences issue #92                
 
