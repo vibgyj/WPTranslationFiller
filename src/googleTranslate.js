@@ -49,13 +49,18 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
             //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
             //console.debug('sendAPIRequest transtype:', transtype);
             if (transtype == "single") {
-               //console.debug("sendAPIRequest single:");
+               console.debug("sendAPIRequest single:");
                 textareaElem = record.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
                 current.innerText = 'transFill';
                 current.value = 'transFill';
+                // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                textareaElem.value = translatedText;
+                //PSS 25-03-2021 Fixed problem with description box issue #13
+                textareaElem.style.height = 'auto';
+                textareaElem.style.height = textareaElem.scrollHeight + 'px';
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                //console.debug("is pure single:", preview.innerText);
+                console.debug("is pure single:", preview.innerText);
                 preview.innerText = translatedText;
                 validateEntry(language, textareaElem, "", "", rowId);
             }
@@ -114,10 +119,14 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                         }
                         if (plural_line == 1) {
                             //populate plural line if not already translated, so we can take original rowId!
-                            //console.debug("singular updatet:", translatedText);
+                            console.debug("singular updatet:", translatedText);
                             textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_0");
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
+                            
+                            //PSS 25-03-2021 Fixed problem with description box issue #13
+                            textareaElem1.style.height = 'auto';
+                            textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
                             // Select the first li
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
                             if (previewElem != null) {

@@ -50,6 +50,11 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
             if (transtype == "single") {
                 textareaElem = record.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
+                // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                textareaElem.value = translatedText;
+                //PSS 25-03-2021 Fixed problem with description box issue #13
+                textareaElem.style.height = 'auto';
+                textareaElem.style.height = textareaElem.scrollHeight + 'px';
                 current.innerText = 'transFill';
                 current.value = 'transFill';
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');

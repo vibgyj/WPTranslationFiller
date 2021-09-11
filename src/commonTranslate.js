@@ -631,9 +631,14 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     //console.debug('plural rowId:', rowId);
     var transtype = "";
     var plural_line = "";
-    checkplural = document.querySelector(`#editor-${rowId} .source-string__singular span.original`);
-    if (typeof checkplural == null) {
+    var checkplural = "";
+    // To check if a plural is present we need to select the plural line!!
+    var checkplural = document.querySelector(`#editor-${rowId} .source-string__plural span.original`);
+    console.debug("checkplural:", checkplural);
+
+    if (checkplural == null) {
         transtype = "single";
+        console.debug("transtype:", transtype);
     }
     else {
         transtype = "plural";
