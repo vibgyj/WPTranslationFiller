@@ -453,6 +453,7 @@ table.translations th.priority, table.translations td.priority {
     display: table-cell !important;
     font-size: 14px !important;
 }
+
 /**
 tr.preview.has-glotdict .original::before {
     display: none !important;

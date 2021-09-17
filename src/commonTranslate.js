@@ -319,30 +319,13 @@ function checkPage(postTranslationReplace) {
         }
         //var myForm = document.getElementById('translation-actions');
         //myForm.submit();
-        var myWindow = window.self;
-        cuteAlert({
-            type: "info",
-            title: "Message",
-            message: 'Replace verbs done ' + countreplaced + ' replaced' + ' words\n' + repl_verb,
-            buttonText: "OK",
-            myWindow: myWindow,
-            closeStyle: "alert-close",
-        });
-        //alert('Replace verbs done ' + countreplaced + ' replaced' + ' words\n' + repl_verb);
+        messageBox("info", 'Replace verbs done ' + countreplaced + ' replaced' + ' words\n' + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
         checkButton.className += " ready";
     }
     else {
-        var myWindow = window.self;
-        cuteAlert({
-            type: "error",
-            title: "Message",
-            message: "Your postreplacement verbs is empty!!",
-            buttonText: "OK",
-            myWindow: myWindow,
-            closeStyle: "alert-close",
-        });
+        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
     }
 }
 
@@ -446,6 +429,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (currec != null) {
                             var current = currec.querySelector('span.panel-header__bubble');
                         }
+                        //14-09-2021 PSS changed the class to meet GlotDict behavior
+                        var currentClass = document.querySelector(`#editor-${row}`);
+                        var prevcurrentClass = document.querySelector(`#preview-${row}`);
+                        currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                        currentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                        prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        console.debug("currentClass:", currentClass);
+                        console.debug("currentClass:", prevcurrentClass);
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
@@ -579,6 +571,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         current.innerText = 'transFill';
                         current.value = 'transFill';
                         // console.debug('translatePage No need to translate copy the original', original);
+                        //14-09-2021 PSS changed the class to meet GlotDict behavior
+                        var currentClass = document.querySelector(`#editor-${row}`);
+                        var prevcurrentClass = document.querySelector(`#preview-${row}`);
+                        currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                        currentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                        prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        console.debug("currentClass:", currentClass);
+                        console.debug("currentClass:", prevcurrentClass);
                     }
                 }
             }
@@ -587,31 +588,14 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
             translateButton.className += " translated";
         }
         else {
-            var myWindow = window.self;
-            cuteAlert({
-                type: "error",
-                title: "Message",
-                message: "Your pretranslate replace verbs are not populated add at least on line!!",
-                buttonText: "OK",
-                myWindow: myWindow,
-                closeStyle: "alert-close",
-            });
-            //alert("Your pretranslate replace verbs are not populated add at least on line!!");
+            messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!");
             // 07-07-2021 Fix for issue #98
             translateButton = document.querySelector(".paging a.translation-filler-button");
             translateButton.className += " after_error";
         }
     }
     else {
-        var myWindow = window.self;
-        cuteAlert({
-            type: "error",
-            title: "Message",
-            message: "Your postreplace verbs are not populated add at least on line!!",
-            buttonText: "OK",
-            myWindow: myWindow,
-            closeStyle: "alert-close",
-        });
+        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
         // 07-07-2021 Fix for issue #98
         translateButton = document.querySelector(".paging a.translation-filler-button");
         translateButton.className += " after_error";
@@ -753,32 +737,89 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
             translateButton.className += " translated";
         }
         else {
-            var myWindow = window.self;
-            cuteAlert({
-                type: "error",
-                title: "Message",
-                message: "Your pretranslate replace verbs are not populated add at least on line!!",
-                buttonText: "OK",
-                myWindow: myWindow,
-                closeStyle: "alert-close",
-            });
-            //alert("Your pretranslate replace verbs are not populated add at least on line!!");
+            messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!!");
             let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             translateButton.className += " translated_error";
         }
     }
     else {
-        var myWindow = window.self;
-        cuteAlert({
-            type: "error",
-            title: "Message",
-            message: "Your postreplace verbs are not populated add at least on line!!",
-            buttonText: "OK",
-            myWindow: myWindow,
-            closeStyle: "alert-close",
-        });
-        //alert("Your postreplace verbs are not populated add at least on line!!");
+        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
         let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
         translateButton.className += " translated_error";
     }
+}
+
+function bulkSave() {
+    var countRec = 0;
+    for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+        let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
+        row = rowfound.split('-')[1];
+        let newrow = rowfound.split('-')[2];
+        if (typeof newrow != 'undefined') {
+            newrowId = row.concat("-", newrow);
+            row = newrowId;
+        }
+        else {
+            rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
+            row = rowfound.split('_')[1];
+        }
+        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+        if (currec != null) {
+            var current = currec.querySelector('span.panel-header__bubble');
+        }
+        var checkboxTicked = document.querySelector(`#preview-${row} input`);
+        //console.debug("checkbox:", checkboxTicked, row);
+        if (checkboxTicked != null) {
+            if (checkboxTicked.checked == true) {
+                countRec++;
+                //console.debug("ticked is true");
+                if (current.innerText == 'transFill') {
+                    current.innerText = 'translated'
+                    let open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
+                    //console.debug('glotpress_open_editor:', row, open_editor);
+                    let glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+                    //console.debug('glotpress_save:', row, glotpress_save);
+                    let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`).nextElementSibling.nextElementSibling;
+                    //console.debug('glotpress_close:', row, glotpress_close);
+                    // console.debug('prevrow:', glotpress_close);
+                    open_editor.click();
+
+                    glotpress_save.click();
+                    // setTimeout(() => { console.debug("timeout") }, 1000);
+                    //glotpress_close.click();
+                    // We need to remove the saved record from the table!
+                    let prevrow = document.querySelector(`#preview-${row}`);
+                    if (prevrow != null) {
+                        prevrow.classList.add("transFiller");
+                        //prevrow.id = `#preview-${row}-old`;
+                        //prevrow.classList.add("transFiller");
+                    }
+                    
+                    prevrow.remove();
+                    console.debug("Removed row:", prevrow)
+                    //console.debug("Row to remove:", prevrowRem);
+                    //console.debug("Classlist row:", prevrow.classList);
+                }
+            }
+        }
+        else {
+            console.debug("checkbox not found!");
+        }
+    }
+    if (countRec == 0) {
+        messageBox("error", "You do not have translations selected!");
+        console.debug("No selection made!");
+    }
+}
+
+function messageBox(type, message) {
+    var myWindow = window.self;
+    cuteAlert({
+        type: type,
+        title: "Message",
+        message: message,
+        buttonText: "OK",
+        myWindow: myWindow,
+        closeStyle: "alert-close",
+    });
 }

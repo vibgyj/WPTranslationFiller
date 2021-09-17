@@ -184,6 +184,12 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                 validateEntry(language, textareaElem1, "", "", rowId);
                 //console.debug("Validate entry textareaElem1")
             }
+            var currentClass = document.querySelector(`#editor-${rowId}`);
+            var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
+            currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            currentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+            prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
         }
 
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong

@@ -174,15 +174,7 @@ button.addEventListener('click', function () {
         chrome.storage.sync.set({ glossaryY: glossaryY });
         chrome.storage.sync.set({ glossaryZ: glossaryZ });
     }
-    var myWindow = window.self;
-    cuteAlert({
-        type: "info",
-        title: "Message",
-        message: "Settings successfully saved.\nPlease make sure that you enter values\nin Destination Language and select a Glossary File\nand enter values in Post Translation Replace",
-        buttonText: "OK",
-        myWindow: myWindow,
-        closeStyle: "alert-close",
-    });
+    messageBox("info", "Settings successfully saved.\nPlease make sure that you enter values\nin Destination Language and select a Glossary File\nand enter values in Post Translation Replace");
 });
 
 let file = document.getElementById('glossary_file');
@@ -365,15 +357,8 @@ function export_verbs_csv() {
        hiddenElement.target = '_blank';
        hiddenElement.download = export_file;
        hiddenElement.click();
-       var myWindow = window.self;
-       cuteAlert({
-        type: "info",
-        title: "Message",
-        message: "Export verbs ready",
-        buttonText: "OK",
-        myWindow: myWindow,
-        closeStyle: "alert-close",
-    });
+       messageBox("info", "Export verbs ready");
+
    }
 // PSS 08-03-2021 added this to prepare data for export to csv   
 function setPostTranslationReplace(postTranslationReplace) {
@@ -422,14 +407,17 @@ function parseData(data) {
         //console.debug("counter:",counter);
     });
     //console.table(csvData);
+    messageBox("info", "Import ready");
+}
+
+function messageBox(type, message) {
     var myWindow = window.self;
     cuteAlert({
-        type: "info",
+        type: type,
         title: "Message",
-        message: "Import ready",
+        message: message,
         buttonText: "OK",
         myWindow: myWindow,
         closeStyle: "alert-close",
     });
-    
 }

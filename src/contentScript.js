@@ -78,19 +78,25 @@ document.addEventListener("keydown", function (event) {
                         scrapeconsistency(data.destlang);
                     }
                     else {
-                        var myWindow = window.self;
-                        cuteAlert({
-                            type: "error",
-                            title: "Message",
-                            message: "You do not have permissions to start this function!",
-                            buttonText: "OK",
-                            myWindow: myWindow,
-                            closeStyle: "alert-close",
-                        });
+                        messageBox("error", "You do not have permissions to start this function!");
                     }
                 });
     }
 });
+
+document.addEventListener("keydown", function (event) {
+    if (event.altKey && (event.key === 's' || event.key === 'S')) {
+        event.preventDefault();
+        var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
+        // issue #133 block non PTE/GTE users from using this function
+        if (is_pte) {
+
+            console.debug("Bulksave started");
+            bulkSave();
+        }
+    }
+});
+
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 
 document.addEventListener("keydown", function (event) {
@@ -161,31 +167,14 @@ document.addEventListener("keydown", function (event) {
                     }
                     else {
                         //console.debug("not found:", search);
-                        var myWindow = window.self;
-                        cuteAlert({
-                            type: "error",
-                            title: "Message",
-                            message: "Verb not found!" + search,
-                            buttonText: "OK",
-                            myWindow: myWindow,
-                            closeStyle: "alert-close",
-                        });
+                        messageBox("error", "Verb not found!" + search);
                         replaced = false;
                         break;
                     }
                 }
                 else {
-                     var myWindow = window.self;
-                     cuteAlert({
-                     type: "error",
-                     title: "Message",
-                     message: "The name of plugin/theme/url do not need to be replaced!",
-                     buttonText: "OK",
-                     myWindow: myWindow,
-                     closeStyle: "alert-close",
-                     });
-                     replaced = false;
-                    
+                    messageBox("error", "The name of plugin/theme/url do not need to be replaced!");
+                    replaced = false;
                 }
                 if (replaced == true) {
                     setTimeout(() => { window.close(); }, 1000);
@@ -194,17 +183,9 @@ document.addEventListener("keydown", function (event) {
 
         }
         else {
-            var myWindow = window.self;
-            cuteAlert({
-                type: "error",
-                title: "Message",
-                message: "You do not have permissions to start this function!",
-                buttonText: "OK",
-                myWindow: myWindow,
-                closeStyle: "alert-close",
-            });
+            messageBox("error", "You do not have permissions to start this function!");
         }
-        }
+    }
     
 });
 
@@ -291,41 +272,16 @@ function translatePageClicked(event) {
                             translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
                         }
                         else {
-                            var myWindow = window.self;
-                            cuteAlert({
-                                type: "error",
-                                title: "Message",
-                                message: "You need to set the translator API",
-                                buttonText: "OK",
-                                myWindow: myWindow,
-                                closeStyle: "alert-close",
-                            });
+                            messageBox("error", "You need to set the translator API");
                         }
                     }
                     else {
+                        messageBox("error", "You need to set the parameter for Destination language");
                        // console.debug("parameter destlang:", data.destlang);
-                        var myWindow = window.self;
-                        cuteAlert({
-                            type: "error",
-                            title: "Message",
-                            message: "You need to set the parameter for Destination language",
-                            buttonText: "OK",
-                            myWindow: myWindow,
-                            closeStyle: "alert-close",
-                        });
                     }
                 }
                 else {
-                    var myWindow = window.self;
-                    mess = "For " + data.transsel + " no apikey is set!" ;
-                    cuteAlert({
-                        type: "error",
-                        title: "Message",
-                        message: mess,
-                        buttonText: "OK",
-                        myWindow: myWindow,
-                        closeStyle: "alert-close",
-                    });
+                    messageBox("error", "For " + data.transsel + " no apikey is set!");
                     }
             });
 }
@@ -387,31 +343,14 @@ function importPageClicked(event) {
     }
     else {
         // File is wrong type so do not process it
-            var myWindow = window.self;
-            cuteAlert({
-                type: "error",
-                title: "Message",
-                message: "File is not a csv!",
-                buttonText: "OK",
-                myWindow: myWindow,
-                closeStyle: "alert-close",
-            });
+            messageBox("error", "File is not a csv!");
     }
     }); 
    
 }
     
 async function parseDataBase(data) {
-    var myWindow = window.self;
-    cuteAlert({
-        type: "info",
-        title: "Message",
-        message: "Import is started wait for the result",
-        buttonText: "OK",
-        myWindow: myWindow,
-        closeStyle: "alert-close",
-    });
-    
+    messageBox("info", "Import is started wait for the result");
     let csvData = [];
     let lbreak = data.split("\n");
     let counter= 0;
@@ -425,25 +364,17 @@ async function parseDataBase(data) {
     if (counter >0){
         //console.debug('data:',csvData);
         var arrayLength = csvData.length;
-         for (var i = 0; i < arrayLength; i++) {
-        if (i > 1){
-            // Store it into the database
-            //Prevent adding empty line
-            if (csvData[i][0] != ''){
-               res= await addTransDb(csvData[i][0],csvData[i][1],csvData[i][2]);
-               //console.debug('parseDataBase:',res);
+        for (var i = 0; i < arrayLength; i++) {
+            if (i > 1){
+               // Store it into the database
+               //Prevent adding empty line
+               if (csvData[i][0] != ''){
+                  res= await addTransDb(csvData[i][0],csvData[i][1],csvData[i][2]);
+                  //console.debug('parseDataBase:',res);
+               }
             }
         }
-        }
-        var myWindow = window.self;
-        cuteAlert({
-            type: "info",
-            title: "Message",
-            message: "Import is ready rcords imported: "+i,
-            buttonText: "OK",
-            myWindow: myWindow,
-            closeStyle: "alert-close",
-        });
+        messageBox("info", "Import is ready records imported: " + i);
     }
 }
 let glossary = [];
@@ -1143,6 +1074,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     }
     //checkElem.setAttribute('title', result.toolTip);
 }
+
 
 function savetranslateEntryClicked(event) {
     //event.preventDefault();   
