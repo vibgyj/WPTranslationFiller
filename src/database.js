@@ -62,14 +62,7 @@ async function addTransDb(orig, trans, cntry) {
         }
         else if (noOfDataInserted != 1) {
             var myWindow = window.self;
-            cuteAlert({
-                type: "error",
-                title: "Message",
-                message: "Record not added!!",
-                buttonText: "OK",
-                myWindow: myWindow,
-                closeStyle: "alert-close",
-            });
+            messageBox("error", "Record not added!!");
             reslt="Record not added";
 		}
         } catch (ex) {
@@ -199,7 +192,7 @@ async function addTransline(rowId){
                 res = addTransDb(plural, addTrans, language);
             }
             }
-            messageBox("error", "addTransline record added/updated to database");
+            messageBox("info", "addTransline record added/updated to database");
         }
     });
     return;
@@ -242,7 +235,7 @@ async function dbExport(){
        hiddenElement.click();
        let exportButton = document.querySelector(".paging a.export_translation-button");
        exportButton.className += " ready";
-       messageBox("error", "Export database ready" + "<br>" + "Save the file!");
+       messageBox("info", "Export database ready" + "<br>" + "Save the file!");
 }
 
 async function tryPersistWithoutPromtingUser() {

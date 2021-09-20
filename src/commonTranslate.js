@@ -130,7 +130,48 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             //console.debug('Applied lower case: ', translatedText);
         }
     }
+    // check if the returned translation does have the same ending as the original
+    translatedText = checkStartEnd(original, translatedText);
+    return translatedText;
+}
 
+function checkStartEnd(original, translatedText) {
+    // 20-09-2021 Fix for issue #143
+   // console.debug("checkStartEnd", original, translatedText);
+    // strip or add "." at the end of the line
+    if (original.endsWith('.') == true) {
+        if (translatedText.endsWith('.') == false) {
+            translatedText = translatedText + ".";
+        }
+    }
+    if (original.endsWith('.') == false) {
+        if (translatedText.endsWith('.') == true) {
+            //console.debug("translated ends with .");
+            translatedText = translatedText.substring(0, translatedText.length - 1)
+        }
+    }
+    // Strip or add blank at the end of the line
+    if (original.endsWith(' ') == true) {
+        if (translatedText.endsWith(' ') == false) {
+            translatedText = translatedText + " ";
+        }
+    }
+    if (original.endsWith(' ') == false) {
+        if (translatedText.endsWith(' ') == true) {
+            //console.debug("translated ends with blank");
+            translatedText = translatedText.substring(0, translatedText.length - 1)
+        }
+    }
+    if (original.startsWith(' ') == true) {
+        if (translatedText.startsWith(' ') == false) {
+            translatedText = " " + translatedText ;
+        }
+    }
+    if (original.startsWith(' ') == false) {
+        if (translatedText.startsWith(' ') == true) {
+            translatedText = translatedText.substring(1, translatedText.length)
+        }
+    }
     return translatedText;
 }
 
@@ -749,58 +790,64 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-function bulkSave() {
+function bulkSave(event) {
+    event.preventDefault();
     var countRec = 0;
-    for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
-        row = rowfound.split('-')[1];
+    for (let record of document.querySelectorAll("tr.preview")) {
+    //for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+        //console.debug("record", record);
+        
+        let rowfound = record.id;
+       // console.debug("row", rowfound);
+        //let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
+        var row = rowfound.split('-')[1];
         let newrow = rowfound.split('-')[2];
         if (typeof newrow != 'undefined') {
             newrowId = row.concat("-", newrow);
             row = newrowId;
         }
-        else {
-            rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
-            row = rowfound.split('_')[1];
-        }
+        //else {
+        //    rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
+        //    row = rowfound.split('_')[1];
+       // }
         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
         if (currec != null) {
             var current = currec.querySelector('span.panel-header__bubble');
         }
         var checkboxTicked = document.querySelector(`#preview-${row} input`);
-        //console.debug("checkbox:", checkboxTicked, row);
+        //console.debug("checkbox:", checkboxTicked, checkboxTicked.checked);
         if (checkboxTicked != null) {
             if (checkboxTicked.checked == true) {
                 countRec++;
                 //console.debug("ticked is true");
-                if (current.innerText == 'transFill') {
-                    current.innerText = 'translated'
-                    let open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
-                    //console.debug('glotpress_open_editor:', row, open_editor);
-                    let glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-                    //console.debug('glotpress_save:', row, glotpress_save);
-                    let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`).nextElementSibling.nextElementSibling;
-                    //console.debug('glotpress_close:', row, glotpress_close);
-                    // console.debug('prevrow:', glotpress_close);
-                    open_editor.click();
-
-                    glotpress_save.click();
-                    // setTimeout(() => { console.debug("timeout") }, 1000);
-                    //glotpress_close.click();
-                    // We need to remove the saved record from the table!
-                    let prevrow = document.querySelector(`#preview-${row}`);
-                    if (prevrow != null) {
-                        prevrow.classList.add("transFiller");
-                        //prevrow.id = `#preview-${row}-old`;
-                        //prevrow.classList.add("transFiller");
+                let curr_row = document.querySelector(`#preview-${row}`);
+                if (current.innerText == 'transFill' ) {       
+                    if (curr_row != null) {
+                        curr_row.classList.add("transFill");
                     }
+
+                    glotpress_open(row)
+                        .then((result) => {
+                            console.debug("result:", result)
+                        })
+                        .catch((err) => {
+                            console.debug("error:", err)
+                        });                     
                     
-                    prevrow.remove();
-                    console.debug("Removed row:", prevrow)
-                    //console.debug("Row to remove:", prevrowRem);
-                    //console.debug("Classlist row:", prevrow.classList);
-                }
-            }
+                    var current = currec.querySelector('span.panel-header__bubble');
+                    if (current == "waiting") {
+                        current.innerText = 'current'
+                    }
+                    selector = document.getElementsByClassName('transFill');
+                    for (let i = 0; i < selector.length; i++) {
+                      var checkboxTicked = selector[i].querySelector(" input");
+                      if (checkboxTicked.checked == true) {
+                          selector[i].style = "display:none";
+                         //console.debug("removed:", selector[i]);
+                     }     
+                 }    
+                }     
+            }   
         }
         else {
             console.debug("checkbox not found!");
@@ -812,6 +859,43 @@ function bulkSave() {
     }
 }
 
+function glotpress_open(row) {
+    return new Promise((resolve, reject) => {     
+        //console.debug("glotpress:", row);
+        let open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
+
+        if (open_editor != null) {
+            //console.debug("open_editor:", open_editor);
+            res = open_editor.click();
+            let glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+            //console.debug("save record:", glotpress_save);
+            let glotpress_close = document.querySelector(`#editor-${row} div.panel-header-actions .panel-header-actions__cancel`);
+            //console.debug("close record:", glotpress_close);
+            if (glotpress_save != null) {
+                glotpress_save.click();
+            }
+        }
+        else {
+            reject(Error("It didn't work!"));
+        }
+    }).catch ((err) => {
+        console.debug("error:", err)
+    });
+}
+
+function glotpress_save(row) {
+    return new Promise((resolve, reject) => {
+        //console.debug("glotpress:", row);
+        let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+        glotpress_save.click();
+
+        if (glotpress_save != null) {
+            resolve("Stuff worked!");
+        } else {
+            reject(Error("It didn't work!"));
+        }
+    });
+}
 function messageBox(type, message) {
     var myWindow = window.self;
     cuteAlert({
