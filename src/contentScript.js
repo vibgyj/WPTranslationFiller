@@ -566,6 +566,7 @@ function checkbuttonClick(event){
        // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
        if (action == 'Details' || action == '✓Details') {
            let rowId = event.target.parentElement.parentElement.getAttribute('row');
+           console.debug("rowid in details:", rowId);
            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
            // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
            chrome.storage.sync.set({ 'noOldTrans': 'True' }, function () {
@@ -582,6 +583,7 @@ function checkbuttonClick(event){
                // Fetch only the current string to compaire with the waiting string
                //url = newurl + '?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=' + rowId + '&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc';
                url = newurl + '?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=' + rowId;
+
                chrome.storage.sync.get(['showTransDiff'], function (data) {
                    if (data.showTransDiff != 'null') {
                        if (data.showTransDiff == true) {
@@ -1249,8 +1251,9 @@ async function fetchOldRec(url, rowId) {
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     if (e != null) {
         let original = e.querySelector('#editor-' + rowId + ' .foreign-text').textContent;
+        console.debug("Original in fetchOldRec:", original," ",rowId);
         let status = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerHTML;
-        //console.debug('fetchOldRec status:', status);
+        console.debug('fetchOldRec status:', status);
         switch (status) {
             case 'current':
                 newurl = url.replace("mystat", "waiting");
@@ -1275,6 +1278,11 @@ async function fetchOldRec(url, rowId) {
                 break;
             case 'untranslated':
                 newurl = url.replace("mystat", "untranslated");
+                //console.debug("fetchOldRec untranslated after replace to current:", newurl);
+                break;
+            // below is a fix for issue #144
+            case 'transFill':
+                newurl = url.replace("mystat", "current");
                 //console.debug("fetchOldRec untranslated after replace to current:", newurl);
                 break;
             }
