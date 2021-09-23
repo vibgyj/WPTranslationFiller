@@ -1441,12 +1441,15 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
         if (next_editor != null) {
             // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
-            select = next_editor.getElementsByClassName("meta");
-            status = document.querySelector('dd').innerText;
+            // So current editor needs to be marked
+            select = editor.querySelector(`div.editor-panel__right div.panel-content`);
+            //select = next_editor.getElementsByClassName("meta");
+            var status = select.querySelector('dt').nextElementSibling;
+            status.innerText = 'transFill';
+            // And next editor does not need to be shown
             next_editor.style.display = 'none';
-            status.innerText = "translated";
             if (typeof next_preview != 'undefined') {
-                next_preview.style.display = 'table-row';
+                //next_preview.style.display = 'table-row';
             }
         }
     }

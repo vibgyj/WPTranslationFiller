@@ -806,10 +806,7 @@ function bulkSave(event) {
             newrowId = row.concat("-", newrow);
             row = newrowId;
         }
-        //else {
-        //    rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
-        //    row = rowfound.split('_')[1];
-       // }
+        
         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
         if (currec != null) {
             var current = currec.querySelector('span.panel-header__bubble');
@@ -823,9 +820,9 @@ function bulkSave(event) {
                 let curr_row = document.querySelector(`#preview-${row}`);
                 if (current.innerText == 'transFill' ) {       
                     if (curr_row != null) {
-                        curr_row.classList.add("transFill");
+                        curr_row.classList.add("transFill");                       
                     }
-
+                    
                     glotpress_open(row)
                         .then((result) => {
                             console.debug("result:", result)
@@ -867,12 +864,19 @@ function glotpress_open(row) {
         if (open_editor != null) {
             //console.debug("open_editor:", open_editor);
             res = open_editor.click();
+            // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+            select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+            //select = next_editor.getElementsByClassName("meta");
+            var status = select.querySelector('dt').nextElementSibling;
+            //console.debug("bulksave status1:", select, status);
+            status.innerText = 'current';
+
             let glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
             //console.debug("save record:", glotpress_save);
             let glotpress_close = document.querySelector(`#editor-${row} div.panel-header-actions .panel-header-actions__cancel`);
             //console.debug("close record:", glotpress_close);
             if (glotpress_save != null) {
-                glotpress_save.click();
+                await glotpress_save.click();
             }
         }
         else {

@@ -72,6 +72,14 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                 // console.debug("is pure single:", preview.innerText);
                 preview.innerText = translatedText;
                 validateEntry(language, textareaElem, "", "", rowId);
+
+                // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+                select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                //select = next_editor.getElementsByClassName("meta");
+                var status = select.querySelector('dt').nextElementSibling;
+                //console.debug("bulksave status1:", select, status, rowId);
+                status.innerText = 'transFill';
+      
             }
             else {
                 //console.debug("sendAPIRequest plural_line:", plural_line);
