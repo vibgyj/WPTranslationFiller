@@ -49,7 +49,7 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
             //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
             //console.debug('sendAPIRequest transtype:', transtype);
             if (transtype == "single") {
-               console.debug("sendAPIRequest single:");
+              // console.debug("sendAPIRequest single:");
                 textareaElem = record.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
                 current.innerText = 'transFill';
@@ -60,9 +60,16 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                 textareaElem.style.height = 'auto';
                 textareaElem.style.height = textareaElem.scrollHeight + 'px';
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                console.debug("is pure single:", preview.innerText);
+                //console.debug("is pure single:", preview.innerText);
                 preview.innerText = translatedText;
                 validateEntry(language, textareaElem, "", "", rowId);
+
+                // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+                select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                //select = next_editor.getElementsByClassName("meta");
+                var status = select.querySelector('dt').nextElementSibling;
+                //console.debug("bulksave status1:", select, status, rowId);
+                status.innerText = 'transFill';
             }
             else {
                 // PSS 09-04-2021 added populating plural text
@@ -194,10 +201,12 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                 alert("Error in translation received status 400, maybe a license problem\n\nClick on OK until all records are processed!!!");
             }
         }
+        
     };
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
     xhttp.send(JSON.stringify(requestBody));
+    
 }
 
 // PSS 01-30-2021 added this to prevent wrong replacement of searches
@@ -299,52 +308,54 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
             else {
                // console.debug('processPlaceholderSpaces values are not equal!:', '"' + placedictorg[counter] + '"', " " + '"' + placedicttrans[counter] + '"');
                // console.debug('orgval', '"' + orgval + '"');
-                if (orgval.startsWith(" ")) {
-                   // console.debug("processPlaceholderSpaces in org blank before!!!");
-                    if (!(transval.startsWith(" "))) {
-                        // 24-03-2021 PSS found another problem when the placeholder is at the start of the line
-                        found = translatedText.search("[" + counter + "]");
-                       // console.debug('processPlaceholderSpaces found at :', found);
-                        if (found != 1){
-                          // console.debug("processPlaceholderSpaces in trans no blank before!!!");
-                           repl = transval.substr(0, 1) + " " + transval.substr(1,);
-                           translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                if (typeof orgval != 'undefined') {
+                    if (orgval.startsWith(" ")) {
+                        // console.debug("processPlaceholderSpaces in org blank before!!!");
+                        if (!(transval.startsWith(" "))) {
+                            // 24-03-2021 PSS found another problem when the placeholder is at the start of the line
+                            found = translatedText.search("[" + counter + "]");
+                            // console.debug('processPlaceholderSpaces found at :', found);
+                            if (found != 1) {
+                                // console.debug("processPlaceholderSpaces in trans no blank before!!!");
+                                repl = transval.substr(0, 1) + " " + transval.substr(1,);
+                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            }
                         }
                     }
-                }
-                else {
-                    transval = placedicttrans[counter];
-                    repl = transval.substr(1,);
-                   // console.debug("processPlaceholderSpaces no blank before in org!");
-                    if (transval.startsWith(" ")) {
-                      //  console.debug("processPlaceholderSpaces apparently blank in front in trans!!!");
-                        translatedText = translatedText.replaceAt(translatedText, transval, repl);
-                       // console.debug("processPlaceholderSpaces blank in front removed in trans", translatedText);
-                    }
-
-                }
-                if (!(orgval.endsWith(" "))) {
-                    //console.debug("processPlaceholderSpaces apparently in org no blank behind!!!");
-                   // console.debug('processPlaceholderSpaces values are not equal!:', '"' + orgval + '"', " ", '"' + transval + '"');
-                    if (transval.endsWith(" ")) {
-                       // console.debug("processPlaceholderSpaces in trans blank behind!!!");
-                        //console.debug('processPlaceholderSpaces values are not equal!:', orgval, transval);
-                        // 11-03 PSS changed this to prevent removing the blank if the translated is not at the end of the line
-                        // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
-                        found = translatedText.search("[" + counter + "]");
-                        //23-03-2021 PSS added another improvement to the end of the line 
-                        foundorg= originalPreProcessed.search("[" + counter + "]");
-                      //  console.debug('found at:', found);
-                        if (found != (originalPreProcessed.length) - 2) {
-                            //if (foundorg===found){
-                               repl = transval.substring(0, transval.length - 1);
-                               translatedText = translatedText.replaceAt(translatedText, transval, repl);
-                             //  console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
-                            //}
-                        }
-                        else {
-                            repl = transval.substring(0, transval.length) + " ";
+                    else {
+                        transval = placedicttrans[counter];
+                        repl = transval.substr(1,);
+                        // console.debug("processPlaceholderSpaces no blank before in org!");
+                        if (transval.startsWith(" ")) {
+                            //  console.debug("processPlaceholderSpaces apparently blank in front in trans!!!");
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            // console.debug("processPlaceholderSpaces blank in front removed in trans", translatedText);
+                        }
+
+                    }
+                    if (!(orgval.endsWith(" "))) {
+                        //console.debug("processPlaceholderSpaces apparently in org no blank behind!!!");
+                        // console.debug('processPlaceholderSpaces values are not equal!:', '"' + orgval + '"', " ", '"' + transval + '"');
+                        if (transval.endsWith(" ")) {
+                            // console.debug("processPlaceholderSpaces in trans blank behind!!!");
+                            //console.debug('processPlaceholderSpaces values are not equal!:', orgval, transval);
+                            // 11-03 PSS changed this to prevent removing the blank if the translated is not at the end of the line
+                            // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
+                            found = translatedText.search("[" + counter + "]");
+                            //23-03-2021 PSS added another improvement to the end of the line 
+                            foundorg = originalPreProcessed.search("[" + counter + "]");
+                            //  console.debug('found at:', found);
+                            if (found != (originalPreProcessed.length) - 2) {
+                                //if (foundorg===found){
+                                repl = transval.substring(0, transval.length - 1);
+                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                                //  console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                                //}
+                            }
+                            else {
+                                repl = transval.substring(0, transval.length) + " ";
+                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            }
                         }
                     }
                 }

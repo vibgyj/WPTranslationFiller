@@ -1,7 +1,7 @@
 
 //console.debug('Content script...');
-/// PSS added function from GlotDict to save records in editor
-gd_wait_table_alter();
+// PSS added function from GlotDict to save records in editor
+//gd_wait_table_alter();
 
 // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
@@ -84,7 +84,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
-    if (event.altKey && (event.key === 's' || event.key === 'S')) {
+    if (event.altKey && event.shiftKey && (event.key === '*')) {
         event.preventDefault();
         var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
         // issue #133 block non PTE/GTE users from using this function
@@ -113,7 +113,7 @@ document.addEventListener("keydown", function (event) {
             var translatedText;
             var replaced = false
             //myrow = event.target.parentElement.parentElement;
-            //rowId = myrow.attributes.row.value;
+            //rowId = myrow.attributes.row.valueclose;
             for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                 let original = e.querySelector("span.original-raw").innerText;
                 // Fetch the translations

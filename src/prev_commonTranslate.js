@@ -466,16 +466,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         let textareaElem = record.querySelector("textarea.foreign-text");
                         textareaElem.innerText = translatedText;
                         textareaElem.value = translatedText;
-                        if (typeof current != 'undefined') { 
-                             current.innerText = 'transFill';
-                             current.value = 'transFill';
-                         }
-                        // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
-                        select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-                        //select = next_editor.getElementsByClassName("meta");
-                        var status = select.querySelector('dt').nextElementSibling;
-                        //console.debug("bulksave status1:", select, status, rowId);
-                        status.innerText = 'transFill';
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                         if (currec != null) {
                             var current = currec.querySelector('span.panel-header__bubble');
@@ -621,6 +611,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = 'transFill';
                         current.value = 'transFill';
+
+                        // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+                        select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                        var status = select.querySelector('dt').nextElementSibling;
+                        status.innerText = 'transFill';
+
                         // console.debug('translatePage No need to translate copy the original', original);
                         //14-09-2021 PSS changed the class to meet GlotDict behavior
                         var currentClass = document.querySelector(`#editor-${row}`);
@@ -719,8 +715,6 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
                     textareaElem.value = translatedText;
-                    current.innerText = 'transFill';
-                    current.value = 'transFill';
                     //let zoeken = "translate-" + rowId + '"-translocal-entry-local-button';  
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = 'visible';
                 }
@@ -805,114 +799,158 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
 function bulkSave(event) {
     event.preventDefault();
     var countRec = 0;
+    var openRec = true;
     for (let record of document.querySelectorAll("tr.preview")) {
-        row = record.attributes.row.value;
-        var checkboxTicked = document.querySelector(`#preview-${row} input`);
-        if (checkboxTicked != null) {
-            if (checkboxTicked.checked == true) {
-                checkboxTicked.checked = false;
-                countRec++;
-                let currec = document.querySelector(`#preview-${row}`);
-                curheader = currec.nextSibling.nextSibling;
-                var current = curheader.querySelector('div.editor-panel__left div.panel-header span.panel-header__bubble');
-                if (current.innerText == 'transFill' ) {       
-                    if (currec != null) {
-                        currec.classList.add("transFill");                       
-                    }
-                    if (currec != null) {
-                        glotpress_open(row).then((result) => {
-                            console.debug("result:", result)
-                        })
-                            .catch((err) => {
-                                console.debug("error:", err)
-                            });
-                    }
-                    else {
-                        console.debug("currec is null in openrow")
-                    }
-                }     
-            }   
+
+        //for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+        //console.debug("record", record);
+        let rowfound = record.id;
+
+        // console.debug("row", rowfound);
+        //let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
+        var row = rowfound.split('-')[1];
+        let newrow = rowfound.split('-')[2];
+        if (typeof newrow != 'undefined') {
+            newrowId = row.concat("-", newrow);
+            row = newrowId;
+        }
+
+        var next_row = record.nextElementSibling.nextElementSibling;
+        if (next_row != null) {
+            console.debug("row:", row)
+            console.debug("nextrow:", next_row.attributes.row.value)
+            next_row = next_row.attributes.row.value;
         }
         else {
-            console.debug("checkbox not found!");
+            console.debug('nextrow not defined');
+        }
+        
+        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+        if (currec != null) { 
+             var checkboxTicked = document.querySelector(`#preview-${row} input`);
+             //console.debug("checkbox:", checkboxTicked, checkboxTicked.checked);
+            if (checkboxTicked != null) {
+                if (checkboxTicked.checked == true) {
+                    countRec++;
+                     //console.debug("ticked is true");
+                    let curr_row = document.querySelector(`#preview-${row}`);
+                    let curr_editor = document.querySelector(`#editor-${row}`);
+                    var current = currec.querySelector('span.panel-header__bubble');
+                     if (current.innerText == 'transFill') {
+                         if (curr_row != null) {
+                             curr_row.classList.add("transFill");
+                            
+                             let glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+                             console.debug("Openrec:", openRec);
+                             if (openRec == true) {
+                                 let open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
+                                 let glotpress_save = curr_editor.querySelector(` .translation-actions__save`);
+                                 console.debug('save editor:', glotpress_save);
+                                 res = first(open_editor).then(function (result) {
+                                 console.debug('result after open promise:', result);
+                                 if (result == "Opened") {
+                                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                                    //if (current.innerText != "current") {
+                                        const ressave = third(glotpress_save);
+                                        console.debug('save editor:', ressave);
+                                     //let glotpress_close = document.querySelector(`#editor-${next_row} div.editor-panel__left .panel-header-actions__cancel`);
+                                     
+                                        //glotpress_close.click();
+                                     //}
+                                 }
+                                 
+                                 });
+                                openRec = false;
+                                
+                             }
+                            else {
+                                console.debug("only save");
+                                //console.debug('open editor:', res);                
+                           //     console.debug("nextrow:", next_row);
+                                // if (glotpress_save != null) {
+                           //    if (next_row != null) {
+                                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                            //        //glotpress_next_save = document.querySelector(`#editor-${next_row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+                                    
+
+                                    if (currec != null) {
+                             //           var current = currec.querySelector('span.panel-header__bubble');
+                                        console.debug("new current:", current.innerText, row);
+                              //          if (current.innerText != "current") {
+                                            const ressave = third(glotpress_save);
+                                //            console.debug('save editor:', ressave, current.innertText);
+                                //            const timer = second();
+                                //            console.debug('timer', timer);
+                                        }
+                            // var current = currec.querySelector('span.panel-header__bubble');
+                            // if (current == "waiting") {
+                             //    current.innerText = 'current'
+                         }
+                     }  // checkbox ticked
+
+                }
+                }
+            }
+            else {
+                console.debug("checkbox not set!");
+            }
         }
     }
+    //selector = document.getElementsByClassName('transFill');
+    //for (let i = 0; i < selector.length; i++) {
+    //    var checkboxTicked = selector[i].querySelector(" input");
+     //   if (checkboxTicked.checked == true) {
+            //selector[i].style = "display:none";
+            //checkboxTicked == false;
+            //console.debug("removed:", selector[i]);
+       // }
+    //}
     if (countRec == 0) {
         messageBox("error", "You do not have translations selected!");
         console.debug("No selection made!");
     }
-    else {
-        selector = document.getElementsByClassName('transFill');
-        for (let i = 0; i < selector.length; i++) {
-            var checkboxTicked = selector[i].querySelector(" input");
-            //if (checkboxTicked.checked == true) {
-                selector[i].style = "display:none";
-                //console.debug("removed:", selector[i]);
-           //}
-        }
-    }
 }
 
-function editor_open(open_editor) {
+function first(open_editor) {
     return new Promise((resolve) => {
         (async () => {
-            waitForElm('.translation-actions').then(elm => console.log("check if editor is open!"));
-            if (typeof elm != 'undefined') {
-                console.debug(elm.textContent);
-            }
-            else {
-                await open_editor.click();
-                waitForElm('.translation-actions').then(elm => console.log("Editor is open"));
-            }
-            
-            //waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent));
-            if (typeof elm != 'undefined') {
-                //elm.textContent.click();
-            }
-        })();        
-        resolve("Editor has been opened");
+            await open_editor.click();
+            waitForElm('.translation-actions__save').then(elm => console.log("Editor is open"));
+        })();   
+        resolve("Opened");
     });
 }
 
-function second(milliseconds) {
+function second() {
     return new Promise((resolve) => {
         (async () => {
-            const date = Date.now();
-            let currentDate = null;
-            do {
-                currentDate = Date.now();
-            } while (currentDate - date < milliseconds);
+            sleep(5000);
+
+            console.log("2nd:");
         })();
         
-        resolve("done waiting");
+        resolve("done");
     });
 }
-function editor_save(glotpress_save,row) {
-    console.debug("row:", row);
+
+function third(glotpress_save) {
+    
     return new Promise((resolve) => {
         (async () => {
-            //waitForElm('.translation-actions__save').then(elm => console.log("waiting for save in third"));
-            console.debug("row:", row);
-            let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-            //console.debug("current rec in third:", currec);
-            if (currec != null) {
-                var current = currec.querySelector('span.panel-header__bubble');
-                console.debug("new current:", current.innerText);
-                if (current.innerText == "transFill") {
-                    await glotpress_save.click();
-                    console.debug("after save click",row);
-                    //waitForElm('.gp-js-message').then(elm => console.log(elm.textContent,row));
-                    //waitForElm('.gp-js-message-content').then(elm => console.log(elm.textContent,row));
-                    waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent,row));
-                    current.innerText = "current";
-                    if (typeof elm != 'undefined') {
-                        elm.textContent.click();
-                    }
-                }
+            waitForElm('.translation-actions__save').then(elm => console.log("waiting for save in third"));
+            glotpress_save.click();
+            //waitForElm('.gp-js-message').then(elm => console.log(elm.textContent));
+            waitForElm('.gp-js-message-content').then(elm => console.log(elm.textContent));
+            waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent));
+            if(typeof elm != 'undefined'){
+                elm.textContent.click();
             }
-            resolve("Row saved,row");
-            console.log("third");
+            
+            waitForElm('.translation-actions__save').then(elm => console.log("Save ready"));
         })();
+        const timer = second();
+        console.debug('timer', timer);
+        resolve("saved");
     });
 }
 
@@ -956,13 +994,22 @@ function glotpress_open(row) {
         if (open_editor != null) {
             // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
             select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+            //select = next_editor.getElementsByClassName("meta");
             var status = select.querySelector('dt').nextElementSibling;
+            //console.debug("bulksave status1:", select, status);
             status.innerText = 'current';
+
             var glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
             console.debug("save record:", glotpress_save);
             let glotpress_close = document.querySelector(`#editor-${row} div.panel-header-actions .panel-header-actions__cancel`);
-            editor_open(open_editor, row).then(second(50).then(editor_save(glotpress_save, row).then(second(50))));
-            sleep(100);
+            //console.debug("close record:", glotpress_close);
+            if (glotpress_save != null) {
+                //res = glotpress_save.click();
+                //console.debug("Result save:", res);
+            }
+            
+            first(open_editor).then(third(glotpress_save));
+            sleep(200);
             resolve("done:"+row);
         }
         else {

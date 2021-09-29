@@ -158,9 +158,9 @@ async function addTransline(rowId){
             messageBox("error", "No translation to store!");
     }
     else {
-        console.debug('addTransline translated text to add to database:',addTrans);
-        console.debug('addTransline original text to add to database:',orig);
-        console.debug("addTransline Language:",language);
+        //console.debug('addTransline translated text to add to database:',addTrans);
+        //console.debug('addTransline original text to add to database:',orig);
+        //console.debug("addTransline Language:",language);
         var res = addTransDb(orig, addTrans, language);
         console.debug('addTransline res add to database:', res);
         let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
@@ -235,7 +235,7 @@ async function dbExport(){
        hiddenElement.click();
        let exportButton = document.querySelector(".paging a.export_translation-button");
        exportButton.className += " ready";
-       messageBox("info", "Export database ready" + "<br>" + "Save the file!");
+       messageBox("info", "Export database in progress" + "<br>" + "Wait for saving the file!");
 }
 
 async function tryPersistWithoutPromtingUser() {
