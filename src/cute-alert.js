@@ -122,37 +122,54 @@ function cuteAlert({
   });
 }
 // 13-08-2011 PSS added myWindow as parameter
-function cuteToast({ type, message, timer = 5000, myWindow }) {
+function cuteToast({ type, message, timer = 5000, myWindow="" }) {
   return new Promise((resolve) => {
-    if (myWindow.document.querySelector(".toast-container")) {
-      myWindow.document.querySelector(".toast-container").remove();
-    }
-    const body = myWindow.document.querySelector("body");
-
-    const scripts = myWindow.document.getElementsByTagName("script");
-    let currScript = "";
-
-    for (let script of scripts) {
-      if (script.src.includes("cute-alert.js")) {
-        currScript = script;
+    
+    //const body = myWindow.document.querySelector("body");
+      if (typeof myWindow != 'string') {
+          body = myWindow.document.getElementById("container");
+          //console.debug("body:", body);
+          if (body == null) {
+              body = document.getElementById("wordpress-org");
+              //console.debug("document:", document);
+          }
       }
-    }
-
-    let src = currScript.src;
-
- //   src = src.substring(0, src.lastIndexOf("/"));
-      src = "";
-    const template = `
+      else {
+          // console.debug("myWindow not defined!");
+          body = document.getElementById('wordpress-org');
+          //const body = document.getElementsByClassName("logged-in");
+      }
+      if (document.querySelector(".toast-container")) {
+          document.querySelector(".toast-container").remove();
+      }
+    const scripts = document.getElementsByTagName("script");
+    let currScript = "";
+    let src = "";
+      for (let script of scripts) {
+          if (script.src.includes("cute-alert.js")) {
+              currScript = script;
+              let src = currScript.src;
+              src = src.substring(0, src.lastIndexOf("/"));
+          }
+      }
+      // 07-09-2021 PSS added extra check to prevent empty src and missing "/"
+      if (src === "") {
+          // 13-08-2021 Modified the code below to be able to use it in manifest
+          src = chrome.extension.getURL('/');
+      }
+      const template = `
+    
     <div class="toast-container ${type}-bg">
       <div>
         <div class="toast-frame">
-          <img class="toast-img" src="${src}/img/${type}.svg" />
+          <img class="toast-img" src="${src}img/${type}.svg" />
           <span class="toast-message">${message}</span>
           <div class="toast-close">X</div>
         </div>
         <div class="toast-timer ${type}-timer" style="animation: timer ${timer}ms linear;"/>
       </div>
     </div>
+    </p>
     `;
 
     body.insertAdjacentHTML("afterend", template);

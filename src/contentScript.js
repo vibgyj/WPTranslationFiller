@@ -1,7 +1,7 @@
 
 //console.debug('Content script...');
 // PSS added function from GlotDict to save records in editor
-//gd_wait_table_alter();
+gd_wait_table_alter();
 
 // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
@@ -89,7 +89,8 @@ document.addEventListener("keydown", function (event) {
         var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
         // issue #133 block non PTE/GTE users from using this function
         if (is_pte) {
-            bulkSave(event);
+            toastbox('info', "Bulksave running", 3000).then(bulkSave(event));
+            //bulkSave(event);     
         }
     }
 });
