@@ -456,7 +456,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         var currentClass = document.querySelector(`#editor-${row}`);
                         var prevcurrentClass = document.querySelector(`#preview-${row}`);
                         currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        currentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        currentClass.classList.add("status-current", "priority-normal", "no-warnings", "has-translations");
                         prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
                         prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
                         validateEntry(destlang, textareaElem, "", "", row);
@@ -575,7 +575,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     }
                 }
                 else {
-                    // This is when urls/plugin/theme names are present
+                    // This is when urls/plugin/theme names are present or local translation is present
                     let translatedText = original;
                     let textareaElem = record.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
@@ -590,11 +590,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         var currentClass = document.querySelector(`#editor-${row}`);
                         var prevcurrentClass = document.querySelector(`#preview-${row}`);
                         currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        currentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        currentClass.classList.add("status-current", "priority-normal", "no-warnings", "has-translations");
                         prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
                         prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
-                        console.debug("currentClass:", currentClass);
-                        console.debug("currentClass:", prevcurrentClass);
+                        //console.debug("currentClass:", currentClass);
+                        //console.debug("currentClass:", prevcurrentClass);
                     }
                 }
             }
@@ -759,14 +759,14 @@ function bulkSave(event) {
         var checkboxTicked = document.querySelector(`#preview-${row} input`);
         if (checkboxTicked != null) {
             if (checkboxTicked.checked == true) {
-                checkboxTicked.checked = false;
                 countRec++;
                 let currec = document.querySelector(`#preview-${row}`);
+                console.debug("bulksave preview row:",row)
                 curheader = currec.nextSibling.nextSibling;
                 var current = curheader.querySelector('div.editor-panel__left div.panel-header span.panel-header__bubble');
                 if (current.innerText == 'transFill' ) {       
                     if (currec != null) {
-                        currec.classList.add("transFill");                       
+                        //currec.classList.add("transFill");                       
                     }
                     if (currec != null) {
                         glotpress_open(row).then((result) => {
@@ -792,35 +792,41 @@ function bulkSave(event) {
         }
     else {
              // PSS we need to hide the processed line, if it is not properly handled
-             selector = document.getElementsByClassName('transFill');
+             //selector = document.getElementsByClassName('transFill');
+             selector = document.querySelectorAll(' [id|=preview] ')
              for (let i = 0; i < selector.length; i++) {
-                //var checkboxTicked = selector[i].querySelector(" input");
-                //if (checkboxTicked.checked == true) {
-                selector[i].style = "display:none";
-                 //}
+                var checkboxTicked = selector[i].querySelector(" input");
+                if (checkboxTicked.checked == true) {
+                 selector[i].style = "display:none";
+                 //selector.classList.remove("transFill");
+                   // selector.classList.remove("status-waiting");
+                    checkboxTicked.checked = false;
+                }
         }
         
              }
 }
 
-function editor_open(open_editor) {
+function editor_open(open_editor,row) {
     return new Promise((resolve) => {
         (async () => {
-            waitForElm('.translation-actions').then(elm => console.log("check if editor is open!"));
-            if (typeof elm != 'undefined') {
-                console.debug(elm.textContent);
-            }
-            else {
-                await open_editor.click();
-                waitForElm('.translation-actions').then(elm => console.log("Editor is open"));
-            }
+            //elementReady('.translation-actions').then(elm => console.log("check if editor is open!"));
+            elementReady('.translation-actions').then(elm => resolve());
+            //if (typeof elm != 'undefined') {
+            //    console.debug(elm.textContent);
+           // }
+           //else {
+                open_editor.click();
+             //   waitForElm('.translation-actions').then(elm => console.log("Editor is open"));
+           // }
             
             //waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent));
-            if (typeof elm != 'undefined') {
+           // if (typeof elm != 'undefined') {
                 //elm.textContent.click();
-            }
+            //}
+            //resolve("Editor has been opened");
         })();        
-        resolve("Editor has been opened");
+        
     });
 }
 
@@ -838,7 +844,6 @@ function second(milliseconds) {
     });
 }
 function editor_save(glotpress_save,row) {
-    console.debug("row:", row);
     return new Promise((resolve) => {
         (async () => {
             //waitForElm('.translation-actions__save').then(elm => console.log("waiting for save in third"));
@@ -846,24 +851,26 @@ function editor_save(glotpress_save,row) {
             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
             if (currec != null) {
                 var current = currec.querySelector('span.panel-header__bubble');
-                console.debug("new current:", current.innerText);
+                console.debug("row current:", current.innerText);
                 if (current.innerText == "transFill") {
-                    await glotpress_save.click();
+                    sleep(2500);
+                    glotpress_save.click();
                     console.debug("after save click",row);
                     //waitForElm('.gp-js-message').then(elm => console.log(elm.textContent,row));
-                    waitForElm('.gp-js-message-content').then(elm => console.log(elm.textContent,row));
-                    waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent, row));
-
+                    //waitForElm('.gp-js-message-content').then(elm => console.log(elm.textContent,row));
+                     elementReady('.gp-js-message-dismiss').then(elm => console.log("result of elementReady:",elm.textContent, row));
+                   // console.debug("res:", res);
+                    //const res = waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent, row));
+                    
                     current.innerText = "current";
-                    if (typeof elm != 'undefined') {
-                        elm.textContent.click();
-                    }
+                   // if (typeof elm != 'undefined') {
+                    //    elm.textContent.click();
+                  //  }
+                    
                 }
-            }
-            
-            resolve("Row saved,row");
-            console.log("third");
+            }   
         })();
+        resolve("Row saved,row");
     });
 }
 
@@ -875,15 +882,36 @@ function sleep(milliseconds) {
     } while (currentDate - date < milliseconds);
 }
 
+function elementReady(selector) {
+    return new Promise((resolve, reject) => {
+        let el = document.querySelector(selector);
+        if (el) { resolve(el); }
+        new MutationObserver((mutationRecords, observer) => {
+            // Query for elements matching the specified selector
+            Array.from(document.querySelectorAll(selector)).forEach((element) => {
+                console.debug("new elementReady",element);
+                resolve(element);
+                //Once we have resolved we don't need the observer anymore.
+                observer.disconnect();
+            });
+        })
+            .observe(document.documentElement, {
+                childList: true,
+                subtree: true
+            });
+    });
+}
+
 function waitForElm(selector) {
     return new Promise(resolve => {
         if (document.querySelector(selector)) {
-            
+            console.debug("Selector found");
             return resolve(document.querySelector(selector));
         }
 
         const observer = new MutationObserver(mutations => {
             if (document.querySelector(selector)) {
+                console.debug("In observer found");
                 resolve(document.querySelector(selector));
                 observer.disconnect();
             }
@@ -906,6 +934,7 @@ function glotpress_open(row) {
         var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
         let original = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content span.original-raw`).innerText;
         
+        elementReady('div.panel-header-actions .panel-header-actions__cancel').then(elm => console.log("result of elementReady:", elm.textContent, row));
         console.debug('editor:', open_editor,original);
         if (open_editor != null) {
             // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
@@ -913,9 +942,9 @@ function glotpress_open(row) {
             var status = select.querySelector('dt').nextElementSibling;
             status.innerText = 'current';
             var glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-            console.debug("save record:", glotpress_save);
-            let glotpress_close = document.querySelector(`#editor-${row} div.panel-header-actions .panel-header-actions__cancel`);
-            editor_open(open_editor, row).then(second(100).then(editor_save(glotpress_save, row).then(second(550))));
+            //console.debug("save record:", glotpress_save);
+            //let glotpress_close = document.querySelector(`#editor-${row} div.panel-header-actions .panel-header-actions__cancel`);
+            editor_open(open_editor, row).then(second(100).then(editor_save(glotpress_save, row).then(second(50))));
             //second(100);
             resolve("done:" + row);
             
@@ -933,7 +962,7 @@ function glotpress_save(row) {
     return new Promise((resolve, reject) => {
         let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
         glotpress_save.click();
-
+        const res = waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent, row));
         if (glotpress_save != null) {
             resolve("Stuff worked!");
         } else {

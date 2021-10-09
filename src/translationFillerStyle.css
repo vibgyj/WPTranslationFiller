@@ -467,10 +467,7 @@ table.translations tr.preview.has-glotdict th + .priority + .original::before {
 table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
     margin-left: calc(-.5em - 48px) !important;
 }
-table.translations th.original, table.translations th.translation {
-    width: 39.5% !important;
-   
-}
+
 button.save-button {
     font-size: 12px !important;
     height: 20px;

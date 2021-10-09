@@ -1,7 +1,7 @@
 
 //console.debug('Content script...');
 // PSS added function from GlotDict to save records in editor
-gd_wait_table_alter();
+//gd_wait_table_alter();
 
 // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
@@ -1446,9 +1446,9 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             select = editor.querySelector(`div.editor-panel__right div.panel-content`);
             //select = next_editor.getElementsByClassName("meta");
             var status = select.querySelector('dt').nextElementSibling;
-            status.innerText = 'transFill';
+            status.innerText = 'current';
             // And next editor does not need to be shown
-            next_editor.style.display = 'none';
+            //next_editor.style.display = 'none';
             if (typeof next_preview != 'undefined') {
                 //next_preview.style.display = 'table-row';
             }

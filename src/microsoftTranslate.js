@@ -194,10 +194,12 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
             }
             var currentClass = document.querySelector(`#editor-${rowId}`);
             var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
-            currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            currentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
-            prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+            currentClass.classList.remove("untranslated","no-translations", "priority-normal", "no-warnings");
+            currentClass.classList.add("status-current", "priority-normal", "no-warnings", "has-translations");
+            //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            // prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            prevcurrentClass.classList.remove("untranslated","no-translations", "priority-normal", "no-warnings");
+            prevcurrentClass.classList.add("status-waiting","priority-normal", "no-warnings", "has-translations");
         }
 
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
