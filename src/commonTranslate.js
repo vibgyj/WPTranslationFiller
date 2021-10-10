@@ -751,7 +751,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-function bulkSave(event) {
+async function bulkSave(event) {
     event.preventDefault();
     var countRec = 0;
     for (let record of document.querySelectorAll("tr.preview")) {
@@ -769,12 +769,16 @@ function bulkSave(event) {
                         //currec.classList.add("transFill");                       
                     }
                     if (currec != null) {
-                        glotpress_open(row).then((result) => {
-                            console.debug("result:", result)
-                        })
-                            .catch((err) => {
-                                console.debug("error:", err)
-                            });
+                        //glotpress_open(row).then((result) => {
+                        //    console.debug("result:", result)
+                        //})
+                         //   .catch((err) => {
+                          //      console.debug("error:", err)
+                         //   });
+                        const res = myAsyncFunction(row);
+                        console.debug("after myAsyncFunction", res);
+                        
+
                     }
                     else {
                         console.debug("currec is null in openrow")
@@ -853,12 +857,16 @@ function editor_save(glotpress_save,row) {
                 var current = currec.querySelector('span.panel-header__bubble');
                 console.debug("row current:", current.innerText);
                 if (current.innerText == "transFill") {
-                    sleep(2500);
+                    sleep(500);
                     glotpress_save.click();
-                    console.debug("after save click",row);
+                    console.debug("after save click", row);
                     //waitForElm('.gp-js-message').then(elm => console.log(elm.textContent,row));
-                    //waitForElm('.gp-js-message-content').then(elm => console.log(elm.textContent,row));
-                     elementReady('.gp-js-message-dismiss').then(elm => console.log("result of elementReady:",elm.textContent, row));
+
+                    elementReady('.gp-js-message-dismiss').then(elm => console.log("result of elementReady:", elm.textContent, row));
+                    waitForElm('.gp-js-message').then(elm => {
+                        console.log("succes message:", elm.textContent, row);
+                        sleep(250);
+                    });
                    // console.debug("res:", res);
                     //const res = waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent, row));
                     
@@ -881,6 +889,66 @@ function sleep(milliseconds) {
         currentDate = Date.now();
     } while (currentDate - date < milliseconds);
 }
+
+function delay(n) {
+    return new Promise(function (resolve) {
+        setTimeout(resolve("timer done"), n * 1000);
+    });
+}
+
+async function myAsyncFunction(row) {
+    //Do what you want here 
+    console.log("Before the delay");
+    var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
+    open_editor.click();
+    waitForElm('.translation-actions').then(elm => console.log("Editor is open"));
+    let glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+    glotpress_save.click();
+    console.debug("save clicked");
+    const start = (async (resolve) => {
+        const $el = await _waitForElement(`.gp-js-message-dismiss`);
+        console.log("result of new waitforelement:", $el);
+        const res=$el.click();
+        console.debug("dismissed clicked:", res);
+        
+    })();
+    //waitForElem('.gp-js-message-dismiss').then(elm => console.log("result of elementReady:", elm.textContent, row));
+
+    const res=await delay(60);
+    console.log("After the delay:", res);
+   
+    //Do what you want here too
+
+    return ("AsyncResolved");
+}
+
+function _waitForElement(selector, delay =50, tries = 250) {
+    const element = document.querySelector(selector);
+
+    if (!window[`__${selector}`]) {
+      window[`__${selector}`] = 0;
+    }
+
+    function _search() {
+      return new Promise((resolve) => {
+        window[`__${selector}`]++;
+        console.log("Search result:",window[`__${selector}`]);
+        setTimeout(resolve, delay);
+      });
+    }
+
+    if (element === null) {
+      if (window[`__${selector}`] >= tries) {
+        window[`__${selector}`] = 0;
+        return Promise.reject(null);
+      }
+
+      return _search().then(() => _waitForElement(selector));
+    } else {
+      return Promise.resolve(element);
+    }
+  }
+
 
 function elementReady(selector) {
     return new Promise((resolve, reject) => {

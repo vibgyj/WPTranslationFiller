@@ -860,3 +860,7 @@ button.save-button.ready {
 }
 
 /** End of cuteAlert **/
+.panel-header__bubble--waiting {
+    color: #000000 !important;
+    border-color: #000000 !important;
+}

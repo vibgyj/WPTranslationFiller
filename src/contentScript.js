@@ -1,7 +1,7 @@
 
 //console.debug('Content script...');
 // PSS added function from GlotDict to save records in editor
-//gd_wait_table_alter();
+gd_wait_table_alter();
 
 // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
@@ -89,7 +89,7 @@ document.addEventListener("keydown", function (event) {
         var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
         // issue #133 block non PTE/GTE users from using this function
         if (is_pte) {
-            toastbox('info', "Bulksave running", 3000).then(bulkSave(event));
+            toastbox('info', "Bulksave started", 1500).then(bulkSave(event));
             //bulkSave(event);     
         }
     }
@@ -1427,7 +1427,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
      * @param {object} editor
      * @returns {void}
      */
-    function gd_auto_hide_next_editor(editor) {
+    function old_gd_auto_hide_next_editor(editor) {
         const preview = editor.nextElementSibling;
         if (!preview) {
             return;
@@ -1456,7 +1456,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     }
 
 
-    function gd_wait_table_alter() {
+    function old_gd_wait_table_alter() {
         if (document.querySelector('#translations tbody') !== null) {
             var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
@@ -1489,3 +1489,75 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
 
+/**
+ * Auto hide next editor when status action open it.
+ *
+ * @param {object} editor
+ * @returns {void}
+ */
+function gd_auto_hide_next_editor(editor) {
+    const preview = editor.nextElementSibling;
+    if (!preview) {
+        return;
+    }
+    const next_editor = preview.nextElementSibling;
+    const next_preview = next_editor.previousElementSibling;
+    if (!next_editor || !next_preview || !next_editor.classList.contains('editor') || !next_preview.classList.contains('preview')) {
+        return;
+    }
+    next_editor.style.display = 'none';
+    next_preview.style.display = 'table-row';
+}
+
+/**
+ * Mutations Observer for Translation Table Changes:
+ * Auto hide next editor on status actions.
+ * Add clone buttons on new preview rows and add glossary links.
+ *
+ * @triggers gd_add_column, gd_add_meta
+ */
+function gd_wait_table_alter() {
+    if (document.querySelector('#translations tbody') !== null) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                const user_is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
+                mutation.addedNodes.forEach((addedNode) => {
+                    // Don't treat text nodes.
+                    if (1 !== addedNode.nodeType) {
+                        return;
+                    }
+
+                    const row_is_preview = addedNode.classList.contains('preview');
+                    const row_is_editor = addedNode.classList.contains('editor');
+                    const is_new_translation = mutation.previousSibling && mutation.previousSibling.matches('.editor.untranslated');
+                    let status_has_changed = false;
+                    if (row_is_editor && mutation.previousSibling && mutation.previousSibling.matches('[class*="status-"]')) {
+                        let status_before = '';
+                        let status_after = '';
+                        status_before = RegExp(/status-[a-z]*/).exec(mutation.previousSibling.className)[0];
+                        status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
+                        status_has_changed = status_before !== status_after;
+                    }
+                    console.debug("before hide editor");
+                    if (user_is_pte && row_is_editor ) {
+                    //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
+                        gd_auto_hide_next_editor(addedNode);
+                    }
+                   // if (user_is_pte && row_is_preview) {
+                    //    gd_add_column_buttons(addedNode);
+                   // }
+                    //if (row_is_preview) {
+                       // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
+                   // }
+                });
+                //gd_add_meta();
+            });
+        });
+
+        observer.observe(document.querySelector('#translations tbody'), {
+            attributes: true,
+            childList: true,
+            characterData: true,
+        });
+    }
+}
