@@ -864,3 +864,7 @@ button.save-button.ready {
     color: #000000 !important;
     border-color: #000000 !important;
 }
+
+table.translations tr.preview.wptf-translated {
+    background-color: #FFFFC2;
+}

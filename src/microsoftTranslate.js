@@ -54,6 +54,7 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
         if (this.readyState == 4 && myfault == 0) {
             //console.debug('Restrans:', restrans);
             translatedText = restrans[0].translations[0].text;
+            //console.debug("translated text:", translatedText);
             // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
             translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl");
             //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
@@ -195,11 +196,11 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
             var currentClass = document.querySelector(`#editor-${rowId}`);
             var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
             currentClass.classList.remove("untranslated","no-translations", "priority-normal", "no-warnings");
-            currentClass.classList.add("status-current", "priority-normal", "no-warnings", "has-translations");
+            currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "no-translations","wptf-translated");
             //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
             // prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
             prevcurrentClass.classList.remove("untranslated","no-translations", "priority-normal", "no-warnings");
-            prevcurrentClass.classList.add("status-waiting","priority-normal", "no-warnings", "has-translations");
+            prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "no-translations","wptf-translated");
         }
 
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
@@ -232,7 +233,7 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
         }
     ];
 
-    //console.debug("apikey:", apikeyMicrosoft, "textType:",transtype);
+    //console.debug("apikey:", apikeyMicrosoft, "textType:",transtype,originalPreProcessed);
     language = language.toUpperCase();
     translen = originalPreProcessed.length;
     xhttp.open('POST', "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&textType=" + trntype + "&from=en&to=" + language);

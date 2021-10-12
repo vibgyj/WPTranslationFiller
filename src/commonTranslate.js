@@ -456,9 +456,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         var currentClass = document.querySelector(`#editor-${row}`);
                         var prevcurrentClass = document.querySelector(`#preview-${row}`);
                         currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        currentClass.classList.add("status-current", "priority-normal", "no-warnings", "has-translations");
+                        currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
                         prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
@@ -537,7 +537,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype, plural_line);
                                 }
                                 else if (transsel == "microsoft") {
-                                    microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line);
+                                    translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line);
                                 }
                             }
                             else {
@@ -590,9 +590,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         var currentClass = document.querySelector(`#editor-${row}`);
                         var prevcurrentClass = document.querySelector(`#preview-${row}`);
                         currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        currentClass.classList.add("status-current", "priority-normal", "no-warnings", "has-translations");
+                        currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
                         prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+                        prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
                         //console.debug("currentClass:", currentClass);
                         //console.debug("currentClass:", prevcurrentClass);
                     }
@@ -754,61 +754,82 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
 async function bulkSave(event) {
     event.preventDefault();
     var countRec = 0;
-    for (let record of document.querySelectorAll("tr.preview")) {
-        row = record.attributes.row.value;
-        var checkboxTicked = document.querySelector(`#preview-${row} input`);
-        if (checkboxTicked != null) {
-            if (checkboxTicked.checked == true) {
-                countRec++;
-                let currec = document.querySelector(`#preview-${row}`);
-                console.debug("bulksave preview row:",row)
-                curheader = currec.nextSibling.nextSibling;
-                var current = curheader.querySelector('div.editor-panel__left div.panel-header span.panel-header__bubble');
-                if (current.innerText == 'transFill' ) {       
-                    if (currec != null) {
-                        //currec.classList.add("transFill");                       
-                    }
-                    if (currec != null) {
-                        //glotpress_open(row).then((result) => {
-                        //    console.debug("result:", result)
-                        //})
-                         //   .catch((err) => {
-                          //      console.debug("error:", err)
-                         //   });
-                        const res = myAsyncFunction(row);
-                        console.debug("after myAsyncFunction", res);
-                        
+    var RecCount = 0;
+    let timeout = 0;
+    for (let record of document.querySelectorAll('tr')) {
+       // console.debug("record:", record);
+        
+        if (RecCount >0) {
+            let rec = record.querySelector('tr.preview');
+            //console.debug("rec:", rec);
+                if (typeof rec !='undefined') {
+                row = record.attributes.row.value;
+                //console.debug("row:", row);
+                var checkboxTicked = document.querySelector(`#preview-${row} input`);
+                    if (checkboxTicked != null) {
+                        //console.debug('checkbox:', checkboxTicked.checked);
+                        if (checkboxTicked.checked == true) {
+                            checkboxTicked.checked = false;
+                            countRec++;
+                            let currec = document.querySelector(`#preview-${row}`);
+                            //console.debug("bulksave preview row:", row)
+                            curheader = currec.nextSibling.nextSibling;
+                            var current = curheader.querySelector('div.editor-panel__left div.panel-header span.panel-header__bubble');
+                            if (current.innerText == 'transFill') {
+                                current.innerText = 'current';
+                            
+                            select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                            var status = select.querySelector('dt').nextElementSibling;
+                            status.innerText = 'current';
+                            // const res = await myAsyncFunction(row);
+                            //console.debug("after myAsyncFunction", res);
+                            //await sleep(1000);
+                            //console.debug("na delay");
+                            let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
+                            var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
+                                // the code below is to prevent the error hasClass, but does not always work!!!
+                            var next_preview = currec.nextElementSibling.nextElementSibling;
+                            console.debug("next:", next_preview);
+                            if (next_preview == null) {
+                                    console.debug("no next editor!!");
+                            }
+                            else {
+                                    //const next_editor = preview.nextElementSibling;
+                                    open_editor.click();
+                                    //toastbox('info', "Bulksave processing", 4000);
+                                    var currentClass = document.querySelector(`#editor-${row}`);
+                                    var prevcurrentClass = document.querySelector(`#preview-${row}`);
+                                    currentClass.classList.add("wptf-bulksaved");
+                                    prevcurrentClass.classList.add("wptf-bulksaved");
+                                    res = waitForElm(`#editor-${row} .translation-actions`).then(glotpress_save.click()).then(toastbox('info', 'Bulksave processing', 1000));
+                                   // console.log("Editor is open", res);
+                                   // console.debug("save clicked");
 
+                                    const $el = elementReady(`.gp-js-message-dismiss`);
+                                    console.log("result of new waitforelement:", $el, row);
+                                    let glotpress_saved = elementReady(`.gp-js-message gp-js-success`);
+                                    console.debug("saved:", glotpress_saved);
+                       
+                                }
+                            sleep(300);
+                        }
+                        else {
+                            console.debug("currec is null in openrow")
+                        }
                     }
-                    else {
-                        console.debug("currec is null in openrow")
-                    }
-                }     
-            }   
+
+                }
+                else {
+                    console.debug("checkbox not found!");
+                }
+            }
         }
-        else {
-            console.debug("checkbox not found!");
-        }
+        RecCount++;
     }
     if (countRec == 0) {
         messageBox("error", "You do not have translations selected!");
         console.debug("No selection made!");
         }
-    else {
-             // PSS we need to hide the processed line, if it is not properly handled
-             //selector = document.getElementsByClassName('transFill');
-             selector = document.querySelectorAll(' [id|=preview] ')
-             for (let i = 0; i < selector.length; i++) {
-                var checkboxTicked = selector[i].querySelector(" input");
-                if (checkboxTicked.checked == true) {
-                 selector[i].style = "display:none";
-                 //selector.classList.remove("transFill");
-                   // selector.classList.remove("status-waiting");
-                    checkboxTicked.checked = false;
-                }
-        }
-        
-             }
 }
 
 function editor_open(open_editor,row) {
@@ -882,7 +903,7 @@ function editor_save(glotpress_save,row) {
     });
 }
 
-function sleep(milliseconds) {
+async function sleep(milliseconds) {
     const date = Date.now();
     let currentDate = null;
     do {
@@ -890,7 +911,7 @@ function sleep(milliseconds) {
     } while (currentDate - date < milliseconds);
 }
 
-function delay(n) {
+async function delay(n) {
     return new Promise(function (resolve) {
         setTimeout(resolve("timer done"), n * 1000);
     });
@@ -901,20 +922,26 @@ async function myAsyncFunction(row) {
     console.log("Before the delay");
     var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
     open_editor.click();
-    waitForElm('.translation-actions').then(elm => console.log("Editor is open"));
-    let glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-    glotpress_save.click();
-    console.debug("save clicked");
-    const start = (async (resolve) => {
+    await _waitForElement('.translation-actions').then(elm => {
+        console.log("Editor is open");
+        let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
+        let glotpress_change = document.querySelector(`#editor-${row} textarea.foreign-text`);
+        glotpress_save.click();
+        console.debug("save clicked");
+           
+        const start = (async (resolve) => {
         const $el = await _waitForElement(`.gp-js-message-dismiss`);
         console.log("result of new waitforelement:", $el);
         const res=$el.click();
         console.debug("dismissed clicked:", res);
         
-    })();
+        })().catch((err) => {
+            console.debug("No result found for element:", err)
+        });
+    });
     //waitForElem('.gp-js-message-dismiss').then(elm => console.log("result of elementReady:", elm.textContent, row));
 
-    const res=await delay(60);
+    const res=await delay(10);
     console.log("After the delay:", res);
    
     //Do what you want here too
@@ -922,7 +949,7 @@ async function myAsyncFunction(row) {
     return ("AsyncResolved");
 }
 
-function _waitForElement(selector, delay =50, tries = 250) {
+function _waitForElement(selector, delay =5, tries = 50) {
     const element = document.querySelector(selector);
 
     if (!window[`__${selector}`]) {
@@ -1048,10 +1075,11 @@ function toastbox(type, message, time) {
         timer: time,
         myWindow: myWindow
     })
+        resolve("toast");
     }).catch((err) => {
         console.debug("error:", err)
     });
-    resolve();
+   // resolve("toast ready");
 
 }
 function messageBox(type, message) {

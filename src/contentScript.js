@@ -85,16 +85,31 @@ document.addEventListener("keydown", function (event) {
 
 document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === '*')) {
-        event.preventDefault();
+        //event.preventDefault();
         var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
         // issue #133 block non PTE/GTE users from using this function
         if (is_pte) {
-            toastbox('info', "Bulksave started", 1500).then(bulkSave(event));
-            //bulkSave(event);     
+            bulk(event);
+            
         }
     }
 });
+function bulk(event) {
+    const res = toastbox('info', "Bulksave started", 2000).then(bulkSave(event)).then(remove_prev());
+    console.debug('bulksave started')
 
+}
+
+function remove_prev() {
+    // PSS we need to hide the processed line, if it is not properly handled
+    selector = document.getElementsByClassName('wptf-bulksaved');
+    for (let i = 0; i < selector.length; i++) {
+        if (selector[i].classList.contains('preview')) {
+            selector[i].style = "display:none";
+           // console.debug("found bulksave:", selector[i]);
+        }
+    }
+}
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 
 document.addEventListener("keydown", function (event) {
