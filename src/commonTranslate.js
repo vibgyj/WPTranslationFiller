@@ -756,6 +756,8 @@ async function bulkSave(event) {
     var countRec = 0;
     var RecCount = 0;
     let timeout = 0;
+    var table = document.getElementById("translations");
+    console.debug('table:', table);
     for (let record of document.querySelectorAll('tr')) {
         if (RecCount >0) {
             let rec = record.querySelector('tr.preview');
@@ -769,38 +771,39 @@ async function bulkSave(event) {
                             let currec = document.querySelector(`#preview-${row}`);
                             curheader = currec.nextSibling.nextSibling;
                             var current = curheader.querySelector('div.editor-panel__left div.panel-header span.panel-header__bubble');
-                            if (current.innerText == 'transFill') {
-                                current.innerText = 'current';
-                                 select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-                                 var status = select.querySelector('dt').nextElementSibling;
-                                 status.innerText = 'current';
-                                 let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
-                                var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
-                                try {
-                                    open_editor.click();
-                                } catch (e) {
-                                    console.debug("Error when opening record", e)
-                                }
+                            if (current.innerText == 'transFill') {     
+                                    current.innerText = 'current';
+                                    select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                                    var status = select.querySelector('dt').nextElementSibling;
+                                    status.innerText = 'current';
+                                    let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
+                                    var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
+                                    try {
+                                        open_editor.click();
+                                    } catch (e) {
+                                        console.debug("Error when opening record", e)
+                                    }
+
+                                    const currentClass = document.querySelector(`#editor-${row}`);
+                                    const prevcurrentClass = document.querySelector(`#preview-${row}`);
+                                    console.debug('preview:', prevcurrentClass);
+                                    currentClass.classList.add("wptf-bulksaved");
+                                    prevcurrentClass.classList.add("wptf-bulksaved");
+                                
+                                    try {
+                                        glotpress_save.click();
+
+                                    } catch (e) {
+                                        console.debug("Error when saving record", e)
+                                    }
+                                    const $el = elementReady(`.gp-js-message-dismiss`);
+                                    console.log("result of new waitforelement:", $el, row);
+                                    el.click();
                                  
-                                 const currentClass = document.querySelector(`#editor-${row}`);
-                                 const prevcurrentClass = document.querySelector(`#preview-${row}`);
-                                 console.debug('preview:', prevcurrentClass);
-                                 currentClass.classList.add("wptf-bulksaved");
-                                prevcurrentClass.classList.add("wptf-bulksaved");
-                                try {
-                                    glotpress_save.click();
-                                    
-                                } catch (e) {
-                                    console.debug("Error when saving record", e)
-                                }
-                                const $el = elementReady(`.gp-js-message-dismiss`);
-                                console.log("result of new waitforelement:", $el, row);
-                                el.click();
-                                 
-                                 
-                                 toastbox('info', 'Bulksave processing', 2500);
-                                 //let glotpress_saved = waitForElm(`.gp-js-message gp-js-success`);
-                                 // console.debug("saved:", glotpress_saved);
+                                    toastbox('info', 'Bulksave processing', 2500);
+                                     //let glotpress_saved = waitForElm(`.gp-js-message gp-js-success`);
+                                     // console.debug("saved:", glotpress_saved);        
+                               
                         }
                         else {
                             console.debug("currec is null in openrow")

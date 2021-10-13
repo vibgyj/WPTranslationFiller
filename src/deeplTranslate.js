@@ -213,7 +213,14 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     //let xhttp = new XMLHttpRequest();
     language = language.toUpperCase();
     //console.debug("Target_lang:", language);
-    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+    // 13-10-2021 PSS fix for not translating issue #151
+    if (language != "RO") {
+        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+    }
+    else {
+        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+
+    }
     xhttp.responseType = 'json';
     xhttp.send();
 
