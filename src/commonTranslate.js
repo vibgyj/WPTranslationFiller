@@ -757,67 +757,55 @@ async function bulkSave(event) {
     var RecCount = 0;
     let timeout = 0;
     for (let record of document.querySelectorAll('tr')) {
-       // console.debug("record:", record);
-        
         if (RecCount >0) {
             let rec = record.querySelector('tr.preview');
-            //console.debug("rec:", rec);
-                if (typeof rec !='undefined') {
+            if (typeof rec !='undefined') {
                 row = record.attributes.row.value;
-                //console.debug("row:", row);
                 var checkboxTicked = document.querySelector(`#preview-${row} input`);
                     if (checkboxTicked != null) {
-                        //console.debug('checkbox:', checkboxTicked.checked);
                         if (checkboxTicked.checked == true) {
                             checkboxTicked.checked = false;
                             countRec++;
                             let currec = document.querySelector(`#preview-${row}`);
-                            //console.debug("bulksave preview row:", row)
                             curheader = currec.nextSibling.nextSibling;
                             var current = curheader.querySelector('div.editor-panel__left div.panel-header span.panel-header__bubble');
                             if (current.innerText == 'transFill') {
                                 current.innerText = 'current';
-                            
-                            select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-                            var status = select.querySelector('dt').nextElementSibling;
-                            status.innerText = 'current';
-                            // const res = await myAsyncFunction(row);
-                            //console.debug("after myAsyncFunction", res);
-                            //await sleep(1000);
-                            //console.debug("na delay");
-                            let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
-                            var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
-                                // the code below is to prevent the error hasClass, but does not always work!!!
-                            var next_preview = currec.nextElementSibling.nextElementSibling;
-                            console.debug("next:", next_preview);
-                            if (next_preview == null) {
-                                    console.debug("no next editor!!");
-                            }
-                            else {
-                                    //const next_editor = preview.nextElementSibling;
+                                 select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                                 var status = select.querySelector('dt').nextElementSibling;
+                                 status.innerText = 'current';
+                                 let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
+                                var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
+                                try {
                                     open_editor.click();
-                                    //toastbox('info', "Bulksave processing", 4000);
-                                    var currentClass = document.querySelector(`#editor-${row}`);
-                                    var prevcurrentClass = document.querySelector(`#preview-${row}`);
-                                    currentClass.classList.add("wptf-bulksaved");
-                                    prevcurrentClass.classList.add("wptf-bulksaved");
-                                    res = waitForElm(`#editor-${row} .translation-actions`).then(glotpress_save.click()).then(toastbox('info', 'Bulksave processing', 1000));
-                                   // console.log("Editor is open", res);
-                                   // console.debug("save clicked");
-
-                                    const $el = elementReady(`.gp-js-message-dismiss`);
-                                    console.log("result of new waitforelement:", $el, row);
-                                    let glotpress_saved = elementReady(`.gp-js-message gp-js-success`);
-                                    console.debug("saved:", glotpress_saved);
-                       
+                                } catch (e) {
+                                    console.debug("Error when opening record", e)
                                 }
-                            sleep(300);
+                                 
+                                 const currentClass = document.querySelector(`#editor-${row}`);
+                                 const prevcurrentClass = document.querySelector(`#preview-${row}`);
+                                 console.debug('preview:', prevcurrentClass);
+                                 currentClass.classList.add("wptf-bulksaved");
+                                prevcurrentClass.classList.add("wptf-bulksaved");
+                                try {
+                                    glotpress_save.click();
+                                    
+                                } catch (e) {
+                                    console.debug("Error when saving record", e)
+                                }
+                                const $el = elementReady(`.gp-js-message-dismiss`);
+                                console.log("result of new waitforelement:", $el, row);
+                                el.click();
+                                 
+                                 
+                                 toastbox('info', 'Bulksave processing', 2500);
+                                 //let glotpress_saved = waitForElm(`.gp-js-message gp-js-success`);
+                                 // console.debug("saved:", glotpress_saved);
                         }
                         else {
                             console.debug("currec is null in openrow")
                         }
                     }
-
                 }
                 else {
                     console.debug("checkbox not found!");

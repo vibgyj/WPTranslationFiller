@@ -85,7 +85,7 @@ document.addEventListener("keydown", function (event) {
 
 document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === '*')) {
-        //event.preventDefault();
+        event.preventDefault();
         var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
         // issue #133 block non PTE/GTE users from using this function
         if (is_pte) {
@@ -95,8 +95,11 @@ document.addEventListener("keydown", function (event) {
     }
 });
 function bulk(event) {
-    const res = toastbox('info', "Bulksave started", 2000).then(bulkSave(event)).then(remove_prev());
+    //const res = toastbox('info', "Bulksave started", 10000);
     console.debug('bulksave started')
+    bulkSave(event);
+    remove_prev();
+    
 
 }
 
@@ -105,8 +108,8 @@ function remove_prev() {
     selector = document.getElementsByClassName('wptf-bulksaved');
     for (let i = 0; i < selector.length; i++) {
         if (selector[i].classList.contains('preview')) {
-            selector[i].style = "display:none";
-           // console.debug("found bulksave:", selector[i]);
+            selector[i].style.display = 'none';
+            console.debug("found bulksave:", selector[i]);
         }
     }
 }
@@ -1553,7 +1556,7 @@ function gd_wait_table_alter() {
                         status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
                         status_has_changed = status_before !== status_after;
                     }
-                    console.debug("before hide editor");
+                   // console.debug("before hide editor");
                     if (user_is_pte && row_is_editor ) {
                     //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
                         gd_auto_hide_next_editor(addedNode);
