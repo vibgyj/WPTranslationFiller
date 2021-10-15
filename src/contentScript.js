@@ -255,7 +255,6 @@ if (divPaging != null && divProjects == null){
 
 function translatePageClicked(event) {
     event.preventDefault();
-   // console.log("Translate clicked!");
     chrome.storage.sync
         .get(
             ['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace', 'showHistory', 'showTransDiff'],
@@ -265,8 +264,9 @@ function translatePageClicked(event) {
 
                     if (data.destlang != 'undefined' && data.destlang != null && data.destlang !="") {
                         if (data.transsel != 'undefined') {
-
-                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+                            //15-10-2021 PSS enhencement for Deepl to go into formal issue #152
+                            var formal = checkFormal(false);
+                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace,formal);
                         }
                         else {
                             messageBox("error", "You need to set the translator API");
@@ -283,7 +283,18 @@ function translatePageClicked(event) {
             });
 }
 
-// Add translation button - end
+function checkFormal(formal) {
+    const locString = window.location.href;
+    console.debug("Url:", locString);
+    if (locString.includes("default")) {
+        return false;
+    }
+    else {
+    return true;
+    }
+   // console.debug("Formal ?:", formal);
+    
+}
 
 function checkPageClicked(event) {
     event.preventDefault();

@@ -3,8 +3,7 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line) {
-
+function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line,formal) {
     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
     let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
     //var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
@@ -15,12 +14,11 @@ function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId
     //else {
     //    var trntype = "html";
     // }
-    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line);
+    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal);
 }
 
-function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line) {
+function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal) {
     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
-
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -214,12 +212,20 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     language = language.toUpperCase();
     //console.debug("Target_lang:", language);
     // 13-10-2021 PSS fix for not translating issue #151
-    if (language != "RO") {
-        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+    // 15-10-2021 PSS enhencement for Deepl to go into formal issue #152
+    if (language == "RO") {
+        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
     }
     else {
-        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+        if (!formal) {
+           // console.debug("not formal");
+            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+        }
+        else {
+            //console.debug("formal");
+            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines");
 
+        }
     }
     xhttp.responseType = 'json';
     xhttp.send();
