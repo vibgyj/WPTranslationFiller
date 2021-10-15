@@ -183,12 +183,12 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 validateEntry(language, textareaElem1, "", "", rowId);
             }
             //14-09-2021 PSS changed the class to meet GlotDict behavior
-            var currentClass = document.querySelector(`#editor-${rowId}`);
-            var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
-            currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
-            prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
+            //var currentClass = document.querySelector(`#editor-${rowId}`);
+           // var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
+            //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+           // currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
+            //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            //prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
             //console.debug("currentClass:", currentClass);
             //console.debug("currentClass:", prevcurrentClass);
             

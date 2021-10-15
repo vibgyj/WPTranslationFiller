@@ -452,13 +452,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (currec != null) {
                             var current = currec.querySelector('span.panel-header__bubble');
                         }
-                        //14-09-2021 PSS changed the class to meet GlotDict behavior
-                        var currentClass = document.querySelector(`#editor-${row}`);
-                        var prevcurrentClass = document.querySelector(`#preview-${row}`);
-                        currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
-                        prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
+                        
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
@@ -586,17 +580,19 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = 'transFill';
                         current.value = 'transFill';
-                        //14-09-2021 PSS changed the class to meet GlotDict behavior
-                        var currentClass = document.querySelector(`#editor-${row}`);
-                        var prevcurrentClass = document.querySelector(`#preview-${row}`);
-                        currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
-                        prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                        prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations","wptf-translated");
-                        //console.debug("currentClass:", currentClass);
-                        //console.debug("currentClass:", prevcurrentClass);
                     }
                 }
+                //14-09-2021 PSS changed the class to meet GlotDict behavior
+                var currentClass = document.querySelector(`#editor-${row}`);
+                var prevcurrentClass = document.querySelector(`#preview-${row}`);
+                //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                currentClass.classList.add("wptf-translated");
+                currentClass.classList.replace("no-translations", "has-translations");
+                //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                prevcurrentClass.classList.replace("no-translations", "has-translations");
+                prevcurrentClass.classList.add("wptf-translated");
+                        //console.debug("currentClass:", currentClass);
+                        //console.debug("currentClass:", prevcurrentClass);
             }
             // Translation completed  
             let translateButton = document.querySelector(".paging a.translation-filler-button");
@@ -751,100 +747,34 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-async function bulkSave(event) {
-    event.preventDefault();
-    var countRec = 0;
-    var RecCount = 0;
+function bulkSave(event) {
     let timeout = 0;
-    var table = document.getElementById("translations");
-    console.debug('table:', table);
-    for (let record of document.querySelectorAll('tr')) {
-        if (RecCount >0) {
-            let rec = record.querySelector('tr.preview');
-            if (typeof rec !='undefined') {
-                row = record.attributes.row.value;
-                var checkboxTicked = document.querySelector(`#preview-${row} input`);
-                    if (checkboxTicked != null) {
-                        if (checkboxTicked.checked == true) {
-                            checkboxTicked.checked = false;
-                            countRec++;
-                            let currec = document.querySelector(`#preview-${row}`);
-                            curheader = currec.nextSibling.nextSibling;
-                            var current = curheader.querySelector('div.editor-panel__left div.panel-header span.panel-header__bubble');
-                            if (current.innerText == 'transFill') {     
-                                    current.innerText = 'current';
-                                    select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-                                    var status = select.querySelector('dt').nextElementSibling;
-                                    status.innerText = 'current';
-                                    let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
-                                    var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
-                                    try {
-                                        open_editor.click();
-                                    } catch (e) {
-                                        console.debug("Error when opening record", e)
-                                    }
-
-                                    const currentClass = document.querySelector(`#editor-${row}`);
-                                    const prevcurrentClass = document.querySelector(`#preview-${row}`);
-                                    console.debug('preview:', prevcurrentClass);
-                                    currentClass.classList.add("wptf-bulksaved");
-                                    prevcurrentClass.classList.add("wptf-bulksaved");
-                                
-                                    try {
-                                        glotpress_save.click();
-
-                                    } catch (e) {
-                                        console.debug("Error when saving record", e)
-                                    }
-                                    const $el = elementReady(`.gp-js-message-dismiss`);
-                                    console.log("result of new waitforelement:", $el, row);
-                                    el.click();
-                                 
-                                    toastbox('info', 'Bulksave processing', 2500);
-                                     //let glotpress_saved = waitForElm(`.gp-js-message gp-js-success`);
-                                     // console.debug("saved:", glotpress_saved);        
-                               
-                        }
-                        else {
-                            console.debug("currec is null in openrow")
-                        }
-                    }
-                }
-                else {
-                    console.debug("checkbox not found!");
-                }
-            }
+    var counter = 0;
+    document.querySelectorAll('tr.preview').forEach((preview, i) => {
+        if (!preview.querySelector('th input').checked) {
+            return;
         }
-        RecCount++;
-    }
-    if (countRec == 0) {
-        messageBox("error", "You do not have translations selected!");
-        console.debug("No selection made!");
-        }
-}
-
-function editor_open(open_editor,row) {
-    return new Promise((resolve) => {
-        (async () => {
-            //elementReady('.translation-actions').then(elm => console.log("check if editor is open!"));
-            elementReady('.translation-actions').then(elm => resolve());
-            //if (typeof elm != 'undefined') {
-            //    console.debug(elm.textContent);
-           // }
-           //else {
-                open_editor.click();
-             //   waitForElm('.translation-actions').then(elm => console.log("Editor is open"));
-           // }
-            
-            //waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent));
-           // if (typeof elm != 'undefined') {
-                //elm.textContent.click();
-            //}
-            //resolve("Editor has been opened");
-        })();        
-        
+        counter++;
+        setTimeout(() => {
+            preview.querySelector('td.actions .edit').click();
+            const editor = preview.nextElementSibling;
+            editor.style.display = 'none';
+            editor.querySelector('.translation-actions__save').click();
+            confirm = "button.gp-js-message-dismiss";
+            // PSS confirm the message for dismissal
+            elementReady('.gp-js-message-dismiss').then(elm => { elm.click(); }
+            );
+            toastbox('info', "Saving suggestion: "+(i+1), 800);
+        }, timeout);
+        timeout +=1700;
     });
+    if ( counter == 0) {
+        messageBox("error", "You do not have translations selected!");
+    }
+    
 }
+
+
 
 function second(milliseconds) {
     return new Promise((resolve) => {
@@ -857,40 +787,6 @@ function second(milliseconds) {
         })();
         
         resolve("done waiting");
-    });
-}
-function editor_save(glotpress_save,row) {
-    return new Promise((resolve) => {
-        (async () => {
-            //waitForElm('.translation-actions__save').then(elm => console.log("waiting for save in third"));
-            console.debug("row:", row);
-            let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-            if (currec != null) {
-                var current = currec.querySelector('span.panel-header__bubble');
-                console.debug("row current:", current.innerText);
-                if (current.innerText == "transFill") {
-                    sleep(500);
-                    glotpress_save.click();
-                    console.debug("after save click", row);
-                    //waitForElm('.gp-js-message').then(elm => console.log(elm.textContent,row));
-
-                    elementReady('.gp-js-message-dismiss').then(elm => console.log("result of elementReady:", elm.textContent, row));
-                    waitForElm('.gp-js-message').then(elm => {
-                        console.log("succes message:", elm.textContent, row);
-                        sleep(250);
-                    });
-                   // console.debug("res:", res);
-                    //const res = waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent, row));
-                    
-                    current.innerText = "current";
-                   // if (typeof elm != 'undefined') {
-                    //    elm.textContent.click();
-                  //  }
-                    
-                }
-            }   
-        })();
-        resolve("Row saved,row");
     });
 }
 
@@ -908,37 +804,6 @@ async function delay(n) {
     });
 }
 
-async function myAsyncFunction(row) {
-    //Do what you want here 
-    console.log("Before the delay");
-    var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
-    open_editor.click();
-    await _waitForElement('.translation-actions').then(elm => {
-        console.log("Editor is open");
-        let glotpress_save = document.querySelector(`#editor-${row} button.translation-actions__save`);
-        let glotpress_change = document.querySelector(`#editor-${row} textarea.foreign-text`);
-        glotpress_save.click();
-        console.debug("save clicked");
-           
-        const start = (async (resolve) => {
-        const $el = await _waitForElement(`.gp-js-message-dismiss`);
-        console.log("result of new waitforelement:", $el);
-        const res=$el.click();
-        console.debug("dismissed clicked:", res);
-        
-        })().catch((err) => {
-            console.debug("No result found for element:", err)
-        });
-    });
-    //waitForElem('.gp-js-message-dismiss').then(elm => console.log("result of elementReady:", elm.textContent, row));
-
-    const res=await delay(10);
-    console.log("After the delay:", res);
-   
-    //Do what you want here too
-
-    return ("AsyncResolved");
-}
 
 function _waitForElement(selector, delay =5, tries = 50) {
     const element = document.querySelector(selector);
@@ -976,7 +841,7 @@ function elementReady(selector) {
             // Query for elements matching the specified selector
             Array.from(document.querySelectorAll(selector)).forEach((element) => {
                 console.debug("new elementReady",element);
-                resolve(element);
+                resolve(selector);
                 //Once we have resolved we don't need the observer anymore.
                 observer.disconnect();
             });
@@ -1014,48 +879,6 @@ function close_toast(){
     toastContainer.remove();
 }
 
-function glotpress_open(row) {
-    return new Promise((resolve, reject) => {     
-        console.debug("glotpress_open:", row);
-        var open_editor = document.querySelector(`#preview-${row} td.actions .edit`);
-        let original = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content span.original-raw`).innerText;
-        
-        elementReady('div.panel-header-actions .panel-header-actions__cancel').then(elm => console.log("result of elementReady:", elm.textContent, row));
-        console.debug('editor:', open_editor,original);
-        if (open_editor != null) {
-            // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
-            select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-            var status = select.querySelector('dt').nextElementSibling;
-            status.innerText = 'current';
-            var glotpress_save = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-            //console.debug("save record:", glotpress_save);
-            //let glotpress_close = document.querySelector(`#editor-${row} div.panel-header-actions .panel-header-actions__cancel`);
-            editor_open(open_editor, row).then(second(100).then(editor_save(glotpress_save, row).then(second(50))));
-            //second(100);
-            resolve("done:" + row);
-            
-        }
-        else {
-            reject(Error("It didn't work!"));
-            reject();
-        }
-    }).catch ((err) => {
-        console.debug("error:", err)
-    });
-}
-
-function glotpress_save(row) {
-    return new Promise((resolve, reject) => {
-        let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-        glotpress_save.click();
-        const res = waitForElm('.gp-js-message-dismiss').then(elm => console.log(elm.textContent, row));
-        if (glotpress_save != null) {
-            resolve("Stuff worked!");
-        } else {
-            reject(Error("It didn't work!"));
-        }
-    });
-}
 
 function toastbox(type, message, time) {
     return new Promise((resolve) => {

@@ -730,6 +730,7 @@ button.save-button.ready {
 .toast-container {
     top: 15px;
     right: 15px;
+    min-width: 250px;
     overflow: hidden;
     position: fixed;
     border-radius: 5px;
@@ -739,13 +740,13 @@ button.save-button.ready {
 }
 
 .toast-frame {
-    padding: 5px 15px;
+    padding: 5px 5px;
     display: flex;
     min-width: 100px;
     height: 60px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    align-items: center;
+    align-items: left;
     flex-wrap: wrap;
 }
 
@@ -759,7 +760,7 @@ button.save-button.ready {
     font-weight: 600;
     font-size: 15px;
     color: #fff;
-    margin-left: 15px;
+    margin-left: 10px;
 }
 
 .toast-close {
@@ -769,7 +770,7 @@ button.save-button.ready {
     font-size: 16px;
     cursor: pointer;
     transition: color 0.5s;
-    margin-left: 25px;
+    margin-left: 20px;
 }
 
 @keyframes timer {
