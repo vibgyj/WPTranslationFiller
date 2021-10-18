@@ -264,9 +264,10 @@ function translatePageClicked(event) {
 
                     if (data.destlang != 'undefined' && data.destlang != null && data.destlang !="") {
                         if (data.transsel != 'undefined') {
-                            //15-10-2021 PSS enhencement for Deepl to go into formal issue #152
+                            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
                             var formal = checkFormal(false);
-                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace,formal);
+                            //var locale = checkLocale();
+                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal)
                         }
                         else {
                             messageBox("error", "You need to set the translator API");
@@ -283,17 +284,26 @@ function translatePageClicked(event) {
             });
 }
 
+function checkLocale() {
+    const localeString = window.location.href;
+    locale = localeString.split('/');
+    if (localeString.includes("wp-plugins") ) {
+        locale = locale[7]
+    }
+    else {
+        locale = locale[6]
+    }
+    return locale;
+}
 function checkFormal(formal) {
     const locString = window.location.href;
-    console.debug("Url:", locString);
+    //console.debug("Url:", locString);
     if (locString.includes("default")) {
         return false;
     }
     else {
     return true;
     }
-   // console.debug("Formal ?:", formal);
-    
 }
 
 function checkPageClicked(event) {
@@ -377,6 +387,7 @@ async function parseDataBase(data) {
         messageBox("info", "Import is ready records imported: " + i);
     }
 }
+
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
     , 'glossaryD', 'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI'
@@ -424,9 +435,13 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         if (glossary.length > 0) {
             chrome.storage.sync.get(['showHistory'], function (data) {
                 if (data.showHistory != 'null') {
-                    validatePage(data.destlang, data.showHistory);
+                    locale = checkLocale();
+                    validatePage(data.destlang, data.showHistory, locale);
                 }
-                    });
+            });
+        }
+        else {
+            console.debug("Glossary empty!!");
         }
         checkbuttonClick();
     });
@@ -611,12 +626,14 @@ function translateEntryClicked(event) {
         rowId = newrowId;
     }
     chrome.storage.sync
-        .get(['apikey', 'apikeyDeepl','apikeyMicrosoft','transsel','destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+        .get(['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
+            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+            var formal = checkFormal(false);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace,formal);
         });
 }
 
-function validatePage(language, showHistory) {
+function validatePage(language, showHistory,locale) {
     
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName('breadcrumb');   
@@ -646,8 +663,8 @@ function validatePage(language, showHistory) {
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
        
-        textareaElem.addEventListener('input', function (e) {
-        validateEntry(language, e.target,newurl,showHistory,rowId);
+        textareaElem.addEventListener('input', function (e, locale) {
+        validateEntry(language, e.target,newurl,showHistory,rowId,locale);
         });
         let element = e.querySelector('.source-details__comment');
         let toTranslate = false;
@@ -678,7 +695,7 @@ function validatePage(language, showHistory) {
         else {
             nameDiff = false;
         }
-        var result = validate(language, original, translation);
+        var result = validate(language, original, translation,locale);
         updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff,rowId);
     }
     // 30-06-2021 PSS set fetch status from local storage
@@ -760,14 +777,13 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
             }
 }
 
-function validateEntry(language, textareaElem, newurl, showHistory,rowId) {
+function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
-    let result = validate(language, originalText, translation);
-    // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId
+    let result = validate(language, originalText, translation,locale);
     updateStyle(textareaElem, result, newurl, showHistory,"True","",rowId);
 }
 
@@ -1120,58 +1136,58 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
 
-    function validate(language, original, translation) {
-        let originalWords = original.split(' ');
-        let wordCount = 0;
-        let foundCount = 0;
-        let toolTip = '';
-        // 17-05-2021 PSS added check to prevent errors with empty glossary be aware that if the glossary gets more entries the amount needs to be adepted
-        if (glossary.length > 27) {
-            //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
-            if (translation.length > 0) {
-
-                for (let oWord of originalWords) {
-                    for (let gItem of glossary) {
-                        let gItemKey = gItem["key"];
-                        let gItemValue = gItem["value"];
-                        if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
-                            //console.log('Word found:', gItemKey, gItemValue);
-                            wordCount++;
-
-                            let isFound = false;
-                            for (let gWord of gItemValue) {
-                                if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
-                                    //console.log('+ Translation found:', gWord);
-                                    isFound = true;
-                                    break;
-                                }
+function validate(language, original, translation,locale) {
+    let originalWords = original.split(' ');
+    let wordCount = 0;
+    let foundCount = 0;
+    let toolTip = '';
+    // 17-05-2021 PSS added check to prevent errors with empty glossary be aware that if the glossar//y gets more entries the amount needs to be adepted
+    if (glossary.length > 27) {
+        //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
+        if (translation.length > 0) {
+            for (let oWord of originalWords) {
+                for (let gItem of glossary) {
+                    let gItemKey = gItem["key"];
+                    let gItemValue = gItem["value"];
+                    if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
+                        //console.log('Word found:', gItemKey, gItemValue);
+                        wordCount++;
+                        let isFound = false;
+                        for (let gWord of gItemValue) {
+                            if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
+                                //console.log('+ Translation found:', gWord);
+                                isFound = true;
+                                break;
                             }
-
-                            if (isFound) {
-                                foundCount++;
-                            } else {
-                                if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
-                                    toolTip += `${gItemKey} - ${gItemValue}\n`;
-                                }
-                            }
-                            break;
                         }
+                        if (isFound) {
+                            foundCount++;
+                        } else {
+                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
+                                toolTip += `${gItemKey} - ${gItemValue}\n`;
+                            }
+                        }
+                        break;
                     }
                 }
             }
-            else {
-                foundCount = 0;
-                wordCount = 0;
-            }
-        }
-        // 27-03-2021 PSS added this to prevent devision by zero      
-        if (wordCount != 0) {
-            percent = foundCount * 100 / wordCount;
         }
         else {
+            foundCount = 0;
+            wordCount = 0;
+        }
+    }
+    else {
+        console.debug("Glossary empty!!");
+    }
+    // 27-03-2021 PSS added this to prevent devision by zero      
+    if (wordCount != 0) {
+        percent = foundCount * 100 / wordCount;
+        }
+    else {
             percent = 0;
         }
-        return { wordCount, percent, toolTip };
+    return { wordCount, percent, toolTip };
     }
 
 

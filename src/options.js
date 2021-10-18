@@ -209,6 +209,8 @@ let glossaryZ = [];
 file.addEventListener('change', function () {
     var file = this.files[0];
     var entry = "";
+    locale = "nl";
+    console.debug
     var reader = new FileReader();
     reader.onload = function () {
         var lines = this.result.split('\n');
@@ -223,8 +225,7 @@ file.addEventListener('change', function () {
                        value[val] = value[val].replaceAll("\"", "").trim();
                     }
                 }
-
-                let startChar = key.substring(0, 1);
+                startChar = key.substring(0, 1);
                 switch (startChar) {
                     case "a":
                         pushToGlossary(glossaryA, key, value);
@@ -315,6 +316,10 @@ file.addEventListener('change', function () {
     reader.readAsText(file);
 });
 
+function checkLocale() {
+    //need to fetch the locale from the filename
+    return locale;
+}
 function pushToGlossary(glossary, key, value) {
     for (var i in glossary) {
         if (glossary[i].key == key) {

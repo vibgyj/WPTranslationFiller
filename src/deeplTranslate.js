@@ -3,7 +3,7 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line,formal) {
+function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line,formal,locale) {
     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
     let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
     //var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
@@ -14,11 +14,10 @@ function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId
     //else {
     //    var trntype = "html";
     // }
-    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal);
+    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal,locale);
 }
 
-function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal) {
-    //console.debug("deepl row: ", rowId, transtype, plural_line, original);
+function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal,locale) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -32,8 +31,6 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     prevstate = current.innerText;
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
-
-        //console.debug("Deepl translation:", this.response);
         responseObj = this.response;
 
         // console.debug("Deepl this ready state:", this.readyState, "this status:",this.status, "Response:",this.response);
@@ -57,7 +54,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 current.value = 'transFill';
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
                 preview.innerText = translatedText;
-                validateEntry(language, textareaElem, "", "", rowId);
+                validateEntry(language, textareaElem, "", "", rowId,locale);
 
                 // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
                 select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
@@ -178,7 +175,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 current.innerText = 'transFill';
                 current.value = 'transFill';
                
-                validateEntry(language, textareaElem1, "", "", rowId);
+                validateEntry(language, textareaElem1, "", "", rowId,locale);
             }
             //14-09-2021 PSS changed the class to meet GlotDict behavior
             //var currentClass = document.querySelector(`#editor-${rowId}`);
