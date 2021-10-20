@@ -1,5 +1,13 @@
 
 //console.debug('Content script...');
+/// PSS added function from GlotDict to save records in editor
+gd_wait_table_alter();
+// 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
+window.onbeforeunload = function () {
+    return switchoff();
+}
+
+//console.debug('Content script...');
 // PSS added function from GlotDict to save records in editor
 //gd_wait_table_alter();
 
@@ -48,14 +56,14 @@ window.onbeforeunload = function () {
 
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
-var db =getDbSchema() ;
+var db = getDbSchema();
 var isDbCreated = jsstoreCon.initDb(db);
 
-if (!isDbCreated){
-//console.debug('Database is not created, so we create one', isDbCreated);
+if (!isDbCreated) {
+    //console.debug('Database is not created, so we create one', isDbCreated);
 }
-else{
-	console.debug("Database is present");
+else {
+    console.debug("Database is present");
 }
 
 //09-05-2021 PSS added fileselector for silent selection of file
@@ -64,6 +72,7 @@ fileSelector.setAttribute('type', 'file');
 
 // PSS 31-07-2021 added new function to scrape consistency tool
 document.addEventListener("keydown", function (event) {
+
     if (event.altKey && event.shiftKey && (event.key === '&')) {
 
         event.preventDefault();
@@ -168,13 +177,11 @@ document.addEventListener("keydown", function (event) {
                     setTimeout(() => { window.close(); }, 1000);
                 }
             }
-
         }
         else {
             messageBox("error", "You do not have permissions to start this function!");
         }
     }
-    
 });
 
 
@@ -182,8 +189,8 @@ document.addEventListener("keydown", function (event) {
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
-if (el != null){
-  el.addEventListener("click", checkbuttonClick);
+if (el != null) {
+    el.addEventListener("click", checkbuttonClick);
 }
 
 
@@ -201,8 +208,8 @@ translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
 // 1-05-2021 PSS fix for issue #75 do not show the buttons on project page
 var divProjects = document.querySelector('div.projects');
-if (divPaging != null && divProjects  == null){
-   divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
+if (divPaging != null && divProjects == null) {
+    divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
 }
 //23-03-2021 PSS added a new button on first page
 var checkButton = document.createElement("a");
@@ -212,8 +219,8 @@ checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
 var divPaging = document.querySelector("div.paging");
 var divProjects = document.querySelector('div.projects');
-if (divPaging != null && divProjects == null){
-   divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+if (divPaging != null && divProjects == null) {
+    divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
 }
 //07-05-2021 PSS added a new button on first page
 var exportButton = document.createElement("a");
@@ -223,8 +230,8 @@ exportButton.onclick = exportPageClicked;
 exportButton.innerText = "Export";
 var divPaging = document.querySelector("div.paging");
 var divProjects = document.querySelector('div.projects');
-if (divPaging != null && divProjects == null){
-   divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
+if (divPaging != null && divProjects == null) {
+    divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
 }
 
 
@@ -239,8 +246,8 @@ importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
 var divPaging = document.querySelector("div.paging");
 var divProjects = document.querySelector('div.projects');
-if (divPaging != null && divProjects == null){
-   divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+if (divPaging != null && divProjects == null) {
+    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
 function translatePageClicked(event) {
@@ -328,14 +335,13 @@ function importPageClicked(event) {
             messageBox("error", "File is not a csv!");
     }
     }); 
-   
 }
-    
+
 async function parseDataBase(data) {
     messageBox("info", "Import is started wait for the result");
     let csvData = [];
     let lbreak = data.split("\n");
-    let counter= 0;
+    let counter = 0;
     // To make sure we can manipulate the data store it into an array
     lbreak.forEach(res => {
         // 09-07-2021 PSS altered the separator issue #104
@@ -396,16 +402,16 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         glossary.sort(function (a, b) {
             // to sory by descending order
             return b.key.length - a.key.length;
-            
+
         });
         //console.log(glossary);
         addTranslateButtons();
         if (glossary.length > 0) {
-            chrome.storage.sync.get(['showHistory'], function (data) {
+            chrome.storage.sync.get(['destlang', 'showHistory'], function (data) {
                 if (data.showHistory != 'null') {
                     validatePage(data.destlang, data.showHistory);
                 }
-                    });
+            });
         }
         checkbuttonClick();
     });
@@ -450,8 +456,8 @@ function addTranslateButtons() {
     }
 }
 
-function addtranslateEntryClicked(event){
-    if (event != undefined){ 
+function addtranslateEntryClicked(event) {
+    if (event != undefined) {
         event.preventDefault();
        let rowId = event.target.id.split('-')[1];
       // console.log("addtranslateEntry clicked rowId", rowId);
@@ -470,7 +476,7 @@ function addtranslateEntryClicked(event){
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
 function checkactionClick(event) {
     if (event != undefined) {
-       
+
         //let action = event.target.textContent;
         // 19-06-2021 PSS changed the type to classname to prevent possible translation issue
         let classname = event.target.getAttribute("class");
@@ -505,18 +511,18 @@ function checkactionClick(event) {
         }
     }
     //else {
-        // Necessary to prevent showing old translation exist if started from link "Translation history"
-        //chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
-            // Notify that we saved.
-            // alert('Settings saved');
-       // });
-   // }
-        
+    // Necessary to prevent showing old translation exist if started from link "Translation history"
+    //chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
+    // Notify that we saved.
+    // alert('Settings saved');
+    // });
+    // }
+
 }
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
-function checkbuttonClick(event){
-   if (event != undefined){ 
+function checkbuttonClick(event) {
+    if (event != undefined) {
         //event.preventDefault(); caused a problem within the single page enttry  
        let action = event.target.textContent ;
        // 30-06-2021 PSS added fetch status from local storage
@@ -590,23 +596,23 @@ function translateEntryClicked(event) {
         rowId = newrowId;
     }
     chrome.storage.sync
-        .get(['apikey', 'apikeyDeepl','apikeyMicrosoft','transsel','destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
+        .get(['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
             translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
         });
 }
 
 function validatePage(language, showHistory) {
-    
+
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName('breadcrumb');   
     let url = f[0].firstChild.baseURI;
     let newurl = url.split('?')[0];
-    
+
     var divProjects = document.querySelector('div.projects');
     // We need to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project
     var tr = document.getElementById('translations');
-     if (tr != null) {
+    if (tr != null) {
         trhead = tr.tHead.children[0]
         // 26-06-2021 PSS set  the visibillity of the Priority column back to open
         trprio = trhead.children[1];
@@ -617,10 +623,10 @@ function validatePage(language, showHistory) {
             all_col[i].style.display = "table-cell";
         }
     }
-    
+
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-        
+
         let textareaElem = e.querySelector('textarea.foreign-text');
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
@@ -663,7 +669,7 @@ function validatePage(language, showHistory) {
     // 30-06-2021 PSS set fetch status from local storage
     chrome.storage.sync.set({ 'noOldTrans': 'False' }, function () {
         // Notify that we saved.
-       // alert('Settings saved');
+        // alert('Settings saved');
     });
 }
 
@@ -671,7 +677,6 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     if (typeof rowId == 'undefined') {
         let rowId = textareaElem.parentElement.parentElement.parentElement
            .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
-        
     }
     originalElem = document.querySelector('#preview-' + rowId + ' .original');
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
@@ -725,6 +730,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     //let origElem =  updateElementStyle(checkElem, result,'False',originalElem,"","","","","",rowId,showName);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(checkElem, headerElem, result, 'False', originalElem, "", "", "", "", "", rowId,showName,nameDiff);
+
     let row = rowId.split('-')[0];
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
@@ -788,7 +794,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
             else {
                 current = myrec.querySelector('span.panel-header__bubble');
-
                 if (current.innerText == 'transFill') {
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
@@ -1413,7 +1418,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     }
                 }
             }).catch(error => console.error(error));
-
     }
 
     // The code below is taken from the free add-on GlotDict

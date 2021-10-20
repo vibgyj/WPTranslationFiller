@@ -13,11 +13,8 @@
       "jsstore.worker.js"
     ]
   },
-  "options_ui": {
-    "page": "options.html",
-    "browser_style": true
-  },
   "permissions": [
+    "declarativeContent",
     "storage",
     "activeTab",
     "tabs",
@@ -27,6 +24,7 @@
     "https://api.languagetoolplus.com/*",
     "https://api.cognitive.microsofttranslator.com/*"
   ],
+  "options_page": "options.html",
   "content_scripts": [
     {
       "matches": [
@@ -51,11 +49,5 @@
         "translationFillerStyle.css"
       ]
     }
-  ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "{1f70acc7-00c6-4bdf-96a1-c97a19a6884a}",
-      "strict_min_version": "57.0"
-    }
-  }
+  ]
 }
