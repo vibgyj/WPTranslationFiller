@@ -7,28 +7,43 @@ function cuteAlert({
   buttonText = "OK",
   confirmText = "OK",
   cancelText = "Cancel",
-  myWindow ="",
-  closeStyle,
+  myWindow = "",
+  closeStyle
 }) {
     return new Promise((resolve) => {
-        console.debug("window:", myWindow);
+        //console.debug("window:", myWindow);
+        var body;
         setInterval(() => { }, 5000);
-        const body = myWindow.document.getElementById("wptf_container");
+        if (typeof myWindow != 'string') {
+            body = myWindow.document.getElementById("container");
+            //console.debug("body:", body);
+            if (body == null) {
+                body = document.getElementById("wordpress-org");
+                //console.debug("document:", document);
+            }
+        }
+        else {
+           // console.debug("myWindow not defined!");
+            body = document.getElementById('wordpress-org');
+            //const body = document.getElementsByClassName("logged-in");
+        }
         //const body = myWindow.document.getElementsByTagName("body");
-        console.debug("bodyresult:", body);
-        const scripts = myWindow.document.getElementsByTagName("script");
+        //console.debug("bodyresult:", body);
+        const scripts = document.getElementsByTagName("script");
         let currScript = "";
-        // 13-08-2021 Modified the code below to be able to use it in manifest
-        let src = chrome.extension.getURL('/');
+        let src = "";
         for (let script of scripts) {
           if (script.src.includes("cute-alert.js")) {
               currScript = script;
-              src = currScript.src;
+              let src = currScript.src;
               src = src.substring(0, src.lastIndexOf("/"));
-              console.debug("currScript not empty");
             }
         }
-        
+        // 07-09-2021 PSS added extra check to prevent empty src and missing "/"
+        if (src === "") {
+            // 13-08-2021 Modified the code below to be able to use it in manifest
+            src = chrome.extension.getURL('/');
+        }
     let closeStyleTemplate = "alert-close";
     if (closeStyle == "circle") {
       closeStyleTemplate = "alert-close-circle";
@@ -63,7 +78,6 @@ function cuteAlert({
     </div>
     `;
 
-        console.debug("Body before adding:", body);
     body.insertAdjacentHTML("beforeend", template);
 
     const alertWrapper = myWindow.document.querySelector(".alert-wrapper");

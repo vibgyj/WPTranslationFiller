@@ -2,8 +2,9 @@
   "manifest_version": 2,
   "name": "WordPress Translation Filler",
   "version": "1.5.2",
-  "description": "Chrome extension to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
+  "description": "Firefox addon to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
   "web_accessible_resources": [
+    "//cute-alert.css",
     "/img/*"
   ],
   "background": {
@@ -36,11 +37,15 @@
         "jsstore.js",
         "jsstore.worker.js",
         "database.js",
+        "commonTranslate.js",
+        "deeplTranslate.js",
+        "microsoftTranslate.js",
         "googleTranslate.js",
         "contentScript.js",
         "jsdiff.js"
       ],
       "css": [
+        "cute-alert.css",
         "translationFillerStyle.css"
       ]
     }

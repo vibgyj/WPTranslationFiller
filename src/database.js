@@ -59,20 +59,19 @@ async function addTransDb(orig, trans, cntry) {
         if (noOfDataInserted == 1) {
           reslt ="Inserted";
           console.debug('addTransDb record added');
-			//alert("Record added");
         }
-		else if (noOfDataInserted != 1){
-			alert("Record not added!!");
+        else if (noOfDataInserted != 1) {
+            var myWindow = window.self;
+            messageBox("error", "Record not added!!");
             reslt="Record not added";
 		}
-    } catch (ex) {
-        alert(ex.message);
+        } catch (ex) {
+            messageBox("error", "Error: " + ex.message);
        }
 	}
 	else{
 		res =updateTransDb(orig,trans,cntry);
 		console.debug('addTransDb record present so update it',trans," ",res);
-		//alert("Record updated!!",res);
         reslt="updated";
         console.debug('addTransDb record present so update it',reslt);
 	}
@@ -96,7 +95,7 @@ async function updateTransDb(orig,trans,cntry) {
         console.log(`data updated ${noOfDataUpdated}`);
         
     } catch (ex) {
-        alert(ex.message,"record:",orig);
+        messageBox("error", "Error: " + ex.message + "record: " + orig);
     }
 }
 
@@ -155,13 +154,13 @@ async function addTransline(rowId){
     var orig = e.querySelector("span.original-raw").innerText;
     let textareaElem = e.querySelector("textarea.foreign-text");
     var addTrans = textareaElem.value;
-    if (addTrans === ""){
-        alert("No translation to store!");
+        if (addTrans === "") {
+            messageBox("error", "No translation to store!");
     }
     else {
-        console.debug('addTransline translated text to add to database:',addTrans);
-        console.debug('addTransline original text to add to database:',orig);
-        console.debug("addTransline Language:",language);
+        //console.debug('addTransline translated text to add to database:',addTrans);
+        //console.debug('addTransline original text to add to database:',orig);
+        //console.debug("addTransline Language:",language);
         var res = addTransDb(orig, addTrans, language);
         console.debug('addTransline res add to database:', res);
         let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
@@ -193,13 +192,12 @@ async function addTransline(rowId){
                 res = addTransDb(plural, addTrans, language);
             }
             }
-         alert("addTransline record added/updated to database ");
+            messageBox("info", "addTransline record added/updated to database");
         }
     });
     return;
 }
 async function dbExport(){
-  //alert("database export");
   const trans = await jsstoreCon.select({
     from: "Translation"
   });
@@ -237,8 +235,7 @@ async function dbExport(){
        hiddenElement.click();
        let exportButton = document.querySelector(".paging a.export_translation-button");
        exportButton.className += " ready";
-       alert('Export database ready');
-
+       messageBox("info", "Export database in progress" + "<br>" + "Wait for saving the file!");
 }
 
 async function tryPersistWithoutPromtingUser() {

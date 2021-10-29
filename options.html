@@ -3,7 +3,7 @@
 <head> 
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <meta content="utf-8" http-equiv="encoding">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" content-type="image/svg+xml">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         .form-input {
             margin: 10px 0;
@@ -49,7 +49,7 @@
     </style>
 </head>
 <body>
-    <div class="container" id="container">
+    <div class="container">
         <h1>WP Translation Filler - Options</h1>
         <div class="form-input">
             <label for="google_api_key">Google API Key</label>
@@ -112,16 +112,12 @@ wrong2,right2
         </div>
         <br />
         <div>
-            <input type="checkbox" id="show-history">
             <label>Show history</label>
+            <input type="checkbox"  id="show-history">      
         </div>
         <div>
-            <input type="checkbox" id="comp-translations">
             <label>Compare translations</label>
-        </div>
-        <div>
-            <input type="checkbox" id="show-glotDictGlos">
-            <label>Show GlotDict</label>
+            <input type="checkbox" id="comp-translations">           
         </div>
         <div class="form-input">
             <input id="save" type="button" value="Save" />
