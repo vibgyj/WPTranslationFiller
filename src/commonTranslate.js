@@ -536,19 +536,19 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                             }
                             else {
-
                                 // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
                                 // 17-08-2021 PSS additional fix #118 when translation is already present we only need the first part of the rowId
                                 let translatedText = pretrans;
                                 // Plural second line
+                                let rowId = row.split('-')[0];
                                 if (current.innerText == 'current') {
-                                    let rowId = row.split('-')[0];
+                                    
                                     textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
                                     textareaElem1.innerText = translatedText;
                                     textareaElem1.value = translatedText;
                                     // Populate the second line in preview Plural
                                     if (prevstate != 'current') {
-                                        let preview = document.querySelector('#preview-' + row + ' td.translation');
+                                        let preview = document.querySelector('#preview-' + rowId + ' td.translation');
                                         if (preview != null) {
                                             preview.innerText = translatedText;
                                             preview.value = translatedText;
@@ -556,11 +556,47 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     }
                                 }
                                 else {
-                                    textareaElem1 = record.querySelector("textarea#translation_" + row + "_1");
-                                    let previewElem = document.querySelector('#preview-' + row + ' li:nth-of-type(2) span.translation-text');
+                                    // 30-10-2021 PSS added a fix for issue #154
+                                    // If the span,missing is present it needs to be removed and the ul added otherwise the second line cannot be populated
+                                    let preview = document.querySelector('#preview-' + row + ' td.translation');
+                                    //console.debug("prev:", preview);
+                                    let spanmissing = preview.querySelector(" span.missing");
+                                    if (spanmissing != null) {
+                                        spanmissing.remove();
+                                        ul = document.createElement('ul');
+                                        preview.appendChild(ul);
+                                        var li1 = document.createElement('li');
+                                        li1.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
+                                        ul.appendChild(li1);
+                                        var small = document.createElement('small');
+                                        li1.appendChild(small);
+                                        small.appendChild(document.createTextNode("Singular:"));
+                                        var br = document.createElement('br');
+                                        li1.appendChild(br);
+                                        var myspan1 = document.createElement('span');
+                                        myspan1.className = "translation-text";
+                                        li1.appendChild(myspan1);
+                                        myspan1.appendChild(document.createTextNode("empty"));
+                                        // Also create the second li
+                                        var li2 = document.createElement('li');
+                                        ul.appendChild(li2);
+                                        var small = document.createElement('small');
+                                        li2.appendChild(small);
+                                        small.appendChild(document.createTextNode("Plural:"));
+                                        var br = document.createElement('br');
+                                        li2.appendChild(br);
+                                        var myspan2 = document.createElement('span');
+                                        myspan2.className = "translation-text";
+                                        li2.appendChild(myspan2);
+                                        myspan2.appendChild(document.createTextNode("empty"));
+                                    }
+                                    textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
                                     textareaElem1.innerText = translatedText;
                                     textareaElem1.value = translatedText;
-                                    previewElem.innerText = translatedText;
+                                    let previewElem = document.querySelector('#preview-' + row + ' li:nth-of-type(2) .translation-text');
+                                    if (previewElem != null) {
+                                        previewElem.innerText = translatedText;
+                                    }
                                     current.innerText = 'transFill';
                                     current.value = 'transFill';
                                 }
