@@ -72,6 +72,17 @@ local.paging a.translation-filler-button {
         animation: button-loading-spinner 1s ease infinite;
 }
 
+
+    .paging a.translation-filler-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: button-loading-spinner 1s ease infinite;
+    }
     .paging a.translation-filler-button.after_error {
         animation: none;
         background: red;
@@ -746,7 +757,7 @@ button.save-button.ready {
     height: 60px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    align-items: left;
+    align-items: center ;
     flex-wrap: wrap;
 }
 

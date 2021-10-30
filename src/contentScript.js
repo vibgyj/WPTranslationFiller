@@ -339,7 +339,9 @@ function importPageClicked(event) {
         if (file.type == "application/vnd.ms-excel"){ 
            if (fileList[0]) {
               let reader = new FileReader();
-              reader.readAsBinaryString(fileList[0]);
+               //reader.readAsBinaryString(fileList[0]);
+               // 30-10-2021 PSS added fix #156 for converting special chars
+              reader.readAsText(fileList[0]);     
               reader.onload = function (e) {
               //console.log("functions started:",e);
               obj_csv.size = e.total;

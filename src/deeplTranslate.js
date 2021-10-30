@@ -78,44 +78,50 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 else {
                     //console.debug("Deepl plural_line in plural:", plural_line, rowId,translatedText);
                     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
+                    //check_span_missing(rowId, plural_line);
                     let newrow = rowId.split('-')[1];
                     if (typeof newrow == 'undefined') {
                         //console.debug('newrow = undefined!');
-                        //console.debug('plural_line:', plural_line);
-                        let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                        let spanmissing = preview.querySelector(" span.missing");
-                        if (spanmissing != null) {
-                            spanmissing.remove();
-                        }
+                        //console.debug('plural_line:', plural_line,newrow);
+                        //let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                       // let spanmissing = preview.querySelector(" span.missing");
+                       // if (spanmissing != null) {
+                           // spanmissing.remove();
+                            
+                        //}
                         if (transtype != "single") {
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
+                            //console.debug('not single:',rowId,plural_line)
+                            
                             if (previewElem == null) {
-                                ul = document.createElement('ul');
-                                preview.appendChild(ul);
-                                var li1 = document.createElement('li');
-                                li1.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
-                                ul.appendChild(li1);
-                                var small = document.createElement('small');
-                                li1.appendChild(small);
-                                small.appendChild(document.createTextNode("Singular:"));
-                                var br = document.createElement('br');
-                                li1.appendChild(br);
-                                var myspan1 = document.createElement('span');
-                                myspan1.className = "translation-text";
-                                li1.appendChild(myspan1);
-                                myspan1.appendChild(document.createTextNode("empty"));
+                                check_span_missing(rowId, plural_line);
+                               // check_span_missing(rowId, plural_line);
+                                //ul = document.createElement('ul');
+                               // preview.appendChild(ul);
+                               // var li1 = document.createElement('li');
+                               // li1.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
+                               // ul.appendChild(li1);
+                               // var small = document.createElement('small');
+                               // li1.appendChild(small);
+                              //  small.appendChild(document.createTextNode("Singular:"));
+                               // var br = document.createElement('br');
+                              //  li1.appendChild(br);
+                              //  var myspan1 = document.createElement('span');
+                              //  myspan1.className = "translation-text";
+                              //  li1.appendChild(myspan1);
+                              //  myspan1.appendChild(document.createTextNode("empty"));
                                 // Also create the second li
-                                var li2 = document.createElement('li');
-                                ul.appendChild(li2);
-                                var small = document.createElement('small');
-                                li2.appendChild(small);
-                                small.appendChild(document.createTextNode("Plural:"));
-                                var br = document.createElement('br');
-                                li2.appendChild(br);
-                                var myspan2 = document.createElement('span');
-                                myspan2.className = "translation-text";
-                                li2.appendChild(myspan2);
-                                myspan2.appendChild(document.createTextNode("empty"));
+                              //  var li2 = document.createElement('li');
+                              //  ul.appendChild(li2);
+                               // var small = document.createElement('small');
+                               // li2.appendChild(small);
+                               // small.appendChild(document.createTextNode("Plural:"));
+                               // var br = document.createElement('br');
+                               // li2.appendChild(br);
+                               // var myspan2 = document.createElement('span');
+                               // myspan2.className = "translation-text";
+                               // li2.appendChild(myspan2);
+                               // myspan2.appendChild(document.createTextNode("empty"));
                             }
                         }
 

@@ -352,7 +352,17 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
     // 19-06-2021 PSS added animated button for translation at translatePage
     locale = checkLocale();
     let translateButton = document.querySelector(".paging a.translation-filler-button");
-    translateButton.className += " started";
+    //console.debug("Button classname:", translateButton.className);
+    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
+    if (translateButton.className == "translation-filler-button") {
+        translateButton.className += " started";
+    }
+    else {
+
+        translateButton.classList.remove("translation-filler-button" , "started", "translated");
+        translateButton.classList.remove("translation-filler-button", "restarted", "translated");
+        translateButton.className = "translation-filler-button restarted";
+    }
     var transtype = "";
     var plural_line = "";
     var plural_present = "";
@@ -557,39 +567,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                                 else {
                                     // 30-10-2021 PSS added a fix for issue #154
-                                    // If the span,missing is present it needs to be removed and the ul added otherwise the second line cannot be populated
-                                    let preview = document.querySelector('#preview-' + row + ' td.translation');
-                                    //console.debug("prev:", preview);
-                                    let spanmissing = preview.querySelector(" span.missing");
-                                    if (spanmissing != null) {
-                                        spanmissing.remove();
-                                        ul = document.createElement('ul');
-                                        preview.appendChild(ul);
-                                        var li1 = document.createElement('li');
-                                        li1.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
-                                        ul.appendChild(li1);
-                                        var small = document.createElement('small');
-                                        li1.appendChild(small);
-                                        small.appendChild(document.createTextNode("Singular:"));
-                                        var br = document.createElement('br');
-                                        li1.appendChild(br);
-                                        var myspan1 = document.createElement('span');
-                                        myspan1.className = "translation-text";
-                                        li1.appendChild(myspan1);
-                                        myspan1.appendChild(document.createTextNode("empty"));
-                                        // Also create the second li
-                                        var li2 = document.createElement('li');
-                                        ul.appendChild(li2);
-                                        var small = document.createElement('small');
-                                        li2.appendChild(small);
-                                        small.appendChild(document.createTextNode("Plural:"));
-                                        var br = document.createElement('br');
-                                        li2.appendChild(br);
-                                        var myspan2 = document.createElement('span');
-                                        myspan2.className = "translation-text";
-                                        li2.appendChild(myspan2);
-                                        myspan2.appendChild(document.createTextNode("empty"));
-                                    }
+                                    // If the span missing is present it needs to be removed and the ul added otherwise the second line cannot be populated
+                                    check_span_missing(row,plural_line);
+                                    
                                     textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
                                     textareaElem1.innerText = translatedText;
                                     textareaElem1.value = translatedText;
@@ -650,6 +630,45 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
     }
 }
 
+function check_span_missing(row,plural_line) {
+    let preview = document.querySelector('#preview-' + row + ' td.translation');
+    //console.debug("prev:", preview);
+    let spanmissing = preview.querySelector(" span.missing");
+
+    if (spanmissing != null) {
+        //if (plural_line == '1') {
+            // only remove when it is present and first plural line
+            spanmissing.remove();
+        //}
+        
+        ul = document.createElement('ul');
+        preview.appendChild(ul);
+        var li1 = document.createElement('li');
+        li1.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
+        ul.appendChild(li1);
+        var small = document.createElement('small');
+        li1.appendChild(small);
+        small.appendChild(document.createTextNode("Singular:"));
+        var br = document.createElement('br');
+        li1.appendChild(br);
+        var myspan1 = document.createElement('span');
+        myspan1.className = "translation-text";
+        li1.appendChild(myspan1);
+        myspan1.appendChild(document.createTextNode("empty"));
+        // Also create the second li
+        var li2 = document.createElement('li');
+        ul.appendChild(li2);
+        var small = document.createElement('small');
+        li2.appendChild(small);
+        small.appendChild(document.createTextNode("Plural:"));
+        var br = document.createElement('br');
+        li2.appendChild(br);
+        var myspan2 = document.createElement('span');
+        myspan2.className = "translation-text";
+        li2.appendChild(myspan2);
+        myspan2.appendChild(document.createTextNode("empty"));
+    }
+}
 
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace,formal) {
     let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
@@ -877,7 +896,7 @@ function elementReady(selector) {
         new MutationObserver((mutationRecords, observer) => {
             // Query for elements matching the specified selector
             Array.from(document.querySelectorAll(selector)).forEach((element) => {
-                console.debug("new elementReady",element);
+                //console.debug("new elementReady",element);
                 resolve(selector);
                 //Once we have resolved we don't need the observer anymore.
                 observer.disconnect();
