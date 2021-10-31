@@ -34,6 +34,7 @@
         "https://cdnjs.cloudflare.com/*"
       ],
       "js": [
+        "purify.min.js",
         "cute-alert.js",
         "consistency.js",
         "jsstore.js",

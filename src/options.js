@@ -1,5 +1,5 @@
 var scriptElm = document.createElement('script');
-scriptElm.src = chrome.extension.getURL('cute-alert.js');
+scriptElm.src = chrome.runtime.getURL('cute-alert.js');
 document.body.appendChild(scriptElm);
 
 //var meta = document.createElement('meta');
@@ -12,7 +12,7 @@ var link = document.createElement("link");
 
 link.type = "text/css";
 link.rel = "stylesheet";
-link.href = chrome.extension.getURL('cute-alert.css');
+link.href = chrome.runtime.getURL('cute-alert.css');
 
 document.getElementsByTagName('head')[0].appendChild(link);
 

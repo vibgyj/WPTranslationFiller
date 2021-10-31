@@ -42,7 +42,8 @@ function cuteAlert({
         // 07-09-2021 PSS added extra check to prevent empty src and missing "/"
         if (src === "") {
             // 13-08-2021 Modified the code below to be able to use it in manifest
-            src = chrome.extension.getURL('/');
+            // 31-10-2021 Old call was deprecated, so altered it to current command
+            src = chrome.runtime.getURL('/');
         }
     let closeStyleTemplate = "alert-close";
     if (closeStyle == "circle") {
@@ -78,7 +79,7 @@ function cuteAlert({
     </div>
     `;
 
-    body.insertAdjacentHTML("beforeend", template);
+        body.insertAdjacentHTML("beforeend", DOMPurify.sanitize(template));
 
     const alertWrapper = myWindow.document.querySelector(".alert-wrapper");
     const alertFrame = myWindow.document.querySelector(".alert-frame");
@@ -155,7 +156,8 @@ function cuteToast({ type, message, timer = 5000, myWindow="" }) {
       // 07-09-2021 PSS added extra check to prevent empty src and missing "/"
       if (src === "") {
           // 13-08-2021 Modified the code below to be able to use it in manifest
-          src = chrome.extension.getURL('/');
+          // 31-10-2021 Old call was deprecated, so altered it to current command
+          src = chrome.runtime.getURL('/');
       }
       const template = `
     
@@ -172,7 +174,7 @@ function cuteToast({ type, message, timer = 5000, myWindow="" }) {
     </p>
     `;
 
-    body.insertAdjacentHTML("afterend", template);
+      body.insertAdjacentHTML("afterend", DOMPurify.sanitize(template));
 
     const toastContainer = myWindow.document.querySelector(".toast-container");
 

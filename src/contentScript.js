@@ -1367,7 +1367,7 @@ function validate(language, original, translation,locale) {
                                 else {
                                     element4.appendChild(document.createTextNode('New translation difference!'));
                                 }
-                                element5.innerHTML = JsDiff.convertChangesToXML(changes) + textdif;
+                                element5.innerHTML = DOMPurify.sanitize(JsDiff.convertChangesToXML(changes) + textdif);
                                 metaElem.appendChild(element5);
 
                                 //metaElem.style.color = 'darkblue';

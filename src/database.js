@@ -146,12 +146,14 @@ async function addTransline(rowId){
         if (checkplural != null) {
             let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             var current = g.querySelector('span.panel-header__bubble');
-            let plural = checkplural.innerText;
+            // 31-10-2021 PSS added sanitizing the values before storing
+            let plural = DOMPurify.sanitize(checkplural.innerText);
             // 08-07-2021 PSS fixed a problem where the plural was not stored in the database issue #103
             if (current != 'null') {
                 let row = rowId.split('-')[0];
                 textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
-                addTrans = textareaElem1.value;
+                // 31-10-2021 PSS added sanitizing the values before storing
+                addTrans = DOMPurify.sanitize(textareaElem1.value);
                 res = addTransDb(plural, addTrans, language);
                 //textareaElem1.innerText = translatedText;
                 //textareaElem1.value = translatedText;
@@ -159,7 +161,8 @@ async function addTransline(rowId){
             }
             else {
                 textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
-                addTrans = textareaElem1.value;
+                // 31-10-2021 PSS added sanitizing the values before storing
+                addTrans = DOMPurify.sanitize(textareaElem1.value);
                 res = addTransDb(plural, addTrans, language);
                 }
             }
