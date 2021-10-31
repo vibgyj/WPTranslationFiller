@@ -38,6 +38,7 @@
         "consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
+        "purify.js",
         "database.js",
         "commonTranslate.js",
         "deeplTranslate.js",

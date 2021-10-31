@@ -37,11 +37,12 @@
         "consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
+        "purify.js",
         "database.js",
         "commonTranslate.js",
         "deeplTranslate.js",
         "googleTranslate.js",
-		"microsoftTranslate.js",					
+		    "microsoftTranslate.js",					
         "contentScript.js",
         "jsdiff.js"
       ],
