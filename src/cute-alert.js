@@ -173,7 +173,7 @@ function cuteToast({ type, message, timer = 5000, myWindow="" }) {
     </div>
     </p>
     `;
-
+      
       body.insertAdjacentHTML("afterend", DOMPurify.sanitize(template));
 
     const toastContainer = myWindow.document.querySelector(".toast-container");

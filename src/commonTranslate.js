@@ -327,7 +327,7 @@ function checkPage(postTranslationReplace) {
                         }
                         let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
                         // Enhencement issue #123
-                        preview.innerHTML = DOMPurify.sanitize(previewNewText);
+                        preview.innerHTML  = DOMPurify.sanitize(previewNewText);
                     }
                     let wordCount = countreplaced;
                     let percent = 10;

@@ -18,7 +18,7 @@ function scrapeconsistency(locale) {
     var link = document.createElement("link");
     link.type = "text/css";
     link.rel = "stylesheet";
-	link.href = chrome.extension.getURL('cute-alert.css');
+	link.href = chrome.runtime.getURL('cute-alert.css');
     myWindow.document.getElementsByTagName('head')[0].appendChild(link);
 
 	const style = myWindow.document.createElement('style');
