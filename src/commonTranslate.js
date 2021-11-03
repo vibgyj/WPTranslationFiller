@@ -288,13 +288,14 @@ function checkPage(postTranslationReplace) {
                 let element = e.querySelector('.source-details__comment');
                 let textareaElem = e.querySelector("textarea.foreign-text");
                 translatedText = textareaElem.innerText;
+
                 // Enhencement issue #123
                 previewNewText = textareaElem.innerText;
                 // Need to replace the existing html before replacing the verbs! issue #124
-                previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+               // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                 replaced = false;
                 // replverb contains the verbs to replace
-
+                let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
                 for (let i = 0; i < replaceVerb.length; i++) {
                     if (translatedText.includes(replaceVerb[i][0])) {
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
@@ -304,10 +305,11 @@ function checkPage(postTranslationReplace) {
                             current.innerText = "transFill";
                         }
 
+                        var orgText = translatedText;
                         // Enhencement issue #123
-                        previewNewText = previewNewText.replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
+                        previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                         translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-
+                        //console.debug("mark:", previewNewText, replaceVerb[i][1]);
                         repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] + "\n";
                         countreplaced++;
                         replaced = true;
@@ -326,8 +328,35 @@ function checkPage(postTranslationReplace) {
                             row = newrowId;
                         }
                         let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
-                        // Enhencement issue #123
-                        preview.innerHTML  = DOMPurify.sanitize(previewNewText);
+                        // PSS we need to remove the current span, as the mark function adds one again
+                        // PSS fix for issue #157
+                        let span = document.querySelector('#preview-' + newrowId + ' td.translation span.translation-text');
+                        span.remove();
+                        // Enhancement issue #123
+                        var myspan1 = document.createElement('span');
+                        myspan1.className = "translation-text";             
+                        preview.appendChild(myspan1);
+                        myspan1.appendChild(document.createTextNode(previewNewText));
+                        preview = document.querySelector('#preview-' + newrowId + ' td.translation');
+                        // PSS populate the preview before marking
+                        preview.innerText = DOMPurify.sanitize(previewNewText);
+                        
+                        // Highlight all keywords found in the page, so loop through the replacement array
+                        var arr = [];
+                        for (let i = 0; i < replaceVerb.length; i++) {
+                            if (orgText.includes(replaceVerb[i][0] )){
+                                high = replaceVerb[i][1];
+                                high=high.trim();
+                                if (high != '') {
+                                    // push the verb into the array
+                                    arr.push(high);              
+                                }
+                            }
+                            // PSS we found everything to mark, so mark it issue #157
+                            if (arr.length > 0) {
+                                highlight(preview, arr);
+                            }
+                        }
                     }
                     let wordCount = countreplaced;
                     let percent = 10;
@@ -338,6 +367,7 @@ function checkPage(postTranslationReplace) {
 
             }
         }
+        
         messageBox("info", 'Replace verbs done ' + countreplaced + ' replaced' + ' words\n' + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
@@ -963,3 +993,41 @@ function messageBox(type, message) {
         closeStyle: "alert-close",
     });
 }
+
+/**
+ ** function copied from stackoverflow created by eclanrs
+ ** https://stackoverflow.com/questions/8644428/how-to-highlight-text-using-javascript
+ * Highlight keywords inside a DOM element
+ * @param {string} elem Element to search for keywords in
+ * @param {string[]} keywords Keywords to highlight
+ * @param {boolean} caseSensitive Differenciate between capital and lowercase letters
+ * @param {string} cls Class to apply to the highlighted keyword
+ */
+function highlight(elem, keywords, caseSensitive = false, cls = 'highlight') {
+    const flags = caseSensitive ? 'gi' : 'g';
+    // Sort longer matches first to avoid
+    // highlighting keywords within keywords.
+    keywords.sort((a, b) => b.length - a.length);
+    Array.from(elem.childNodes).forEach(child => {
+        const keywordRegex = RegExp(keywords.join('|'), flags);
+        if (child.nodeType !== 3) { // not a text node
+            highlight(child, keywords, caseSensitive, cls);
+        } else if (keywordRegex.test(child.textContent)) {
+            const frag = document.createDocumentFragment();
+            let lastIdx = 0;
+            child.textContent.replace(keywordRegex, (match, idx) => {
+                const part = document.createTextNode(child.textContent.slice(lastIdx, idx));
+                const highlighted = document.createElement('span');
+                highlighted.textContent = match;
+                highlighted.classList.add(cls);
+                frag.appendChild(part);
+                frag.appendChild(highlighted);
+                lastIdx = idx + match.length;
+            });
+            const end = document.createTextNode(child.textContent.slice(lastIdx));
+            frag.appendChild(end);
+            child.parentNode.replaceChild(frag, child);
+        }
+    });
+}
+

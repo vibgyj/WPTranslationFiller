@@ -880,3 +880,14 @@ button.save-button.ready {
 table.translations tr.preview.wptf-translated {
     background-color: #FFFFC2;
 }
+
+#myspan {
+    background-color: #FFFFC2;
+}
+.myspan {
+    background-color: yellow;
+}
+
+.highlight {
+    background: lightpink;
+}
