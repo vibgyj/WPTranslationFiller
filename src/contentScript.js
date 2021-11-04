@@ -1367,11 +1367,21 @@ function validate(language, original, translation,locale) {
                                 else {
                                     element4.appendChild(document.createTextNode('New translation difference!'));
                                 }
-                                
-                                element5.innerHTML = DOMPurify.sanitize(JsDiff.convertChangesToXML(changes) + textdif);
-                                metaElem.appendChild(element5);
-
-                                //metaElem.style.color = 'darkblue';
+                                //04-10-2021 PSS changed the class to resolve issue #157
+                                const diff = JsDiff[diffType](oldStr, newStr),
+                                fragment = document.createDocumentFragment();
+                                diff.forEach((part) => {
+                                    // green for additions, red for deletions
+                                    // dark grey for common parts
+                                    const color = part.added ? 'green' :
+                                        part.removed ? 'red' : 'dark-grey';
+                                    span = document.createElement('span');
+                                    span.style.color = color;
+                                    span.appendChild(document
+                                        .createTextNode(part.value));
+                                    fragment.appendChild(span);
+                                });
+                                element5.appendChild(fragment);
                                 metaElem.style.fontWeight = "900";
                             }
 
@@ -1379,7 +1389,13 @@ function validate(language, original, translation,locale) {
                     }).catch(error => console.error(error));
             }
         }
-    }
+}
+
+var stringToHTML = function (str) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(str, 'text/html');
+    return doc;
+};
 
     // 11-06-2021 PSS added function to mark that existing translation is present
     async function fetchOld(checkElem, result, url, single, originalElem, row, rowId) {

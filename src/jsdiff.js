@@ -362,9 +362,9 @@ var JsDiff = (function () {
             for (var i = 0; i < changes.length; i++) {
                 var change = changes[i];
                 if (change.added) {
-                    ret.push("<ins class='diff'>");
+                    ret.push('<ins class="diff">');
                 } else if (change.removed) {
-                    ret.push("<del class='diff'>");
+                    ret.push('<del class="diff">');
                 }
 
                 ret.push(escapeHTML(change.value));
