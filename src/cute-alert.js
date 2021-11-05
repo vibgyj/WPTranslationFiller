@@ -79,7 +79,7 @@ function cuteAlert({
     </div>
     `;
 
-        body.insertAdjacentHTML("beforeend", DOMPurify.sanitize(template));
+        body.insertAdjacentHTML("beforeend", template);
 
     const alertWrapper = myWindow.document.querySelector(".alert-wrapper");
     const alertFrame = myWindow.document.querySelector(".alert-frame");
