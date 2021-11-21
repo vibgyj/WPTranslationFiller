@@ -12,30 +12,30 @@ res=initStoragePersistence();
 
 function getDbSchema() {
     var table = {
-        name: 'Translation',
+        name: "Translation",
         columns: {
-			 id: {
-                primaryKey: true,
-                autoIncrement: true
+            id: {
+                autoIncrement: true,
+                primaryKey: true
             },
             source: {
-				primaryKey: true,
-                notNull: true,
-                dataType: 'string'
+                primaryKey: true,
+                dataType: "string",
+                notNull: true
             },
             translation: {
-                dataType: 'string',
-                default: 'male'
+                dataType: "string",
+                default: "translation"
             },
             country: {
-                notNull: true,
-                dataType: 'string'
+                dataType: "string",
+                notNull: true
             }
         }
-    }
+    };
 
     var db = {
-        name: 'My-Trans',
+        name: "My-Trans",
         tables: [table]
     }
     return db;

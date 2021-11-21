@@ -89,7 +89,7 @@ function bulk(event) {
     } catch (e) {
         console.debug("Error when bulk saving", e)
     }
-    console.debug("bulksave ended");
+    //console.debug("bulksave ended");
 }
 
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111

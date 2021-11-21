@@ -85,7 +85,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll('  ]', ']');
-
+    //console.debug('after replace spaces:', translatedText);
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
@@ -102,6 +102,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
+        //console.debug('after replace x:', translatedText);
     }
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
@@ -120,6 +121,16 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     // check if the returned translation does have the same ending as the original
     translatedText = checkStartEnd(original, translatedText);
+    // check if there is a blank after the tag 
+    pos=translatedText.indexOf("</a>");
+    found = translatedText.substring(pos, pos + 5);
+    if (found.substr(found.length - 1) != " ") {
+        if (found.substr(found.length - 1) != "." && found.substr(found.length - 1) != "<" && found.length ==5) {
+            //console.debug("pos of </a>:", pos, found);
+            translatedText = translatedText.replace("</a>", "</a> ");
+           //console.debug("pos of </a>:", pos, found, translatedText);
+        }
+    }
     return translatedText;
 }
 
