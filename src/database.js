@@ -19,9 +19,9 @@ function getDbSchema() {
                 primaryKey: true
             },
             source: {
-                primaryKey: true,
                 dataType: "string",
-                notNull: true
+                notNull: true,
+                primaryKey: true
             },
             translation: {
                 dataType: "string",
@@ -40,15 +40,16 @@ function getDbSchema() {
     }
     return db;
 }
+
 async function addTransDb(orig, trans, cntry) {
     // 05-06-2021 PSS fixed a problem with wrong var names
-	count = await countTransline(orig,cntry);
-	if (count =='0') {
+    count = await countTransline(orig,cntry);
+    if (count == "0") {
         reslt = "Inserted";
         var transl = { source: orig, translation: trans, country: cntry };
         try {
            var noOfDataInserted = await jsstoreCon.insert({
-            into: 'Translation',
+            into: "Translation",
             values: [transl]
            });
         if (noOfDataInserted == 1) {
@@ -58,15 +59,15 @@ async function addTransDb(orig, trans, cntry) {
             var myWindow = window.self;
             messageBox("error", "Record not added!!");
             reslt="Record not added";
-		}
+        }
         } catch (ex) {
             messageBox("error", "Error: " + ex.message);
        }
-	}
-	else{
-		res =updateTransDb(orig,trans,cntry);
+    }
+    else{
+        res =updateTransDb(orig,trans,cntry);
         reslt="updated";
-	}
+    }
   return reslt;
 }
 
@@ -74,14 +75,14 @@ async function updateTransDb(orig,trans,cntry) {
     var transl = {orig,trans,cntry};
     try {
         var noOfDataUpdated = await jsstoreCon.update({
-            in: 'Translation',
+            in: "Translation",
             set: {
-                translation: transl.trans,
-                country: transl.cntry             
+                country: transl.cntry,
+                translation: transl.trans
             },
             where: {
-                source: transl.orig,
-                country :transl.cntry
+                country: transl.cntry,
+                source: transl.orig
             }
         });
     } catch (ex) {
@@ -93,43 +94,43 @@ async function countTransline(orig,cntry){
 const results = await jsstoreCon.count({
     from: "Translation",
     where: {
-        source: orig,
-        country: cntry
+        country: cntry,
+        source: orig
     }
 })
 return results;
 }
 
 async function findTransline(orig,cntry){
-	var trans = 'notFound';
-	const results = await jsstoreCon.select({
+    var trans = "notFound";
+    const results = await jsstoreCon.select({
     from: "Translation",
-    where: {
-        source: orig,
-        country: cntry
+        where: {
+        country: cntry,
+        source: orig
     }
 }).then((value) => {
-  if (value !=""){	
+    if (value !=""){
      trans= convPromise(value);
     }
-	else {
-		trans= convPromise('notFound');
-	} 
+    else {
+        trans= convPromise("notFound");
+    }
   });
 return trans;
 }
 
 async function convPromise(trans){
-	res= trans[0]['translation'];
-	if (typeof res== 'undefined'){
-		res='notFound';
-	}
-	return res;
+    res= trans[0]["translation"];
+    if (typeof res== "undefined"){
+       res="notFound";
+    }
+    return res;
 }
 
 async function addTransline(rowId){
     // 07-05-2021 PSS added language read from config to store in database
-    chrome.storage.sync.get(['destlang'], function (data) {
+    chrome.storage.sync.get(["destlang"], function (data) {
     language = data.destlang;
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     var orig = e.querySelector("span.original-raw").innerText;
@@ -145,12 +146,12 @@ async function addTransline(rowId){
         // 21-06-2021 PSS fixed the problem with no storing of plurals into the datase issue #87
         if (checkplural != null) {
             let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-            var current = g.querySelector('span.panel-header__bubble');
+            var current = g.querySelector("span.panel-header__bubble");
             // 31-10-2021 PSS added sanitizing the values before storing
             let plural = DOMPurify.sanitize(checkplural.innerText);
             // 08-07-2021 PSS fixed a problem where the plural was not stored in the database issue #103
-            if (current != 'null') {
-                let row = rowId.split('-')[0];
+            if (current != null) {
+                let row = rowId.split("-")[0];
                 textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
                 // 31-10-2021 PSS added sanitizing the values before storing
                 addTrans = DOMPurify.sanitize(textareaElem1.value);
@@ -171,22 +172,23 @@ async function addTransline(rowId){
     });
     return;
 }
+
 async function dbExport(){
   const trans = await jsstoreCon.select({
     from: "Translation"
   });
-    destlang ='nl';
-    let export_file = 'export_database_' +destlang +'.csv'
-    let arrayData  = [] 
+    destlang ="nl";
+    let export_file = "export_database_" + destlang + ".csv";
+    let arrayData = [];
     i = 1;
     trans.forEach(function (trans) {
     arrayData[i] = { original : trans.source, translation : trans.translation, country : trans.country};
-    i++; 
+    i++;
     });
     // 09-07-2021 PSS altered the separator issue #104
   let delimiter = '|';
     let arrayHeader = ["original","translation", "country"];
-    let header = arrayHeader.join(delimiter) + '\n';
+    let header = arrayHeader.join(delimiter) + "\n";
        let csv = header;
        arrayData.forEach( obj => {
            let row = [];
@@ -198,12 +200,12 @@ async function dbExport(){
            csv += row.join(delimiter)+"\n";
        });
        // 09-07-2021 The export of the database does convert characters #105
-       let csvData = new Blob([csv], { type: 'text/csv;charset=utf-8' });  
+       let csvData = new Blob([csv], { type: "text/csv;charset=utf-8" });
        let csvUrl = URL.createObjectURL(csvData);
 
-       let hiddenElement = document.createElement('a');
+       let hiddenElement = document.createElement("a");
        hiddenElement.href = csvUrl;
-       hiddenElement.target = '_blank';
+       hiddenElement.target = "_blank";
        hiddenElement.download = export_file;
        hiddenElement.click();
        let exportButton = document.querySelector(".paging a.export_translation-button");
@@ -240,7 +242,6 @@ async function tryPersistWithoutPromtingUser() {
 }
 
 async function initStoragePersistence() {
-  	
   const persist = await tryPersistWithoutPromtingUser();
   switch (persist) {
     case "never":
