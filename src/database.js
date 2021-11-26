@@ -42,11 +42,12 @@ function getDbSchema() {
 }
 
 async function addTransDb(orig, trans, cntry) {
+    var transl = { source: orig, translation: trans, country: cntry };
+    var myWindow = window.self;
     // 05-06-2021 PSS fixed a problem with wrong var names
     count = await countTransline(orig,cntry);
     if (count == "0") {
         reslt = "Inserted";
-        var transl = { source: orig, translation: trans, country: cntry };
         try {
            var noOfDataInserted = await jsstoreCon.insert({
             into: "Translation",
@@ -56,7 +57,6 @@ async function addTransDb(orig, trans, cntry) {
           reslt ="Inserted";
         }
         else if (noOfDataInserted != 1) {
-            var myWindow = window.self;
             messageBox("error", "Record not added!!");
             reslt="Record not added";
         }
@@ -114,7 +114,7 @@ async function findTransline(orig,cntry){
      trans= convPromise(value);
     }
     else {
-        trans= convPromise("notFound");
+        trans= "notFound";
     }
   });
 return trans;
@@ -130,6 +130,8 @@ async function convPromise(trans){
 
 async function addTransline(rowId){
     // 07-05-2021 PSS added language read from config to store in database
+    var res = "";
+    var row = "";
     chrome.storage.sync.get(["destlang"], function (data) {
     language = data.destlang;
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
@@ -140,7 +142,7 @@ async function addTransline(rowId){
             messageBox("error", "No translation to store!");
     }
     else {
-        var res = addTransDb(orig, addTrans, language);
+        res = addTransDb(orig, addTrans, language);
         let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
         let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
         // 21-06-2021 PSS fixed the problem with no storing of plurals into the datase issue #87
@@ -151,7 +153,7 @@ async function addTransline(rowId){
             let plural = DOMPurify.sanitize(checkplural.innerText);
             // 08-07-2021 PSS fixed a problem where the plural was not stored in the database issue #103
             if (current != null) {
-                let row = rowId.split("-")[0];
+                row = rowId.split("-")[0];
                 textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
                 // 31-10-2021 PSS added sanitizing the values before storing
                 addTrans = DOMPurify.sanitize(textareaElem1.value);
@@ -173,25 +175,26 @@ async function addTransline(rowId){
     return;
 }
 
-async function dbExport(){
+async function dbExport() {
+  var export_file = "";
+  var arrayData = [];
+  // 09-07-2021 PSS altered the separator issue #104
+  var delimiter = "|";
+  var arrayHeader = ["original", "translation", "country"];
+  var header = arrayHeader.join(delimiter) + "\n";
+  var csv = header;
   const trans = await jsstoreCon.select({
     from: "Translation"
   });
     destlang ="nl";
-    let export_file = "export_database_" + destlang + ".csv";
-    let arrayData = [];
+    export_file = "export_database_" + destlang + ".csv";
     i = 1;
     trans.forEach(function (trans) {
     arrayData[i] = { original : trans.source, translation : trans.translation, country : trans.country};
     i++;
     });
-    // 09-07-2021 PSS altered the separator issue #104
-  let delimiter = '|';
-    let arrayHeader = ["original","translation", "country"];
-    let header = arrayHeader.join(delimiter) + "\n";
-       let csv = header;
        arrayData.forEach( obj => {
-           let row = [];
+           var row = [];
            for (key in obj) {
                if (obj.hasOwnProperty(key)) {
                    row.push(obj[key]);
@@ -200,10 +203,10 @@ async function dbExport(){
            csv += row.join(delimiter)+"\n";
        });
        // 09-07-2021 The export of the database does convert characters #105
-       let csvData = new Blob([csv], { type: "text/csv;charset=utf-8" });
-       let csvUrl = URL.createObjectURL(csvData);
+       var csvData = new Blob([csv], { type: "text/csv;charset=utf-8" });
+       var csvUrl = URL.createObjectURL(csvData);
 
-       let hiddenElement = document.createElement("a");
+       var hiddenElement = document.createElement("a");
        hiddenElement.href = csvUrl;
        hiddenElement.target = "_blank";
        hiddenElement.download = export_file;
