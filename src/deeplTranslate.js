@@ -5,7 +5,7 @@
 
 function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line,formal,locale) {
     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
-    let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
+    let originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     //var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     //var myArray = myRe.exec(originalPreProcessed);
     //if (myArray == null) {
@@ -48,11 +48,11 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                     // PSS 29-03-2021 Added populating the value of the property to retranslate            
                     textareaElem.value = translatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
-                    textareaElem.style.height = 'auto';
-                    textareaElem.style.height = textareaElem.scrollHeight + 'px';
-                    current.innerText = 'transFill';
-                    current.value = 'transFill';
-                    let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                    textareaElem.style.height = "auto";
+                    textareaElem.style.height = textareaElem.scrollHeight + "px";
+                    current.innerText = "transFill";
+                    current.value = "transFill";
+                    let preview = document.querySelector("#preview-" + rowId + " td.translation");
                     preview.innerText = translatedText;
                     validateEntry(language, textareaElem, "", "", rowId, locale);
 
@@ -61,7 +61,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                     //select = next_editor.getElementsByClassName("meta");
                     var status = select.querySelector('dt').nextElementSibling;
                     //console.debug("bulksave status1:", select, status, rowId);
-                    status.innerText = 'transFill';
+                    status.innerText = "transFill";
                 }
                 else {
                     //console.debug("DeeplTranslate plural_line:", plural_line);
@@ -90,7 +90,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
 
                             //}
                             if (transtype != "single") {
-                                let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
+                                let previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
                                 //console.debug('not single:',rowId,plural_line)
 
                                 if (previewElem == null) {
@@ -132,7 +132,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
                                 // Select the first li
-                                let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
+                                let previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
                                 if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
@@ -145,7 +145,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
                                 // Select the second li
-                                let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
+                                let previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
                                 if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
@@ -159,7 +159,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                                 textareaElem1 = record.querySelector("textarea#translation_" + row + "_0");
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
-                                let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
+                                let previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
                                 if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
@@ -170,7 +170,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                                 // console.debug('newrow = not undefined!', row + "_1");
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
-                                let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(2) .translation-text');
+                                let previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
                                 if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
@@ -178,8 +178,8 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                         }
                     }
                     // The line below is necessary to update the save button on the left in the panel
-                    current.innerText = 'transFill';
-                    current.value = 'transFill';
+                    current.innerText = "transFill";
+                    current.value = "transFill";
 
                     validateEntry(language, textareaElem1, "", "", rowId, locale);
                 }
@@ -234,7 +234,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
 
         }
     }
-    xhttp.responseType = 'json';
+    xhttp.responseType = "json";
     xhttp.send();
 
     xhttp.onload = function () {
