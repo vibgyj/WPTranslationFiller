@@ -59,7 +59,22 @@ document.addEventListener("keydown", function (event) {
                     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
                     // issue #133 block non PTE/GTE users from using this function
                     if (is_pte) {
-                        scrapeconsistency(data.destlang);
+                        // issue #161 populate the consistency screen with the current values
+                        let e = document.querySelector("div.editor-panel__left .panel-content .original-raw");
+                        if (e != "undefined") {
+                            var org_verb = e.innerText;
+                        }
+                        else {
+                            var org_verb = "Original";
+                        }
+                        let f = document.querySelector("div.editor-panel__left .panel-content .foreign-text");
+                        if (f != "undefined"){
+                            var wrong_verb = f.value;
+                        }
+                        else {
+                            var wrong_verb = "Wrong verb";
+                        }
+                        scrapeconsistency(data.destlang,org_verb,wrong_verb);
                     }
                     else {
                         messageBox("error", "You do not have permissions to start this function!");
