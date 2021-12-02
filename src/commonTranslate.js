@@ -1017,7 +1017,6 @@ function waitForElm(selector) {
             //console.debug("Selector found");
             return resolve(document.querySelector(selector));
         }
-
         const observer = new MutationObserver(mutations => {
             if (document.querySelector(selector)) {
                // console.debug("In observer found");
@@ -1037,15 +1036,14 @@ function close_toast(){
     toastContainer.remove();
 }
 
-
 function toastbox(type, message, time) {
+    var currWindow = window.self;
     return new Promise((resolve) => {
-    var myWindow = window.self;
     cuteToast({
         type: type, // or 'info', 'error', 'warning'
         message: message,
         timer: time,
-        myWindow: myWindow
+        myWindow: currWindow,
     })
         resolve("toast");
     }).catch((err) => {
@@ -1055,13 +1053,13 @@ function toastbox(type, message, time) {
 
 }
 function messageBox(type, message) {
-    var myWindow = window.self;
+    var currWindow = window.self;
     cuteAlert({
         type: type,
         title: "Message",
         message: message,
         buttonText: "OK",
-        myWindow: myWindow,
+        myWindow: currWindow,
         closeStyle: "alert-close",
     });
 }
