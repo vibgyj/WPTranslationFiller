@@ -125,8 +125,7 @@ function cuteAlert({
 // 13-08-2011 PSS added myWindow as parameter
 function cuteToast({ type, message, timer = 5000, myWindow = "" }) {
     var currWindow = myWindow;
-    console.debug("curr window:", currWindow)
-  return new Promise((resolve) => {
+    return new Promise((resolve) => {
     
     //const body = myWindow.document.querySelector("body");
       if (typeof myWindow != 'string') {
