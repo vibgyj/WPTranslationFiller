@@ -640,10 +640,12 @@ function validatePage(language, showHistory,locale) {
     
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
+        //console.debug("original:", original);
         let textareaElem = e.querySelector("textarea.foreign-text");
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
         textareaElem.addEventListener("input", function (e, locale) {
+        //    console.debug("target:", e.target);
         validateEntry(language, e.target,newurl,showHistory,rowId,locale);
         });
         let element = e.querySelector(".source-details__comment");
@@ -758,6 +760,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
 function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     let translation = textareaElem.value;
+   // console.debug("textareaElem:", textareaElem);
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
@@ -1041,9 +1044,23 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     }
 
 function savetranslateEntryClicked(event) {
+    let timeout = 0;
         //event.preventDefault();   
-        myrow = event.target.parentElement.parentElement;
-        rowId = myrow.attributes.row.value;
+    myrow = event.target.parentElement.parentElement;
+    rowId = myrow.attributes.row.value;
+    // var mynewrow = myrow.nextSibling.nextSibling.nextSibling.nextSibling;
+    //console.debug("mynewrow:", mynewrow);
+    // if (mynewrow != null) {
+    //  if (mynewrow.classList != null) {
+    //      var newRowId = mynewrow.attributes.row.value;
+    //  }
+    //  else {
+    //      mynewrow = myrow.nextEditor;
+    //      var newRowId = mynewrow.attributes.row.value;
+    //      console.debug("waiting:", newRowId,mynewrow);
+    // }
+        
+    // }
         // Determine status of record
         let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
         var current = h.querySelector("span.panel-header__bubble");
@@ -1052,13 +1069,34 @@ function savetranslateEntryClicked(event) {
             if (current.innerText == "transFill") {
                 let open_editor = document.querySelector(`#preview-${rowId} td.actions .edit`);
                 let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-                let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`).nextElementSibling.nextElementSibling;
-                let prevrow = document.querySelector(`#preview-${rowId}`);
+                //console.debug("newrowId:",newRowId)
+                //if (newRowId != null) {
+                //   var glotpress_close = document.querySelector(`#editor-${newRowId} button.panel-header-actions__cancel`);
+                //}
+                select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                //select = next_editor.getElementsByClassName("meta");
+                var status = select.querySelector("dt").nextElementSibling;
+                //console.debug("bulksave status1:", select, status, rowId);
+                status.innerText = "waiting";
+                //console.debug("close value:", glotpress_close);
+                //let prevrow = document.querySelector(`#preview-${rowId}`);
                 open_editor.click();
-                glotpress_save.click();
-                //glotpress_close.click();
-                //newrow = glotpress_close.parentElement.parentElement;
-                //gd_auto_hide_next_editor(newrow);
+                setTimeout(() => {        
+                    glotpress_save.click();
+                    confirm = "button.gp-js-message-dismiss";
+                    // PSS confirm the message for dismissal
+                    elementReady(".gp-js-message-dismiss").then(elm => { elm.click();  }
+                    );
+                    toastbox("info", "Saving suggestion: " + (i + 1), 800);
+                    
+                }, timeout);
+                timeout +=1000;
+                //if (newRowId != null) {
+                //   setTimeout(() => {
+                //       glotpress_close.click();
+                //   }, timeout);
+                    
+                //}
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-transFill`);
                 if (prevrow != null) {
                     prevrow.style.backgroundColor = "#b5e1b9";
@@ -1447,8 +1485,11 @@ function gd_auto_hide_next_editor(editor) {
         return;
     }
     const next_editor = preview.nextElementSibling;
+    if (!next_editor) {
+        return;
+    }
     const next_preview = next_editor.previousElementSibling;
-    if (!next_editor || !next_preview || !next_editor.classList.contains("editor") || !next_preview.classList.contains("preview")) {
+    if (!next_preview || !next_editor.classList.contains("editor") || !next_preview.classList.contains("preview")) {
         return;
     }
     next_editor.style.display = "none";
@@ -1484,10 +1525,10 @@ function gd_wait_table_alter() {
                         status_has_changed = status_before !== status_after;
                     }
                    // console.debug("before hide editor");
-                    if (user_is_pte && row_is_editor ) {
+                   // if (user_is_pte && row_is_editor ) {
                     //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
                         gd_auto_hide_next_editor(addedNode);
-                    }
+                   // }
                    // if (user_is_pte && row_is_preview) {
                     //    gd_add_column_buttons(addedNode);
                    // }

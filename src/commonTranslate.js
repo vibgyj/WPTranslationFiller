@@ -1,8 +1,7 @@
 /**
  * This file includes all functions for translating commonly used
  */
-
-
+var currWindow = "";
 // This array is used to replace wrong words in translation
 // PSS version 12-05-2021
 let replaceVerb = [];
@@ -741,9 +740,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
 }
 
 function check_span_missing(row,plural_line) {
-    let preview = document.querySelector("#preview-" + row + " td.translation");
-    //console.debug("prev:", preview);
+    let preview = document.querySelector("#preview-" + row + " td.translation");   
     let spanmissing = preview.querySelector(" span.missing");
+    //console.debug("prev:", spanmissing);
     if (spanmissing != null) {
         //if (plural_line == "1") {
             // only remove when it is present and first plural line
@@ -819,19 +818,21 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 toTranslate = checkComments(comment.trim());
             }
             if (toTranslate) {
+               // console.debug("we need to translate");
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line);
+                        translatedText = googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line);
                     }
                     else if (transsel == "deepl") {
-                        deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line,formal);
+                        translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line,formal);
                     }
                     else if (transsel == "microsoft") {
-                        microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line);
+                        translatedText = microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line);
                     }
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "hide";
                     let textareaElem = e.querySelector("textarea.foreign-text");
+                   // console.debug("translatedText:",translatedText)
                 }
                 else {
                     let translatedText = pretrans;
@@ -998,7 +999,7 @@ function elementReady(selector) {
         new MutationObserver((mutationRecords, observer) => {
             // Query for elements matching the specified selector
             Array.from(document.querySelectorAll(selector)).forEach((element) => {
-                //console.debug("new elementReady",element);
+                //console.debug("new elementReady",selector);
                 resolve(selector);
                 //Once we have resolved we don't need the observer anymore.
                 observer.disconnect();
@@ -1037,7 +1038,7 @@ function close_toast(){
 }
 
 function toastbox(type, message, time) {
-    var currWindow = window.self;
+    currWindow = window.self;
     return new Promise((resolve) => {
     cuteToast({
         type: type, // or 'info', 'error', 'warning'
@@ -1053,7 +1054,7 @@ function toastbox(type, message, time) {
 
 }
 function messageBox(type, message) {
-    var currWindow = window.self;
+    currWindow = window.self;
     cuteAlert({
         type: type,
         title: "Message",

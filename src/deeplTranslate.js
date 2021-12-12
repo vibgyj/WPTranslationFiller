@@ -2,19 +2,7 @@
  * This file includes all functions for translating with the deepL API
  * It depends on commonTranslate for additional translation functions
  */
-var row = "";
-var translatedText = "";
-var ul = "";
-var current = "";
-var prevstate = "";
-var pluralpresent = "";
-var responseObj = "";
-var textareaElem = "";
-var select = "";
-var textareaElem1 = "";
-var previewElem = "";
-var preview = "";
-var status = "";
+
 
 function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line,formal,locale) {
     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
@@ -30,7 +18,20 @@ function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId
     sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal,locale);
 }
 
-function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal,locale) {
+function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale) {
+    var row = "";
+    var translatedText = "";
+    var ul = "";
+    var current = "";
+    var prevstate = "";
+    var pluralpresent = "";
+    var responseObj = "";
+    var textareaElem = "";
+    var select = "";
+    var textareaElem1 = "";
+    var previewElem = "";
+    var preview = "";
+    var status = "";
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
@@ -38,15 +39,15 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     xhttp.onreadystatechange = function () {
         responseObj = this.response;
         // console.debug("Deepl this ready state:", this.readyState, "this status:",this.status, "Response:",this.response);
-        if (this.readyState === 4 && this.status !== 400 ) {
+        if (this.readyState == 4 && this.status != 400 ) {
             //responseObj = xhttp.response;
             responseObj = this.response;
-            if (this.response !== null) {
+            if (this.response != null) {
                 translatedText = responseObj.translations[0].text;
-                //console.debug("deepl row: ", rowId, transtype, plural_line, original);
+               // console.debug("deepl row: ", rowId, transtype, plural_line, original);
                 translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl");
                 //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
-                if (transtype === "single") {
+                if (transtype == "single") {
                     textareaElem = record.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
                     // PSS 29-03-2021 Added populating the value of the property to retranslate            
@@ -71,7 +72,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                     //console.debug("DeeplTranslate plural_line:", plural_line);
                     // PSS 09-04-2021 added populating plural text
                     // PSS 09-07-2021 additional fix for issue #102 plural not updated
-                    if (current !== "null" && current === "current" && current === "waiting") {
+                    if (current != "null" && current == "current" && current == "waiting") {
                         row = rowId.split("-")[0];
                         //console.debug('rowId plural:', row)
                         textareaElem1 = f.querySelector("textarea#translation_" + row + "_0");
@@ -84,7 +85,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                         //console.debug("deepl row: ", rowId, transtype, plural_line, original);
                         //check_span_missing(rowId, plural_line);
                         let newrow = rowId.split("-")[1];
-                        if (typeof newrow === "undefined") {
+                        if (typeof newrow == "undefined") {
                             //console.debug('newrow = undefined!');
                             //console.debug('plural_line:', plural_line,newrow);
                             //let preview = document.querySelector('#preview-' + rowId + ' td.translation');
@@ -93,11 +94,11 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                             // spanmissing.remove();
 
                             //}
-                            if (transtype !== "single") {
+                            if (transtype != "single") {
                                  previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
                                 //console.debug('not single:',rowId,plural_line)
 
-                                if (previewElem === null) {
+                                if (previewElem == null) {
                                     check_span_missing(rowId, plural_line);
                                     // check_span_missing(rowId, plural_line);
                                     //ul = document.createElement('ul');
@@ -129,19 +130,22 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                                 }
                             }
 
-                            if (plural_line === 1) {
+                            if (plural_line == 1) {
                                 //populate plural line if not already translated, so we can take original rowId!
                                 //console.debug("singular updatet:", translatedText);
                                 textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_0");
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
+                                //PSS 25-03-2021 Fixed problem with description box issue #13
+                                textareaElem1.style.height = 'auto';
+                                textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
                                 // Select the first li
                                 previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
-                                if (previewElem !== null) {
+                                if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
                             }
-                            if (plural_line === 2) {
+                            if (plural_line == 2) {
                                 //console.debug("deepl row: ", rowId, transtype, plural_line);
                                 //if (typeof translatedText != undefined) {
                                 //console.debug("plural updatet:", translatedText);
@@ -150,7 +154,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                                 textareaElem1.value = translatedText;
                                 // Select the second li
                                 previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
-                                if (previewElem !== null) {
+                                if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
                             }
@@ -158,13 +162,13 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                         else {
                             //console.debug('newrow = not undefined!', newrow);
                             row = rowId.split("-")[0];
-                            if (plural_line === 1) {
+                            if (plural_line == 1) {
                                 //populate singular line if already translated
                                 textareaElem1 = record.querySelector("textarea#translation_" + row + "_0");
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
                                 previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
-                                if (previewElem !== null) {
+                                if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
                             }
@@ -175,7 +179,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
                                 previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
-                                if (previewElem !== null) {
+                                if (previewElem != null) {
                                     previewElem.innerText = translatedText;
                                 }
                             }
@@ -203,10 +207,10 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
         }
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
-            if (this.response !== null && this.response.message === "\"Value for 'target_lang' not supported.\"") {        
+            if (this.response != null && this.response.message == "\"Value for 'target_lang' not supported.\"") {        
                 alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
             }
-            else if (this.readyState === 2 && this.status === 403) {
+            else if (this.readyState == 2 && this.status == 403) {
                 alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
             }
             else {
@@ -222,7 +226,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     //console.debug("Target_lang:", language);
     // 13-10-2021 PSS fix for not translating issue #151
     // 15-10-2021 PSS enhencement for Deepl to go into formal issue #152
-    if (language === "RO") {
+    if (language == "RO") {
         xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
     }
     else {
