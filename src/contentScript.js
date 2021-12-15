@@ -1158,17 +1158,14 @@ function validate(language, original, translation,locale) {
                         }
                         if (isFound) {
                             foundCount++;
-                        } else {
+                        }
+                        else {
                             if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
                                 toolTip += `${gItemKey} - ${gItemValue}\n`;
                             }
                         }
                     }
                 }
-            }
-            else {
-                foundCount = 0;
-                wordCount = 0;
             }
         }
         else {
@@ -1573,24 +1570,24 @@ function gd_wait_table_alter() {
                         status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
                         status_has_changed = status_before !== status_after;
                     }
-                   // console.debug("before hide editor");
-                    if (user_is_pte && row_is_editor ) {
-                    //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
+                    // console.debug("before hide editor");
+                    if (user_is_pte && row_is_editor) {
+                        //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
                         gd_auto_hide_next_editor(addedNode);
                     }
-                   // if (user_is_pte && row_is_preview) {
+                    // if (user_is_pte && row_is_preview) {
                     //    gd_add_column_buttons(addedNode);
-                   // }
+                    // }
                     //if (row_is_preview) {
-                       // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
-                   // }
+                    // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
+                    // }
                 });
             });
-
+        });
         observer.observe(document.querySelector('#translations tbody'), {
             attributes: true,
             childList: true,
             characterData: true,
         });
     }
-
+}
