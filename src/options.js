@@ -174,7 +174,7 @@ button.addEventListener('click', function () {
         chrome.storage.sync.set({ glossaryY: glossaryY });
         chrome.storage.sync.set({ glossaryZ: glossaryZ });
     }
-    messageBox("info", "Settings successfully saved.\nPlease make sure that you enter values\nin Destination Language and select a Glossary File\nand enter values in Post Translation Replace");
+    messageBox("info", "Settings successfully saved.<br>Please make sure that you enter<br>values in Destination Language<br> and select a Glossary File<br>and enter values in <br>Post Translation Replace");
 });
 
 let file = document.getElementById('glossary_file');
@@ -209,6 +209,8 @@ let glossaryZ = [];
 file.addEventListener('change', function () {
     var file = this.files[0];
     var entry = "";
+    locale = "nl";
+    console.debug
     var reader = new FileReader();
     reader.onload = function () {
         var lines = this.result.split('\n');
@@ -223,8 +225,7 @@ file.addEventListener('change', function () {
                        value[val] = value[val].replaceAll("\"", "").trim();
                     }
                 }
-
-                let startChar = key.substring(0, 1);
+                startChar = key.substring(0, 1);
                 switch (startChar) {
                     case "a":
                         pushToGlossary(glossaryA, key, value);
@@ -315,6 +316,10 @@ file.addEventListener('change', function () {
     reader.readAsText(file);
 });
 
+function checkLocale() {
+    //need to fetch the locale from the filename
+    return locale;
+}
 function pushToGlossary(glossary, key, value) {
     for (var i in glossary) {
         if (glossary[i].key == key) {

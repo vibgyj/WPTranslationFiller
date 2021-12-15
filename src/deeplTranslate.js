@@ -3,8 +3,7 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line) {
-
+function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line,formal,locale) {
     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
     let originalPreProcessed = preProcessOriginal(original, preverbs, 'deepl');
     //var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
@@ -15,12 +14,10 @@ function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId
     //else {
     //    var trntype = "html";
     // }
-    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line);
+    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal,locale);
 }
 
-function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line) {
-    //console.debug("deepl row: ", rowId, transtype, plural_line, original);
-
+function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal,locale) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -34,8 +31,6 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     prevstate = current.innerText;
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
-
-        //console.debug("Deepl translation:", this.response);
         responseObj = this.response;
 
         // console.debug("Deepl this ready state:", this.readyState, "this status:",this.status, "Response:",this.response);
@@ -59,7 +54,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 current.value = 'transFill';
                 let preview = document.querySelector('#preview-' + rowId + ' td.translation');
                 preview.innerText = translatedText;
-                validateEntry(language, textareaElem, "", "", rowId);
+                validateEntry(language, textareaElem, "", "", rowId,locale);
 
                 // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
                 select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
@@ -83,44 +78,50 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 else {
                     //console.debug("Deepl plural_line in plural:", plural_line, rowId,translatedText);
                     //console.debug("deepl row: ", rowId, transtype, plural_line, original);
+                    //check_span_missing(rowId, plural_line);
                     let newrow = rowId.split('-')[1];
                     if (typeof newrow == 'undefined') {
                         //console.debug('newrow = undefined!');
-                        //console.debug('plural_line:', plural_line);
-                        let preview = document.querySelector('#preview-' + rowId + ' td.translation');
-                        let spanmissing = preview.querySelector(" span.missing");
-                        if (spanmissing != null) {
-                            spanmissing.remove();
-                        }
+                        //console.debug('plural_line:', plural_line,newrow);
+                        //let preview = document.querySelector('#preview-' + rowId + ' td.translation');
+                       // let spanmissing = preview.querySelector(" span.missing");
+                       // if (spanmissing != null) {
+                           // spanmissing.remove();
+                            
+                        //}
                         if (transtype != "single") {
                             let previewElem = document.querySelector('#preview-' + rowId + ' li:nth-of-type(1) .translation-text');
+                            //console.debug('not single:',rowId,plural_line)
+                            
                             if (previewElem == null) {
-                                ul = document.createElement('ul');
-                                preview.appendChild(ul);
-                                var li1 = document.createElement('li');
-                                li1.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
-                                ul.appendChild(li1);
-                                var small = document.createElement('small');
-                                li1.appendChild(small);
-                                small.appendChild(document.createTextNode("Singular:"));
-                                var br = document.createElement('br');
-                                li1.appendChild(br);
-                                var myspan1 = document.createElement('span');
-                                myspan1.className = "translation-text";
-                                li1.appendChild(myspan1);
-                                myspan1.appendChild(document.createTextNode("empty"));
+                                check_span_missing(rowId, plural_line);
+                               // check_span_missing(rowId, plural_line);
+                                //ul = document.createElement('ul');
+                               // preview.appendChild(ul);
+                               // var li1 = document.createElement('li');
+                               // li1.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
+                               // ul.appendChild(li1);
+                               // var small = document.createElement('small');
+                               // li1.appendChild(small);
+                              //  small.appendChild(document.createTextNode("Singular:"));
+                               // var br = document.createElement('br');
+                              //  li1.appendChild(br);
+                              //  var myspan1 = document.createElement('span');
+                              //  myspan1.className = "translation-text";
+                              //  li1.appendChild(myspan1);
+                              //  myspan1.appendChild(document.createTextNode("empty"));
                                 // Also create the second li
-                                var li2 = document.createElement('li');
-                                ul.appendChild(li2);
-                                var small = document.createElement('small');
-                                li2.appendChild(small);
-                                small.appendChild(document.createTextNode("Plural:"));
-                                var br = document.createElement('br');
-                                li2.appendChild(br);
-                                var myspan2 = document.createElement('span');
-                                myspan2.className = "translation-text";
-                                li2.appendChild(myspan2);
-                                myspan2.appendChild(document.createTextNode("empty"));
+                              //  var li2 = document.createElement('li');
+                              //  ul.appendChild(li2);
+                               // var small = document.createElement('small');
+                               // li2.appendChild(small);
+                               // small.appendChild(document.createTextNode("Plural:"));
+                               // var br = document.createElement('br');
+                               // li2.appendChild(br);
+                               // var myspan2 = document.createElement('span');
+                               // myspan2.className = "translation-text";
+                               // li2.appendChild(myspan2);
+                               // myspan2.appendChild(document.createTextNode("empty"));
                             }
                         }
 
@@ -179,16 +180,16 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 // The line below is necessary to update the save button on the left in the panel
                 current.innerText = 'transFill';
                 current.value = 'transFill';
-               
-                validateEntry(language, textareaElem1, "", "", rowId);
+
+                validateEntry(language, textareaElem1, "", "", rowId,locale);
             }
             //14-09-2021 PSS changed the class to meet GlotDict behavior
-            var currentClass = document.querySelector(`#editor-${rowId}`);
-            var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
-            currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            currentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
-            prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            prevcurrentClass.classList.add("status-waiting", "priority-normal", "no-warnings", "has-translations");
+            //var currentClass = document.querySelector(`#editor-${rowId}`);
+           // var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
+            //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+           // currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
+            //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            //prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
             //console.debug("currentClass:", currentClass);
             //console.debug("currentClass:", prevcurrentClass);
             
@@ -213,7 +214,22 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     //let xhttp = new XMLHttpRequest();
     language = language.toUpperCase();
     //console.debug("Target_lang:", language);
-    xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+    // 13-10-2021 PSS fix for not translating issue #151
+    // 15-10-2021 PSS enhencement for Deepl to go into formal issue #152
+    if (language == "RO") {
+        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+    }
+    else {
+        if (!formal) {
+           // console.debug("not formal");
+            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+        }
+        else {
+            //console.debug("formal");
+            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines");
+
+        }
+    }
     xhttp.responseType = 'json';
     xhttp.send();
 

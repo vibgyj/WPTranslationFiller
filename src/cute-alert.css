@@ -8,7 +8,7 @@
     align-items: center;
     justify-content: center;
     margin: 0px auto;
-    padding: 0px auto;
+    padding: 0px 0px;
     left: 0;
     top: 0;
     overflow: hidden;
@@ -232,7 +232,8 @@
 
 .toast-container {
     top: 15px;
-    right: 15px;
+    left: 15px;
+    max-width: 200px;
     overflow: hidden;
     position: fixed;
     border-radius: 5px;
@@ -242,7 +243,7 @@
 }
 
 .toast-frame {
-    padding: 5px 15px;
+    padding: 5px 5px;
     display: flex;
     min-width: 100px;
     height: 60px;

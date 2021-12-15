@@ -1,15 +1,7 @@
 
 //console.debug('Content script...');
-/// PSS added function from GlotDict to save records in editor
-gd_wait_table_alter();
-// 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
-window.onbeforeunload = function () {
-    return switchoff();
-}
-
-//console.debug('Content script...');
 // PSS added function from GlotDict to save records in editor
-//gd_wait_table_alter();
+gd_wait_table_alter();
 
 // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
@@ -59,8 +51,8 @@ var jsstoreCon = new JsStore.Connection();
 var db = getDbSchema();
 var isDbCreated = jsstoreCon.initDb(db);
 
-if (!isDbCreated) {
-    //console.debug('Database is not created, so we create one', isDbCreated);
+if (!isDbCreated){
+//console.debug('Database is not created, so we create one', isDbCreated);
 }
 else {
     console.debug("Database is present");
@@ -72,9 +64,7 @@ fileSelector.setAttribute('type', 'file');
 
 // PSS 31-07-2021 added new function to scrape consistency tool
 document.addEventListener("keydown", function (event) {
-
     if (event.altKey && event.shiftKey && (event.key === '&')) {
-
         event.preventDefault();
         chrome.storage.sync
             .get(
@@ -98,13 +88,23 @@ document.addEventListener("keydown", function (event) {
         var is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
         // issue #133 block non PTE/GTE users from using this function
         if (is_pte) {
-            bulkSave(event);
+            toastbox('info', 'Bulksave started', 2000);
+            bulk(event);
+            
         }
     }
 });
 
-// PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
+function bulk(event) {
+    try {
+        bulkSave(event);
+    } catch (e) {
+        console.debug("Error when bulk saving", e)
+    }
+    console.debug("bulksave ended");
+}
 
+// PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 document.addEventListener("keydown", function (event) {
     if (event.altKey && (event.key === 'r' || event.key === 'R')) {  
         event.preventDefault();
@@ -161,7 +161,6 @@ document.addEventListener("keydown", function (event) {
                         //glotpress_approve.click();
                         //glotpress_close.click();
                         setTimeout(() => { glotpress_close.click(); }, 1500);
-
                     }
                     else {
                         messageBox("error", "Verb not found!" + search);
@@ -177,6 +176,7 @@ document.addEventListener("keydown", function (event) {
                     setTimeout(() => { window.close(); }, 1000);
                 }
             }
+
         }
         else {
             messageBox("error", "You do not have permissions to start this function!");
@@ -252,7 +252,6 @@ if (divPaging != null && divProjects == null) {
 
 function translatePageClicked(event) {
     event.preventDefault();
-   // console.log("Translate clicked!");
     chrome.storage.sync
         .get(
             ['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace', 'showHistory', 'showTransDiff'],
@@ -262,8 +261,10 @@ function translatePageClicked(event) {
 
                     if (data.destlang != 'undefined' && data.destlang != null && data.destlang !="") {
                         if (data.transsel != 'undefined') {
-
-                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+                            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                            var formal = checkFormal(false);
+                            //var locale = checkLocale();
+                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal)
                         }
                         else {
                             messageBox("error", "You need to set the translator API");
@@ -280,7 +281,27 @@ function translatePageClicked(event) {
             });
 }
 
-// Add translation button - end
+function checkLocale() {
+    const localeString = window.location.href;
+    locale = localeString.split('/');
+    if (localeString.includes("wp-plugins") ) {
+        locale = locale[7]
+    }
+    else {
+        locale = locale[6]
+    }
+    return locale;
+}
+function checkFormal(formal) {
+    const locString = window.location.href;
+    //console.debug("Url:", locString);
+    if (locString.includes("default")) {
+        return false;
+    }
+    else {
+    return true;
+    }
+}
 
 function checkPageClicked(event) {
     event.preventDefault();
@@ -315,7 +336,9 @@ function importPageClicked(event) {
         if (file.type == "application/vnd.ms-excel"){ 
            if (fileList[0]) {
               let reader = new FileReader();
-              reader.readAsBinaryString(fileList[0]);
+               //reader.readAsBinaryString(fileList[0]);
+               // 30-10-2021 PSS added fix #156 for converting special chars
+              reader.readAsText(fileList[0]);     
               reader.onload = function (e) {
               //console.log("functions started:",e);
               obj_csv.size = e.total;
@@ -362,6 +385,7 @@ async function parseDataBase(data) {
         messageBox("info", "Import is ready records imported: " + i);
     }
 }
+
 let glossary = [];
 chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
     , 'glossaryD', 'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI'
@@ -409,9 +433,13 @@ chrome.storage.sync.get(['glossary', 'glossaryA', 'glossaryB', 'glossaryC'
         if (glossary.length > 0) {
             chrome.storage.sync.get(['destlang', 'showHistory'], function (data) {
                 if (data.showHistory != 'null') {
-                    validatePage(data.destlang, data.showHistory);
+                    locale = checkLocale();
+                    validatePage(data.destlang, data.showHistory, locale);
                 }
             });
+        }
+        else {
+            console.debug("Glossary empty!!");
         }
         checkbuttonClick();
     });
@@ -597,12 +625,13 @@ function translateEntryClicked(event) {
     }
     chrome.storage.sync
         .get(['apikey', 'apikeyDeepl', 'apikeyMicrosoft', 'transsel', 'destlang', 'postTranslationReplace', 'preTranslationReplace'], function (data) {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace);
+            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+            var formal = checkFormal(false);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace,formal);
         });
 }
 
-function validatePage(language, showHistory) {
-
+function validatePage(language, showHistory,locale) {
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName('breadcrumb');   
     let url = f[0].firstChild.baseURI;
@@ -631,8 +660,8 @@ function validatePage(language, showHistory) {
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
        
-        textareaElem.addEventListener('input', function (e) {
-        validateEntry(language, e.target,newurl,showHistory,rowId);
+        textareaElem.addEventListener('input', function (e, locale) {
+        validateEntry(language, e.target,newurl,showHistory,rowId,locale);
         });
         let element = e.querySelector('.source-details__comment');
         let toTranslate = false;
@@ -663,7 +692,7 @@ function validatePage(language, showHistory) {
         else {
             nameDiff = false;
         }
-        var result = validate(language, original, translation);
+        var result = validate(language, original, translation,locale);
         updateStyle(textareaElem, result, newurl, showHistory,showName,nameDiff,rowId);
     }
     // 30-06-2021 PSS set fetch status from local storage
@@ -745,14 +774,13 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
             }
 }
 
-function validateEntry(language, textareaElem, newurl, showHistory,rowId) {
+function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     let translation = textareaElem.value;
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
-    let result = validate(language, originalText, translation);
-    // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId
+    let result = validate(language, originalText, translation,locale);
     updateStyle(textareaElem, result, newurl, showHistory,"True","",rowId);
 }
 
@@ -1104,58 +1132,58 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
 
-    function validate(language, original, translation) {
-        let originalWords = original.split(' ');
-        let wordCount = 0;
-        let foundCount = 0;
-        let toolTip = '';
-        // 17-05-2021 PSS added check to prevent errors with empty glossary be aware that if the glossary gets more entries the amount needs to be adepted
-        if (glossary.length > 27) {
-            //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
-            if (translation.length > 0) {
-
-                for (let oWord of originalWords) {
-                    for (let gItem of glossary) {
-                        let gItemKey = gItem["key"];
-                        let gItemValue = gItem["value"];
-                        if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
-                            //console.log('Word found:', gItemKey, gItemValue);
-                            wordCount++;
-
-                            let isFound = false;
-                            for (let gWord of gItemValue) {
-                                if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
-                                    //console.log('+ Translation found:', gWord);
-                                    isFound = true;
-                                    break;
-                                }
+function validate(language, original, translation,locale) {
+    let originalWords = original.split(' ');
+    let wordCount = 0;
+    let foundCount = 0;
+    let toolTip = '';
+    // 17-05-2021 PSS added check to prevent errors with empty glossary be aware that if the glossar//y gets more entries the amount needs to be adepted
+    if (glossary.length > 27) {
+        //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
+        if (translation.length > 0) {
+            for (let oWord of originalWords) {
+                for (let gItem of glossary) {
+                    let gItemKey = gItem["key"];
+                    let gItemValue = gItem["value"];
+                    if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
+                        //console.log('Word found:', gItemKey, gItemValue);
+                        wordCount++;
+                        let isFound = false;
+                        for (let gWord of gItemValue) {
+                            if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
+                                //console.log('+ Translation found:', gWord);
+                                isFound = true;
+                                break;
                             }
-
-                            if (isFound) {
-                                foundCount++;
-                            } else {
-                                if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
-                                    toolTip += `${gItemKey} - ${gItemValue}\n`;
-                                }
+                        }
+                        if (isFound) {
+                            foundCount++;
+                        }
+                        else {
+                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
+                                toolTip += `${gItemKey} - ${gItemValue}\n`;
                             }
-                            break;
                         }
                     }
                 }
             }
-            else {
-                foundCount = 0;
-                wordCount = 0;
-            }
-        }
-        // 27-03-2021 PSS added this to prevent devision by zero      
-        if (wordCount != 0) {
-            percent = foundCount * 100 / wordCount;
         }
         else {
+            foundCount = 0;
+            wordCount = 0;
+        }
+    }
+    else {
+        console.debug("Glossary empty!!");
+    }
+    // 27-03-2021 PSS added this to prevent devision by zero      
+    if (wordCount != 0) {
+        percent = foundCount * 100 / wordCount;
+        }
+    else {
             percent = 0;
         }
-        return { wordCount, percent, toolTip };
+    return { wordCount, percent, toolTip };
     }
 
 
@@ -1418,6 +1446,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     }
                 }
             }).catch(error => console.error(error));
+
     }
 
     // The code below is taken from the free add-on GlotDict
@@ -1430,7 +1459,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
      * @param {object} editor
      * @returns {void}
      */
-    function gd_auto_hide_next_editor(editor) {
+    function old_gd_auto_hide_next_editor(editor) {
         const preview = editor.nextElementSibling;
         if (!preview) {
             return;
@@ -1449,9 +1478,9 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             select = editor.querySelector(`div.editor-panel__right div.panel-content`);
             //select = next_editor.getElementsByClassName("meta");
             var status = select.querySelector('dt').nextElementSibling;
-            status.innerText = 'transFill';
+            status.innerText = 'current';
             // And next editor does not need to be shown
-            next_editor.style.display = 'none';
+            //next_editor.style.display = 'none';
             if (typeof next_preview != 'undefined') {
                 //next_preview.style.display = 'table-row';
             }
@@ -1459,7 +1488,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     }
 
 
-    function gd_wait_table_alter() {
+    function old_gd_wait_table_alter() {
         if (document.querySelector('#translations tbody') !== null) {
             var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
@@ -1492,3 +1521,73 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
 
+/**
+ * Auto hide next editor when status action open it.
+ *
+ * @param {object} editor
+ * @returns {void}
+ */
+function gd_auto_hide_next_editor(editor) {
+    const preview = editor.nextElementSibling;
+    if (!preview) {
+        return;
+    }
+    const next_editor = preview.nextElementSibling;
+    const next_preview = next_editor.previousElementSibling;
+    if (!next_editor || !next_preview || !next_editor.classList.contains('editor') || !next_preview.classList.contains('preview')) {
+        return;
+    }
+    next_editor.style.display = 'none';
+    next_preview.style.display = 'table-row';
+}
+
+/**
+ * Mutations Observer for Translation Table Changes:
+ * Auto hide next editor on status actions.
+ * Add clone buttons on new preview rows and add glossary links.
+ *
+ * @triggers gd_add_column, gd_add_meta
+ */
+function gd_wait_table_alter() {
+    if (document.querySelector('#translations tbody') !== null) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                const user_is_pte = document.querySelector('#bulk-actions-toolbar-top') !== null;
+                mutation.addedNodes.forEach((addedNode) => {
+                    // Don't treat text nodes.
+                    if (1 !== addedNode.nodeType) {
+                        return;
+                    }
+
+                    const row_is_preview = addedNode.classList.contains('preview');
+                    const row_is_editor = addedNode.classList.contains('editor');
+                    const is_new_translation = mutation.previousSibling && mutation.previousSibling.matches('.editor.untranslated');
+                    let status_has_changed = false;
+                    if (row_is_editor && mutation.previousSibling && mutation.previousSibling.matches('[class*="status-"]')) {
+                        let status_before = '';
+                        let status_after = '';
+                        status_before = RegExp(/status-[a-z]*/).exec(mutation.previousSibling.className)[0];
+                        status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
+                        status_has_changed = status_before !== status_after;
+                    }
+                    // console.debug("before hide editor");
+                    if (user_is_pte && row_is_editor) {
+                        //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
+                        gd_auto_hide_next_editor(addedNode);
+                    }
+                    // if (user_is_pte && row_is_preview) {
+                    //    gd_add_column_buttons(addedNode);
+                    // }
+                    //if (row_is_preview) {
+                    // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
+                    // }
+                });
+            });
+        });
+        observer.observe(document.querySelector('#translations tbody'), {
+            attributes: true,
+            childList: true,
+            characterData: true,
+        });
+    }
+}

@@ -72,6 +72,17 @@ local.paging a.translation-filler-button {
         animation: button-loading-spinner 1s ease infinite;
 }
 
+
+    .paging a.translation-filler-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: button-loading-spinner 1s ease infinite;
+    }
     .paging a.translation-filler-button.after_error {
         animation: none;
         background: red;
@@ -467,10 +478,7 @@ table.translations tr.preview.has-glotdict th + .priority + .original::before {
 table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
     margin-left: calc(-.5em - 48px) !important;
 }
-table.translations th.original, table.translations th.translation {
-    width: 39.5% !important;
-   
-}
+
 button.save-button {
     font-size: 12px !important;
     height: 20px;
@@ -733,6 +741,7 @@ button.save-button.ready {
 .toast-container {
     top: 15px;
     right: 15px;
+    min-width: 250px;
     overflow: hidden;
     position: fixed;
     border-radius: 5px;
@@ -742,13 +751,13 @@ button.save-button.ready {
 }
 
 .toast-frame {
-    padding: 5px 15px;
+    padding: 5px 5px;
     display: flex;
     min-width: 100px;
     height: 60px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    align-items: center;
+    align-items: center ;
     flex-wrap: wrap;
 }
 
@@ -762,7 +771,7 @@ button.save-button.ready {
     font-weight: 600;
     font-size: 15px;
     color: #fff;
-    margin-left: 15px;
+    margin-left: 10px;
 }
 
 .toast-close {
@@ -772,7 +781,7 @@ button.save-button.ready {
     font-size: 16px;
     cursor: pointer;
     transition: color 0.5s;
-    margin-left: 25px;
+    margin-left: 20px;
 }
 
 @keyframes timer {
@@ -863,3 +872,11 @@ button.save-button.ready {
 }
 
 /** End of cuteAlert **/
+.panel-header__bubble--waiting {
+    color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+table.translations tr.preview.wptf-translated {
+    background-color: #FFFFC2;
+}
