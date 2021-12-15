@@ -1143,10 +1143,6 @@ function validate(language, original, translation, locale) {
                         }
                         if (isFound) {
                             foundCount++;
-                        } else {
-                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
-                                toolTip += `${gItemKey} - ${gItemValue}\n`;
-                            }
                         }
                         else {
                             if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
