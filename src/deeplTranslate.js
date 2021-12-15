@@ -180,7 +180,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
                 // The line below is necessary to update the save button on the left in the panel
                 current.innerText = 'transFill';
                 current.value = 'transFill';
-               
+
                 validateEntry(language, textareaElem1, "", "", rowId,locale);
             }
             //14-09-2021 PSS changed the class to meet GlotDict behavior
