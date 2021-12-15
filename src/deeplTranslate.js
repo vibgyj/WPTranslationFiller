@@ -227,16 +227,16 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
     // 13-10-2021 PSS fix for not translating issue #151
     // 15-10-2021 PSS enhencement for Deepl to go into formal issue #152
     if (language == "RO") {
-        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
+        xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines");
     }
     else {
         if (!formal) {
            // console.debug("not formal");
-            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
+            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines");
         }
         else {
             //console.debug("formal");
-            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&split_sentences=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines");
+            xhttp.open('POST', "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines");
 
         }
     }
