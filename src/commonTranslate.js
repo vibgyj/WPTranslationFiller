@@ -121,6 +121,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     // check if the returned translation does have the same ending as the original
     translatedText = checkStartEnd(original, translatedText);
+
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -131,6 +132,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
            //console.debug("pos of </a>:", pos, found, translatedText);
         }
     }
+
     return translatedText;
 }
 
@@ -238,6 +240,7 @@ async function pretranslate(original) {
         console.debug('Error retrieving pretrans', err.message);
     });
     //console.log('resultaat translate:', translated);
+
     if (typeof translated == 'undefined') {
         translated = 'notFound';
     }
@@ -476,6 +479,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
         translateButton.classList.remove("translation-filler-button", "restarted", "translated");
         translateButton.className = "translation-filler-button restarted";
     }
+
     var transtype = "";
     var plural_line = "";
     var plural_present = "";
@@ -576,7 +580,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (currec != null) {
                             var current = currec.querySelector('span.panel-header__bubble');
                         }
-                        
+
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
@@ -690,6 +694,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     if (previewElem != null) {
                                         previewElem.innerText = translatedText;
                                     }
+
                                     current.innerText = 'transFill';
                                     current.value = 'transFill';
                                 }
@@ -943,8 +948,6 @@ function bulkSave(event) {
     
 }
 
-
-
 function second(milliseconds) {
     return new Promise((resolve) => {
         (async () => {
@@ -1043,6 +1046,7 @@ function waitForElm(selector) {
         });
     });
 }
+
 function close_toast(){
     const toastContainer = document.querySelector(".toast-container");
     toastContainer.remove();
@@ -1063,7 +1067,6 @@ function toastbox(type, message, time) {
         console.debug("error:", err)
     });
    // resolve("toast ready");
-
 }
 function messageBox(type, message) {
     var myWindow = window.self;
@@ -1115,4 +1118,3 @@ function highlight(elem, keywords, caseSensitive = false, cls = 'highlight') {
         });
     }
 }
-

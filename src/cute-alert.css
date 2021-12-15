@@ -209,7 +209,6 @@
     }
 
 @keyframes open-toast {
-
     0% {
         transform: scaleX(1) scaleY(1);
     }

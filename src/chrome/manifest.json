@@ -6,7 +6,7 @@
   "web_accessible_resources": [
     "//cute-alert.css",
     "/img/*",
-	"//cute-alert.js"
+	  "//cute-alert.js"
   ],
   "background": {
     "scripts": [
