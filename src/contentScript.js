@@ -1379,7 +1379,7 @@ function validate(language, original, translation, locale) {
                                 metaElem.style.fontWeight = "900";
                             }
                         }
-                    }).catch(error => console.error(error));
+                    }).catch(error => console.debug(error));
             }
         }
 }
@@ -1466,7 +1466,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         }
                     }
                 }
-            }).catch(error => console.error(error));
+            }).catch(error => console.debug(error));
 }
 
 // The code below is taken from the free add-on GlotDict
