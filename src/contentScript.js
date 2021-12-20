@@ -823,11 +823,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Current translation";
                 }
-                else if (current.innerText == 'current') {
-                    SavelocalButton.innerText = "Curr";
-                    checkElem.title = "Current translation";
-
-                }
                 else {
                     console.debug("no current text found");
                 }
