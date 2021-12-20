@@ -43,9 +43,6 @@ else {
     console.debug("Database is present");
 }
 
-// PSS 31-07-2021 added new function to scrape consistency tool
-document.addEventListener("keydown", function (event) {
-    if (event.altKey && event.shiftKey && (event.key === '&')) {
 
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement("input");
@@ -100,14 +97,14 @@ document.addEventListener("keydown", function (event) {
     }
 });
 
-function bulk(event) {
-    try {
-        bulkSave(event);
-    } catch (e) {
-        console.debug("Error when bulk saving", e)
-    }
-    //console.debug("bulksave ended");
-}
+        function bulk(event) {
+            try {
+                bulkSave(event);
+            } catch (e) {
+                console.debug("Error when bulk saving", e)
+            }
+            //console.debug("bulksave ended");
+        }
 
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 document.addEventListener("keydown", function (event) {
@@ -182,9 +179,6 @@ document.addEventListener("keydown", function (event) {
                 }
             }
 
-        }
-        else {
-            messageBox("error", "You do not have permissions to start this function!");
         }
         else {
             messageBox("error", "You do not have permissions to start this function!");
@@ -1179,14 +1173,10 @@ function validate(language, original, translation, locale) {
                                 toolTip += `${gItemKey} - ${gItemValue}\n`;
                             }
                         }
-                        else {
-                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
-                                toolTip += `${gItemKey} - ${gItemValue}\n`;
-                            }
+                        break;
                         }
                     }
                 }
-            }
         }
         else {
             foundCount = 0;
@@ -1486,14 +1476,6 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
             }).catch(error => console.debug(error));
 }
 
-            observer.observe(document.querySelector('#translations tbody'), {
-                attributes: true,
-                childList: true,
-                characterData: true
-            });
-        }
-    }
-
 /**
  * Auto hide next editor when status action open it.
  *
@@ -1524,46 +1506,46 @@ function gd_auto_hide_next_editor(editor) {
  *
  * @triggers gd_add_column, gd_add_meta
  */
-function gd_wait_table_alter() {
-    if (document.querySelector("#translations tbody") !== null) {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                const user_is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-                mutation.addedNodes.forEach((addedNode) => {
-                    // Don"t treat text nodes.
-                    if (1 !== addedNode.nodeType) {
-                        return;
-                    }
-                    const row_is_preview = addedNode.classList.contains("preview");
-                    const row_is_editor = addedNode.classList.contains("editor");
-                    const is_new_translation = mutation.previousSibling && mutation.previousSibling.matches(".editor.untranslated");
-                    let status_has_changed = false;
-                    if (row_is_editor && mutation.previousSibling && mutation.previousSibling.matches('[class*="status-"]')) {
-                        let status_before = "";
-                        let status_after = "";
-                        status_before = RegExp(/status-[a-z]*/).exec(mutation.previousSibling.className)[0];
-                        status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
-                        status_has_changed = status_before !== status_after;
-                    }
-                   // console.debug("before hide editor");
-                   // if (user_is_pte && row_is_editor ) {
-                    //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
-                        gd_auto_hide_next_editor(addedNode);
-                   // }
-                   // if (user_is_pte && row_is_preview) {
-                    //    gd_add_column_buttons(addedNode);
-                   // }
-                    //if (row_is_preview) {
-                       // addedNode.querySelectorAll(".glossary-word").forEach(gd_add_glossary_links);
-                   // }
+        function gd_wait_table_alter() {
+            if (document.querySelector("#translations tbody") !== null) {
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        const user_is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+                        mutation.addedNodes.forEach((addedNode) => {
+                            // Don"t treat text nodes.
+                            if (1 !== addedNode.nodeType) {
+                                return;
+                            }
+                            const row_is_preview = addedNode.classList.contains("preview");
+                            const row_is_editor = addedNode.classList.contains("editor");
+                            const is_new_translation = mutation.previousSibling && mutation.previousSibling.matches(".editor.untranslated");
+                            let status_has_changed = false;
+                            if (row_is_editor && mutation.previousSibling && mutation.previousSibling.matches('[class*="status-"]')) {
+                                let status_before = "";
+                                let status_after = "";
+                                status_before = RegExp(/status-[a-z]*/).exec(mutation.previousSibling.className)[0];
+                                status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
+                                status_has_changed = status_before !== status_after;
+                            }
+                            // console.debug("before hide editor");
+                            // if (user_is_pte && row_is_editor ) {
+                            //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
+                            gd_auto_hide_next_editor(addedNode);
+                            // }
+                            // if (user_is_pte && row_is_preview) {
+                            //    gd_add_column_buttons(addedNode);
+                            // }
+                            //if (row_is_preview) {
+                            // addedNode.querySelectorAll(".glossary-word").forEach(gd_add_glossary_links);
+                            // }
+                        });
+                    });
                 });
-            });
-        });
 
-        observer.observe(document.querySelector("#translations tbody"), {
-            attributes: true,
-            childList: true,
-            characterData: true,
-        });
-    }
-}
+                observer.observe(document.querySelector("#translations tbody"), {
+                    attributes: true,
+                    childList: true,
+                    characterData: true,
+                });
+            }
+        }
