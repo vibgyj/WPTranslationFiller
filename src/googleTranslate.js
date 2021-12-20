@@ -166,16 +166,19 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
            // prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
             //prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
         }
+       
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
         else {
             if (this.readyState == 4 && this.status == 400) {
                 alert("Error in translation received status 400, maybe a license problem\n\nClick on OK until all records are processed!!!");
             }
         }
+        
     };
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
     xhttp.send(JSON.stringify(requestBody));
+    
 }
 
 // PSS 01-30-2021 added this to prevent wrong replacement of searches

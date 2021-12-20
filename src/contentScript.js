@@ -31,19 +31,21 @@ chrome.storage.sync
 
         });
 
-
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
-var db =getDbSchema() ;
+var db = getDbSchema();
 var isDbCreated = jsstoreCon.initDb(db);
 
 if (!isDbCreated){
 //console.debug("Database is not created, so we create one", isDbCreated);
 }
-else{
-	console.debug("Database is present");
+else {
+    console.debug("Database is present");
 }
 
+// PSS 31-07-2021 added new function to scrape consistency tool
+document.addEventListener("keydown", function (event) {
+    if (event.altKey && event.shiftKey && (event.key === '&')) {
 
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement("input");
@@ -179,6 +181,10 @@ document.addEventListener("keydown", function (event) {
                     setTimeout(() => { window.close(); }, 1000);
                 }
             }
+
+        }
+        else {
+            messageBox("error", "You do not have permissions to start this function!");
         }
         else {
             messageBox("error", "You do not have permissions to start this function!");
@@ -186,11 +192,13 @@ document.addEventListener("keydown", function (event) {
     }
 });
 
+
+
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
-if (el != null){
-  el.addEventListener("click", checkbuttonClick);
+if (el != null) {
+    el.addEventListener("click", checkbuttonClick);
 }
 
 const el3 = document.getElementById("translations");
@@ -354,12 +362,12 @@ function importPageClicked(event) {
     }
     }); 
 }
-    
+
 async function parseDataBase(data) {
     messageBox("info", "Import is started wait for the result");
     let csvData = [];
     let lbreak = data.split("\n");
-    let counter= 0;
+    let counter = 0;
     // To make sure we can manipulate the data store it into an array
     lbreak.forEach(res => {
         // 09-07-2021 PSS altered the separator issue #104
@@ -477,8 +485,8 @@ function addTranslateButtons() {
     }
 }
 
-function addtranslateEntryClicked(event){
-    if (event != undefined){ 
+function addtranslateEntryClicked(event) {
+    if (event != undefined) {
         event.preventDefault();
        let rowId = event.target.id.split("-")[1];
       // console.log("addtranslateEntry clicked rowId", rowId);
@@ -537,8 +545,8 @@ function checkactionClick(event) {
 }
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
-function checkbuttonClick(event){
-   if (event != undefined){ 
+function checkbuttonClick(event) {
+    if (event != undefined) {
         //event.preventDefault(); caused a problem within the single page enttry  
        let action = event.target.textContent ;
        // 30-06-2021 PSS added fetch status from local storage
@@ -637,7 +645,7 @@ function validatePage(language, showHistory,locale) {
             all_col[i].style.display = "table-cell";
         }
     }
-    
+
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
         //console.debug("original:", original);
@@ -820,6 +828,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 else if (current.innerText == "current") {
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Current translation";
+                }
+                else if (current.innerText == 'current') {
+                    SavelocalButton.innerText = "Curr";
+                    checkElem.title = "Current translation";
+
                 }
                 else {
                     console.debug("no current text found");
@@ -1166,7 +1179,11 @@ function validate(language, original, translation, locale) {
                                 toolTip += `${gItemKey} - ${gItemValue}\n`;
                             }
                         }
-                        break;
+                        else {
+                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
+                                toolTip += `${gItemKey} - ${gItemValue}\n`;
+                            }
+                        }
                     }
                 }
             }
@@ -1469,9 +1486,13 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
             }).catch(error => console.debug(error));
 }
 
-// The code below is taken from the free add-on GlotDict
-// All the credits go to the authors of GlotDict
-// It is modified to get the results needed by  WordPress Translation Filler
+            observer.observe(document.querySelector('#translations tbody'), {
+                attributes: true,
+                childList: true,
+                characterData: true
+            });
+        }
+    }
 
 /**
  * Auto hide next editor when status action open it.
@@ -1536,7 +1557,6 @@ function gd_wait_table_alter() {
                        // addedNode.querySelectorAll(".glossary-word").forEach(gd_add_glossary_links);
                    // }
                 });
-                //gd_add_meta();
             });
         });
 

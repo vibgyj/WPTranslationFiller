@@ -217,4 +217,3 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
     xhttp.responseType = "json";
     xhttp.send(JSON.stringify(requestBody));
 }
-

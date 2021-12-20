@@ -120,6 +120,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     // check if the returned translation does have the same ending as the original
     translatedText = checkStartEnd(original, translatedText);
+
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -130,6 +131,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
            //console.debug("pos of </a>:", pos, found, translatedText);
         }
     }
+
     return translatedText;
 }
 
@@ -475,6 +477,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
         translateButton.classList.remove("translation-filler-button", "restarted", "translated");
         translateButton.className = "translation-filler-button restarted";
     }
+
     var transtype = "";
     var plural_line = "";
     var plural_present = "";
@@ -1103,4 +1106,3 @@ function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
         });
     }
 }
-
