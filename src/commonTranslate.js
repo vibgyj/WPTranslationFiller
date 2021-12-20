@@ -85,7 +85,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll('  ]', ']');
-
+    //console.debug('after replace spaces:', translatedText);
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
@@ -102,6 +102,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
+        //console.debug('after replace x:', translatedText);
     }
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
@@ -120,6 +121,18 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     // check if the returned translation does have the same ending as the original
     translatedText = checkStartEnd(original, translatedText);
+
+    // check if there is a blank after the tag 
+    pos=translatedText.indexOf("</a>");
+    found = translatedText.substring(pos, pos + 5);
+    if (found.substr(found.length - 1) != " ") {
+        if (found.substr(found.length - 1) != "." && found.substr(found.length - 1) != "<" && found.length ==5) {
+            //console.debug("pos of </a>:", pos, found);
+            translatedText = translatedText.replace("</a>", "</a> ");
+           //console.debug("pos of </a>:", pos, found, translatedText);
+        }
+    }
+
     return translatedText;
 }
 
@@ -217,16 +230,17 @@ function checkComments(comment) {
 // 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
 // 18-04-2021 PSS now the function retrieves the data from the local database if present
 async function pretranslate(original) {
-    console.debug('pretranslate with:', original);
+    //console.debug('pretranslate with:', original);
     var translated = "";
 
     res = await listRec(original).then(function (v) {
-        console.debug('answ:', v);
+        //console.debug('answ:', v);
         translated = v;
     }).catch(function (err) {
         console.debug('Error retrieving pretrans', err.message);
     });
-    console.log('resultaat translate:', translated);
+    //console.log('resultaat translate:', translated);
+
     if (typeof translated == 'undefined') {
         translated = 'notFound';
     }
@@ -250,9 +264,10 @@ function checkPage(postTranslationReplace) {
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
         let countreplaced = 0;
-        var translatedText;
+        var translatedText = "";
         var repl_verb = "";
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+            replaced = false;
             let original = e.querySelector("span.original-raw").innerText;
             let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
             let row = rowfound.split('-')[1];
@@ -277,47 +292,47 @@ function checkPage(postTranslationReplace) {
             }
             if (toTranslate) {
                 // Check if it is a plural
-                let pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) small`);
+                // If in the original field "Singular is present we have a plural translation                
+                var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);             
                 if (pluralpresent != null) {
                     transtype = "plural";
+                    //console.debug("found plural line 1", pluralpresent1);
                 }
                 else {
-                    transtype = "single";
+                    transtype = "single";  
                 }
                 // Fetch the translations
                 let element = e.querySelector('.source-details__comment');
                 let textareaElem = e.querySelector("textarea.foreign-text");
-                translatedText = textareaElem.innerText;
-                // Enhencement issue #123
-                previewNewText = textareaElem.innerText;
-                // Need to replace the existing html before replacing the verbs! issue #124
-                previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-                replaced = false;
-                // replverb contains the verbs to replace
+                if (transtype == 'single') {
+                    translatedText = textareaElem.innerText;
+                }
 
-                for (let i = 0; i < replaceVerb.length; i++) {
-                    if (translatedText.includes(replaceVerb[i][0])) {
-                        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                if (transtype == "single") {
+                    //console.debug(" found single");
+                    // Enhencement issue #123
+                    previewNewText = textareaElem.innerText;
+                    // Need to replace the existing html before replacing the verbs! issue #124
+                    // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                    //console.debug("before:", translatedText, previewNewText);
+                    result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
+                    previewNewText = result.previewNewText;
+                    translatedText = result.translatedText;
+                    countreplaced = result.countreplaced;
+                    replaced = result.replaced;
+                    orgText = result.orgText;
+                    repl_verb = result.repl_verb;
+                    // PSS 22-07-2021 fix for the preview text is not updated #109
+                    if (replaced) {
                         if (currec != null) {
                             var current = currec.querySelector('span.panel-header__bubble');
                             var prevstate = current.innerText;
                             current.innerText = "transFill";
                         }
-
-                        // Enhencement issue #123
-                        previewNewText = previewNewText.replaceAll(replaceVerb[i][0], '<mark>' + replaceVerb[i][1] + '</mark>');
-                        translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-
-                        repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] + "\n";
-                        countreplaced++;
-                        replaced = true;
-                    }
-                }
-                // PSS 22-07-2021 fix for the preview text is not updated #109
-                if (replaced) {
-                    textareaElem.innerText = translatedText;
-                    textareaElem.value = translatedText;
-                    if (transtype == "single") {
+                        textareaElem.innerText = translatedText;
+                        textareaElem.value = translatedText;
+                        //console.debug("found single!");
                         let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
                         let row = rowfound.split('-')[1];
                         let newrow = rowfound.split('-')[2];
@@ -326,16 +341,77 @@ function checkPage(postTranslationReplace) {
                             row = newrowId;
                         }
                         let preview = document.querySelector('#preview-' + newrowId + ' td.translation');
-                        // Enhencement issue #123
-                        preview.innerHTML = previewNewText;
+                        // PSS we need to remove the current span, as the mark function adds one again
+                        // PSS fix for issue #157
+                        let span = document.querySelector('#preview-' + newrowId + ' td.translation span.translation-text');
+                        span.remove();
+                        // Enhancement issue #123
+                        var myspan1 = document.createElement('span');
+                        myspan1.className = "translation-text";
+                        preview.appendChild(myspan1);
+                        myspan1.appendChild(document.createTextNode(previewNewText));
+                        preview = document.querySelector('#preview-' + newrowId + ' td.translation');
+                        // PSS populate the preview before marking
+                        preview.innerText = DOMPurify.sanitize(previewNewText);
+                        markElements(preview, replaceVerb, orgText);
                     }
+                 }
+                 else {
+                        // plural line 1
+                        let previewElem = document.querySelector('#preview-' + row + ' .translation.foreign-text li:nth-of-type(1) span.translation-text');
+                        previewNewText = previewElem.innerText;
+                        translatedText = previewElem.innerText;
+                        //console.debug("plural1 found:",previewElem,translatedText);
+                        result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
+                        previewNewText = result.previewNewText;
+                        translatedText = result.translatedText;
+                        countreplaced = result.countreplaced;
+                        replaced = result.replaced;
+                        orgText = result.orgText;
+                        if (replaced) {
+                                previewElem.innerText = previewNewText;
+                                let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                // if current translation we need to split the rownumber
+                                let newrowId = row.split('-')[0];
+                                textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
+                                textareaElem1.innerText = translatedText;
+                                textareaElem1.value = translatedText;
+                                // Highlight all keywords found in the page, so loop through the replacement array
+                                markElements(previewElem, replaceVerb, orgText);
+                            }
+                            // plural line 2
+                        previewElem = document.querySelector('#preview-' + row + ' .translation.foreign-text li:nth-of-type(2) span.translation-text');
+                        //console.debug("plural2:", previewNewText, translatedText);
+                        if (previewElem != null) {
+                                previewNewText = previewElem.innerText;
+                                translatedText = previewElem.innerText;
+                                result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
+                                previewNewText = result.previewNewText;
+                                translatedText = result.translatedText;
+                                countreplaced = result.countreplaced;
+                                replaced = result.replaced;
+                                if (replaced) {  
+                                    previewElem.innerText = previewNewText;
+                                    let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                    // if current translation we need to split the rownumber
+                                    let rowId = row.split('-')[0];
+                                    textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
+                                    if (textareaElem1 != null) {
+                                        textareaElem1.innerText = translatedText;
+                                        textareaElem1.value = translatedText;
+                                        markElements(previewElem, replaceVerb, orgText);
+                                    }
+                                }
+                        }
+                }
+                if (replaced) {
+                    // Only update the style if verbs are replaced!!
                     let wordCount = countreplaced;
                     let percent = 10;
                     let toolTip = '';
                     result = { wordCount, percent, toolTip };
                     updateStyle(textareaElem, result, "", true, false, false, row);
                 }
-
             }
         }
         messageBox("info", 'Replace verbs done ' + countreplaced + ' replaced' + ' words\n' + repl_verb);
@@ -346,6 +422,46 @@ function checkPage(postTranslationReplace) {
     else {
         messageBox("error", "Your postreplace verbs are not populated add at least on line!");
     }
+}
+
+function markElements(preview,replaceVerb,orgText) {
+    // Highlight all keywords found in the page, so loop through the replacement array
+    var arr = [];
+    for (let i = 0; i < replaceVerb.length; i++) {
+        if (orgText.includes(replaceVerb[i][0])) {
+            high = replaceVerb[i][1];
+            high = high.trim();
+            if (high != '') {
+                // push the verb into the array
+                arr.push(high);
+            }
+        }
+        // PSS we found everything to mark, so mark it issue #157
+        if (arr.length > 0) {
+            highlight(preview, arr);
+        }
+    }
+    return previewNewText;
+}
+function replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced) {
+    var replaced = false;
+    for (let i = 0; i < replaceVerb.length; i++) {
+        if (translatedText.includes(replaceVerb[i][0])) {
+            var orgText = translatedText;
+            // Enhencement issue #123
+            previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+            translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+            //console.debug("mark:", previewNewText, replaceVerb[i][1]);
+            repl_verb += replaceVerb[i][0] + "->" + replaceVerb[i][1] + "\n";
+            //console.debug("replaced:", replaceVerb[i][1], previewNewText, i)
+            countreplaced++;
+            replaced = true;
+        }
+    }
+    if (i == 2) {
+        replaced = false
+    }
+    return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb};
 }
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal) {
@@ -684,11 +800,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     var checkplural = "";
     // To check if a plural is present we need to select the plural line!!
     var checkplural = document.querySelector(`#editor-${rowId} .source-string__plural span.original`);
-    console.debug("checkplural:", checkplural);
+    //console.debug("checkplural:", checkplural);
 
     if (checkplural == null) {
         transtype = "single";
-        console.debug("transtype:", transtype);
+       // console.debug("transtype:", transtype);
     }
     else {
         transtype = "plural";
@@ -871,7 +987,7 @@ function _waitForElement(selector, delay =5, tries = 50) {
     function _search() {
       return new Promise((resolve) => {
         window[`__${selector}`]++;
-        console.log("Search result:",window[`__${selector}`]);
+       // console.log("Search result:",window[`__${selector}`]);
         setTimeout(resolve, delay);
       });
     }
@@ -912,13 +1028,13 @@ function elementReady(selector) {
 function waitForElm(selector) {
     return new Promise(resolve => {
         if (document.querySelector(selector)) {
-            console.debug("Selector found");
+            //console.debug("Selector found");
             return resolve(document.querySelector(selector));
         }
 
         const observer = new MutationObserver(mutations => {
             if (document.querySelector(selector)) {
-                console.debug("In observer found");
+               // console.debug("In observer found");
                 resolve(document.querySelector(selector));
                 observer.disconnect();
             }
@@ -962,4 +1078,43 @@ function messageBox(type, message) {
         myWindow: myWindow,
         closeStyle: "alert-close",
     });
+}
+
+/**
+ ** function copied from stackoverflow created by eclanrs
+ ** https://stackoverflow.com/questions/8644428/how-to-highlight-text-using-javascript
+ * Highlight keywords inside a DOM element
+ * @param {string} elem Element to search for keywords in
+ * @param {string[]} keywords Keywords to highlight
+ * @param {boolean} caseSensitive Differenciate between capital and lowercase letters
+ * @param {string} cls Class to apply to the highlighted keyword
+ */
+function highlight(elem, keywords, caseSensitive = false, cls = 'highlight') {
+    const flags = caseSensitive ? 'gi' : 'g';
+    // Sort longer matches first to avoid
+    // highlighting keywords within keywords.
+    if (typeof keywords != 'undefined') {
+        keywords.sort((a, b) => b.length - a.length);
+        Array.from(elem.childNodes).forEach(child => {
+            const keywordRegex = RegExp(keywords.join('|'), flags);
+            if (child.nodeType !== 3) { // not a text node
+                highlight(child, keywords, caseSensitive, cls);
+            } else if (keywordRegex.test(child.textContent)) {
+                const frag = document.createDocumentFragment();
+                let lastIdx = 0;
+                child.textContent.replace(keywordRegex, (match, idx) => {
+                    const part = document.createTextNode(child.textContent.slice(lastIdx, idx));
+                    const highlighted = document.createElement('span');
+                    highlighted.textContent = match;
+                    highlighted.classList.add(cls);
+                    frag.appendChild(part);
+                    frag.appendChild(highlighted);
+                    lastIdx = idx + match.length;
+                });
+                const end = document.createTextNode(child.textContent.slice(lastIdx));
+                frag.appendChild(end);
+                child.parentNode.replaceChild(frag, child);
+            }
+        });
+    }
 }

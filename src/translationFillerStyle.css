@@ -880,3 +880,7 @@ button.save-button.ready {
 table.translations tr.preview.wptf-translated {
     background-color: #FFFFC2;
 }
+
+.highlight {
+    background: lightpink;
+}

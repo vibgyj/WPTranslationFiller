@@ -30,22 +30,6 @@ chrome.storage.sync
 
         });
 
-
-// 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
-function setToOff() {
-    //var key = 'noOldTrans', OldTrans = { val: false }; 
-    chrome.storage.sync.set({
-        'noOldTrans': 'False'
-    }, function () {
-        console.debug("Content script set flag for noOldTrans back to False");
-    });
-}
-
-window.onbeforeunload = function () {
-    return setToOff();
-}
-
-
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
 var db = getDbSchema();
@@ -65,6 +49,7 @@ fileSelector.setAttribute('type', 'file');
 // PSS 31-07-2021 added new function to scrape consistency tool
 document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === '&')) {
+
         event.preventDefault();
         chrome.storage.sync
             .get(
@@ -101,7 +86,7 @@ function bulk(event) {
     } catch (e) {
         console.debug("Error when bulk saving", e)
     }
-    console.debug("bulksave ended");
+    //console.debug("bulksave ended");
 }
 
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
@@ -636,7 +621,6 @@ function validatePage(language, showHistory,locale) {
     let f = document.getElementsByClassName('breadcrumb');   
     let url = f[0].firstChild.baseURI;
     let newurl = url.split('?')[0];
-
     var divProjects = document.querySelector('div.projects');
     // We need to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project
@@ -655,7 +639,6 @@ function validatePage(language, showHistory,locale) {
 
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         let original = e.querySelector("span.original-raw").innerText;
-
         let textareaElem = e.querySelector('textarea.foreign-text');
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute('row');
@@ -759,7 +742,6 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     //let origElem =  updateElementStyle(checkElem, result,'False',originalElem,"","","","","",rowId,showName);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(checkElem, headerElem, result, 'False', originalElem, "", "", "", "", "", rowId,showName,nameDiff);
-
     let row = rowId.split('-')[0];
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
@@ -870,7 +852,10 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     }
 
     if (oldstring == 'True') {
-
+        
+    // 05-07-2021 this function is need to set the flag back for noOldTrans at pageload
+     
+        
         // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
         if (originalElem != undefined) {
             // 19-09-2021 PSS fixed issue #141 duplicate label creation
@@ -1132,7 +1117,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
 
-function validate(language, original, translation,locale) {
+function validate(language, original, translation, locale) {
     let originalWords = original.split(' ');
     let wordCount = 0;
     let foundCount = 0;
@@ -1361,10 +1346,21 @@ function validate(language, original, translation,locale) {
                                 else {
                                     element4.appendChild(document.createTextNode('New translation difference!'));
                                 }
-                                element5.innerHTML = JsDiff.convertChangesToXML(changes) + textdif;
-                                metaElem.appendChild(element5);
-
-                                //metaElem.style.color = 'darkblue';
+                                //04-10-2021 PSS changed the class to resolve issue #157
+                                const diff = JsDiff[diffType](oldStr, newStr),
+                                fragment = document.createDocumentFragment();
+                                diff.forEach((part) => {
+                                    // green for additions, red for deletions
+                                    // dark grey for common parts
+                                    const color = part.added ? 'green' :
+                                        part.removed ? 'red' : 'dark-grey';
+                                    span = document.createElement('span');
+                                    span.style.color = color;
+                                    span.appendChild(document
+                                        .createTextNode(part.value));
+                                    fragment.appendChild(span);
+                                });
+                                element5.appendChild(fragment);
                                 metaElem.style.fontWeight = "900";
                             }
 
@@ -1372,17 +1368,23 @@ function validate(language, original, translation,locale) {
                     }).catch(error => console.error(error));
             }
         }
-    }
+}
+
+var stringToHTML = function (str) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(str, 'text/html');
+    return doc;
+};
 
     // 11-06-2021 PSS added function to mark that existing translation is present
     async function fetchOld(checkElem, result, url, single, originalElem, row, rowId) {
         // 30-06-2021 PSS added fetch status from local storage
-        chrome.storage.sync
-            .get(
-                ['noOldTrans'],
-                function (data) {
-                    single = data.noOldTrans;
-                });
+        //chrome.storage.sync
+          //  .get(
+          //      ['noOldTrans'],
+           //     function (data) {
+           //         single = data.noOldTrans;
+            //    });
 
         const data = fetch(url, {
             headers: new Headers({
@@ -1392,57 +1394,63 @@ function validate(language, original, translation,locale) {
             .then(response => response.text())
             .then(data => {
                 //console.log(data);
-                var parser = new DOMParser();
-                var doc = parser.parseFromString(data, 'text/html');
-                //console.log("html:", doc);
-                var table = doc.getElementById("translations");
-                let tr = table.rows;
+                //05-11-2021 PSS added fix for issue #159 causing an error message after restarting the add-on
+                currURL = window.location.href;
+                //console.debug("url:", currURL);
+                // &historypage is added by GlotDict or WPGPT, so no extra parameter is necessary for now
+                if (currURL.includes('&historypage') == false) {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(data, 'text/html');
+                    //console.log("html:", doc);
+                    var table = doc.getElementById("translations");
+                    let tr = table.rows;
 
-                if (table != undefined) {
-                    const tbodyRowCount = table.tBodies[0].rows.length;
-                    // 04-07-2021 PSS added counter to message for existing translations
-                    var rejected = table.querySelectorAll('tr.preview.status-rejected');
-                    var waiting = table.querySelectorAll('tr.preview.status-waiting');
-                    var fuzzy = table.querySelectorAll('tr.preview.status-fuzzy');
-                    var current = table.querySelectorAll('tr.preview.status-current');
-                    var old = table.querySelectorAll('tr.preview.status-old');
-                    if (typeof current != 'null' && current.length != 0) {
-                        current = " Current:" + current.length;
-                    }
-                    else {
-                        current = "";
-                    }
-                    if (waiting.length != 0) {
-                        wait = " Waiting:" + waiting.length;
-                    }
-                    else {
-                        wait = "";
-                    }
-                    if (rejected.length != 0) {
-                        rejec = " Rejected:" + rejected.length;
-                    }
-                    else {
-                        rejec = "";
-                    }
-                    if (fuzzy.length != 0) {
-                        fuz = " Fuzzy:" + fuzzy.length;
-                    }
-                    else {
-                        fuz = "";
-                    }
-                    if (old.length != 0) {
-                        old = " Old:" + old.length;
-                    }
-                    else {
-                        old = "";
-                    }
-                    if (tbodyRowCount > 2 && single == 'False') {
-                        updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old, rowId, "", "");
-                    }
-                    else if (tbodyRowCount > 2 && single == 'True') {
-                        updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old, rowId, "", "");
-                        //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
-                        //window.open(url, "_blank", windowFeatures);
+                    if (table != undefined) {
+                        const tbodyRowCount = table.tBodies[0].rows.length;
+                        // 04-07-2021 PSS added counter to message for existing translations
+                        var rejected = table.querySelectorAll('tr.preview.status-rejected');
+                        var waiting = table.querySelectorAll('tr.preview.status-waiting');
+                        var fuzzy = table.querySelectorAll('tr.preview.status-fuzzy');
+                        var current = table.querySelectorAll('tr.preview.status-current');
+                        var old = table.querySelectorAll('tr.preview.status-old');
+                        if (typeof current != 'null' && current.length != 0) {
+                            current = " Current:" + current.length;
+                        }
+                        else {
+                            current = "";
+                        }
+                        if (waiting.length != 0) {
+                            wait = " Waiting:" + waiting.length;
+                        }
+                        else {
+                            wait = "";
+                        }
+                        if (rejected.length != 0) {
+                            rejec = " Rejected:" + rejected.length;
+                        }
+                        else {
+                            rejec = "";
+                        }
+                        if (fuzzy.length != 0) {
+                            fuz = " Fuzzy:" + fuzzy.length;
+                        }
+                        else {
+                            fuz = "";
+                        }
+                        if (old.length != 0) {
+                            old = " Old:" + old.length;
+                        }
+                        else {
+                            old = "";
+                        }
+                        if (tbodyRowCount > 2 && single == 'False') {
+                            updateElementStyle(checkElem, "", result, 'True', originalElem, current, wait, rejec, fuz, old, rowId, "", "");
+                        }
+                        else if (tbodyRowCount > 2 && single == 'True') {
+                            updateElementStyle(checkElem, "", result, 'False', originalElem, current, wait, rejec, fuz, old, rowId, "", "");
+                            //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+                            //window.open(url, "_blank", windowFeatures);
+                        }
                     }
                 }
             }).catch(error => console.error(error));
@@ -1570,17 +1578,17 @@ function gd_wait_table_alter() {
                         status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
                         status_has_changed = status_before !== status_after;
                     }
-                    // console.debug("before hide editor");
-                    if (user_is_pte && row_is_editor) {
-                        //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
+                   // console.debug("before hide editor");
+                    if (user_is_pte && row_is_editor ) {
+                    //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
                         gd_auto_hide_next_editor(addedNode);
                     }
-                    // if (user_is_pte && row_is_preview) {
+                   // if (user_is_pte && row_is_preview) {
                     //    gd_add_column_buttons(addedNode);
-                    // }
+                   // }
                     //if (row_is_preview) {
-                    // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
-                    // }
+                       // addedNode.querySelectorAll('.glossary-word').forEach(gd_add_glossary_links);
+                   // }
                 });
             });
         });
