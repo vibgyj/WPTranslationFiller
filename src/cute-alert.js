@@ -123,8 +123,9 @@ function cuteAlert({
   });
 }
 // 13-08-2011 PSS added myWindow as parameter
-function cuteToast({ type, message, timer = 5000, myWindow="" }) {
-  return new Promise((resolve) => {
+function cuteToast({ type, message, timer = 5000, myWindow = "" }) {
+    var currWindow = myWindow;
+    return new Promise((resolve) => {
     
     //const body = myWindow.document.querySelector("body");
       if (typeof myWindow != 'string') {
@@ -176,14 +177,14 @@ function cuteToast({ type, message, timer = 5000, myWindow="" }) {
       
       body.insertAdjacentHTML("afterend", DOMPurify.sanitize(template));
 
-    const toastContainer = myWindow.document.querySelector(".toast-container");
+      const toastContainer = myWindow.document.querySelector(".toast-container");
 
     setTimeout(() => {
       toastContainer.remove();
       resolve();
     }, timer);
 
-    const toastClose = myWindow.document.querySelector(".toast-close");
+      const toastClose = myWindow.document.querySelector(".toast-close");
 
     toastClose.addEventListener("click", () => {
       toastContainer.remove();

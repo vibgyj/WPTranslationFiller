@@ -1,42 +1,42 @@
-var scriptElm = document.createElement('script');
-scriptElm.src = chrome.runtime.getURL('cute-alert.js');
+var scriptElm = document.createElement("script");
+scriptElm.src = chrome.runtime.getURL("cute-alert.js");
 document.body.appendChild(scriptElm);
 
-//var meta = document.createElement('meta');
-//meta.setAttribute('name', 'viewport');
-//meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-//meta.setAttribute('Content-Type', 'image/svg+xml');
-//document.getElementsByTagName('head')[0].appendChild(meta);
+//var meta = document.createElement("meta");
+//meta.setAttribute("name", "viewport");
+//meta.setAttribute("content", "width=device-width, initial-scale=1.0");
+//meta.setAttribute("Content-Type", "image/svg+xml");
+//document.getElementsByTagName("head")[0].appendChild(meta);
 //myWindow.focus();
 var link = document.createElement("link");
 
 link.type = "text/css";
 link.rel = "stylesheet";
-link.href = chrome.runtime.getURL('cute-alert.css');
+link.href = chrome.runtime.getURL("cute-alert.css");
 
-document.getElementsByTagName('head')[0].appendChild(link);
+document.getElementsByTagName("head")[0].appendChild(link);
 
 
 document.getElementById("exportverbs").addEventListener("click", export_verbs_csv);
 // This array is used to replace wrong words in translation and is necessary for the export
 let replaceVerb = [];
 
-let apikeyTextbox = document.getElementById('google_api_key');
-let apikeydeeplTextbox = document.getElementById('deepl_api_key');
-let apikeymicrosoftTextbox = document.getElementById('microsoft_api_key');
-let transselectBox = document.getElementById('transselect');
-let destLangTextbox = document.getElementById('destination_lang');
-let uploadedFile = document.getElementById('text_glossary_file');
-let glossaryFile = document.getElementById('glossary_file');
-let verbsTextbox = document.getElementById('text_verbs');
-let preverbsTextbox = document.getElementById('text_pre_verbs');
-let showHistCheckbox = document.getElementById('show-history');
-let showDiffCheckbox = document.getElementById('comp-translations');
-let showGlotCheckbox = document.getElementById('show-glotDictGlos');
+let apikeyTextbox = document.getElementById("google_api_key");
+let apikeydeeplTextbox = document.getElementById("deepl_api_key");
+let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
+let transselectBox = document.getElementById("transselect");
+let destLangTextbox = document.getElementById("destination_lang");
+let uploadedFile = document.getElementById("text_glossary_file");
+let glossaryFile = document.getElementById("glossary_file");
+let verbsTextbox = document.getElementById("text_verbs");
+let preverbsTextbox = document.getElementById("text_pre_verbs");
+let showHistCheckbox = document.getElementById("show-history");
+let showDiffCheckbox = document.getElementById("comp-translations");
+let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 //console.debug("Diff:", showDiffCheckbox);
 //console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'destlang', 'glossaryFile', 'postTranslationReplace','preTranslationReplace','showHistory', 'showTransDiff', 'glotDictGlos'], function (data) {
+chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
@@ -50,52 +50,52 @@ chrome.storage.sync.get(['apikey','apikeyDeepl','apikeyMicrosoft','transsel', 'd
     uploadedFile.innerText = `Uploaded file: ${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
-    if (data.showHistory != 'null') {
-        console.debug(data.showHistory);
+    if (data.showHistory != "null") {
+        //console.debug(data.showHistory);
         if (data.showHistory == true) {
             showHistCheckbox.checked = true;
-            //document.getElementById('show-history').checked = true;
+            //document.getElementById("show-history").checked = true;
         }
         else {
             showHistCheckbox.checked = false;
-            //document.getElementById('show-history').checked = false;
+            //document.getElementById("show-history").checked = false;
         }
     }
     
-    if (data.showTransDiff != 'null') {
+    if (data.showTransDiff != "null") {
         if (data.showTransDiff == true) {
             showDiffCheckbox.checked = true;
-           // document.getElementById('comp-translations').checked = true;
+           // document.getElementById("comp-translations").checked = true;
         }
         else {
             showDiffCheckbox.checked = false;
-            //document.getElementById('comp-translations').checked = false;
+            //document.getElementById("comp-translations").checked = false;
         }
     }
-    if (data.glotDictGlos != 'null') {
+    if (data.glotDictGlos != "null") {
         if (data.glotDictGlos == true) {
             showGlotCheckbox.checked = true;
-            // document.getElementById('comp-translations').checked = true;
+            // document.getElementById("comp-translations").checked = true;
         }
         else {
             showGlotCheckbox.checked = false;
-            //document.getElementById('comp-translations').checked = false;
+            //document.getElementById("comp-translations").checked = false;
         }
     }
     //console.log("Read options: ", data);
 });
 
 
-let button = document.getElementById('save');
-button.addEventListener('click', function () {
+let button = document.getElementById("save");
+button.addEventListener("click", function () {
     let apikey = apikeyTextbox.value;
     let apikeyDeepl = apikeydeeplTextbox.value;
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
-    if (typeof transselectBox.value == 'undefined') {
+    if (typeof transselectBox.value == "undefined") {
          transsel = "google";
     }
     else if (transselectBox.value == "") {
-        transsel = '"google';
+        transsel = "google";
     }
     else {
         transsel = transselectBox.value;
@@ -103,30 +103,30 @@ button.addEventListener('click', function () {
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
-    if (document.querySelector('#show-history:checked') !== null) {
-        //console.debug('diff:', document.querySelector('#show-history:checked'));
-        let Hist = document.querySelector('#show-history:checked');
+    if (document.querySelector("#show-history:checked") !== null) {
+        //console.debug("diff:", document.querySelector("#show-history:checked"));
+        let Hist = document.querySelector("#show-history:checked");
         showHist = Hist.checked;
         }
     else {
-        showHist = 'false';
+        showHist = "false";
     }
-    if (document.querySelector('#comp-translations:checked') !== null) {   
-        //console.debug('diff:', document.querySelector('#comp-translations:checked'));
-        let showDiff = document.querySelector('#comp-translations:checked');
+    if (document.querySelector("#comp-translations:checked") !== null) {   
+        //console.debug("diff:", document.querySelector("#comp-translations:checked"));
+        let showDiff = document.querySelector("#comp-translations:checked");
         showDifference = showDiff.checked;
     }
     else {
-        showDifference = 'false';
+        showDifference = "false";
     }
     
-    if (document.querySelector('#show-glotDictGlos:checked') !== null) {
-        //console.debug('diff:', document.querySelector('#comp-translations:checked'));
-        let showGlos = document.querySelector('#show-glotDictGlos:checked');
+    if (document.querySelector("#show-glotDictGlos:checked") !== null) {
+        //console.debug("diff:", document.querySelector("#comp-translations:checked"));
+        let showGlos = document.querySelector("#show-glotDictGlos:checked");
         showDictGlosLine = showGlos.checked;
     }
     else {
-        showDictGlosLine = 'false';
+        showDictGlosLine = "false";
     }
     chrome.storage.sync.set({
         apikey: apikey,
@@ -140,10 +140,10 @@ button.addEventListener('click', function () {
         showTransDiff: showDifference,
         glotDictGlos: showDictGlosLine
     });
-    //console.debug('Options saved: ', apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
+    //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  
     if (glossaryFile.value !== "") {
-        //console.debug('Options: ', glossaryFile);
+        //console.debug("Options: ", glossaryFile);
         chrome.storage.sync.set({ glossaryFile: glossaryFile.value.replace("C:\\fakepath\\", "") });
 
         chrome.storage.sync.set({ glossary: glossary });
@@ -177,7 +177,7 @@ button.addEventListener('click', function () {
     messageBox("info", "Settings successfully saved.<br>Please make sure that you enter<br>values in Destination Language<br> and select a Glossary File<br>and enter values in <br>Post Translation Replace");
 });
 
-let file = document.getElementById('glossary_file');
+let file = document.getElementById("glossary_file");
 let glossary = [];
 let glossaryA = [];
 let glossaryB = [];
@@ -206,20 +206,20 @@ let glossaryX = [];
 let glossaryY = [];
 let glossaryZ = [];
 
-file.addEventListener('change', function () {
+file.addEventListener("change", function () {
     var file = this.files[0];
     var entry = "";
     locale = "nl";
     console.debug
     var reader = new FileReader();
     reader.onload = function () {
-        var lines = this.result.split('\n');
-        // don't read first(header) and last(empty) lines
+        var lines = this.result.split("\n");
+        // don"t read first(header) and last(empty) lines
         for (var line = 1; line < lines.length - 1; line++) {
-            entry = lines[line].split(',');
+            entry = lines[line].split(",");
             if (entry[1] && entry[1].length > 0) {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                let value = entry[1].split('/');
+                let value = entry[1].split("/");
                 for (let val in value) {
                     if (value != ""){
                        value[val] = value[val].replaceAll("\"", "").trim();
@@ -333,16 +333,16 @@ function export_verbs_csv() {
     //console.debug("Export started:");
     // 13-03-2021 PSS added locale to export filename
     var destlang = destLangTextbox.value;
-    let export_file = 'export_verbs_' + destlang + '.csv';
+    let export_file = "export_verbs_" + destlang + ".csv";
     setPostTranslationReplace(verbsTextbox.value);
     let arrayData = [];  
     for (let i = 0; i < replaceVerb.length; i++) {
           arrayData[i] = { original: replaceVerb[i][0], replacement:  replaceVerb[i][1] };
          }
    // let header ="original,replace");
-    let delimiter = ',';
+    let delimiter = ",";
     let arrayHeader = ["original", "translation", "country"];
-    let header = arrayHeader.join(delimiter) + '\n';
+    let header = arrayHeader.join(delimiter) + "\n";
        let csv = header;
        arrayData.forEach(obj => {
            let row = [];
@@ -354,12 +354,12 @@ function export_verbs_csv() {
            csv += row.join(delimiter) + "\n";
        });
 
-       let csvData = new Blob([csv], { type: 'text/csv' });  
+       let csvData = new Blob([csv], { type: "text/csv" });  
        let csvUrl = URL.createObjectURL(csvData);
 
-       let hiddenElement = document.createElement('a');
+       let hiddenElement = document.createElement("a");
        hiddenElement.href = csvUrl;
-       hiddenElement.target = '_blank';
+       hiddenElement.target = "_blank";
        hiddenElement.download = export_file;
        hiddenElement.click();
        messageBox("info", "Export verbs ready");
@@ -368,11 +368,11 @@ function export_verbs_csv() {
 // PSS 08-03-2021 added this to prepare data for export to csv   
 function setPostTranslationReplace(postTranslationReplace) {
      replaceVerb = [];
-     let lines = postTranslationReplace.split('\n');
+     let lines = postTranslationReplace.split("\n");
      lines.forEach(function (item) {
      // Handle blank lines
      if (item != "") {
-       replaceVerb.push(item.split(','));
+       replaceVerb.push(item.split(","));
        }
     });
 }
@@ -382,8 +382,8 @@ var obj_csv = {
     dataFile:[]
     };
 
-let input = document.getElementById('importPost');
-input.addEventListener('change', function () {   
+let input = document.getElementById("importPost");
+input.addEventListener("change", function () {   
 if (input.files && input.files[0]) {
     let reader = new FileReader();
         // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
@@ -393,7 +393,7 @@ if (input.files && input.files[0]) {
         obj_csv.size = e.total;
         obj_csv.dataFile = e.target.result;
        //console.log(obj_csv.dataFile)
-       document.getElementById('text_verbs').value = "";
+       document.getElementById("text_verbs").value = "";
        parseData(obj_csv.dataFile);             
     };
    }
@@ -406,7 +406,7 @@ function parseData(data) {
     lbreak.forEach(res => {
         csvData.push(res.split(","));
         if (counter >0) {
-            verbsTextbox.value += res.split(",") + '\n';
+            verbsTextbox.value += res.split(",") + "\n";
         }
         ++counter;
         //console.debug("counter:",counter);
