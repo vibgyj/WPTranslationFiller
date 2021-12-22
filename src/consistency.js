@@ -134,7 +134,7 @@ function scrapeconsistency(locale, org_verb, wrong_verb) {
     SavelocalButton.className = "return-button";
     SavelocalButton.innerText = "Close window";
     SavelocalButton.onclick = function() {
-    submitClicked(myWindow, consistsWindow);
+		submitClicked(currWindow, consistsWindow);
 	};
 
 	const br = currWindow.document.createElement("br");
