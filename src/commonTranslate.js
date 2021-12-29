@@ -237,6 +237,9 @@ function checkComments(comment) {
         case "Theme URI of the theme":
             toTranslate = false;
             break;
+        case "Theme URI of the plugin/theme":
+            toTranslate = false;
+            break;
         case "Author URI of the theme":
             toTranslate = false;
             break;
