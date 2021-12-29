@@ -105,7 +105,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
-        translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+        if (!CheckUrl(translatedText, replaceVerb[i][0])){
+            translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+        }
     }
     // Make translation to start with same case (upper/lower) as the original.
     if (isStartsWithUpperCase(original)) {
@@ -133,6 +135,24 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
 
     return translatedText;
+}
+
+function CheckUrl(translatedText,searchword) {
+    //console.debug('tekst: ', translatedText, searchword);
+    const mymatches = translatedText.match(/\b((https?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
+    if (mymatches != null) {
+        for (const match of mymatches) {
+            foundmysearch = match.includes(searchword);
+            //console.debug("found:", foundmysearch, searchword);
+            if (foundmysearch) {
+                break;
+            }
+        }
+    }
+    else {
+        foundmysearch = false;
+    }
+    return foundmysearch;
 }
 
 function checkStartEnd(original, translatedText) {
