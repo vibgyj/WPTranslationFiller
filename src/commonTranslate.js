@@ -42,7 +42,9 @@ const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&\w{2,6};
 function preProcessOriginal(original, preverbs, translator) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
-        original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
+            if (!CheckUrl(original, preverbs[i][0])) {
+                original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
+            }
     }
     // 15-05-2021 PSS added check for translator
     if (translator == "google") {
@@ -105,7 +107,13 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
-        if (!CheckUrl(translatedText, replaceVerb[i][0])){
+        // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
+        if (replaceVerb[i][1] != '#') {
+            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+            }
+        }
+        else {
             translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
         }
     }
@@ -137,13 +145,13 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     return translatedText;
 }
 
-function CheckUrl(translatedText,searchword) {
+function CheckUrl(translated,searchword) {
     //console.debug('tekst: ', translatedText, searchword);
-    const mymatches = translatedText.match(/\b((https?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
+    const mymatches = translated.match(/\b((https?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
     if (mymatches != null) {
         for (const match of mymatches) {
             foundmysearch = match.includes(searchword);
-            //console.debug("found:", foundmysearch, searchword);
+            console.debug("found:", foundmysearch, searchword,match);
             if (foundmysearch) {
                 break;
             }
