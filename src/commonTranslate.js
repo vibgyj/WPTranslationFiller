@@ -108,7 +108,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
-        if (replaceVerb[i][1] != '#') {
+        if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
