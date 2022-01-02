@@ -3,9 +3,9 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-
-function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line,formal,locale) {
-    //console.debug("deepl row: ", rowId, transtype, plural_line, original);
+                        
+function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower) {
+    //console.debug("deepl row: ", rowId, transtype, plural_line, original, convertToLower);
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     //var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     //var myArray = myRe.exec(originalPreProcessed);
@@ -15,10 +15,10 @@ function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId
     //else {
     //    var trntype = "html";
     // }
-    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line,formal,locale);
+    sendAPIRequestDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower);
 }
 
-function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale) {
+function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -45,7 +45,7 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
             if (this.response != null) {
                 translatedText = responseObj.translations[0].text;
                // console.debug("deepl row: ", rowId, transtype, plural_line, original);
-                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl");
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
                 //console.debug('sendAPIRequest translatedText after postProces:', translatedText);
                 if (transtype == "single") {
                     textareaElem = record.querySelector("textarea.foreign-text");

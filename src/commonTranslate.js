@@ -82,7 +82,7 @@ function preProcessOriginal(original, preverbs, translator) {
     return original;
 }
 
-function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator) {
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
@@ -105,29 +105,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
         //console.debug('after replace x:', translatedText);
     }
-    // replverb contains the verbs to replace
-    for (let i = 0; i < replaceVerb.length; i++) {
-        // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
-        if (replaceVerb[i][1] != '#') {
-            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-            }
-        }
-        else {
-            translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-        }
-    }
-    // Make translation to start with same case (upper/lower) as the original.
-    if (isStartsWithUpperCase(original)) {
-        if (!isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
-        }
-    }
-    else {
-        if (isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
-        }
-    }
+    
     // check if the returned translation does have the same ending as the original
     translatedText = checkStartEnd(original, translatedText);
 
@@ -141,12 +119,83 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
            //console.debug("pos of </a>:", pos, found, translatedText);
         }
     }
+    // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
+    if (convertToLower == true) {
+        translatedText = convert_lower(translatedText);
+    }
 
+    // Make translation to start with same case (upper/lower) as the original.
+    if (isStartsWithUpperCase(original)) {
+        if (!isStartsWithUpperCase(translatedText)) {
+            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+        }
+    }
+    else {
+        if (isStartsWithUpperCase(translatedText)) {
+            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+        }
+    }
+
+    // replverb contains the verbs to replace
+    for (let i = 0; i < replaceVerb.length; i++) {
+        // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
+        if (replaceVerb[i][1] != '#') {
+            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+            }
+        }
+        else {
+            translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+        }
+    }
     return translatedText;
 }
 
+function capt(word) {
+    return word
+        .toLowerCase()
+        .replace(/\w/, firstLetter => firstLetter.toUpperCase());
+}
+
+// check if the provided string has more then one Capital
+function isUpperCase(myString, pos) {
+    return (myString.charAt(pos) == myString.charAt(pos).toUpperCase());
+}
+
+function convert_lower(text) {
+    let wordsArray = text.split(' ')
+    let capsArray = []
+    var counter = 0;
+    wordsArray.forEach(word => {
+        // do not convert the first word in sentence to lowercase
+        if (counter != 0) {
+            // if word contains all uppercase, then do not convert it to lowercase!!
+            if (isUpperCase(word, 1) == false) {
+                capsArray.push(word[0].toLowerCase() + word.slice(1));
+            }
+            else {
+                capsArray.push(word);
+            }
+        }
+        else {
+            capsArray.push(word[0].toUpperCase() + word.slice(1))
+        }
+        counter++;
+    });
+    converted = capsArray.join(' ');
+    // Because now all sentences start with lowercase is longer texts, we need to put back the uppercase at the start of each sentence
+    converted = applySentenceCase(converted);
+    return converted
+}
+
+function applySentenceCase(str) {
+    // Convert each first word in a sentence to uppercase
+    return str.replace(/.+?[\.\?\!](\s|$)/g, function (txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1);
+    });
+}
 function CheckUrl(translated,searchword) {
-    //console.debug('tekst: ', translatedText, searchword);
+    // check if the text contains an URL
     const mymatches = translated.match(/\b((https?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
     if (mymatches != null) {
         for (const match of mymatches) {
@@ -493,7 +542,7 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
     return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb};
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower) {
     // 19-06-2021 PSS added animated button for translation at translatePage
     locale = checkLocale();
     let translateButton = document.querySelector(".paging a.translation-filler-button");
@@ -581,13 +630,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "hide";
                         }
                         if (transsel == "google") {
-                            googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line,locale);
+                            googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
                         }
                         else if (transsel == "deepl") {
-                            deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line,formal,locale);
+                            deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower);
                         }
                         else if (transsel == "microsoft") {
-                            microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line,locale);
+                            microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
                         }
                     }
                     else {
@@ -681,13 +730,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
                                 if (transsel == "google") {
-                                    translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line,locale);
+                                    translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
                                 }
                                 else if (transsel == "deepl") {
-                                    translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype, plural_line,formal,locale);
+                                    translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower);
                                 }
                                 else if (transsel == "microsoft") {
-                                    translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line,locale);
+                                    translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
                                 }
                             }
                             else {
@@ -811,7 +860,8 @@ function check_span_missing(row,plural_line) {
     }
 }
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace,formal) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower) {
+    locale = checkLocale();
     let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
     translateButton.className += " started";
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
@@ -856,13 +906,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        translatedText = googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line);
+                        translatedText = googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
                     }
                     else if (transsel == "deepl") {
-                        translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line,formal);
+                        translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower);
                     }
                     else if (transsel == "microsoft") {
-                        translatedText = microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line);
+                        translatedText = microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
                     }
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "hide";
                     let textareaElem = e.querySelector("textarea.foreign-text");
@@ -897,13 +947,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 plural_line = "2";
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line);
+                        translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
                     }
                     else if (transsel == "deepl") {
-                        translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line,formal);
+                        translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower);
                     }
                     else if (transsel == "microsoft") {
-                        translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line);
+                        translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
                     }
                 }
                 else {

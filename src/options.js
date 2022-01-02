@@ -33,10 +33,12 @@ let preverbsTextbox = document.getElementById("text_pre_verbs");
 let showHistCheckbox = document.getElementById("show-history");
 let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
+let showConvertCheckbox = document.getElementById("show-convertToLower");
+
 //console.debug("Diff:", showDiffCheckbox);
 //console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos"], function (data) {
+chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
@@ -80,6 +82,14 @@ chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "d
         else {
             showGlotCheckbox.checked = false;
             //document.getElementById("comp-translations").checked = false;
+        }
+    }
+    if (data.convertToLower != "null") {
+        if (data.convertToLower == true) {
+            showConvertCheckbox.checked = true;
+        }
+        else {
+            showConvertCheckbox.checked = false;
         }
     }
     //console.log("Read options: ", data);
@@ -128,17 +138,26 @@ button.addEventListener("click", function () {
     else {
         showDictGlosLine = "false";
     }
+
+    if (document.querySelector("#show-convertToLower:checked") !== null) {
+        let showConvert = document.querySelector("#show-convertToLower:checked");
+        showConvertToLower = showConvert.checked;
+    }
+    else {
+        showConvertToLower = "false";
+    }
     chrome.storage.sync.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
-        apikeyMicrosoft:apikeyMicrosoft,
+        apikeyMicrosoft: apikeyMicrosoft,
         transsel: transsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation,
         showHistory: showHist,
         showTransDiff: showDifference,
-        glotDictGlos: showDictGlosLine
+        glotDictGlos: showDictGlosLine,
+        convertToLower: showConvertToLower
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  
