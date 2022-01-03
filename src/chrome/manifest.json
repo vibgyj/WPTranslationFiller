@@ -17,7 +17,6 @@
   "permissions": [
     "storage",
     "activeTab",
-    "tabs",
     "https://api.deepl.com/*",
     "https://translation.googleapis.com/*",
     "https://translate.wordpress.org/*",
