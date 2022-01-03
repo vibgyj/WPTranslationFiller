@@ -6,7 +6,7 @@
 var result="";
 var res = "";
 
-function googleTranslate(original, destlang, e, apikey, preverbs, rowId, transtype, plural_line) {
+function googleTranslate(original, destlang, e, apikey, preverbs, rowId, transtype, plural_line, locale, convertToLower) {
     var trntype;
     let originalPreProcessed = preProcessOriginal(original, preverbs,"google");
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
@@ -24,11 +24,11 @@ function googleTranslate(original, destlang, e, apikey, preverbs, rowId, transty
         "target": destlang,
         "format": trntype
     };
-    translatedText=sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed,rowId,transtype,plural_line);
+    translatedText = sendAPIRequest(e, destlang, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower);
 }
 
 
-function sendAPIRequest(record, language, apikey, requestBody, original, originalPreProcessed,rowId,transtype,plural_line) {
+function sendAPIRequest(record, language, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower) {
     //console.debug("sendAPIRequest original_line Google:", originalPreProcessed);
     var row = "";
     var translatedText = "";
@@ -51,7 +51,7 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
             var responseObj = JSON.parse(this.responseText);
             translatedText = responseObj.data.translations[0].translatedText;
             //console.debug("sendAPIRequest result before postProces:", translatedText);
-            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google");
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower);
             //console.debug("sendAPIRequest translatedText after postProces:", translatedText);
             //console.debug("sendAPIRequest transtype:", transtype);
             if (transtype == "single") {
@@ -155,7 +155,7 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
                 // The line below is necessary to update the save button on the left in the panel
                 current.innerText = "transFill";
                 current.value = "transFill";
-                validateEntry(language, textareaElem1, "", "", rowId);
+                validateEntry(language, textareaElem1, "", "", rowId, locale);
                 //console.debug("Validate entry textareaElem1")
             }
             //14-09-2021 PSS changed the class to meet GlotDict behavior

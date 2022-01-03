@@ -7,7 +7,7 @@ var textareaElem = "";
 var preview = "";
 var translatedText = "";
 var trntype = "";
-function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype, plural_line) {
+function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype, plural_line, locale, convertToLower) {
     var originalPreProcessed = preProcessOriginal(original, preverbs, "microsoft");
     //console.debug("microsoftTranslate result of preProcessOriginal:", originalPreProcessed);
     //var myRe = |(\</?([a-zA-Z]+[1-6]?)(\s[^>]*)?(\s?/)?\>|)/gm;
@@ -19,10 +19,10 @@ function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, ro
     else {
         trntype = "html";
     }
-    sendAPIRequestMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line);
+    sendAPIRequestMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line, locale, convertToLower);
 }
 
-function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line) {
+function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line, locale, convertToLower) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -64,7 +64,7 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
              translatedText = restrans[0].translations[0].text;
             //console.debug("translated text:", translatedText);
             // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
-            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl");
+            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
             //console.debug("sendAPIRequest translatedText after postProces:", translatedText);
             if (transtype == "single") {
                 // console.debug("sendAPIRequest single:");
@@ -167,7 +167,7 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                 // The line below is necessary to update the save button on the left in the panel
                 current.innerText = "transFill";
                 current.value = "transFill";
-                validateEntry(language, textareaElem1, "", "", rowId);
+                validateEntry(language, textareaElem1, "", "", rowId, locale);
                 //console.debug("Validate entry textareaElem1")
             }
             //var currentClass = document.querySelector(`#editor-${rowId}`);
