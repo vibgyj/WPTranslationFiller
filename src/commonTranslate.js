@@ -204,7 +204,7 @@ function CheckUrl(translated,searchword) {
     if (mymatches != null) {
         for (const match of mymatches) {
             foundmysearch = match.includes(searchword);
-            console.debug("found:", foundmysearch, searchword,match);
+            //console.debug("found:", foundmysearch, searchword,match);
             if (foundmysearch) {
                 break;
             }

@@ -15,13 +15,7 @@
     ]
   },
   "permissions": [
-    "storage",
-    "activeTab",
-    "https://api.deepl.com/*",
-    "https://translation.googleapis.com/*",
-    "https://translate.wordpress.org/*",
-    "https://api.languagetoolplus.com/*",
-    "https://api.cognitive.microsofttranslator.com/*"
+    "storage"
   ],
   "options_page": "options.html",
   "content_scripts": [

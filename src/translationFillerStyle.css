@@ -53,13 +53,13 @@ local.paging a.translation-filler-button {
 
 .paging a.translation-filler-button {
     background: blue;
-    color: white;
+    color: white !important;
     padding-left: 5px;
     padding-right: 5px;
 }
 
 .paging a.translation-filler-button:hover {
-    color: lightgray;
+    color: lightgray !important;
 }
 
 .paging a.translation-filler-button.started {
@@ -149,9 +149,13 @@ local.paging a.translation-filler-button {
 
 .paging a.check_translation-button {
     background: blue;
-    color: white;
+    color: white !important;
     padding-left: 5px;
     padding-right: 5px;
+}
+
+.paging a.check_translation-button:hover {
+        color: lightgray !important;
 }
 
 .paging a.check_translation-button {
@@ -262,13 +266,14 @@ local.paging a.translation-filler-button {
 
 .paging a.export_translation-button {
     background: darkcyan;
-    color: white;
+    color: white !important;
     padding-left: 5px;
     padding-right: 5px;
 }
 
-.paging a.export_translation-button {
-    color: lightgray;
+
+.paging a.export_translation-button:hover {
+    color: lightgray !important;
 }
 
 .paging a.export_translation-button.ready {
@@ -297,7 +302,7 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .export_translation-button:hover {
     background-color: blue;
-    color: lightgray;
+    color: lightgray !important;
 }
 
 .panel-header-actions .export_translation-button::before {
@@ -315,13 +320,13 @@ local.paging a.translation-filler-button {
 
 .paging a.import_translation-button {
     background: darkcyan;
-    color: white;
+    color: white !important;
     padding-left: 5px;
     padding-right: 5px;
 }
 
-.paging a.import_translation-button {
-    color: lightgray;
+.paging a.import_translation-button:hover {
+    color: lightgray !important;
 }
 
 .paging a.import_translation-button.ready {
