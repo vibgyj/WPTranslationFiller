@@ -178,7 +178,10 @@ function convert_lower(text) {
             }
         }
         else {
-            capsArray.push(word[0].toUpperCase() + word.slice(1))
+            // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
+            if (typeof word[0] != "undefined") {
+                capsArray.push(word[0].toUpperCase() + word.slice(1))
+            }
         }
         counter++;
     });
@@ -201,7 +204,7 @@ function CheckUrl(translated,searchword) {
     if (mymatches != null) {
         for (const match of mymatches) {
             foundmysearch = match.includes(searchword);
-            console.debug("found:", foundmysearch, searchword,match);
+            //console.debug("found:", foundmysearch, searchword,match);
             if (foundmysearch) {
                 break;
             }
