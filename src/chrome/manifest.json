@@ -4,9 +4,7 @@
   "version": "1.6.3",
   "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
   "web_accessible_resources": [
-    "//cute-alert.css",
-    "/img/*",
-	  "//cute-alert.js"
+    "/img/*"
   ],
   "background": {
     "scripts": [
