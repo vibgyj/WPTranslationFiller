@@ -73,10 +73,14 @@ jobs:
           cp src/img/question.svg src/firefox/img/question.svg
           cp src/img/success.svg src/firefox/img/success.svg
           cp src/img/warning.svg src/firefox/img/warning.svg
-          echo 'Creating zip...'
-          cd ./src
-          zip -r chrome-extension chrome
-          zip -r firefox-addon firefox
+          echo 'Creating Chrome zip...'
+          cd ./src/chrome
+          zip -r chrome-extension .
+          echo 'Creating Firefox zip...'
+          cd ../..
+          ls
+          cd ./src/firefox
+          zip -r firefox-addon .
           ls
       - name: Create Release
         id: create_release
@@ -95,7 +99,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./src/chrome-extension.zip
+          asset_path: ./src/chrome/chrome-extension.zip
           asset_name: chrome-extension.zip
           asset_content_type: application/zip
       - name: Upload Firefox addon Release Asset
@@ -105,6 +109,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./src/firefox-addon.zip
+          asset_path: ./src/firefox/firefox-addon.zip
           asset_name: firefox-addon.zip
           asset_content_type: application/zip
