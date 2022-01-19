@@ -29,6 +29,7 @@ jobs:
         run: |
           ls
           ls src
+          echo 'Copying Chrome files...'
           cp src/contentScript.js src/chrome/contentScript.js
           cp src/commonTranslate.js src/chrome/commonTranslate.js
           cp src/deeplTranslate.js src/chrome/deeplTranslate.js
@@ -50,6 +51,7 @@ jobs:
           cp src/img/question.svg src/chrome/img/question.svg
           cp src/img/success.svg src/chrome/img/success.svg
           cp src/img/warning.svg src/chrome/img/warning.svg
+          echo 'Copying Firefox files...'
           cp src/contentScript.js src/firefox/contentScript.js
           cp src/commonTranslate.js src/firefox/commonTranslate.js
           cp src/deeplTranslate.js src/firefox/deeplTranslate.js
@@ -71,9 +73,11 @@ jobs:
           cp src/img/question.svg src/firefox/img/question.svg
           cp src/img/success.svg src/firefox/img/success.svg
           cp src/img/warning.svg src/firefox/img/warning.svg
+          echo 'Creating zip...'
           cd ./src
           zip -r chrome-extension chrome
           zip -r firefox-addon firefox
+          ls
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -91,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./chrome-extension.zip
+          asset_path: ./src/chrome-extension.zip
           asset_name: chrome-extension.zip
           asset_content_type: application/zip
       - name: Upload Firefox addon Release Asset
@@ -101,6 +105,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./firefox-addon.zip
+          asset_path: ./src/firefox-addon.zip
           asset_name: firefox-addon.zip
           asset_content_type: application/zip
