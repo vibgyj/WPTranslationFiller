@@ -37,6 +37,7 @@ jobs:
           cp src/microsoftTranslate.js src/chrome/microsoftTranslate.js
           cp src/options.js src/chrome/options.js
           cp src/options.html src/chrome/options.html
+          cp src/cute-alert.css src/chrome/cute-alert.css
           cp src/translationFillerStyle.css src/chrome/translationFillerStyle.css
           cp src/jsstore.js src/chrome/jsstore.js
           cp src/jsstore.worker.js src/chrome/jsstore.worker.js
@@ -59,6 +60,7 @@ jobs:
           cp src/microsoftTranslate.js src/firefox/microsoftTranslate.js
           cp src/options.js src/firefox/options.js
           cp src/options.html src/firefox/options.html
+          cp src/cute-alert.css src/firefox/cute-alert.css
           cp src/translationFillerStyle.css src/firefox/translationFillerStyle.css
           cp src/jsstore.js src/firefox/jsstore.js
           cp src/jsstore.worker.js src/firefox/jsstore.worker.js
