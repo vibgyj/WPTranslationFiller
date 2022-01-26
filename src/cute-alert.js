@@ -18,13 +18,16 @@ function cuteAlert({
             body = myWindow.document.getElementById("container");
             //console.debug("body:", body);
             if (body == null) {
-                body = document.getElementById("wordpress-org");
+                // fix for #177 message no longer shown due to change of template on WordPress.org
+                //body = document.getElementById("wordpress-org");
+                body = document.getElementsByClassName("gp-content")[0];
                 //console.debug("document:", document);
             }
         }
         else {
            // console.debug("myWindow not defined!");
-            body = document.getElementById('wordpress-org');
+            // fix for #177 message no longer shown due to change of template on WordPress.org
+            body = document.getElementsByClassName("gp-content")[0];
             //const body = document.getElementsByClassName("logged-in");
         }
         //const body = myWindow.document.getElementsByTagName("body");
@@ -78,7 +81,7 @@ function cuteAlert({
       </div>
     </div>
     `;
-
+        console.debug("content of body:", body);
         body.insertAdjacentHTML("beforeend", template);
 
     const alertWrapper = myWindow.document.querySelector(".alert-wrapper");
@@ -132,13 +135,17 @@ function cuteToast({ type, message, timer = 5000, myWindow = "" }) {
           body = myWindow.document.getElementById("container");
           //console.debug("body:", body);
           if (body == null) {
-              body = document.getElementById("wordpress-org");
+              // fix for #177 message no longer shown due to change of template on WordPress.org
+              body = document.getElementsByClassName("gp-content")[0];
+              //body = document.getElementById("wordpress-org");
               //console.debug("document:", document);
           }
       }
       else {
           // console.debug("myWindow not defined!");
-          body = document.getElementById('wordpress-org');
+          // fix for #177 message no longer shown due to change of template on WordPress.org
+          body = document.getElementsByClassName("gp-content")[0];
+          //body = document.getElementById('wordpress-org');
           //const body = document.getElementsByClassName("logged-in");
       }
       if (document.querySelector(".toast-container")) {
