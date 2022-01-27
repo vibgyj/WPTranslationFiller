@@ -17,7 +17,7 @@ function scrapeconsistency(locale, org_verb, wrong_verb) {
     link.href = chrome.runtime.getURL("cute-alert.css");
 	currWindow.document.getElementsByTagName("head")[0].appendChild(link);
 	const style = currWindow.document.createElement("style");
-    style.innerHTML = `
+	style.innerHTML = `
       input.searchfor {
         background-color: lightgrey !important;
         color:black;
@@ -79,7 +79,19 @@ function scrapeconsistency(locale, org_verb, wrong_verb) {
         margin: auto;
         width: 50%;
       	   }
+    #toast-container {
+    top: 5px;
+    left: 15px;
+    max-width: 350px;
+    overflow: hidden;
+    position: fixed;
+    border-radius: 5px;
+    z-index: 999999;
+}
     `;
+	var element = currWindow.document.getElementsByTagName("body")[0];
+	element.setAttribute("id" , "consistency");
+
 	currWindow.document.head.appendChild(style);
     //myWindow.focus();
 	var dv = currWindow.document.createElement("div");
@@ -156,6 +168,10 @@ function scrapeconsistency(locale, org_verb, wrong_verb) {
 	const para = currWindow.document.createElement("p");
 	const paranode = currWindow.document.createTextNode("-->Please be patient it can sometimes take a bit before the result windows are opened!");
 	currWindow.document.getElementById("paradiv").appendChild(paranode);
+	var toastcontainer = currWindow.document.createElement("div");
+	toastcontainer.setAttribute("id", "toast-container");
+	currWindow.document.getElementsByTagName("body")[0].appendChild(toastcontainer);
+
 }
 
 function submitClicked(myWindow, consistsWindow) {
@@ -166,6 +182,7 @@ function submitClicked(myWindow, consistsWindow) {
 function startsearch(currWindow, curloc, locale, consistsWindow) {
 	event.preventDefault();
 	var myWindow = currWindow;
+	var wind;
     var searchverb = currWindow.document.getElementById("myForm").elements.namedItem("searchfor").value;
 	var replverb = currWindow.document.getElementById("myForm").elements.namedItem("replverb").value;
 	var wrongverb = currWindow.document.getElementById("myForm").elements.namedItem("wrongverb").value;
@@ -180,7 +197,8 @@ function startsearch(currWindow, curloc, locale, consistsWindow) {
 			};
             confirm_msg = "A log of replaced translations will be downloaded.\n";
             confirm_msg += "Before downloading the file the windows will be opened!\n";
-            confirm_msg += "The records will be replaced are you sure to continue?";
+			confirm_msg += "The records will be replaced are you sure to continue?";
+			
             cuteAlert({
                 type: "question",
                 title: "Create a back-up for check afterwards",
@@ -189,13 +207,16 @@ function startsearch(currWindow, curloc, locale, consistsWindow) {
 				cancelText: "No stop",
 				closeStyle: "",
 				myWindow: currWindow,
-                }).then((e) => {
+			}).then((e) => {
 				if (e == "confirm") {
 					cuteToast({
 						type: "info",
 						message: "Please wait while data is fetched\n",
-						timer: 5000,
-						myWindow
+						timer: 2000,
+						playSound: null,
+						title: "Fetching records",
+						img: "/img",
+						myWindow:currWindow,
 					});
 					fetch(search_url, myInit)
 						.then(function (response) {
@@ -285,7 +306,7 @@ function startsearch(currWindow, curloc, locale, consistsWindow) {
 							}
 						})
 						.catch(function (err) {
-							console.log("Failed to fetch page: ", err);
+							//console.log("Failed to fetch page: ", err);
 							cuteAlert({
 								type: "error",
 								title: "Message",

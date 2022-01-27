@@ -1,77 +1,81 @@
 // Alert box design by Igor Ferrão de Souza: https://www.linkedin.com/in/igor-ferr%C3%A3o-de-souza-4122407b/
-// 13-08-2021 PSS added myWindow as parameter, to be able to show it on blank screen
-function cuteAlert({
-  type,
-  title,
-  message,
-  buttonText = "OK",
-  confirmText = "OK",
-  cancelText = "Cancel",
-  myWindow = "",
-  closeStyle
-}) {
-    return new Promise((resolve) => {
-        //console.debug("window:", myWindow);
+
+const cuteAlert = ({
+    type,
+    title,
+    message,
+    img = "/img",
+    buttonText = 'OK',
+    confirmText = 'OK',
+    vibrate = [],
+    playSound = "/error-alert.flac",
+    cancelText = 'Cancel',
+    closeStyle,
+    myWindow = ""
+}) => {
+    return new Promise(resolve => {
+        const existingAlert = document.querySelector('.alert-wrapper');
+
+        if (existingAlert) {
+            existingAlert.remove();
+        }
         var body;
-        setInterval(() => { }, 5000);
         if (typeof myWindow != 'string') {
             body = myWindow.document.getElementById("container");
-            //console.debug("body:", body);
             if (body == null) {
                 // fix for #177 message no longer shown due to change of template on WordPress.org
                 //body = document.getElementById("wordpress-org");
                 body = document.getElementsByClassName("gp-content")[0];
-                //console.debug("document:", document);
             }
         }
         else {
-           // console.debug("myWindow not defined!");
-            // fix for #177 message no longer shown due to change of template on WordPress.org
-            body = document.getElementsByClassName("gp-content")[0];
-            //const body = document.getElementsByClassName("logged-in");
+            const body = document.querySelector('body');
         }
-        //const body = myWindow.document.getElementsByTagName("body");
-        //console.debug("bodyresult:", body);
         const scripts = document.getElementsByTagName("script");
-        let currScript = "";
         let src = "";
+
         for (let script of scripts) {
-          if (script.src.includes("cute-alert.js")) {
-              currScript = script;
-              let src = currScript.src;
-              src = src.substring(0, src.lastIndexOf("/"));
+            if (script.src.includes("cute-alert.js")) {
+                src = script.src.substring(0, script.src.lastIndexOf('/'));
             }
         }
-        // 07-09-2021 PSS added extra check to prevent empty src and missing "/"
         if (src === "") {
             // 13-08-2021 Modified the code below to be able to use it in manifest
-            // 31-10-2021 Old call was deprecated, so altered it to current command
             src = chrome.runtime.getURL('/');
+            src = src.substring(0, src.lastIndexOf('/'));
         }
-    let closeStyleTemplate = "alert-close";
-    if (closeStyle == "circle") {
-      closeStyleTemplate = "alert-close-circle";
-    }
 
-    let btnTemplate = `
+        let btnTemplate = `
+	
     <button class="alert-button ${type}-bg ${type}-btn">${buttonText}</button>
     `;
-    if (type === "question") {
-      btnTemplate = `
+
+        if (type === 'question') {
+            btnTemplate = `
       <div class="question-buttons">
         <button class="confirm-button ${type}-bg ${type}-btn">${confirmText}</button>
         <button class="cancel-button error-bg error-btn">${cancelText}</button>
       </div>
       `;
-    }
+        }
 
-    const template = `
+        if (vibrate.length > 0) {
+            navigator.vibrate(vibrate);
+        }
+
+        if (playSound !== null && type === "error") {
+            let sound = new Audio(src + playSound);
+            sound.play();
+        }
+        const template = `
     <div class="alert-wrapper">
       <div class="alert-frame">
-        <div class="alert-header ${type}-bg">
-          <span class="${closeStyleTemplate}">X</span>
-          <img class="alert-img" src="${src}img/${type}.svg" />
-          
+        ${img !== '' ? '<div class="alert-header ' + type + '-bg">' : '<div>'}
+          <span class="alert-close ${closeStyle === 'circle'
+                ? 'alert-close-circle'
+                : 'alert-close-default'
+            }">X</span>
+          ${img !== '' ? '<img class="alert-img" src="' + src + img + '/' + type + '.svg' + '" />' : ''}
         </div>
         <div class="alert-body">
           <span class="alert-title">${title}</span>
@@ -81,121 +85,158 @@ function cuteAlert({
       </div>
     </div>
     `;
-        console.debug("content of body:", body);
-        body.insertAdjacentHTML("beforeend", template);
 
-    const alertWrapper = myWindow.document.querySelector(".alert-wrapper");
-    const alertFrame = myWindow.document.querySelector(".alert-frame");
-    const alertClose = myWindow.document.querySelector(`.${closeStyleTemplate}`);
+        body.insertAdjacentHTML('afterend', template);
 
-    if (type === "question") {
-      const confirmButton = myWindow.document.querySelector(".confirm-button");
-      const cancelButton = myWindow.document.querySelector(".cancel-button");
+        const alertWrapper = myWindow.document.querySelector('.alert-wrapper');
+        const alertFrame = myWindow.document.querySelector('.alert-frame');
+        const alertClose = myWindow.document.querySelector('.alert-close');
 
-      confirmButton.addEventListener("click", () => {
-        alertWrapper.remove();
-        resolve("confirm");
-      });
+        if (type === 'question') {
+            const confirmButton = myWindow.document.querySelector('.confirm-button');
+            const cancelButton = myWindow.document.querySelector('.cancel-button');
 
-      cancelButton.addEventListener("click", () => {
-        alertWrapper.remove();
-        resolve();
-      });
-    } else {
-      const alertButton = myWindow.document.querySelector(".alert-button");
+            confirmButton.addEventListener('click', () => {
+                alertWrapper.remove();
+                resolve('confirm');
+            });
 
-      alertButton.addEventListener("click", () => {
-        alertWrapper.remove();
-        resolve();
-      });
-    }
+            cancelButton.addEventListener('click', () => {
+                alertWrapper.remove();
+                resolve();
+            });
+        } else {
+            const alertButton = myWindow.document.querySelector('.alert-button');
 
-    alertClose.addEventListener("click", () => {
-      alertWrapper.remove();
-      resolve();
+            alertButton.addEventListener('click', () => {
+                alertWrapper.remove();
+                resolve('ok');
+            });
+        }
+
+        alertClose.addEventListener('click', () => {
+            alertWrapper.remove();
+            resolve('close');
+        });
+
+        /*     alertWrapper.addEventListener('click', () => {
+              alertWrapper.remove();
+              resolve();
+            }); */
+
+        alertFrame.addEventListener('click', e => {
+            e.stopPropagation();
+        });
     });
+};
 
-    alertWrapper.addEventListener("click", () => {
-      alertWrapper.remove();
-      resolve();
-    });
+const cuteToast = ({ type, message, timer = 5000, vibrate = [], playSound = "/error-alert.flac", img = "/img", title = "", myWindow }) => {
+    var body;
+    return new Promise(resolve => {
+        //console.debug("params:", type, message, timer, vibrate, playSound, img, title, myWindow);
+        if (typeof myWindow == "undefined") {
+            body = document.querySelector("body");
+        }
+        else {
+             body = myWindow.document.querySelector("#consistency");
+        }
 
-    alertFrame.addEventListener("click", (e) => {
-      e.stopPropagation();
-    });
-  });
-}
-// 13-08-2011 PSS added myWindow as parameter
-function cuteToast({ type, message, timer = 5000, myWindow = "" }) {
-    var currWindow = myWindow;
-    return new Promise((resolve) => {
-    
-    //const body = myWindow.document.querySelector("body");
-      if (typeof myWindow != 'string') {
-          body = myWindow.document.getElementById("container");
-          //console.debug("body:", body);
-          if (body == null) {
-              // fix for #177 message no longer shown due to change of template on WordPress.org
-              body = document.getElementsByClassName("gp-content")[0];
-              //body = document.getElementById("wordpress-org");
-              //console.debug("document:", document);
-          }
-      }
-      else {
-          // console.debug("myWindow not defined!");
-          // fix for #177 message no longer shown due to change of template on WordPress.org
-          body = document.getElementsByClassName("gp-content")[0];
-          //body = document.getElementById('wordpress-org');
-          //const body = document.getElementsByClassName("logged-in");
-      }
-      if (document.querySelector(".toast-container")) {
-          document.querySelector(".toast-container").remove();
-      }
-    const scripts = document.getElementsByTagName("script");
-    let currScript = "";
-    let src = "";
-      for (let script of scripts) {
-          if (script.src.includes("cute-alert.js")) {
-              currScript = script;
-              let src = currScript.src;
-              src = src.substring(0, src.lastIndexOf("/"));
-          }
-      }
-      // 07-09-2021 PSS added extra check to prevent empty src and missing "/"
-      if (src === "") {
-          // 13-08-2021 Modified the code below to be able to use it in manifest
-          // 31-10-2021 Old call was deprecated, so altered it to current command
-          src = chrome.runtime.getURL('/');
-      }
-      const template = `
-    
-    <div class="toast-container ${type}-bg">
+        const scripts = document.getElementsByTagName("script");
+        let src = "";
+
+        for (let script of scripts) {
+            if (script.src.includes('cute-alert.js')) {
+                src = script.src.substring(0, script.src.lastIndexOf('/'));
+            }
+        }
+        if (src === "") {
+            // 13-08-2021 Modified the code below to be able to use it in manifest
+            src = chrome.runtime.getURL('/');
+            src = src.substring(0, src.lastIndexOf('/'));
+        }
+        if (typeof myWindow == "undefined") {
+            templateContainer = document.getElementById('toast-container');
+        }
+        else {
+            templateContainer = myWindow.document.getElementById('toast-container');
+        }
+        if (!templateContainer) {
+            body.insertAdjacentHTML(
+                'afterend',
+                '<div class="toast-container"></div>',
+            );
+            if (typeof myWindow == "undefined") {
+                templateContainer = document.querySelector('.toast-container');
+            }
+            else {
+                templateContainer = myWindow.document.querySelector('.toast-container');
+            }
+        }
+
+        const toastId = id();
+        const templateContent = `
+    <div class="toast-content ${type}-bg" id="${toastId}-toast-content">
       <div>
         <div class="toast-frame">
-          <img class="toast-img" src="${src}img/${type}.svg" />
-          <span class="toast-message">${message}</span>
-          <div class="toast-close">X</div>
+          <div class="toast-body">
+            ${img !== '' ? '<img class="toast-body-img" src="' + src + img + '/' + type + '.svg' + '" />' : ''}  
+            <div class="toast-body-content">
+              <span class="toast-title">${title}</span>
+              <span class="toast-message">${message}</span>
+            </div>
+            <div class="toast-close" id="${toastId}-toast-close">X</div>
+          </div>
         </div>
-        <div class="toast-timer ${type}-timer" style="animation: timer ${timer}ms linear;"/>
+        ${img !== '' ? '<div class="toast-timer ' + type + '-timer"  style="animation: timer' + timer + 'ms linear;>' : ''}
       </div>
     </div>
-    </p>
     `;
-      
-      body.insertAdjacentHTML("afterend", DOMPurify.sanitize(template));
+        if (typeof myWindow == "undefined") {
+            toasts = document.querySelectorAll('.toast-content');
+        }
+        else {
+             toasts = myWindow.document.querySelectorAll('.toast-content');
+        }
 
-      const toastContainer = myWindow.document.querySelector(".toast-container");
+        if (toasts.length) {
+            toasts[0].insertAdjacentHTML('beforebegin', DOMPurify.sanitize(templateContent));
+        } else {
+            templateContainer.innerHTML = DOMPurify.sanitize(templateContent);
+        }
+        if (typeof myWindow == "undefined") {
+            toastContent = document.getElementById(`${toastId}-toast-content`);
+       }
+       else {
+            toastContent = myWindow.document.getElementsByClassName("toast-content info-bg")[0];
+       }
 
-    setTimeout(() => {
-      toastContainer.remove();
-      resolve();
-    }, timer);
+        if (vibrate.length > 0) {
+            navigator.vibrate(vibrate);
+        }
 
-      const toastClose = myWindow.document.querySelector(".toast-close");
+        if (playSound !== null) {
+            let sound = new Audio(src + playSound);
+            sound.play();
+        }
 
-    toastClose.addEventListener("click", () => {
-      toastContainer.remove();
-      resolve();
+        setTimeout(() => {
+            toastContent.remove();
+            resolve();
+        }, timer);
+        if (typeof myWindow == "undefined") {
+            toastClose = document.getElementById(`${toastId}-toast-close`);
+        }
+        else {
+            toastClose = myWindow.document.getElementsByClassName("toast-close")[0];
+       }
+
+        toastClose.addEventListener('click', () => {
+            toastContent.remove();
+            resolve();
+        });
     });
-  });
-}
+};
+
+const id = () => {
+    return '_' + Math.random().toString(36).substr(2, 9);
+};

@@ -114,9 +114,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     found = translatedText.substring(pos, pos + 5);
     if (found.substr(found.length - 1) != " ") {
         if (found.substr(found.length - 1) != "." && found.substr(found.length - 1) != "<" && found.length ==5) {
-            //console.debug("pos of </a>:", pos, found);
             translatedText = translatedText.replace("</a>", "</a> ");
-           //console.debug("pos of </a>:", pos, found, translatedText);
         }
     }
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
@@ -204,7 +202,6 @@ function CheckUrl(translated,searchword) {
     if (mymatches != null) {
         for (const match of mymatches) {
             foundmysearch = match.includes(searchword);
-            //console.debug("found:", foundmysearch, searchword,match);
             if (foundmysearch) {
                 break;
             }
@@ -226,8 +223,7 @@ function checkStartEnd(original, translatedText) {
     }
     if (original.endsWith(".") == false) {
         if (translatedText.endsWith(".") == true) {
-            //console.debug("translated ends with .");
-            translatedText = translatedText.substring(0, translatedText.length - 1)
+            translatedText = translatedText.substring(0, translatedText.length - 1);
         }
     }
     // Strip or add blank at the end of the line
@@ -238,8 +234,7 @@ function checkStartEnd(original, translatedText) {
     }
     if (original.endsWith(" ") == false) {
         if (translatedText.endsWith(" ") == true) {
-            //console.debug("translated ends with blank");
-            translatedText = translatedText.substring(0, translatedText.length - 1)
+            translatedText = translatedText.substring(0, translatedText.length - 1);
         }
     }
     if (original.startsWith(" ") == true) {
@@ -313,16 +308,12 @@ function checkComments(comment) {
 // 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
 // 18-04-2021 PSS now the function retrieves the data from the local database if present
 async function pretranslate(original) {
-    //console.debug('pretranslate with:', original);
     var translated = "";
-
     res = await listRec(original).then(function (v) {
-        //console.debug('answ:', v);
         translated = v;
     }).catch(function (err) {
         console.debug("Error retrieving pretrans", err.message);
     });
-    //console.log('resultaat translate:', translated);
     if (typeof translated == "undefined") {
         translated = "notFound";
     }
@@ -378,7 +369,6 @@ function checkPage(postTranslationReplace) {
                 var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);     
                 if (pluralpresent != null) {
                     transtype = "plural";
-                    //console.debug("found plural line 1", pluralpresent1);
                 }
                 else {
                     transtype = "single";
@@ -391,13 +381,11 @@ function checkPage(postTranslationReplace) {
                 }
 
                 if (transtype == "single") {
-                    //console.debug(" found single");
                     // Enhencement issue #123
                     previewNewText = textareaElem.innerText;
                     // Need to replace the existing html before replacing the verbs! issue #124
                     // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                     let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                    //console.debug("before:", translatedText, previewNewText);
                     result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
                     previewNewText = result.previewNewText;
                     translatedText = result.translatedText;
@@ -1001,6 +989,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
 function bulkSave(event) {
     let timeout = 0;
     var counter = 0;
+    var myWindow;
     document.querySelectorAll("tr.preview").forEach((preview, i) => {
         if (!preview.querySelector("th input").checked) {
             return;
@@ -1015,7 +1004,7 @@ function bulkSave(event) {
             // PSS confirm the message for dismissal
             elementReady(".gp-js-message-dismiss").then(elm => { elm.click(); }
             );
-            toastbox("info", "Saving suggestion: "+(i+1), 800);
+            toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving", myWindow);
         }, timeout);
         timeout +=1700;
     });
@@ -1125,22 +1114,26 @@ function close_toast(){
     toastContainer.remove();
 }
 
-function toastbox(type, message, time) {
-    currWindow = window.self;
+function toastbox(type, message, time, titel,currWindow) {
+    playSound = null;
     return new Promise((resolve) => {
-    cuteToast({
-        type: type, // or 'info', 'error', 'warning'
-        message: message,
-        timer: time,
-        myWindow: currWindow,
-    })
+        cuteToast({
+            type: type, // or 'info', 'error', 'warning'
+            message: message,
+            timer: time,
+            playSound,
+            img: "/img",
+            title: titel,
+            myWindow: currWindow,
+        })
         resolve("toast");
     }).catch((err) => {
         console.debug("error:", err)
     });
-   // resolve("toast ready");
+    // resolve("toast ready");
 
 }
+
 function messageBox(type, message) {
     currWindow = window.self;
     cuteAlert({

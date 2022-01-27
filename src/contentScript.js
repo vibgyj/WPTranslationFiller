@@ -91,7 +91,7 @@ document.addEventListener("keydown", function (event) {
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
         if (is_pte) {
-            toastbox("info", "Bulksave started", 2000);
+           // toastbox("info", "Bulksave started", 2000);
             bulk(event);
         }
     }
@@ -1046,6 +1046,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     }
 
 function savetranslateEntryClicked(event) {
+    var myWindow;
     let timeout = 0;
         //event.preventDefault();   
     myrow = event.target.parentElement.parentElement;
@@ -1089,7 +1090,7 @@ function savetranslateEntryClicked(event) {
                     // PSS confirm the message for dismissal
                     elementReady(".gp-js-message-dismiss").then(elm => { elm.click();  }
                     );
-                    toastbox("info", "Saving suggestion: " + (i + 1), 800);
+                    toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving",myWindow);
                     
                 }, timeout);
                 timeout +=1000;
