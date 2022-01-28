@@ -2,6 +2,7 @@
 // PSS added function from GlotDict to save records in editor
 // PSS added glob_row to determine the actual row from the editor
 var glob_row = 0;
+var convertToLow = true;
 gd_wait_table_alter();
 
 // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
@@ -95,16 +96,42 @@ document.addEventListener("keydown", function (event) {
             bulk(event);
         }
     }
+    if (event.altKey && event.shiftKey && (event.key === "+")) {
+        // This switches convert to lowercase on
+        event.preventDefault();
+        chrome.storage.sync.set({
+            convertToLower: true
+        });
+        chrome.storage.sync.get(["convertToLower"], function (data) {
+            if (data.convertToLower != "null") {
+                convertToLow = data.convertToLower;
+            }
+        });
+    }
+    if (event.altKey && event.shiftKey && (event.key === "-")) {
+        // This switches convert to lowercase off
+        event.preventDefault();
+        console.debug("Switch to uppercase:", convertToLow);
+        chrome.storage.sync.set({
+            convertToLower: false
+        });
+        chrome.storage.sync.get(["convertToLower"], function (data) {
+            if (data.convertToLower != "null") {
+                convertToLow = data.convertToLower;
+            }
+        });
+    }
 });
 
-        function bulk(event) {
+
+ function bulk(event) {
             try {
                 bulkSave(event);
             } catch (e) {
                 console.debug("Error when bulk saving", e)
             }
             //console.debug("bulksave ended");
-        }
+ }
 
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 document.addEventListener("keydown", function (event) {
@@ -264,7 +291,8 @@ function translatePageClicked(event) {
                             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
                             var formal = checkFormal(false);
                             //var locale = checkLocale();
-                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower)
+                            convertToLow = data.convertToLower;
+                            translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow)
                         }
                         else {
                             messageBox("error", "You need to set the translator API");
