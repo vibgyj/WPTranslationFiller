@@ -11,6 +11,24 @@ let replaceVerb = [];
 let replacePreVerb = [];
 // 06-05-2021 PSS These vars can probably removed after testen
 
+
+function copyToClipBoard(detailRow) {
+    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);  
+    if (e != null) {
+        var content = e.querySelector("span.original-raw").innerText;
+        if (content != null) {
+            navigator.clipboard.writeText(content);
+            toastbox("info", "Copy original to clipboard<br>"+content, "2500", "Copy");
+        }
+        else {
+            toastbox("error", "No text found to copy", "1200", "Error");
+        }
+    }
+    else {
+        toastbox("error", "No text found to copy", "1200", "Error");
+    }
+}
+
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
     if (preTranslationReplace != undefined) {

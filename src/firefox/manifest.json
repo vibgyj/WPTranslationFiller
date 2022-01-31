@@ -5,7 +5,7 @@
   "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "cute-alert.css", "error-alert.flac" ],
+      "resources": [ "/img/*", "cute-alert.css", "error-alert.flac", "clipboard-icon.png" ],
       "matches": [ "https://translate.wordpress.org/*" ]
 
     }

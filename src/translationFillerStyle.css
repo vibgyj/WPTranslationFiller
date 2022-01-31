@@ -92,7 +92,12 @@ local.paging a.translation-filler-button {
         background: green;
     }
 
-.paging a.translation-entry-my-button::before {
+    /* below function can to be removed if GlotPress has improved the behavior of the edit screen*/
+    .panel-header__bubble {
+    padding: 1px 1px !important;
+    }
+
+    .paging a.translation-entry-my-button::before {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
@@ -103,9 +108,10 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .translation-entry-my-button {
     width: auto;
-    padding: 5px;
+    padding: 2px;
     background-color: blue;
     color: white;
+    vertical-align: middle;
 }
 
 .panel-header-actions .translation-entry-my-button:focus {
@@ -209,8 +215,10 @@ local.paging a.translation-filler-button {
 .paging a.addtranslation-entry-my-button {
     background: blue;
     color: white;
-    padding-left: 5px;
+    padding-left: 3px;
     padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 10px;
 }
 
 .paging a.addtranslation-entry-my-button {
@@ -225,20 +233,31 @@ local.paging a.translation-filler-button {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
-    font: normal 20px/1 'dashicons';
+    font: normal 200px/1 'dashicons';
     vertical-align: middle;
     width: 28px;
 }
 
 .panel-header-actions my-button{
-	margin:5px;
+	margin:2px;
 }
-
+.translation-actions copy-button {
+    width: 40px;
+    height: 35px;
+    padding: 7px 10px;
+    margin: 0 4px;
+    border: 1px solid #ccc;
+    background: #fafafa;
+    box-shadow: 0 1px 0 #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
 .panel-header-actions .addtranslation-entry-my-button {
-    width: auto;
-    padding: 5px;
+    width: 25px;
+    padding: 2px;
     background-color: blue;
     color: white;
+    vertical-align: middle;
 }
 
 .panel-header-actions .addtranslation-entry-my-button:focus {
@@ -378,11 +397,10 @@ local.paging a.translation-filler-button {
     vertical-align: middle;
     background: darkcyan;
     color: white;
-    padding-left: 5px;
+    padding-top: 2px;
+    padding-left: 3px;
     padding-right: 5px;
-    padding-top: 3px;
-    padding-bottom : 10px;
-    height: 28px;
+    height: 25px;
     font: normal 16px/1 'dashicons';
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -889,3 +907,63 @@ table.translations tr.preview.wptf-translated {
 .highlight {
     background: lightpink;
 }
+/*Below code needs to be removed if GlotPress has improved the template*/
+.editor-panel__right {
+    flex: 0 0 19rem !important;
+   /* min-width: 1%;*/
+}
+
+/* Tooltip container */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    background-color: #0085ba;
+    color: white;
+    padding-right: 3px;
+    padding-left: 3px;
+    min-width: 40px;
+    height: 35px;
+    border: 1px solid #ccc;
+    /* Other styles here */
+}
+/*#meta-copy-to-clipboard {
+    height: 20px;
+    width: 40px;
+} */
+    /* Tooltip text */
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 120px;
+        background-color: #0085ba;
+        color: #fff;
+        text-align: center;
+        padding: 5px 0;
+        border-radius: 6px;
+        /* Position the tooltip text */
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -60px;
+        /* Fade in tooltip */
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+        /* Tooltip arrow */
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+    /* Show the tooltip text when you mouse over the tooltip container */
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }

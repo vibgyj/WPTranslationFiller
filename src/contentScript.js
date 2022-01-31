@@ -3,6 +3,7 @@
 // PSS added glob_row to determine the actual row from the editor
 var glob_row = 0;
 var convertToLow = true;
+var detailRow = 0;
 gd_wait_table_alter();
 
 // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
@@ -120,6 +121,12 @@ document.addEventListener("keydown", function (event) {
                 convertToLow = data.convertToLower;
             }
         });
+    }
+    if (event.altKey && event.shiftKey && (event.key === "%")) {
+        // This switches convert to lowercase off
+        event.preventDefault();
+        console.debug("Copy text to clipboard");
+        copyToClipBoard(detailRow);
     }
 });
 
@@ -504,6 +511,26 @@ function addTranslateButtons() {
         TranslocalButton.innerText = "Local";
         TranslocalButton.style.visibility = "hidden";
         panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
+
+        let translationActions = e.querySelector("#editor-" + rowId + " div.editor-panel__left .panel-content .translation-actions");
+        let panelCont = document.createElement("copy-button"); 
+        panelCont.className = "with-tooltip";
+        panelCont.id = `meta-copy-to-clipboard`;
+        panelCont.ariaLabel = "Copy original to clipboard";
+        panelCont.style.cursor = "pointer";
+        panelCont.onclick = addtoClipBoardClicked;
+        let panelTool = document.createElement("span");
+        panelTool.className = "tooltiptext";
+        panelTool.className = "dashicons dashicons-clipboard";
+        panelCont.appendChild(panelTool);
+        translationActions.appendChild(panelCont);
+    }
+}
+
+function addtoClipBoardClicked(event) {
+    if (event != undefined) {
+        event.preventDefault();
+        copyToClipBoard(detailRow);
     }
 }
 
@@ -578,6 +605,7 @@ function checkbuttonClick(event) {
        if (action == "Details" || action == "✓Details") {
            let rowId = event.target.parentElement.parentElement.getAttribute("row");
            glob_row = rowId;
+           detailRow = rowId;
            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
            // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
            chrome.storage.sync.set({ "noOldTrans": "True" }, function () {

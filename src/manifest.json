@@ -6,7 +6,7 @@
 
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "cute-alert.css", "error-alert.flac" ],
+      "resources": [ "/img/*", "cute-alert.css", "error-alert.flac", "clipboard-icon.png" ],
       "matches": [ "https://translate.wordpress.org/*" ]
 
     }
