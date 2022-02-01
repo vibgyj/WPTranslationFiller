@@ -182,7 +182,10 @@ async function dbExport() {
   var delimiter = "|";
   var arrayHeader = ["original", "translation", "country"];
   var header = arrayHeader.join(delimiter) + "\n";
-  var csv = header;
+    var csv = header;
+    // 01-02-2022 altered the messagebox into a toast so you do not need to dismiss it issue #181
+    toastbox("info", "Export database in progress" + "<br>" + "Wait for saving the file!", "5000", "Saving");
+    //messageBox("info", "Export database in progress" + "<br>" + "Wait for saving the file!");
   const trans = await jsstoreCon.select({
     from: "Translation"
   });
@@ -212,8 +215,9 @@ async function dbExport() {
        hiddenElement.download = export_file;
        hiddenElement.click();
        let exportButton = document.querySelector(".paging a.export_translation-button");
-       exportButton.className += " ready";
-       messageBox("info", "Export database in progress" + "<br>" + "Wait for saving the file!");
+    exportButton.className += " ready";
+    messageBox("info", "Export database done amount of records exported: "+i);
+      
 }
 
 async function tryPersistWithoutPromtingUser() {

@@ -926,10 +926,7 @@ table.translations tr.preview.wptf-translated {
     border: 1px solid #ccc;
     /* Other styles here */
 }
-/*#meta-copy-to-clipboard {
-    height: 20px;
-    width: 40px;
-} */
+
     /* Tooltip text */
     .tooltip .tooltiptext {
         visibility: hidden;

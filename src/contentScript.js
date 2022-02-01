@@ -350,7 +350,14 @@ function checkPageClicked(event) {
 
 function exportPageClicked(event) {
     event.preventDefault();
-    res= dbExport();
+    chrome.storage.sync
+        .get(
+            ["apikey", "destlang"],
+            function (data) {
+                console.debug("destlang:", data.destlang);
+                dbExport(data.destlang);
+            });
+   // res= dbExport();
     
 }
 // 08-05-2021 PSS added import of records into local database
