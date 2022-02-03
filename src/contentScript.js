@@ -108,6 +108,7 @@ document.addEventListener("keydown", function (event) {
                 convertToLow = data.convertToLower;
             }
         });
+        toastbox("info", "Switching conversion on", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "-")) {
         // This switches convert to lowercase off
@@ -121,6 +122,7 @@ document.addEventListener("keydown", function (event) {
                 convertToLow = data.convertToLower;
             }
         });
+        toastbox("info", "Switching conversion off", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "%")) {
         // This switches convert to lowercase off
@@ -491,6 +493,8 @@ function addTranslateButtons() {
     for (let e of document.querySelectorAll("tr.editor")) {
         let rowId = e.getAttribute("row");
         let panelHeaderActions = e.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
+        var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
+        currentcel.innerText = "";
         // Add translate button
         let translateButton = document.createElement("my-button");
         importButton.href = "#";
@@ -760,7 +764,8 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     originalElem = document.querySelector("#preview-" + rowId + " .original");
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
     let checkElem = document.querySelector("#preview-" + rowId + " .priority");
-    var saveButton = document.querySelector("#preview-" + rowId + " .save-button");
+
+    var saveButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
     // we need to take care that the save button is not added twice
    
     if (typeof checkElem == "object") {
@@ -774,26 +779,31 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
             let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             var current = myrec.querySelector("span.panel-header__bubble");
             let SavelocalButton = document.createElement("button");
-            SavelocalButton.id = "save-button";
-            SavelocalButton.className = "save-button";
+            SavelocalButton.id = "tf-save-button";
+            SavelocalButton.className = "tf-save-button";
             SavelocalButton.onclick = savetranslateEntryClicked;
             if (current.innerText == "untranslated") {
                 SavelocalButton.innerText = "Empt";
+                SavelocalButton.style.backgroundColor = "grey";
                 checkElem.title = "No translation";
             }
             else if (current.innerText == "waiting") {
                 SavelocalButton.innerText = "Appr";
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Approve the string";
             }
             else if (current.innerText == "transFill") {
                 SavelocalButton.innerText = ("Save");
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
             else if (current.innerText == "fuzzy") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 SavelocalButton.innerText = ("Rej");
                 checkElem.title = "Reject the string";
             }
             else if (current.innerText == "current") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 SavelocalButton.innerText = ("Curr");
                 checkElem.title = "Current string";
             }
@@ -802,6 +812,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
         }
         else {
             saveButton.innerText = ("Save");
+            saveButton.style.backgroundColor = "#0085ba";
             checkElem.title = "Save the string";
         }
     }
@@ -835,20 +846,23 @@ function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale)
 
 function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId, showName, nameDiff) {
     if (typeof rowId != "undefined") {
-        var SavelocalButton = document.querySelector("#preview-" + rowId + " .save-button");
+        var SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         if (SavelocalButton == "null") {
+            
             SavelocalButton = document.createElement("button");
-            SavelocalButton.id = "save-button";
-            SavelocalButton.className = "save-button";
+            SavelocalButton.id = "tf-save-button";
+            SavelocalButton.className = "tf-save-button";
             let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (myrec != "null") {
                 var current = myrec.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
                     SavelocalButton.innerText = "Save";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Save the string";
                 }
                 else if (current.innerText == "waiting") {
                     SavelocalButton.innerText = "Appr";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Approve the string";
                 }
                 else if (current.innerText == "current") {
@@ -857,6 +871,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 }
                 else if (current.innerText == "untranslated") {
                     SavelocalButton.innerText = "Empt";
+                    SavelocalButton.style.backgroundColor = "grey";
                     checkElem.title = "No translation";
                 }
                 SavelocalButton.title = "Save and approve translation";
@@ -872,13 +887,16 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 current = myrec.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
                     SavelocalButton.innerText = "Save";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Save the string";
                 }
                 else if (current.innerText == "waiting") {
                     SavelocalButton.innerText = "Appr";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Approve the string";
                 }
                 else if (current.innerText == "untranslated") {
+                    SavelocalButton.style.backgroundColor = "grey";
                     SavelocalButton.innerText = "Empt";
                     checkElem.title = "No translation";
                 }
@@ -935,25 +953,29 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
     }
     if (typeof result.wordCount == "undefined") {
-        SavelocalButton = document.querySelector("#preview-" + rowId + " .save-button");
+        SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         if (SavelocalButton != null) {
             let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (h != null) {
                 current = h.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
                     SavelocalButton.innerText = "Save";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     SavelocalButton.title = "Save the string";
                 }
                 else if (current.innerText == "waiting") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     SavelocalButton.innerText = "Appr";
                     checkElem.title = "Approve the string";
                 }
                 else if (current.innerText == "current") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Save the string";
                 }
                 else {
                     SavelocalButton.innerText = "Appr";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Approve the string";
                 }
             }
@@ -966,19 +988,22 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         return;
     }
         if (result.wordCount == 0) {
-            SavelocalButton = document.querySelector("#preview-" + rowId + " .save-button");
+            SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (h != null) {
                 current = h.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
                     SavelocalButton.innerText = "Save";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Save the string";
                 }
                 else if (current.innerText == "waiting") {
                     SavelocalButton.innerText = "Appr";
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Approve the string";
                 }
                 else if (current.innerText == "current") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Save the string";
                 }
@@ -992,6 +1017,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (result.percent == 100) {
             checkElem.innerHTML = "100";
             if (current.innerText == "transFill") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
             checkElem.style.backgroundColor = "green";
@@ -1001,9 +1027,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     checkElem.title = "Save the string";
                 }
                 else if (current.innerText == "waiting") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Approve the string";
                 }
                 else if (current.innerText == "current") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Current string";
                 }
             }
@@ -1011,6 +1039,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         else if (result.percent > 66) {
             //checkElem.style.cssText = "padding-left:0px; text-align: right";
             checkElem.innerHTML = "66";
+            SavelocalButton.style.backgroundColor = "#0085ba";
             checkElem.style.backgroundColor = "yellow";
             if (typeof headerElem.style != "undefined") {
                 headerElem.style.backgroundColor = "yellow";
@@ -1020,6 +1049,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         else if (result.percent > 33) {
             //checkElem.style.cssText = "padding-left:0px; text-align: right";
             checkElem.innerHTML = "33";
+            SavelocalButton.style.backgroundColor = "#0085ba";
             checkElem.style.backgroundColor = "orange";
             if (typeof headerElem.style != "undefined") {
                 headerElem.style.backgroundColor = "orange";
@@ -1029,7 +1059,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         else {
             //checkElem.style.cssText = "padding-left:0px; text-align: right";
             checkElem.innerHTML = "0";
+            var separator1 = document.createElement("div");
+            separator1.setAttribute("class", "checkElem_save");
+            checkElem.appendChild(separator1);
+            SavelocalButton.style.backgroundColor = "#0085ba";
             checkElem.style.backgroundColor = "red";
+            SavelocalButton.style.animation = "blinking 1s infinite";
             if (typeof headerElem.style != "undefined") {
                 headerElem.style.backgroundColor = "red";
             }
@@ -1041,8 +1076,8 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
 
         // we need to add the save button again after updating the element  
         SavelocalButton = document.createElement("button");
-        SavelocalButton.id = "save-button";
-        SavelocalButton.className = "save-button";
+        SavelocalButton.id = "tf-save-button";
+        SavelocalButton.className = "tf-save-button";
         SavelocalButton.onclick = savetranslateEntryClicked;
         //#editor - 8188612 - 87485455 span.panel - header__bubble
         // let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -1050,34 +1085,55 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (current != null) {
             //current = h.querySelector("span.panel-header__bubble");
             if (current.innerText == "transFill") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 SavelocalButton.innerText = "Save";
                 checkElem.title = "Save the string";
             }
             else if (current.innerText == "waiting") {
                 SavelocalButton.innerText = "Appr";
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Approve the string";
             }
             else if (current.innerText == "current") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 SavelocalButton.innerText = "Curr";
                 SavelocalButton.disabled = true;
                 SavelocalButton.style.cursor = "none";
                 checkElem.title = "Save the string";
             }
             else if (current.innerText == "fuzzy") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 SavelocalButton.innerText = ("Rej");
                 checkElem.title = "Reject the string";
             }
             else {
                 SavelocalButton.innerText = "Save";
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
             // 22-07-2021 PSS fix for wrong button text "Apply" #108 This needs to be investigated to check if the others also need to be moved down
+            
+
             if (result.percent == 10) {
                 //checkElem.style.cssText = "padding-left:0px; text-align: right";
                 checkElem.innerHTML = "Mod";
                 checkElem.style.backgroundColor = "purple";
                 if (typeof headerElem.style != "undefined") {
                     headerElem.style.backgroundColor = "purple";
+                    SavelocalButton.innerText = "Save";
+                    checkElem.title = "Save the string";
+                }
+            }
+            if (result.percent == 0) {
+                //checkElem.style.cssText = "padding-left:0px; text-align: right";
+                checkElem.innerHTML = "0";
+                var separator1 = document.createElement("div");
+                separator1.setAttribute("class", "checkElem_save");
+                checkElem.appendChild(separator1);
+                checkElem.style.backgroundColor = "red";
+                SavelocalButton.style.animation = "blinking 1s infinite";
+                if (typeof headerElem.style != "undefined") {
+                    headerElem.style.backgroundColor = "red";
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
                 }
@@ -1194,7 +1250,7 @@ function savetranslateEntryClicked(event) {
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-fuzzy`);
                 prevrow.style.backgroundColor = "#eb9090";
             }
-            let SavelocalButton = document.querySelector("#preview-" + rowId + " .save-button");
+            let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             SavelocalButton.className += " ready";
             SavelocalButton.disabled = true;
             SavelocalButton.display = "none";

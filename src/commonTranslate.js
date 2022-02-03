@@ -553,8 +553,9 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 }
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower) {
-    // 19-06-2021 PSS added animated button for translation at translatePage
+    //console.time("translation")
     locale = checkLocale();
+    // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".paging a.translation-filler-button");
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -600,7 +601,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 if (transname != null) {
                     transname.className = "trans_name_div";
                     transname.innerText = "URL, name of theme or plugin or author!";
-                    current = document.querySelector(`#preview-${row} .priority button.save-button`);
+                    // In case of a plugin/theme name we need to set the button to blue
+                    current = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                    current.style.backgroundColor = "#0085ba";
                     current.innerText = "Save";
                     transtype = "single";
                 }
@@ -782,7 +785,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     current.innerText = "transFill";
                                     current.value = "transFill";
                                 }
+                   
                                 validateEntry(destlang, textareaElem1, "", "", row);
+                                
                             }
                         }
                     }
@@ -830,6 +835,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
         translateButton = document.querySelector(".paging a.translation-filler-button");
         translateButton.className += " after_error";
     }
+    //console.timeEnd("translation");
 }
 
 function check_span_missing(row,plural_line) {
