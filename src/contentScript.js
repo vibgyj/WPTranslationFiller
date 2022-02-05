@@ -363,7 +363,8 @@ function exportPageClicked(event) {
     
 }
 // 08-05-2021 PSS added import of records into local database
-function importPageClicked(event) { 
+function importPageClicked(event) {
+    event.preventDefault();
     fileSelector.click();
     fileSelector.addEventListener("change", (event) => {   
        fileList = event.target.files;
@@ -374,7 +375,8 @@ function importPageClicked(event) {
        dataFile:[]
           }; 
         // 09-05-2021 PSS added check for proper import type
-        if (file.type == "application/vnd.ms-excel"){ 
+        // File type not recognized on some systems issue #183
+        if (file.type == "text/csv" || "application/vnd.ms-excel"){
            if (fileList[0]) {
               let reader = new FileReader();
                //reader.readAsBinaryString(fileList[0]);
@@ -387,8 +389,7 @@ function importPageClicked(event) {
               //console.log(obj_csv.dataFile)
               //File is imported so process it
               parseDataBase(obj_csv.dataFile); 
-              let importButton = document.querySelector(".paging a.import_translation-button");
-              importButton.className += " ready";
+              
               //alert("Import is running please wait");          
            }
         }
@@ -402,7 +403,8 @@ function importPageClicked(event) {
 }
 
 async function parseDataBase(data) {
-    messageBox("info", "Import is started wait for the result");
+    toastbox("info", "Import is started wait for the result!!", "100000", "Import database");
+    //messageBox("info", "Import is started wait for the result");
     let csvData = [];
     let lbreak = data.split("\n");
     let counter = 0;
@@ -423,8 +425,12 @@ async function parseDataBase(data) {
                }
             }
         }
+        close_toast();
         messageBox("info", "Import is ready records imported: " + i);
+
     }
+    let importButton = document.querySelector(".paging a.import_translation-button");
+    importButton.className += " ready";
 }
 
 let glossary = [];

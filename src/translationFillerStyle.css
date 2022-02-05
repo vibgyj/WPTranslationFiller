@@ -985,8 +985,10 @@ table.translations tr.preview.wptf-translated {
         border: 2px solid #fff;
     }
 }
-/*After Glotpress has improved remove this footer change*/
+/*After Glotpress has improved remove this footer change  */
 .wp-block-group.global-footer {
      padding-bottom: 12px !important; 
      padding-top: 12px !important; 
 }
+
+

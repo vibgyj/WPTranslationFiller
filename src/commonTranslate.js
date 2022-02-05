@@ -557,6 +557,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".paging a.translation-filler-button");
+    translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
     if (translateButton.className == "translation-filler-button") {
@@ -821,6 +822,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
             // Translation completed  
             let translateButton = document.querySelector(".paging a.translation-filler-button");
             translateButton.className += " translated";
+            translateButton.innerText = "Translated";
+
         }
         else {
             messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!");
@@ -880,6 +883,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     locale = checkLocale();
     let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
     translateButton.className += " started";
+    translateButton.innerText = "Translate";
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     // 07-07-2021 PSS need to determine if current record
     let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -996,6 +1000,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
             // Translation completed
             let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             translateButton.className += " translated";
+            translateButton.innerText = "Translated";
         }
         else {
             messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!!");
