@@ -11,27 +11,27 @@
         }
 
         .container {
-            max-width: 500px;
+            max-width: 600px;
             margin: auto;
             font-size: 12pt;
         }
 
         #google_api_key {
-            width: 300px;
+            width: 350px;
         }
 
         #deepl_api_key {
-            width: 300px;
+            width: 350px;
         }
 
         #microsoft_api_key {
-            width: 300px;
+            width: 350px;
         }
 
         #text_glossary_file {
             display: block;
             font-style: italic;
-            width: 400px;
+            width: 300px;
         }
 
         #text_verbs {
@@ -54,81 +54,136 @@
 <body>
     <div class="container" id="container">
         <h1>WP Translation Filler - Options</h1>
+        <table>
+            <tr>
+                <div class="form-input">
+                <td style="width:200px">
+                    <label for="google_api_key">Google API Key</label>
+                </td>
+                <td>
+                    <input id="google_api_key" type="text" value="-api key->" />
+                </td>
+    </div>
+    </tr>
+    <tr>
         <div class="form-input">
-            <label for="google_api_key">Google API Key</label>
-            <input id="google_api_key" type="text" value="-api key->" />
-        </div>
-        <div class="form-input">
-            <label for="deepl_api_key">Deepl Pro API Key&nbsp;&nbsp;</label>
-            <input id="deepl_api_key" type="text" value="-api key->" />
-        </div>
-        <div class="form-input">
-            <label for="microsoft_api_key">Microsoft API Key&nbsp;&nbsp;</label>
+        <td style="width:200px">
+            <label for="microsoft_api_key">Microsoft API Key</label>
+        </td>
+        <td>
             <input id="microsoft_api_key" type="text" value="-api key->" />
+        </td>
         </div>
+    </tr>
+    <tr>
+        <div class="form-input">
+        <td style="width:200px">
+            <label for="deepl_api_key">Deepl API Key</label>
+        </td>
+        <td>
+            <input id="deepl_api_key" type="text" value="-api key->" />
+        </td>
+        </div>
+    </tr>
+    <tr>
+        <div>
+        <td style="width:200px">
+            <label>License is for DeepL Free</label>
+        </td>
+        <td>
+            <input type="checkbox" id="DeeplFree">
+        </td>
+        </div>
+    </tr>
+    <tr>
         <div class="form-select">
+        <td style="width:200px">
             <label for="translator">Select a translator:</label>
+        </td>
+        <td>
             <select name="transsel" id="transselect">
                 <option value="deepl">Deepl</option>
                 <option value="google">Google</option>
                 <option value="microsoft">Microsoft</option>
             </select>
+        </td>
         </div>
-        <br>
-        <br>
+    </tr>
+    <tr>
         <div class="form-input">
+        <td style="width:200px">
             <label for="destination_lang">Destination Language</label>
+        </td>
+        <td>
             <input id="destination_lang" type="text" value="nl" />
+        </td>
         </div>
+    </tr>
+    <tr>
         <div class="form-input">
+        <td style="width:200px">
             <label for="glossary_file">Glossary File (csv)</label>
+        </td>
+        <td>
             <input id="glossary_file" type="file" />
-            <span id="text_glossary_file"></span>
+        </td>
         </div>
-        <div class="form-input">
-            <label for="text_pre_verbs">Pre Translation Replace</label>
-            <textarea id="text_pre_verbs">Your,Je
+    </tr>
+    <tr>
+        <div>
+        <td style="width:200px">
+        </td>
+        <td colspan="1">
+            <span style="width:320px" id="text_glossary_file"></span>
+        </td>
+        </div>
+    </tr>
+    </table>
+
+    <div class="form-input">
+        <label for="text_pre_verbs">Pre Translation Replace</label>
+        <textarea id="text_pre_verbs">Your,Je
 You,Je
             </textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_verbs">Post Translation Replace</label>
-            <textarea id="text_verbs">wrong1,right1
+    </div>
+    <div class="form-input">
+        <label for="text_verbs">Post Translation Replace</label>
+        <textarea id="text_verbs">wrong1,right1
 wrong2,right2
             </textarea>
-        </div>
-        <div class="form-input">
-            <label for="export_verbs">Export post translation verbs </label>
-                <fieldset>
-                    <button id="exportverbs">Export verbs</button>
-                </fieldset>
-        </div>
-        <div id="dvImportSegments" class="fileupload ">
-            <label>Upload post translation replace CSV File</label>
-                <fieldset>
-                    <input id="importPost" type="file" />
-                </fieldset>
-        </div>
-        <br />
-        <div>
-            <input type="checkbox" id="show-history">
-            <label>Show history</label>
-        </div>
-        <div>
-            <input type="checkbox" id="comp-translations">
-            <label>Compare translations</label>
-        </div>
-        <div>
-            <input type="checkbox" id="show-glotDictGlos">
-            <label>Show GlotDict</label>
-        </div>
-        <div>
-            <input type="checkbox" id="show-convertToLower">
-            <label>Convert words to lowercase except first word</label>
-        </div>
-        <div class="form-input">
-            <input id="save" type="button" value="Save" />
-        </div>
+    </div>
+    <div class="form-input">
+        <label for="export_verbs">Export post translation verbs </label>
+        <fieldset>
+            <button id="exportverbs">Export verbs</button>
+        </fieldset>
+    </div>
+    <div id="dvImportSegments" class="fileupload ">
+        <label>Upload post translation replace CSV File</label>
+        <fieldset>
+            <input id="importPost" type="file" />
+        </fieldset>
+    </div>
+    <br />
+    <div>
+        <input type="checkbox" id="show-history">
+        <label>Show history</label>
+    </div>
+    <div>
+        <input type="checkbox" id="comp-translations">
+        <label>Compare translations</label>
+    </div>
+    <div>
+        <input type="checkbox" id="show-glotDictGlos">
+        <label>Show GlotDict</label>
+    </div>
+    <div>
+        <input type="checkbox" id="show-convertToLower">
+        <label>Convert words to lowercase except first word</label>
+    </div>
+    <div class="form-input">
+        <input id="save" type="button" value="Save" />
+    </div>
     </div>
 </body>
 </html>

@@ -23,6 +23,7 @@ let replaceVerb = [];
 
 let apikeyTextbox = document.getElementById("google_api_key");
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
+let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let transselectBox = document.getElementById("transselect");
 let destLangTextbox = document.getElementById("destination_lang");
@@ -38,9 +39,18 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 //console.debug("Diff:", showDiffCheckbox);
 //console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower"], function (data) {
+chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
+    if (data.DeeplFree != null) {
+        if (data.DeeplFree == true) {
+            apikeydeeplCheckbox.checked = true
+        }
+        else {
+            apikeydeeplCheckbox.checked = false
+        }
+    }
+    apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     if (data.transsel == "") {
         transselectBox.value = "google";
@@ -100,6 +110,15 @@ let button = document.getElementById("save");
 button.addEventListener("click", function () {
     let apikey = apikeyTextbox.value;
     let apikeyDeepl = apikeydeeplTextbox.value;
+    
+    if (document.querySelector("#DeeplFree:checked") !== null) {
+        
+        let showDeeplFree = document.querySelector("#DeeplFree:checked");
+        showDeepl = showDeeplFree.checked;
+    }
+    else {
+        showDeepl = "false";
+    }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -149,6 +168,7 @@ button.addEventListener("click", function () {
     chrome.storage.sync.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
+        DeeplFree : showDeepl,
         apikeyMicrosoft: apikeyMicrosoft,
         transsel: transsel,
         destlang: destlang,
