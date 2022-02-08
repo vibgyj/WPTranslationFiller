@@ -5,8 +5,8 @@ var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
 gd_wait_table_alter();
-
-// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
+addCheckBox();
+;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
     .get(
         ["glotDictGlos"],
@@ -89,13 +89,13 @@ document.addEventListener("keydown", function (event) {
 
 document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === "*")) {
-        event.preventDefault();
+        //event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
-        if (is_pte) {
+       // if (is_pte) {
            // toastbox("info", "Bulksave started", 2000);
             bulk(event);
-        }
+       // }
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
         // This switches convert to lowercase on
@@ -130,15 +130,22 @@ document.addEventListener("keydown", function (event) {
         console.debug("Copy text to clipboard");
         copyToClipBoard(detailRow);
     }
+    if (event.altKey && event.shiftKey && (event.key === "#")) {
+        event.preventDefault();
+        console.debug("Make bulk checkbox active for non PTE");
+        setmyCheckBox(event);
+    }
 });
 
 
  function bulk(event) {
             try {
                 bulkSave(event);
+           
             } catch (e) {
                 console.debug("Error when bulk saving", e)
-            }
+     }
+     close_toast();
             //console.debug("bulksave ended");
  }
 
@@ -341,13 +348,16 @@ function checkFormal(formal) {
 
 function checkPageClicked(event) {
     event.preventDefault();
+    toastbox("info", "checkPage is started wait for the result!!", "10000", "CheckPage");
     //console.log("Checkpage clicked!");
     chrome.storage.sync
         .get(
             ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
             function (data) {
                 checkPage(data.postTranslationReplace);
+                close_toast();
             });
+    
 }
 
 function exportPageClicked(event) {
@@ -498,6 +508,7 @@ function addTranslateButtons() {
     //16 - 06 - 2021 PSS fixed this function addTranslateButtons to prevent double buttons issue #74
     for (let e of document.querySelectorAll("tr.editor")) {
         let rowId = e.getAttribute("row");
+        
         let panelHeaderActions = e.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
         var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
         currentcel.innerText = "";
@@ -770,12 +781,21 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     originalElem = document.querySelector("#preview-" + rowId + " .original");
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
     let checkElem = document.querySelector("#preview-" + rowId + " .priority");
+    
 
     var saveButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
     // we need to take care that the save button is not added twice
    
     if (typeof checkElem == "object") {
         if (saveButton == null) {
+            var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+            if (!is_pte) {
+                let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
+                var checkbox = document.createElement('input');
+                checkbox.setAttribute("type", "checkbox");
+                checkbox.setAttribute("name", "selected-row[]");
+                checkBx.appendChild(checkbox);
+            }
             // check for the status of the record
             var separator1 = document.createElement("div");
             separator1.setAttribute("class", "checkElem_save");
@@ -1202,12 +1222,8 @@ function savetranslateEntryClicked(event) {
                 //   var glotpress_close = document.querySelector(`#editor-${newRowId} button.panel-header-actions__cancel`);
                 //}
                 select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
-                //select = next_editor.getElementsByClassName("meta");
                 var status = select.querySelector("dt").nextElementSibling;
-                //console.debug("bulksave status1:", select, status, rowId);
                 status.innerText = "waiting";
-                //console.debug("close value:", glotpress_close);
-                //let prevrow = document.querySelector(`#preview-${rowId}`);
                 open_editor.click();
                 setTimeout(() => {        
                     glotpress_save.click();
@@ -1218,13 +1234,7 @@ function savetranslateEntryClicked(event) {
                     toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving",myWindow);
                     
                 }, timeout);
-                timeout +=1000;
-                //if (newRowId != null) {
-                //   setTimeout(() => {
-                //       glotpress_close.click();
-                //   }, timeout);
-                    
-                //}
+                timeout += 1000;
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-transFill`);
                 if (prevrow != null) {
                     prevrow.style.backgroundColor = "#b5e1b9";
@@ -1609,12 +1619,30 @@ function gd_auto_hide_next_editor(editor) {
         return;
     }
     const next_editor = preview.nextElementSibling;
+    // if it is the last row we need to add the checkboxes if the translator is not a PTE
     if (!next_editor) {
+        if (!is_pte) {
+            oldRow = editor.id;
+            newRow = oldRow.replace("editor", "preview")
+            myRow = document.querySelector(`#${newRow}`);
+            var x = myRow.insertCell(0);
+            x.className = "myCheckBox";
+        }
         return;
     }
     const next_preview = next_editor.previousElementSibling;
     if (!next_preview || !next_editor.classList.contains("editor") || !next_preview.classList.contains("preview")) {
         return;
+    }
+    // We need to add the extra cell on front of the preview line
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    // We need to add the checkboxes if the translator is not a PTE
+    if (!is_pte) {
+        oldRow = editor.id;
+        newRow = oldRow.replace("editor", "preview")
+        myRow = document.querySelector(`#${newRow}`);
+        var x = myRow.insertCell(0);
+        x.className = "myCheckBox";
     }
     next_editor.style.display = "none";
     next_preview.style.display = "table-row";
@@ -1651,6 +1679,7 @@ function gd_auto_hide_next_editor(editor) {
                             // console.debug("before hide editor");
                             // if (user_is_pte && row_is_editor ) {
                             //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
+                            
                             gd_auto_hide_next_editor(addedNode);
                             // }
                             // if (user_is_pte && row_is_preview) {
@@ -1669,4 +1698,40 @@ function gd_auto_hide_next_editor(editor) {
                     characterData: true,
                 });
             }
+}
+
+function addCheckBox() {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+     // if the translator is a PTE than we do not need to add the extra checkboxes
+    if (!is_pte) {
+        tablehead = document.getElementById("translations");      
+        if (tablehead != null) {
+            hoofd = tablehead.rows[0];
+            var y = hoofd.insertCell(0);
+            y.outerHTML = "<th class= 'thCheckBox' display:'table-cell'>Bulk</th>";
+            for (let e of document.querySelectorAll("tr.preview")) {
+                var x = e.insertCell(0);
+                x.className = "myCheckBox";
+            }
         }
+    }
+}
+
+function setmyCheckBox(event){
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    // if the translator is a PTE than we do not need to add the extra checkboxes
+    if (!is_pte) {
+        //document.getElementsByClassName("myCheckBox").checked = true;
+        document.querySelectorAll("tr.preview").forEach((preview, i) => {
+            if (!is_pte) {
+                rowchecked = preview.querySelector("td input");
+                if (rowchecked != null) {
+                    if (!rowchecked.checked) {
+                        console.debug("no checkbox1 set!");
+                        preview.querySelector("td input").checked = true;
+                    }
+                }
+            }
+        });
+    }
+}

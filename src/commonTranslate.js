@@ -432,7 +432,9 @@ function checkPage(postTranslationReplace) {
                         // PSS we need to remove the current span, as the mark function adds one again
                         // PSS fix for issue #157
                         let span = document.querySelector("#preview-" + newrowId + " td.translation span.translation-text");
-                        span.remove();
+                        if (span != null) {
+                            span.remove();
+                        }
                         // Enhancement issue #123
                         var myspan1 = document.createElement("span");
                         myspan1.className = "translation-text";
@@ -502,6 +504,7 @@ function checkPage(postTranslationReplace) {
                 }
             }
         }
+        
         messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words\n" + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
@@ -1019,23 +1022,36 @@ function bulkSave(event) {
     let timeout = 0;
     var counter = 0;
     var myWindow;
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     document.querySelectorAll("tr.preview").forEach((preview, i) => {
-        if (!preview.querySelector("th input").checked) {
-            return;
+        if (is_pte) {
+            if (!preview.querySelector("th input").checked) {
+                //console.debug("no checkbox set!");
+                return;
+            }
         }
-        counter++;
-        setTimeout(() => {
-            preview.querySelector("td.actions .edit").click();
-            const editor = preview.nextElementSibling;
-            editor.style.display = "none";
-            editor.querySelector(".translation-actions__save").click();
-            confirm = "button.gp-js-message-dismiss";
-            // PSS confirm the message for dismissal
-            elementReady(".gp-js-message-dismiss").then(elm => { elm.click(); }
-            );
-            toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving", myWindow);
-        }, timeout);
-        timeout +=1700;
+        else {
+            if (!preview.querySelector("td input").checked) {
+                //console.debug("no checkbox1 set!");
+                return;
+            }
+            counter++;
+            setTimeout(() => {
+                toastbox("info", "Saving suggestion: " + (i + 1), "800", "Saving", myWindow);
+                preview.querySelector("td.actions .edit").click();
+                const editor = preview.nextElementSibling;
+                if (editor != null) {
+                    editor.style.display = "none";
+                    editor.querySelector(".translation-actions__save").click();
+                }
+                confirm = "button.gp-js-message-dismiss";
+                // PSS confirm the message for dismissal
+                elementReady(".gp-js-message-dismiss").then(confirm => { confirm.click(); }
+                );
+               
+            }, timeout);
+            timeout += 1500;
+        }
     });
     if ( counter == 0) {
         messageBox("error", "You do not have translations selected!");
@@ -1138,9 +1154,12 @@ function waitForElm(selector) {
         });
     });
 }
+
 function close_toast(){
     const toastContainer = document.querySelector(".toast-container");
-    toastContainer.remove();
+    if (toastContainer != null) {
+        toastContainer.remove();
+    }
 }
 
 function toastbox(type, message, time, titel,currWindow) {
@@ -1160,7 +1179,6 @@ function toastbox(type, message, time, titel,currWindow) {
         console.debug("error:", err)
     });
     // resolve("toast ready");
-
 }
 
 function messageBox(type, message) {
