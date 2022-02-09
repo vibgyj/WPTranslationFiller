@@ -797,6 +797,10 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
                 checkbox.setAttribute("type", "checkbox");
                 checkbox.setAttribute("name", "selected-row[]");
                 checkBx.appendChild(checkbox);
+                let myrec = document.querySelector(`#editor-${rowId}`);
+                // We need to expand the amount of columns otherwise the editor is to small
+                var tds = myrec.getElementsByTagName("td")[0];
+                tds.setAttribute("colspan",5);
             }
             // check for the status of the record
             var separator1 = document.createElement("div");

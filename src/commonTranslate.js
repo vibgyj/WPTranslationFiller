@@ -2,6 +2,7 @@
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
+var errorstate ="OK";
 // This array is used to replace wrong words in translation
 // PSS version 12-05-2021
 let replaceVerb = [];
@@ -650,8 +651,20 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                         }
                         else if (transsel == "deepl") {
+                            
                             deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
-                        }
+                            if (errorstate == "Error 404") {
+                                alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                break;
+                            }
+                            else if (errorstate == "Error 400"){
+                                alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
+                                break;
+                              }
+                            }
+                           // result = deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                           
+                        
                         else if (transsel == "microsoft") {
                             microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                         }
@@ -1031,8 +1044,16 @@ function bulkSave(event) {
             }
         }
         else {
-            if (!preview.querySelector("td input").checked) {
-                //console.debug("no checkbox1 set!");
+            checkset = preview.querySelector("td input");
+            // If a translation alreay has been saved, there is not checkbox available
+            if (checkset != null) {
+                if (!checkset.checked) {
+                    //console.debug("no checkbox1 set!");
+                    return;
+                }
+            }
+            else {
+                //console.debug("problem reading checkbox1");
                 return;
             }
             counter++;
