@@ -258,7 +258,8 @@ file.addEventListener("change", function () {
             entry = lines[line].split(",");
             if (entry[1] && entry[1].length > 0) {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                let value = entry[1].split("/");
+                // This possibly needs to be reverted to "/"
+                let value = entry[1].split(",");
                 for (let val in value) {
                     if (value != ""){
                        value[val] = value[val].replaceAll("\"", "").trim();

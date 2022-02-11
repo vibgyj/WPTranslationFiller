@@ -209,11 +209,11 @@ function sendAPIRequestDeepl(original, language, record, apikeyDeepl, originalPr
             else {
                 if (this.response != null && this.response.message == "\"Value for 'target_lang' not supported.\"") {
                    // alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
-                    errorstate = "Error 404";
+                    errorstate = "Error 400";
                 }
                 else if (this.readyState == 2 && this.status == 403) {
                     //alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
-                    errorstate = "Error 404";
+                    errorstate = "Error 403";
                 }
                 else {
                     // 18-06-2021 PSS fixed an alert at the wrong time issue #83

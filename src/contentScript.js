@@ -497,6 +497,7 @@ chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
         }
         else {
             console.debug("Glossary empty!!");
+            alert("Your glossary is not loaded because no file is loaded!!");
         }
         checkbuttonClick();
     });
