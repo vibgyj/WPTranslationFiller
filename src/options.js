@@ -249,7 +249,7 @@ file.addEventListener("change", function () {
     var file = this.files[0];
     var entry = "";
     locale = "nl";
-    console.debug
+    var value = "";
     var reader = new FileReader();
     reader.onload = function () {
         var lines = this.result.split("\n");
@@ -258,13 +258,29 @@ file.addEventListener("change", function () {
             entry = lines[line].split(",");
             if (entry[1] && entry[1].length > 0) {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                // This possibly needs to be reverted to "/"
-                let value = entry[1].split(",");
-                for (let val in value) {
-                    if (value != ""){
-                       value[val] = value[val].replaceAll("\"", "").trim();
+                console.debug(" entry 1:", entry[1]);
+                const found = entry[1].indexOf("-/");
+                console.debug(" entry 1:", entry[1],found);
+                if (found == -1) {
+                    value = entry[1].split("/");
+                    console.debug(" -/ not found", value);
+                    for (let val in value) {
+                        if (value != "") {
+                            value[val] = value[val].replaceAll("\"", "").trim();
+                        }
                     }
                 }
+                else {
+                    value = entry[1];
+                    console.debug("/ found:", value);
+                }
+                console.debug("wefound:", value);
+                for (let val in value) {
+                        if (value != "") {
+                            value[val] = value[val].replaceAll("\"", "").trim();
+                        }
+                    }
+                
                 startChar = key.substring(0, 1);
                 switch (startChar) {
                     case "a":

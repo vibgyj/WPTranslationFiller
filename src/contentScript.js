@@ -1293,28 +1293,31 @@ function validate(language, original, translation, locale) {
                 for (let gItem of glossary) {
                     let gItemKey = gItem["key"];
                     let gItemValue = gItem["value"];
-                    if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
-                        //console.log("Word found:", gItemKey, gItemValue);
+                    if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {          
                         wordCount++;
                         let isFound = false;
                         for (let gWord of gItemValue) {
-                            if (match(language, gWord.toLowerCase(), translation.toLowerCase())) {
-                                //console.log("+ Translation found:", gWord);
+                           // console.debug("translation:", translation, "gWord:",gWord.toLowerCase(), "translation:",translation.toLowerCase())
+                            if (match(language, gWord.toLowerCase(), translation.toLowerCase(),gItemValue)) {
                                 isFound = true;
+                                break;
+                            }
+                            else {
+                                isfound = false;
                                 break;
                             }
                         }
                         if (isFound) {
                             foundCount++;
-                        } else {
+                          } else {
                             if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
                                 toolTip += `${gItemKey} - ${gItemValue}\n`;
                             }
                         }
                         break;
-                        }
                     }
                 }
+            }
         }
         else {
             foundCount = 0;
@@ -1336,7 +1339,11 @@ function validate(language, original, translation, locale) {
 
 
     // Language specific matching.
-    function match(language, gWord, tWord) {
+function match(language, gWord, tWord, gItemValue) {
+    var glossaryverb;
+    if (typeof language != 'undefined') {
+        // language is set to uppercase, so we need to return it to lowercase
+        language = language.toLowerCase();
         switch (language) {
             case "ta":
                 return taMatch(gWord, tWord);
@@ -1344,6 +1351,27 @@ function validate(language, original, translation, locale) {
                 return tWord.includes(gWord);
         }
     }
+    else {
+        if (tWord.len == "1") {
+            return tWord.includes(gWord);
+        }
+        else {
+            if (!Array.isArray(gItemValue)) {
+                glossaryverb = gItemValue.toLowerCase();
+            }
+            else {
+                // if the glossary contains an array we need to walk through the array
+                for (var i = 0; i < gItemValue.length; i++) {
+                    glossaryverb = gItemValue[i].toLowerCase();
+                    if (tWord.includes(glossaryverb) == true) {
+                        break;
+                      }
+                } 
+            }
+            return tWord.includes(glossaryverb);
+        }
+    }
+}
 
     function taMatch(gWord, tWord) {
         let trimSize = gWord.charCodeAt(gWord.length - 1) == "\u0BCD".charCodeAt(0)
