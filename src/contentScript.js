@@ -1293,7 +1293,8 @@ function validate(language, original, translation, locale) {
                 for (let gItem of glossary) {
                     let gItemKey = gItem["key"];
                     let gItemValue = gItem["value"];
-                    if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {          
+                    //if (oWord.toLowerCase().startsWith(gItemKey.toLowerCase())) {
+                    if (oWord.toLowerCase() == gItemKey.toLowerCase()) {          
                         wordCount++;
                         let isFound = false;
                         for (let gWord of gItemValue) {
