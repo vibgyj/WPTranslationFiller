@@ -1015,13 +1015,14 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             else {
                 console.debug("no current found!");
                 //SavelocalButton.innerText = "Save";
-                //SavelocalButton.title = "Save the string";
+                SavelocalButton.title = "Save the string";
             }
         }
         return;
     }
         if (result.wordCount == 0) {
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+
             let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (h != null) {
                 current = h.querySelector("span.panel-header__bubble");
@@ -1047,73 +1048,78 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 return;
             }
         }
-        if (result.percent == 100) {
-            checkElem.innerHTML = "100";
+    if (result.percent == 100) {
+        checkElem.innerHTML = "100";
+        if (current.innerText == "transFill") {
+            SavelocalButton.style.backgroundColor = "#0085ba";
+            checkElem.title = "Save the string";
+        }
+        checkElem.style.backgroundColor = "green";
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = "green";
             if (current.innerText == "transFill") {
-                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
-            checkElem.style.backgroundColor = "green";
-            if (typeof headerElem.style != "undefined") {
-                headerElem.style.backgroundColor = "green";
-                if (current.innerText == "transFill") {
-                    checkElem.title = "Save the string";
-                }
-                else if (current.innerText == "waiting") {
-                    SavelocalButton.style.backgroundColor = "#0085ba";
-                    checkElem.title = "Approve the string";
-                }
-                else if (current.innerText == "current") {
-                    SavelocalButton.style.backgroundColor = "#0085ba";
-                    checkElem.title = "Current string";
-                }
-            }
-        }
-        else if (result.percent > 66) {
-            //checkElem.style.cssText = "padding-left:0px; text-align: right";
-            checkElem.innerHTML = "66";
-            SavelocalButton.style.backgroundColor = "#0085ba";
-            checkElem.style.backgroundColor = "yellow";
-            if (typeof headerElem.style != "undefined") {
-                headerElem.style.backgroundColor = "yellow";
+            else if (current.innerText == "waiting") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Approve the string";
             }
-        }
-        else if (result.percent > 33) {
-            //checkElem.style.cssText = "padding-left:0px; text-align: right";
-            checkElem.innerHTML = "33";
-            SavelocalButton.style.backgroundColor = "#0085ba";
-            checkElem.style.backgroundColor = "orange";
-            if (typeof headerElem.style != "undefined") {
-                headerElem.style.backgroundColor = "orange";
-                checkElem.title = "Approve the string";
+            else if (current.innerText == "current") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
+                checkElem.title = "Current string";
             }
         }
-        else {
-            //checkElem.style.cssText = "padding-left:0px; text-align: right";
-            checkElem.innerHTML = "0";
+    }
+    else if (result.percent > 66) {
+        //checkElem.style.cssText = "padding-left:0px; text-align: right";
+        newtitle = checkElem.title;
+        checkElem.innerHTML = "66";
+        SavelocalButton.style.backgroundColor = "#0085ba";
+        checkElem.style.backgroundColor = "yellow";
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = "yellow";
+            checkElem.title = "Approve the string";
+        }
+    }
+    else if (result.percent > 33) {
+        //checkElem.style.cssText = "padding-left:0px; text-align: right";
+        newtitle = checkElem.title;
+        checkElem.innerHTML = "33";
+        SavelocalButton.style.backgroundColor = "#0085ba";
+        checkElem.style.backgroundColor = "orange";
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = "orange";
+            checkElem.title = "Approve the string";
+        }
+    }
+    else if (result.percent == 0) {
+            //console.debug("checkElem:", checkElem.innerHTML, result.percent, result.wordCount, result.toolTip)
+            // We need to set the title here also, otherwise it will occassionally not be shown
+            newtitle = checkElem.title;
+            checkElem.innerText = "0";
             var separator1 = document.createElement("div");
             separator1.setAttribute("class", "checkElem_save");
             checkElem.appendChild(separator1);
             SavelocalButton.style.backgroundColor = "#0085ba";
             checkElem.style.backgroundColor = "red";
             SavelocalButton.style.animation = "blinking 1s infinite";
+            SavelocalButton.style.cursor = "none";
+            SavelocalButton.disabled = true;
+            checkElem.title = "Approve the string";
             if (typeof headerElem.style != "undefined") {
                 headerElem.style.backgroundColor = "red";
             }
         }
-        var separator1 = document.createElement("div");
-        separator1.setAttribute("class", "checkElem_save");
+        //var separator1 = document.createElement("div");
+        //separator1.setAttribute("class", "checkElem_save");
         //separator1.style.cssText = "width:100%; display:block; height:1px; border-bottom: 1px solid grey;";
-        checkElem.appendChild(separator1);
+        //checkElem.appendChild(separator1);
 
         // we need to add the save button again after updating the element  
         SavelocalButton = document.createElement("button");
         SavelocalButton.id = "tf-save-button";
         SavelocalButton.className = "tf-save-button";
         SavelocalButton.onclick = savetranslateEntryClicked;
-        //#editor - 8188612 - 87485455 span.panel - header__bubble
-        // let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
         current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
         if (current != null) {
             //current = h.querySelector("span.panel-header__bubble");
@@ -1140,13 +1146,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 checkElem.title = "Reject the string";
             }
             else {
-                SavelocalButton.innerText = "Save";
+                SavelocalButton.innerText = "Undef";
                 SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
             // 22-07-2021 PSS fix for wrong button text "Apply" #108 This needs to be investigated to check if the others also need to be moved down
-            
-
             if (result.percent == 10) {
                 //checkElem.style.cssText = "padding-left:0px; text-align: right";
                 checkElem.innerHTML = "Mod";
@@ -1159,26 +1163,32 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
             if (result.percent == 0) {
                 //checkElem.style.cssText = "padding-left:0px; text-align: right";
-                checkElem.innerHTML = "0";
-                var separator1 = document.createElement("div");
-                separator1.setAttribute("class", "checkElem_save");
-                checkElem.appendChild(separator1);
-                checkElem.style.backgroundColor = "red";
+                //checkElem.innerHTML = "0";
+                //var separator1 = document.createElement("div");
+                //separator1.setAttribute("class", "checkElem_save");
+                //checkElem.appendChild(separator1);
+                //checkElem.style.backgroundColor = "red";
+                SavelocalButton.disabled = false;
+                SavelocalButton.style.pointerEvents = "none"
                 SavelocalButton.style.animation = "blinking 1s infinite";
-                if (typeof headerElem.style != "undefined") {
-                    headerElem.style.backgroundColor = "red";
-                    SavelocalButton.innerText = "Save";
-                    checkElem.title = "Save the string";
-                }
-            }
+                checkElem.title = "Do not save the string!!";
+                //if (typeof headerElem.style != "undefined") {
+                //headerElem.style.backgroundColor = "red";
+                //SavelocalButton.innerText = "Save" 
+                // }
+           }
         }
         //SavelocalButton.ariaLabel = "Save and approve translation";
-        checkElem.appendChild(SavelocalButton);
+        var saveButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         newline = "\n";
         missingverbs = "Missing verbs \n";
+
+       if (saveButton == null) {
+           checkElem.appendChild(SavelocalButton);
+       }
         // 11-08-2021 PSS added aditional code to prevent duplicate missing verbs in individual translation
         headerElem.title = "";
-        if (result.toolTip != "") {
+       if (result.toolTip != "") {
             // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
             if (typeof headerElem.title != "undefined") {
                 headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
@@ -1186,8 +1196,8 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
         }
         else {
-            newtitle = checkElem.title;
-            headertitle = headerElem.title;
+           newtitle = checkElem.title.concat(result.toolTip);
+           headertitle = headerElem.title;
         }
         checkElem.setAttribute("title", newtitle);
         // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
@@ -1195,7 +1205,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             headerElem.setAttribute("title", headertitle);
         }
         //checkElem.setAttribute("title", result.toolTip);
-    }
+}
 
 function savetranslateEntryClicked(event) {
     var myWindow;
@@ -1284,8 +1294,8 @@ function validate(language, original, translation, locale) {
     let originalWords = original.split(" ");
     let wordCount = 0;
     let foundCount = 0;
-    let toolTip = "";
-    // 17-05-2021 PSS added check to prevent errors with empty glossary be aware that if the glossar//y gets more entries the amount needs to be adepted
+    var toolTip = [];
+    // 17-05-2021 PSS added check to prevent errors with empty glossary be aware that if the glossary gets more entries the amount needs to be adepted
     if (glossary.length > 27) {
         //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
         if (translation.length > 0) {
@@ -1303,19 +1313,16 @@ function validate(language, original, translation, locale) {
                                 isFound = true;
                                 break;
                             }
-                            else {
-                                isfound = false;
-                                break;
-                            }
                         }
                         if (isFound) {
                             foundCount++;
-                          } else {
+                        }
+                        else {
                             if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
                                 toolTip += `${gItemKey} - ${gItemValue}\n`;
-                            }
-                        }
-                        break;
+                           }
+                         }
+                          // break;
                     }
                 }
             }
