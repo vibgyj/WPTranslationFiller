@@ -481,7 +481,14 @@ function checkPage(postTranslationReplace) {
                                 translatedText = result.translatedText;
                                 countreplaced = result.countreplaced;
                                 replaced = result.replaced;
-                                if (replaced) {
+                            if (replaced) {
+                                // PSS fix for #188 label Transfill needs to be set
+                                let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                                if (currec != null) {
+                                    var current = currec.querySelector("span.panel-header__bubble");
+                                    var prevstate = current.innerText;
+                                    current.innerText = "transFill";
+                                }
                                     previewElem.innerText = previewNewText;
                                     let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                                     // if current translation we need to split the rownumber

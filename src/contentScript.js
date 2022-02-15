@@ -135,6 +135,11 @@ document.addEventListener("keydown", function (event) {
         console.debug("Make bulk checkbox active for non PTE");
         setmyCheckBox(event);
     }
+    if (event.altKey && event.shiftKey && (event.key === "@")) {
+        event.preventDefault();
+        console.debug("Make bulk checkbox not active for non PTE");
+        deselectCheckBox(event);
+    }
 });
 
 
@@ -1074,6 +1079,9 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         //checkElem.style.cssText = "padding-left:0px; text-align: right";
         newtitle = checkElem.title;
         checkElem.innerHTML = "66";
+        var separator1 = document.createElement("div");
+        separator1.setAttribute("class", "checkElem_save");
+        checkElem.appendChild(separator1);
         SavelocalButton.style.backgroundColor = "#0085ba";
         checkElem.style.backgroundColor = "yellow";
         if (typeof headerElem.style != "undefined") {
@@ -1085,6 +1093,9 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         //checkElem.style.cssText = "padding-left:0px; text-align: right";
         newtitle = checkElem.title;
         checkElem.innerHTML = "33";
+        var separator1 = document.createElement("div");
+        separator1.setAttribute("class", "checkElem_save");
+        checkElem.appendChild(separator1);
         SavelocalButton.style.backgroundColor = "#0085ba";
         checkElem.style.backgroundColor = "orange";
         if (typeof headerElem.style != "undefined") {
@@ -1092,6 +1103,20 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             checkElem.title = "Approve the string";
         }
     }
+    
+    else if (result.percent == 10) {
+        //checkElem.style.cssText = "padding-left:0px; text-align: right";
+        checkElem.innerHTML = "Mod";
+        SavelocalButton.disabled = false;
+        SavelocalButton.innerText = "Save";
+        SavelocalButton.onclick = savetranslateEntryClicked;
+        checkElem.style.backgroundColor = "purple";
+        checkElem.title = "Save the string";
+        if (typeof headerElem.style != "undefined") {
+            headerElem.style.backgroundColor = "purple";   
+        }
+    }
+
     else if (result.percent == 0) {
             //console.debug("checkElem:", checkElem.innerHTML, result.percent, result.wordCount, result.toolTip)
             // We need to set the title here also, otherwise it will occassionally not be shown
@@ -1151,16 +1176,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 checkElem.title = "Save the string";
             }
             // 22-07-2021 PSS fix for wrong button text "Apply" #108 This needs to be investigated to check if the others also need to be moved down
-            if (result.percent == 10) {
-                //checkElem.style.cssText = "padding-left:0px; text-align: right";
-                checkElem.innerHTML = "Mod";
-                checkElem.style.backgroundColor = "purple";
-                if (typeof headerElem.style != "undefined") {
-                    headerElem.style.backgroundColor = "purple";
-                    SavelocalButton.innerText = "Save";
-                    checkElem.title = "Save the string";
-                }
-            }
             if (result.percent == 0) {
                 //checkElem.style.cssText = "padding-left:0px; text-align: right";
                 //checkElem.innerHTML = "0";
@@ -1770,8 +1785,24 @@ function setmyCheckBox(event){
                 rowchecked = preview.querySelector("td input");
                 if (rowchecked != null) {
                     if (!rowchecked.checked) {
-                        console.debug("no checkbox1 set!");
                         preview.querySelector("td input").checked = true;
+                    }
+                }
+            }
+        });
+    }
+}
+function deselectCheckBox(event) {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    // if the translator is a PTE than we do not need to add the extra checkboxes
+    if (!is_pte) {
+        //document.getElementsByClassName("myCheckBox").checked = true;
+        document.querySelectorAll("tr.preview").forEach((preview, i) => {
+            if (!is_pte) {
+                rowchecked = preview.querySelector("td input");
+                if (rowchecked != null) {
+                    if (rowchecked.checked) {
+                        preview.querySelector("td input").checked = false;
                     }
                 }
             }
