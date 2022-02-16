@@ -4,6 +4,7 @@
 var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
+var errorstate = "OK";
 gd_wait_table_alter();
 addCheckBox();
 ;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
@@ -313,7 +314,7 @@ function translatePageClicked(event) {
                             var formal = checkFormal(false);
                             //var locale = checkLocale();
                             convertToLow = data.convertToLower;
-                            var DeeplFree = "true";
+                            var DeeplFree = data.DeeplFree;
                             translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree)
                         }
                         else {
@@ -706,7 +707,7 @@ function translateEntryClicked(event) {
         .get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
             var formal = checkFormal(false);
-            var DeeplFree = "true";
+            var DeeplFree = data.DeeplFree;
             translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower,DeeplFree);
         });
 }
@@ -1057,6 +1058,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         checkElem.innerHTML = "100";
         if (current.innerText == "transFill") {
             SavelocalButton.style.backgroundColor = "#0085ba";
+           // SavelocalButton.innerText = "Save";
             checkElem.title = "Save the string";
         }
         checkElem.style.backgroundColor = "green";
@@ -1097,6 +1099,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         separator1.setAttribute("class", "checkElem_save");
         checkElem.appendChild(separator1);
         SavelocalButton.style.backgroundColor = "#0085ba";
+       // SavelocalButton.innerText = "Save";
         checkElem.style.backgroundColor = "orange";
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = "orange";
@@ -1130,6 +1133,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             SavelocalButton.style.animation = "blinking 1s infinite";
             SavelocalButton.style.cursor = "none";
             SavelocalButton.disabled = true;
+            //SavelocalButton.innerText = "Save";
             checkElem.title = "Approve the string";
             if (typeof headerElem.style != "undefined") {
                 headerElem.style.backgroundColor = "red";
@@ -1186,6 +1190,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 SavelocalButton.disabled = false;
                 SavelocalButton.style.pointerEvents = "none"
                 SavelocalButton.style.animation = "blinking 1s infinite";
+                //SavelocalButton.innerText = "Save";
                 checkElem.title = "Do not save the string!!";
                 //if (typeof headerElem.style != "undefined") {
                 //headerElem.style.backgroundColor = "red";

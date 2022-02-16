@@ -2,7 +2,7 @@
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
-var errorstate ="OK";
+
 // This array is used to replace wrong words in translation
 // PSS version 12-05-2021
 let replaceVerb = [];
@@ -663,8 +663,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         }
                         else if (transsel == "deepl") {
                             
-                            deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
-                            if (errorstate == "Error 404") {
+                            result = await nwdeepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                            if (result == "Error 403") {
                                 alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
                                 break;
                             }
@@ -786,9 +786,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     }
                                 }
                                 else if (transsel == "deepl") {
-                                    translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
-                                    if (errorstate == "Error 404") {
+                                    result = await nwdeepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                                    if (result == "Error 403")  {
                                         alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                        break;
+                                    }
+                                    else if (result == 'Error 404') {
+                                        alert("Error in translation received status 404 The requested resource could not be found.")
                                         break;
                                     }
                                     else if (errorstate == "Error 400") {
@@ -796,7 +800,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         break;
                                     }
                                 }
-                                
                                 else if (transsel == "microsoft") {
                                     translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (errorstate == "Error 401") {
@@ -989,12 +992,16 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         }
                     }
                     else if (transsel == "deepl") {
-                        translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
-                        if (errorstate == "Error 404") {
+                        result = await nwdeepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                       // console.debug("returned errorstate:",result)
+                        if (result == 'Error 403') {
                             alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
                         }
+                        else if (result == 'Error 404') {
+                            alert("Error in translation received status 404 The requested resource could not be found.")
+                        }
                         else if (errorstate == "Error 400") {
-                            alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
+                            alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                     }
                     else if (transsel == "microsoft") {
@@ -1042,7 +1049,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                     }
                     else if (transsel == "deepl") {
-                        translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                        translatedText = nwdeepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                     }
                     else if (transsel == "microsoft") {
                         translatedText = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);

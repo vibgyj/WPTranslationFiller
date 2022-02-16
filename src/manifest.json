@@ -35,6 +35,7 @@
         "database.js",
         "commonTranslate.js",
         "deeplTranslate.js",
+        "nwdeeplTranslate.js",
         "googleTranslate.js",
         "microsoftTranslate.js",
         "contentScript.js",
