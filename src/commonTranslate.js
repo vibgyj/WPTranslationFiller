@@ -675,11 +675,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         else if (transsel == "microsoft") {
                             microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                             if (errorstate == "Error 401") {
-                                alert("Error in translation received status 401, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                alert("Error in translation received status 401, authorisation refused.\r\nPLease check your licence in the options!!!");
                                 break;
                             }
                             else if (errorstate == "Error 403") {
-                                alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                 break;
                             }
                         }
@@ -1001,9 +1001,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         }
                     }
                     else if (transsel == "microsoft") {
-                        translatedText = microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        translatedText = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 401") {
-                            alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
+                            alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (errorstate == "Error 403") {
                             alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");

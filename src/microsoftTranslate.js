@@ -40,6 +40,7 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
+
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         // 24-06-2021 PSS fixed an error in Chrome with type null message
