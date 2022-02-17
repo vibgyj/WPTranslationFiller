@@ -655,14 +655,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "hide";
                         }
                         if (transsel == "google") {
-                            googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                            translatedText = googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                             if (errorstate == "Error 400") {
                                 alert("Error in translation received status 400, maybe a license problem\n\nPLease check your licence in the options!!!");
                                 break;
                             }
                         }
                         else if (transsel == "deepl") {
-                            
                             result = await nwdeepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                             if (result == "Error 403") {
                                 alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
@@ -673,9 +672,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 break;
                               }
                             }
-                           // result = deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
-                           
-                        
                         else if (transsel == "microsoft") {
                             microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                             if (errorstate == "Error 401") {
