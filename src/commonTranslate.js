@@ -655,9 +655,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "hide";
                         }
                         if (transsel == "google") {
-                            translatedText = googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                            result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                             if (errorstate == "Error 400") {
-                                alert("Error in translation received status 400, maybe a license problem\r\nPlease check your licence in the options!!!");
+                                alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                 break;
                             }
                         }
@@ -775,9 +775,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
                                 if (transsel == "google") {
-                                    translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                                    result = await googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (errorstate == "Error 400") {
-                                        alert("Error in translation received status 400, maybe a license problem\n\nPlease check your licence in the options!!!");
+                                        alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                         break;
                                     }
                                 }
@@ -982,9 +982,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        translatedText = googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 400") {
-                            alert("Error in translation received status 400, authorisation refused.\n\nPlease check your licence in the options!!!");
+                            alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                         }
                     }
                     else if (transsel == "deepl") {
