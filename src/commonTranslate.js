@@ -657,28 +657,28 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (transsel == "google") {
                             translatedText = googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                             if (errorstate == "Error 400") {
-                                alert("Error in translation received status 400, maybe a license problem\n\nPLease check your licence in the options!!!");
+                                alert("Error in translation received status 400, maybe a license problem\r\nPlease check your licence in the options!!!");
                                 break;
                             }
                         }
                         else if (transsel == "deepl") {
-                            result = await nwdeepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                            result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                             if (result == "Error 403") {
-                                alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                                 break;
                             }
-                            else if (errorstate == "Error 400"){
-                                alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
+                            else if (result == "Error 400"){
+                                alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                 break;
                               }
                             }
                         else if (transsel == "microsoft") {
-                            microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
-                            if (errorstate == "Error 401") {
-                                alert("Error in translation received status 401, authorisation refused.\r\nPLease check your licence in the options!!!");
+                            result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                            if (result == "Error 401") {
+                                alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
                                 break;
                             }
-                            else if (errorstate == "Error 403") {
+                            else if (result == "Error 403") {
                                 alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                 break;
                             }
@@ -777,32 +777,32 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 if (transsel == "google") {
                                     translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (errorstate == "Error 400") {
-                                        alert("Error in translation received status 400, maybe a license problem\n\nPLease check your licence in the options!!!");
+                                        alert("Error in translation received status 400, maybe a license problem\n\nPlease check your licence in the options!!!");
                                         break;
                                     }
                                 }
                                 else if (transsel == "deepl") {
-                                    result = await nwdeepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                                    result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                                     if (result == "Error 403")  {
-                                        alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                        alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                                         break;
                                     }
                                     else if (result == 'Error 404') {
                                         alert("Error in translation received status 404 The requested resource could not be found.")
                                         break;
                                     }
-                                    else if (errorstate == "Error 400") {
-                                        alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
+                                    else if (result == "Error 400") {
+                                        alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
                                 }
                                 else if (transsel == "microsoft") {
-                                    translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
-                                    if (errorstate == "Error 401") {
-                                        alert("Error in translation received status 401, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                    result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                                    if (result == "Error 401") {
+                                        alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
                                         break;
                                     }
-                                    else if (errorstate == "Error 403") {
+                                    else if (result == "Error 403") {
                                         alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
@@ -984,28 +984,27 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     if (transsel == "google") {
                         translatedText = googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 400") {
-                            alert("Error in translation received status 400, authorisation refused.\n\nPLease check your licence in the options!!!");
+                            alert("Error in translation received status 400, authorisation refused.\n\nPlease check your licence in the options!!!");
                         }
                     }
                     else if (transsel == "deepl") {
-                        result = await nwdeepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
-                       // console.debug("returned errorstate:",result)
+                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == 'Error 403') {
-                            alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                            alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                         }
                         else if (result == 'Error 404') {
                             alert("Error in translation received status 404 The requested resource could not be found.")
                         }
-                        else if (errorstate == "Error 400") {
+                        else if (result == "Error 400") {
                             alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                     }
                     else if (transsel == "microsoft") {
-                        translatedText = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
-                        if (errorstate == "Error 401") {
+                        result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        if (result == "Error 401") {
                             alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
-                        else if (errorstate == "Error 403") {
+                        else if (result == "Error 403") {
                             alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                     }
@@ -1045,14 +1044,23 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                     }
                     else if (transsel == "deepl") {
-                        translatedText = nwdeepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                        result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                        if (result == "Error 403") {
+                            alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
+                        }
+                        else if (result == 'Error 404') {
+                            alert("Error in translation received status 404 The requested resource could not be found.")
+                        }
+                        else if (result == "Error 400") {
+                            alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
                     }
                     else if (transsel == "microsoft") {
-                        translatedText = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
-                        if (errorstate == "Error 401") {
+                        result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        if (result == "Error 401") {
                             alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
                         }
-                        else if (errorstate == "Error 403") {
+                        else if (result == "Error 403") {
                             alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                     }

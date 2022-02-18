@@ -36,7 +36,7 @@
         "commonTranslate.js",
         "deeplTranslate.js",
         "googleTranslate.js",
-        "nwmicrosoftTranslate.js",
+        "microsoftTranslate.js",
         "contentScript.js",
         "jsdiff.js"
       ],

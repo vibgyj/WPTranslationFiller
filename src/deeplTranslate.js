@@ -4,15 +4,15 @@
  */
 
 
-async function nwdeepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
+async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    let translatedText = await getTrans(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+    let translatedText = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
     return errorstate;
 }
 
 
-async function getTrans(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
+async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -28,76 +28,43 @@ async function getTrans(original, language, record, apikeyDeepl, originalPreProc
     var status = "";
     var error;
     var data;
+    var link;
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
 
-    const myHeaders = new Headers({
-    'Content-Type': 'text/plain',
-    'Content-Length': originalPreProcessed.length.toString()
-     });
-
-    //const myRequest = new Request('flowers.jpg', {
-     //   method: 'POST',
-     //   mode: 'cors',
-     //   cache: 'default',
-     //   auth_key: apikeyDeepl,
-      //  target_lang: language,
-      //  preserve_formatting: '0',
-       // tag_handling: 'xml',
-       // ignore_tags: 'x',
-      //  formality: 'default',
-      //  split_sentences: 'nonewlines',
-      //  body: JSON.stringify({
-            // your expected POST request payload goes here
-        //    body: originalPreProcessed
-       // })
-    //});
-
-    const requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        auth_key: apikeyDeepl,
-        target_lang: language,
-        preserve_formatting: 0,
-        tag_handling: 'xml',
-        ignore_tags: 'x',
-        formality: 'default',
-        split_sentences: 'nonewlines',
-        
-    };
     language = language.toUpperCase();
     if (language == "RO") {
         if (DeeplFree == true ) {
-            var link = "https://api-free.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+            link = "https://api-free.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
         }
         else {
-            var link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+            link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
         }
     }
     else {
         if (!formal) {
             if (DeeplFree == true) {
                 //console.debug("Free",DeeplFree);
-                var link = `https://api-free.deepl.com/v2/translate?auth_key=` + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+                link = `https://api-free.deepl.com/v2/translate?auth_key=` + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
             }
             else {
                // console.debug("Payed");
-                var link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+                link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
             }
         }
         else {
             //console.debug("formal");
             if (DeeplFree == true) {
-                var link = "https://api-free.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+                link = "https://api-free.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
             }
             else {
-                var link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+                link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
             }
         }
     }
 
-    const response = fetch(link, requestOptions)
+    const response = fetch(link)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
@@ -107,7 +74,7 @@ async function getTrans(original, language, record, apikeyDeepl, originalPreProc
                 // get error message from body or default to response status
                 //console.debug("data:", data, response.status)
                 if (typeof data != "undefined") {
-                    error = [data, message, response.status];
+                    error = [data, error, response.status];
                 }
                 else {
                     let message = 'Noresponse';
@@ -221,7 +188,6 @@ async function getTrans(original, language, record, apikeyDeepl, originalPreProc
             }
         })
         .catch(error => {
-            //console.debug("error:", error)
             if (error[2] == "403") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 errorstate = "Error 403";
