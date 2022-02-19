@@ -237,10 +237,11 @@ document.addEventListener("keydown", function (event) {
 
 
 let bulkbutton = document.getElementById("tf-bulk-button");
-  bulkbutton.addEventListener("click", () => {
-      //console.log("bulkButton clicked.");
-      bulk(event);
-});
+if (bulkbutton != null){
+    bulkbutton.addEventListener("click", () => {
+        bulk(event);
+    });
+}
 
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
