@@ -144,7 +144,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 
- function bulk(event) {
+function bulk(event) {
             try {
                 bulkSave(event);
            
@@ -236,6 +236,11 @@ document.addEventListener("keydown", function (event) {
 });
 
 
+let bulkbutton = document.getElementById("tf-bulk-button");
+  bulkbutton.addEventListener("click", () => {
+      //console.log("bulkButton clicked.");
+      bulk(event);
+});
 
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
@@ -631,65 +636,66 @@ function checkactionClick(event) {
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 function checkbuttonClick(event) {
+    //console.debug("eventAction:", event)
     if (event != undefined) {
-        //event.preventDefault(); caused a problem within the single page enttry  
-       let action = event.target.textContent ;
-       // 30-06-2021 PSS added fetch status from local storage
-       // Necessary to prevent showing old translation exist if started from link "Translation history"
-      // alert(action);
-       // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
-       if (action == "Details" || action == "✓Details") {
-           let rowId = event.target.parentElement.parentElement.getAttribute("row");
-           glob_row = rowId;
-           detailRow = rowId;
-           let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-           // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
-           chrome.storage.sync.set({ "noOldTrans": "True" }, function () {
-               // Notify that we saved.
-               // alert("Settings saved");
-           });
-           // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
-           let f = document.getElementsByClassName("breadcrumb");
-           let url = f[0].firstChild.baseURI;
-           let newurl = url.split("?")[0];
-           if (typeof newurl != "undefined") {
-               // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
-               // Fetch only the current string to compaire with the waiting string
-               //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
-               url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
-               chrome.storage.sync.get(["showTransDiff"], function (data) {
-                   if (data.showTransDiff != "null") {
-                       if (data.showTransDiff == true) {
-                           fetchOldRec(url, rowId);
-                       }
-                   }
-               });
-           }
-           if (translateButton == null) {
-               let panelHeaderActions = document.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
-               let translateButton = document.createElement("my-button");
-               translateButton.id = `translate-${rowId}-translation-entry-my-button`;
-               translateButton.className = "translation-entry-my-button";
-               translateButton.onclick = translateEntryClicked;
-               translateButton.innerText = "Translate";
-               panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
-               // Add addtranslate button
-               let addTranslateButton = document.createElement("my-button");
-               
-               addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
-               addTranslateButton.className = "addtranslation-entry-my-button";
-               addTranslateButton.onclick = addtranslateEntryClicked;
-               addTranslateButton.innerText = "Add Translation";
-               panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
+            //event.preventDefault(); caused a problem within the single page enttry  
+            let action = event.target.textContent;
+            // 30-06-2021 PSS added fetch status from local storage
+            // Necessary to prevent showing old translation exist if started from link "Translation history"
+            // alert(action);
+            // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
+            if (action == "Details" || action == "✓Details") {
+                let rowId = event.target.parentElement.parentElement.getAttribute("row");
+                glob_row = rowId;
+                detailRow = rowId;
+                let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+                // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
+                chrome.storage.sync.set({ "noOldTrans": "True" }, function () {
+                    // Notify that we saved.
+                    // alert("Settings saved");
+                });
+                // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
+                let f = document.getElementsByClassName("breadcrumb");
+                let url = f[0].firstChild.baseURI;
+                let newurl = url.split("?")[0];
+                if (typeof newurl != "undefined") {
+                    // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
+                    // Fetch only the current string to compaire with the waiting string
+                    //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
+                    url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
+                    chrome.storage.sync.get(["showTransDiff"], function (data) {
+                        if (data.showTransDiff != "null") {
+                            if (data.showTransDiff == true) {
+                                fetchOldRec(url, rowId);
+                            }
+                        }
+                    });
+                }
+                if (translateButton == null) {
+                    let panelHeaderActions = document.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
+                    let translateButton = document.createElement("my-button");
+                    translateButton.id = `translate-${rowId}-translation-entry-my-button`;
+                    translateButton.className = "translation-entry-my-button";
+                    translateButton.onclick = translateEntryClicked;
+                    translateButton.innerText = "Translate";
+                    panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+                    // Add addtranslate button
+                    let addTranslateButton = document.createElement("my-button");
 
-               let TranslocalButton = document.createElement("local-button");
-               TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
-               TranslocalButton.className = "translocal-entry-local-button";
-               TranslocalButton.innerText = "Local";
-               TranslocalButton.style.visibility = "hidden";
-               panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
-           }
-       }
+                    addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
+                    addTranslateButton.className = "addtranslation-entry-my-button";
+                    addTranslateButton.onclick = addtranslateEntryClicked;
+                    addTranslateButton.innerText = "Add Translation";
+                    panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
+
+                    let TranslocalButton = document.createElement("local-button");
+                    TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
+                    TranslocalButton.className = "translocal-entry-local-button";
+                    TranslocalButton.innerText = "Local";
+                    TranslocalButton.style.visibility = "hidden";
+                    panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
+                }
+            }
     }
 }
 
@@ -1764,14 +1770,29 @@ function gd_auto_hide_next_editor(editor) {
 }
 
 function addCheckBox() {
+
+    var BulkButton;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      // if the translator is a PTE than we do not need to add the extra checkboxes
     if (!is_pte) {
-        tablehead = document.getElementById("translations");      
+        tablehead = document.getElementById("translations");
+        BulkButton = document.createElement("button");
+        BulkButton.id = "tf-bulk-button";
+        BulkButton.className = "tf-bulk-button";
+        BulkButton.innerText = "Start";
+        
         if (tablehead != null) {
             hoofd = tablehead.rows[0];
             var y = hoofd.insertCell(0);
+            
             y.outerHTML = "<th class= 'thCheckBox' display:'table-cell'>Bulk</th>";
+            var blkButton = document.querySelector("th.thCheckBox");
+            //console.debug("bulk:", blkButton)
+           // if (blkButton == null) {
+            if (typeof blkButton != null) {
+                blkButton.appendChild(BulkButton);
+            }
+            //}
             for (let e of document.querySelectorAll("tr.preview")) {
                 var x = e.insertCell(0);
                 x.className = "myCheckBox";

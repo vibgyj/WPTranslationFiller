@@ -660,6 +660,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                 break;
                             }
+                            else {
+                                if (errorstate != "OK") {
+                                    alert("There has been some uncatched error: " + errorstate);
+                                    break;
+                                }
+                            }
                         }
                         else if (transsel == "deepl") {
                             result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
@@ -667,9 +673,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                                 break;
                             }
-                            else if (result == "Error 400"){
+                            else if (result == "Error 400") {
                                 alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                 break;
+                            }
+                            else {
+                                if (errorstate != "OK") {
+                                    alert("There has been some uncatched error: " + errorstate);
+                                    break;
+                                }
                               }
                             }
                         else if (transsel == "microsoft") {
@@ -681,6 +693,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             else if (result == "Error 403") {
                                 alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                 break;
+                            }
+                            else {
+                                if (errorstate != "OK") {
+                                    alert("There has been some uncatched error: " + errorstate);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -780,6 +798,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                         break;
                                     }
+                                    else {
+                                        if (errorstate != "OK") {
+                                            alert("There has been some uncatched error: " + errorstate);
+                                            break;
+                                        }
+                                    }
                                 }
                                 else if (transsel == "deepl") {
                                     result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
@@ -795,6 +819,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
+                                    else {
+                                        if (errorstate != "OK") {
+                                            alert("There has been some uncatched error: " + errorstate);
+                                            break;
+                                        }
+                                    }
                                 }
                                 else if (transsel == "microsoft") {
                                     result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
@@ -806,7 +836,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
-                                    
+                                    else {
+                                        if (errorstate != "OK") {
+                                            alert("There has been some uncatched error: " + errorstate);
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                             else {
@@ -843,8 +878,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     current.value = "transFill";
                                 }
                    
-                                validateEntry(destlang, textareaElem1, "", "", row);
-                                
+                                validateEntry(destlang, textareaElem1, "", "", row);   
                             }
                         }
                     }
@@ -986,6 +1020,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         if (errorstate == "Error 400") {
                             alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                         }
+                        else {
+                            if (errorstate != "OK") {
+                                alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
                     }
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
@@ -998,6 +1037,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         else if (result == "Error 400") {
                             alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
+                        else {
+                            if (errorstate != "OK") {
+                                alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
                     }
                     else if (transsel == "microsoft") {
                         result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
@@ -1006,6 +1050,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         }
                         else if (result == "Error 403") {
                             alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            if (errorstate != "OK") {
+                                alert("There has been some uncatched error: " + errorstate);
+                            }
                         }
                     }
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "hide";
@@ -1041,8 +1090,17 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 plural_line = "2";
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        result = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        if (errorstate == "Error 400") {
+                            alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
+                        }
+                        else {
+                            if (errorstate != "OK") {
+                                alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
                     }
+
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == "Error 403") {
@@ -1054,6 +1112,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         else if (result == "Error 400") {
                             alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
+                        else {
+                            if (errorstate != "OK") {
+                                alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
                     }
                     else if (transsel == "microsoft") {
                         result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
@@ -1062,6 +1125,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         }
                         else if (result == "Error 403") {
                             alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            if (errorstate != "OK") {
+                                alert("There has been some uncatched error: " + errorstate);
+                            }
                         }
                     }
                 }
