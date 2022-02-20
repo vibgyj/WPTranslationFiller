@@ -263,3 +263,19 @@ async function initStoragePersistence() {
   }
 }
 
+// This function copies the current line from the editor into the local database
+function addtranslateEntryClicked(event) {
+    if (event != undefined) {
+        event.preventDefault();
+        let rowId = event.target.id.split("-")[1];
+        // console.log("addtranslateEntry clicked rowId", rowId);
+        let myrowId = event.target.id.split("-")[2];
+        //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+        // So that needs to be added to the base rowId to find it
+        if (myrowId !== undefined && myrowId != "addtranslation") {
+            newrowId = rowId.concat("-", myrowId);
+            rowId = newrowId;
+        }
+        addTransline(rowId);
+    }
+}

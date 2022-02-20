@@ -385,76 +385,7 @@ function exportPageClicked(event) {
    // res= dbExport();
     
 }
-// 08-05-2021 PSS added import of records into local database
-function importPageClicked(event) {
-    event.preventDefault();
-    fileSelector.click();
-    fileSelector.addEventListener("change", (event) => {   
-       fileList = event.target.files;
-       const arrayFiles = Array.from(event.target.files)
-       const file = fileList[0];
-       var obj_csv = {
-       size:0,
-       dataFile:[]
-          }; 
-        // 09-05-2021 PSS added check for proper import type
-        // File type not recognized on some systems issue #183
-        if (file.type == "text/csv" || "application/vnd.ms-excel"){
-           if (fileList[0]) {
-              let reader = new FileReader();
-               //reader.readAsBinaryString(fileList[0]);
-               // 30-10-2021 PSS added fix #156 for converting special chars
-              reader.readAsText(fileList[0]);     
-              reader.onload = function (e) {
-              //console.log("functions started:",e);
-              obj_csv.size = e.total;
-              obj_csv.dataFile = e.target.result;
-              //console.log(obj_csv.dataFile)
-              //File is imported so process it
-              parseDataBase(obj_csv.dataFile); 
-              
-              //alert("Import is running please wait");          
-           }
-        }
-       
-    }
-    else {
-        // File is wrong type so do not process it
-            messageBox("error", "File is not a csv!");
-    }
-    }); 
-}
 
-async function parseDataBase(data) {
-    toastbox("info", "Import is started wait for the result!!", "100000", "Import database");
-    //messageBox("info", "Import is started wait for the result");
-    let csvData = [];
-    let lbreak = data.split("\n");
-    let counter = 0;
-    // To make sure we can manipulate the data store it into an array
-    lbreak.forEach(res => {
-        // 09-07-2021 PSS altered the separator issue #104
-        csvData.push(res.split("|"));
-        ++counter;
-    });
-    if (counter >0){
-        var arrayLength = csvData.length;
-        for (var i = 0; i < arrayLength; i++) {
-            if (i > 1){
-               // Store it into the database
-               //Prevent adding empty line
-               if (csvData[i][0] != ""){
-                  res= await addTransDb(csvData[i][0],csvData[i][1],csvData[i][2]);
-               }
-            }
-        }
-        close_toast();
-        messageBox("info", "Import is ready records imported: " + i);
-
-    }
-    let importButton = document.querySelector(".paging a.import_translation-button");
-    importButton.className += " ready";
-}
 
 let glossary = [];
 chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
@@ -569,27 +500,83 @@ function addTranslateButtons() {
     }
 }
 
+// 08-05-2021 PSS added import of records into local database
+function importPageClicked(event) {
+    event.preventDefault();
+    fileSelector.click();
+    fileSelector.addEventListener("change", (event) => {
+        fileList = event.target.files;
+        const arrayFiles = Array.from(event.target.files)
+        const file = fileList[0];
+        var obj_csv = {
+            size: 0,
+            dataFile: []
+        };
+        // 09-05-2021 PSS added check for proper import type
+        // File type not recognized on some systems issue #183
+        if (file.type == "text/csv" || "application/vnd.ms-excel") {
+            if (fileList[0]) {
+                let reader = new FileReader();
+                //reader.readAsBinaryString(fileList[0]);
+                // 30-10-2021 PSS added fix #156 for converting special chars
+                reader.readAsText(fileList[0]);
+                reader.onload = function (e) {
+                    //console.log("functions started:",e);
+                    obj_csv.size = e.total;
+                    obj_csv.dataFile = e.target.result;
+                    //console.log(obj_csv.dataFile)
+                    //File is imported so process it
+                    parseDataBase(obj_csv.dataFile);
+
+                    //alert("Import is running please wait");          
+                }
+            }
+
+        }
+        else {
+            // File is wrong type so do not process it
+            messageBox("error", "File is not a csv!");
+        }
+    });
+}
+
+async function parseDataBase(data) {
+    toastbox("info", "Import is started wait for the result!!", "100000", "Import database");
+    //messageBox("info", "Import is started wait for the result");
+    let csvData = [];
+    let lbreak = data.split("\n");
+    let counter = 0;
+    // To make sure we can manipulate the data store it into an array
+    lbreak.forEach(res => {
+        // 09-07-2021 PSS altered the separator issue #104
+        csvData.push(res.split("|"));
+        ++counter;
+    });
+    if (counter > 0) {
+        var arrayLength = csvData.length;
+        for (var i = 0; i < arrayLength; i++) {
+            if (i > 1) {
+                // Store it into the database
+                //Prevent adding empty line
+                if (csvData[i][0] != "") {
+                    res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
+                }
+            }
+        }
+        close_toast();
+        messageBox("info", "Import is ready records imported: " + i);
+
+    }
+    let importButton = document.querySelector(".paging a.import_translation-button");
+    importButton.className += " ready";
+}
+
+
 function addtoClipBoardClicked(event) {
     if (event != undefined) {
         event.preventDefault();
         copyToClipBoard(detailRow);
     }
-}
-
-function addtranslateEntryClicked(event) {
-    if (event != undefined) {
-        event.preventDefault();
-       let rowId = event.target.id.split("-")[1];
-      // console.log("addtranslateEntry clicked rowId", rowId);
-       let myrowId = event.target.id.split("-")[2];
-       //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
-       // So that needs to be added to the base rowId to find it
-       if (myrowId !== undefined && myrowId !="addtranslation") {
-        newrowId = rowId.concat("-", myrowId);
-        rowId = newrowId;
-       }
-       addTransline(rowId); 
-    }   
 }
 
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
@@ -853,6 +840,11 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
                 SavelocalButton.innerText = ("Curr");
                 checkElem.title = "Current string";
             }
+            else if (current.innerText == "rejected") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
+                SavelocalButton.innerText = ("Rej");
+                checkElem.title = "Rejected string";
+            }
             //SavelocalButton.ariaLabel = "Save and approve translation";
             checkElem.appendChild(SavelocalButton);
         }
@@ -915,6 +907,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Current translation";
                 }
+                else if (current.innerText == "rejected") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
+                    SavelocalButton.innerText = ("Rej");
+                    SavelocalButton.disabled = true;
+                    checkElem.title = "Rejected string";
+                }
                 else if (current.innerText == "untranslated") {
                     SavelocalButton.innerText = "Empt";
                     SavelocalButton.style.backgroundColor = "grey";
@@ -949,6 +947,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 else if (current.innerText == "current") {
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Current translation";
+                }
+                else if (current.innerText == "rejected") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
+                    SavelocalButton.innerText = ("Rej");
+                    SavelocalButton.disabled = true;
+                    checkElem.title = "Rejected string";
                 }
                 else {
                     console.debug("no current text found");
@@ -1019,6 +1023,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Save the string";
                 }
+               else if (current.innerText == "rejected") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
+                    SavelocalButton.innerText = ("Rej");
+                    SavelocalButton.disabled = true;
+                    checkElem.title = "Rejected string";
+                }
                 else {
                     SavelocalButton.innerText = "Appr";
                     SavelocalButton.style.backgroundColor = "#0085ba";
@@ -1054,6 +1064,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     SavelocalButton.innerText = "Curr";
                     checkElem.title = "Save the string";
                 }
+                else if (current.innerText == "rejected") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
+                    SavelocalButton.innerText = ("Rej");
+                    SavelocalButton.disabled = true;
+                    checkElem.title = "Rejected string";
+                }
                 else if (current.innerText == "untranslated") {
                     // SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
@@ -1081,6 +1097,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             else if (current.innerText == "current") {
                 SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Current string";
+            }
+            else if (current.innerText == "rejected") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
+                SavelocalButton.innerText = ("Rej");
+                checkElem.title = "Rejected string";
+                SavelocalButton.disabled = true;
             }
         }
     }
@@ -1181,6 +1203,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 SavelocalButton.innerText = ("Rej");
                 checkElem.title = "Reject the string";
             }
+            else if (current.innerText == "rejected") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
+                SavelocalButton.innerText = ("Rej");
+                SavelocalButton.disabled = true;
+                checkElem.title = "Rejected string";
+            }
             else {
                 SavelocalButton.innerText = "Undef";
                 SavelocalButton.style.backgroundColor = "#0085ba";
@@ -1237,28 +1265,16 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
 function savetranslateEntryClicked(event) {
     var myWindow;
     let timeout = 0;
-        //event.preventDefault();   
+    //event.preventDefault();   
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
-    // var mynewrow = myrow.nextSibling.nextSibling.nextSibling.nextSibling;
-    //console.debug("mynewrow:", mynewrow);
-    // if (mynewrow != null) {
-    //  if (mynewrow.classList != null) {
-    //      var newRowId = mynewrow.attributes.row.value;
-    //  }
-    //  else {
-    //      mynewrow = myrow.nextEditor;
-    //      var newRowId = mynewrow.attributes.row.value;
-    //      console.debug("waiting:", newRowId,mynewrow);
-    // }
-        
-    // }
-        // Determine status of record
-        let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-        var current = h.querySelector("span.panel-header__bubble");
-        // we take care that we can save the record by opening the editor save the record and close the editor again
-        if (current.innerText != "Empty" && current.innerText != "untranslated") {
-            if (current.innerText == "transFill") {
+    
+    // Determine status of record
+    let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+    var current = h.querySelector("span.panel-header__bubble");
+    // we take care that we can save the record by opening the editor save the record and close the editor again
+    if (current.innerText != "Empty" && current.innerText != "untranslated") {
+       if (current.innerText == "transFill") {
                 let open_editor = document.querySelector(`#preview-${rowId} td.actions .edit`);
                 let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
                 //console.debug("newrowId:",newRowId)
@@ -1289,8 +1305,8 @@ function savetranslateEntryClicked(event) {
                         prevrow.style.backgroundColor = "#b5e1b9";
                     }
                 }
-            }
-            if (current.innerText == "waiting") {
+       }
+       if (current.innerText == "waiting") {
                 let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
                 let glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
                 let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
@@ -1299,8 +1315,8 @@ function savetranslateEntryClicked(event) {
                 glotpress_close.click();
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
                 prevrow.style.backgroundColor = "#b5e1b9";
-            }
-            if (current.innerText == "fuzzy") {
+       }
+       if (current.innerText == "fuzzy") {
                 let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
                 let glotpress_reject = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .reject`);
                 let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
@@ -1309,13 +1325,14 @@ function savetranslateEntryClicked(event) {
                 glotpress_close.click();
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-fuzzy`);
                 prevrow.style.backgroundColor = "#eb9090";
-            }
-            let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
-            SavelocalButton.className += " ready";
-            SavelocalButton.disabled = true;
-            SavelocalButton.display = "none";
         }
+        // Now we are done reset the button state
+       let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+       SavelocalButton.className += " ready";
+       SavelocalButton.disabled = true;
+       SavelocalButton.display = "none";
     }
+}
 
 function validate(language, original, translation, locale) {
     let originalWords = original.split(" ");

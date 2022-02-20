@@ -533,7 +533,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     margin-top: 5px !important;
     margin-bottom : 6px !important;
     /*margin: 0px !important;*/
-    padding: 0px 2px !important; */
+    padding: 0px 2px !important; 
     /* background: #0085ba;*/
     border-color: #0073aa #006799 #006799; 
     box-shadow: 0 1px 0 #006799;
@@ -572,7 +572,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     align-items: center;
     justify-content: center;
     margin: 0px auto;
-    padding: 0px auto;
+    padding: 0px;
     left: 0;
     top: 0;
     overflow: hidden;

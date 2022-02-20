@@ -32,13 +32,13 @@
         "consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
-        "database.js",
         "commonTranslate.js",
         "deeplTranslate.js",
         "googleTranslate.js",
         "microsoftTranslate.js",
-        "contentScript.js",
-        "jsdiff.js"
+        "jsdiff.js",
+        "database.js",
+        "contentScript.js"
       ],
       "css": [
         "cute-alert.css",
