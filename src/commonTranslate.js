@@ -513,7 +513,7 @@ function checkPage(postTranslationReplace) {
             }
         }
         
-        messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words\n" + repl_verb);
+        messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words<br>" + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
         checkButton.className += " ready";
@@ -657,7 +657,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (transsel == "google") {
                             result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                             if (errorstate == "Error 400") {
-                                messageBox("error", "API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
+                                messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                                 //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                 break;
                             }
@@ -672,12 +672,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         else if (transsel == "deepl") {
                             result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                             if (result == "Error 403") {
-                                messageBox("error", "Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
+                                messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                 //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                                 break;
                             }
                             else if (result == "Error 400") {
-                                messageBox("error", "Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
                                 //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                 break;
                             }
@@ -692,12 +692,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         else if (transsel == "microsoft") {
                             result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                             if (result == "Error 401") {
-                                messageBox("error", "Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
+                                messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
                                 //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
                                 break;
                             }
                             else if (result == "Error 403") {
-                                messageBox("error", "Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
+                                messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
                                 //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                 break;
                             }
@@ -803,7 +803,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 if (transsel == "google") {
                                     result = await googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (errorstate == "Error 400") {
-                                        messageBox("error", "API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
+                                        messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                                         //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                         break;
                                     }
@@ -818,12 +818,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 else if (transsel == "deepl") {
                                     result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                                     if (result == "Error 403") {
-                                        messageBox("error", "Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
+                                        messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                         //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                                         break;
                                     }
                                     else if (result == "Error 400") {
-                                        messageBox("error", "Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                        messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
                                         //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
@@ -838,12 +838,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 else if (transsel == "microsoft") {
                                     result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (result == "Error 401") {
-                                        messageBox("error", "Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
+                                        messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
                                         //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
                                         break;
                                     }
                                     else if (result == "Error 403") {
-                                        messageBox("error", "Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
+                                        messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
                                         //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
@@ -1030,7 +1030,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     if (transsel == "google") {
                         result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 400") {
-                            messageBox("error", "API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
+                            messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                            // alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                         }
                         else {
@@ -1043,7 +1043,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == 'Error 403') {
-                            messageBox("error", "Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
+                            messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                             //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                         }
                         else if (result == 'Error 404') {
@@ -1051,7 +1051,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                             //alert("Error in translation received status 404 The requested resource could not be found.")
                         }
                         else if (result == "Error 400") {
-                            messageBox("error", "Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
                            // alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
@@ -1064,11 +1064,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     else if (transsel == "microsoft") {
                         result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (result == "Error 401") {
-                            messageBox("error", "Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                            messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + language + " not supported!");
                             //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
@@ -1113,7 +1113,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     if (transsel == "google") {
                         result = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 400") {
-                            messageBox("error", "API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
+                            messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                            // alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                         }
                         else {
@@ -1127,7 +1127,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
+                            messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                            // alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                         }
                         else if (result == 'Error 404') {
@@ -1135,7 +1135,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                            // alert("Error in translation received status 404 The requested resource could not be found.")
                         }
                         else if (result == "Error 400") {
-                            messageBox("error", "Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
                             //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
@@ -1148,11 +1148,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     else if (transsel == "microsoft") {
                         result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (result == "Error 401") {
-                            messageBox("error", "Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
+                            messageBox("error", "Error in translation received status 401000<br>The request is not authorized because credentials are missing or invalid.");
                             //alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + language + " not supported!");
                            // alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {

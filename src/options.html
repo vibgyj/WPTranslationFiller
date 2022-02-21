@@ -59,11 +59,17 @@
         }
 
         #save {
-            float: right;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             width: 150px;
             padding: 5px 0;
         }
-
+        .savebutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         /* Tooltip container */
         .tooltip {
             position: relative;
@@ -125,7 +131,17 @@
         .tooltip:hover::after {
                 opacity: 1;
                 visibility: visible;
-        }  
+        }
+        .wptf-info {
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            clear: both;
+        }
+        a:hover, a:visited, a:link, a:active {
+            text-decoration: none;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -262,9 +278,19 @@ wrong2,right2
         <input type="checkbox" id="show-convertToLower">
         <label>Convert words to lowercase except first word</label>
     </div>
-    <div class="form-input">
-        <input id="save" type="button" value="Save" />
-    </div>
-    </div>
+        <table id="options">
+            <tr>
+                <td>
+                    <div class="savebutton">
+                         <input id="save" type="button" value="Save" />
+                    </div>
+                </td>
+                <td>
+                    <div class="wptf-info">
+                        <a href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
 </body>
 </html>

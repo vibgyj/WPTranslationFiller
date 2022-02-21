@@ -146,6 +146,11 @@ document.addEventListener("keydown", function (event) {
         console.debug("Reset database");
         result = resetDB();
     }
+    if (event.altKey && event.shiftKey && (event.key === "F2")) {
+        event.preventDefault();
+        console.debug("Reset database");
+        result = deleteDB();
+    }
 });
 
 

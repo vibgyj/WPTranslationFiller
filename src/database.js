@@ -280,12 +280,7 @@ function addtranslateEntryClicked(event) {
     }
 }
 async function resetDB() {
-   // var db = getDbSchema();
-   // var myInteger = db.version();
-   // console.debug("myversion",myInteger,db)
     var DBOpenRequest = window.indexedDB.open("My-Trans");
-    //var db = getDbSchema();
-    //var isDbCreated = jsstoreCon.initDb(db);
       DBOpenRequest.onsuccess = function (event) {
         console.debug("Database initialised");
 
@@ -319,8 +314,37 @@ async function resetDB() {
 
     objectStoreRequest.onsuccess = function (event) {
         // report the success of our request
-        alert("Database reset done");
+       // alert("Database reset done");
         messageBox("info", "Database reset done");
     };
     
+}
+
+function deleteDB() {
+
+    var DBDeleteRequest = window.indexedDB.deleteDatabase("My-Trans");
+
+    DBDeleteRequest.onerror = function (event) {
+        console.log("Error deleting database My-Trans.");
+    };
+
+    DBDeleteRequest.onsuccess = function (event) {
+        console.log("Database My-Trans deleted successfully");
+
+        console.log(event.result); // should be undefined
+    };
+
+
+    var DBDeleteRequest = window.indexedDB.deleteDatabase("KeyStore");
+
+    DBDeleteRequest.onerror = function (event) {
+        console.log("Error deleting database KeyStore.");
+    };
+
+    DBDeleteRequest.onsuccess = function (event) {
+        console.log("Database KeyStore deleted successfully");
+
+        console.log(event.result); // should be undefined
+    };
+    messageBox("info", "Database deletion done<br> My-Trans and KeyStore");
 }
