@@ -279,3 +279,48 @@ function addtranslateEntryClicked(event) {
         addTransline(rowId);
     }
 }
+async function resetDB() {
+   // var db = getDbSchema();
+   // var myInteger = db.version();
+   // console.debug("myversion",myInteger,db)
+    var DBOpenRequest = window.indexedDB.open("My-Trans");
+    //var db = getDbSchema();
+    //var isDbCreated = jsstoreCon.initDb(db);
+      DBOpenRequest.onsuccess = function (event) {
+        console.debug("Database initialised");
+
+        // store the result of opening the database in the db variable.
+        // This is used a lot below
+        dbase = DBOpenRequest.result;
+
+        // Clear all the data form the object store
+        clearData();
+    };
+
+}
+
+    function clearData() {
+    // open a read/write db transaction, ready for clearing the data
+    var transaction = dbase.transaction(["Translation"], "readwrite");
+    // report on the success of the transaction completing, when everything is done
+    transaction.oncomplete = function (event) {
+        console.debug("Transaction completed.");
+    };
+
+        transaction.onerror = function (event) {
+            messageBox("error", "Transaction not opened due to error: " + transaction.error);
+    };
+
+    // create an object store on the transaction
+    var objectStore = transaction.objectStore("Translation");
+
+    // Make a request to clear all the data out of the object store
+    var objectStoreRequest = objectStore.clear();
+
+    objectStoreRequest.onsuccess = function (event) {
+        // report the success of our request
+        alert("Database reset done");
+        messageBox("info", "Database reset done");
+    };
+    
+}

@@ -141,6 +141,11 @@ document.addEventListener("keydown", function (event) {
         console.debug("Make bulk checkbox not active for non PTE");
         deselectCheckBox(event);
     }
+    if (event.altKey && event.shiftKey && (event.key === "F1")) {
+        event.preventDefault();
+        console.debug("Reset database");
+        result = resetDB();
+    }
 });
 
 

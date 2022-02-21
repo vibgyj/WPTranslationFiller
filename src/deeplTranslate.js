@@ -7,7 +7,7 @@
 async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    let translatedText = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
     return errorstate;
 }
 
@@ -182,7 +182,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                     current.innerText = "transFill";
                     current.value = "transFill";
                     validateEntry(language, textareaElem1, "", "", rowId, locale);
-                    errorstate = "Translated"
+                    
                 }
                 //return response.json()
             }
