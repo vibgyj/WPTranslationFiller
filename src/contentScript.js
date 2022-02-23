@@ -636,6 +636,7 @@ function checkactionClick(event) {
 function checkbuttonClick(event) {
     //console.debug("eventAction:", event)
     if (event != undefined) {
+            var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
             //event.preventDefault(); caused a problem within the single page enttry  
             let action = event.target.textContent;
             // 30-06-2021 PSS added fetch status from local storage
@@ -647,6 +648,14 @@ function checkbuttonClick(event) {
                 glob_row = rowId;
                 detailRow = rowId;
                 let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+
+                // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
+                // if the translator is a PTE then we do not need to do this, as there is already an extra column
+                if (!is_pte) {
+                    let myrec = document.querySelector(`#editor-${detailRow}`);
+                    var tds = myrec.getElementsByTagName("td")[0];
+                    tds.setAttribute("colspan", 5);
+                }
                 // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
                 chrome.storage.sync.set({ "noOldTrans": "True" }, function () {
                     // Notify that we saved.
@@ -716,7 +725,8 @@ function translateEntryClicked(event) {
         });
 }
 
-function validatePage(language, showHistory,locale) {
+function validatePage(language, showHistory, locale) {
+    
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");   
     let url = f[0].firstChild.baseURI;
@@ -787,6 +797,8 @@ function validatePage(language, showHistory,locale) {
 }
 
 function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId) {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    
     if (typeof rowId == "undefined") {
         let rowId = textareaElem.parentElement.parentElement.parentElement
            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
@@ -801,7 +813,6 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
    
     if (typeof checkElem == "object") {
         if (saveButton == null) {
-            var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
             if (!is_pte) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
                 var checkbox = document.createElement('input');
@@ -811,7 +822,8 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
                 let myrec = document.querySelector(`#editor-${rowId}`);
                 // We need to expand the amount of columns otherwise the editor is to small
                 var tds = myrec.getElementsByTagName("td")[0];
-                tds.setAttribute("colspan",5);
+                tds.setAttribute("colspan", 5);
+               
             }
             // check for the status of the record
             var separator1 = document.createElement("div");
@@ -819,7 +831,8 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
             if (checkElem != null) {
                 checkElem.appendChild(separator1);
             }
-            let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            
+            myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             var current = myrec.querySelector("span.panel-header__bubble");
             let SavelocalButton = document.createElement("button");
             SavelocalButton.id = "tf-save-button";
@@ -868,6 +881,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "", "", "", "", rowId,showName,nameDiff);
     let row = rowId.split("-")[0];
+    
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
     // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
@@ -1108,6 +1122,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Current string";
             }
+            else if (current.innerText == "fuzzy") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
+                SavelocalButton.innerText = ("Rej");
+                checkElem.title = "Reject the string";
+            }
             else if (current.innerText == "rejected") {
                 SavelocalButton.style.backgroundColor = "#0085ba";
                 SavelocalButton.innerText = ("Rej");
@@ -1340,7 +1359,7 @@ function savetranslateEntryClicked(event) {
        let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
        SavelocalButton.className += " ready";
        SavelocalButton.disabled = true;
-       SavelocalButton.display = "none";
+        SavelocalButton.display = "none";
     }
 }
 
@@ -1828,6 +1847,7 @@ function addCheckBox() {
         }
     }
 }
+
 
 function setmyCheckBox(event){
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;

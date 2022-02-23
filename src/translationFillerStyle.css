@@ -947,11 +947,7 @@ table.translations tr.preview.wptf-translated {
 .highlight {
     background: lightpink;
 }
-/*Below code needs to be removed if GlotPress has improved the template
-.editor-panel__right {
-    flex: 0 0 19rem !important;
-    min-width: 1%;
-} */
+
 
 /* Tooltip container */
 .tooltip {
@@ -1026,6 +1022,31 @@ table.translations tr.preview.wptf-translated {
      padding-bottom: 12px !important; 
      padding-top: 12px !important; 
 }
+ 
+
+/*After Glotpress has improved remove this header change */
+/*.wp-block-group.global-header { */
+/*      position: relative; */
+/*      top: 0px; */
+/* }    */
+/*@media (min-width: 890px)
+ html {
+    margin-top: 150px !important;
+    scroll-padding-top: 250px !important;
+}
+@media screen and (min-width: 890px) {
+    .admin-bar .editor-panel__left .panel-header,
+    .admin-bar .editor-panel__right,
+    .consistency-table tr.new-translation th {
+        top: 32px !important;
+    }
+}
+    */
+/*Below code needs to be removed if GlotPress has improved the template */
+.editor-panel__right {
+    flex: 0 0 19rem !important;
+    min-width: 1%;
+}
 
 table.translations td.myCheckBox {
     text-align: center;
@@ -1034,7 +1055,7 @@ table.translations td.myCheckBox {
     border-bottom: 1px solid #72777c;
     border-right: 1px solid #72777c;
     display: table-cell !important;
-    color:black;
+    color: black;
 }
 table.translations th.thCheckBox {
     width: 3em !important;
