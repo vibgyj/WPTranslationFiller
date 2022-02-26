@@ -347,6 +347,14 @@ function translatePageClicked(event) {
             });
 }
 
+//var win = window,
+ //   doc = document,
+ //   docElem = doc.documentElement,
+//    body = doc.getElementsByTagName('body')[0],
+ //   x = win.innerWidth || docElem.clientWidth || body.clientWidth,
+ //   y = win.innerHeight || docElem.clientHeight || body.clientHeight;
+//alert(x + ' × ' + y);
+
 function checkLocale() {
     const localeString = window.location.href;
     locale = localeString.split("/");
@@ -1730,12 +1738,16 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
  * @returns {void}
  */
 function gd_auto_hide_next_editor(editor) {
+    var myRow;
+    var newRow;
+
     const preview = editor.nextElementSibling;
     if (!preview) {
         return;
     }
     const next_editor = preview.nextElementSibling;
     // if it is the last row we need to add the checkboxes if the translator is not a PTE
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     if (!next_editor) {
         if (!is_pte) {
             oldRow = editor.id;
@@ -1751,12 +1763,19 @@ function gd_auto_hide_next_editor(editor) {
         return;
     }
     // We need to add the extra cell on front of the preview line
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    oldRow = editor.id;
+    newRow = oldRow.replace("editor", "preview")
+    myRow = document.querySelector(`#${newRow}`);
+    myRow.style.position = '-webkit-sticky';
+    myRow.style.position = 'sticky';
+    myRow.style.top = 32 + 'px';
+    myRow.style.bottom = 9 + 'px';
+    const elmnt = document.querySelector(`#${newRow}`)
+    // With center it works best, but it can be put on the top, center, bottom
+    elmnt.scrollIntoView({ behavior: "smooth", block: "center", inline: "end" });
     // We need to add the checkboxes if the translator is not a PTE
+    // We need to add the extra cell on front of the preview line
     if (!is_pte) {
-        oldRow = editor.id;
-        newRow = oldRow.replace("editor", "preview")
-        myRow = document.querySelector(`#${newRow}`);
         var x = myRow.insertCell(0);
         x.className = "myCheckBox";
     }
