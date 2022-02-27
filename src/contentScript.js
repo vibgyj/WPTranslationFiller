@@ -659,11 +659,12 @@ function checkbuttonClick(event) {
 
                 // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
                 // if the translator is a PTE then we do not need to do this, as there is already an extra column
+                let myrec = document.querySelector(`#editor-${detailRow}`);
                 if (!is_pte) {
-                    let myrec = document.querySelector(`#editor-${detailRow}`);
                     var tds = myrec.getElementsByTagName("td")[0];
                     tds.setAttribute("colspan", 5);
                 }
+                myrec.scrollIntoView(true);
                 // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
                 chrome.storage.sync.set({ "noOldTrans": "True" }, function () {
                     // Notify that we saved.
@@ -1762,17 +1763,15 @@ function gd_auto_hide_next_editor(editor) {
     if (!next_preview || !next_editor.classList.contains("editor") || !next_preview.classList.contains("preview")) {
         return;
     }
-    // We need to add the extra cell on front of the preview line
+    // Determine which row we need to push to the top
     oldRow = editor.id;
     newRow = oldRow.replace("editor", "preview")
     myRow = document.querySelector(`#${newRow}`);
-    myRow.style.position = '-webkit-sticky';
-    myRow.style.position = 'sticky';
-    myRow.style.top = 32 + 'px';
-    myRow.style.bottom = 9 + 'px';
-    const elmnt = document.querySelector(`#${newRow}`)
+    
+   // const elmnt = document.querySelector(`#${newRow}`)
     // With center it works best, but it can be put on the top, center, bottom
-    elmnt.scrollIntoView({ behavior: "smooth", block: "center", inline: "end" });
+    //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
+    myRow.scrollIntoView(true);
     // We need to add the checkboxes if the translator is not a PTE
     // We need to add the extra cell on front of the preview line
     if (!is_pte) {

@@ -519,10 +519,19 @@ table.translations td.priority {
     vertical-align: middle !important;
     font-size: 14px !important;
 }
- 
+
+/* This setting is necessary to move the row down due to the header that is no longer fixed */
+table.translations tr.preview {
+    scroll-margin-top: 32px;
+}
+
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict th + .priority + .original::before {
         margin-left: calc(-0.5em - 45px) !important;
+}
+
+tr.editor {
+    scroll-margin-top: 62px !important;
 }
 
 /** The change below is for issue# 137 modification in GlotDict*/
@@ -1054,7 +1063,6 @@ table.translations th.thCheckBox {
         margin-top: 0px !important;
         top: 0px !important;
         top: var(--wp-admin--admin-bar--height,0) !important;
-        
 }
 
 /*After Glotpress has improved remove this header change */
@@ -1072,8 +1080,9 @@ table.translations th.thCheckBox {
 
 /*After Glotpress has improved remove this header change */
 html {
-    --wp-global-header-offset: 32 px !important;
-    scroll-padding-top: 150px;
+     --wp-global-header-offset: 32 px !important;
+     /*This one should move the editor down when scrolled*/
+    scroll-margin-top: 32px !important;
 }
 
 /*After Glotpress has improved remove this header change */
@@ -1081,10 +1090,9 @@ html {
         .admin-bar .editor-panel__left .panel-header,
         .admin-bar .editor-panel__right,
         .consistency-table tr.new-translation tr.preview th {
-            top: 20px !important;
+            top: 62px !important;
         }
 }
-
 
 /*Below code needs to be removed if GlotPress has improved the template */
    .editor-panel__right {
