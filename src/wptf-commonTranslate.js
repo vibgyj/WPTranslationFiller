@@ -1229,20 +1229,23 @@ function bulkSave(event) {
             }
             counter++;
             setTimeout(() => {
-                toastbox("info", "Saving suggestion: " + (i + 1), "800", "Saving", myWindow);
+                //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
                 preview.querySelector("td.actions .edit").click();
                 const editor = preview.nextElementSibling;
                 if (editor != null) {
                     editor.style.display = "none";
                     editor.querySelector(".translation-actions__save").click();
                 }
-                confirm = "button.gp-js-message-dismiss";
+                //confirm = "button.gp-js-message-dismiss";
+                //console.debug("res:",confirm)
                 // PSS confirm the message for dismissal
-                elementReady(".gp-js-message-dismiss").then(confirm => { confirm.click(); }
-                );
-               
+                elementReady(".gp-js-message-dismiss").then(confirm => {
+                    if (confirm != '.gp-js-message-dismiss') {
+                            confirm.click();
+                        }
+                    });
             }, timeout);
-            timeout += 1500;
+            timeout += 1700;
         }
     });
     if ( counter == 0) {
@@ -1307,9 +1310,13 @@ function _waitForElement(selector, delay =5, tries = 50) {
 
 
 function elementReady(selector) {
+    var el;
     return new Promise((resolve, reject) => {
-        let el = document.querySelector(selector);
-        if (el) { resolve(el); }
+        el = document.querySelector(selector);
+        if (el) {
+            resolve(el);
+            return
+        }
         new MutationObserver((mutationRecords, observer) => {
             // Query for elements matching the specified selector
             Array.from(document.querySelectorAll(selector)).forEach((element) => {
