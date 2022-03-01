@@ -1085,6 +1085,12 @@ html {
     scroll-margin-top: 32px !important;
 }
 
+/*#editor div.source-string {
+    position: -webkit-sticky;
+    position: sticky;
+}
+    */
+
 /*After Glotpress has improved remove this header change */
 @media screen and (min-width: 890px) {
         .admin-bar .editor-panel__left .panel-header,
@@ -1093,9 +1099,9 @@ html {
             top: 62px !important;
         }
 }
-
+ 
 /*Below code needs to be removed if GlotPress has improved the template */
-   .editor-panel__right {
+    .editor-panel__right {
     flex: 0 0 19rem !important;
     min-width: 1%;
 }
