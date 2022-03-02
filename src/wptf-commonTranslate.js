@@ -1236,16 +1236,14 @@ function bulkSave(event) {
                     editor.style.display = "none";
                     editor.querySelector(".translation-actions__save").click();
                 }
-                //confirm = "button.gp-js-message-dismiss";
-                //console.debug("res:",confirm)
                 // PSS confirm the message for dismissal
-                elementReady(".gp-js-message-dismiss").then(confirm => {
+                foundlabel= elementReady(".gp-js-message-dismiss").then(confirm => {
                     if (confirm != '.gp-js-message-dismiss') {
                             confirm.click();
                         }
                     });
             }, timeout);
-            timeout += 1700;
+            timeout += 1500;
         }
     });
     if ( counter == 0) {
@@ -1309,7 +1307,7 @@ function _waitForElement(selector, delay =5, tries = 50) {
   }
 
 
-function elementReady(selector) {
+async function elementReady(selector) {
     var el;
     return new Promise((resolve, reject) => {
         el = document.querySelector(selector);
@@ -1317,19 +1315,21 @@ function elementReady(selector) {
             resolve(el);
             return
         }
-        new MutationObserver((mutationRecords, observer) => {
-            // Query for elements matching the specified selector
-            Array.from(document.querySelectorAll(selector)).forEach((element) => {
-                //console.debug("new elementReady",selector);
-                resolve(selector);
-                //Once we have resolved we don't need the observer anymore.
-                observer.disconnect();
-            });
-        })
-            .observe(document.documentElement, {
-                childList: true,
-                subtree: true
-            });
+        else {
+            new MutationObserver((mutationRecords, observer) => {
+                // Query for elements matching the specified selector
+                Array.from(document.querySelectorAll(selector)).forEach((element) => {
+                    //console.debug("new elementReady",selector);
+                    resolve(selector);
+                    //Once we have resolved we don't need the observer anymore.
+                    observer.disconnect();
+                });
+            })
+                .observe(document.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+        }
     });
 }
 

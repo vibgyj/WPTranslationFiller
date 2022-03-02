@@ -128,27 +128,27 @@ document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === "%")) {
         // This switches convert to lowercase off
         event.preventDefault();
-        console.debug("Copy text to clipboard");
+        //console.debug("Copy text to clipboard");
         copyToClipBoard(detailRow);
     }
     if (event.altKey && event.shiftKey && (event.key === "#")) {
         event.preventDefault();
-        console.debug("Make bulk checkbox active for non PTE");
+        //console.debug("Make bulk checkbox active for non PTE");
         setmyCheckBox(event);
     }
     if (event.altKey && event.shiftKey && (event.key === "@")) {
         event.preventDefault();
-        console.debug("Make bulk checkbox not active for non PTE");
+        //console.debug("Make bulk checkbox not active for non PTE");
         deselectCheckBox(event);
     }
     if (event.altKey && event.shiftKey && (event.key === "F1")) {
         event.preventDefault();
-        console.debug("Reset database");
+        //console.debug("Reset database");
         result = resetDB();
     }
     if (event.altKey && event.shiftKey && (event.key === "F2")) {
         event.preventDefault();
-        console.debug("Reset database");
+        //console.debug("Reset database");
         result = deleteDB();
     }
 });
