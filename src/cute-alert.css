@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Dosis:wght@800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dosis:wght@800&display=swap');
 
 .alert-wrapper {
     display: flex;
@@ -8,7 +8,7 @@
     align-items: center;
     justify-content: center;
     margin: 0px auto;
-    padding: 0px 0px;
+    padding: 0px auto;
     left: 0;
     top: 0;
     overflow: hidden;
@@ -72,7 +72,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Dosis", sans-serif;
+    font-family: 'Dosis', sans-serif;
     font-weight: 700;
     cursor: pointer;
     line-height: 30px;
@@ -115,7 +115,7 @@
 
 .alert-title {
     font-size: 18px !important;
-    font-family: "Open Sans", sans-serif;
+    font-family: 'Open Sans', sans-serif;
     font-weight: 700;
     font-size: 15px;
     margin-bottom: 35px;
@@ -126,7 +126,7 @@
 .alert-message {
     font-size: 15px !important;
     color: #666;
-    font-family: "Open Sans", sans-serif;
+    font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 15px;
     text-align: center;
@@ -139,7 +139,7 @@
     min-width: 140px;
     height: 35px;
     border-radius: 20px;
-    font-family: "Open Sans", sans-serif;
+    font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 15px;
     color: white;
@@ -167,7 +167,7 @@
     min-width: 100px;
     height: 35px;
     border-radius: 20px;
-    font-family: "Open Sans", sans-serif;
+    font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 15px;
     color: white;
@@ -189,7 +189,7 @@
     min-width: 100px;
     height: 35px;
     border-radius: 20px;
-    font-family: "Open Sans", sans-serif;
+    font-family: 'Open Sans', sans-serif;
     font-weight: 400;
     font-size: 15px;
     color: white;
@@ -231,35 +231,65 @@
 }
 
 .toast-container {
-    top: 15px;
+    top: 5px;
     left: 15px;
-    max-width: 200px;
+    max-width: 300px;
     overflow: hidden;
     position: fixed;
     border-radius: 5px;
-    box-shadow: 0 0 20px rgb(0, 0, 0, 0.2);
-    animation: open-toast 0.3s linear;
     z-index: 999999;
 }
 
+.toast-content {
+    overflow: hidden;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgb(0, 0, 0, 0.2);
+    animation: open-toast 0.3s linear;
+}
+
+    .toast-content + .toast-content {
+        margin-top: 10px;
+    }
+
 .toast-frame {
-    padding: 5px 5px;
+    padding: 200x 15px;
     display: flex;
-    min-width: 100px;
-    height: 100px;
+    min-width: 300px;
+    min-height: 100px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     align-items: center;
     flex-wrap: wrap;
 }
 
-.toast-img {
-    height: 40px;
+.toast-body-img {
+    height: 60px;
+}
+
+.toast-body {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.toast-body-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.toast-title {
+    font-size: 16px !important;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: bold;
+    font-size: 15px;
+    color: #fff;
+    margin-left: 15px;
 }
 
 .toast-message {
-    font-size: 14px !important;
-    font-family: "Open Sans", sans-serif;
+    font-size: 13px !important;
+    font-family: 'Open Sans', sans-serif;
     font-weight: 600;
     font-size: 15px;
     color: #fff;
@@ -268,7 +298,7 @@
 
 .toast-close {
     color: rgb(0, 0, 0, 0.2);
-    font-family: "Dosis", sans-serif;
+    font-family: 'Dosis', sans-serif;
     font-weight: 700;
     font-size: 16px;
     cursor: pointer;
@@ -362,4 +392,3 @@
 .info-bg {
     background: #88cef7;
 }
-

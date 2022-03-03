@@ -88,11 +88,22 @@ local.paging a.translation-filler-button {
         background: red;
     }
     .paging a.translation-filler-button.translated {
-        animation: none;
+        animation: none !important;
         background: green;
+        border-radius: 0%;
+        border: 0px solid transparent;
+        display: inline-block;
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        margin: 5px !important;
     }
 
-.paging a.translation-entry-my-button::before {
+    /* below function can to be removed if GlotPress has improved the behavior of the edit screen*/
+    .panel-header__bubble {
+    padding: 1px 1px !important;
+    }
+
+    .paging a.translation-entry-my-button::before {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
@@ -103,9 +114,10 @@ local.paging a.translation-filler-button {
 
 .panel-header-actions .translation-entry-my-button {
     width: auto;
-    padding: 5px;
+    padding: 2px;
     background-color: blue;
     color: white;
+    vertical-align: middle;
 }
 
 .panel-header-actions .translation-entry-my-button:focus {
@@ -137,8 +149,14 @@ local.paging a.translation-filler-button {
 }
 
     .panel-header-actions .translation-entry-my-button.translated {
-        animation:none;
-        background-color: green;
+        animation: none !important;
+        background: green;
+        border-radius: 0%;
+        border: 0px solid transparent;
+        display: inline-block;
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        margin: 5px !important;
     }
 
     .panel-header-actions .translation-entry-my-button.translated_error {
@@ -200,6 +218,15 @@ local.paging a.translation-filler-button {
     width: 28px;
 }
 
+.panel-header-actions .check_translation-button.started {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+}
 .panel-header-actions .check_translation-button.ready {
     background-color: green;
 }
@@ -209,8 +236,10 @@ local.paging a.translation-filler-button {
 .paging a.addtranslation-entry-my-button {
     background: blue;
     color: white;
-    padding-left: 5px;
+    padding-left: 3px;
     padding-right: 5px;
+    padding-top: 3px;
+    padding-bottom: 10px;
 }
 
 .paging a.addtranslation-entry-my-button {
@@ -225,20 +254,31 @@ local.paging a.translation-filler-button {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
-    font: normal 20px/1 'dashicons';
+    font: normal 200px/1 'dashicons';
     vertical-align: middle;
     width: 28px;
 }
 
 .panel-header-actions my-button{
-	margin:5px;
+	margin:2px;
 }
-
+.translation-actions copy-button {
+    width: 40px;
+    height: 35px;
+    padding: 7px 10px;
+    margin: 0 4px;
+    border: 1px solid #ccc;
+    background: #fafafa;
+    box-shadow: 0 1px 0 #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
 .panel-header-actions .addtranslation-entry-my-button {
-    width: auto;
-    padding: 5px;
+    width: 25px;
+    padding: 2px;
     background-color: blue;
     color: white;
+    vertical-align: middle;
 }
 
 .panel-header-actions .addtranslation-entry-my-button:focus {
@@ -378,11 +418,10 @@ local.paging a.translation-filler-button {
     vertical-align: middle;
     background: darkcyan;
     color: white;
-    padding-left: 5px;
+    padding-top: 2px;
+    padding-left: 3px;
     padding-right: 5px;
-    padding-top: 3px;
-    padding-bottom : 10px;
-    height: 28px;
+    height: 25px;
     font: normal 16px/1 'dashicons';
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -464,43 +503,47 @@ table.translations tr.row_filler_status {
     display:none;
 }
 table.translations th.priority, table.translations td.priority {
-    padding :0px !important;
+    padding: 0px !important;
     width: 3em !important;
     display: table-cell !important;
     font-size: 14px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    font-weight: 700 !important; 
 }
 
-/**
-tr.preview.has-glotdict .original::before {
-    display: none !important;
+table.translations td.priority {
+    vertical-align :middle !important;
 }
-    **/
+ 
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict th + .priority + .original::before {
-    margin-left: calc(-0.5em - 45px) !important;
+        margin-left: calc(-0.5em - 45px) !important;
 }
+
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
     margin-left: calc(-.5em - 48px) !important;
 }
 
-button.save-button {
+#tf-save-button {
     font-size: 12px !important;
     height: 20px;
     line-height: 1;
-    margin-top: 10px !important;
-    margin: 0px !important;
-    padding: 0px 2px !important;
-    background: #0085ba !important;
-    border-color: #0073aa #006799 #006799;
+    margin-top: 5px !important;
+    margin-bottom : 6px !important;
+    /*margin: 0px !important;*/
+    padding: 0px 2px !important; */
+    /* background: #0085ba;*/
+    border-color: #0073aa #006799 #006799; 
     box-shadow: 0 1px 0 #006799;
-    color: #fff !important;
+    color: #fff;
     text-decoration: none;
     text-shadow: 0 -1px 1px #006799, 1px 0 1px #006799, 0 1px 1px #006799, -1px 0 1px #006799;
-    margin-left: 0px;
+    cursor:pointer !important;
 }
 
-button.save-button.ready {
+#tf-save-button.ready {
     display:none;
 }
 /** Start of cuteAlert **/
@@ -888,4 +931,102 @@ table.translations tr.preview.wptf-translated {
 
 .highlight {
     background: lightpink;
+}
+/*Below code needs to be removed if GlotPress has improved the template*/
+.editor-panel__right {
+    flex: 0 0 19rem !important;
+   /* min-width: 1%;*/
+}
+
+/* Tooltip container */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    background-color: #0085ba;
+    color: white;
+    padding-right: 3px;
+    padding-left: 3px;
+    min-width: 40px;
+    height: 35px;
+    border: 1px solid #ccc;
+    /* Other styles here */
+}
+
+    /* Tooltip text */
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 120px;
+        background-color: #0085ba;
+        color: #fff;
+        text-align: center;
+        padding: 5px 0;
+        border-radius: 6px;
+        /* Position the tooltip text */
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -60px;
+        /* Fade in tooltip */
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+        /* Tooltip arrow */
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+    /* Show the tooltip text when you mouse over the tooltip container */
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
+@keyframes blinking {
+    0% {
+        background-color: #ff3d50;
+        border: 2px solid #6565f2;
+    }
+    /* YOU CAN ADD MORE COLORS IN THE KEYFRAMES IF YOU WANT
+  50% {
+    background-color: #55d66b;
+    border: 5px solid #126620;
+  }
+  */
+    100% {
+        background-color: #0085ba;
+        border: 2px solid #fff;
+    }
+}
+/*After Glotpress has improved remove this footer change  */
+.wp-block-group.global-footer {
+     padding-bottom: 12px !important; 
+     padding-top: 12px !important; 
+}
+
+table.translations td.myCheckBox {
+    text-align: center;
+    border: 1px solid #72777c;
+    border-top: 1px solid #72777c;
+    border-bottom: 1px solid #72777c;
+    border-right: 1px solid #72777c;
+    display: table-cell !important;
+    color:black;
+}
+table.translations th.thCheckBox {
+    width: 3em !important;
+    display: table-cell !important;
+    font-size: 14px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    font-weight: 700 !important;
+    padding: 0px !important;
 }

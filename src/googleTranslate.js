@@ -175,6 +175,7 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
         }
         
     };
+ 
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
     xhttp.send(JSON.stringify(requestBody));

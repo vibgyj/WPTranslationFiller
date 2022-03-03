@@ -11,6 +11,24 @@ let replaceVerb = [];
 let replacePreVerb = [];
 // 06-05-2021 PSS These vars can probably removed after testen
 
+
+function copyToClipBoard(detailRow) {
+    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);  
+    if (e != null) {
+        var content = e.querySelector("span.original-raw").innerText;
+        if (content != null) {
+            navigator.clipboard.writeText(content);
+            toastbox("info", "Copy original to clipboard<br>"+content, "2500", "Copy");
+        }
+        else {
+            toastbox("error", "No text found to copy", "1200", "Error");
+        }
+    }
+    else {
+        toastbox("error", "No text found to copy", "1200", "Error");
+    }
+}
+
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
     if (preTranslationReplace != undefined) {
@@ -114,9 +132,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     found = translatedText.substring(pos, pos + 5);
     if (found.substr(found.length - 1) != " ") {
         if (found.substr(found.length - 1) != "." && found.substr(found.length - 1) != "<" && found.length ==5) {
-            //console.debug("pos of </a>:", pos, found);
             translatedText = translatedText.replace("</a>", "</a> ");
-           //console.debug("pos of </a>:", pos, found, translatedText);
         }
     }
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
@@ -204,7 +220,6 @@ function CheckUrl(translated,searchword) {
     if (mymatches != null) {
         for (const match of mymatches) {
             foundmysearch = match.includes(searchword);
-            //console.debug("found:", foundmysearch, searchword,match);
             if (foundmysearch) {
                 break;
             }
@@ -226,8 +241,7 @@ function checkStartEnd(original, translatedText) {
     }
     if (original.endsWith(".") == false) {
         if (translatedText.endsWith(".") == true) {
-            //console.debug("translated ends with .");
-            translatedText = translatedText.substring(0, translatedText.length - 1)
+            translatedText = translatedText.substring(0, translatedText.length - 1);
         }
     }
     // Strip or add blank at the end of the line
@@ -238,8 +252,7 @@ function checkStartEnd(original, translatedText) {
     }
     if (original.endsWith(" ") == false) {
         if (translatedText.endsWith(" ") == true) {
-            //console.debug("translated ends with blank");
-            translatedText = translatedText.substring(0, translatedText.length - 1)
+            translatedText = translatedText.substring(0, translatedText.length - 1);
         }
     }
     if (original.startsWith(" ") == true) {
@@ -313,16 +326,12 @@ function checkComments(comment) {
 // 18-03-2021 PSS added pretranslate function so we can use a API to find existing records locally
 // 18-04-2021 PSS now the function retrieves the data from the local database if present
 async function pretranslate(original) {
-    //console.debug('pretranslate with:', original);
     var translated = "";
-
     res = await listRec(original).then(function (v) {
-        //console.debug('answ:', v);
         translated = v;
     }).catch(function (err) {
         console.debug("Error retrieving pretrans", err.message);
     });
-    //console.log('resultaat translate:', translated);
     if (typeof translated == "undefined") {
         translated = "notFound";
     }
@@ -378,7 +387,6 @@ function checkPage(postTranslationReplace) {
                 var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);     
                 if (pluralpresent != null) {
                     transtype = "plural";
-                    //console.debug("found plural line 1", pluralpresent1);
                 }
                 else {
                     transtype = "single";
@@ -391,13 +399,11 @@ function checkPage(postTranslationReplace) {
                 }
 
                 if (transtype == "single") {
-                    //console.debug(" found single");
                     // Enhencement issue #123
                     previewNewText = textareaElem.innerText;
                     // Need to replace the existing html before replacing the verbs! issue #124
                     // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                     let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                    //console.debug("before:", translatedText, previewNewText);
                     result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
                     previewNewText = result.previewNewText;
                     translatedText = result.translatedText;
@@ -426,7 +432,9 @@ function checkPage(postTranslationReplace) {
                         // PSS we need to remove the current span, as the mark function adds one again
                         // PSS fix for issue #157
                         let span = document.querySelector("#preview-" + newrowId + " td.translation span.translation-text");
-                        span.remove();
+                        if (span != null) {
+                            span.remove();
+                        }
                         // Enhancement issue #123
                         var myspan1 = document.createElement("span");
                         myspan1.className = "translation-text";
@@ -496,6 +504,7 @@ function checkPage(postTranslationReplace) {
                 }
             }
         }
+        
         messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words\n" + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".paging a.check_translation-button");
@@ -547,9 +556,11 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 }
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower) {
-    // 19-06-2021 PSS added animated button for translation at translatePage
+    //console.time("translation")
     locale = checkLocale();
+    // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".paging a.translation-filler-button");
+    translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
     if (translateButton.className == "translation-filler-button") {
@@ -594,7 +605,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 if (transname != null) {
                     transname.className = "trans_name_div";
                     transname.innerText = "URL, name of theme or plugin or author!";
-                    current = document.querySelector(`#preview-${row} .priority button.save-button`);
+                    // In case of a plugin/theme name we need to set the button to blue
+                    current = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                    current.style.backgroundColor = "#0085ba";
                     current.innerText = "Save";
                     transtype = "single";
                 }
@@ -776,7 +789,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     current.innerText = "transFill";
                                     current.value = "transFill";
                                 }
+                   
                                 validateEntry(destlang, textareaElem1, "", "", row);
+                                
                             }
                         }
                     }
@@ -810,6 +825,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
             // Translation completed  
             let translateButton = document.querySelector(".paging a.translation-filler-button");
             translateButton.className += " translated";
+            translateButton.innerText = "Translated";
+
         }
         else {
             messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!");
@@ -824,6 +841,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
         translateButton = document.querySelector(".paging a.translation-filler-button");
         translateButton.className += " after_error";
     }
+    //console.timeEnd("translation");
 }
 
 function check_span_missing(row,plural_line) {
@@ -868,6 +886,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     locale = checkLocale();
     let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
     translateButton.className += " started";
+    translateButton.innerText = "Translate";
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     // 07-07-2021 PSS need to determine if current record
     let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -984,6 +1003,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
             // Translation completed
             let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             translateButton.className += " translated";
+            translateButton.innerText = "Translated";
         }
         else {
             messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!!");
@@ -1001,23 +1021,37 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
 function bulkSave(event) {
     let timeout = 0;
     var counter = 0;
+    var myWindow;
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     document.querySelectorAll("tr.preview").forEach((preview, i) => {
-        if (!preview.querySelector("th input").checked) {
-            return;
+        if (is_pte) {
+            if (!preview.querySelector("th input").checked) {
+                //console.debug("no checkbox set!");
+                return;
+            }
         }
-        counter++;
-        setTimeout(() => {
-            preview.querySelector("td.actions .edit").click();
-            const editor = preview.nextElementSibling;
-            editor.style.display = "none";
-            editor.querySelector(".translation-actions__save").click();
-            confirm = "button.gp-js-message-dismiss";
-            // PSS confirm the message for dismissal
-            elementReady(".gp-js-message-dismiss").then(elm => { elm.click(); }
-            );
-            toastbox("info", "Saving suggestion: "+(i+1), 800);
-        }, timeout);
-        timeout +=1700;
+        else {
+            if (!preview.querySelector("td input").checked) {
+                //console.debug("no checkbox1 set!");
+                return;
+            }
+            counter++;
+            setTimeout(() => {
+                toastbox("info", "Saving suggestion: " + (i + 1), "800", "Saving", myWindow);
+                preview.querySelector("td.actions .edit").click();
+                const editor = preview.nextElementSibling;
+                if (editor != null) {
+                    editor.style.display = "none";
+                    editor.querySelector(".translation-actions__save").click();
+                }
+                confirm = "button.gp-js-message-dismiss";
+                // PSS confirm the message for dismissal
+                elementReady(".gp-js-message-dismiss").then(confirm => { confirm.click(); }
+                );
+               
+            }, timeout);
+            timeout += 1500;
+        }
     });
     if ( counter == 0) {
         messageBox("error", "You do not have translations selected!");
@@ -1120,27 +1154,33 @@ function waitForElm(selector) {
         });
     });
 }
+
 function close_toast(){
     const toastContainer = document.querySelector(".toast-container");
-    toastContainer.remove();
+    if (toastContainer != null) {
+        toastContainer.remove();
+    }
 }
 
-function toastbox(type, message, time) {
-    currWindow = window.self;
+function toastbox(type, message, time, titel,currWindow) {
+    playSound = null;
     return new Promise((resolve) => {
-    cuteToast({
-        type: type, // or 'info', 'error', 'warning'
-        message: message,
-        timer: time,
-        myWindow: currWindow,
-    })
+        cuteToast({
+            type: type, // or 'info', 'error', 'warning'
+            message: message,
+            timer: time,
+            playSound,
+            img: "/img",
+            title: titel,
+            myWindow: currWindow,
+        })
         resolve("toast");
     }).catch((err) => {
         console.debug("error:", err)
     });
-   // resolve("toast ready");
-
+    // resolve("toast ready");
 }
+
 function messageBox(type, message) {
     currWindow = window.self;
     cuteAlert({
