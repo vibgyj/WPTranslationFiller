@@ -79,6 +79,10 @@ function preProcessOriginal(original, preverbs, translator) {
         }
     }
     else if (translator == "deepl") {
+        // Deepl does remove crlf so we need to replace them before sending them to the API
+        original = original.replace(/(\r\n|\n|\r)/gm, "crlf");
+        // Deepl does remove tabs so we need to replace them before sending them to the API
+        original = original.replaceAll("	", "mytb");
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
@@ -122,6 +126,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
+        console.debug('after replace x:', translatedText);
+        // Deepl does remove crlf so we need to replace them after sending them to the API
+        translatedText = translatedText.replaceAll("crlf", "\r\n");
+        // Deepl does remove tabs so we need to replace them after sending them to the API
+        translatedText = translatedText.replaceAll("mytb", "	");
         //console.debug('after replace x:', translatedText);
     }
     
@@ -681,6 +690,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                 break;
                             }
+                            else if (result == "Error 456") {
+                                messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
+                                break;
+                            }
                             else {
                                 if (errorstate != "OK") {
                                     messageBox("error", "There has been some uncatched error: " + errorstate);
@@ -825,6 +838,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     else if (result == "Error 400") {
                                         messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
                                         //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                        break;
+                                    }
+                                    else if (result == "Error 456") {
+                                        messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
                                         break;
                                     }
                                     else {
@@ -1044,15 +1061,15 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == 'Error 403') {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
-                            //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                         }
                         else if (result == 'Error 404') {
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
-                            //alert("Error in translation received status 404 The requested resource could not be found.")
                         }
                         else if (result == "Error 400") {
                             messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
-                           // alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else if (result == "Error 456") {
+                            messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
                         }
                         else {
                             if (errorstate != "OK") {
@@ -1114,34 +1131,30 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         result = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 400") {
                             messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
-                           // alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                         }
                         else {
                             if (errorstate != "OK") {
                                 messageBox("error", "There has been some uncatched error: " + errorstate);
-                                //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
                     }
-
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == "Error 403") {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
-                           // alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                         }
                         else if (result == 'Error 404') {
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
-                           // alert("Error in translation received status 404 The requested resource could not be found.")
                         }
                         else if (result == "Error 400") {
                             messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
-                            //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else if (result == "Error 456") {
+                            messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
                         }
                         else {
                             if (errorstate != "OK") {
                                 messageBox("error", "There has been some uncatched error: " + errorstate);
-                                //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
                     }

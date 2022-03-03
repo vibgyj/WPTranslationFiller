@@ -32,7 +32,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
-
+    console.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
     if (language == "RO") {
         if (DeeplFree == true ) {
@@ -196,9 +196,14 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 alert("Error 404 The requested resource could not be found.")
                 errorstate = "Error 404";
             }
+            else if (error[2] == '456') {
+                //alert("Error 456 Quota exceeded. The character limit has been reached")
+                errorstate = "Error 456";
+            }
             else {
                 alert("Error message: " + error[1]);
-                errorstate = "Error" + error[1];
+                console.debug("Error:",error)
+                errorstate = "Error " + error[1];
             }
         });
     //console.debug("endres:", response)
