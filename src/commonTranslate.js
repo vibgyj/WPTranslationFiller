@@ -2,6 +2,7 @@
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
+var errorstate ="OK";
 // This array is used to replace wrong words in translation
 // PSS version 12-05-2021
 let replaceVerb = [];
@@ -480,7 +481,14 @@ function checkPage(postTranslationReplace) {
                                 translatedText = result.translatedText;
                                 countreplaced = result.countreplaced;
                                 replaced = result.replaced;
-                                if (replaced) {
+                            if (replaced) {
+                                // PSS fix for #188 label Transfill needs to be set
+                                let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                                if (currec != null) {
+                                    var current = currec.querySelector("span.panel-header__bubble");
+                                    var prevstate = current.innerText;
+                                    current.innerText = "transFill";
+                                }
                                     previewElem.innerText = previewNewText;
                                     let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                                     // if current translation we need to split the rownumber
@@ -555,7 +563,7 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
     return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb};
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
     //console.time("translation")
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
@@ -647,13 +655,37 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "hide";
                         }
                         if (transsel == "google") {
-                            googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
+                            googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                            if (errorstate == "Error 400") {
+                                alert("Error in translation received status 400, maybe a license problem\n\nPLease check your licence in the options!!!");
+                                break;
+                            }
                         }
                         else if (transsel == "deepl") {
-                            deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower);
-                        }
+                            
+                            deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                            if (errorstate == "Error 404") {
+                                alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                break;
+                            }
+                            else if (errorstate == "Error 400"){
+                                alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
+                                break;
+                              }
+                            }
+                           // result = deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                           
+                        
                         else if (transsel == "microsoft") {
-                            microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
+                            microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                            if (errorstate == "Error 401") {
+                                alert("Error in translation received status 401, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                break;
+                            }
+                            else if (errorstate == "Error 403") {
+                                alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                break;
+                            }
                         }
                     }
                     else {
@@ -747,13 +779,35 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
                                 if (transsel == "google") {
-                                    translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
+                                    translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                                    if (errorstate == "Error 400") {
+                                        alert("Error in translation received status 400, maybe a license problem\n\nPLease check your licence in the options!!!");
+                                        break;
+                                    }
                                 }
                                 else if (transsel == "deepl") {
-                                    translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower);
+                                    translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                                    if (errorstate == "Error 404") {
+                                        alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                        break;
+                                    }
+                                    else if (errorstate == "Error 400") {
+                                        alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
+                                        break;
+                                    }
                                 }
+                                
                                 else if (transsel == "microsoft") {
-                                    translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower);
+                                    translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                                    if (errorstate == "Error 401") {
+                                        alert("Error in translation received status 401, authorisation refused.\n\nPLease check your licence in the options!!!");
+                                        break;
+                                    }
+                                    else if (errorstate == "Error 403") {
+                                        alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                        break;
+                                    }
+                                    
                                 }
                             }
                             else {
@@ -882,7 +936,7 @@ function check_span_missing(row,plural_line) {
     }
 }
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
     locale = checkLocale();
     let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
     translateButton.className += " started";
@@ -929,13 +983,28 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        translatedText = googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
+                        translatedText = googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        if (errorstate == "Error 400") {
+                            alert("Error in translation received status 400, authorisation refused.\n\nPLease check your licence in the options!!!");
+                        }
                     }
                     else if (transsel == "deepl") {
-                        translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower);
+                        translatedText = deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                        if (errorstate == "Error 404") {
+                            alert("Error in translation received status 403, authorisation refused.\n\nPLease check your licence in the options!!!");
+                        }
+                        else if (errorstate == "Error 400") {
+                            alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported! \r\nClick on OK until all lines are processed");
+                        }
                     }
                     else if (transsel == "microsoft") {
-                        translatedText = microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
+                        translatedText = microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        if (errorstate == "Error 401") {
+                            alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (errorstate == "Error 403") {
+                            alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
                     }
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "hide";
                     let textareaElem = e.querySelector("textarea.foreign-text");
@@ -970,13 +1039,19 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 plural_line = "2";
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
+                        translatedText = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                     }
                     else if (transsel == "deepl") {
-                        translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower);
+                        translatedText = deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                     }
                     else if (transsel == "microsoft") {
-                        translatedText = microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower);
+                        translatedText = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        if (errorstate == "Error 401") {
+                            alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (errorstate == "Error 403") {
+                            alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
                     }
                 }
                 else {
@@ -1031,8 +1106,16 @@ function bulkSave(event) {
             }
         }
         else {
-            if (!preview.querySelector("td input").checked) {
-                //console.debug("no checkbox1 set!");
+            checkset = preview.querySelector("td input");
+            // If a translation alreay has been saved, there is not checkbox available
+            if (checkset != null) {
+                if (!checkset.checked) {
+                    //console.debug("no checkbox1 set!");
+                    return;
+                }
+            }
+            else {
+                //console.debug("problem reading checkbox1");
                 return;
             }
             counter++;

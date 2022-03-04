@@ -23,6 +23,7 @@ let replaceVerb = [];
 
 let apikeyTextbox = document.getElementById("google_api_key");
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
+let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let transselectBox = document.getElementById("transselect");
 let destLangTextbox = document.getElementById("destination_lang");
@@ -38,9 +39,18 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 //console.debug("Diff:", showDiffCheckbox);
 //console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower"], function (data) {
+chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
+    if (data.DeeplFree != null) {
+        if (data.DeeplFree == true) {
+            apikeydeeplCheckbox.checked = true
+        }
+        else {
+            apikeydeeplCheckbox.checked = false
+        }
+    }
+    apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     if (data.transsel == "") {
         transselectBox.value = "google";
@@ -100,6 +110,15 @@ let button = document.getElementById("save");
 button.addEventListener("click", function () {
     let apikey = apikeyTextbox.value;
     let apikeyDeepl = apikeydeeplTextbox.value;
+    
+    if (document.querySelector("#DeeplFree:checked") !== null) {
+        
+        let showDeeplFree = document.querySelector("#DeeplFree:checked");
+        showDeepl = showDeeplFree.checked;
+    }
+    else {
+        showDeepl = "false";
+    }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -149,6 +168,7 @@ button.addEventListener("click", function () {
     chrome.storage.sync.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
+        DeeplFree : showDeepl,
         apikeyMicrosoft: apikeyMicrosoft,
         transsel: transsel,
         destlang: destlang,
@@ -229,7 +249,7 @@ file.addEventListener("change", function () {
     var file = this.files[0];
     var entry = "";
     locale = "nl";
-    console.debug
+    var value = "";
     var reader = new FileReader();
     reader.onload = function () {
         var lines = this.result.split("\n");
@@ -238,12 +258,29 @@ file.addEventListener("change", function () {
             entry = lines[line].split(",");
             if (entry[1] && entry[1].length > 0) {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                let value = entry[1].split("/");
-                for (let val in value) {
-                    if (value != ""){
-                       value[val] = value[val].replaceAll("\"", "").trim();
+                console.debug(" entry 1:", entry[1]);
+                const found = entry[1].indexOf("-/");
+                console.debug(" entry 1:", entry[1],found);
+                if (found == -1) {
+                    value = entry[1].split("/");
+                    console.debug(" -/ not found", value);
+                    for (let val in value) {
+                        if (value != "") {
+                            value[val] = value[val].replaceAll("\"", "").trim();
+                        }
                     }
                 }
+                else {
+                    value = entry[1];
+                    console.debug("/ found:", value);
+                }
+                console.debug("wefound:", value);
+                for (let val in value) {
+                        if (value != "") {
+                            value[val] = value[val].replaceAll("\"", "").trim();
+                        }
+                    }
+                
                 startChar = key.substring(0, 1);
                 switch (startChar) {
                     case "a":

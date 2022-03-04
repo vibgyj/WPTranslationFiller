@@ -36,6 +36,7 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
     var previewElem = "";
     var preview = "";
     var status = "";
+   
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
@@ -59,6 +60,7 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
             }
         }
         //console.debug("Microsoft readyState:", this.readyState);
+        //console.debug("myfault", myfault);
         if (this.readyState == 4 && myfault == 0) {
             //console.debug("Restrans:", restrans);
              translatedText = restrans[0].translations[0].text;
@@ -170,14 +172,6 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                 validateEntry(language, textareaElem1, "", "", rowId, locale);
                 //console.debug("Validate entry textareaElem1")
             }
-            //var currentClass = document.querySelector(`#editor-${rowId}`);
-           //var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
-           // currentClass.classList.remove("untranslated","no-translations", "priority-normal", "no-warnings");
-           // currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "no-translations","wptf-translated");
-            //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            // prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-           // prevcurrentClass.classList.remove("untranslated","no-translations", "priority-normal", "no-warnings");
-           // prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "no-translations","wptf-translated");
         }
 
         // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
@@ -192,10 +186,16 @@ function sendAPIRequestMicrosoft(record, language, apikeyMicrosoft, original, or
                 alert("Error in translation received status 400074, The body of the request is not valid JSON.\n\nClick on OK until all records are processed!!!");
             }
             else if (this.readyState == 4 && myfault == 403000) {
-                alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
+                //alert("Error in translation received status 403, authorisation refused.\n\nClick on OK until all records are processed!!!");
+                errorstate = "Error 403";
+
             }
             else if (this.readyState == 4 && myfault == 401000) {
-                alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.\n\nClick on OK until all records are processed!!!");
+                //alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.\n\nClick on OK until all records are processed!!!");
+                errorstate = "Error 401";
+            }
+            else {
+                    //console.debug('Error!', this.readyState,myfault);
             }
         }
     };

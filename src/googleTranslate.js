@@ -43,135 +43,140 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
     var previewElem = "";
     var preview = "";
     var status = "";
+    
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
     xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            var responseObj = JSON.parse(this.responseText);
-            translatedText = responseObj.data.translations[0].translatedText;
-            //console.debug("sendAPIRequest result before postProces:", translatedText);
-            translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower);
-            //console.debug("sendAPIRequest translatedText after postProces:", translatedText);
-            //console.debug("sendAPIRequest transtype:", transtype);
-            if (transtype == "single") {
-              // console.debug("sendAPIRequest single:");
-                textareaElem = record.querySelector("textarea.foreign-text");
-                textareaElem.innerText = translatedText;
-                current.innerText = "transFill";
-                current.value = "transFill";
-                // PSS 29-03-2021 Added populating the value of the property to retranslate            
-                textareaElem.value = translatedText;
-                //PSS 25-03-2021 Fixed problem with description box issue #13
-                textareaElem.style.height = "auto";
-                textareaElem.style.height = textareaElem.scrollHeight + "px";
-                preview = document.querySelector("#preview-" + rowId + " td.translation");
-                //console.debug("is pure single:", preview.innerText);
-                preview.innerText = translatedText;
-                validateEntry(language, textareaElem, "", "", rowId);
-                // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
-                select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
-                //select = next_editor.getElementsByClassName("meta");
-                var status = select.querySelector("dt").nextElementSibling;
-                //console.debug("bulksave status1:", select, status, rowId);
-                status.innerText = "transFill";
-            }
-            else {
-                // PSS 09-04-2021 added populating plural text
-                // PSS 09-07-2021 additional fix for issue #102 plural not updated
-                if (current != "null" && current == "current" && current == "waiting") {
-                    row = rowId.split("-")[0];
-                    //console.debug("rowId plural:", row)
-                    textareaElem1 = f.querySelector("textarea#translation_" + row + "_0");
-                    //textareaElem1.innerText = translatedText;
-                    //textareaElem1.value = translatedText;
-                    //console.debug("existing plural text:", translatedText);
+        //console.debug("status:", this.readyState, "stat:", this.status);
+            if (this.readyState == 4 && this.status == 200) {
+                var responseObj = JSON.parse(this.responseText);
+                translatedText = responseObj.data.translations[0].translatedText;
+                //console.debug("sendAPIRequest result before postProces:", translatedText);
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower);
+                //console.debug("sendAPIRequest translatedText after postProces:", translatedText);
+                //console.debug("sendAPIRequest transtype:", transtype);
+                if (transtype == "single") {
+                    // console.debug("sendAPIRequest single:");
+                    textareaElem = record.querySelector("textarea.foreign-text");
+                    textareaElem.innerText = translatedText;
+                    current.innerText = "transFill";
+                    current.value = "transFill";
+                    // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                    textareaElem.value = translatedText;
+                    //PSS 25-03-2021 Fixed problem with description box issue #13
+                    textareaElem.style.height = "auto";
+                    textareaElem.style.height = textareaElem.scrollHeight + "px";
+                    preview = document.querySelector("#preview-" + rowId + " td.translation");
+                    //console.debug("is pure single:", preview.innerText);
+                    preview.innerText = translatedText;
+                    validateEntry(language, textareaElem, "", "", rowId);
+                    // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+                    select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                    //select = next_editor.getElementsByClassName("meta");
+                    var status = select.querySelector("dt").nextElementSibling;
+                    //console.debug("bulksave status1:", select, status, rowId);
+                    status.innerText = "transFill";
                 }
                 else {
-                    //console.debug("Google plural_line in plural:", plural_line, rowId, translatedText);
-                    let newrow = rowId.split("-")[1];
-                    if (typeof newrow == "undefined") {
-                        if (transtype != "single") {
-                            previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
-                            if (previewElem == null) {
-                                check_span_missing(rowId, plural_line);
-                            }
-                        }
-                        if (plural_line == 1) {
-                            //populate plural line if not already translated, so we can take original rowId!
-                            //console.debug("singular updatet:", translatedText);
-                            textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_0");
-                            textareaElem1.innerText = translatedText;
-                            textareaElem1.value = translatedText;
-                            //PSS 25-03-2021 Fixed problem with description box issue #13
-                            textareaElem1.style.height = 'auto';
-                            textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
-                            // Select the first li
-                            previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
-                            if (previewElem != null) {
-                                previewElem.innerText = translatedText;
-                            }
-                        }
-                        if (plural_line == 2) {
-                            //if (typeof translatedText != undefined) {
-                            //console.debug("plural updatet:", translatedText);
-                            textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
-                            textareaElem1.innerText = translatedText;
-                            textareaElem1.value = translatedText;
-                            // Select the second li
-                            previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
-                            if (previewElem != null) {
-                                previewElem.innerText = translatedText;
-                            }
-                        }
+                    // PSS 09-04-2021 added populating plural text
+                    // PSS 09-07-2021 additional fix for issue #102 plural not updated
+                    if (current != "null" && current == "current" && current == "waiting") {
+                        row = rowId.split("-")[0];
+                        //console.debug("rowId plural:", row)
+                        textareaElem1 = f.querySelector("textarea#translation_" + row + "_0");
+                        //textareaElem1.innerText = translatedText;
+                        //textareaElem1.value = translatedText;
+                        //console.debug("existing plural text:", translatedText);
                     }
                     else {
-                        //console.debug("newrow = not undefined!", newrow);
-                        let row = rowId.split("-")[0];
-                        if (plural_line == 1) {
-                            //populate singular line if already translated
-                            textareaElem1 = record.querySelector("textarea#translation_" + row + "_0");
-                            textareaElem1.innerText = translatedText;
-                            textareaElem1.value = translatedText;
-                            previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
-                            //console.debug("Existing record plural_line 1:", translatedText);
-                            if (previewElem != null) {
-                                previewElem.innerText = translatedText;
+                        //console.debug("Google plural_line in plural:", plural_line, rowId, translatedText);
+                        let newrow = rowId.split("-")[1];
+                        if (typeof newrow == "undefined") {
+                            if (transtype != "single") {
+                                previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
+                                if (previewElem == null) {
+                                    check_span_missing(rowId, plural_line);
+                                }
+                            }
+                            if (plural_line == 1) {
+                                //populate plural line if not already translated, so we can take original rowId!
+                                //console.debug("singular updatet:", translatedText);
+                                textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_0");
+                                textareaElem1.innerText = translatedText;
+                                textareaElem1.value = translatedText;
+                                //PSS 25-03-2021 Fixed problem with description box issue #13
+                                textareaElem1.style.height = 'auto';
+                                textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
+                                // Select the first li
+                                previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
+                                if (previewElem != null) {
+                                    previewElem.innerText = translatedText;
+                                }
+                            }
+                            if (plural_line == 2) {
+                                //if (typeof translatedText != undefined) {
+                                //console.debug("plural updatet:", translatedText);
+                                textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
+                                textareaElem1.innerText = translatedText;
+                                textareaElem1.value = translatedText;
+                                // Select the second li
+                                previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
+                                if (previewElem != null) {
+                                    previewElem.innerText = translatedText;
+                                }
                             }
                         }
                         else {
-                            //populate plural line if  already translated
-                            textareaElem1 = record.querySelector("textarea#translation_" + row + "_1");
-                            //console.debug("newrow = not undefined!", row + "_1");
-                            textareaElem1.innerText = translatedText;
-                            textareaElem1.value = translatedText;
-                            previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
-                            if (previewElem != null) {
-                                previewElem.innerText = translatedText;
+                            //console.debug("newrow = not undefined!", newrow);
+                            let row = rowId.split("-")[0];
+                            if (plural_line == 1) {
+                                //populate singular line if already translated
+                                textareaElem1 = record.querySelector("textarea#translation_" + row + "_0");
+                                textareaElem1.innerText = translatedText;
+                                textareaElem1.value = translatedText;
+                                previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(1) .translation-text");
+                                //console.debug("Existing record plural_line 1:", translatedText);
+                                if (previewElem != null) {
+                                    previewElem.innerText = translatedText;
+                                }
+                            }
+                            else {
+                                //populate plural line if  already translated
+                                textareaElem1 = record.querySelector("textarea#translation_" + row + "_1");
+                                //console.debug("newrow = not undefined!", row + "_1");
+                                textareaElem1.innerText = translatedText;
+                                textareaElem1.value = translatedText;
+                                previewElem = document.querySelector("#preview-" + rowId + " li:nth-of-type(2) .translation-text");
+                                if (previewElem != null) {
+                                    previewElem.innerText = translatedText;
+                                }
                             }
                         }
                     }
+                    // The line below is necessary to update the save button on the left in the panel
+                    current.innerText = "transFill";
+                    current.value = "transFill";
+                    validateEntry(language, textareaElem1, "", "", rowId, locale);
+                   
+                    //console.debug("Validate entry textareaElem1")
                 }
-                // The line below is necessary to update the save button on the left in the panel
-                current.innerText = "transFill";
-                current.value = "transFill";
-                validateEntry(language, textareaElem1, "", "", rowId, locale);
-                //console.debug("Validate entry textareaElem1")
+                //14-09-2021 PSS changed the class to meet GlotDict behavior
+                //var currentClass = document.querySelector(`#editor-${rowId}`);
+                //var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
+                //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                //currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
+                // prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                //prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
             }
-            //14-09-2021 PSS changed the class to meet GlotDict behavior
-            //var currentClass = document.querySelector(`#editor-${rowId}`);
-            //var prevcurrentClass = document.querySelector(`#preview-${rowId}`);
-            //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            //currentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
-           // prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-            //prevcurrentClass.classList.add("untranslated", "priority-normal", "no-warnings", "has-translations");
-        }
-       
-        // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
-        else {
-            if (this.readyState == 4 && this.status == 400) {
-                alert("Error in translation received status 400, maybe a license problem\n\nClick on OK until all records are processed!!!");
-            }
+
+            // PSS 04-03-2021 added check on result to prevent nothing happening when key is wrong
+            else {
+                if (this.status == 400) {
+                    //alert("Error in translation received status 400, maybe a license problem\n\nClick on OK until all records are processed!!!");
+                    errorstate = "Error 400";
+                    console.debug("Licence problem");
+                }
         }
         
     };
@@ -179,7 +184,11 @@ function sendAPIRequest(record, language, apikey, requestBody, original, origina
     xhttp.open("POST", `https://translation.googleapis.com/language/translate/v2?key=${apikey}`, true);
     xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
     xhttp.send(JSON.stringify(requestBody));
-    
+
+    if (this.status == 400) {
+        //alert("Error in translation received status 400, maybe a license problem\n\nClick on OK until all records are processed!!!");
+        errorstate = "Error 400";
+    }
 }
 
 // PSS 01-30-2021 added this to prevent wrong replacement of searches
