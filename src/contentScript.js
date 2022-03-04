@@ -1063,6 +1063,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = "green";
             if (current.innerText == "transFill") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
             else if (current.innerText == "waiting") {
