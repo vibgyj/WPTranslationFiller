@@ -1,16 +1,15 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "WordPress Translation Filler",
-  "version": "1.6.12",
-  "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
+  "version": "1.5.12",
+  "description": "Firefox addon to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
   "web_accessible_resources": [
-    {
-      "resources": [ "/img/*", "cute-alert.css", "error-alert.flac", "clipboard-icon.png" ],
-      "matches": [ "https://translate.wordpress.org/*" ]
-
-    }
+    "//cute-alert.css",
+    "/img/*",
+    "error-alert.flac",
+    "clipboard-icon.png"
   ],
-  "background.service_worker": {
+  "background": {
     "scripts": [
       "jsstore.js",
       "jsstore.worker.js"
@@ -33,22 +32,23 @@
   "content_scripts": [
     {
       "matches": [
-        "https://translate.wordpress.org/*"
+        "https://translate.wordpress.org/*",
+        "https://cdnjs.cloudflare.com/*"
       ],
       "js": [
+        "wptf-functions.js",
         "purify.min.js",
         "cute-alert.js",
-        "wptf-functions.js",
         "wptf-consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
-        "wptf-database.js",
         "wptf-commonTranslate.js",
         "deeplTranslate.js",
-        "microsoftTranslate.js",
         "googleTranslate.js",
-        "contentScript.js",
-        "jsdiff.js"
+        "microsoftTranslate.js",
+        "jsdiff.js",
+        "wptf-database.js",
+        "contentScript.js"
       ],
       "css": [
         "cute-alert.css",

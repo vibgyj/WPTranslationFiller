@@ -82,7 +82,7 @@ function preProcessOriginal(original, preverbs, translator) {
         // Deepl does remove crlf so we need to replace them before sending them to the API
         original = original.replace(/(\r\n|\n|\r)/gm, "crlf");
         // Deepl does remove tabs so we need to replace them before sending them to the API
-        original = original.replaceAll("	", "mytb");
+        original = original.replaceAll(/\t/g, "mytb");
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
@@ -126,7 +126,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
-        console.debug('after replace x:', translatedText);
+        //console.debug('after replace x:', translatedText);
         // Deepl does remove crlf so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("crlf", "\r\n");
         // Deepl does remove tabs so we need to replace them after sending them to the API

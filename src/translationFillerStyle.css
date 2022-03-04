@@ -1075,7 +1075,7 @@ table.translations th.thCheckBox {
     position: relative !important;
     top: 25px !important;
     --wp-global-header-height: 90px !important;
-    --wp-global-header-offset: 85px !important;
+    --wp-global-header-offset: 85px !important; 
 }
 
 /*After Glotpress has improved remove this header change */
