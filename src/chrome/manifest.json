@@ -34,9 +34,9 @@
         "jsstore.worker.js",
         "wptf-database.js",
         "wptf-commonTranslate.js",
-        "deeplTranslate.js",
-        "googleTranslate.js",
-        "microsoftTranslate.js",
+        "wptf-deeplTrans.js",
+        "wptf-googleTrans.js",
+        "wptf-microsoftTrans.js",
         "contentScript.js",
         "jsdiff.js"
       ],
