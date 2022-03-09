@@ -574,6 +574,14 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
     //console.time("translation")
+    var translate;
+    var transtype = "";
+    var plural_line = "";
+    var plural_present = "";
+    var record = "";
+    var row = "";
+    var preview = "";
+
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".paging a.translation-filler-button");
@@ -590,12 +598,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
         translateButton.className = "translation-filler-button restarted";
     }
 
-    var transtype = "";
-    var plural_line = "";
-    var plural_present = "";
-    var record = "";
-    var row = "";
-    var preview = "";
+    
     // 15-05-2021 PSS added fix for issue #73
     // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
     if (typeof postTranslationReplace != "undefined" && postTranslationReplace.length != 0) {
@@ -616,6 +619,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
                     row = rowfound.split("_")[1];
                 }
+                let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                // We need to determine the current state of the record
+                if (currec != null) {
+                    var current = currec.querySelector("span.panel-header__bubble");
+                    var prevstate = current.innerText;
+                }
                 let original = record.querySelector("span.original-raw").innerText;
                 // 14-08-2021 PSS we need to put the status back of the label after translating
                 let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
@@ -623,9 +632,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     transname.className = "trans_name_div";
                     transname.innerText = "URL, name of theme or plugin or author!";
                     // In case of a plugin/theme name we need to set the button to blue
-                    current = document.querySelector(`#preview-${row} .priority .tf-save-button`);
-                    current.style.backgroundColor = "#0085ba";
-                    current.innerText = "Save";
+                    let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                    curbut.style.backgroundColor = "#0085ba";
+                    curbut.innerText = "Save";
                     transtype = "single";
                 }
                 // If in the original field "Singular is present we have a plural translation
@@ -641,20 +650,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 }
                 // PSS 09-03-2021 added check to see if we need to translate
                 //Needs to be put into a function, because now it is unnessary double code
-                let toTranslate = true;
+                toTranslate = true;
                 // Check if the comment is present, if not then if will block the request for the details name etc.
                 let element = record.querySelector(".source-details__comment");
                 if (element != null) {
                     let comment = record.querySelector(".source-details__comment p").innerText;
                     comment = comment.replace(/(\r\n|\n|\r)/gm, "");
                     toTranslate = checkComments(comment.trim());
-                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                    if (currec != null) {
-                        var current = currec.querySelector("span.panel-header__bubble");
-                        var prevstate = current.innerText;
-                    }
                 }
                 // Do we need to translate ??
+                
                 if (toTranslate) {
                     let pretrans = await findTransline(original, destlang);
                     // 07-05-2021 PSS added pretranslate in pages
@@ -702,25 +707,25 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                               }
                             }
-                        else if (transsel == "microsoft") {
-                            result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
-                            if (result == "Error 401") {
-                                messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
-                                //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
-                                break;
-                            }
-                            else if (result == "Error 403") {
-                                messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
-                                //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
-                                break;
-                            }
-                            else {
-                                if (errorstate != "OK") {
-                                    messageBox("error", "There has been some uncatched error: " + errorstate);
-                                    //alert("There has been some uncatched error: " + errorstate);
-                                    break;
+                           else if (transsel == "microsoft") {
+                                result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                                if (result == "Error 401") {
+                                   messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
+                                  //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
+                                  break;
                                 }
-                            }
+                                else if (result == "Error 403") {
+                                     messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
+                                    //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
+                                   break;
+                                }
+                               else {
+                                   if (errorstate != "OK") {
+                                       messageBox("error", "There has been some uncatched error: " + errorstate);
+                                       //alert("There has been some uncatched error: " + errorstate);
+                                      break;
+                                  }
+                               }
                         }
                     }
                     else {
@@ -738,6 +743,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         //select = next_editor.getElementsByClassName("meta");
                         var status = select.querySelector("dt").nextElementSibling;
                         status.innerText = "transFill";
+                        status.value = "transFill";
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                         if (currec != null) {
                             var current = currec.querySelector("span.panel-header__bubble");
@@ -932,8 +938,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
                 currentClass.classList.add("wptf-translated");
                 currentClass.classList.replace("no-translations", "has-translations");
+                currentClass.classList.replace("untranslated", "status-waiting");
                 //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
                 prevcurrentClass.classList.replace("no-translations", "has-translations");
+                prevcurrentClass.classList.replace("untranslated", "status-waiting");
                 prevcurrentClass.classList.add("wptf-translated");
                         //console.debug("currentClass:", currentClass);
                         //console.debug("currentClass:", prevcurrentClass);
@@ -1222,13 +1230,16 @@ function bulkSave(event) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     document.querySelectorAll("tr.preview").forEach((preview, i) => {
         if (is_pte) {
+            //console.debug("is pte:", is_pte)
             if (!preview.querySelector("th input").checked) {
                 //console.debug("no checkbox set!");
                 return;
             }
+            checkset = preview.querySelector("th input");
         }
         else {
             checkset = preview.querySelector("td input");
+        }
             // If a translation alreay has been saved, there is not checkbox available
             if (checkset != null) {
                 if (!checkset.checked) {
@@ -1257,7 +1268,7 @@ function bulkSave(event) {
                     });
             }, timeout);
             timeout += 1500;
-        }
+
     });
     if ( counter == 0) {
         messageBox("error", "You do not have translations selected!");
@@ -1456,16 +1467,12 @@ function processTransl(original, translatedText, language, record, rowId, transt
         textareaElem.style.height = textareaElem.scrollHeight + "px";
         current.innerText = "transFill";
         current.value = "transFill";
+        //current.innerText = "waiting";
+        //current.value = "waiting";
         preview = document.querySelector("#preview-" + rowId + " td.translation");
         preview.innerText = translatedText;
         validateEntry(language, textareaElem, "", "", rowId, locale);
-
-        // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
-        select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
-        //select = next_editor.getElementsByClassName("meta");
-        status = select.querySelector("dt").nextElementSibling;
-        //console.debug("bulksave status1:", select, status, rowId);
-        status.innerText = "transFill";
+        
     }
     else {
         // PSS 09-04-2021 added populating plural text
@@ -1540,6 +1547,21 @@ function processTransl(original, translatedText, language, record, rowId, transt
         current.innerText = "transFill";
         current.value = "transFill";
         validateEntry(language, textareaElem1, "", "", rowId, locale);
+        
     }
+    myRow = document.querySelector(`#editor-${rowId}`);
+    //console.debug("myRow:", myRow);
+    current.innerText = "transFill";
+    //current.innerText = "waiting";
+    // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+    select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+    //select = next_editor.getElementsByClassName("meta");
+    var status = select.querySelector("dt").nextElementSibling;
+    //status = select.querySelector("dd").innerText;
+    //console.debug("bulksave status1:", select, status, rowId);
+    status.innerText = "transFill";
+   // status.innerText = "waiting";
+        //status.value = "waiting";
+
 }
 

@@ -114,7 +114,7 @@ document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === "-")) {
         // This switches convert to lowercase off
         event.preventDefault();
-        console.debug("Switch to uppercase:", convertToLow);
+        //console.debug("Switch to uppercase:", convertToLow);
         chrome.storage.sync.set({
             convertToLower: false
         });
@@ -244,7 +244,6 @@ document.addEventListener("keydown", function (event) {
         }
     }
 });
-
 
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
@@ -379,8 +378,7 @@ function checkPageClicked(event) {
             function (data) {
                 checkPage(data.postTranslationReplace);
                 close_toast();
-            });
-    
+            }); 
 }
 
 function exportPageClicked(event) {
@@ -389,7 +387,7 @@ function exportPageClicked(event) {
         .get(
             ["apikey", "destlang"],
             function (data) {
-                console.debug("destlang:", data.destlang);
+               // console.debug("destlang:", data.destlang);
                 dbExport(data.destlang);
             });
    // res= dbExport();
@@ -432,7 +430,8 @@ chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
         loadSet(glossary, data.glossaryY);
         loadSet(glossary, data.glossaryZ);
         if (typeof data.glossary == "undefined") {
-            alert("Your glossary is not loaded because no file is loaded!!");
+            messageBox("error", "Your glossary is not loaded because no file is loaded!!");
+            //alert("Your glossary is not loaded because no file is loaded!!");
         }
         glossary.sort(function (a, b) {
             // to sory by descending order
@@ -449,8 +448,9 @@ chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
             });
         }
         else {
-            console.debug("Glossary empty!!");
-            alert("Your glossary is not loaded because no file is loaded!!");
+           // console.debug("Glossary empty!!");
+            messageBox("error", "Your glossary is not loaded because no file is loaded!!");
+           // alert("Your glossary is not loaded because no file is loaded!!");
         }
         checkbuttonClick();
     });
@@ -728,7 +728,7 @@ function translateEntryClicked(event) {
 
 function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    
+    var current;
     if (typeof rowId == "undefined") {
         let rowId = textareaElem.parentElement.parentElement.parentElement
            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
@@ -763,7 +763,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
             }
             
             myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-            var current = myrec.querySelector("span.panel-header__bubble");
+            current = myrec.querySelector("span.panel-header__bubble");
             let SavelocalButton = document.createElement("button");
             SavelocalButton.id = "tf-save-button";
             SavelocalButton.className = "tf-save-button";
@@ -809,7 +809,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     }
     //let origElem =  updateElementStyle(checkElem, result,"False",originalElem,"","","","","",rowId,showName);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "", "", "", "", rowId,showName,nameDiff);
+    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "", "", "", rowId,showName,nameDiff);
     let row = rowId.split("-")[0];
     
     // 12-06-2021 PSS do not fetch old if within the translation
@@ -836,7 +836,8 @@ function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale)
     updateStyle(textareaElem, result, newurl, showHistory,"True","",rowId);
 }
 
-function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, current, wait, rejec, fuz, old, rowId, showName, nameDiff) {
+function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff) {
+    var current;
     if (typeof rowId != "undefined") {
         var SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         if (SavelocalButton == "null") {
@@ -846,7 +847,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             SavelocalButton.className = "tf-save-button";
             let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (myrec != "null") {
-                var current = myrec.querySelector("span.panel-header__bubble");
+                current = myrec.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
                     SavelocalButton.innerText = "Save";
                     SavelocalButton.style.backgroundColor = "#0085ba";
@@ -879,7 +880,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         else {
             let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (myrec != "null") {
-                //console.debug("current === null");
+                current = myrec.querySelector("span.panel-header__bubble");
             }
             else {
                 current = myrec.querySelector("span.panel-header__bubble");
@@ -911,10 +912,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 else {
                     console.debug("no current text found");
                 }
-                //console.debug("SavelocalButton != null");
-                //if (SavelocalButton.innerText == "Empty") {
-                //  SavelocalButton.innerText = "Empty";
-                //}
             }
         }
     }
@@ -1127,17 +1124,13 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 headerElem.style.backgroundColor = "red";
             }
         }
-        //var separator1 = document.createElement("div");
-        //separator1.setAttribute("class", "checkElem_save");
-        //separator1.style.cssText = "width:100%; display:block; height:1px; border-bottom: 1px solid grey;";
-        //checkElem.appendChild(separator1);
-
         // we need to add the save button again after updating the element  
         SavelocalButton = document.createElement("button");
         SavelocalButton.id = "tf-save-button";
         SavelocalButton.className = "tf-save-button";
         SavelocalButton.onclick = savetranslateEntryClicked;
         current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+       // console.debug("current:",current.innerText,rowId)
         if (current != null) {
             //current = h.querySelector("span.panel-header__bubble");
             if (current.innerText == "transFill") {
@@ -1167,6 +1160,12 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 SavelocalButton.innerText = ("Rej");
                 SavelocalButton.disabled = true;
                 checkElem.title = "Rejected string";
+            }
+            else if (current.innerText == "untranslated") {
+                    SavelocalButton.style.backgroundColor = "#0085ba";
+                    SavelocalButton.innerText = ("Empt");
+                    SavelocalButton.disabled = true;
+                    checkElem.title = "Empty string";
             }
             else {
                 SavelocalButton.innerText = "Undef";
@@ -1254,23 +1253,46 @@ function savetranslateEntryClicked(event) {
                     
                 }, timeout);
                 timeout += 1000;
-                prevrow = document.querySelector(`#preview-${rowId}.preview.status-transFill`);
-                if (prevrow != null) {
-                    prevrow.style.backgroundColor = "#b5e1b9";
-                }
-                else {
-                    prevrow = document.querySelector(`#preview-${rowId}.preview.untranslated`);
-                    if (prevrow != null) {
-                        prevrow.style.backgroundColor = "#b5e1b9";
-                    }
-                }
+                //prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
+                //if (prevrow != null) {
+                    //prevrow.style.backgroundColor = "#b5e1b9";
+                    //prevrow.style.backgroundColor = "#42f584";
+               // }
+               // else {
+               //     prevrow = document.querySelector(`#preview-${rowId}.preview.has-translations`);
+                //    if (prevrow != null) {
+                        //prevrow.style.backgroundColor = "#b5e1b9";
+                        //prevrow.style.backgroundColor = "#42f584";
+                   // }
+              //  }
        }
        if (current.innerText == "waiting") {
                 let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
-                let glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
+                var glotpress_approve = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .approve`);
                 let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
+                select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
+                var status = select.querySelector("dt").nextElementSibling;
+                status.innerText = "waiting";
                 glotpress_open.click();
-                glotpress_approve.click();
+                if (glotpress_approve != null) {
+                   glotpress_approve.click();
+                }
+                else {
+                    glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+                    setTimeout(() => {
+                        glotpress_save.click();
+                        confirm = "button.gp-js-message-dismiss";
+                        // PSS confirm the message for dismissal
+                        elementReady(".gp-js-message-dismiss").then(elm => { elm.click(); }
+                        );
+                        toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving", myWindow);
+
+                    }, timeout);
+                    timeout += 1000;
+                    
+                }
+                
+                status.innerText = "current";
                 glotpress_close.click();
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
                 prevrow.style.backgroundColor = "#b5e1b9";
@@ -1675,8 +1697,15 @@ function gd_auto_hide_next_editor(editor) {
             oldRow = editor.id;
             newRow = oldRow.replace("editor", "preview")
             myRow = document.querySelector(`#${newRow}`);
+            myRow.style.backgroundColor = "#b5e1b9";
             var x = myRow.insertCell(0);
             x.className = "myCheckBox";
+        }
+        else {
+            oldRow = editor.id;
+            newRow = oldRow.replace("editor", "preview")
+            myRow = document.querySelector(`#${newRow}`);
+            myRow.style.backgroundColor = "#b5e1b9";
         }
         return;
     }
@@ -1688,8 +1717,8 @@ function gd_auto_hide_next_editor(editor) {
     oldRow = editor.id;
     newRow = oldRow.replace("editor", "preview")
     myRow = document.querySelector(`#${newRow}`);
-    
-   // const elmnt = document.querySelector(`#${newRow}`)
+    myRow.style.backgroundColor = "#b5e1b9";
+   
     // With center it works best, but it can be put on the top, center, bottom
     //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
     myRow.scrollIntoView(true);
