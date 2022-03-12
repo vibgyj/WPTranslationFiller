@@ -1,5 +1,30 @@
 // This file contains functions used within various files
 
+// This function copies the original to the clipboard
+function addtoClipBoardClicked(event) {
+    if (event != undefined) {
+        event.preventDefault();
+        copyToClipBoard(detailRow);
+    }
+}
+
+function copyToClipBoard(detailRow) {
+    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);
+    if (e != null) {
+        var content = e.querySelector("span.original-raw").innerText;
+        if (content != null) {
+            navigator.clipboard.writeText(content);
+            toastbox("info", "Copy original to clipboard<br>" + content, "2500", "Copy");
+        }
+        else {
+            toastbox("error", "No text found to copy", "1200", "Error");
+        }
+    }
+    else {
+        toastbox("error", "No text found to copy", "1200", "Error");
+    }
+}
+
 function addCheckBox() {
     var BulkButton;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -64,14 +89,6 @@ function deselectCheckBox(event) {
                 }
             }
         });
-    }
-}
-
-// This function copies the original to the clipboard
-function addtoClipBoardClicked(event) {
-    if (event != undefined) {
-        event.preventDefault();
-        copyToClipBoard(detailRow);
     }
 }
 
@@ -146,3 +163,33 @@ function validatePage(language, showHistory, locale) {
     });
 }
 
+function toastbox(type, message, time, titel, currWindow) {
+    playSound = null;
+    return new Promise((resolve) => {
+        cuteToast({
+            type: type, // or 'info', 'error', 'warning'
+            message: message,
+            timer: time,
+            playSound,
+            img: "/img",
+            title: titel,
+            myWindow: currWindow,
+        })
+        resolve("toast");
+    }).catch((err) => {
+        console.debug("error:", err)
+    });
+    // resolve("toast ready");
+}
+
+function messageBox(type, message) {
+    currWindow = window.self;
+    cuteAlert({
+        type: type,
+        title: "Message",
+        message: message,
+        buttonText: "OK",
+        myWindow: currWindow,
+        closeStyle: "alert-close",
+    });
+}

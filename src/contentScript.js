@@ -1697,7 +1697,7 @@ function gd_auto_hide_next_editor(editor) {
             oldRow = editor.id;
             newRow = oldRow.replace("editor", "preview")
             myRow = document.querySelector(`#${newRow}`);
-            myRow.style.backgroundColor = "#b5e1b9";
+            myRow.style.backgroundColor = "#b5eeee";
             var x = myRow.insertCell(0);
             x.className = "myCheckBox";
         }
@@ -1717,7 +1717,12 @@ function gd_auto_hide_next_editor(editor) {
     oldRow = editor.id;
     newRow = oldRow.replace("editor", "preview")
     myRow = document.querySelector(`#${newRow}`);
-    myRow.style.backgroundColor = "#b5e1b9";
+    if (!is_pte) {
+        myRow.style.backgroundColor = "#b5eeee";
+    }
+    else {
+        myRow.style.backgroundColor = "#b5e1b9";
+    }
    
     // With center it works best, but it can be put on the top, center, bottom
     //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });

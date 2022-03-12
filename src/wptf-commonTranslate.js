@@ -12,24 +12,6 @@ let replaceVerb = [];
 let replacePreVerb = [];
 // 06-05-2021 PSS These vars can probably removed after testen
 
-
-function copyToClipBoard(detailRow) {
-    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);  
-    if (e != null) {
-        var content = e.querySelector("span.original-raw").innerText;
-        if (content != null) {
-            navigator.clipboard.writeText(content);
-            toastbox("info", "Copy original to clipboard<br>"+content, "2500", "Copy");
-        }
-        else {
-            toastbox("error", "No text found to copy", "1200", "Error");
-        }
-    }
-    else {
-        toastbox("error", "No text found to copy", "1200", "Error");
-    }
-}
-
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
     if (preTranslationReplace != undefined) {
@@ -943,8 +925,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 prevcurrentClass.classList.replace("no-translations", "has-translations");
                 prevcurrentClass.classList.replace("untranslated", "status-waiting");
                 prevcurrentClass.classList.add("wptf-translated");
-                        //console.debug("currentClass:", currentClass);
-                        //console.debug("currentClass:", prevcurrentClass);
+                // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
+                prevcurrentClass.style.backgroundColor = "#ffe399";
             }
             // Translation completed  
             let translateButton = document.querySelector(".paging a.translation-filler-button");
@@ -1288,21 +1270,6 @@ function second(milliseconds) {
     });
 }
 
-async function sleep(milliseconds) {
-    const date = Date.now();
-    let currentDate = null;
-    do {
-        currentDate = Date.now();
-    } while (currentDate - date < milliseconds);
-}
-
-async function delay(n) {
-    return new Promise(function (resolve) {
-        setTimeout(resolve("timer done"), n * 1000);
-    });
-}
-
-
 function _waitForElement(selector, delay =5, tries = 50) {
     const element = document.querySelector(selector);
 
@@ -1383,37 +1350,6 @@ function close_toast(){
     if (toastContainer != null) {
         toastContainer.remove();
     }
-}
-
-function toastbox(type, message, time, titel,currWindow) {
-    playSound = null;
-    return new Promise((resolve) => {
-        cuteToast({
-            type: type, // or 'info', 'error', 'warning'
-            message: message,
-            timer: time,
-            playSound,
-            img: "/img",
-            title: titel,
-            myWindow: currWindow,
-        })
-        resolve("toast");
-    }).catch((err) => {
-        console.debug("error:", err)
-    });
-    // resolve("toast ready");
-}
-
-function messageBox(type, message) {
-    currWindow = window.self;
-    cuteAlert({
-        type: type,
-        title: "Message",
-        message: message,
-        buttonText: "OK",
-        myWindow: currWindow,
-        closeStyle: "alert-close",
-    });
 }
 
 /**
