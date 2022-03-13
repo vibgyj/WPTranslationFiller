@@ -1081,7 +1081,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         else {
                             if (errorstate != "OK") {
                                 messageBox("error", "There has been some uncatched error: " + errorstate);
-                                alert("There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
                     }
@@ -1345,12 +1345,6 @@ function waitForElm(selector) {
     });
 }
 
-function close_toast(){
-    const toastContainer = document.querySelector(".toast-container");
-    if (toastContainer != null) {
-        toastContainer.remove();
-    }
-}
 
 /**
  ** function copied from stackoverflow created by eclanrs

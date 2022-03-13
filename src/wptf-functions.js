@@ -182,6 +182,13 @@ function toastbox(type, message, time, titel, currWindow) {
     // resolve("toast ready");
 }
 
+function close_toast() {
+    const toastContainer = document.querySelector(".toast-container");
+    if (toastContainer != null) {
+        toastContainer.remove();
+    }
+}
+
 function messageBox(type, message) {
     currWindow = window.self;
     cuteAlert({
