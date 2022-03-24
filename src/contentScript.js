@@ -1242,29 +1242,24 @@ function savetranslateEntryClicked(event) {
                 select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
                 var status = select.querySelector("dt").nextElementSibling;
                 status.innerText = "waiting";
-                open_editor.click();
-                setTimeout(() => {        
-                    glotpress_save.click();
-                    confirm = "button.gp-js-message-dismiss";
-                    // PSS confirm the message for dismissal
-                    elementReady(".gp-js-message-dismiss").then(elm => { elm.click();  }
-                    );
-                    toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving",myWindow);
-                    
-                }, timeout);
-                timeout += 1000;
-                //prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
-                //if (prevrow != null) {
-                    //prevrow.style.backgroundColor = "#b5e1b9";
-                    //prevrow.style.backgroundColor = "#42f584";
-               // }
-               // else {
-               //     prevrow = document.querySelector(`#preview-${rowId}.preview.has-translations`);
-                //    if (prevrow != null) {
-                        //prevrow.style.backgroundColor = "#b5e1b9";
-                        //prevrow.style.backgroundColor = "#42f584";
-                   // }
-              //  }
+                // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
+                setTimeout(() => {
+                toastbox("info", "" , "700", "Saving suggestion", myWindow);
+                let preview = document.querySelector(`#preview-${rowId}`);
+                preview.querySelector("td.actions .edit").click();
+                const editor = preview.nextElementSibling;
+                if (editor != null) {
+                   editor.style.display = "none";
+                   editor.querySelector(".translation-actions__save").click();
+                }
+                // PSS confirm the message for dismissal
+                foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
+                   if (confirm != '.gp-js-message-dismiss') {
+                       confirm.click();
+                   }
+                });
+       }, timeout);
+       timeout += 1500;        
        }
        if (current.innerText == "waiting") {
                 let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
