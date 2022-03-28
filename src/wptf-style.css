@@ -481,6 +481,21 @@ local.paging a.translation-filler-button {
     border-radius: 5px;
     display: inline;
 }
+
+.trans_local_div {
+    display: block;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 11px;
+    margin-top: 5px;
+    padding: 1px 10px;
+    margin-left: .2em;
+    background-color: #036fa2;
+    border-radius: 5px;
+    width: 30px;
+}
+
 del {
     text-decoration: none;
     color: #b30000;

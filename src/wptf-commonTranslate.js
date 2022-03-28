@@ -736,6 +736,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
                         if (previewElem != null) {
                             previewElem.innerText = translatedText;
+                            var element1 = document.createElement("div");
+                            console.debug("found locally!");
+                            element1.setAttribute("class", "trans_local_div");
+                            element1.setAttribute("id", "trans_local_div");
+                            element1.appendChild(document.createTextNode("Local"));
+                            previewElem.appendChild(element1);
                         }
                         else {
                             let preview = document.querySelector("#preview-" + row + " td.translation");
@@ -778,6 +784,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     preview.innerText = translatedText;
                                     current.innerText = "transFill";
                                     current.value = "transFill";
+                                    var element1 = document.createElement("div");
+                                    element1.setAttribute("class", "trans_local_div");
+                                    element1.setAttribute("id", "trans_local_div");
+                                    element1.appendChild(document.createTextNode("Local"));
+                                    preview.appendChild(element1);
                                 }
                             }
                             else {
@@ -785,6 +796,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 preview.innerText = translatedText;
                                 current.innerText = "transFill";
                                 current.value = "transFill";
+                                var element1 = document.createElement("div");
+                                element1.setAttribute("class", "trans_local_div");
+                                element1.setAttribute("id", "trans_local_div");
+                                element1.appendChild(document.createTextNode("Local"));
+                                preview.appendChild(element1);
                             }
                         }
                         if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
