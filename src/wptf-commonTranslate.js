@@ -736,12 +736,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
                         if (previewElem != null) {
                             previewElem.innerText = translatedText;
-                            var element1 = document.createElement("div");
-                            console.debug("found locally!");
-                            element1.setAttribute("class", "trans_local_div");
-                            element1.setAttribute("id", "trans_local_div");
-                            element1.appendChild(document.createTextNode("Local"));
-                            previewElem.appendChild(element1);
                         }
                         else {
                             let preview = document.querySelector("#preview-" + row + " td.translation");
@@ -765,6 +759,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan1.className = "translation-text";
                                     li1.appendChild(myspan1);
                                     myspan1.appendChild(document.createTextNode(translatedText));
+                                    
 
                                     // Also create the second li
                                     var li2 = document.createElement("li");
@@ -779,6 +774,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan2.className = "translation-text";
                                     li2.appendChild(myspan2);
                                     myspan2.appendChild(document.createTextNode("empty"));
+                                   
                                 }
                                 else {
                                     preview.innerText = translatedText;
@@ -893,6 +889,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         if (preview != null) {
                                             preview.innerText = translatedText;
                                             preview.value = translatedText;
+                                            var element1 = document.createElement("div");
+                                            element1.setAttribute("class", "trans_local_div");
+                                            element1.setAttribute("id", "trans_local_div");
+                                            element1.appendChild(document.createTextNode("Local"));
+                                            preview.appendChild(element1);
                                         }
                                     }
                                 }
@@ -906,6 +907,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
                                     if (previewElem != null) {
                                         previewElem.innerText = translatedText;
+                                        var element1 = document.createElement("div");
+                                        element1.setAttribute("class", "trans_local_div");
+                                        element1.setAttribute("id", "trans_local_div");
+                                        element1.appendChild(document.createTextNode("Local"));
+                                        previewElem.appendChild(element1);
                                     }
                                     current.innerText = "transFill";
                                     current.value = "transFill";
