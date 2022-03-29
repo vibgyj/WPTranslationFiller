@@ -89,6 +89,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
+    //console.debug("eventkey:", event.key);
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -150,6 +151,11 @@ document.addEventListener("keydown", function (event) {
         event.preventDefault();
         //console.debug("Reset database");
         result = deleteDB();
+    }
+    if (event.altKey && event.shiftKey && (event.key === "F3")) {
+        event.preventDefault();
+        //console.log("Populate with local");
+        result = populateWithLocal();
     }
 });
 
@@ -371,7 +377,6 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     toastbox("info", "checkPage is started wait for the result!!", "10000", "CheckPage");
-    //console.log("Checkpage clicked!");
     chrome.storage.sync
         .get(
             ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
@@ -387,7 +392,6 @@ function exportPageClicked(event) {
         .get(
             ["apikey", "destlang"],
             function (data) {
-               // console.debug("destlang:", data.destlang);
                 dbExport(data.destlang);
             });
    // res= dbExport();
@@ -448,7 +452,6 @@ chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
             });
         }
         else {
-           // console.debug("Glossary empty!!");
             messageBox("error", "Your glossary is not loaded because no file is loaded!!");
            // alert("Your glossary is not loaded because no file is loaded!!");
         }
@@ -828,7 +831,6 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
 function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     let translation = textareaElem.value;
-   // console.debug("textareaElem:", textareaElem);
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
@@ -987,7 +989,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 }
             }
             else {
-                console.debug("no current found!");
+               // console.debug("no current found!");
                 //SavelocalButton.innerText = "Save";
                 SavelocalButton.title = "Save the string";
             }
@@ -1608,10 +1610,8 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
         })
             .then(response => response.text())
             .then(data => {
-                //console.log(data);
                 //05-11-2021 PSS added fix for issue #159 causing an error message after restarting the add-on
                 currURL = window.location.href;
-                //console.debug("url:", currURL);
                 // &historypage is added by GlotDict or WPGPT, so no extra parameter is necessary for now
                 if (currURL.includes("&historypage") == false) {
                     var parser = new DOMParser();
