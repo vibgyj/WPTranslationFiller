@@ -554,73 +554,6 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
     return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb};
 }
 
-async function old_populateWithLocal() {
-    var found = 'false';
-    var arrayData = [];
-    const trans = await jsstoreCon.select({
-        from: "Translation"
-    });
-
-    i = 1;
-    const arr = await trans.forEach(function (trans) {
-        arrayData[i] = { original: trans.source, translation: trans.translation };
-        i++;
-    });
-
-    table = document.getElementById('translations');
-    tr = table.getElementsByTagName("tr");
-    arrayData.forEach(obj => {
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                filter = obj[key];
-
-                
-                console.debug("filter:", filter, obj[0, 1]);
-                //for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-                for (i = 0; i < tr.length; i++) {
-                    //this skips the headers
-                    if (i > 0) {
-                        //console.debug("record:", tr[i], i)
-                        record = tr[i].querySelector("tr.editor div.editor-panel__left div.panel-content");
-
-                        console.debug("preview:", preview)
-                        if (record != null) {
-                            rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
-                            row = rowfound.split("-")[1];
-                            console.debug("row:", row)
-                            original = record.querySelector("span.original-raw").innerText;
-                            console.debug("td:", original);
-                            if (original != null) {
-
-                                if (original == filter) {
-                                    console.debug("found!!")
-                                    found = true;
-                                }
-                                else {
-                                    preview = document.querySelector(`#preview-${row}`);
-                                    console.debug("preview:", preview);
-                                    if (preview != null) {
-                                        preview.style.display = "none";
-
-                                    }
-                                }
-                            }
-                            if (found) {
-                                tr[i].style.display = "";
-                                found = false;
-                            }
-                        }
-                    }
-
-
-                }
-            }
-        }
-    });
-    console.debug("Done!!")
- }
-
-
 async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
     //console.time("translation")
     var translate;
@@ -630,7 +563,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     var record = "";
     var row = "";
     var preview = "";
-    destlang = "nl"
+    //destlang = "nl"
 
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
@@ -650,7 +583,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
 
     
-            for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+    for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                 transtype = "single";
                 // 16-08-2021 PSS fixed retranslation issue #118
                 let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
@@ -706,12 +639,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 // Do we need to translate ??
 
                 if (toTranslate) {
-                    
                     let pretrans = await findTransline(original, destlang);
                     if (pretrans != 'notFound') {
-                        // 07-05-2021 PSS added pretranslate in pages
-
-
                         // Pretranslation found!
                         let translatedText = pretrans;
                         let textareaElem = record.querySelector("textarea.foreign-text");
@@ -760,7 +689,6 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                                     myspan1.className = "translation-text";
                                     li1.appendChild(myspan1);
                                     myspan1.appendChild(document.createTextNode(translatedText));
-
 
                                     // Also create the second li
                                     var li2 = document.createElement("li");
@@ -949,8 +877,6 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
     //console.timeEnd("translation");
 }
-
-
 
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {

@@ -175,7 +175,7 @@ async function addTransline(rowId){
     return;
 }
 
-async function dbExport() {
+async function dbExport(destlang) {
   var export_file = "";
   var arrayData = [];
   // 09-07-2021 PSS altered the separator issue #104
@@ -189,7 +189,7 @@ async function dbExport() {
   const trans = await jsstoreCon.select({
     from: "Translation"
   });
-    destlang ="nl";
+    
     export_file = "export_database_" + destlang + ".csv";
     i = 1;
     trans.forEach(function (trans) {
