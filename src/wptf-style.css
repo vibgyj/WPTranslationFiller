@@ -461,36 +461,36 @@ local.paging a.translation-filler-button {
 }
 
 .trans_name_div {
-    float: left;
-    font-size: 0.9em;
+    
     font-weight: 600;
     color: #ffffff;
-    font-size: 11px;
+    font-size: 12px;
     margin-top: 10px;
     padding: 1px 5px;
     margin-left: .2em;
     background-color: #036fa2;
     border-radius: 5px;
-    display: inline;
+    display: block;
+    width: 50% !important;
 }
 
 .trans_name_div_true {
-    float: left;
-    font-size: 0.9em;
+    
     font-weight: 600;
     color: #ffffff;
-    font-size: 11px;
+    font-size: 12px;
     margin-top: 10px;
     padding: 1px 5px;
     margin-left: .2em;
     background-color: red;
     border-radius: 5px;
-    display: inline;
+    display: block;
+    width: 65% !important;
 }
 
 .trans_local_div {
     display: block;
-    font-size: 0.9em;
+    font-size: 12px;
     font-weight: 600;
     color: #ffffff;
     font-size: 11px;
