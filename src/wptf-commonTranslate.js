@@ -566,6 +566,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     //destlang = "nl"
 
     locale = checkLocale();
+
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".paging a.translation-filler-button");
     translateButton.innerText = "Translate";

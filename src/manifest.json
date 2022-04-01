@@ -15,10 +15,22 @@
     "scripts": [
       "jsstore.js",
       "jsstore.worker.js"
+      
+    ]
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "1",
+        "enabled": true,
+        "path": "/wptf-block_rules.json"
+      }
     ]
   },
   "permissions": [
-    "storage"
+    "storage",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
   ],
   "options_page": "wptf-options.html",
   "content_scripts": [
@@ -44,6 +56,9 @@
       "css": [
         "wptf-cute-alert.css",
         "wptf-style.css"
+      ],
+      "json": [
+        "wptf-block_rules.json"
       ]
     }
   ]
