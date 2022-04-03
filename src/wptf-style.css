@@ -518,6 +518,9 @@ table.translations th.priority, table.translations td.priority {
 table.translations td.priority {
     vertical-align: middle !important;
     font-size: 14px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    font-weight: 700 !important; 
 }
 
 /* This setting is necessary to move the row down due to the header that is no longer fixed */
@@ -960,7 +963,6 @@ table.translations tr.preview.wptf-translated {
 .highlight {
     background: lightpink;
 }
-
 
 /* Tooltip container */
 .tooltip {

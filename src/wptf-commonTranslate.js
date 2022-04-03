@@ -2,7 +2,6 @@
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
-
 // This array is used to replace wrong words in translation
 // PSS version 12-05-2021
 let replaceVerb = [];
@@ -11,6 +10,24 @@ let replaceVerb = [];
 // This is done by replacing the formal word for a informal word
 let replacePreVerb = [];
 // 06-05-2021 PSS These vars can probably removed after testen
+
+
+function copyToClipBoard(detailRow) {
+    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);  
+    if (e != null) {
+        var content = e.querySelector("span.original-raw").innerText;
+        if (content != null) {
+            navigator.clipboard.writeText(content);
+            toastbox("info", "Copy original to clipboard<br>"+content, "2500", "Copy");
+        }
+        else {
+            toastbox("error", "No text found to copy", "1200", "Error");
+        }
+    }
+    else {
+        toastbox("error", "No text found to copy", "1200", "Error");
+    }
+}
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
@@ -840,6 +857,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         }
                                     }
                                 }
+                                
                                 else if (transsel == "microsoft") {
                                     result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (result == "Error 401") {
@@ -1344,7 +1362,6 @@ function waitForElm(selector) {
         });
     });
 }
-
 
 /**
  ** function copied from stackoverflow created by eclanrs

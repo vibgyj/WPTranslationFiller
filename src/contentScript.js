@@ -394,7 +394,6 @@ function exportPageClicked(event) {
     
 }
 
-
 let glossary = [];
 chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
     , "glossaryD", "glossaryE", "glossaryF", "glossaryG", "glossaryH", "glossaryI"
@@ -1039,6 +1038,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = "green";
             if (current.innerText == "transFill") {
+                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
             else if (current.innerText == "waiting") {
@@ -1783,5 +1783,4 @@ function gd_auto_hide_next_editor(editor) {
                 });
             }
 }
-
 
