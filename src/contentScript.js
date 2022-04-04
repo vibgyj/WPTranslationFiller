@@ -220,21 +220,21 @@ document.addEventListener("keydown", function (event) {
         console.debug("F5 pressed!", browser);
 
        
-        //res = chrome.declarativeNetRequest.updateEnabledRuleset(
-          //  {
-            //    addRules: [{
-              //      "id": 1,
-                //    "priority": 1,
-                  //  "action": { "type": "block" },
-                   // "condition": {
-                    //    "regexFilter": "-get-tm-suggestions",
-                    //    "resourceTypes": ["xmlhttprequest"]
-                   // }
-               // }
-               // ],
-               // removeRuleIds: [1]
-           // },
-       // )
+        res = chrome.declarativeNetRequest.updateEnabledRuleset(
+          {
+              addRules: [{
+                    "id": 1,
+                   "priority": 1,
+                 "action": { "type": "block" },
+                "condition": {
+                  "regexFilter": "-get-tm-suggestions",
+                     "resourceTypes": ["xmlhttprequest"]
+                 }
+              }
+              ],
+               removeRuleIds: [1]
+           },
+        )
         console.debug("F5 pressed!",res)
     }
 });

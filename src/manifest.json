@@ -6,9 +6,8 @@
 
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png" ],
+      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png","/_metadata" ],
       "matches": [ "https://translate.wordpress.org/*" ]
-
     }
   ],
   "background.service_worker": {
@@ -28,13 +27,13 @@
   },
   "permissions": [
     "storage",
+    "declarativeContent",
     "declarativeNetRequest",
     "declarativeNetRequestWithHostAccess",
     "declarativeNetRequestFeedback"
   ],
   "host_permissions": [
-    "https://www.translate.wordpress.org/",
-    "*://*/*"
+    "*://translate.wordpress.org/*"
   ],
   "options_page": "wptf-options.html",
   "content_scripts": [
