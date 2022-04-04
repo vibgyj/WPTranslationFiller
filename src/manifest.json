@@ -15,7 +15,6 @@
     "scripts": [
       "jsstore.js",
       "jsstore.worker.js"
-      
     ]
   },
   "declarative_net_request": {
@@ -30,7 +29,12 @@
   "permissions": [
     "storage",
     "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
     "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "https://www.translate.wordpress.org/",
+    "*://*/*"
   ],
   "options_page": "wptf-options.html",
   "content_scripts": [

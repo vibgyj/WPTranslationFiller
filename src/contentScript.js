@@ -94,10 +94,10 @@ document.addEventListener("keydown", function (event) {
         //event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
-       // if (is_pte) {
-           // toastbox("info", "Bulksave started", 2000);
-            bulk(event);
-       // }
+        // if (is_pte) {
+        // toastbox("info", "Bulksave started", 2000);
+        bulk(event);
+        // }
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
         // This switches convert to lowercase on
@@ -181,6 +181,61 @@ document.addEventListener("keydown", function (event) {
                         messageBox("error", "For " + data.transsel + " no apikey is set!");
                     }
                 });
+    }
+    if (event.altKey && event.shiftKey && (event.key === "F4")) {
+        event.preventDefault();
+        //console.debug("Reset database");
+        var rule = {
+            "id": 1,
+            "priority": 1,
+            "action": { "type": "allow" },
+            "condition": {
+                "regexFilter": "-get-tm-suggestions",
+                "resourceTypes": ["xmlhttprequest"]
+            }
+        };
+
+        resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
+        console.debug("blockres:"), resblock;
+    }
+
+    if (event.altKey && event.shiftKey && (event.key === "F5")) {
+        //event.preventDefault();
+        let userAgent = navigator.userAgent;
+        let browser;
+
+        if (userAgent.match(/chrome|chromium|crios/i)) {
+            browser = "chrome";
+        } else if (userAgent.match(/firefox|fxios/i)) {
+            browser = "firefox";
+        } else if (userAgent.match(/safari/i)) {
+            browser = "safari";
+        } else if (userAgent.match(/opr\//i)) {
+            browser = "opera";
+        } else if (userAgent.match(/edg/i)) {
+            browser = "edge";
+        } else {
+            browser = "No browser detection";
+        }
+        console.debug("F5 pressed!", browser);
+
+       
+        //res = chrome.declarativeNetRequest.updateEnabledRuleset(
+          //  {
+            //    addRules: [{
+              //      "id": 1,
+                //    "priority": 1,
+                  //  "action": { "type": "block" },
+                   // "condition": {
+                    //    "regexFilter": "-get-tm-suggestions",
+                    //    "resourceTypes": ["xmlhttprequest"]
+                   // }
+               // }
+               // ],
+               // removeRuleIds: [1]
+           // },
+       // )
+        console.debug("F5 pressed!",res)
     }
 });
 

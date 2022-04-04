@@ -1,11 +1,11 @@
 [
     {
-        "id": 1,
-        "priority": 1,
-        "action": { "type": "block" },
-        "condition": {
-        "urlFilter": "translate.wordpress.org/wp-content/*get-tm-suggestions*",
-        "resourceTypes": [ "script" ]
+      "id": 1,
+      "priority": 1,
+      "action": { "type": "allow" },
+      "condition": {
+      "regexFilter": "-get-tm-suggestions",
+      "resourceTypes": [ "xmlhttprequest" ]
       }
-      }
+    }
 ]
