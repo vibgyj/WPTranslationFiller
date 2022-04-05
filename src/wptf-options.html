@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" content-type="image/svg+xml">
+    <script type="text/javascript" src="wptf-options.js" defer></script>
+    <style>
+        .form-input {
+            margin: 5px 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            font-size: 12pt;
+        }
+        #options tr {
+            padding-top: 12px !important;
+            padding-bottom: 12px !important;
+            padding-left:5px !important;
+            padding-right:5px !important;
+            text-align: left;
+            background-color: #04AA6D;
+            color: white;
+            width:600px;
+        }
+        #options td {
+            padding-left: 5px ;
+            padding-right: 5px;
+            width:220px;
+        }
+        #google_api_key {
+            width: 350px;
+        }
+
+        #deepl_api_key {
+            width: 350px;
+        }
+
+        #microsoft_api_key {
+            width: 350px;
+        }
+
+        #text_glossary_file {
+            display: block;
+            font-style: italic;
+            width: 300px;
+        }
+
+        #text_verbs {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+
+        #text_pre_verbs {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+
+        #save {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 150px;
+            padding: 5px 0;
+        }
+        .savebutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Tooltip container */
+        .tooltip {
+            position: relative;
+            background-color: #0085ba;
+            color:white;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: .8rem;
+            cursor: help;
+        }
+
+        .tooltip::before {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            left: 50%;
+            top: -20px;
+            transition: all .25s ease;
+        }
+        .tooltip::after {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            left: 50%;
+            top: -20px;
+            transition: all .25s ease;
+        }
+        .tooltip::before {
+            content: '';
+            border-width: 8px 5px 0 5px;
+            border-style: solid;
+            border-color: rgba(0,0,0,.3) transparent transparent transparent;
+            margin-left: -5px;
+        }
+            .tooltip::after {
+                content: attr(data-tooltip);
+                transform: translate(-50%, -100%);
+                font-size: .75rem;
+                letter-spacing: 1px;
+                color: #eaeaea;
+                background-color: #0085ba;
+                /*background-color: rgba(0,0,0,.3); */
+                padding: .5rem;
+                border-radius: 5px;
+                min-width: 315px;
+            }
+              
+
+       /* Show the tooltip text when you mouse over the tooltip container */
+        .tooltip:hover::before {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .tooltip:hover::after {
+                opacity: 1;
+                visibility: visible;
+        }
+        .wptf-info {
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            clear: both;
+        }
+        a:hover, a:visited, a:link, a:active {
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <h1>WP Translation Filler - Options</h1>
+        <table id="options">
+            <tr>
+                <td>
+                        <label for="google_api_key">Google API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="google_api_key" type="text" value="-api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td> 
+                        <label for="microsoft_api_key">Microsoft API Key</label>
+                </td>
+                <td>
+                   <div class="form-input">
+                        <input id="microsoft_api_key" type="text" value="-api key->" />
+                   </div>
+                </td>
+            </tr>
+            <tr>
+               <td>
+                      <label for="deepl_api_key">Deepl API Key</label>
+               </td>
+               <td>
+                   <div class="form-input">
+                       <input id="deepl_api_key" type="text" value="-api key->" />
+                   </div>
+               </td>
+            </tr>
+            <tr>
+               <td>
+                    <label>License is for DeepL Free</label>
+               </td>
+               <td>
+                   <div>
+                       <input type="checkbox" id="DeeplFree">
+                       <span class="tooltip" data-tooltip="Select this if you are using a free license from Deepl">?</span>
+                   </div>
+               </td>
+            </tr>
+            <tr>
+               <td>
+                  <label for="translator">Select a translator:</label>
+               </td>
+               <td>
+                 <div class="form-select">
+                     <select name="transsel" id="transselect">
+                      <option value="deepl">Deepl</option>
+                      <option value="google">Google</option>
+                      <option value="microsoft">Microsoft</option>
+                     </select>
+                 </div>
+               </td>
+            </tr>
+            <tr> 
+            <td>
+                <label for="destination_lang">Destination Language</label>
+            </td>
+            <td>
+                <div class="form-input">
+                    <input id="destination_lang" type="text" value="nl" />
+                    <span class="tooltip" data-tooltip="Use the id from the list of languages provided by the API translator in lowercase">?</span>
+                </div>
+            </td> 
+            </tr>
+            <tr>
+               <td>
+                   <label for="glossary_file">Glossary File (csv)</label>
+               </td>
+               <td>
+                  <div class="form-input">
+                    <input id="glossary_file" type="file" />
+                  </div>
+               </td>    
+            </tr>
+            <tr>    
+               <td>
+               </td>
+               <td colspan="1">
+                 <div>
+                   <span style="width:320px" id="text_glossary_file"></span>
+                 </div>
+               </td>
+            </tr>
+    </table>
+
+        <div class="form-input">
+            <label for="text_pre_verbs">Pre Translation Replace</label>
+            <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
+            <textarea id="text_pre_verbs">Your,Je
+You,Je
+            </textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_verbs">Post Translation Replace</label>
+            <span class="tooltip" data-tooltip="With this table you can replace verbs after sending them to the translator API">?</span>
+            <textarea id="text_verbs">wrong1,right1
+wrong2,right2
+            </textarea>
+        </div>
+    <div class="form-input">
+        <label for="export_verbs">Export post translation verbs </label>
+        <fieldset>
+            <button id="exportverbs">Export verbs</button>
+        </fieldset>
+    </div>
+    <div id="dvImportSegments" class="fileupload ">
+        <label>Upload post translation replace CSV File</label>
+        <fieldset>
+            <input id="importPost" type="file" />
+        </fieldset>
+    </div>
+    <br />
+    <div>
+        <input type="checkbox" id="show-history">
+        <label>Show history</label>
+    </div>
+    <div>
+        <input type="checkbox" id="comp-translations">
+        <label>Compare translations</label>
+    </div>
+    <div>
+        <input type="checkbox" id="show-glotDictGlos">
+        <label>Show GlotDict</label>
+    </div>
+    <div>
+        <input type="checkbox" id="show-convertToLower">
+        <label>Convert words to lowercase except first word</label>
+    </div>
+        <table id="options">
+            <tr>
+                <td>
+                    <div class="savebutton">
+                         <input id="save" type="button" value="Save" />
+                    </div>
+                </td>
+                <td>
+                    <div class="wptf-info">
+                        <a href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

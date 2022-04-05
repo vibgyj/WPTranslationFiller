@@ -263,3 +263,88 @@ async function initStoragePersistence() {
   }
 }
 
+// This function copies the current line from the editor into the local database
+function addtranslateEntryClicked(event) {
+    if (event != undefined) {
+        event.preventDefault();
+        let rowId = event.target.id.split("-")[1];
+        // console.log("addtranslateEntry clicked rowId", rowId);
+        let myrowId = event.target.id.split("-")[2];
+        //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+        // So that needs to be added to the base rowId to find it
+        if (myrowId !== undefined && myrowId != "addtranslation") {
+            newrowId = rowId.concat("-", myrowId);
+            rowId = newrowId;
+        }
+        addTransline(rowId);
+    }
+}
+async function resetDB() {
+    var DBOpenRequest = window.indexedDB.open("My-Trans");
+      DBOpenRequest.onsuccess = function (event) {
+        console.debug("Database initialised");
+
+        // store the result of opening the database in the db variable.
+        // This is used a lot below
+        dbase = DBOpenRequest.result;
+
+        // Clear all the data form the object store
+        clearData();
+    };
+
+}
+
+    function clearData() {
+    // open a read/write db transaction, ready for clearing the data
+    var transaction = dbase.transaction(["Translation"], "readwrite");
+    // report on the success of the transaction completing, when everything is done
+    transaction.oncomplete = function (event) {
+        console.debug("Transaction completed.");
+    };
+
+        transaction.onerror = function (event) {
+            messageBox("error", "Transaction not opened due to error: " + transaction.error);
+    };
+
+    // create an object store on the transaction
+    var objectStore = transaction.objectStore("Translation");
+
+    // Make a request to clear all the data out of the object store
+    var objectStoreRequest = objectStore.clear();
+
+    objectStoreRequest.onsuccess = function (event) {
+        // report the success of our request
+       // alert("Database reset done");
+        messageBox("info", "Database reset done");
+    };
+    
+}
+
+function deleteDB() {
+
+    var DBDeleteRequest = window.indexedDB.deleteDatabase("My-Trans");
+
+    DBDeleteRequest.onerror = function (event) {
+        console.log("Error deleting database My-Trans.");
+    };
+
+    DBDeleteRequest.onsuccess = function (event) {
+        console.log("Database My-Trans deleted successfully");
+
+        console.log(event.result); // should be undefined
+    };
+
+
+    var DBDeleteRequest = window.indexedDB.deleteDatabase("KeyStore");
+
+    DBDeleteRequest.onerror = function (event) {
+        console.log("Error deleting database KeyStore.");
+    };
+
+    DBDeleteRequest.onsuccess = function (event) {
+        console.log("Database KeyStore deleted successfully");
+
+        console.log(event.result); // should be undefined
+    };
+    messageBox("info", "Database deletion done<br> My-Trans and KeyStore");
+}

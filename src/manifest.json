@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "1.6.11",
+  "version": "1.6.12",
   "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
 
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "cute-alert.css", "error-alert.flac", "clipboard-icon.png" ],
+      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png" ],
       "matches": [ "https://translate.wordpress.org/*" ]
 
     }
@@ -20,29 +20,30 @@
   "permissions": [
     "storage"
   ],
-  "options_page": "options.html",
+  "options_page": "wptf-options.html",
   "content_scripts": [
     {
       "matches": [
         "https://translate.wordpress.org/*"
       ],
       "js": [
-        "purify.min.js",
-        "cute-alert.js",
-        "consistency.js",
+        "wptf-functions.js",
+        "wptf-purify.min.js",
+        "wptf-cute-alert.js",
+        "wptf-consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
-        "database.js",
-        "commonTranslate.js",
-        "deeplTranslate.js",
-        "googleTranslate.js",
-        "microsoftTranslate.js",
-        "contentScript.js",
-        "jsdiff.js"
+        "wptf-commonTranslate.js",
+        "wptf-deeplTrans.js",
+        "wptf-googleTrans.js",
+        "wptf-microsoftTrans.js",
+        "jsdiff.js",
+        "wptf-database.js",
+        "contentScript.js"
       ],
       "css": [
-        "cute-alert.css",
-        "translationFillerStyle.css"
+        "wptf-cute-alert.css",
+        "wptf-style.css"
       ]
     }
   ]

@@ -506,19 +506,35 @@ table.translations th.priority, table.translations td.priority {
     padding: 0px !important;
     width: 3em !important;
     display: table-cell !important;
+    font-size: 15px !important;
+    text-align: center !important;
+    line-height: 1.6 !important;
+    padding: 0.5em !important;
+    /* vertical-align: middle !important; */
+    font-weight: 700 !important;
+    color: #fff !important;
+}
+
+table.translations td.priority {
+    vertical-align: middle !important;
     font-size: 14px !important;
     text-align: center !important;
     vertical-align: middle !important;
     font-weight: 700 !important; 
 }
 
-table.translations td.priority {
-    vertical-align :middle !important;
+/* This setting is necessary to move the row down due to the header that is no longer fixed */
+table.translations tr.preview {
+    scroll-margin-top: 32px;
 }
- 
+
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict th + .priority + .original::before {
         margin-left: calc(-0.5em - 45px) !important;
+}
+
+tr.editor {
+    scroll-margin-top: 62px !important;
 }
 
 /** The change below is for issue# 137 modification in GlotDict*/
@@ -533,7 +549,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     margin-top: 5px !important;
     margin-bottom : 6px !important;
     /*margin: 0px !important;*/
-    padding: 0px 2px !important; */
+    padding: 0px 2px !important; 
     /* background: #0085ba;*/
     border-color: #0073aa #006799 #006799; 
     box-shadow: 0 1px 0 #006799;
@@ -546,6 +562,21 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
 #tf-save-button.ready {
     display:none;
 }
+#tf-bulk-button {
+    font-size: 12px !important;
+    height: 20px;
+    line-height: 1;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding: 0px 2px !important;
+    background: #0085ba;
+    border-color: #0073aa #006799 #006799;
+    box-shadow: 0 1px 0 #006799;
+    color: #fff;
+    text-decoration: none;
+    text-shadow: 0 -1px 1px #006799, 1px 0 1px #006799, 0 1px 1px #006799, -1px 0 1px #006799;
+    cursor: pointer !important;
+}
 /** Start of cuteAlert **/
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Dosis:wght@800&display=swap");
@@ -557,7 +588,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     align-items: center;
     justify-content: center;
     margin: 0px auto;
-    padding: 0px auto;
+    padding: 0px;
     left: 0;
     top: 0;
     overflow: hidden;
@@ -932,11 +963,6 @@ table.translations tr.preview.wptf-translated {
 .highlight {
     background: lightpink;
 }
-/*Below code needs to be removed if GlotPress has improved the template*/
-.editor-panel__right {
-    flex: 0 0 19rem !important;
-   /* min-width: 1%;*/
-}
 
 /* Tooltip container */
 .tooltip {
@@ -1006,11 +1032,6 @@ table.translations tr.preview.wptf-translated {
         border: 2px solid #fff;
     }
 }
-/*After Glotpress has improved remove this footer change  */
-.wp-block-group.global-footer {
-     padding-bottom: 12px !important; 
-     padding-top: 12px !important; 
-}
 
 table.translations td.myCheckBox {
     text-align: center;
@@ -1019,14 +1040,71 @@ table.translations td.myCheckBox {
     border-bottom: 1px solid #72777c;
     border-right: 1px solid #72777c;
     display: table-cell !important;
-    color:black;
+    color: black;
 }
+
 table.translations th.thCheckBox {
     width: 3em !important;
     display: table-cell !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     text-align: center !important;
-    vertical-align: middle !important;
+    padding: 0.5em !important;
+    /* vertical-align: middle !important; */
     font-weight: 700 !important;
     padding: 0px !important;
+    margin: 0px !important;
 }
+
+/*After Glotpress has improved remove this footer change  */
+.wp-block-group.global-footer {
+     padding-bottom: 32px !important; 
+     padding-top: 12px !important; 
+}
+
+.wp-block-group.global-footer [class*=wp-container-].global-footer__logos-container {
+        margin-top: 0px !important;
+        top: 0px !important;
+        top: var(--wp-admin--admin-bar--height,0) !important;
+}
+
+/*After Glotpress has improved remove this header change */
+.site-header {
+    padding-top:32px !important;
+}
+
+/*After Glotpress has improved remove this header change */
+.wp-block-group.global-header {
+    position: relative !important;
+    top: 25px !important;
+    --wp-global-header-height: 90px !important;
+    --wp-global-header-offset: 85px !important; 
+}
+
+/*After Glotpress has improved remove this header change */
+html {
+     --wp-global-header-offset: 32 px !important;
+     /*This one should move the editor down when scrolled*/
+    scroll-margin-top: 32px !important;
+}
+
+/*#editor div.source-string {
+    position: -webkit-sticky;
+    position: sticky;
+}
+    */
+
+/*After Glotpress has improved remove this header change */
+@media screen and (min-width: 890px) {
+        .admin-bar .editor-panel__left .panel-header,
+        .admin-bar .editor-panel__right,
+        .consistency-table tr.new-translation tr.preview th {
+            top: 62px !important;
+        }
+}
+ 
+/*Below code needs to be removed if GlotPress has improved the template */
+    .editor-panel__right {
+    flex: 0 0 19rem !important;
+    min-width: 1%;
+}
+
