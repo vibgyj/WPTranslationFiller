@@ -1045,7 +1045,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (typeof current != "undefined") {
                              current.innerText = "transFill";
                              current.value = "transFill";
-                         }
+                            }
                         // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
                         //select = next_editor.getElementsByClassName("meta");
@@ -1055,14 +1055,14 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                         if (currec != null) {
                             var current = currec.querySelector("span.panel-header__bubble");
-                        }
+                           }
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
                         let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
                         if (previewElem != null) {
                             previewElem.innerText = translatedText;
-                        }
+                           }
                         else {
                             let preview = document.querySelector("#preview-" + row + " td.translation");
                             let spanmissing = preview.querySelector(" span.missing");
@@ -1111,6 +1111,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     element1.setAttribute("id", "trans_local_div");
                                     element1.appendChild(document.createTextNode("Local"));
                                     preview.appendChild(element1);
+                                    preview = document.querySelector(`#preview-${row}`);
+                                    rowchecked = preview.querySelector("td input");
+                                    if (rowchecked != null) {
+                                        if (!rowchecked.checked) {
+                                            rowchecked.checked = true;
+                                        }
+                                    }
                                 }
                             }
                             else {
@@ -1123,6 +1130,14 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 element1.setAttribute("id", "trans_local_div");
                                 element1.appendChild(document.createTextNode("Local"));
                                 preview.appendChild(element1);
+                                // we need to set the checkbox as marked
+                                preview = document.querySelector(`#preview-${row}`);
+                                rowchecked = preview.querySelector("td input");
+                                if (rowchecked != null) {
+                                    if (!rowchecked.checked) {
+                                        rowchecked.checked = true;
+                                    }
+                                }
                             }
                         }
                         if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
@@ -1245,6 +1260,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                    
                                 validateEntry(destlang, textareaElem1, "", "", row);   
                             }
+                            preview = document.querySelector(`#preview-${row}`);
+                            rowchecked = preview.querySelector("td input");
+                            if (rowchecked != null) {
+                                if (!rowchecked.checked) {
+                                    rowchecked.checked = true;
+                                }
+                            }
                         }
                     }
                 }
@@ -1260,6 +1282,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = "transFill";
                         current.value = "transFill";
+                    }
+                    preview = document.querySelector(`#preview-${row}`);
+                    rowchecked = preview.querySelector("td input");
+                    if (rowchecked != null) {
+                        if (!rowchecked.checked) {
+                            rowchecked.checked = true;
+                        }
                     }
                 }
                 //14-09-2021 PSS changed the class to meet GlotDict behavior
