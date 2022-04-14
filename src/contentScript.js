@@ -182,9 +182,40 @@ document.addEventListener("keydown", function (event) {
                     }
                 });
     }
-    if (event.altKey && event.shiftKey && (event.key === "F4")) {
+
+    if (event.altKey && event.shiftKey && (event.key === "F5")) {
         event.preventDefault();
-        //console.debug("Reset database");
+        chrome.storage.sync
+            .get(
+                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
+                function (data) {
+                    if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
+
+                        if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
+                            if (data.transsel != "undefined") {
+                                //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                                var formal = checkFormal(false);
+                                //var locale = checkLocale();
+                                convertToLow = data.convertToLower;
+                                var DeeplFree = data.DeeplFree;
+                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
+                            }
+                            else {
+                                messageBox("error", "You need to set the translator API");
+                            }
+                        }
+                        else {
+                            messageBox("error", "You need to set the parameter for Destination language");
+                        }
+                    }
+                    else {
+                        messageBox("error", "For " + data.transsel + " no apikey is set!");
+                    }
+                });
+    }
+
+    if (event.altKey && event.shiftKey && (event.key === "F6")) {
+        event.preventDefault();
         var rule = {
             "id": 1,
             "priority": 1,
@@ -199,7 +230,7 @@ document.addEventListener("keydown", function (event) {
         console.debug("blockres:"), resblock;
     }
 
-    if (event.altKey && event.shiftKey && (event.key === "F5")) {
+    if (event.altKey && event.shiftKey && (event.key === "F7")) {
         //event.preventDefault();
         let userAgent = navigator.userAgent;
         let browser;
@@ -217,7 +248,7 @@ document.addEventListener("keydown", function (event) {
         } else {
             browser = "No browser detection";
         }
-        console.debug("F5 pressed!", browser);
+        console.debug("F6 pressed!", browser);
 
        
         res = chrome.declarativeNetRequest.updateEnabledRuleset(
@@ -235,7 +266,7 @@ document.addEventListener("keydown", function (event) {
                removeRuleIds: [1]
            },
         )
-        console.debug("F5 pressed!",res)
+        console.debug("F7 pressed!",res)
     }
 });
 
