@@ -22,7 +22,7 @@ async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
     convertToLower = false;
     
     let translatedText = myLi;
-    console.debug("myLI:", myLi,translatedText)
+    //console.debug("myLI:", myLi,translatedText)
     translatedText = postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", convertToLower);
     let textareaElem = record.querySelector("textarea.foreign-text");
     textareaElem.innerText = translatedText;
