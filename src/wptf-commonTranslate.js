@@ -911,14 +911,14 @@ async function fetchsuggestions(row) {
 //};
 
 // Part of the solution issue #204
-async function fetchli(result, editor,row) {
+async function fetchli(result, editor,row,TMwait) {
     var res;
     //var myres;
     var ulfound;
     var lires;
     var newres;
     var liSuggestion;
-
+    console.debug("TMwait:",TMwait)
     return new Promise((resolve, reject) => {
         //res = elementReady(`#editor-${row} .suggestions__translation-memory.initialized`);
         //console.debug("resli:", res, editor)
@@ -937,7 +937,7 @@ async function fetchli(result, editor,row) {
                  else {
                     resolve("No suggestions");
                 }
-          }, 900);
+          }, TMwait);
     });
 }
 // Part of the solution issue #204
@@ -948,7 +948,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var preview;
     var res;
     locale = checkLocale();
-    console.debug("TMwait:", TMwait);
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
@@ -1043,7 +1042,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             });
             //console.debug("resolve:", result);
             if (result != "No suggestions") {
-                let myresult = await fetchli(result, editor, row).then(res => {
+                let myresult = await fetchli(result, editor, row,TMwait).then(res => {
                     if (typeof res != null) {
                         res = getTM(res, row, record, destlang, original, replaceVerb, transtype);
                         // With center it works best, but it can be put on the top, center, bottom

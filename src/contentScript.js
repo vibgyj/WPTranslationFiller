@@ -199,12 +199,12 @@ document.addEventListener("keydown", function (event) {
                                 convertToLow = data.convertToLower;
                                 var DeeplFree = data.DeeplFree;
                                 if (typeof data.TMwait == "undefined") {
-                                    var TMwait = "500";
+                                    var TMwait = 500;
+                                    console.debug("TMwait is undefined set to: ", TMwait)
                                 }
                                 else {
                                    var TMwait = data.TMwait;
                                 }
-                                console.debug("TMwait is undefined set to: ",TMwait)
                                 result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree,TMwait);
                             }
                             else {
