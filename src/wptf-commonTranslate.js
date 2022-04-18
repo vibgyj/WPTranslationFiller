@@ -941,13 +941,14 @@ async function fetchli(result, editor,row) {
     });
 }
 // Part of the solution issue #204
-async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
+async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait) {
     var timeout = 0;
     var editoropen;
     var editor;
     var preview;
     var res;
     locale = checkLocale();
+    console.debug("TMwait:", TMwait);
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
