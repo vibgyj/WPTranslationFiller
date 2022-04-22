@@ -1090,25 +1090,25 @@ table.translations th.thCheckBox {
         top: var(--wp-admin--admin-bar--height,0) !important;
 }
 
-/*After Glotpress has improved remove this header change */
+/*After Glotpress has improved remove this header change
 .site-header {
     padding-top:32px !important;
 }
-
-/*After Glotpress has improved remove this header change */
+     */
+/*After Glotpress has improved remove this header change 
 .wp-block-group.global-header {
     position: relative !important;
     top: 25px !important;
     --wp-global-header-height: 90px !important;
     --wp-global-header-offset: 85px !important; 
 }
-
+    */
 /*After Glotpress has improved remove this header change */
-html {
-     --wp-global-header-offset: 32 px !important;
+/*html { */
+     /*--wp-global-header-offset: 32 px !important;*/
      /*This one should move the editor down when scrolled*/
-    scroll-margin-top: 32px !important;
-}
+  /*  scroll-margin-top: 32px !important; 
+}*/
 
 /*#editor div.source-string {
     position: -webkit-sticky;
@@ -1117,17 +1117,17 @@ html {
     */
 
 /*After Glotpress has improved remove this header change */
-@media screen and (min-width: 890px) {
+/*@media screen and (min-width: 890px) {
         .admin-bar .editor-panel__left .panel-header,
         .admin-bar .editor-panel__right,
         .consistency-table tr.new-translation tr.preview th {
             top: 62px !important;
         }
-}
+}*/
  
 /*Below code needs to be removed if GlotPress has improved the template */
-    .editor-panel__right {
-    flex: 0 0 19rem !important;
-    min-width: 1%;
-}
+ /*   .editor-panel__right { */
+  /*  flex: 0 0 19rem !important; */
+  /*  min-width: 1%; */
+/*}*/
 

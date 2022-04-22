@@ -918,7 +918,7 @@ async function fetchli(result, editor,row,TMwait) {
     var lires;
     var newres;
     var liSuggestion;
-    console.debug("TMwait:",TMwait)
+    //console.debug("TMwait:",TMwait)
     return new Promise((resolve, reject) => {
         //res = elementReady(`#editor-${row} .suggestions__translation-memory.initialized`);
         //console.debug("resli:", res, editor)
@@ -1788,7 +1788,8 @@ async function bulkSave(event) {
         if (is_pte) {
             //console.debug("is pte:", is_pte)
             if (!preview.querySelector("th input").checked) {
-                //console.debug("no checkbox set!");
+               // console.debug("no checkbox set!");
+                preview.style.display = "none";
                 return;
             }
             checkset = preview.querySelector("th input");
@@ -1799,12 +1800,14 @@ async function bulkSave(event) {
             // If a translation alreay has been saved, there is not checkbox available
             if (checkset != null) {
                 if (!checkset.checked) {
-                    //console.debug("no checkbox1 set!");
+                   // console.debug("no checkbox1 set!");
+                    preview.style.display = "none";
                     return;
                 }
             }
             else {
                 //console.debug("problem reading checkbox1");
+                preview.style.display = "none";
                 return;
             }
             counter++;
@@ -1813,17 +1816,22 @@ async function bulkSave(event) {
                 preview.querySelector("td.actions .edit").click();
                 const editor = preview.nextElementSibling;
                 if (editor != null) {
-                    editor.style.display = "none";
                     editor.querySelector(".translation-actions__save").click();
+                    
+
+                    // PSS confirm the message for dismissal
+                    //foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
+                    //    console.debug("dismiss:",confirm)
+                    //    if (confirm == '.gp-js-message-dismiss') {
+                     //       if (confirm != "No suggestions") {
+                      //           console.debug("closing message")
+                      //          editor.querySelector(".gp-js-message-dismiss").click();
+                                //confirm.click();
+                        //    }
+                      //  }
+                    //});
+                    editor.style.display = "none";
                 }
-                // PSS confirm the message for dismissal
-                foundlabel= elementReady(".gp-js-message-dismiss").then(confirm => {
-                    if (confirm != '.gp-js-message-dismiss') {
-                        if (confirm != "No suggestions") {
-                            confirm.click();
-                        }
-                    }
-            });
             }, timeout);
             timeout += 1500;
 
