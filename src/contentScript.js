@@ -278,15 +278,8 @@ document.addEventListener("keydown", function (event) {
 });
 
 
-function bulk(event) {
-            try {
-                bulkSave(event);
-           
-            } catch (e) {
-                console.debug("Error when bulk saving", e)
-     }
-     close_toast();
-            //console.debug("bulksave ended");
+async function bulk(event) {
+      res = await bulkSave(event);
  }
 
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111

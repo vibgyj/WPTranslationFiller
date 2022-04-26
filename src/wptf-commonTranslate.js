@@ -563,6 +563,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     var record = "";
     var row = "";
     var preview = "";
+    var pretrans = 'notFound';
     //destlang = "nl"
 
     locale = checkLocale();
@@ -640,7 +641,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 // Do we need to translate ??
 
                 if (toTranslate) {
-                    let pretrans = await findTransline(original, destlang);
+                    pretrans = await findTransline(original, destlang);
                     if (pretrans != 'notFound') {
                         // Pretranslation found!
                         let translatedText = pretrans;
@@ -843,6 +844,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     if (preview != null) {
                         preview.innerText = translatedText;
                         preview.value = translatedText;
+                        pretrans = "FoundName";
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = "transFill";
                         current.value = "transFill";
@@ -860,16 +862,24 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 //14-09-2021 PSS changed the class to meet GlotDict behavior
                 var currentClass = document.querySelector(`#editor-${row}`);
                 var prevcurrentClass = document.querySelector(`#preview-${row}`);
-                //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                currentClass.classList.add("wptf-translated");
-                currentClass.classList.replace("no-translations", "has-translations");
-                currentClass.classList.replace("untranslated", "status-waiting");
-                //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                prevcurrentClass.classList.replace("no-translations", "has-translations");
-                prevcurrentClass.classList.replace("untranslated", "status-waiting");
-                prevcurrentClass.classList.add("wptf-translated");
-                // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
-                prevcurrentClass.style.backgroundColor = "#ffe399";
+        if (pretrans != 'notFound') {
+            //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            currentClass.classList.add("wptf-translated");
+            currentClass.classList.replace("no-translations", "has-translations");
+            currentClass.classList.replace("untranslated", "status-waiting");
+            //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            prevcurrentClass.classList.replace("no-translations", "has-translations");
+            prevcurrentClass.classList.replace("untranslated", "status-waiting");
+            prevcurrentClass.classList.add("wptf-translated");
+            // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
+            prevcurrentClass.style.backgroundColor = "#ffe399";
+        }
+        else {
+            // We need to adept the class to hide the untranslated lines
+            // Hiding the row is done through CSS tr.preview.status-processed
+            prevcurrentClass.classList.replace("untranslated", "status-processed");
+           // prevcurrentClass.style.display = "none";
+        }
             }
             // Translation completed  
             translateButton = document.querySelector(".paging a.translation-filler-button");
@@ -1048,10 +1058,10 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         // With center it works best, but it can be put on the top, center, bottom
                         //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
                         // Determine which row we need to push to the top
-                        oldRow = editor.id;
-                        newRow = oldRow.replace("editor", "preview")
-                        myRow = document.querySelector(`#${newRow}`);
-                        myRow.scrollIntoView(true);
+                       // oldRow = editor.id;
+                       // newRow = oldRow.replace("editor", "preview")
+                       // myRow = document.querySelector(`#${newRow}`);
+                       // myRow.scrollIntoView(true);
                     }
                     else {
                         console.debug("notfound");
@@ -1779,66 +1789,87 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-async function bulkSave(event) {
-    let timeout = 0;
+async function saveLocal() {
     var counter = 0;
-    var myWindow;
+    var timeout = 0;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    document.querySelectorAll("tr.preview").forEach((preview, i) => {
+    document.querySelectorAll("tr.preview").forEach((preview) => {
+        let rowfound = preview.id;
+        row = rowfound.split("-")[1];
+        let newrow = rowfound.split("-")[2];
+        if (typeof newrow != "undefined") {
+            newrowId = row.concat("-", newrow);
+            row = newrowId;
+        }
+
         if (is_pte) {
-            //console.debug("is pte:", is_pte)
-            if (!preview.querySelector("th input").checked) {
-               // console.debug("no checkbox set!");
-                preview.style.display = "none";
-                return;
-            }
             checkset = preview.querySelector("th input");
         }
         else {
             checkset = preview.querySelector("td input");
         }
-            // If a translation alreay has been saved, there is not checkbox available
-            if (checkset != null) {
-                if (!checkset.checked) {
-                   // console.debug("no checkbox1 set!");
-                    preview.style.display = "none";
-                    return;
-                }
+        // If a translation alreay has been saved, there is no checkbox available
+        if (checkset != null) {
+            //nextpreview = preview.nextElementSibling.nextElementSibling;
+            if (checkset.checked) {
+                counter++;
+                setTimeout(() => {
+                    //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
+                    const editor = preview.nextElementSibling;
+                    preview.querySelector("td.actions .edit").click();
+                    if (editor != null) {
+                        editor.querySelector(".translation-actions__save").click();
+                        // PSS confirm the message for dismissal
+                        // foundlabel = elementReady("gp-js-notice").then(confirm => {
+                        // console.debug("dismiss:",confirm)
+                        //    if (confirm == '.gp-js-message-dismiss') {
+                        //       if (confirm != "No suggestions") {
+                        //           console.debug("closing message")
+                        //          editor.querySelector(".gp-js-message-dismiss").click();
+                        //confirm.click();
+                        // }
+                        //  }
+                        // });
+                    }
+                }, timeout);
+                timeout += 2000;
             }
             else {
-                //console.debug("problem reading checkbox1");
-                preview.style.display = "none";
-                return;
-            }
-            counter++;
-            setTimeout(() => {
-                //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
-                preview.querySelector("td.actions .edit").click();
-                const editor = preview.nextElementSibling;
-                if (editor != null) {
-                    editor.querySelector(".translation-actions__save").click();
-                    
-
-                    // PSS confirm the message for dismissal
-                    //foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                    //    console.debug("dismiss:",confirm)
-                    //    if (confirm == '.gp-js-message-dismiss') {
-                     //       if (confirm != "No suggestions") {
-                      //           console.debug("closing message")
-                      //          editor.querySelector(".gp-js-message-dismiss").click();
-                                //confirm.click();
-                        //    }
-                      //  }
-                    //});
-                    editor.style.display = "none";
+                if (preview != null) {
+                    if (!is_pte) {
+                        rowchecked = preview.querySelector("td input");
+                    }
+                    else {
+                        rowchecked = preview.querySelector("th input");
+                    }
+                    if (rowchecked != null) {
+                        if (!rowchecked.checked) {
+                        rowchecked.checked = false;
+                          }
+                    }
                 }
-            }, timeout);
-            timeout += 1500;
-
+            }
+        }
+        else {
+            console.debug("problem reading checkbox1");
+        }
     });
-    if ( counter == 0) {
+    return counter;
+}
+
+async function bulkSave(event) {
+    let timeout = 0;
+    var counter = 0;
+    var row;
+    var myWindow;
+    var nextpreview;
+
+    counter = await saveLocal();
+
+    if (counter == 0) {
         messageBox("error", "You do not have translations selected!");
-    }
+    }          
+    return "done"
 }
 
 function second(milliseconds) {
