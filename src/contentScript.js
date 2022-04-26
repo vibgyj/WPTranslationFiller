@@ -96,7 +96,7 @@ document.addEventListener("keydown", function (event) {
         // issue #133 block non PTE/GTE users from using this function
         // if (is_pte) {
         // toastbox("info", "Bulksave started", 2000);
-        bulk(event);
+        bulkSave(event);
         // }
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
@@ -277,11 +277,6 @@ document.addEventListener("keydown", function (event) {
     }
 });
 
-
-async function bulk(event) {
-      res = await bulkSave(event);
- }
-
 // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
 document.addEventListener("keydown", function (event) {
     if (event.altKey && (event.key === "r" || event.key === "R")) {
@@ -365,7 +360,7 @@ document.addEventListener("keydown", function (event) {
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
     bulkbutton.addEventListener("click", () => {
-        bulk(event);
+        bulkSave(event);
     });
 }
 
