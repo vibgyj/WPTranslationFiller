@@ -1036,7 +1036,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 //editor.style.display = "none";
                 preview.style.backgroundColor = "#ffe399";
             }
-            result = await elementReady(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
+            result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
                 return new Promise((resolve, reject) => {
                     myTM = fetchsuggestions(row);
                     if (typeof myTM != 'undefined') {
@@ -1788,7 +1788,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-async function saveLocal() {
+function saveLocal() {
     var counter = 0;
     var timeout = 0;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -1819,8 +1819,8 @@ async function saveLocal() {
                     if (editor != null) {
                         editor.querySelector(".translation-actions__save").click();
                         // PSS confirm the message for dismissal
-                        // foundlabel = elementReady("gp-js-notice").then(confirm => {
-                        // console.debug("dismiss:",confirm)
+                         const foundlabel =  waitForElm(".gp-js-message.gp-js-success").then(confirm => {
+                         //console.debug("result elementReady:",confirm)
                         //    if (confirm == '.gp-js-message-dismiss') {
                         //       if (confirm != "No suggestions") {
                         //           console.debug("closing message")
@@ -1828,10 +1828,10 @@ async function saveLocal() {
                         //confirm.click();
                         // }
                         //  }
-                        // });
+                        });
                     }
                 }, timeout);
-                timeout += 2000;
+                timeout += 1000;
             }
             else {
                 if (preview != null) {
@@ -1856,14 +1856,13 @@ async function saveLocal() {
     return counter;
 }
 
-async function bulkSave(event) {
-    let timeout = 0;
+ function bulkSave(event) {
     var counter = 0;
     var row;
     var myWindow;
     var nextpreview;
 
-    counter = await saveLocal();
+    counter = saveLocal();
 
     if (counter == 0) {
         messageBox("error", "You do not have translations selected!");
@@ -1912,17 +1911,19 @@ function _waitForElement(selector, delay =5, tries = 50) {
   }
 
 
-function elementReady(selector) {
+async function elementReady(selector) {
     var el;
-    var timeout = "20";
+    var timeout = 20;
+    var findsel;
     return new Promise((resolve, reject) => {
         //console.debug("within elementReady",selector)
             // PSS issue #203 improvement
         setTimeout(() => {
             el = document.querySelector(selector);
-            //console.debug("el:",el)
+            console.debug("el:",el)
         }, timeout);
-        if (el) {
+        console.debug("eltype:", typeof el);
+        if (typeof el !=null) {
             resolve(el);
       
         }
@@ -1930,8 +1931,8 @@ function elementReady(selector) {
             new MutationObserver((mutationRecords, observer) => {
                 // Query for elements matching the specified selector
                // console.debug("new elementReady", selector);
-                let findsel = document.querySelectorAll(selector);
-               // console.debug("findsel:", findsel.length);
+                findsel = document.querySelectorAll(selector);
+                console.debug("findsel:", findsel.length,findsel);
                 if (findsel.length != "0") {
                     Array.from(document.querySelectorAll(selector)).forEach((element) => {
 
@@ -1953,7 +1954,8 @@ function elementReady(selector) {
     });
 }
 
-function waitForElm(selector) {
+async function waitForElm(selector) {
+   // console.debug("Selector:", selector);
     return new Promise(resolve => {
         if (document.querySelector(selector)) {
             //console.debug("Selector found");
@@ -1961,9 +1963,13 @@ function waitForElm(selector) {
         }
         const observer = new MutationObserver(mutations => {
             if (document.querySelector(selector)) {
-               // console.debug("In observer found");
+                //console.debug("In observer found");
                 resolve(document.querySelector(selector));
                 observer.disconnect();
+            }
+            else {
+                //console.debug("Selector not found");
+                resolve("No suggestions")
             }
         });
 
