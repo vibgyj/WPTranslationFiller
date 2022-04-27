@@ -876,9 +876,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
         }
         else {
             // We need to adept the class to hide the untranslated lines
-            // Hiding the row is done through CSS tr.preview.status-processed
-            prevcurrentClass.classList.replace("untranslated", "status-processed");
-           // prevcurrentClass.style.display = "none";
+            // Hiding the row is done through CSS tr.preview.status-hidden
+            prevcurrentClass.classList.replace("untranslated", "status-hidden");
         }
             }
             // Translation completed  
