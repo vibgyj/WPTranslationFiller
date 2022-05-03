@@ -406,57 +406,86 @@ async function resetDB() {
 
 }
 
-    function clearData() {
+function clearData() {
     // open a read/write db transaction, ready for clearing the data
-    var transaction = dbase.transaction(["Translation"], "readwrite");
-    // report on the success of the transaction completing, when everything is done
-    transaction.oncomplete = function (event) {
-        console.debug("Transaction completed.");
-    };
+    event.preventDefault();
+    currWindow = window.self;
+    cuteAlert({
+        type: "question",
+        title: "Delete data",
+        message: "Are you sure you want to delete<br> the contents of the local database?",
+        confirmText: "Confirm",
+        cancelText: "Cancel",
+        myWindow: currWindow
+    }).then((e) => {
+        if (e == ("confirm")) {
+            var transaction = dbase.transaction(["Translation"], "readwrite");
+            // report on the success of the transaction completing, when everything is done
+            transaction.oncomplete = function (event) {
+                console.debug("Transaction completed.");
+            };
 
-        transaction.onerror = function (event) {
-            messageBox("error", "Transaction not opened due to error: " + transaction.error);
-    };
+            transaction.onerror = function (event) {
+                messageBox("error", "Transaction not opened due to error: " + transaction.error);
+            };
 
-    // create an object store on the transaction
-    var objectStore = transaction.objectStore("Translation");
+            // create an object store on the transaction
+            var objectStore = transaction.objectStore("Translation");
 
-    // Make a request to clear all the data out of the object store
-    var objectStoreRequest = objectStore.clear();
+            // Make a request to clear all the data out of the object store
+            var objectStoreRequest = objectStore.clear();
 
-    objectStoreRequest.onsuccess = function (event) {
-        // report the success of our request
-       // alert("Database reset done");
-        messageBox("info", "Database reset done");
-    };
-    
+            objectStoreRequest.onsuccess = function (event) {
+                // report the success of our request
+                // alert("Database reset done");
+                messageBox("info", "Database reset done restart add-on!");
+            };
+        } else {
+            messageBox("info", "Database reset cancelled");
+           
+        }
+    })
 }
 
 function deleteDB() {
-
-    var DBDeleteRequest = window.indexedDB.deleteDatabase("My-Trans");
-
-    DBDeleteRequest.onerror = function (event) {
-        console.log("Error deleting database My-Trans.");
-    };
-
-    DBDeleteRequest.onsuccess = function (event) {
-        console.log("Database My-Trans deleted successfully");
-
-        console.log(event.result); // should be undefined
-    };
+    event.preventDefault();
+    currWindow = window.self;
 
 
-    var DBDeleteRequest = window.indexedDB.deleteDatabase("KeyStore");
+    cuteAlert({
+        type: "question",
+        title: "Delete database",
+        message: "Are you sure you want to delete the local database?",
+        confirmText: "Confirm",
+        cancelText: "Cancel",
+        myWindow: currWindow
+    }).then((e) => {
+        if (e == ("confirm")) {
+            var DBDeleteRequest = window.indexedDB.deleteDatabase("My-Trans");
+            var DBDeleteRequest = window.indexedDB.deleteDatabase("KeyStore");
+            DBDeleteRequest.onerror = function (event) {
+                console.log("Error deleting database My-Trans.");
+            };
 
-    DBDeleteRequest.onerror = function (event) {
-        console.log("Error deleting database KeyStore.");
-    };
+            DBDeleteRequest.onsuccess = function (event) {
+                console.log("Database My-Trans deleted successfully");
 
-    DBDeleteRequest.onsuccess = function (event) {
-        console.log("Database KeyStore deleted successfully");
+                console.log(event.result); // should be undefined
+            };
 
-        console.log(event.result); // should be undefined
-    };
-    messageBox("info", "Database deletion done<br> My-Trans and KeyStore");
+            DBDeleteRequest.onerror = function (event) {
+                console.log("Error deleting database KeyStore.");
+            };
+
+            DBDeleteRequest.onsuccess = function (event) {
+                console.log("Database KeyStore deleted successfully");
+
+                console.log(event.result); // should be undefined
+            };
+            messageBox("info", "Database deletion done<br> My-Trans and KeyStore<br>Restart the add-on and window!");
+        } else {
+            messageBox("info", "Database deletion cancelled");
+
+        }
+    })
 }
