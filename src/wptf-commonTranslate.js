@@ -39,7 +39,7 @@ function setPostTranslationReplace(postTranslationReplace) {
     }
 }
 
-const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&\w{2,6};|%\w*%/gi);
+const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
 function preProcessOriginal(original, preverbs, translator) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
@@ -83,7 +83,7 @@ function preProcessOriginal(original, preverbs, translator) {
             //  console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
     }
-    //console.debug("After pre-processing:", original);
+    console.debug("After pre-processing:", original);
     return original;
 }
 

@@ -68,7 +68,7 @@ chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "d
         transselectBox.value = data.transsel;
     }
     destLangTextbox.value = data.destlang;
-    uploadedFile.innerText = `Uploaded file: ${data.glossaryFile}`;
+    uploadedFile.innerText = `${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
     if (data.showHistory != "null") {
@@ -194,7 +194,16 @@ button.addEventListener("click", function () {
  
     if (glossaryFile.value !== "") {
         //console.debug("Options: ", glossaryFile);
-        chrome.storage.sync.set({ glossaryFile: glossaryFile.value.replace("C:\\fakepath\\", "") });
+        // 06-05-2022 PSS fix for issue #208
+        const thisdate = new Date();
+        let myYear = thisdate.getFullYear();
+        let mymonth = thisdate.getMonth();
+        let myday = thisdate.getDate();
+        let thisDay = myday + "-" + mymonth + "-" + myYear;
+        
+        myfile = glossaryFile.value.replace("C:\\fakepath\\", "");
+        myfile = myfile + "   " + thisDay;
+        chrome.storage.sync.set({ glossaryFile: myfile });
 
         chrome.storage.sync.set({ glossary: glossary });
         chrome.storage.sync.set({ glossaryA: glossaryA });
