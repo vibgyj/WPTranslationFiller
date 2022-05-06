@@ -376,6 +376,20 @@ if (el3 != null) {
     el3.addEventListener("click", checkactionClick);
 }
 
+
+//Add option link
+var optionlink = document.createElement("li");
+var a = document.createElement('a');
+
+a.href = chrome.runtime.getURL('wptf-options.html');
+var link = document.createTextNode("WPTF options");
+a.appendChild(link)
+optionlink.className = 'menu-item wptf_settings_menu'
+
+var divMenu = document.querySelector("#menu-headline-nav");
+console.debug("menu:", divMenu)
+optionlink.appendChild(a)
+divMenu.appendChild(optionlink);
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
