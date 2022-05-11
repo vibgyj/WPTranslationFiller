@@ -11,19 +11,20 @@ res=initStoragePersistence();
 //}
 
 // Part of the solution issue #204
-async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
+async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype) {
     var timeout = 0;
     var timer = 0;
     var preview;
-    var result ="";
-    var res;
-    var myres;
-    var nosugg;
+    var result = "";
+    var translatedText;
     convertToLower = false;
-    
-    let translatedText = myLi;
-    //console.debug("myLI:", myLi,translatedText)
-    translatedText = postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", convertToLower);
+
+    translatedText = myLi;
+    //console.debug("myLI:", myLi, translatedText)
+    if (translatedText != 'No suggestions') {
+        translatedText = postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
+    }
+
     let textareaElem = record.querySelector("textarea.foreign-text");
     textareaElem.innerText = translatedText;
     textareaElem.value = translatedText;
@@ -41,7 +42,7 @@ async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
     if (currec != null) {
        var current = currec.querySelector("span.panel-header__bubble");
     }
-    validateEntry(destlang, textareaElem, "", "", row);
+   
     // PSS 10-05-2021 added populating the preview field issue #68
     // Fetch the first field Singular
     let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
@@ -56,8 +57,11 @@ async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
          let spanmissing = preview.querySelector(" span.missing");
          if (spanmissing != null) {
              preview.innerText = translatedText;
-             current.innerText = "transFill";
-             current.value = "transFill";
+             if (translatedText != 'No suggestions') {
+                 current.innerText = "transFill";
+                 current.value = "transFill";
+                 status.value = "untranslated";
+             }
              var element1 = document.createElement("div");
              element1.setAttribute("class", "trans_local_div");
              element1.setAttribute("id", "trans_local_div");
@@ -66,7 +70,6 @@ async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
 
             // we need to set the checkbox as marked
             rowchecked = preview.querySelector("td input");
-            //console.debug("row:", row, transtype);
             if (rowchecked != null) {
                 if (!rowchecked.checked) {
                     if (transtype == 'single') {
@@ -93,6 +96,7 @@ async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
              element1.setAttribute("id", "trans_local_div");
              element1.appendChild(document.createTextNode("TM"));
              preview.appendChild(element1);
+             
              // we need to set the checkbox as marked
              preview = document.querySelector(`#preview-${row}`);
              rowchecked = preview.querySelector("td input");
@@ -118,6 +122,10 @@ async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
                 //  }
             }
         }
+    }
+    //console.debug("Before return validate:",translatedText)
+     if (translatedText != 'No suggestions') {
+        validateEntry(destlang, textareaElem, "", "", row,"");
     }
     return myLi;
 }
@@ -296,12 +304,11 @@ async function dbExport(destlang) {
   var header = arrayHeader.join(delimiter) + "\n";
     var csv = header;
     // 01-02-2022 altered the messagebox into a toast so you do not need to dismiss it issue #181
-    toastbox("info", "Export database in progress" + "<br>" + "Wait for saving the file!", "5000", "Saving");
+    toastbox("info", "Export database in progress" + "<br>" + "Wait for saving the file!", "2500", "Saving");
     //messageBox("info", "Export database in progress" + "<br>" + "Wait for saving the file!");
   const trans = await jsstoreCon.select({
     from: "Translation"
   });
-    
     export_file = "export_database_" + destlang + ".csv";
     i = 1;
     trans.forEach(function (trans) {
@@ -328,6 +335,7 @@ async function dbExport(destlang) {
        hiddenElement.click();
        let exportButton = document.querySelector(".paging a.export_translation-button");
     exportButton.className += " ready";
+    //close_toast();
     messageBox("info", "Export database done amount of records exported: "+i);
       
 }
@@ -394,7 +402,7 @@ function addtranslateEntryClicked(event) {
 async function resetDB() {
     var DBOpenRequest = window.indexedDB.open("My-Trans");
       DBOpenRequest.onsuccess = function (event) {
-        console.debug("Database initialised");
+        //console.debug("Database initialised");
 
         // store the result of opening the database in the db variable.
         // This is used a lot below

@@ -165,21 +165,21 @@ function validatePage(language, showHistory, locale) {
 
 function toastbox(type, message, time, titel, currWindow) {
     playSound = null;
-    return new Promise((resolve) => {
-        cuteToast({
-            type: type, // or 'info', 'error', 'warning'
-            message: message,
-            timer: time,
-            playSound,
-            img: "/img",
-            title: titel,
-            myWindow: currWindow,
-        })
-        resolve("toast");
-    }).catch((err) => {
-        console.debug("error:", err)
-    });
-    // resolve("toast ready");
+        return new Promise((resolve) => {
+            cuteToast({
+                type: type, // or 'info', 'error', 'warning'
+                message: message,
+                timer: time,
+                playSound,
+                img: "/img",
+                title: titel,
+                myWindow: currWindow,
+            })
+            resolve("toast");
+        }).catch((err) => {
+            console.debug("error:", err)
+        });
+        // resolve("toast ready");
 }
 
 function close_toast() {
