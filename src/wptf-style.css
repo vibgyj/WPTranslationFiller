@@ -7,8 +7,15 @@ local.paging a.translation-filler-button {
     width: 28px;
 }
 
+.paging a.translation-filler-button {
+    background: blue;
+    color: white !important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 .paging a.translation-filler-button:hover {
-    color: lightgray;
+    color: lightgray !important;
 }
 
 .paging a.translation-filler-button.translated {
@@ -24,6 +31,186 @@ local.paging a.translation-filler-button {
     width: 28px;
 }
 
+.paging a.translation-filler-button.started {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: button-loading-spinner 1s ease infinite;
+}
+
+.paging a.translation-filler-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: button-loading-spinner 1s ease infinite;
+}
+
+.paging a.translation-filler-button.after_error {
+        animation: none;
+        background: red;
+}
+
+.paging a.translation-filler-button.translated {
+        animation: none !important;
+        background: green;
+        border-radius: 0%;
+        border: 0px solid transparent;
+        display: inline-block;
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        margin: 5px !important;
+}
+
+local.paging a.local-trans-button {
+    background: blue;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+    width: 28px;
+}
+
+
+.paging a.local-trans-button:hover {
+    color: lightgray !important;
+}
+
+.paging a.local-trans-button.translated {
+    background: green;
+}
+
+.paging a.local-trans-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.paging a.local-trans-button {
+    background: blue;
+    color: white !important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.local-trans-button.started {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: button-loading-spinner 1s ease infinite;
+}
+
+
+.paging a.local-trans-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: button-loading-spinner 1s ease infinite;
+}
+
+.paging a.local-trans-button.after_error {
+    animation: none;
+    background: red;
+}
+
+.paging a.local-trans-button.translated {
+    animation: none !important;
+    background: green;
+    border-radius: 0%;
+    border: 0px solid transparent;
+    display: inline-block;
+    padding-top: 0.1em !important;
+    padding-bottom: 0.1em !important;
+    margin: 5px !important;
+}
+
+local.paging a.tm-trans-button {
+    background: blue;
+    color: white;
+    padding-left: 5px;
+    padding-right: 5px;
+    width: 28px;
+}
+
+
+.paging a.tm-trans-button:hover {
+    color: lightgray !important;
+}
+
+.paging a.tm-trans-button.translated {
+    background: green;
+}
+
+.paging a.tm-trans-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.paging a.tm-trans-button {
+    background: blue;
+    color: white !important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.paging a.tm-trans-button.started {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: button-loading-spinner 1s ease infinite;
+ }
+
+
+ .paging a.tm-trans-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: button-loading-spinner 1s ease infinite;
+ }
+
+ .paging a.tm-trans-button.after_error {
+        animation: none;
+        background: red;
+ }
+
+ .paging a.tm-trans-button.translated {
+        animation: none !important;
+        background: green;
+        border-radius: 0%;
+        border: 0px solid transparent;
+        display: inline-block;
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        margin: 5px !important;
+ }
+
+
 .panel-header-actions .translation-filler-button {
     width: auto;
     padding: 5px;
@@ -31,6 +218,12 @@ local.paging a.translation-filler-button {
     color: white;
 }
 
+.panel-header-actions .translation-filler-button {
+    width: auto;
+    padding: 5px;
+    background-color: blue;
+    color: white;
+}
 .panel-header-actions .translation-filler-button:focus {
     color: white;
 }
@@ -53,52 +246,7 @@ local.paging a.translation-filler-button {
     background-color: green;
 }
 
-.paging a.translation-filler-button {
-    background: blue;
-    color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
-}
 
-.paging a.translation-filler-button:hover {
-    color: lightgray !important;
-}
-
-.paging a.translation-filler-button.started {
-        content: "";
-        display: inline-block;
-        margin: auto;
-        border: 4px solid transparent;
-        border-top-color: #ffffff;
-        border-radius: 50%;
-        animation: button-loading-spinner 1s ease infinite;
-}
-
-
-    .paging a.translation-filler-button.restarted {
-        content: "";
-        display: inline-block;
-        margin: auto;
-        border: 4px solid transparent;
-        border-top-color: #ffffff;
-        border-radius: 50%;
-        background-color: blue;
-        animation: button-loading-spinner 1s ease infinite;
-    }
-    .paging a.translation-filler-button.after_error {
-        animation: none;
-        background: red;
-    }
-    .paging a.translation-filler-button.translated {
-        animation: none !important;
-        background: green;
-        border-radius: 0%;
-        border: 0px solid transparent;
-        display: inline-block;
-        padding-top: 0.1em !important;
-        padding-bottom: 0.1em !important;
-        margin: 5px !important;
-    }
 
     /* below function can to be removed if GlotPress has improved the behavior of the edit screen*/
     .panel-header__bubble {

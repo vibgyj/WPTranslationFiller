@@ -569,18 +569,18 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     locale = checkLocale();
 
     // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".paging a.translation-filler-button");
+    let translateButton = document.querySelector(".paging a.local-trans-button");
     translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-    if (translateButton.className == "translation-filler-button") {
+    if (translateButton.className == "local-trans-button") {
         translateButton.className += " started";
     }
     else {
 
-        translateButton.classList.remove("translation-filler-button", "started", "translated");
-        translateButton.classList.remove("translation-filler-button", "restarted", "translated");
-        translateButton.className = "translation-filler-button restarted";
+        translateButton.classList.remove("local-trans-button", "started", "translated");
+        translateButton.classList.remove("local-trans-button", "restarted", "translated");
+        translateButton.className = "local-trans-button restarted";
     }
 
 
@@ -885,7 +885,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
         }
             }
             // Translation completed  
-            translateButton = document.querySelector(".paging a.translation-filler-button");
+            translateButton = document.querySelector(".paging a.local-trans-button");
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
 
@@ -964,17 +964,17 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     
     
         // 19-06-2021 PSS added animated button for translation at translatePage
-        let translateButton = document.querySelector(".paging a.translation-filler-button");
+        let translateButton = document.querySelector(".paging a.tm-trans-button");
         translateButton.innerText = "Translate";
         //console.debug("Button classname:", translateButton.className);
         // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-        if (translateButton.className == "translation-filler-button") {
+        if (translateButton.className == "tm-trans-button") {
             translateButton.className += " started";
         }
         else {
-            translateButton.classList.remove("translation-filler-button", "started", "translated");
-            translateButton.classList.remove("translation-filler-button", "restarted", "translated");
-            translateButton.className = "translation-filler-button restarted";
+            translateButton.classList.remove("tm-trans-button", "started", "translated");
+            translateButton.classList.remove("tm-trans-button", "restarted", "translated");
+            translateButton.className = "tm-trans-button restarted";
         }
         // Let us find the records to populate
     for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
@@ -1083,7 +1083,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
         }
     }
     // Translation completed  
-    translateButton = document.querySelector(".paging a.translation-filler-button");
+    translateButton = document.querySelector(".paging a.tm-trans-button");
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
 }

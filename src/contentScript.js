@@ -392,34 +392,36 @@ translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
 // 1-05-2021 PSS fix for issue #75 do not show the buttons on project page
 var divProjects = document.querySelector("div.projects");
-if (divPaging != null && divProjects  == null){
-   divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
-}
+
+//12-05-2022 PSS added a new button for local translate
+var localtransButton = document.createElement("a");
+localtransButton.href = "#";
+localtransButton.className = "local-trans-button";
+localtransButton.onclick = localTransClicked;
+localtransButton.innerText = "Local";
+
+//12-05-2022 PSS added a new button for local translate
+var tmtransButton = document.createElement("a");
+tmtransButton.href = "#";
+tmtransButton.className = "tm-trans-button";
+tmtransButton.onclick = tmTransClicked;
+tmtransButton.innerText = "TM";
+
 //23-03-2021 PSS added a new button on first page
 var checkButton = document.createElement("a");
 checkButton.href = "#";
 checkButton.className = "check_translation-button";
 checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
-var divPaging = document.querySelector("div.paging");
-var divProjects = document.querySelector("div.projects");
-if (divPaging != null && divProjects == null){
-   divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
-}
-//07-05-2021 PSS added a new button on first page
+
+//07-05-2021 PSS added a export button on first page
 var exportButton = document.createElement("a");
 exportButton.href = "#";
 exportButton.className = "export_translation-button";
 exportButton.onclick = exportPageClicked;
 exportButton.innerText = "Export";
-var divPaging = document.querySelector("div.paging");
-var divProjects = document.querySelector("div.projects");
-if (divPaging != null && divProjects == null){
-   divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
-}
 
-
-//07-05-2021 PSS added a new button on first page
+//07-05-2021 PSS added a import button on first page
 var importButton = document.createElement("a");
 importButton.href = "#";
 importButton.id = "ImportDb";
@@ -428,10 +430,86 @@ importButton.id = "ImportDb";
 importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
-var divPaging = document.querySelector("div.paging");
-var divProjects = document.querySelector("div.projects");
-if (divPaging != null && divProjects == null){
-   divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+
+// 12-05-2022 PSS here we add all buttons in the pagina together
+if (divPaging != null && divProjects == null) {
+    divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(localtransButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(tmtransButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+}
+
+// 12-05-2022 PSS addid this function to start translating from translation memory button
+function tmTransClicked(event) {
+    event.preventDefault();
+    chrome.storage.sync
+        .get(
+            ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
+            function (data) {
+                if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
+
+                    if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
+                        if (data.transsel != "undefined") {
+                            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                            var formal = checkFormal(false);
+                            //var locale = checkLocale();
+                            convertToLow = data.convertToLower;
+                            var DeeplFree = data.DeeplFree;
+                            if (typeof data.TMwait == "undefined") {
+                                var TMwait = 500;
+                            }
+                            else {
+                                var TMwait = data.TMwait;
+                            }
+                            result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait);
+                        }
+                        else {
+                            messageBox("error", "You need to set the translator API");
+                        }
+                    }
+                    else {
+                        messageBox("error", "You need to set the parameter for Destination language");
+                    }
+                }
+                else {
+                    messageBox("error", "For " + data.transsel + " no apikey is set!");
+                }
+            });
+
+}
+//12-05-2022 PSS added this function to start local translating with button
+function localTransClicked(event) {
+    event.preventDefault();
+    chrome.storage.sync
+        .get(
+            ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
+            function (data) {
+                if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
+
+                    if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
+                        if (data.transsel != "undefined") {
+                            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                            var formal = checkFormal(false);
+                            //var locale = checkLocale();
+                            convertToLow = data.convertToLower;
+                            var DeeplFree = data.DeeplFree;
+                            result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
+                        }
+                        else {
+                            messageBox("error", "You need to set the translator API");
+                        }
+                    }
+                    else {
+                        messageBox("error", "You need to set the parameter for Destination language");
+                    }
+                }
+                else {
+                    messageBox("error", "For " + data.transsel + " no apikey is set!");
+                }
+            });
+
 }
 
 function translatePageClicked(event) {
