@@ -1363,6 +1363,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (checkplural != null) {
                             transtype = "plural";
                             plural_line = "2";
+                            console.debug("Plural: ", plural_line, original)
                             let plural = checkplural.innerText;
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
@@ -1382,7 +1383,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     }
                                 }
                                 else if (transsel == "deepl") {
-                                    result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                                    // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
+                                    result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                                     if (result == "Error 403") {
                                         messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                         //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
