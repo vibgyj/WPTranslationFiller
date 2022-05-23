@@ -594,8 +594,6 @@ local.paging a.tm-trans-button {
 }
 
 .trans_exists_div {
-    clear: right;
-    float: left;
     font-size: 0.9em;
     font-weight: 600;
     color: #ffffff;
@@ -605,7 +603,8 @@ local.paging a.tm-trans-button {
     margin-left: .2em;
     background-color: #036fa2;
     border-radius: 5px;
-    display: inline;
+    display: block;
+    width: 75% !important;
 }
 
 .trans_name_div {

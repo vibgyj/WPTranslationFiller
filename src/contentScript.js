@@ -922,7 +922,7 @@ function translateEntryClicked(event) {
 
 function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    var current;
+    var currcount;
     if (typeof rowId == "undefined") {
         let rowId = textareaElem.parentElement.parentElement.parentElement
            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
@@ -1004,7 +1004,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     }
     //let origElem =  updateElementStyle(checkElem, result,"False",originalElem,"","","","","",rowId,showName);
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "", "", "", rowId,showName,nameDiff);
+    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "", "", "", rowId,showName,nameDiff,currcount);
     let row = rowId.split("-")[0];
     
     // 12-06-2021 PSS do not fetch old if within the translation
@@ -1032,7 +1032,7 @@ function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale)
     updateStyle(textareaElem, result, newurl, showHistory,"True","",rowId);
 }
 
-function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff) {
+function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount) {
     var current;
     if (typeof rowId != "undefined") {
         var SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
@@ -1131,6 +1131,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     if (showName == true) {
         if (originalElem != undefined) {
             var element1 = document.createElement("div");
+            originalElem.appendChild(element1);
             if (nameDiff == true) {
                 element1.setAttribute("class", "trans_name_div_true");
                 element1.setAttribute("id", "trans_name_div_true");
@@ -1142,7 +1143,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 element1.appendChild(document.createTextNode("URL, name of theme or plugin or author!"));
             }
             //element1.style.cssText = "padding-left:0px; padding-top:20px";
-            originalElem.appendChild(element1);
+            //originalElem.appendChild(element1);
         }
     }
 
@@ -1157,9 +1158,10 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             }
             var element1 = document.createElement("div");
             element1.setAttribute("class", "trans_exists_div");
-            //element1.style.cssText = "padding-left:0px; padding-top:20px";
-            element1.appendChild(document.createTextNode("Existing string(s)! " + current + " " + wait + " " + rejec + " " + fuz + " " + old));
             originalElem.appendChild(element1);
+            //element1.style.cssText = "padding-left:0px; padding-top:20px";
+            element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
+            //originalElem.appendChild(element1);
         }
         else {
             console.debug("updateElementStyle empty!:", originalElem);
@@ -1251,6 +1253,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     if (result.percent == 100) {
         checkElem.innerHTML = "100";
         checkElem.style.backgroundColor = "green";
+
         if (current.innerText == "transFill") {
             SavelocalButton.style.backgroundColor = "#0085ba";
             SavelocalButton.innerText = "Save";
@@ -1340,8 +1343,8 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         else {
             checkElem.innerText = result.wordCount;
         }
-            var separator1 = document.createElement("div");
-            separator1.setAttribute("class", "checkElem_save");
+        var separator1 = document.createElement("div");
+        separator1.setAttribute("class", "checkElem_save");
         checkElem.appendChild(separator1);
         if (SavelocalButton != null) {
             SavelocalButton.style.backgroundColor = "#0085ba";
@@ -1357,6 +1360,11 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         }
         else {
             console.debug("SavelocalButton is null")
+           // var separator1 = document.createElement("div");
+           // separator1.setAttribute("class", "checkElem_save");
+           // checkElem.appendChild(separator1);
+          //  SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+           // SaveLocalButton.innerText="Empty"
         }
         }
         // we need to add the save button again after updating the element  
@@ -1901,10 +1909,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         var current = table.querySelectorAll("tr.preview.status-current");
                         var old = table.querySelectorAll("tr.preview.status-old");
                         if (typeof current != "null" && current.length != 0) {
-                            current = " Current:" + current.length;
+                            currcount = " Current:" + current.length;
                         }
                         else {
-                            current = "";
+                            currcount = "";
                         }
                         if (waiting.length != 0) {
                             wait = " Waiting:" + waiting.length;
@@ -1931,10 +1939,11 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                             old = "";
                         }
                         if (tbodyRowCount > 2 && single == "False") {
-                            updateElementStyle(checkElem, "", result, "True", originalElem, current, wait, rejec, fuz, old, rowId, "", "");
+                                               
+                            updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
                         }
                         else if (tbodyRowCount > 2 && single == "True") {
-                            updateElementStyle(checkElem, "", result, "False", originalElem, current, wait, rejec, fuz, old, rowId, "", "");
+                            updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
                             //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                             //window.open(url, "_blank", windowFeatures);
                         }
