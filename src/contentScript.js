@@ -7,6 +7,21 @@ var detailRow = 0;
 var errorstate = "OK";
 gd_wait_table_alter();
 addCheckBox();
+// Intercept the fetch Api reqauests
+//const { fetch: originalFetch } = window;
+
+//window.fetch = async (...args) => {
+//    let [resource, config] = args;
+    // request interceptor here
+ //   const response = await originalFetch(resource, config);
+    // response interceptor here
+ //   console.debug("Api request fetch:",response)
+ //   return response;
+//};
+//
+
+
+
 ;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
     .get(
