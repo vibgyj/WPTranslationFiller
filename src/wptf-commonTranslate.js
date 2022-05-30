@@ -565,7 +565,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     var preview = "";
     var pretrans = 'notFound';
     //destlang = "nl"
-
+    parrotActive = 'true';
     locale = checkLocale();
 
     // 19-06-2021 PSS added animated button for translation at translatePage
@@ -888,7 +888,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             translateButton = document.querySelector(".paging a.local-trans-button");
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
-
+parrotActive = 'false';
     //console.timeEnd("translation");
 }
 // Part of the solution issue #204
@@ -1265,7 +1265,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (currec != null) {
                             var current = currec.querySelector("span.panel-header__bubble");
                         }
-                        console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
+                       // console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
                         //validate(destlang, textareaElem, original, locale);
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
@@ -1795,9 +1795,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-function saveLocal() {
+async function saveLocal() {
     var counter = 0;
     var timeout = 0;
+    //localStorage.setItem('interXHR', 'true');
+    
+    
+
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     document.querySelectorAll("tr.preview").forEach((preview) => {
         let rowfound = preview.id;
@@ -1860,20 +1864,36 @@ function saveLocal() {
             console.debug("problem reading checkbox1");
         }
     });
+    
     return counter;
 }
 
- function bulkSave(event) {
+ async function bulkSave(event) {
     var counter = 0;
     var row;
     var myWindow;
-    var nextpreview;
-
+     var nextpreview;
+     var parrotMockDefinitions = [{
+         "active": true,
+         "description": "XHR",
+         "method": "GET",
+         "pattern": "-get-tm-suggestions",
+         "status": "200",
+         "type": "JSON",
+         "response": '{"success":true,"data":"No suggestieeeees."}',
+         "delay": "0"
+     }];
+     window.postMessage({
+         sender: 'commontranslate',
+         parrotActive: true,
+         parrotMockDefinitions
+     }, location.origin);
     counter = saveLocal();
 
     if (counter == 0) {
         messageBox("error", "You do not have translations selected!");
-    }          
+     }
+    
     return "done"
 }
 
