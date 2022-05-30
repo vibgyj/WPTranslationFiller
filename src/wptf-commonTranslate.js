@@ -1282,7 +1282,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan1.className = "translation-text";
                                     li1.appendChild(myspan1);
                                     myspan1.appendChild(document.createTextNode(translatedText));
-                                    
 
                                     // Also create the second li
                                     var li2 = document.createElement("li");
@@ -1297,7 +1296,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan2.className = "translation-text";
                                     li2.appendChild(myspan2);
                                     myspan2.appendChild(document.createTextNode("empty"));
-                                   
                                 }
                                 else {
                                     preview.innerText = translatedText;
@@ -1873,7 +1871,6 @@ function _waitForElement(selector, delay =5, tries = 50) {
     }
   }
 
-
 function elementReady(selector) {
     var el;
     var timeout = "20";
@@ -1935,7 +1932,6 @@ function waitForElm(selector) {
         });
     });
 }
-
 
 /**
  ** function copied from stackoverflow created by eclanrs
