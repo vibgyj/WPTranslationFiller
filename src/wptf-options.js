@@ -9,7 +9,8 @@ document.body.appendChild(scriptElm);
 //document.getElementsByTagName("head")[0].appendChild(meta);
 //myWindow.focus();
 var link = document.createElement("link");
-
+var parrotActive = 'false';
+var inter;
 link.type = "text/css";
 link.rel = "stylesheet";
 link.href = chrome.runtime.getURL("wptf-cute-alert.css");
@@ -40,7 +41,7 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 //console.debug("Diff:", showDiffCheckbox);
 //console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait"], function (data) {
+chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -111,6 +112,13 @@ chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "d
             showConvertCheckbox.checked = false;
         }
     }
+    if (data.interXHR != "null") {
+        let parrotActive = data.interXHR;
+    }
+    else {
+        let parrotActive = 'false';
+        }
+    console.debug("parrotActive:",parrotActive)
     //console.log("Read options: ", data);
 });
 
@@ -175,6 +183,12 @@ button.addEventListener("click", function () {
     else {
         showConvertToLower = "false";
     }
+    if (parrotActive = null) {
+       let  inter = 'false'
+    }
+    else {
+       let inter = parrotActive;
+    }
     chrome.storage.sync.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
@@ -188,7 +202,8 @@ button.addEventListener("click", function () {
         showTransDiff: showDifference,
         glotDictGlos: showDictGlosLine,
         convertToLower: showConvertToLower,
-        TMwait: TMwaitVal
+        TMwait: TMwaitVal,
+        interXHR:inter
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  

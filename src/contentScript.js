@@ -5,20 +5,19 @@ var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
 var errorstate = "OK";
+
 gd_wait_table_alter();
 addCheckBox();
-// Intercept the fetch Api reqauests
-//const { fetch: originalFetch } = window;
 
-//window.fetch = async (...args) => {
-//    let [resource, config] = args;
-    // request interceptor here
- //   const response = await originalFetch(resource, config);
-    // response interceptor here
- //   console.debug("Api request fetch:",response)
- //   return response;
-//};
-//
+var parrotActive ;
+//localStorage.setItem('interXHR', 'false');
+const script = document.createElement('script');
+script.src = chrome.runtime.getURL('inject.js');
+(document.head || document.documentElement).prepend(script);
+//script.src = chrome.runtime.getURL('fake_xml_http_request.js');
+//script.type = 'module';
+//(document.head || document.documentElement).prepend(script);
+
 
 
 
@@ -200,7 +199,7 @@ document.addEventListener("keydown", function (event) {
         event.preventDefault();
         chrome.storage.sync
             .get(
-                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree","TMwait"],
+                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
                 function (data) {
                     if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
 
@@ -215,9 +214,9 @@ document.addEventListener("keydown", function (event) {
                                     var TMwait = 500;
                                 }
                                 else {
-                                   var TMwait = data.TMwait;
+                                    var TMwait = data.TMwait;
                                 }
-                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree,TMwait);
+                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait);
                             }
                             else {
                                 messageBox("error", "You need to set the translator API");
@@ -248,7 +247,20 @@ document.addEventListener("keydown", function (event) {
         resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
         //console.debug("blockres:"), resblock;
     }
-
+    if (event.altKey && event.shiftKey && (event.key === "F8")) {
+        event.preventDefault();
+        console.debug("F8")
+        let int = localStorage.getItem(['interXHR']);
+        if (int == "false") {
+            toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
+            localStorage.setItem('interXHR', 'true');
+        }
+        else {
+            toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
+            localStorage.setItem('interXHR', 'false');
+        }
+        location.reload();
+    };
     if (event.altKey && event.shiftKey && (event.key === "F7")) {
         //event.preventDefault();
         let userAgent = navigator.userAgent;
@@ -370,6 +382,7 @@ let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
     bulkbutton.addEventListener("click", () => {
         bulkSave(event);
+        
     });
 }
 
@@ -856,7 +869,7 @@ function checkbuttonClick(event) {
                 glob_row = rowId;
                 detailRow = rowId;
                 let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-
+                //localStorage.setItem('interXHR', 'false');
                 // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
                 // if the translator is a PTE then we do not need to do this, as there is already an extra column
                 let myrec = document.querySelector(`#editor-${detailRow}`);

@@ -6,7 +6,7 @@
 
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "/_metadata","wptf-options.html" ],
+      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "/_metadata","wptf-options.html","inject.js","fake_xml_http_request.js" ],
       "matches": [ "https://translate.wordpress.org/*" ]
     }
   ],
@@ -54,6 +54,7 @@
         "wptf-microsoftTrans.js",
         "jsdiff.js",
         "wptf-database.js",
+        "inject.js",
         "contentScript.js"
       ],
       "css": [
