@@ -1,14 +1,13 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "1.6.12",
+  "version": "1.6.13",
   "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
 
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png" ],
+      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png","/_metadata" ],
       "matches": [ "https://translate.wordpress.org/*" ]
-
     }
   ],
   "background.service_worker": {
@@ -17,8 +16,24 @@
       "jsstore.worker.js"
     ]
   },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "1",
+        "enabled": true,
+        "path": "/wptf-block_rules.json"
+      }
+    ]
+  },
   "permissions": [
-    "storage"
+    "storage",
+    "declarativeContent",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "*://translate.wordpress.org/*"
   ],
   "options_page": "wptf-options.html",
   "content_scripts": [
@@ -44,6 +59,9 @@
       "css": [
         "wptf-cute-alert.css",
         "wptf-style.css"
+      ],
+      "json": [
+        "wptf-block_rules.json"
       ]
     }
   ]

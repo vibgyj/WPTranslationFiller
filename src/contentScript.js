@@ -89,14 +89,15 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
+    //console.debug("eventkey:", event.key);
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
-       // if (is_pte) {
-           // toastbox("info", "Bulksave started", 2000);
-            bulk(event);
-       // }
+        // if (is_pte) {
+        // toastbox("info", "Bulksave started", 2000);
+        bulk(event);
+        // }
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
         // This switches convert to lowercase on
@@ -150,6 +151,122 @@ document.addEventListener("keydown", function (event) {
         event.preventDefault();
         //console.debug("Reset database");
         result = deleteDB();
+    }
+    if (event.altKey && event.shiftKey && (event.key === "F3")) {
+        event.preventDefault();
+        chrome.storage.sync
+            .get(
+                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
+                function (data) {
+                    if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
+
+                        if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
+                            if (data.transsel != "undefined") {
+                                //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                                var formal = checkFormal(false);
+                                //var locale = checkLocale();
+                                convertToLow = data.convertToLower;
+                                var DeeplFree = data.DeeplFree;
+                                result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
+                            }
+                            else {
+                                messageBox("error", "You need to set the translator API");
+                            }
+                        }
+                        else {
+                            messageBox("error", "You need to set the parameter for Destination language");
+                        }
+                    }
+                    else {
+                        messageBox("error", "For " + data.transsel + " no apikey is set!");
+                    }
+                });
+    }
+
+    if (event.altKey && event.shiftKey && (event.key === "F5")) {
+        event.preventDefault();
+        chrome.storage.sync
+            .get(
+                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
+                function (data) {
+                    if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
+
+                        if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
+                            if (data.transsel != "undefined") {
+                                //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                                var formal = checkFormal(false);
+                                //var locale = checkLocale();
+                                convertToLow = data.convertToLower;
+                                var DeeplFree = data.DeeplFree;
+                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
+                            }
+                            else {
+                                messageBox("error", "You need to set the translator API");
+                            }
+                        }
+                        else {
+                            messageBox("error", "You need to set the parameter for Destination language");
+                        }
+                    }
+                    else {
+                        messageBox("error", "For " + data.transsel + " no apikey is set!");
+                    }
+                });
+    }
+
+    if (event.altKey && event.shiftKey && (event.key === "F6")) {
+        event.preventDefault();
+        var rule = {
+            "id": 1,
+            "priority": 1,
+            "action": { "type": "allow" },
+            "condition": {
+                "regexFilter": "-get-tm-suggestions",
+                "resourceTypes": ["xmlhttprequest"]
+            }
+        };
+
+        resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
+        console.debug("blockres:"), resblock;
+    }
+
+    if (event.altKey && event.shiftKey && (event.key === "F7")) {
+        //event.preventDefault();
+        let userAgent = navigator.userAgent;
+        let browser;
+
+        if (userAgent.match(/chrome|chromium|crios/i)) {
+            browser = "chrome";
+        } else if (userAgent.match(/firefox|fxios/i)) {
+            browser = "firefox";
+        } else if (userAgent.match(/safari/i)) {
+            browser = "safari";
+        } else if (userAgent.match(/opr\//i)) {
+            browser = "opera";
+        } else if (userAgent.match(/edg/i)) {
+            browser = "edge";
+        } else {
+            browser = "No browser detection";
+        }
+        console.debug("F6 pressed!", browser);
+
+       
+        res = chrome.declarativeNetRequest.updateEnabledRuleset(
+          {
+              addRules: [{
+                    "id": 1,
+                   "priority": 1,
+                 "action": { "type": "block" },
+                "condition": {
+                  "regexFilter": "-get-tm-suggestions",
+                     "resourceTypes": ["xmlhttprequest"]
+                 }
+              }
+              ],
+               removeRuleIds: [1]
+           },
+        )
+        console.debug("F7 pressed!",res)
     }
 });
 
@@ -371,7 +488,6 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     toastbox("info", "checkPage is started wait for the result!!", "10000", "CheckPage");
-    //console.log("Checkpage clicked!");
     chrome.storage.sync
         .get(
             ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
@@ -387,7 +503,6 @@ function exportPageClicked(event) {
         .get(
             ["apikey", "destlang"],
             function (data) {
-               // console.debug("destlang:", data.destlang);
                 dbExport(data.destlang);
             });
    // res= dbExport();
@@ -447,7 +562,6 @@ chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
             });
         }
         else {
-           // console.debug("Glossary empty!!");
             messageBox("error", "Your glossary is not loaded because no file is loaded!!");
            // alert("Your glossary is not loaded because no file is loaded!!");
         }
@@ -827,7 +941,6 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
 function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     let translation = textareaElem.value;
-   // console.debug("textareaElem:", textareaElem);
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
@@ -986,7 +1099,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 }
             }
             else {
-                console.debug("no current found!");
+               // console.debug("no current found!");
                 //SavelocalButton.innerText = "Save";
                 SavelocalButton.title = "Save the string";
             }
@@ -1038,7 +1151,6 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = "green";
             if (current.innerText == "transFill") {
-                SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
             else if (current.innerText == "waiting") {
@@ -1608,10 +1720,8 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
         })
             .then(response => response.text())
             .then(data => {
-                //console.log(data);
                 //05-11-2021 PSS added fix for issue #159 causing an error message after restarting the add-on
                 currURL = window.location.href;
-                //console.debug("url:", currURL);
                 // &historypage is added by GlotDict or WPGPT, so no extra parameter is necessary for now
                 if (currURL.includes("&historypage") == false) {
                     var parser = new DOMParser();
@@ -1783,4 +1893,3 @@ function gd_auto_hide_next_editor(editor) {
                 });
             }
 }
-

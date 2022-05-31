@@ -2,6 +2,7 @@
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
+//document.addEventListener('DOMContentLoaded', setupEvents);
 // This array is used to replace wrong words in translation
 // PSS version 12-05-2021
 let replaceVerb = [];
@@ -10,24 +11,6 @@ let replaceVerb = [];
 // This is done by replacing the formal word for a informal word
 let replacePreVerb = [];
 // 06-05-2021 PSS These vars can probably removed after testen
-
-
-function copyToClipBoard(detailRow) {
-    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);  
-    if (e != null) {
-        var content = e.querySelector("span.original-raw").innerText;
-        if (content != null) {
-            navigator.clipboard.writeText(content);
-            toastbox("info", "Copy original to clipboard<br>"+content, "2500", "Copy");
-        }
-        else {
-            toastbox("error", "No text found to copy", "1200", "Error");
-        }
-    }
-    else {
-        toastbox("error", "No text found to copy", "1200", "Error");
-    }
-}
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
@@ -571,6 +554,529 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
     return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb};
 }
 
+async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
+    //console.time("translation")
+    var translate;
+    var transtype = "";
+    var plural_line = "";
+    var plural_present = "";
+    var record = "";
+    var row = "";
+    var preview = "";
+    //destlang = "nl"
+
+    locale = checkLocale();
+
+    // 19-06-2021 PSS added animated button for translation at translatePage
+    let translateButton = document.querySelector(".paging a.translation-filler-button");
+    translateButton.innerText = "Translate";
+    //console.debug("Button classname:", translateButton.className);
+    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
+    if (translateButton.className == "translation-filler-button") {
+        translateButton.className += " started";
+    }
+    else {
+
+        translateButton.classList.remove("translation-filler-button", "started", "translated");
+        translateButton.classList.remove("translation-filler-button", "restarted", "translated");
+        translateButton.className = "translation-filler-button restarted";
+    }
+
+
+    
+    for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+                transtype = "single";
+                // 16-08-2021 PSS fixed retranslation issue #118
+                let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
+                row = rowfound.split("-")[1];
+                let newrow = rowfound.split("-")[2];
+                if (typeof newrow != "undefined") {
+                    newrowId = row.concat("-", newrow);
+                    row = newrowId;
+                }
+                else {
+                    rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
+                    row = rowfound.split("_")[1];
+                }
+                let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                // We need to determine the current state of the record
+                if (currec != null) {
+                    var current = currec.querySelector("span.panel-header__bubble");
+                    var prevstate = current.innerText;
+                }
+                let original = record.querySelector("span.original-raw").innerText;
+                // 14-08-2021 PSS we need to put the status back of the label after translating
+                let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+                if (transname != null) {
+                    transname.className = "trans_name_div";
+                    transname.innerText = "URL, name of theme or plugin or author!";
+                    // In case of a plugin/theme name we need to set the button to blue
+                    let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                    curbut.style.backgroundColor = "#0085ba";
+                    curbut.innerText = "Save";
+                    transtype = "single";
+                }
+                // If in the original field "Singular is present we have a plural translation
+                pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
+                if (pluralpresent != null) {
+                    original = pluralpresent.innerText;
+                    transtype = "plural";
+                    plural_line = "1";
+                }
+                else {
+                    transtype = "single";
+                    plural_line = "0";
+                }
+                // PSS 09-03-2021 added check to see if we need to translate
+                //Needs to be put into a function, because now it is unnessary double code
+                toTranslate = true;
+                // Check if the comment is present, if not then if will block the request for the details name etc.
+                let element = record.querySelector(".source-details__comment");
+                if (element != null) {
+                    let comment = record.querySelector(".source-details__comment p").innerText;
+                    comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                    toTranslate = checkComments(comment.trim());
+                }
+                // Do we need to translate ??
+
+                if (toTranslate) {
+                    let pretrans = await findTransline(original, destlang);
+                    if (pretrans != 'notFound') {
+                        // Pretranslation found!
+                        let translatedText = pretrans;
+                        let textareaElem = record.querySelector("textarea.foreign-text");
+                        textareaElem.innerText = translatedText;
+                        textareaElem.value = translatedText;
+                        if (typeof current != "undefined") {
+                            current.innerText = "transFill";
+                            current.value = "transFill";
+                        }
+                        // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+                        select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                        //select = next_editor.getElementsByClassName("meta");
+                        var status = select.querySelector("dt").nextElementSibling;
+                        status.innerText = "transFill";
+                        status.value = "transFill";
+                        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                        if (currec != null) {
+                            var current = currec.querySelector("span.panel-header__bubble");
+                        }
+                        validateEntry(destlang, textareaElem, "", "", row);
+                        // PSS 10-05-2021 added populating the preview field issue #68
+                        // Fetch the first field Singular
+                        let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
+                        if (previewElem != null) {
+                           // previewElem.innerText = translatedText;
+                        }
+                        else {
+                            let preview = document.querySelector("#preview-" + row + " td.translation");
+                            let spanmissing = preview.querySelector(" span.missing");
+                            if (spanmissing != null) {
+                                if (plural_line == "1") {
+                                    spanmissing.remove();
+                                }
+                                if (transtype != "single") {
+                                    ul = document.createElement("ul");
+                                    preview.appendChild(ul);
+                                    var li1 = document.createElement("li");
+                                    li1.style.cssText = "text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;";
+                                    ul.appendChild(li1);
+                                    var small = document.createElement("small");
+                                    li1.appendChild(small);
+                                    small.appendChild(document.createTextNode("Singular:"));
+                                    var br = document.createElement("br");
+                                    li1.appendChild(br);
+                                    var myspan1 = document.createElement("span");
+                                    myspan1.className = "translation-text";
+                                    li1.appendChild(myspan1);
+                                    myspan1.appendChild(document.createTextNode(translatedText));
+
+                                    // Also create the second li
+                                    var li2 = document.createElement("li");
+                                    //li2.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
+                                    ul.appendChild(li2);
+                                    var small = document.createElement("small");
+                                    li2.appendChild(small);
+                                    small.appendChild(document.createTextNode("Plural:"));
+                                    var br = document.createElement("br");
+                                    li2.appendChild(br);
+                                    var myspan2 = document.createElement("span");
+                                    myspan2.className = "translation-text";
+                                    li2.appendChild(myspan2);
+                                    myspan2.appendChild(document.createTextNode("empty"));
+
+                                }
+                                else {
+                                    preview.innerText = translatedText;
+                                    current.innerText = "transFill";
+                                    current.value = "transFill";
+                                    var element1 = document.createElement("div");
+                                    element1.setAttribute("class", "trans_local_div");
+                                    element1.setAttribute("id", "trans_local_div");
+                                    element1.appendChild(document.createTextNode("Local"));
+                                    preview.appendChild(element1);
+                                   
+                                    // we need to set the checkbox as marked
+                                    preview = document.querySelector(`#preview-${row}`);
+                                    rowchecked = preview.querySelector("td input");
+                                    if (rowchecked != null) {
+                                        if (!rowchecked.checked) {
+                                            rowchecked.checked = true;
+                                        }
+                                    }
+                                }
+                            }
+                            else {
+                                // if it is as single with local then we need also update the preview
+                                preview.innerText = translatedText;
+                                current.innerText = "transFill";
+                                current.value = "transFill";
+                                var element1 = document.createElement("div");
+                                element1.setAttribute("class", "trans_local_div");
+                                element1.setAttribute("id", "trans_local_div");
+                                element1.appendChild(document.createTextNode("Local"));
+                                preview.appendChild(element1);
+                                // we need to set the checkbox as marked
+                                preview = document.querySelector(`#preview-${row}`);
+                                rowchecked = preview.querySelector("td input");
+                                if (rowchecked != null) {
+                                    if (!rowchecked.checked) {
+                                        rowchecked.checked = true;
+                                    }
+                                }
+                            }
+                        }
+                        if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
+                            document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "visible";
+                        }
+                        
+                    }
+                    else {
+                       // console.debug("pretrans not found single!");
+                        preview = document.querySelector(`#preview-${row}`);
+                       // console.debug("preview:", preview);
+                        if (preview != null) {
+                            preview.style.display = "none";
+                            rowchecked = preview.querySelector("td input");
+                            if (rowchecked != null) {
+                            //if (!rowchecked.checked) {
+                              rowchecked.checked = false;
+                                //  }
+                            }
+
+                        }
+                    }
+                    // 10-04-2021 PSS added translation of plural into translatePage
+                    let e = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                    if (e != null) {
+                        checkplural = e.querySelector(`#editor-${row} .source-string__plural span.original`);
+                        if (checkplural != null) {
+                            transtype = "plural";
+                            plural_line = "2";
+                            let plural = checkplural.innerText;
+                            let pretrans = await findTransline(plural, destlang);
+                            if (pretrans == "notFound") {
+                                console.debug("plural pretrans not found!");
+                            }
+                            else {
+                                // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
+                                // 17-08-2021 PSS additional fix #118 when translation is already present we only need the first part of the rowId
+                                let translatedText = pretrans;
+                                // Plural second line
+                                let rowId = row.split("-")[0];
+                                if (current.innerText == "current") {
+                                    textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
+                                    textareaElem1.innerText = translatedText;
+                                    textareaElem1.value = translatedText;
+                                    // Populate the second line in preview Plural
+                                    if (prevstate != "current") {
+                                        let preview = document.querySelector("#preview-" + rowId + " td.translation");
+                                        if (preview != null) {
+                                            preview.innerText = translatedText;
+                                            preview.value = translatedText;
+                                            var element1 = document.createElement("div");
+                                            element1.setAttribute("class", "trans_local_div");
+                                            element1.setAttribute("id", "trans_local_div");
+                                            element1.appendChild(document.createTextNode("Local"));
+                                            preview.appendChild(element1);
+                                        }
+                                    }
+                                }
+                                else {
+                                    // 30-10-2021 PSS added a fix for issue #154
+                                    // If the span missing is present it needs to be removed and the ul added otherwise the second line cannot be populated
+                                    check_span_missing(row, plural_line);
+                                    textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
+                                    textareaElem1.innerText = translatedText;
+                                    textareaElem1.value = translatedText;
+                                    let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
+                                    if (previewElem != null) {
+                                        previewElem.innerText = translatedText;
+                                        var element1 = document.createElement("div");
+                                        element1.setAttribute("class", "trans_local_div");
+                                        element1.setAttribute("id", "trans_local_div");
+                                        element1.appendChild(document.createTextNode("Local"));
+                                        previewElem.appendChild(element1);
+                                    }
+                                    current.innerText = "transFill";
+                                    current.value = "transFill";
+                                }
+                                 // we need to set the checkbox as marked
+                        preview = document.querySelector(`#preview-${row}`);
+                        rowchecked = preview.querySelector("td input");
+                        if (rowchecked != null) {
+                           if (!rowchecked.checked) {
+                            rowchecked.checked = true;
+                           }
+                        }
+                                validateEntry(destlang, textareaElem1, "", "", row);
+                            }
+                        }
+                    }
+                }
+                else {
+                    // This is when urls/plugin/theme names are present or local translation is present
+                    let translatedText = original;
+                    let textareaElem = record.querySelector("textarea.foreign-text");
+                    textareaElem.innerText = translatedText;
+                    let preview = document.querySelector("#preview-" + row + " td.translation");
+                    if (preview != null) {
+                        preview.innerText = translatedText;
+                        preview.value = translatedText;
+                        // We need to alter the status otherwise the save button does not work
+                        current.innerText = "transFill";
+                        current.value = "transFill";
+                        // we need to set the checkbox as marked
+                        preview = document.querySelector(`#preview-${row}`);
+                        rowchecked = preview.querySelector("td input");
+                        if (rowchecked != null) {
+                           if (!rowchecked.checked) {
+                            rowchecked.checked = true;
+                           }
+                        }
+                        
+                    }
+                }
+                //14-09-2021 PSS changed the class to meet GlotDict behavior
+                var currentClass = document.querySelector(`#editor-${row}`);
+                var prevcurrentClass = document.querySelector(`#preview-${row}`);
+                //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                currentClass.classList.add("wptf-translated");
+                currentClass.classList.replace("no-translations", "has-translations");
+                currentClass.classList.replace("untranslated", "status-waiting");
+                //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+                prevcurrentClass.classList.replace("no-translations", "has-translations");
+                prevcurrentClass.classList.replace("untranslated", "status-waiting");
+                prevcurrentClass.classList.add("wptf-translated");
+                // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
+                prevcurrentClass.style.backgroundColor = "#ffe399";
+            }
+            // Translation completed  
+            translateButton = document.querySelector(".paging a.translation-filler-button");
+            translateButton.className += " translated";
+            translateButton.innerText = "Translated";
+
+    //console.timeEnd("translation");
+}
+// Part of the solution issue #204
+function openEditor(preview) {
+    var timeout = 0;
+    return new Promise((resolve, reject) => {
+       
+        editoropen = preview.querySelector("td.actions .edit");
+        //console.debug("Editoropen:",editoropen)
+        setTimeout(() => {
+       if (typeof editoropen != null) {
+           //console.debug("editor is open");
+           editoropen.click()
+        resolve("Open");
+       }
+       else {
+         reject("Closed");
+           }
+       }, 500);
+        
+    });
+}
+// Part of the solution issue #204
+async function fetchsuggestions(row) {
+    
+    myTM = await document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .suggestions-wrapper`);
+    return myTM;
+}
+//var setupEvents = function () {
+  //  var elem = document.getElementByTagName("li");
+    //console.debug("elem",elem)
+    
+//};
+
+// Part of the solution issue #204
+async function fetchli(result, editor,row) {
+    var res;
+    //var myres;
+    var ulfound;
+    var lires;
+    var newres;
+    var liSuggestion;
+
+    return new Promise((resolve, reject) => {
+        //res = elementReady(`#editor-${row} .suggestions__translation-memory.initialized`);
+        //console.debug("resli:", res, editor)
+        //const myres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized`);
+        setTimeout(() => {
+        newres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized .suggestions-list`);
+        //console.debug("object:", newres)
+            if (newres !== null) {
+                    // Get the li list from the suggestions
+                    lires =newres.getElementsByTagName("li");
+                    liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                    textFound = liSuggestion.innerHTML;
+                    //sometimes we have a second <span> within the text, we need to drop that
+                    resolve(textFound.split("<span")[0]);
+                }
+                 else {
+                    resolve("No suggestions");
+                }
+          }, 900);
+    });
+}
+// Part of the solution issue #204
+async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
+    var timeout = 0;
+    var editoropen;
+    var editor;
+    var preview;
+    var res;
+    locale = checkLocale();
+    // We need to populate the posttranslate array
+    setPostTranslationReplace(postTranslationReplace);
+    setPreTranslationReplace(preTranslationReplace);
+    
+    
+        // 19-06-2021 PSS added animated button for translation at translatePage
+        let translateButton = document.querySelector(".paging a.translation-filler-button");
+        translateButton.innerText = "Translate";
+        //console.debug("Button classname:", translateButton.className);
+        // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
+        if (translateButton.className == "translation-filler-button") {
+            translateButton.className += " started";
+        }
+        else {
+            translateButton.classList.remove("translation-filler-button", "started", "translated");
+            translateButton.classList.remove("translation-filler-button", "restarted", "translated");
+            translateButton.className = "translation-filler-button restarted";
+        }
+        // Let us find the records to populate
+    for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+        transtype = "single";
+        // 16-08-2021 PSS fixed retranslation issue #118
+        let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
+      
+        row = rowfound.split("-")[1];
+        let newrow = rowfound.split("-")[2];
+        if (typeof newrow != "undefined") {
+            newrowId = row.concat("-", newrow);
+            row = newrowId;
+        }
+        else {
+            rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
+            row = rowfound.split("_")[1];
+        }
+        // we need to store current preview and editor for later usage
+        preview = document.querySelector(`#preview-${row}`);
+        editor = document.querySelector(`#editor-${row}`);
+        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+        // We need to determine the current state of the record
+        if (currec != null) {
+            var current = currec.querySelector("span.panel-header__bubble");
+            var prevstate = current.innerText;
+        }
+        let original = record.querySelector("span.original-raw").innerText;
+        // 14-08-2021 PSS we need to put the status back of the label after translating
+        let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+        if (transname != null) {
+            transname.className = "trans_name_div";
+            transname.innerText = "URL, name of theme or plugin or author!";
+            // In case of a plugin/theme name we need to set the button to blue
+            let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+            curbut.style.backgroundColor = "#0085ba";
+            curbut.innerText = "Save";
+            transtype = "single";
+        }
+        // If in the original field "Singular is present we have a plural translation
+        pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
+        //console.debug("pluralpresent:",pluralpresent)
+        if (pluralpresent != null) {
+            // currently we do not process plural within TM, as it will only give one result
+            original = pluralpresent.innerText;
+            transtype = "plural";
+            plural_line = "1";
+        }
+        else {
+            transtype = "single";
+            plural_line = "0";
+        }
+        if (transtype == "single") {
+            // PSS 09-03-2021 added check to see if we need to translate
+            //Needs to be put into a function, because now it is unnessary double code
+            toTranslate = true;
+            // we need to remember which editor to close
+            let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
+            editoropen = await openEditor(preview);
+            if (editoropen == "Open") {
+                //editor.style.display = "none";
+                preview.style.backgroundColor = "#ffe399";
+            }
+            result = await elementReady(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
+                return new Promise((resolve, reject) => {
+                    myTM = fetchsuggestions(row);
+                    if (typeof myTM != 'undefined') {
+                        glotpress_close.click();
+                        resolve(myTM);
+                    }
+                    else {
+                        reject("No suggestions");
+                        glotpress_close.click();
+                    }
+                });
+            });
+            //console.debug("resolve:", result);
+            if (result != "No suggestions") {
+                let myresult = await fetchli(result, editor, row).then(res => {
+                    if (typeof res != null) {
+                        res = getTM(res, row, record, destlang, original, replaceVerb, transtype);
+                        // With center it works best, but it can be put on the top, center, bottom
+                        //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
+                        // Determine which row we need to push to the top
+                        oldRow = editor.id;
+                        newRow = oldRow.replace("editor", "preview")
+                        myRow = document.querySelector(`#${newRow}`);
+                        myRow.scrollIntoView(true);
+                    }
+                    else {
+                        console.debug("notfound");
+                    }
+
+                }).catch((error) => {
+                    console.error("Error in fetching li:", error);
+                });
+            }
+            else {
+                console.debug("No suggestions");
+            }
+            // glotpress_close.click();
+        }
+        else {
+            console.debug('Found plural!');
+
+        }
+    }
+    // Translation completed  
+    translateButton = document.querySelector(".paging a.translation-filler-button");
+    translateButton.className += " translated";
+    translateButton.innerText = "Translated";
+}
+
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
     //console.time("translation")
     var translate;
@@ -736,7 +1242,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (typeof current != "undefined") {
                              current.innerText = "transFill";
                              current.value = "transFill";
-                         }
+                            }
                         // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
                         //select = next_editor.getElementsByClassName("meta");
@@ -746,14 +1252,14 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                         if (currec != null) {
                             var current = currec.querySelector("span.panel-header__bubble");
-                        }
+                           }
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
                         let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
                         if (previewElem != null) {
                             previewElem.innerText = translatedText;
-                        }
+                           }
                         else {
                             let preview = document.querySelector("#preview-" + row + " td.translation");
                             let spanmissing = preview.querySelector(" span.missing");
@@ -795,6 +1301,18 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     preview.innerText = translatedText;
                                     current.innerText = "transFill";
                                     current.value = "transFill";
+                                    var element1 = document.createElement("div");
+                                    element1.setAttribute("class", "trans_local_div");
+                                    element1.setAttribute("id", "trans_local_div");
+                                    element1.appendChild(document.createTextNode("Local"));
+                                    preview.appendChild(element1);
+                                    preview = document.querySelector(`#preview-${row}`);
+                                    rowchecked = preview.querySelector("td input");
+                                    if (rowchecked != null) {
+                                        if (!rowchecked.checked) {
+                                            rowchecked.checked = true;
+                                        }
+                                    }
                                 }
                             }
                             else {
@@ -802,6 +1320,19 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 preview.innerText = translatedText;
                                 current.innerText = "transFill";
                                 current.value = "transFill";
+                                var element1 = document.createElement("div");
+                                element1.setAttribute("class", "trans_local_div");
+                                element1.setAttribute("id", "trans_local_div");
+                                element1.appendChild(document.createTextNode("Local"));
+                                preview.appendChild(element1);
+                                // we need to set the checkbox as marked
+                                preview = document.querySelector(`#preview-${row}`);
+                                rowchecked = preview.querySelector("td input");
+                                if (rowchecked != null) {
+                                    if (!rowchecked.checked) {
+                                        rowchecked.checked = true;
+                                    }
+                                }
                             }
                         }
                         if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
@@ -857,7 +1388,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         }
                                     }
                                 }
-                                
                                 else if (transsel == "microsoft") {
                                     result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (result == "Error 401") {
@@ -895,6 +1425,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         if (preview != null) {
                                             preview.innerText = translatedText;
                                             preview.value = translatedText;
+                                            var element1 = document.createElement("div");
+                                            element1.setAttribute("class", "trans_local_div");
+                                            element1.setAttribute("id", "trans_local_div");
+                                            element1.appendChild(document.createTextNode("Local"));
+                                            preview.appendChild(element1);
                                         }
                                     }
                                 }
@@ -908,12 +1443,24 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
                                     if (previewElem != null) {
                                         previewElem.innerText = translatedText;
+                                        var element1 = document.createElement("div");
+                                        element1.setAttribute("class", "trans_local_div");
+                                        element1.setAttribute("id", "trans_local_div");
+                                        element1.appendChild(document.createTextNode("Local"));
+                                        previewElem.appendChild(element1);
                                     }
                                     current.innerText = "transFill";
                                     current.value = "transFill";
                                 }
                    
                                 validateEntry(destlang, textareaElem1, "", "", row);   
+                            }
+                            preview = document.querySelector(`#preview-${row}`);
+                            rowchecked = preview.querySelector("td input");
+                            if (rowchecked != null) {
+                                if (!rowchecked.checked) {
+                                    rowchecked.checked = true;
+                                }
                             }
                         }
                     }
@@ -930,6 +1477,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = "transFill";
                         current.value = "transFill";
+                    }
+                    preview = document.querySelector(`#preview-${row}`);
+                    rowchecked = preview.querySelector("td input");
+                    if (rowchecked != null) {
+                        if (!rowchecked.checked) {
+                            rowchecked.checked = true;
+                        }
                     }
                 }
                 //14-09-2021 PSS changed the class to meet GlotDict behavior
@@ -1223,7 +1777,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-function bulkSave(event) {
+async function bulkSave(event) {
     let timeout = 0;
     var counter = 0;
     var myWindow;
@@ -1263,9 +1817,11 @@ function bulkSave(event) {
                 // PSS confirm the message for dismissal
                 foundlabel= elementReady(".gp-js-message-dismiss").then(confirm => {
                     if (confirm != '.gp-js-message-dismiss') {
+                        if (confirm != "No suggestions") {
                             confirm.click();
                         }
-                    });
+                    }
+            });
             }, timeout);
             timeout += 1500;
 
@@ -1315,24 +1871,38 @@ function _waitForElement(selector, delay =5, tries = 50) {
     }
   }
 
-
-async function elementReady(selector) {
+function elementReady(selector) {
     var el;
+    var timeout = "20";
     return new Promise((resolve, reject) => {
-        el = document.querySelector(selector);
+        //console.debug("within elementReady",selector)
+            // PSS issue #203 improvement
+        setTimeout(() => {
+            el = document.querySelector(selector);
+            //console.debug("el:",el)
+        }, timeout);
         if (el) {
             resolve(el);
-            return
+      
         }
         else {
             new MutationObserver((mutationRecords, observer) => {
                 // Query for elements matching the specified selector
-                Array.from(document.querySelectorAll(selector)).forEach((element) => {
-                    //console.debug("new elementReady",selector);
-                    resolve(selector);
-                    //Once we have resolved we don't need the observer anymore.
-                    observer.disconnect();
-                });
+               // console.debug("new elementReady", selector);
+                let findsel = document.querySelectorAll(selector);
+               // console.debug("findsel:", findsel.length);
+                if (findsel.length != "0") {
+                    Array.from(document.querySelectorAll(selector)).forEach((element) => {
+
+                        resolve(selector);
+                        //Once we have resolved we don't need the observer anymore.
+                        observer.disconnect();
+                    });
+                }
+                else {
+                    resolve("No suggestions");
+                   
+                    }
             })
                 .observe(document.documentElement, {
                     childList: true,
@@ -1512,3 +2082,162 @@ function processTransl(original, translatedText, language, record, rowId, transt
 
 }
 
+// PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks
+function processPlaceholderSpaces(originalPreProcessed, translatedText) {
+    if (originalPreProcessed == "") {
+        //console.debug("preprocessed empty");
+    }
+    //console.debug("processPlaceholderSpaces not translated", originalPreProcessed);
+    //console.debug("processPlaceholderSpaces translated", translatedText);
+
+    var placedictorg = {};
+    var placedicttrans = {};
+    var found = 0;
+    var counter = 0;
+    while (counter < 20) {
+        // PSS 03-03-2021 find if the placeholder is present and at which position
+        found = originalPreProcessed.search("[" + counter + "]");
+        // console.debug("processPlaceholderSpaces found start:", found, " ", "[" + counter + "]");
+        if (found == -1) {
+            break;
+        }
+        // PSS if at beginning of the line we cannot have a blank before
+        if (found == 1) {
+            part = originalPreProcessed.substring(found - 1, found + 3);
+            placedictorg[counter] = part;
+        }
+        else if (found == (originalPreProcessed.length) - 3) {
+            // PSS if at end of line it is possible that no blank is behind
+            // console.debug("found at end of line!!", found);
+            part = originalPreProcessed.substring(found - 2, found + 2);
+            placedictorg[counter] = part;
+        }
+        else {
+            // PSS we are in the middle
+            part = originalPreProcessed.substring(found - 2, found + 3);
+            placedictorg[counter] = part;
+        }
+        //console.debug("processPlaceholderSpaces at matching in original line:", '"' + part + '"');
+        counter++;
+    }
+    var lengteorg = Object.keys(placedictorg).length;
+    if (lengteorg > 0) {
+        counter = 0;
+        while (counter < 20) {
+            found = translatedText.search("[" + counter + "]");
+            //console.debug("processPlaceholderSpaces found in translatedText start:", found, " ", "[" + counter + "]");
+            if (found == -1) {
+                break;
+            }
+            // PSS if at beginning of the line we cannot have a blank before       
+            if (found == 1) {
+                part = translatedText.substring(found - 1, found + 3);
+                placedicttrans[counter] = part;
+            }
+            else if (found == (translatedText.length) - 3) {
+                // PSS if at end of line it is possible that no blank is behind
+                //console.debug("found at end of line!!", found);
+                // 24-03-2021 find typo was placedictorg instead of placedicttrans
+                part = translatedText.substring(found - 2, found + 2);
+                //console.debug('found string at end of line:',part);
+                placedicttrans[counter] = part;
+            }
+            else {
+                // PSS we are in the middle	
+                part = translatedText.substring(found - 2, found + 3);
+                placedicttrans[counter] = part;
+            }
+            //console.debug("processPlaceholderSpaces at matching in translated line:", '"' + part + '"');
+            counter++;
+        }
+        counter = 0;
+        // PSS here we loop through the found placeholders to check if a blank is not present or to much
+        while (counter < (Object.keys(placedicttrans).length)) {
+            orgval = placedictorg[counter];
+            let transval = placedicttrans[counter];
+            if (placedictorg[counter] == placedicttrans[counter]) {
+                //console.debug('processPlaceholderSpaces values are equal!');
+            }
+            else {
+                // console.debug('processPlaceholderSpaces values are not equal!:', '"' + placedictorg[counter] + '"', " " + '"' + placedicttrans[counter] + '"');
+                // console.debug('orgval', '"' + orgval + '"');
+                if (typeof orgval != "undefined") {
+                    if (orgval.startsWith(" ")) {
+                        // console.debug("processPlaceholderSpaces in org blank before!!!");
+                        if (!(transval.startsWith(" "))) {
+                            // 24-03-2021 PSS found another problem when the placeholder is at the start of the line
+                            found = translatedText.search("[" + counter + "]");
+                            // console.debug('processPlaceholderSpaces found at :', found);
+                            if (found != 1) {
+                                // console.debug("processPlaceholderSpaces in trans no blank before!!!");
+                                repl = transval.substr(0, 1) + " " + transval.substr(1,);
+                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            }
+                        }
+                    }
+                    else {
+                        transval = placedicttrans[counter];
+                        repl = transval.substr(1,);
+                        // console.debug("processPlaceholderSpaces no blank before in org!");
+                        if (transval.startsWith(" ")) {
+                            //  console.debug("processPlaceholderSpaces apparently blank in front in trans!!!");
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            // console.debug("processPlaceholderSpaces blank in front removed in trans", translatedText);
+                        }
+
+                    }
+                    if (!(orgval.endsWith(" "))) {
+                        //console.debug("processPlaceholderSpaces apparently in org no blank behind!!!");
+                        // console.debug('processPlaceholderSpaces values are not equal!:', '"' + orgval + '"', " ", '"' + transval + '"');
+                        if (transval.endsWith(" ")) {
+                            // console.debug("processPlaceholderSpaces in trans blank behind!!!");
+                            //console.debug('processPlaceholderSpaces values are not equal!:', orgval, transval);
+                            // 11-03 PSS changed this to prevent removing the blank if the translated is not at the end of the line
+                            // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
+                            found = translatedText.search("[" + counter + "]");
+                            //23-03-2021 PSS added another improvement to the end of the line 
+                            foundorg = originalPreProcessed.search("[" + counter + "]");
+                            //  console.debug('found at:', found);
+                            if (found != (originalPreProcessed.length) - 2) {
+                                //if (foundorg===found){
+                                repl = transval.substring(0, transval.length - 1);
+                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                                //  console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
+                                //}
+                            }
+                            else {
+                                repl = transval.substring(0, transval.length) + " ";
+                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            }
+                        }
+                    }
+                }
+                else {
+                    if (!(transval.endsWith(" "))) {
+                        // console.debug("processPlaceholderSpaces no blank behind!!!");
+                        // 11-03-2021 PSS changed this to prevent removing a blank when at end of line in trans
+                        // 16-03-2021 PSS fixed a problem with the tests because blank at the end was not working properly
+                        found = translatedText.search("[" + counter + "]");
+                        //  console.debug("found at:", found);
+                        //  console.debug("length of line:", translatedText.length);
+                        if (found != (translatedText.length) - 2) {
+                            // console.debug("found at end of line:", found);
+                            repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        }
+                        else {
+                            repl = transval.substring(0, transval.length) + " ";
+                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                        }
+                    }
+                }
+            }
+            counter++;
+        }
+    }
+    else {
+        //console.debug("processPlaceholderBlank no placeholders found",translatedText);
+        return translatedText;
+    }
+    return translatedText;
+}

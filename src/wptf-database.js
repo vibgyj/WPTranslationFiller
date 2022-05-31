@@ -10,6 +10,118 @@ res=initStoragePersistence();
    // }
 //}
 
+// Part of the solution issue #204
+async function getTM(myLi,row,record,destlang,original,replaceVerb,transtype) {
+    var timeout = 0;
+    var timer = 0;
+    var preview;
+    var result ="";
+    var res;
+    var myres;
+    var nosugg;
+    convertToLower = false;
+    
+    let translatedText = myLi;
+    //console.debug("myLI:", myLi,translatedText)
+    translatedText = postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", convertToLower);
+    let textareaElem = record.querySelector("textarea.foreign-text");
+    textareaElem.innerText = translatedText;
+    textareaElem.value = translatedText;
+    if (typeof current != "undefined") {
+        current.innerText = "transFill";
+        current.value = "transFill";
+    }
+    // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
+    select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+    //select = next_editor.getElementsByClassName("meta");
+    var status = select.querySelector("dt").nextElementSibling;
+    status.innerText = "transFill";
+    status.value = "transFill";
+    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+    if (currec != null) {
+       var current = currec.querySelector("span.panel-header__bubble");
+    }
+    validateEntry(destlang, textareaElem, "", "", row);
+    // PSS 10-05-2021 added populating the preview field issue #68
+    // Fetch the first field Singular
+    let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
+    if (previewElem != null) {
+       // we found a plural obviously, we do not fetch TM for that
+       if (preview != null) {
+           preview.style.display = "none";
+       }
+    }
+    else {
+         let preview = document.querySelector("#preview-" + row + " td.translation");
+         let spanmissing = preview.querySelector(" span.missing");
+         if (spanmissing != null) {
+             preview.innerText = translatedText;
+             current.innerText = "transFill";
+             current.value = "transFill";
+             var element1 = document.createElement("div");
+             element1.setAttribute("class", "trans_local_div");
+             element1.setAttribute("id", "trans_local_div");
+             element1.appendChild(document.createTextNode("TM"));
+             preview.appendChild(element1);
+
+            // we need to set the checkbox as marked
+            rowchecked = preview.querySelector("td input");
+            //console.debug("row:", row, transtype);
+            if (rowchecked != null) {
+                if (!rowchecked.checked) {
+                    if (transtype == 'single') {
+                       //console.debug("single:", transtype)
+                       rowchecked.checked = true;
+                    }
+                    else {
+                        //console.debug("plural:", transtype)
+                        //console.debug("TM not found plural!");
+                        if (preview != null) {
+                            preview.style.display = "none";
+                        }
+                    }
+                }
+            }
+         }
+         else {
+             // if it is as single with local then we need also update the preview
+             preview.innerText = translatedText;
+             current.innerText = "transFill";
+             current.value = "transFill";
+             var element1 = document.createElement("div");
+             element1.setAttribute("class", "trans_local_div");
+             element1.setAttribute("id", "trans_local_div");
+             element1.appendChild(document.createTextNode("TM"));
+             preview.appendChild(element1);
+             // we need to set the checkbox as marked
+             preview = document.querySelector(`#preview-${row}`);
+             rowchecked = preview.querySelector("td input");
+             if (rowchecked != null) {
+                if (!rowchecked.checked) {
+                   rowchecked.checked = true;
+                }
+             }
+         }
+    }
+    if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
+        document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "visible";
+    }
+    else {
+        // console.debug("TM not found single!");
+        // console.debug("preview:", preview);
+        if (preview != null) {
+            preview.style.display = "none";
+            rowchecked = preview.querySelector("td input");
+            if (rowchecked != null) {
+                //if (!rowchecked.checked) {
+                rowchecked.checked = false;
+                //  }
+            }
+        }
+    }
+    return myLi;
+}
+
 function getDbSchema() {
     var table = {
         name: "Translation",
@@ -174,8 +286,7 @@ async function addTransline(rowId){
     });
     return;
 }
-
-async function dbExport() {
+async function dbExport(destlang) {
   var export_file = "";
   var arrayData = [];
   // 09-07-2021 PSS altered the separator issue #104
@@ -189,7 +300,7 @@ async function dbExport() {
   const trans = await jsstoreCon.select({
     from: "Translation"
   });
-    destlang ="nl";
+
     export_file = "export_database_" + destlang + ".csv";
     i = 1;
     trans.forEach(function (trans) {
