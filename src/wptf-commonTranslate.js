@@ -1881,7 +1881,6 @@ function _waitForElement(selector, delay =5, tries = 50) {
     }
   }
 
-
 function elementReady(selector) {
     var el;
     var timeout = "20";
@@ -1943,7 +1942,6 @@ function waitForElm(selector) {
         });
     });
 }
-
 
 /**
  ** function copied from stackoverflow created by eclanrs

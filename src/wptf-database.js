@@ -286,7 +286,6 @@ async function addTransline(rowId){
     });
     return;
 }
-
 async function dbExport(destlang) {
   var export_file = "";
   var arrayData = [];
