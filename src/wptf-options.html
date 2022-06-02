@@ -47,6 +47,9 @@
             font-style: italic;
             width: 300px;
         }
+        #tmWait {
+            width: 50px;
+        }
 
         #text_verbs {
             width: calc(100% - 6px);
@@ -150,7 +153,7 @@
         <table id="options">
             <tr>
                 <td>
-                        <label for="google_api_key">Google API Key</label>
+                    <label for="google_api_key">Google API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
@@ -159,81 +162,92 @@
                 </td>
             </tr>
             <tr>
-                <td> 
-                        <label for="microsoft_api_key">Microsoft API Key</label>
+                <td>
+                    <label for="microsoft_api_key">Microsoft API Key</label>
                 </td>
                 <td>
-                   <div class="form-input">
+                    <div class="form-input">
                         <input id="microsoft_api_key" type="text" value="-api key->" />
-                   </div>
+                    </div>
                 </td>
             </tr>
             <tr>
-               <td>
-                      <label for="deepl_api_key">Deepl API Key</label>
-               </td>
-               <td>
-                   <div class="form-input">
-                       <input id="deepl_api_key" type="text" value="-api key->" />
-                   </div>
-               </td>
+                <td>
+                    <label for="deepl_api_key">Deepl API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="deepl_api_key" type="text" value="-api key->" />
+                    </div>
+                </td>
             </tr>
             <tr>
-               <td>
+                <td>
                     <label>License is for DeepL Free</label>
-               </td>
-               <td>
-                   <div>
-                       <input type="checkbox" id="DeeplFree">
-                       <span class="tooltip" data-tooltip="Select this if you are using a free license from Deepl">?</span>
-                   </div>
-               </td>
+                </td>
+                <td>
+                    <div>
+                        <input type="checkbox" id="DeeplFree">
+                        <span class="tooltip" data-tooltip="Select this if you are using a free license from Deepl">?</span>
+                    </div>
+                </td>
             </tr>
             <tr>
-               <td>
-                  <label for="translator">Select a translator:</label>
-               </td>
-               <td>
-                 <div class="form-select">
-                     <select name="transsel" id="transselect">
-                      <option value="deepl">Deepl</option>
-                      <option value="google">Google</option>
-                      <option value="microsoft">Microsoft</option>
-                     </select>
-                 </div>
-               </td>
-            </tr>
-            <tr> 
-            <td>
-                <label for="destination_lang">Destination Language</label>
-            </td>
-            <td>
-                <div class="form-input">
-                    <input id="destination_lang" type="text" value="nl" />
-                    <span class="tooltip" data-tooltip="Use the id from the list of languages provided by the API translator in lowercase">?</span>
-                </div>
-            </td> 
+                <td>
+                    <label for="translator">Select a translator:</label>
+                </td>
+                <td>
+                    <div class="form-select">
+                        <select name="transsel" id="transselect">
+                            <option value="deepl">Deepl</option>
+                            <option value="google">Google</option>
+                            <option value="microsoft">Microsoft</option>
+                        </select>
+                    </div>
+                </td>
             </tr>
             <tr>
-               <td>
-                   <label for="glossary_file">Glossary File (csv)</label>
-               </td>
-               <td>
-                  <div class="form-input">
-                    <input id="glossary_file" type="file" />
-                  </div>
-               </td>    
+                <td>
+                    <label for="destination_lang">Destination Language</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="destination_lang" type="text" value="nl" />
+                        <span class="tooltip" data-tooltip="Use the id from the list of languages provided by the API translator in lowercase">?</span>
+                    </div>
+                </td>
             </tr>
-            <tr>    
-               <td>
-               </td>
-               <td colspan="1">
-                 <div>
-                   <span style="width:320px" id="text_glossary_file"></span>
-                 </div>
-               </td>
+            <tr>
+                <td>
+                    <label for="glossary_file">Glossary File (csv)</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="glossary_file" type="file" />
+                    </div>
+                </td>
             </tr>
-    </table>
+            <tr>
+                <td>
+                </td>
+                <td colspan="1">
+                    <div>
+                        <span style="width:320px" id="text_glossary_file"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="tmWait">TM waiting time</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="tmWait" type="text" value="500" />
+                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
         <div class="form-input">
             <label for="text_pre_verbs">Pre Translation Replace</label>

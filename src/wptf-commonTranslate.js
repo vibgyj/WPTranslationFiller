@@ -911,14 +911,14 @@ async function fetchsuggestions(row) {
 //};
 
 // Part of the solution issue #204
-async function fetchli(result, editor,row) {
+async function fetchli(result, editor,row,TMwait) {
     var res;
     //var myres;
     var ulfound;
     var lires;
     var newres;
     var liSuggestion;
-
+    //console.debug("TMwait:",TMwait)
     return new Promise((resolve, reject) => {
         //res = elementReady(`#editor-${row} .suggestions__translation-memory.initialized`);
         //console.debug("resli:", res, editor)
@@ -937,11 +937,11 @@ async function fetchli(result, editor,row) {
                  else {
                     resolve("No suggestions");
                 }
-          }, 900);
+          }, TMwait);
     });
 }
 // Part of the solution issue #204
-async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
+async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait) {
     var timeout = 0;
     var editoropen;
     var editor;
@@ -1042,7 +1042,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             });
             //console.debug("resolve:", result);
             if (result != "No suggestions") {
-                let myresult = await fetchli(result, editor, row).then(res => {
+                let myresult = await fetchli(result, editor, row,TMwait).then(res => {
                     if (typeof res != null) {
                         res = getTM(res, row, record, destlang, original, replaceVerb, transtype);
                         // With center it works best, but it can be put on the top, center, bottom
@@ -1282,6 +1282,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan1.className = "translation-text";
                                     li1.appendChild(myspan1);
                                     myspan1.appendChild(document.createTextNode(translatedText));
+                                    
 
                                     // Also create the second li
                                     var li2 = document.createElement("li");
@@ -1296,6 +1297,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan2.className = "translation-text";
                                     li2.appendChild(myspan2);
                                     myspan2.appendChild(document.createTextNode("empty"));
+                                   
                                 }
                                 else {
                                     preview.innerText = translatedText;
@@ -1786,7 +1788,8 @@ async function bulkSave(event) {
         if (is_pte) {
             //console.debug("is pte:", is_pte)
             if (!preview.querySelector("th input").checked) {
-                //console.debug("no checkbox set!");
+               // console.debug("no checkbox set!");
+                preview.style.display = "none";
                 return;
             }
             checkset = preview.querySelector("th input");
@@ -1797,12 +1800,14 @@ async function bulkSave(event) {
             // If a translation alreay has been saved, there is not checkbox available
             if (checkset != null) {
                 if (!checkset.checked) {
-                    //console.debug("no checkbox1 set!");
+                   // console.debug("no checkbox1 set!");
+                    preview.style.display = "none";
                     return;
                 }
             }
             else {
                 //console.debug("problem reading checkbox1");
+                preview.style.display = "none";
                 return;
             }
             counter++;
@@ -1811,17 +1816,22 @@ async function bulkSave(event) {
                 preview.querySelector("td.actions .edit").click();
                 const editor = preview.nextElementSibling;
                 if (editor != null) {
-                    editor.style.display = "none";
                     editor.querySelector(".translation-actions__save").click();
+                    
+
+                    // PSS confirm the message for dismissal
+                    //foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
+                    //    console.debug("dismiss:",confirm)
+                    //    if (confirm == '.gp-js-message-dismiss') {
+                     //       if (confirm != "No suggestions") {
+                      //           console.debug("closing message")
+                      //          editor.querySelector(".gp-js-message-dismiss").click();
+                                //confirm.click();
+                        //    }
+                      //  }
+                    //});
+                    editor.style.display = "none";
                 }
-                // PSS confirm the message for dismissal
-                foundlabel= elementReady(".gp-js-message-dismiss").then(confirm => {
-                    if (confirm != '.gp-js-message-dismiss') {
-                        if (confirm != "No suggestions") {
-                            confirm.click();
-                        }
-                    }
-            });
             }, timeout);
             timeout += 1500;
 

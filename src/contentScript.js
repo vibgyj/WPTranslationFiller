@@ -187,7 +187,7 @@ document.addEventListener("keydown", function (event) {
         event.preventDefault();
         chrome.storage.sync
             .get(
-                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
+                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree","TMwait"],
                 function (data) {
                     if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
 
@@ -198,7 +198,14 @@ document.addEventListener("keydown", function (event) {
                                 //var locale = checkLocale();
                                 convertToLow = data.convertToLower;
                                 var DeeplFree = data.DeeplFree;
-                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
+                                if (typeof data.TMwait == "undefined") {
+                                    var TMwait = 500;
+                                    console.debug("TMwait is undefined set to: ", TMwait)
+                                }
+                                else {
+                                   var TMwait = data.TMwait;
+                                }
+                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree,TMwait);
                             }
                             else {
                                 messageBox("error", "You need to set the translator API");
@@ -1893,3 +1900,5 @@ function gd_auto_hide_next_editor(editor) {
                 });
             }
 }
+
+

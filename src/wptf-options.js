@@ -29,6 +29,7 @@ let transselectBox = document.getElementById("transselect");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("text_glossary_file");
 let glossaryFile = document.getElementById("glossary_file");
+let TMwaitValue = document.getElementById("tmWait");
 let verbsTextbox = document.getElementById("text_verbs");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let showHistCheckbox = document.getElementById("show-history");
@@ -39,7 +40,7 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 //console.debug("Diff:", showDiffCheckbox);
 //console.debug("Hist:", showHistCheckbox);
 
-chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree"], function (data) {
+chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -49,6 +50,14 @@ chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "d
         else {
             apikeydeeplCheckbox.checked = false
         }
+    }
+    if (typeof data.TMwait == "undefined") {
+        TMwait = 500;
+    }
+    else {
+        TMwait = data.TMwait;
+        TMwaitValue.value = TMwait;
+
     }
     apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
@@ -132,6 +141,7 @@ button.addEventListener("click", function () {
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
+    let TMwaitVal = TMwaitValue.value;
     if (document.querySelector("#show-history:checked") !== null) {
         //console.debug("diff:", document.querySelector("#show-history:checked"));
         let Hist = document.querySelector("#show-history:checked");
@@ -177,7 +187,8 @@ button.addEventListener("click", function () {
         showHistory: showHist,
         showTransDiff: showDifference,
         glotDictGlos: showDictGlosLine,
-        convertToLower: showConvertToLower
+        convertToLower: showConvertToLower,
+        TMwait: TMwaitVal
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  
