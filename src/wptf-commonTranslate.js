@@ -563,6 +563,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     var record = "";
     var row = "";
     var preview = "";
+    var pretrans = 'notFound';
     //destlang = "nl"
 
     locale = checkLocale();
@@ -640,7 +641,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 // Do we need to translate ??
 
                 if (toTranslate) {
-                    let pretrans = await findTransline(original, destlang);
+                    pretrans = await findTransline(original, destlang);
                     if (pretrans != 'notFound') {
                         // Pretranslation found!
                         let translatedText = pretrans;
@@ -843,6 +844,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     if (preview != null) {
                         preview.innerText = translatedText;
                         preview.value = translatedText;
+                        pretrans = "FoundName";
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = "transFill";
                         current.value = "transFill";
@@ -860,16 +862,23 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 //14-09-2021 PSS changed the class to meet GlotDict behavior
                 var currentClass = document.querySelector(`#editor-${row}`);
                 var prevcurrentClass = document.querySelector(`#preview-${row}`);
-                //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                currentClass.classList.add("wptf-translated");
-                currentClass.classList.replace("no-translations", "has-translations");
-                currentClass.classList.replace("untranslated", "status-waiting");
-                //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                prevcurrentClass.classList.replace("no-translations", "has-translations");
-                prevcurrentClass.classList.replace("untranslated", "status-waiting");
-                prevcurrentClass.classList.add("wptf-translated");
-                // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
-                prevcurrentClass.style.backgroundColor = "#ffe399";
+        if (pretrans != 'notFound') {
+            //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            currentClass.classList.add("wptf-translated");
+            currentClass.classList.replace("no-translations", "has-translations");
+            currentClass.classList.replace("untranslated", "status-waiting");
+            //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+            prevcurrentClass.classList.replace("no-translations", "has-translations");
+            prevcurrentClass.classList.replace("untranslated", "status-waiting");
+            prevcurrentClass.classList.add("wptf-translated");
+            // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
+            prevcurrentClass.style.backgroundColor = "#ffe399";
+        }
+        else {
+            // We need to adept the class to hide the untranslated lines
+            // Hiding the row is done through CSS tr.preview.status-hidden
+            prevcurrentClass.classList.replace("untranslated", "status-hidden");
+        }
             }
             // Translation completed  
             translateButton = document.querySelector(".paging a.translation-filler-button");
@@ -1027,7 +1036,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 //editor.style.display = "none";
                 preview.style.backgroundColor = "#ffe399";
             }
-            result = await elementReady(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
+            result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
                 return new Promise((resolve, reject) => {
                     myTM = fetchsuggestions(row);
                     if (typeof myTM != 'undefined') {
@@ -1048,10 +1057,10 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         // With center it works best, but it can be put on the top, center, bottom
                         //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
                         // Determine which row we need to push to the top
-                        oldRow = editor.id;
-                        newRow = oldRow.replace("editor", "preview")
-                        myRow = document.querySelector(`#${newRow}`);
-                        myRow.scrollIntoView(true);
+                       // oldRow = editor.id;
+                       // newRow = oldRow.replace("editor", "preview")
+                       // myRow = document.querySelector(`#${newRow}`);
+                       // myRow.scrollIntoView(true);
                     }
                     else {
                         console.debug("notfound");
@@ -1779,66 +1788,86 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     }
 }
 
-async function bulkSave(event) {
-    let timeout = 0;
+function saveLocal() {
     var counter = 0;
-    var myWindow;
+    var timeout = 0;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    document.querySelectorAll("tr.preview").forEach((preview, i) => {
+    document.querySelectorAll("tr.preview").forEach((preview) => {
+        let rowfound = preview.id;
+        row = rowfound.split("-")[1];
+        let newrow = rowfound.split("-")[2];
+        if (typeof newrow != "undefined") {
+            newrowId = row.concat("-", newrow);
+            row = newrowId;
+        }
+
         if (is_pte) {
-            //console.debug("is pte:", is_pte)
-            if (!preview.querySelector("th input").checked) {
-               // console.debug("no checkbox set!");
-                preview.style.display = "none";
-                return;
-            }
             checkset = preview.querySelector("th input");
         }
         else {
             checkset = preview.querySelector("td input");
         }
-            // If a translation alreay has been saved, there is not checkbox available
-            if (checkset != null) {
-                if (!checkset.checked) {
-                   // console.debug("no checkbox1 set!");
-                    preview.style.display = "none";
-                    return;
-                }
+        // If a translation alreay has been saved, there is no checkbox available
+        if (checkset != null) {
+            //nextpreview = preview.nextElementSibling.nextElementSibling;
+            if (checkset.checked) {
+                counter++;
+                setTimeout(() => {
+                    //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
+                    const editor = preview.nextElementSibling;
+                    preview.querySelector("td.actions .edit").click();
+                    if (editor != null) {
+                        editor.querySelector(".translation-actions__save").click();
+                        // PSS confirm the message for dismissal
+                         const foundlabel =  waitForElm(".gp-js-message.gp-js-success").then(confirm => {
+                         //console.debug("result elementReady:",confirm)
+                        //    if (confirm == '.gp-js-message-dismiss') {
+                        //       if (confirm != "No suggestions") {
+                        //           console.debug("closing message")
+                        //          editor.querySelector(".gp-js-message-dismiss").click();
+                        //confirm.click();
+                        // }
+                        //  }
+                        });
+                    }
+                }, timeout);
+                timeout += 1000;
             }
             else {
-                //console.debug("problem reading checkbox1");
-                preview.style.display = "none";
-                return;
-            }
-            counter++;
-            setTimeout(() => {
-                //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
-                preview.querySelector("td.actions .edit").click();
-                const editor = preview.nextElementSibling;
-                if (editor != null) {
-                    editor.querySelector(".translation-actions__save").click();
-                    
-
-                    // PSS confirm the message for dismissal
-                    //foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                    //    console.debug("dismiss:",confirm)
-                    //    if (confirm == '.gp-js-message-dismiss') {
-                     //       if (confirm != "No suggestions") {
-                      //           console.debug("closing message")
-                      //          editor.querySelector(".gp-js-message-dismiss").click();
-                                //confirm.click();
-                        //    }
-                      //  }
-                    //});
-                    editor.style.display = "none";
+                if (preview != null) {
+                    if (!is_pte) {
+                        rowchecked = preview.querySelector("td input");
+                    }
+                    else {
+                        rowchecked = preview.querySelector("th input");
+                    }
+                    if (rowchecked != null) {
+                        if (!rowchecked.checked) {
+                        rowchecked.checked = false;
+                          }
+                    }
                 }
-            }, timeout);
-            timeout += 1500;
-
+            }
+        }
+        else {
+            console.debug("problem reading checkbox1");
+        }
     });
-    if ( counter == 0) {
+    return counter;
+}
+
+ function bulkSave(event) {
+    var counter = 0;
+    var row;
+    var myWindow;
+    var nextpreview;
+
+    counter = saveLocal();
+
+    if (counter == 0) {
         messageBox("error", "You do not have translations selected!");
-    }
+    }          
+    return "done"
 }
 
 function second(milliseconds) {
@@ -1881,17 +1910,20 @@ function _waitForElement(selector, delay =5, tries = 50) {
     }
   }
 
+
 function elementReady(selector) {
     var el;
-    var timeout = "20";
+    var timeout = 20;
+    var findsel;
     return new Promise((resolve, reject) => {
         //console.debug("within elementReady",selector)
             // PSS issue #203 improvement
         setTimeout(() => {
             el = document.querySelector(selector);
-            //console.debug("el:",el)
+            console.debug("el:",el)
         }, timeout);
-        if (el) {
+        console.debug("eltype:", typeof el);
+        if (typeof el !=null) {
             resolve(el);
       
         }
@@ -1899,8 +1931,8 @@ function elementReady(selector) {
             new MutationObserver((mutationRecords, observer) => {
                 // Query for elements matching the specified selector
                // console.debug("new elementReady", selector);
-                let findsel = document.querySelectorAll(selector);
-               // console.debug("findsel:", findsel.length);
+                findsel = document.querySelectorAll(selector);
+                console.debug("findsel:", findsel.length,findsel);
                 if (findsel.length != "0") {
                     Array.from(document.querySelectorAll(selector)).forEach((element) => {
 
@@ -1922,7 +1954,8 @@ function elementReady(selector) {
     });
 }
 
-function waitForElm(selector) {
+async function waitForElm(selector) {
+   // console.debug("Selector:", selector);
     return new Promise(resolve => {
         if (document.querySelector(selector)) {
             //console.debug("Selector found");
@@ -1930,9 +1963,13 @@ function waitForElm(selector) {
         }
         const observer = new MutationObserver(mutations => {
             if (document.querySelector(selector)) {
-               // console.debug("In observer found");
+                //console.debug("In observer found");
                 resolve(document.querySelector(selector));
                 observer.disconnect();
+            }
+            else {
+                //console.debug("Selector not found");
+                resolve("No suggestions")
             }
         });
 

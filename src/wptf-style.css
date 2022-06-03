@@ -546,9 +546,9 @@ table.translations td.priority {
 }
 
 /* This setting is necessary to move the row down due to the header that is no longer fixed */
-table.translations tr.preview {
+/*table.translations tr.preview {
     scroll-margin-top: 32px;
-}
+}*/
 
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict th + .priority + .original::before {
@@ -557,6 +557,10 @@ table.translations tr.preview.has-glotdict th + .priority + .original::before {
 
 tr.editor {
     scroll-margin-top: 62px !important;
+}
+/*The below line is to prevent untranslated originals to show up when bulk saving*/
+tr.preview.status-hidden {
+    display:none !important;
 }
 
 /** The change below is for issue# 137 modification in GlotDict*/
