@@ -39,7 +39,7 @@ function setPostTranslationReplace(postTranslationReplace) {
     }
 }
 
-const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&\w{2,6};|%\w*%/gi);
+const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
 function preProcessOriginal(original, preverbs, translator) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
@@ -83,7 +83,7 @@ function preProcessOriginal(original, preverbs, translator) {
             //  console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
     }
-    //console.debug("After pre-processing:", original);
+    // console.debug("After pre-processing:", original);
     return original;
 }
 
@@ -569,18 +569,18 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     locale = checkLocale();
 
     // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".paging a.translation-filler-button");
+    let translateButton = document.querySelector(".paging a.local-trans-button");
     translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-    if (translateButton.className == "translation-filler-button") {
+    if (translateButton.className == "local-trans-button") {
         translateButton.className += " started";
     }
     else {
 
-        translateButton.classList.remove("translation-filler-button", "started", "translated");
-        translateButton.classList.remove("translation-filler-button", "restarted", "translated");
-        translateButton.className = "translation-filler-button restarted";
+        translateButton.classList.remove("local-trans-button", "started", "translated");
+        translateButton.classList.remove("local-trans-button", "restarted", "translated");
+        translateButton.className = "local-trans-button restarted";
     }
 
 
@@ -755,7 +755,6 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     else {
                        // console.debug("pretrans not found single!");
                         preview = document.querySelector(`#preview-${row}`);
-                       // console.debug("preview:", preview);
                         if (preview != null) {
                             preview.style.display = "none";
                             rowchecked = preview.querySelector("td input");
@@ -848,6 +847,11 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = "transFill";
                         current.value = "transFill";
+                        //10-05-2022 PSS added poulation of status
+                        select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                        var status = select.querySelector("dt").nextElementSibling;
+                        status.innerText = "transFill";
+                        status.value = "transFill";
                         // we need to set the checkbox as marked
                         preview = document.querySelector(`#preview-${row}`);
                         rowchecked = preview.querySelector("td input");
@@ -856,7 +860,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             rowchecked.checked = true;
                            }
                         }
-                        
+                        validateEntry(destlang, textareaElem, "", "", row);
                     }
                 }
                 //14-09-2021 PSS changed the class to meet GlotDict behavior
@@ -881,7 +885,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
         }
             }
             // Translation completed  
-            translateButton = document.querySelector(".paging a.translation-filler-button");
+            translateButton = document.querySelector(".paging a.local-trans-button");
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
 
@@ -913,11 +917,7 @@ async function fetchsuggestions(row) {
     myTM = await document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .suggestions-wrapper`);
     return myTM;
 }
-//var setupEvents = function () {
-  //  var elem = document.getElementByTagName("li");
-    //console.debug("elem",elem)
-    
-//};
+
 
 // Part of the solution issue #204
 async function fetchli(result, editor,row,TMwait) {
@@ -939,6 +939,7 @@ async function fetchli(result, editor,row,TMwait) {
                     // Get the li list from the suggestions
                     lires =newres.getElementsByTagName("li");
                     liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                    // We need to fetch Text otherwise characters get converted!!
                     textFound = liSuggestion.innerHTML;
                     //sometimes we have a second <span> within the text, we need to drop that
                     resolve(textFound.split("<span")[0]);
@@ -963,17 +964,17 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     
     
         // 19-06-2021 PSS added animated button for translation at translatePage
-        let translateButton = document.querySelector(".paging a.translation-filler-button");
+        let translateButton = document.querySelector(".paging a.tm-trans-button");
         translateButton.innerText = "Translate";
         //console.debug("Button classname:", translateButton.className);
         // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-        if (translateButton.className == "translation-filler-button") {
+        if (translateButton.className == "tm-trans-button") {
             translateButton.className += " started";
         }
         else {
-            translateButton.classList.remove("translation-filler-button", "started", "translated");
-            translateButton.classList.remove("translation-filler-button", "restarted", "translated");
-            translateButton.className = "translation-filler-button restarted";
+            translateButton.classList.remove("tm-trans-button", "started", "translated");
+            translateButton.classList.remove("tm-trans-button", "restarted", "translated");
+            translateButton.className = "tm-trans-button restarted";
         }
         // Let us find the records to populate
     for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
@@ -1049,10 +1050,11 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     }
                 });
             });
-            //console.debug("resolve:", result);
+            
             if (result != "No suggestions") {
                 let myresult = await fetchli(result, editor, row,TMwait).then(res => {
                     if (typeof res != null) {
+                        //console.debug("Fetchli result:",res)
                         res = getTM(res, row, record, destlang, original, replaceVerb, transtype);
                         // With center it works best, but it can be put on the top, center, bottom
                         //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
@@ -1081,7 +1083,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
         }
     }
     // Translation completed  
-    translateButton = document.querySelector(".paging a.translation-filler-button");
+    translateButton = document.querySelector(".paging a.tm-trans-button");
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
 }
@@ -1256,12 +1258,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
                         //select = next_editor.getElementsByClassName("meta");
                         var status = select.querySelector("dt").nextElementSibling;
+                        
                         status.innerText = "transFill";
                         status.value = "transFill";
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                         if (currec != null) {
                             var current = currec.querySelector("span.panel-header__bubble");
-                           }
+                        }
+                        console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
+                        //validate(destlang, textareaElem, original, locale);
                         validateEntry(destlang, textareaElem, "", "", row);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
@@ -1328,6 +1333,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             }
                             else {
                                 // if it is as single with local then we need also update the preview
+                                
                                 preview.innerText = translatedText;
                                 current.innerText = "transFill";
                                 current.value = "transFill";
@@ -1357,6 +1363,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (checkplural != null) {
                             transtype = "plural";
                             plural_line = "2";
+                            console.debug("Plural: ", plural_line, original)
                             let plural = checkplural.innerText;
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
@@ -1376,7 +1383,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     }
                                 }
                                 else if (transsel == "deepl") {
-                                    result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                                    // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
+                                    result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                                     if (result == "Error 403") {
                                         messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                         //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -1488,7 +1496,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = "transFill";
                         current.value = "transFill";
+                        
                     }
+                    
                     preview = document.querySelector(`#preview-${row}`);
                     rowchecked = preview.querySelector("td input");
                     if (rowchecked != null) {
@@ -1536,7 +1546,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
 function check_span_missing(row,plural_line) {
     let preview = document.querySelector("#preview-" + row + " td.translation");   
     let spanmissing = preview.querySelector(" span.missing");
-    //console.debug("prev:", spanmissing);
     if (spanmissing != null) {
         //if (plural_line == "1") {
             // only remove when it is present and first plural line
@@ -1585,11 +1594,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     var checkplural = "";
     // To check if a plural is present we need to select the plural line!!
     var checkplural = document.querySelector(`#editor-${rowId} .source-string__plural span.original`);
-    //console.debug("checkplural:", checkplural);
 
     if (checkplural == null) {
         transtype = "single";
-       // console.debug("transtype:", transtype);
     }
     else {
         transtype = "plural";
@@ -1920,10 +1927,10 @@ function elementReady(selector) {
             // PSS issue #203 improvement
         setTimeout(() => {
             el = document.querySelector(selector);
-            console.debug("el:",el)
+            //console.debug("el:",el)
         }, timeout);
-        console.debug("eltype:", typeof el);
-        if (typeof el !=null) {
+        //console.debug("eltype:", typeof el);
+        if (typeof el !=null && typeof el !='undefined') {
             resolve(el);
       
         }
@@ -1932,7 +1939,7 @@ function elementReady(selector) {
                 // Query for elements matching the specified selector
                // console.debug("new elementReady", selector);
                 findsel = document.querySelectorAll(selector);
-                console.debug("findsel:", findsel.length,findsel);
+                //console.debug("findsel:", findsel.length,findsel);
                 if (findsel.length != "0") {
                     Array.from(document.querySelectorAll(selector)).forEach((element) => {
 
@@ -2114,7 +2121,6 @@ function processTransl(original, translatedText, language, record, rowId, transt
         
     }
     myRow = document.querySelector(`#editor-${rowId}`);
-    //console.debug("myRow:", myRow);
     current.innerText = "transFill";
     //current.innerText = "waiting";
     // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
