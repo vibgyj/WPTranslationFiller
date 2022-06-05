@@ -865,7 +865,7 @@ function checkbuttonClick(event) {
             // Necessary to prevent showing old translation exist if started from link "Translation history"
             // alert(action);
             // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
-            if (action == "Details" || action == "✓Details") {
+        if (action == "Details" || action == "✓Details") {    
                 let rowId = event.target.parentElement.parentElement.getAttribute("row");
                 glob_row = rowId;
                 detailRow = rowId;
