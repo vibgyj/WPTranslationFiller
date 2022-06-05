@@ -1918,7 +1918,7 @@ function _waitForElement(selector, delay =5, tries = 50) {
   }
 
 
-async function elementReady(selector) {
+function elementReady(selector) {
     var el;
     var timeout = 20;
     var findsel;
@@ -1986,7 +1986,6 @@ async function waitForElm(selector) {
         });
     });
 }
-
 
 /**
  ** function copied from stackoverflow created by eclanrs
