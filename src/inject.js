@@ -483,8 +483,7 @@
             console.debug('in respond body:', body);
             this._setResponseHeaders(headers || {});
             this.status = typeof status == "number" ? status : 200;
-            this.statusText = httpStatusCodes[this.status];
-            
+            this.statusText = httpStatusCodes[this.status];  
             this._setResponseBody(body || "");
         }
     };
@@ -558,8 +557,10 @@
             parrotMockDefinitions = [...evt.data.parrotMockDefinitions];
 
             if (parrotActive && !hostedLocally) {
+                console.debug("fake called!!")
                 window.XMLHttpRequest = instrumentedXMLHttpRequest;
             } else {
+                console.debug("original called!")
                 window.XMLHttpRequest = originalXMLHttpRequest;
             }
         }
@@ -567,14 +568,19 @@
 
     const instrumentedXMLHttpRequest = function () {
         const original = new originalXMLHttpRequest();
-        //var original = new FakeXMLHttpRequest();
-        //original.respond(200, { 'Content-Type': 'application/json' }, '{ "success": true, "data": "No suggestieeeees." }');
+       //var original = new FakeXMLHttpRequest();
+        
+        //original.respond(200, { 'Content-Type': 'application/json' }, { "success": true, "data": "No suggestieeeees." });
+       // return original.onreadystatechange();
         var instrumented = this;
         var myresponseText = original.responseText;
         var myresponse = original.response;
         var mystatusText = original.statusText;
         var myStatus = original.status;
-        console.debug("original readyState:", original.readyState,original.responseText);
+        var myreadyState = original.readyState;
+        var myoriginal = original;
+        //this.readyState = orginal.readyState;
+        console.debug("original readyState:", original.readyState,myreadyState,original.responseText);
         original.onreadystatechange = function () {
             //original.readyState = 4;
             function removePrefix(responseInfo) {
@@ -629,8 +635,8 @@
 
                 return undefined;
             }
-            console.debug("readystate:",this.readyState,instrumented.readyState,original.readyState,myresponseText)
-            if (this.readyState === 4) {
+            console.debug("readystate:",this.readyState,instrumented.readyState,original.readyState,myreadyState,myresponseText)
+            if (instrumented.readyState === 4) {
                 // Gets an array of mocks to be used for this URL
                 const parrotMockDefinitions = parrotActive && getParrotMockDefinitions(this);
                 if (parrotMockDefinitions?.length) {
@@ -675,6 +681,7 @@
 
                     setTimeout(() => {
                         if (instrumented.onreadystatechange) {
+                            console.debug("in return 1:", instrumented.onreadystatechange)
                             return instrumented.onreadystatechange();
                         }
 
@@ -691,15 +698,18 @@
                     if (instrumented.responseType === '' || instrumented.responseType === 'text') {
                         instrumented.responseText = original.responseText;
                     }
-                    console.debug("before return", original.onreadystatechange)
+                    console.debug("before return", original.onreadystatechange,myoriginal.onreadystatechange)
                     if (instrumented.onreadystatechange) {
+                        console.debug("in return2", instrumented.onreadystatechange)
                         return instrumented.onreadystatechange();
                     }
                 }
             }
             else {
+                
                 console.debug("no readyState!!")
             }
+            
         };
 
         ['readyState', 'responseXML', 'responseURL', 'upload'].forEach((item) => {
@@ -732,7 +742,9 @@
 
         ['addEventListener', 'open', 'send', 'abort', 'getAllResponseHeaders', 'getResponseHeader', 'overrideMimeType', 'setRequestHeader', 'setMethod'].forEach((item) => {
             Object.defineProperty(instrumented, item, {
+                
                 value: function () {
+                    console.debug("before return:",original[item],arguments)
                     try {
                         return original[item].apply(original, arguments);
                     } catch (e) {
