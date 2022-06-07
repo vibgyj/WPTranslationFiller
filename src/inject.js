@@ -480,7 +480,7 @@
         */
         respond: function respond(status, headers, body) {
             Object.defineProperty(this, "responseText", { writable: true });
-            console.debug('in respond body:', body);
+            //console.debug('in respond body:', body);
             this._setResponseHeaders(headers || {});
             this.status = typeof status == "number" ? status : 200;
             this.statusText = httpStatusCodes[this.status];  
@@ -557,10 +557,10 @@
             parrotMockDefinitions = [...evt.data.parrotMockDefinitions];
 
             if (parrotActive && !hostedLocally) {
-                console.debug("fake called!!")
+                //console.debug("fake called!!")
                 window.XMLHttpRequest = instrumentedXMLHttpRequest;
             } else {
-                console.debug("original called!")
+               // console.debug("original called!")
                 window.XMLHttpRequest = originalXMLHttpRequest;
             }
         }
@@ -580,7 +580,7 @@
         var myreadyState = original.readyState;
         var myoriginal = original;
         //this.readyState = orginal.readyState;
-        console.debug("original readyState:", original.readyState,myreadyState,original.responseText);
+        //console.debug("original readyState:", original.readyState,myreadyState,original.responseText);
         original.onreadystatechange = function () {
             //original.readyState = 4;
             function removePrefix(responseInfo) {
@@ -635,8 +635,9 @@
 
                 return undefined;
             }
-            console.debug("readystate:",this.readyState,instrumented.readyState,original.readyState,myreadyState,myresponseText)
+            //console.debug("readystate:",this.readyState,instrumented.readyState,original.readyState,myreadyState,myresponseText)
             if (instrumented.readyState === 4) {
+                //console.debug("ResponseText:", original.response);
                 // Gets an array of mocks to be used for this URL
                 const parrotMockDefinitions = parrotActive && getParrotMockDefinitions(this);
                 if (parrotMockDefinitions?.length) {
@@ -672,7 +673,7 @@
                         compositeMockData.delay = parrotMockDefinition.delay;
                     });
 
-                    console.log(compositeMockData.response);
+                    console.debug(compositeMockData.response);
 
                     instrumented.statusText = original.statusText;
                     instrumented.status = compositeMockData.status * 1;
@@ -681,13 +682,13 @@
 
                     setTimeout(() => {
                         if (instrumented.onreadystatechange) {
-                            console.debug("in return 1:", instrumented.onreadystatechange)
+                            //console.debug("in return 1:", instrumented.onreadystatechange)
                             return instrumented.onreadystatechange();
                         }
 
                     }, (compositeMockData.delay || 0) * 1);
                 } else {
-                    console.debug("mock leeg", myresponseText,myresponse,mystatusText,myStatus);
+                    //console.debug("mock leeg", myresponseText,myresponse,mystatusText,myStatus);
                     instrumented.statusText = myresponseText;
                     instrumented.status = myStatus * 1;
                     instrumented.response = myresponse;
@@ -698,16 +699,16 @@
                     if (instrumented.responseType === '' || instrumented.responseType === 'text') {
                         instrumented.responseText = original.responseText;
                     }
-                    console.debug("before return", original.onreadystatechange,myoriginal.onreadystatechange)
+                   // console.debug("before return", original.onreadystatechange,myoriginal.onreadystatechange)
                     if (instrumented.onreadystatechange) {
-                        console.debug("in return2", instrumented.onreadystatechange)
+                        //console.debug("in return2", instrumented.onreadystatechange)
                         return instrumented.onreadystatechange();
                     }
                 }
             }
             else {
                 
-                console.debug("no readyState!!")
+                //console.debug("no readyState!!")
             }
             
         };
@@ -744,7 +745,7 @@
             Object.defineProperty(instrumented, item, {
                 
                 value: function () {
-                    console.debug("before return:",original[item],arguments)
+                   // console.debug("before return:",original[item],arguments)
                     try {
                         return original[item].apply(original, arguments);
                     } catch (e) {
