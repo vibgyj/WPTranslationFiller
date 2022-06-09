@@ -16,6 +16,7 @@ This extension helps with Wordpress Translation and has the following features:
 3. Open Chrome extensions and enable **Developer mode**.
 4. Then use **Load Unpacked** button and point to the folder.
 5. The addon will installed and can be activated.
+6. Open the options page from within Extensions and set the parameters as shown in the Wiki:https://github.com/vibgyj/WPTranslationFiller/wiki
 
 ## Method 2
 1. Download the addon from the Chrome store via the link below
