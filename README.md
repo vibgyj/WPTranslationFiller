@@ -6,6 +6,7 @@ This extension helps with Wordpress Translation and has the following features:
 1. Fetch translations from APIs like Google Cloud Translation
 2. Indicate translation accuracy based on uploaded locale glossary
 3. Provide convenient Approve/Reject button based on translation accuracy
+4. Forr full documentation visit the Wiki
 
 # Installation
 
@@ -24,4 +25,4 @@ This extension helps with Wordpress Translation and has the following features:
 ## Method 2
 1. Download the addon from the Chrome store via the link below
 2. https://chrome.google.com/webstore/detail/wordpress-translation-fil/jpkhdloebckgcnealfnkpkafpmhkmphj
-3. Install de addon, and setup the parameters as shown above
+3. Install the addon, and setup the parameters as shown above
