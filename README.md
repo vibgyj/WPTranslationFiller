@@ -25,4 +25,4 @@ This extension helps with Wordpress Translation and has the following features:
 ## Method 2
 1. Download the addon from the Chrome store via the link below
 2. https://chrome.google.com/webstore/detail/wordpress-translation-fil/jpkhdloebckgcnealfnkpkafpmhkmphj
-3. Install the addon, and setup the parameters as shown above
+3. Install the addon, and setup the parameters as shown in the Wiki:https://github.com/vibgyj/WPTranslationFiller/wiki
