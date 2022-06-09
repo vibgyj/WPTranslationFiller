@@ -14,11 +14,6 @@ var parrotActive ;
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('inject.js');
 (document.head || document.documentElement).prepend(script);
-//script.src = chrome.runtime.getURL('fake_xml_http_request.js');
-//script.type = 'module';
-//(document.head || document.documentElement).prepend(script);
-
-
 
 
 ;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column

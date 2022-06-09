@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "1.6.14",
+  "version": "1.6.15",
   "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
 
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "/_metadata","wptf-options.html","inject.js","fake_xml_http_request.js" ],
+      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "/_metadata","wptf-options.html","inject.js"],
       "matches": [ "https://translate.wordpress.org/*" ]
     }
   ],
