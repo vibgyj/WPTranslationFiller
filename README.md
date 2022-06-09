@@ -6,7 +6,7 @@ This extension helps with Wordpress Translation and has the following features:
 1. Fetch translations from APIs like Google Cloud Translation
 2. Indicate translation accuracy based on uploaded locale glossary
 3. Provide convenient Approve/Reject button based on translation accuracy
-4. Forr full documentation visit the Wiki
+4. For full documentation visit the Wiki: https://github.com/vibgyj/WPTranslationFiller/wiki
 
 # Installation
 
