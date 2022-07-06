@@ -244,7 +244,7 @@ document.addEventListener("keydown", function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
-        console.debug("F8")
+       // console.debug("F8")
         let int = localStorage.getItem(['interXHR']);
         if (int == "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
@@ -256,6 +256,22 @@ document.addEventListener("keydown", function (event) {
         }
         location.reload();
     };
+
+    if (event.altKey && event.shiftKey && (event.key === "F9")) {
+        event.preventDefault();
+        // console.debug("F8")
+        let int = localStorage.getItem(['switchTM']);
+        if (int == "false") {
+            toastbox("info", "Switching TM to foreign", "1200", "TM switch");
+            localStorage.setItem('switchTM', 'true');
+        }
+        else {
+            toastbox("info", "Switching TM to local", "1200", "TM switch");
+            localStorage.setItem('switchTM', 'false');
+        }
+        location.reload();
+    };
+
     if (event.altKey && event.shiftKey && (event.key === "F7")) {
         //event.preventDefault();
         let userAgent = navigator.userAgent;
