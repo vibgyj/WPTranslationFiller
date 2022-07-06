@@ -116,9 +116,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         //console.debug('after replace x:', translatedText);
     }
     
-    // check if the returned translation does have the same ending as the original
-    translatedText = checkStartEnd(original, translatedText);
-
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -156,6 +153,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
         }
     }
+    // check if the returned translation does have the same start/ending as the original
+    translatedText = checkStartEnd(original, translatedText);
     return translatedText;
 }
 
@@ -927,14 +926,25 @@ async function fetchli(result, editor,row,TMwait) {
     var lires;
     var newres;
     var liSuggestion;
+    var TMswitch;
+    var TMswitch = localStorage.getItem('switchTM')
     //console.debug("TMwait:",TMwait)
     return new Promise((resolve, reject) => {
         //res = elementReady(`#editor-${row} .suggestions__translation-memory.initialized`);
         //console.debug("resli:", res, editor)
+      
         //const myres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized`);
         setTimeout(() => {
-        newres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized .suggestions-list`);
-        //console.debug("object:", newres)
+            console.debug("switchTM:", TMswitch);
+            if (TMswitch == 'false') {
+                newres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized .suggestions-list`);
+                console.debug("local")
+                }
+            else {
+                newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
+                console.debug("foreighn")
+                }
+        console.debug("object:", newres)
             if (newres !== null) {
                     // Get the li list from the suggestions
                     lires =newres.getElementsByTagName("li");
@@ -942,6 +952,7 @@ async function fetchli(result, editor,row,TMwait) {
                     // We need to fetch Text otherwise characters get converted!!
                     textFound = liSuggestion.innerHTML;
                     //sometimes we have a second <span> within the text, we need to drop that
+                //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
                     resolve(textFound.split("<span")[0]);
                 }
                  else {
