@@ -935,16 +935,16 @@ async function fetchli(result, editor,row,TMwait) {
       
         //const myres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized`);
         setTimeout(() => {
-            console.debug("switchTM:", TMswitch);
+           // console.debug("switchTM:", TMswitch);
             if (TMswitch == 'false') {
                 newres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized .suggestions-list`);
-                console.debug("local")
+               // console.debug("local")
                 }
             else {
                 newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
-                console.debug("foreighn")
+               // console.debug("foreighn")
                 }
-        console.debug("object:", newres)
+        //console.debug("object:", newres)
             if (newres !== null) {
                     // Get the li list from the suggestions
                     lires =newres.getElementsByTagName("li");
