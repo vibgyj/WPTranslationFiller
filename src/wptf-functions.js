@@ -66,7 +66,11 @@ function setmyCheckBox(event) {
                 rowchecked = preview.querySelector("td input");
                 if (rowchecked != null) {
                     if (!rowchecked.checked) {
-                        preview.querySelector("td input").checked = true;
+                        prevtext = preview.querySelector("td.translation").innerText;
+                        // Do not tick the box if preview contaings "No suggestions" issue #221
+                        if (prevtext.search("No suggestions") == -1) {
+                            preview.querySelector("td input").checked = true;
+                        }
                     }
                 }
             }
