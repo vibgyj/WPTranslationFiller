@@ -1872,7 +1872,7 @@ async function saveLocal() {
             }
         }
         else {
-            console.debug("problem reading checkbox1");
+            console.debug("No checkbox available");
         }
     });
     
@@ -1880,10 +1880,12 @@ async function saveLocal() {
 }
 
  async function bulkSave(event) {
-    var counter = 0;
-    var row;
-    var myWindow;
+     var counter = 0;
+     var checkboxCounter = 0;
+     var row;
+     var myWindow;
      var nextpreview;
+     currWindow = window.self;
      var parrotMockDefinitions = [{
          "active": true,
          "description": "XHR",
@@ -1899,10 +1901,31 @@ async function saveLocal() {
          parrotActive: true,
          parrotMockDefinitions
      }, location.origin);
-    counter = saveLocal();
-
-    if (counter == 0) {
-        messageBox("error", "You do not have translations selected!");
+     // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
+     document.querySelectorAll('.myCheckBox input').forEach(function (elem) {
+         if (elem.checked == true) {
+             checkboxCounter++;
+         }
+     });
+     if (checkboxCounter == 0) {
+         cuteAlert({
+             type: "question",
+             title: "Bulk save",
+             message: "There are no records selected,you sure you want to select all records?",
+             confirmText: "Confirm",
+             cancelText: "Cancel",
+             myWindow: currWindow
+         }).then((e) => {
+             if (e == ("confirm")) {
+                 setmyCheckBox(event);
+                 counter = saveLocal();
+             } else {
+                 messageBox("info", "Bulk save cancelled");
+             }
+         })
+     }
+     else {
+         counter = saveLocal();
      }
     
     return "done"
