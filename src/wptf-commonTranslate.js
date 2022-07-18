@@ -1258,6 +1258,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     else {
                         // Pretranslation found!
                         let translatedText = pretrans;
+                        // check if the returned translation does have the same start/ending as the original
+                        translatedText = checkStartEnd(original, translatedText);
                         let textareaElem = record.querySelector("textarea.foreign-text");
                         textareaElem.innerText = translatedText;
                         textareaElem.value = translatedText;
@@ -1692,6 +1694,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 }
                 else {
                     let translatedText = pretrans;
+                    // check if the returned translation does have the same start/ending as the original
+                    translatedText = checkStartEnd(original, translatedText);
                     let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
                     textareaElem.value = translatedText;
