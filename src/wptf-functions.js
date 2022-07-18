@@ -62,14 +62,19 @@ function setmyCheckBox(event) {
     if (!is_pte) {
         //document.getElementsByClassName("myCheckBox").checked = true;
         document.querySelectorAll("tr.preview").forEach((preview, i) => {
-            if (!is_pte) {
+           // if (!is_pte) {
                 rowchecked = preview.querySelector("td input");
                 if (rowchecked != null) {
                     if (!rowchecked.checked) {
-                        preview.querySelector("td input").checked = true;
+                        prevtext = preview.querySelector("td.translation").innerText;
+                        // Do not tick the box if preview contaings "No suggestions" issue #221
+                        // Do not tick the box if preview has no translatione.g. "Double-click to add" issue #223
+                        if (prevtext.search("No suggestions") == -1 && prevtext.search("Double-click to add") ==-1) {
+                            preview.querySelector("td input").checked = true;
+                        }
                     }
                 }
-            }
+           // }
         });
     }
 }

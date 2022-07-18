@@ -260,16 +260,28 @@ document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
         event.preventDefault();
         // console.debug("F8")
+        
         let int = localStorage.getItem(['switchTM']);
         if (int == "false") {
             toastbox("info", "Switching TM to foreign", "1200", "TM switch");
-            localStorage.setItem('switchTM', 'true');
+            localStorage.setItem('switchTM', 'true');       
         }
         else {
             toastbox("info", "Switching TM to local", "1200", "TM switch");
             localStorage.setItem('switchTM', 'false');
         }
         location.reload();
+    };
+
+    if (event.altKey && event.shiftKey && (event.key === "F10")) {
+        event.preventDefault();
+        //$(document).ready(function () {
+        var mysimple = window['wpgpt_load_history_status'];
+        console.log(mysimple);
+        console.log($gp_editor_options['can_approve'])
+        alert("Editor options:" + mysimple)
+       // })
+        
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F7")) {
@@ -440,9 +452,16 @@ localtransButton.onclick = localTransClicked;
 localtransButton.innerText = "Local";
 
 //12-05-2022 PSS added a new button for local translate
+let TM = localStorage.getItem(['switchTM']);
 var tmtransButton = document.createElement("a");
 tmtransButton.href = "#";
-tmtransButton.className = "tm-trans-button";
+
+if (TM == "false") {
+    tmtransButton.className = "tm-trans-button";
+}
+else {
+    tmtransButton.className = "tm-trans-button foreighn"
+}
 tmtransButton.onclick = tmTransClicked;
 tmtransButton.innerText = "TM";
 

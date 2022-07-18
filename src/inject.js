@@ -135,7 +135,7 @@
                         compositeMockData.delay = parrotMockDefinition.delay;
                     });
 
-                    console.debug(compositeMockData.response);
+                   //console.debug(compositeMockData.response);
 
                     instrumented.statusText = original.statusText;
                     instrumented.status = compositeMockData.status * 1;
