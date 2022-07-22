@@ -38,9 +38,6 @@ let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 
-//console.debug("Diff:", showDiffCheckbox);
-//console.debug("Hist:", showHistCheckbox);
-
 chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
@@ -118,8 +115,7 @@ chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "d
     else {
         let parrotActive = 'false';
         }
-    console.debug("parrotActive:",parrotActive)
-    //console.log("Read options: ", data);
+   // console.debug("parrotActive:",parrotActive)
 });
 
 
@@ -151,7 +147,6 @@ button.addEventListener("click", function () {
     let preTranslation = preverbsTextbox.value;
     let TMwaitVal = TMwaitValue.value;
     if (document.querySelector("#show-history:checked") !== null) {
-        //console.debug("diff:", document.querySelector("#show-history:checked"));
         let Hist = document.querySelector("#show-history:checked");
         showHist = Hist.checked;
         }
@@ -159,23 +154,19 @@ button.addEventListener("click", function () {
         showHist = "false";
     }
     if (document.querySelector("#comp-translations:checked") !== null) {   
-        //console.debug("diff:", document.querySelector("#comp-translations:checked"));
         let showDiff = document.querySelector("#comp-translations:checked");
         showDifference = showDiff.checked;
     }
     else {
         showDifference = "false";
     }
-    
     if (document.querySelector("#show-glotDictGlos:checked") !== null) {
-        //console.debug("diff:", document.querySelector("#comp-translations:checked"));
         let showGlos = document.querySelector("#show-glotDictGlos:checked");
         showDictGlosLine = showGlos.checked;
     }
     else {
         showDictGlosLine = "false";
     }
-
     if (document.querySelector("#show-convertToLower:checked") !== null) {
         let showConvert = document.querySelector("#show-convertToLower:checked");
         showConvertToLower = showConvert.checked;
@@ -281,10 +272,15 @@ let glossaryY = [];
 let glossaryZ = [];
 
 file.addEventListener("change", function () {
-    var file = this.files[0];
     var entry = "";
-    locale = "nl";
     var value = "";
+    var file = this.files[0];
+
+    if (this.files.length == 0) {
+        return
+    }
+    //locale = "nl";
+    
     var reader = new FileReader();
     reader.onload = function () {
         var lines = this.result.split("\n");
@@ -293,12 +289,12 @@ file.addEventListener("change", function () {
             entry = lines[line].split(",");
             if (entry[1] && entry[1].length > 0) {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                console.debug(" entry 1:", entry[1]);
+                //console.debug(" entry 1:", entry[1]);
                 const found = entry[1].indexOf("-/");
-                console.debug(" entry 1:", entry[1],found);
+                //console.debug(" entry 1:", entry[1],found);
                 if (found == -1) {
                     value = entry[1].split("/");
-                    console.debug(" -/ not found", value);
+                    //console.debug(" -/ not found", value);
                     for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
@@ -309,7 +305,7 @@ file.addEventListener("change", function () {
                     value = entry[1];
                     console.debug("/ found:", value);
                 }
-                console.debug("wefound:", value);
+                //console.debug("wefound:", value);
                 for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
@@ -408,6 +404,7 @@ file.addEventListener("change", function () {
 });
 
 function checkLocale() {
+    // function currently not used but maybe in future
     //need to fetch the locale from the filename
     return locale;
 }
