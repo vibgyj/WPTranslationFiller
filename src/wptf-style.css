@@ -210,6 +210,13 @@ local.paging a.local-trans-button {
         margin: 5px !important;
  }
 
+.paging a.bulksave-button {
+    background: blue;
+    color: white !important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
 
 .panel-header-actions .translation-filler-button {
     width: auto;

@@ -98,6 +98,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
+   // event.preventDefault();
     //console.debug("eventkey:", event.key);
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
@@ -282,6 +283,17 @@ document.addEventListener("keydown", function (event) {
         alert("Editor options:" + mysimple)
        // })
         
+    };
+
+    if (event.altKey && event.shiftKey && (event.key === "F11")) {
+        console.debug("F11")
+        event.preventDefault();
+        toastbox("info", "checkFormal is started wait for the result!!", "10000", "CheckFormal");
+        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\n';
+        checkPageClicked(event);
+      //  checkFormalPage(dataFormal);
+        close_toast();
+
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F7")) {
@@ -488,6 +500,16 @@ importButton.id = "ImportDb";
 importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
+var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+if (is_pte) {
+    //07-05-2021 PSS added a bulksave button on first page
+    var bulksaveButton = document.createElement("a");
+    bulksaveButton.href = "#";
+    bulksaveButton.id = "BulkSave";
+    bulksaveButton.className = "bulksave-button";
+    bulksaveButton.onclick = bulkSave;
+    bulksaveButton.innerText = "Bulksave";
+}
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
 if (divPaging != null && divProjects == null) {
@@ -497,6 +519,9 @@ if (divPaging != null && divProjects == null) {
     divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
     divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+    if (is_pte) {
+        divPaging.insertBefore(bulksaveButton, divPaging.childNodes[0]);
+    }
 }
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
@@ -624,12 +649,13 @@ function checkFormal(formal) {
 
 function checkPageClicked(event) {
     event.preventDefault();
+    var formal = checkFormal(false);
     toastbox("info", "checkPage is started wait for the result!!", "10000", "CheckPage");
     chrome.storage.sync
         .get(
             ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
             function (data) {
-                checkPage(data.postTranslationReplace);
+                checkPage(data.postTranslationReplace,formal);
                 close_toast();
             }); 
 }
@@ -1591,8 +1617,10 @@ function savetranslateEntryClicked(event) {
                 // PSS confirm the message for dismissal
                 foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
                     if (confirm != '.gp-js-message-dismiss') {
-                       console.debug("confirm value:",confirm)
-                       confirm.click();
+                        console.debug("confirm value:", confirm)
+                        if (typeof confirm === 'function') {
+                            confirm.click();
+                        }
                    }
                 });
        }, timeout);
@@ -1957,54 +1985,53 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     var doc = parser.parseFromString(data, "text/html");
                     //console.log("html:", doc);
                     var table = doc.getElementById("translations");
-                    let tr = table.rows;
-                    if (table != undefined) {
-                        const tbodyRowCount = table.tBodies[0].rows.length;
-                        // 04-07-2021 PSS added counter to message for existing translations
-                        var rejected = table.querySelectorAll("tr.preview.status-rejected");
-                        var waiting = table.querySelectorAll("tr.preview.status-waiting");
-                        var fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
-                        var current = table.querySelectorAll("tr.preview.status-current");
-                        var old = table.querySelectorAll("tr.preview.status-old");
-                        if (typeof current != "null" && current.length != 0) {
-                            currcount = " Current:" + current.length;
-                        }
-                        else {
-                            currcount = "";
-                        }
-                        if (waiting.length != 0) {
-                            wait = " Waiting:" + waiting.length;
-                        }
-                        else {
-                            wait = "";
-                        }
-                        if (rejected.length != 0) {
-                            rejec = " Rejected:" + rejected.length;
-                        }
-                        else {
-                            rejec = "";
-                        }
-                        if (fuzzy.length != 0) {
-                            fuz = " Fuzzy:" + fuzzy.length;
-                        }
-                        else {
-                            fuz = "";
-                        }
-                        if (old.length != 0) {
-                            old = " Old:" + old.length;
-                        }
-                        else {
-                            old = "";
-                        }
-                        if (tbodyRowCount > 2 && single == "False") {
-                                               
-                            updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
-                        }
-                        else if (tbodyRowCount > 2 && single == "True") {
-                            updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
-                            //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
-                            //window.open(url, "_blank", windowFeatures);
-                        }
+                    if (table != null) {
+                           let tr = table.rows;
+                           const tbodyRowCount = table.tBodies[0].rows.length;
+                           // 04-07-2021 PSS added counter to message for existing translations
+                           var rejected = table.querySelectorAll("tr.preview.status-rejected");
+                           var waiting = table.querySelectorAll("tr.preview.status-waiting");
+                           var fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
+                           var current = table.querySelectorAll("tr.preview.status-current");
+                           var old = table.querySelectorAll("tr.preview.status-old");
+                           if (typeof current != "null" && current.length != 0) {
+                               currcount = " Current:" + current.length;
+                           }
+                           else {
+                              currcount = "";
+                           }
+                           if (waiting.length != 0) {
+                               wait = " Waiting:" + waiting.length;
+                           }
+                           else {
+                               wait = "";
+                           }
+                           if (rejected.length != 0) {
+                               rejec = " Rejected:" + rejected.length;
+                           }
+                           else {
+                                rejec = "";
+                           }
+                           if (fuzzy.length != 0) {
+                               fuz = " Fuzzy:" + fuzzy.length;
+                           }
+                           else {
+                              fuz = "";
+                           }
+                           if (old.length != 0) {
+                              old = " Old:" + old.length;
+                           }
+                           else {
+                               old = "";
+                           }
+                           if (tbodyRowCount > 2 && single == "False") {
+                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, "", "", currcount);
+                           }
+                           else if (tbodyRowCount > 2 && single == "True") {
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
+                               //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+                               //window.open(url, "_blank", windowFeatures);
+                           }
                     }
                 }
             }).catch(error => console.debug(error));

@@ -26,14 +26,23 @@ function setPreTranslationReplace(preTranslationReplace) {
 }
 
 
-function setPostTranslationReplace(postTranslationReplace) {
+function setPostTranslationReplace(postTranslationReplace, formal) {
+    // PSS 21-07-2022 Currently when using formal, the translation is still default #225
     replaceVerb = [];
     if (postTranslationReplace != undefined) {
         let lines = postTranslationReplace.split("\n");
         lines.forEach(function (item) {
             // Handle blank lines
             if (item != "") {
-                replaceVerb.push(item.split(","));
+                if (formal) {
+                    item = item.replace(/^##form:/,'')
+                }
+                else {
+                    item = item.replace(/^##def:/,'')
+                }
+                if (item.startsWith("##") == false) {
+                    replaceVerb.push(item.split(","));
+                }
             }
         });
     }
@@ -339,8 +348,206 @@ async function pretranslate(original) {
     return translated;
 }
 
-function checkPage(postTranslationReplace) {
-    setPostTranslationReplace(postTranslationReplace);
+
+function checkFormalPage(dataFormal) {
+    //console.debug('postrepl content:', dataFormal)
+    //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+    var formal = checkFormal(false);
+    setPostTranslationReplace(dataFormal,formal);
+    //console.debug("CheckFormal started")
+    // 15-05-2021 PSS added fix for issue #73add
+    var replaced = false;
+    if (dataFormal.length != 0 && dataFormal != "undefined") {
+        //setPreTranslationReplace(preTranslationReplace);
+        let countreplaced = 0;
+        var translatedText = "";
+        var repl_verb = "";
+        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+            replaced = false;
+            let original = e.querySelector("span.original-raw").innerText;
+            let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
+            let row = rowfound.split("-")[1];
+            let newrow = rowfound.split("-")[2];
+            if (typeof newrow != "undefined") {
+                newrowId = row.concat("-", newrow);
+                row = newrowId;
+            }
+            else {
+                rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
+                let row = rowfound.split("_")[1];
+            }
+            // 30-08-2021 PSS fix for issue # 125
+            let precomment = e.querySelector(".source-details__comment p");
+            if (precomment != null) {
+                comment = precomment.innerText;
+                comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                toTranslate = checkComments(comment.trim());
+            }
+            else {
+                toTranslate = true;
+            }
+            if (toTranslate) {
+                // Check if it is a plural
+                // If in the original field "Singular is present we have a plural translation                
+                var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
+                if (pluralpresent != null) {
+                    transtype = "plural";
+                }
+                else {
+                    transtype = "single";
+                }
+                // Fetch the translations
+                let element = e.querySelector(".source-details__comment");
+                let textareaElem = e.querySelector("textarea.foreign-text");
+                if (transtype == "single") {
+                    translatedText = textareaElem.innerText;
+                }
+
+                if (transtype == "single") {
+                    // Enhencement issue #123
+                    previewNewText = textareaElem.innerText;
+                    // Need to replace the existing html before replacing the verbs! issue #124
+                    // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                    result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
+                    previewNewText = result.previewNewText;
+                    translatedText = result.translatedText;
+                    countreplaced = result.countreplaced;
+                    replaced = result.replaced;
+                    orgText = result.orgText;
+                    repl_verb = result.repl_verb;
+                    // PSS 22-07-2021 fix for the preview text is not updated #109
+                    if (replaced) {
+                        if (currec != null) {
+                            var current = currec.querySelector("span.panel-header__bubble");
+                            var prevstate = current.innerText;
+                            current.innerText = "transFill";
+                        }
+                        textareaElem.innerText = translatedText;
+                        textareaElem.value = translatedText;
+                        //console.debug("found single!");
+                        let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
+                        let row = rowfound.split("-")[1];
+                        let myrow = row;
+                        let newrow = rowfound.split("-")[2];
+                        if (newrow != "undefined") {
+                            newrowId = row.concat("-", newrow);
+                            row = newrowId;
+                        }
+                        // below changes are necessary to populate replaced verbs on table that has not been saved
+                        var preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                        if (preview == null) {
+                            preview = document.querySelector("#preview-" + myrow + " td.translation");
+                           
+                        }
+                        // PSS we need to remove the current span, as the mark function adds one again
+                        // PSS fix for issue #157
+                        var span = document.querySelector("#preview-" + newrowId + " td.translation span.translation-text");
+                        if (span == null) {
+                            span = document.querySelector("#preview-" + myrow + " td.translation span.translation-text");
+                        }
+                        if (span != null) {
+                            span.remove();
+                        }
+                        // Enhancement issue #123
+                        var myspan1 = document.createElement("span");
+                        myspan1.className = "translation-text";
+                        preview.appendChild(myspan1);
+                        myspan1.appendChild(document.createTextNode(previewNewText));
+
+                        preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                        if (preview != null) {
+                            // PSS populate the preview before marking
+                            preview.innerText = DOMPurify.sanitize(previewNewText);
+                        }
+                        else {
+                            preview = document.querySelector("#preview-" + myrow + " td.translation");
+                        }
+                        markElements(preview, replaceVerb, orgText);
+                    }
+                }
+                else {
+                    // plural line 1
+                    let previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
+                    previewNewText = previewElem.innerText;
+                    translatedText = previewElem.innerText;
+                    //console.debug("plural1 found:",previewElem,translatedText);
+                    result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
+                    previewNewText = result.previewNewText;
+                    translatedText = result.translatedText;
+                    countreplaced = result.countreplaced;
+                    replaced = result.replaced;
+                    orgText = result.orgText;
+                    if (replaced) {
+                        previewElem.innerText = previewNewText;
+                        let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                        // if current translation we need to split the rownumber
+                        let newrowId = row.split("-")[0];
+                        textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
+                        textareaElem1.innerText = translatedText;
+                        textareaElem1.value = translatedText;
+                        // Highlight all keywords found in the page, so loop through the replacement array
+                        markElements(previewElem, replaceVerb, orgText);
+                    }
+                    // plural line 2
+                    previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
+                    //console.debug("plural2:", previewNewText, translatedText);
+                    if (previewElem != null) {
+                        previewNewText = previewElem.innerText;
+                        translatedText = previewElem.innerText;
+                        result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced);
+                        previewNewText = result.previewNewText;
+                        translatedText = result.translatedText;
+                        countreplaced = result.countreplaced;
+                        replaced = result.replaced;
+                        if (replaced) {
+                            // PSS fix for #188 label Transfill needs to be set
+                            let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                            if (currec != null) {
+                                var current = currec.querySelector("span.panel-header__bubble");
+                                var prevstate = current.innerText;
+                                current.innerText = "transFill";
+                            }
+                            previewElem.innerText = previewNewText;
+                            let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                            // if current translation we need to split the rownumber
+                            let rowId = row.split("-")[0];
+                            textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
+                            if (textareaElem1 != null) {
+                                textareaElem1.innerText = translatedText;
+                                textareaElem1.value = translatedText;
+                                markElements(previewElem, replaceVerb, orgText);
+                            }
+                        }
+                    }
+                }
+                if (replaced) {
+                    // Only update the style if verbs are replaced!!
+                    let wordCount = countreplaced;
+                    let percent = 10;
+                    let toolTip = "";
+                    result = { wordCount, percent, toolTip };
+                    updateStyle(textareaElem, result, "", true, false, false, row);
+                }
+            }
+        }
+
+        messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words<br>" + repl_verb);
+        // Translation replacement completed
+        let checkButton = document.querySelector(".paging a.check_translation-button");
+        checkButton.className += " ready";
+    }
+    else {
+        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
+    }
+}
+
+function checkPage(postTranslationReplace,formal) {
+    //console.debug('postrepl content:', postTranslationReplace)
+    //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+    //var formal = checkFormal(false);
+    setPostTranslationReplace(postTranslationReplace, formal);
+   // console.debug('repl:',replaceVerb,formal)
     // 15-05-2021 PSS added fix for issue #73add
     var replaced = false;
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
@@ -414,15 +621,22 @@ function checkPage(postTranslationReplace) {
                         //console.debug("found single!");
                         let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
                         let row = rowfound.split("-")[1];
+                        let myrow = row;
                         let newrow = rowfound.split("-")[2];
                         if (newrow != "undefined") {
                             newrowId = row.concat("-", newrow);
                             row = newrowId;
                         }
                         let preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                        if (preview == null) {
+                            preview = document.querySelector("#preview-" + myrow + " td.translation");
+                        }
                         // PSS we need to remove the current span, as the mark function adds one again
                         // PSS fix for issue #157
                         let span = document.querySelector("#preview-" + newrowId + " td.translation span.translation-text");
+                        if (span == null) {
+                           span = document.querySelector("#preview-" + myrow + " td.translation span.translation-text");
+                        }
                         if (span != null) {
                             span.remove();
                         }
@@ -432,6 +646,9 @@ function checkPage(postTranslationReplace) {
                         preview.appendChild(myspan1);
                         myspan1.appendChild(document.createTextNode(previewNewText));
                         preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                        if (preview == null) {
+                            preview = document.querySelector("#preview-" + myrow + " td.translation");
+                        }
                         // PSS populate the preview before marking
                         preview.innerText = DOMPurify.sanitize(previewNewText);
                         markElements(preview, replaceVerb, orgText);
@@ -950,6 +1167,7 @@ async function fetchli(result, editor,row,TMwait) {
                     lires =newres.getElementsByTagName("li");
                     liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                     // We need to fetch Text otherwise characters get converted!!
+                    //console.debug("li:",liSuggestion)
                     textFound = liSuggestion.innerHTML;
                     //sometimes we have a second <span> within the text, we need to drop that
                 //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
@@ -1130,13 +1348,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
     // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
     if (typeof postTranslationReplace != "undefined" && postTranslationReplace.length != 0) {
         if (typeof preTranslationReplace != "undefined" && preTranslationReplace.length != 0) {
-            setPostTranslationReplace(postTranslationReplace);
+            // PSS 21-07-2022 Currently when using formal, the translation is still default #225
+            setPostTranslationReplace(postTranslationReplace,formal);
             setPreTranslationReplace(preTranslationReplace);
             for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                 transtype = "single";
                 // 16-08-2021 PSS fixed retranslation issue #118
                 let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
                 row = rowfound.split("-")[1];
+                let myrow = row;
                 let newrow = rowfound.split("-")[2];
                 if (typeof newrow != "undefined") {
                     newrowId = row.concat("-", newrow);
@@ -1288,7 +1508,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             previewElem.innerText = translatedText;
                            }
                         else {
-                            let preview = document.querySelector("#preview-" + row + " td.translation");
+                            var preview = document.querySelector("#preview-" + row + " td.translation");
                             let spanmissing = preview.querySelector(" span.missing");
                             if (spanmissing != null) {
                                 if (plural_line == "1") {
@@ -1327,14 +1547,26 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                    
                                 }
                                 else {
-                                    preview.innerText = translatedText;
+                                    console.debug("this is the one!!!!")
+                                    console.debug("prev:",preview)
+                                    let spanmissing = preview.querySelector(" span.missing");
+                                    if (spanmissing != null) {
+                                        console.debug("removing span");
+                                        spanmissing.remove();
+                                    }
+                                    
+                                    var myspan1 = document.createElement("span");
+                                    myspan1.className = "translation-text";
+                                    myspan1.appendChild(document.createTextNode(""));
+                                    preview.appendChild(myspan1);
+                                    myspan1.innerText = translatedText;
                                     current.innerText = "transFill";
                                     current.value = "transFill";
-                                    var element1 = document.createElement("div");
-                                    element1.setAttribute("class", "trans_local_div");
-                                    element1.setAttribute("id", "trans_local_div");
-                                    element1.appendChild(document.createTextNode("Local"));
-                                    preview.appendChild(element1);
+                                   // var element1 = document.createElement("div");
+                                   // element1.setAttribute("class", "trans_local_div");
+                                   // element1.setAttribute("id", "trans_local_div");
+                                   // element1.appendChild(document.createTextNode("Local"));
+                                  //  preview.appendChild(element1);
                                     preview = document.querySelector(`#preview-${row}`);
                                     rowchecked = preview.querySelector("td input");
                                     if (rowchecked != null) {
@@ -1346,8 +1578,19 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             }
                             else {
                                 // if it is as single with local then we need also update the preview
-                                
-                                preview.innerText = translatedText;
+                                console.debug("testing two")
+                                let spanmissing = preview.querySelector(" span.missing");
+                                if (spanmissing != null) {
+                                    console.debug("removing span");
+                                    spanmissing.remove();
+                                }
+                                let textareaElem = record.querySelector("translation.foreign-text");
+                                console.debug("textareaElem",textareaElem)
+                                var myspan1 = document.createElement("span");
+                                myspan1.className = "translation-text";
+                                textareaELem.appendChild(myspan1);
+                                myspan1.appendChild(document.createTextNode("empty"));
+                                myspan1.innerText = translatedText;
                                 current.innerText = "transFill";
                                 current.value = "transFill";
                                 var element1 = document.createElement("div");
@@ -1500,18 +1743,33 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 else {
                     // This is when urls/plugin/theme names are present or local translation is present
                     let translatedText = original;
-                    let textareaElem = record.querySelector("textarea.foreign-text");
-                    textareaElem.innerText = translatedText;
+                   
                     let preview = document.querySelector("#preview-" + row + " td.translation");
-                    if (preview != null) {
-                        preview.innerText = translatedText;
-                        preview.value = translatedText;
+                    if (preview == null) {
+                        preview = document.querySelector("#preview-" + myrow + " td.translation");
+                    }
+                    let spanmissing = preview.querySelector(" span.missing");
+                    if (spanmissing != null) {
+                        spanmissing.remove();
+                    }
+                    var myspan1 = document.createElement("span");
+                    myspan1.className = "translation-text";
+                    myspan1.appendChild(document.createTextNode(""));
+                    preview.appendChild(myspan1);
+                    myspan1.innerText = translatedText;
+                    let textareaElem = record.querySelector("textarea.foreign-text");
+                    
+                   // let preview = document.querySelector("#preview-" + row + " td.translation");
+                    if (textareaElem != null) {
+                        textareaElem.innerText = translatedText;
+                        textareaElem.value= translatedText
+                       // preview.innerText = translatedText;
+                       // preview.value = translatedText;
                         // We need to alter the status otherwise the save button does not work
                         current.innerText = "transFill";
                         current.value = "transFill";
                         
                     }
-                    
                     preview = document.querySelector(`#preview-${row}`);
                     rowchecked = preview.querySelector("td input");
                     if (rowchecked != null) {
@@ -1620,7 +1878,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     // 15-05-2021 PSS added fix for issue #73
     if (postTranslationReplace.length != 0) {
         if (preTranslationReplace != 0) {
-            setPostTranslationReplace(postTranslationReplace);
+            // PSS 21-07-2022 Currently when using formal, the translation is still default #225
+            setPostTranslationReplace(postTranslationReplace,formal);
             setPreTranslationReplace(preTranslationReplace);
             let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
             let original = e.querySelector("span.original-raw").innerText;
@@ -1883,13 +2142,16 @@ async function saveLocal() {
     return counter;
 }
 
- async function bulkSave(event) {
+async function bulkSave(event) {
+     
      var counter = 0;
      var checkboxCounter = 0;
      var row;
      var myWindow;
      var nextpreview;
+     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      currWindow = window.self;
+
      var parrotMockDefinitions = [{
          "active": true,
          "description": "XHR",
@@ -1906,11 +2168,20 @@ async function saveLocal() {
          parrotMockDefinitions
      }, location.origin);
      // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
-     document.querySelectorAll('.myCheckBox input').forEach(function (elem) {
-         if (elem.checked == true) {
-             checkboxCounter++;
-         }
-     });
+     if (is_pte) {
+         document.querySelectorAll('.checkbox input').forEach(function (elem) {
+             if (elem.checked == true) {
+                 checkboxCounter++;
+             }
+         });
+     }
+     else {
+         document.querySelectorAll('.myCheckBox input').forEach(function (elem) {
+             if (elem.checked == true) {
+                 checkboxCounter++;
+             }
+         });
+     }
      if (checkboxCounter == 0) {
          cuteAlert({
              type: "question",

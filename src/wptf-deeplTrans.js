@@ -59,7 +59,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 link = "https://api-free.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
             }
             else {
-                link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+                // PSS 21-07-2020 When using Deepl in formal mode, the translation is not always formal #224
+                link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
             }
         }
     }
@@ -87,6 +88,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 //We do have a result so process it
                 //console.debug('result:', data.translations[0].text);
                 translatedText = data.translations[0].text;
+
                 translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                }
