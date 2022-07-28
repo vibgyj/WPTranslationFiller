@@ -31,21 +31,23 @@ jobs:
           ls src
           echo 'Copying Chrome files...'
           cp src/contentScript.js src/chrome/contentScript.js
-          cp src/commonTranslate.js src/chrome/commonTranslate.js
-          cp src/deeplTranslate.js src/chrome/deeplTranslate.js
-          cp src/googleTranslate.js src/chrome/googleTranslate.js
-          cp src/microsoftTranslate.js src/chrome/microsoftTranslate.js
-          cp src/options.js src/chrome/options.js
-          cp src/options.html src/chrome/options.html
-          cp src/cute-alert.css src/chrome/cute-alert.css
-          cp src/translationFillerStyle.css src/chrome/translationFillerStyle.css
+          cp src/wptf-commonTranslate.js src/chrome/wptf-commonTranslate.js
+          cp src/wptf-deeplTrans.js src/chrome/wptf-deeplTrans.js
+          cp src/wptf-googleTrans.js src/chrome/wptf-googleTrans.js
+          cp src/wptf-microsoftTrans.js src/chrome/wptf-microsoftTrans.js
+          cp src/wptf-options.js src/chrome/wptf-options.js
+          cp src/wptf-options.html src/chrome/wptf-options.html
+          cp src/wptf-cute-alert.css src/chrome/wptf-cute-alert.css
+          cp src/wptf-style.css src/chrome/wptf-style.css
           cp src/jsstore.js src/chrome/jsstore.js
           cp src/jsstore.worker.js src/chrome/jsstore.worker.js
-          cp src/database.js src/chrome/database.js
-          cp src/consistency.js src/chrome/consistency.js
-          cp src/cute-alert.js src/chrome/cute-alert.js
+          cp src/wptf-database.js src/chrome/wptf-database.js
+          cp src/wptf-cute-alert.js src/chrome/wptf-cute-alert.js
           cp src/jsdiff.js src/chrome/jsdiff.js
-          cp src/purify.min.js src/chrome/purify.min.js
+          cp src/wptf-purify.min.js src/chrome/wptf-purify.min.js
+          cp src/wptf-functions.js src/chrome/wptf-functions.js
+          cp src/wptf-consistency.js src/chrome/wptf-consistency.js
+          cp src/wptf-block_rules.json src/chrome/wptf-block_rules.json
           mkdir src/chrome/img
           cp src/img/error.svg src/chrome/img/error.svg
           cp src/img/info.svg src/chrome/img/info.svg
@@ -54,21 +56,23 @@ jobs:
           cp src/img/warning.svg src/chrome/img/warning.svg
           echo 'Copying Firefox files...'
           cp src/contentScript.js src/firefox/contentScript.js
-          cp src/commonTranslate.js src/firefox/commonTranslate.js
-          cp src/deeplTranslate.js src/firefox/deeplTranslate.js
-          cp src/googleTranslate.js src/firefox/googleTranslate.js
-          cp src/microsoftTranslate.js src/firefox/microsoftTranslate.js
-          cp src/options.js src/firefox/options.js
-          cp src/options.html src/firefox/options.html
-          cp src/cute-alert.css src/firefox/cute-alert.css
-          cp src/translationFillerStyle.css src/firefox/translationFillerStyle.css
+          cp src/wptf-commonTranslate.js src/firefox/wptf-commonTranslate.js
+          cp src/wptf-deeplTrans.js src/firefox/wptf-deeplTrans.js
+          cp src/wptf-googleTrans.js src/firefox/wptf-googleTrans.js
+          cp src/wptf-microsoftTrans.js src/firefox/wptf-microsoftTrans.js
+          cp src/wptf-options.js src/firefox/wptf-options.js
+          cp src/wptf-options.html src/firefox/wptf-options.html
+          cp src/wptf-cute-alert.css src/firefox/wptf-cute-alert.css
+          cp src/wptf-style.css src/firefox/wptf-style.css
           cp src/jsstore.js src/firefox/jsstore.js
           cp src/jsstore.worker.js src/firefox/jsstore.worker.js
-          cp src/database.js src/firefox/database.js
-          cp src/consistency.js src/firefox/consistency.js
-          cp src/cute-alert.js src/firefox/cute-alert.js
+          cp src/wptf-database.js src/firefox/wptf-database.js
+          cp src/wptf-cute-alert.js src/firefox/wptf-cute-alert.js
           cp src/jsdiff.js src/firefox/jsdiff.js
-          cp src/purify.min.js src/firefox/purify.min.js
+          cp src/wptf-purify.min.js src/firefox/wptf-purify.min.js
+          cp src/wptf-functions.js src/firefox/wptf-functions.js
+          cp src/wptf-consistency.js src/firefox/wptf-consistency.js
+          cp src/wptf-block_rules.json src/firefox/wptf-block_rules.json
           mkdir src/firefox/img
           cp src/img/error.svg src/firefox/img/error.svg
           cp src/img/info.svg src/firefox/img/info.svg
