@@ -1140,6 +1140,10 @@ table.translations tr.preview.wptf-translated {
     background-color: #FFFFC2;
 }
 
+table.translations tr.preview.status-rejected {
+    background-color: #eb9090 !important;
+}
+
 .highlight {
     background: lightpink;
 }

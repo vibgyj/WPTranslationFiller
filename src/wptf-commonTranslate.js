@@ -1579,18 +1579,25 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             else {
                                 // if it is as single with local then we need also update the preview
                                 console.debug("testing two")
+                                console.debug("preview in single:",preview)
                                 let spanmissing = preview.querySelector(" span.missing");
                                 if (spanmissing != null) {
                                     console.debug("removing span");
                                     spanmissing.remove();
                                 }
-                                let textareaElem = record.querySelector("translation.foreign-text");
-                                console.debug("textareaElem",textareaElem)
-                                var myspan1 = document.createElement("span");
-                                myspan1.className = "translation-text";
-                                textareaELem.appendChild(myspan1);
-                                myspan1.appendChild(document.createTextNode("empty"));
-                                myspan1.innerText = translatedText;
+                                let textareaElem = preview.querySelector("span.translation-text");
+                                console.debug("textareaElem", textareaElem)
+                                // PSS 30-07-2022 fixed error when record is already present with span
+                                if (textareaElem == null) {
+                                    var myspan1 = document.createElement("span");
+                                    myspan1.className = "translation-text";
+                                    textareaELem.appendChild(myspan1);
+                                    myspan1.appendChild(document.createTextNode("empty"));
+                                    myspan1.innerText = translatedText;
+                                }
+                                else {
+                                    textareaElem.innerText = translatedText;
+                                }
                                 current.innerText = "transFill";
                                 current.value = "transFill";
                                 var element1 = document.createElement("div");
@@ -2070,14 +2077,21 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
 }
 
 async function saveLocal() {
+    // 04-08-2022 PSS Bulksave does not save all records and "dismiss message" is not dismissed #228
     var counter = 0;
     var timeout = 0;
     //localStorage.setItem('interXHR', 'true');
-    
-    
 
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    document.querySelectorAll("tr.preview").forEach((preview) => {
+    console.debug("saveLocal started",is_pte)
+    document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
+        if (is_pte) {
+            checkset = preview.querySelector("th input");
+            console.debug("checkset:",checkset)
+        }
+        else {
+            checkset = preview.querySelector("td input");
+        }
         let rowfound = preview.id;
         row = rowfound.split("-")[1];
         let newrow = rowfound.split("-")[2];
@@ -2086,12 +2100,6 @@ async function saveLocal() {
             row = newrowId;
         }
 
-        if (is_pte) {
-            checkset = preview.querySelector("th input");
-        }
-        else {
-            checkset = preview.querySelector("td input");
-        }
         // If a translation alreay has been saved, there is no checkbox available
         if (checkset != null) {
             //nextpreview = preview.nextElementSibling.nextElementSibling;
@@ -2099,24 +2107,31 @@ async function saveLocal() {
                 counter++;
                 setTimeout(() => {
                     //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
-                    const editor = preview.nextElementSibling;
+                    let editor = preview.nextElementSibling;
                     preview.querySelector("td.actions .edit").click();
+                    //console.debug("Preview:",editor)
                     if (editor != null) {
                         editor.querySelector(".translation-actions__save").click();
                         // PSS confirm the message for dismissal
-                         const foundlabel =  waitForElm(".gp-js-message.gp-js-success").then(confirm => {
-                         //console.debug("result elementReady:",confirm)
-                        //    if (confirm == '.gp-js-message-dismiss') {
-                        //       if (confirm != "No suggestions") {
-                        //           console.debug("closing message")
-                        //          editor.querySelector(".gp-js-message-dismiss").click();
-                        //confirm.click();
-                        // }
-                        //  }
+                        foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
+                        return new Promise((resolve, reject) => {
+                                if (typeof confirm != 'undefined') {
+                                        if (confirm != "No suggestions") {
+                                            confirm.click();
+                                            resolve(foundlabel);
+                                        }
+                                        else {
+                                            reject("No suggestions");
+                                        }
+                                }
+                                else {
+                                    reject("No suggestions");   
+                                }
+                            });
                         });
                     }
                 }, timeout);
-                timeout += 1000;
+                timeout += 2500;
             }
             else {
                 if (preview != null) {
@@ -2127,7 +2142,7 @@ async function saveLocal() {
                         rowchecked = preview.querySelector("th input");
                     }
                     if (rowchecked != null) {
-                        if (!rowchecked.checked) {
+                        if (rowchecked.checked) {
                         rowchecked.checked = false;
                           }
                     }
