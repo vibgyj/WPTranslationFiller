@@ -1377,12 +1377,15 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     else if (result.percent > 66) {
         //checkElem.style.cssText = "padding-left:0px; text-align: right";
         newtitle = checkElem.title;
-        checkElem.innerHTML = "66";
+        checkElem.innerHTML = '<span style="color:black">66</span>';
+       
+        
         var separator1 = document.createElement("div");
         separator1.setAttribute("class", "checkElem_save");
         checkElem.appendChild(separator1);
         SavelocalButton.style.backgroundColor = "#0085ba";
         checkElem.style.backgroundColor = "yellow";
+        
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = "yellow";
             checkElem.title = "Approve the string";
@@ -1580,7 +1583,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (typeof headerElem.title != "undefined") {
             headerElem.setAttribute("title", headertitle);
         }
-        //checkElem.setAttribute("title", result.toolTip);
+        checkElem.setAttribute("title", result.toolTip);
 }
 
 function savetranslateEntryClicked(event) {
