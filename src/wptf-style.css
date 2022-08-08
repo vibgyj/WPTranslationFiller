@@ -1144,6 +1144,9 @@ table.translations tr.preview.status-rejected {
     background-color: #eb9090 !important;
 }
 
+table.translations tr.preview.status-fuzzy {
+    background-color: #f6a983 !important;
+}
 .highlight {
     background: lightpink;
 }
