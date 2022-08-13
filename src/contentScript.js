@@ -12,7 +12,7 @@ addCheckBox();
 var parrotActive ;
 //localStorage.setItem('interXHR', 'false');
 const script = document.createElement('script');
-script.src = chrome.runtime.getURL('inject.js');
+script.src = chrome.runtime.getURL('wptf-inject.js');
 (document.head || document.documentElement).prepend(script);
 
 
