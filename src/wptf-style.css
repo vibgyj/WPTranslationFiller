@@ -800,6 +800,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
 }
 
 .alert-frame {
+    margin-top: auto;
     background: #fff;
     min-height: 400px;
     width: 300px;
