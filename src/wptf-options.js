@@ -118,6 +118,11 @@ chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "d
    // console.debug("parrotActive:",parrotActive)
 });
 
+let backbutton = document.getElementById("backbutton");
+backbutton.addEventListener("click", function () {
+    console.debug("back clicked!!")
+    window.history.back()
+});
 
 let button = document.getElementById("save");
 button.addEventListener("click", function () {

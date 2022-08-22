@@ -739,6 +739,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     cursor:pointer !important;
 }
 
+
 #tf-save-button.ready {
     display:none;
 }
@@ -800,7 +801,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
 }
 
 .alert-frame {
-    margin-top: auto;
+    margin-top: inherit;
     background: #fff;
     min-height: 400px;
     width: 300px;
