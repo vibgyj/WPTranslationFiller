@@ -437,11 +437,11 @@ if (el3 != null) {
 //Add option link
 var optionlink = document.createElement("li");
 var a = document.createElement('a');
-
 a.href = chrome.runtime.getURL('wptf-options.html');
 var link = document.createTextNode("WPTF options");
-a.appendChild(link)
+a.appendChild(link);
 optionlink.className = 'menu-item wptf_settings_menu'
+
 
 var divMenu = document.querySelector("#menu-headline-nav");
 optionlink.appendChild(a)
