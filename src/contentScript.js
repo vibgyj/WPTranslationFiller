@@ -672,7 +672,6 @@ function exportPageClicked(event) {
     
 }
 
-
 let glossary = [];
 chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
     , "glossaryD", "glossaryE", "glossaryF", "glossaryG", "glossaryH", "glossaryI"
