@@ -1091,7 +1091,16 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
                             document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "visible";
                         }
-                        
+                        // 23-08-2022 PSS added fix for issue #236
+                        // The below vars are not need here, so set them to a default value
+                        let countreplaced = 0;
+                        let repl_verb = [];
+                        let countrows = 0;
+                        let replaced = false;
+                        result = await check_start_end(translatedText, preview.innerText, countreplaced, repl_verb, original, replaced, countrows);
+                        replaced = result.replaced;
+                        textareaElem.innerText = result.translatedText;
+                        textareaElem.value = result.translatedText;
                     }
                     else {
                        // console.debug("pretrans not found single!");
