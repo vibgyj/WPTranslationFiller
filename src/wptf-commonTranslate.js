@@ -821,13 +821,13 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 
 async function check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced,myrow) {
     if (original.startsWith(" ")) {
-        console.debug("Original starts with blanc!"+ original);
+       // console.debug("Original starts with blanc!"+ original);
         if (previewNewText.startsWith(" ")) {
-            console.debug("Preview starts with blanc!", previewNewText);
+         //   console.debug("Preview starts with blanc!", previewNewText);
             //replace = false;
         }
         else {
-            console.debug("Preview does not start with blanc!", previewNewText);
+          //  console.debug("Preview does not start with blanc!", previewNewText);
             previewNewText = " " + previewNewText;
             translatedText = " " + translatedText;
             replaced = true;
@@ -836,13 +836,14 @@ async function check_start_end(translatedText, previewNewText, countreplaced, re
         }
     }
     if (original.endsWith(" ")) {
-        console.debug("Original ends with blanc!"+ original);
+      // console.debug("Original end with blanc!" + original);
+       // console.debug("Preview:",previewNewText);
         if (previewNewText.endsWith(" ")) {
-            console.debug("Preview ends with blanc!", previewNewText);
+         //   console.debug("Preview ends with blanc!", previewNewText);
             //replace = false;
         }
         else {
-            console.debug("Preview does not end with blanc!", previewNewText);
+          //  console.debug("Preview does not end with blanc!", previewNewText);
             previewNewText = previewNewText + " ";
             translatedText = translatedText + " ";
             replaced = true;
@@ -853,7 +854,7 @@ async function check_start_end(translatedText, previewNewText, countreplaced, re
     }
     if (previewNewText.startsWith(" ")) {
         if (!original.startsWith(" ")) {
-            console.debug("Original does not start with blanc!", '"' + original + '"');
+           // console.debug("Original does not start with blanc!", '"' + original + '"');
             previewNewText = previewNewText.substring(1, previewNewText.length);
             translatedText = translatedText.substring(1, translatedText.length);
             replaced = true;
@@ -864,11 +865,11 @@ async function check_start_end(translatedText, previewNewText, countreplaced, re
     }
     if (previewNewText.endsWith(" ")) {   
         if (!original.endsWith(" ")) {
-            console.debug("Original does not end with blanc!", '"' + original + '"');
+           // console.debug("Original does not end with blanc!", '"' + original + '"');
             previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
             translatedText = translatedText.substring(0, translatedText.length - 1);
             repl_verb += myrow + ": blanc after removed" + "<br>";
-            console.debug("repl_verb:", repl_verb)
+          //  console.debug("repl_verb:", repl_verb)
             countreplaced++;
             replaced = true;
         }
@@ -987,8 +988,24 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         // Pretranslation found!
                         let translatedText = pretrans;
                         let textareaElem = record.querySelector("textarea.foreign-text");
-                        textareaElem.innerText = translatedText;
-                        textareaElem.value = translatedText;
+
+                        // 23-08-2022 PSS added fix for issue #236
+                        // The below vars are not need here, so set them to a default value
+                        let countreplaced = 0;
+                        let repl_verb = [];
+                        let countrows = 0;
+                        let replaced = false;
+                        let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
+                        let previewNewText = translatedText;
+                       // console.debug("nieuw:", "'"+ previewNewText+ "'");
+                        result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
+                        //replaced = result.replaced;
+                        textareaElem.innerText = result.translatedText;
+                        textareaElem.value = result.translatedText;
+                        translatedText = result.translatedText;
+                        //console.debug("na:", "'"+ translatedText+"'");
+                       // textareaElem.innerText = translatedText;
+                       // textareaElem.value = translatedText;
                         if (typeof current != "undefined") {
                             current.innerText = "transFill";
                             current.value = "transFill";
@@ -1011,6 +1028,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                            // previewElem.innerText = translatedText;
                         }
                         else {
+                            //console.debug("it seems to be a single as li is not found");
                             let preview = document.querySelector("#preview-" + row + " td.translation");
                             let spanmissing = preview.querySelector(" span.missing");
                             if (spanmissing != null) {
@@ -1018,6 +1036,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                                     spanmissing.remove();
                                 }
                                 if (transtype != "single") {
+                                    
                                     ul = document.createElement("ul");
                                     preview.appendChild(ul);
                                     var li1 = document.createElement("li");
@@ -1049,6 +1068,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
                                 }
                                 else {
+                                    //console.debug("jey it is a single!!");
+                                   // console.debug("newtext:","'"+translatedText+"'")
                                     preview.innerText = translatedText;
                                     current.innerText = "transFill";
                                     current.value = "transFill";
@@ -1070,6 +1091,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             }
                             else {
                                 // if it is as single with local then we need also update the preview
+                                // console.debug("single:", "'" + translatedText + "'");
                                 preview.innerText = translatedText;
                                 current.innerText = "transFill";
                                 current.value = "transFill";
@@ -1091,16 +1113,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
                             document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "visible";
                         }
-                        // 23-08-2022 PSS added fix for issue #236
-                        // The below vars are not need here, so set them to a default value
-                        let countreplaced = 0;
-                        let repl_verb = [];
-                        let countrows = 0;
-                        let replaced = false;
-                        result = await check_start_end(translatedText, preview.innerText, countreplaced, repl_verb, original, replaced, countrows);
-                        replaced = result.replaced;
-                        textareaElem.innerText = result.translatedText;
-                        textareaElem.value = result.translatedText;
+                        
                     }
                     else {
                        // console.debug("pretrans not found single!");
@@ -1186,6 +1199,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 }
                 else {
                     // This is when urls/plugin/theme names are present or local translation is present
+                    //console.debug("name or local:",original)
                     let translatedText = original;
                     let textareaElem = record.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
@@ -1681,11 +1695,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                    
                                 }
                                 else {
-                                    console.debug("this is the one!!!!")
-                                    console.debug("prev:",preview)
+                                   // console.debug("this is the one!!!!")
+                                   // console.debug("prev:",preview)
                                     let spanmissing = preview.querySelector(" span.missing");
                                     if (spanmissing != null) {
-                                        console.debug("removing span");
+                                       // console.debug("removing span");
                                         spanmissing.remove();
                                     }
                                     
@@ -1712,15 +1726,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             }
                             else {
                                 // if it is as single with local then we need also update the preview
-                                console.debug("testing two")
-                                console.debug("preview in single:",preview)
+                               // console.debug("testing two")
+                               // console.debug("preview in single:",preview)
                                 let spanmissing = preview.querySelector(" span.missing");
                                 if (spanmissing != null) {
-                                    console.debug("removing span");
+                                   // console.debug("removing span");
                                     spanmissing.remove();
                                 }
                                 let textareaElem = preview.querySelector("span.translation-text");
-                                console.debug("textareaElem", textareaElem)
+                               // console.debug("textareaElem", textareaElem)
                                 // PSS 30-07-2022 fixed error when record is already present with span
                                 if (textareaElem == null) {
                                     var myspan1 = document.createElement("span");
@@ -1760,7 +1774,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                         if (checkplural != null) {
                             transtype = "plural";
                             plural_line = "2";
-                            console.debug("Plural: ", plural_line, original)
+                           // console.debug("Plural: ", plural_line, original)
                             let plural = checkplural.innerText;
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
@@ -2217,11 +2231,11 @@ async function saveLocal() {
     //localStorage.setItem('interXHR', 'true');
 
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    console.debug("saveLocal started",is_pte)
+    //console.debug("saveLocal started",is_pte)
     document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
         if (is_pte) {
             checkset = preview.querySelector("th input");
-            console.debug("checkset:",checkset)
+            //console.debug("checkset:",checkset)
         }
         else {
             checkset = preview.querySelector("td input");

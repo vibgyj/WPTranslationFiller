@@ -737,50 +737,54 @@ function addTranslateButtons() {
     //16 - 06 - 2021 PSS fixed this function addTranslateButtons to prevent double buttons issue #74
     for (let e of document.querySelectorAll("tr.editor")) {
         let rowId = e.getAttribute("row");
-        
+
         let panelHeaderActions = e.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
-        var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
-        currentcel.innerText = "";
-        // Add translate button
-        let translateButton = document.createElement("my-button");
-        importButton.href = "#";
-        translateButton.id = `translate-${rowId}-translation-entry-my-button`;
-        translateButton.className = "translation-entry-my-button";
-        translateButton.onclick = translateEntryClicked;
-        translateButton.innerText = "Translate";
-        translateButton.style.cursor = "pointer";
-        panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+        if (panelHeaderActions != null) {
+            var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
+            if (currentcel != null) {
+                currentcel.innerText = "";
+            }
+            // Add translate button
+            let translateButton = document.createElement("my-button");
+            importButton.href = "#";
+            translateButton.id = `translate-${rowId}-translation-entry-my-button`;
+            translateButton.className = "translation-entry-my-button";
+            translateButton.onclick = translateEntryClicked;
+            translateButton.innerText = "Translate";
+            translateButton.style.cursor = "pointer";
+            panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
 
-        // Add addtranslate button
-        let addTranslateButton = document.createElement("my-button");
-       
-        importButton.href = "#";
-        addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
-        addTranslateButton.className = "addtranslation-entry-my-button";
-        addTranslateButton.onclick = addtranslateEntryClicked;
-        addTranslateButton.innerText = "Add Translation";
-        addTranslateButton.style.cursor = "pointer";
-        panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
+            // Add addtranslate button
+            let addTranslateButton = document.createElement("my-button");
 
-        let TranslocalButton = document.createElement("local-button");
-        TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
-        TranslocalButton.className = "translocal-entry-local-button";
-        TranslocalButton.innerText = "Local";
-        TranslocalButton.style.visibility = "hidden";
-        panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
+            importButton.href = "#";
+            addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
+            addTranslateButton.className = "addtranslation-entry-my-button";
+            addTranslateButton.onclick = addtranslateEntryClicked;
+            addTranslateButton.innerText = "Add Translation";
+            addTranslateButton.style.cursor = "pointer";
+            panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
 
-        let translationActions = e.querySelector("#editor-" + rowId + " div.editor-panel__left .panel-content .translation-actions");
-        let panelCont = document.createElement("copy-button"); 
-        panelCont.className = "with-tooltip";
-        panelCont.id = `meta-copy-to-clipboard`;
-        panelCont.ariaLabel = "Copy original to clipboard";
-        panelCont.style.cursor = "pointer";
-        panelCont.onclick = addtoClipBoardClicked;
-        let panelTool = document.createElement("span");
-        panelTool.className = "tooltiptext";
-        panelTool.className = "dashicons dashicons-clipboard";
-        panelCont.appendChild(panelTool);
-        translationActions.appendChild(panelCont);
+            let TranslocalButton = document.createElement("local-button");
+            TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
+            TranslocalButton.className = "translocal-entry-local-button";
+            TranslocalButton.innerText = "Local";
+            TranslocalButton.style.visibility = "hidden";
+            panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
+
+            let translationActions = e.querySelector("#editor-" + rowId + " div.editor-panel__left .panel-content .translation-actions");
+            let panelCont = document.createElement("copy-button");
+            panelCont.className = "with-tooltip";
+            panelCont.id = `meta-copy-to-clipboard`;
+            panelCont.ariaLabel = "Copy original to clipboard";
+            panelCont.style.cursor = "pointer";
+            panelCont.onclick = addtoClipBoardClicked;
+            let panelTool = document.createElement("span");
+            panelTool.className = "tooltiptext";
+            panelTool.className = "dashicons dashicons-clipboard";
+            panelCont.appendChild(panelTool);
+            translationActions.appendChild(panelCont);
+        }
     }
 }
 
