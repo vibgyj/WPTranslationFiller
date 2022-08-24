@@ -746,7 +746,7 @@ function addTranslateButtons() {
             }
             // Add translate button
             let translateButton = document.createElement("my-button");
-            importButton.href = "#";
+            translateButton.href = "#";
             translateButton.id = `translate-${rowId}-translation-entry-my-button`;
             translateButton.className = "translation-entry-my-button";
             translateButton.onclick = translateEntryClicked;
@@ -757,7 +757,7 @@ function addTranslateButtons() {
             // Add addtranslate button
             let addTranslateButton = document.createElement("my-button");
 
-            importButton.href = "#";
+            addTranslateButton.href = "#";
             addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
             addTranslateButton.className = "addtranslation-entry-my-button";
             addTranslateButton.onclick = addtranslateEntryClicked;
@@ -829,8 +829,6 @@ function importPageClicked(event) {
 }
 
 async function parseDataBase(data) {
-    toastbox("info", "Import is started wait for the result!!", "2000", "Import database");
-    //messageBox("info", "Import is started wait for the result");
     let csvData = [];
     let lbreak = data.split("\n");
     let counter = 0;
@@ -840,16 +838,22 @@ async function parseDataBase(data) {
         csvData.push(res.split("|"));
         ++counter;
     });
+    // 24-08-2022 PSS fixes enhancement #237
+    toastbox("info", "Import of: " + counter + " records is started wait for the result!!", "3000", "Import database");
+    let importButton = document.querySelector(".paging a.import_translation-button");
+    importButton.innerText="Started"
     if (counter > 0) {
         var arrayLength = csvData.length;
         for (var i = 0; i < arrayLength; i++) {
             if (i > 1) {
+                importButton.innerText =  i;
                 // Store it into the database
                 //Prevent adding empty line
                 if (csvData[i][0] != "") {
                     if (i == 100 || i == 200 || i == 300 || i == 400 || i == 500 || i == 600 || i == 700 || i == 800 || i == 900 || i == 1000 || i == 1100 || i == 1200 || i == 1300 || i == 1400 || i == 1500) {
-                        toastbox("info", "Adding is running <br>Records added:"+i, "1000", "Import database");
+                        toastbox("info", "Adding is running <br>Records added:"+i, "1500", "Import database");
                     }
+                   // console.debug("before addDB record:"+i);
                     res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
                 }
             }
@@ -858,7 +862,7 @@ async function parseDataBase(data) {
         messageBox("info", "Import is ready records imported: " + i);
 
     }
-    let importButton = document.querySelector(".paging a.import_translation-button");
+    //importButton = document.querySelector(".paging a.import_translation-button");
     importButton.className += " ready";
 }
 

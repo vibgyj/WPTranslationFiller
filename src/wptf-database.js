@@ -176,8 +176,8 @@ async function addTransDb(orig, trans, cntry) {
     var transl = { source: orig, translation: trans, country: cntry };
     var myWindow = window.self;
     // 05-06-2021 PSS fixed a problem with wrong var names
-    count = await countTransline(orig,cntry);
-    if (count == "0") {
+    count = await findTransline(orig,cntry);
+    if (count == "notFound") {
         reslt = "Inserted";
         try {
            var noOfDataInserted = await jsstoreCon.insert({
@@ -196,7 +196,7 @@ async function addTransDb(orig, trans, cntry) {
        }
     }
     else{
-        res =updateTransDb(orig,trans,cntry);
+        res = updateTransDb(orig, trans, cntry);
         reslt="updated";
     }
   return reslt;
