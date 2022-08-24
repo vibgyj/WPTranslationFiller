@@ -847,8 +847,8 @@ async function parseDataBase(data) {
                 // Store it into the database
                 //Prevent adding empty line
                 if (csvData[i][0] != "") {
-                    if (i == 200 || i == 400 || i == 600 || i == 800 || i == 1000 || i == 1200) {
-                        toastbox("info", "Adding is running <br>Records added:"+i, "2000", "Import database");
+                    if (i == 100 || i == 200 || i == 300 || i == 400 || i == 500 || i == 600 || i == 700 || i == 800 || i == 900 || i == 1000 || i == 1100 || i == 1200 || i == 1300 || i == 1400 || i == 1500) {
+                        toastbox("info", "Adding is running <br>Records added:"+i, "1000", "Import database");
                     }
                     res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
                 }
