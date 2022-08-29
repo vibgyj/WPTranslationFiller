@@ -1,4 +1,9 @@
 //console.debug("Content script...");
+if (!window.indexedDB) {
+    messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
+    console.log(`Your browser doesn't support IndexedDB`);
+    
+}
 // PSS added function from GlotDict to save records in editor
 // PSS added glob_row to determine the actual row from the editor
 var glob_row = 0;
@@ -136,7 +141,7 @@ document.addEventListener("keydown", function (event) {
         toastbox("info", "Switching conversion off", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "%")) {
-        // This switches convert to lowercase off
+        // copy to clipboard
         event.preventDefault();
         copyToClipBoard(detailRow);
     }
@@ -260,8 +265,6 @@ document.addEventListener("keydown", function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
         event.preventDefault();
-        // console.debug("F8")
-        
         let int = localStorage.getItem(['switchTM']);
         if (int == "false") {
             toastbox("info", "Switching TM to foreign", "1200", "TM switch");
@@ -288,8 +291,8 @@ document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === "F11")) {
         console.debug("F11")
         event.preventDefault();
-        toastbox("info", "checkFormal is started wait for the result!!", "10000", "CheckFormal");
-        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\n';
+        toastbox("info", "checkFormal is started wait for the result!!", "2000", "CheckFormal");
+        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\nmet je,met uw\n';
         checkPageClicked(event);
       //  checkFormalPage(dataFormal);
         close_toast();
@@ -650,7 +653,7 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "checkPage is started wait for the result!!", "10000", "CheckPage");
+    toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.sync
         .get(
             ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],

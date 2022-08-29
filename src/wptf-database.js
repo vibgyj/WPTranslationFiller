@@ -147,12 +147,13 @@ function getDbSchema() {
         columns: {
             id: {
                 autoIncrement: true,
-                primaryKey: true
+                //primaryKey: true
             },
             source: {
                 dataType: "string",
                 notNull: true,
-                primaryKey: true
+                primaryKey: true,
+
             },
             translation: {
                 dataType: "string",
@@ -161,6 +162,10 @@ function getDbSchema() {
             country: {
                 dataType: "string",
                 notNull: true
+            },
+            sourceCountry: {
+                keyPath: ['source', 'country'],
+                enableSearch:true          
             }
         }
     };
@@ -232,13 +237,13 @@ const results = await jsstoreCon.count({
 return results;
 }
 
+
 async function findTransline(orig,cntry){
     var trans = "notFound";
     const results = await jsstoreCon.select({
     from: "Translation",
         where: {
-        country: cntry,
-        source: orig
+        sourceCountry: [orig,cntry]
     }
 }).then((value) => {
     if (value !=""){
