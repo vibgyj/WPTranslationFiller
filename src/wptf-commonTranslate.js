@@ -210,7 +210,7 @@ function convert_lower(text) {
 function applySentenceCase(str) {
     // Convert each first word in a sentence to uppercase
     // 03-01-2022 PSS modified the regex issue #169
-    return str.replace(/.+?[\.\?\!\/](\s|$)/g, function (txt) {
+    return str.replace(/.+?[\.\?\!\/\. ](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);
     });
 }
