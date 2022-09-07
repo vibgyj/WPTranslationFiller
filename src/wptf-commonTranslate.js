@@ -125,6 +125,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         //console.debug('after replace x:', translatedText);
     }
     
+    // check if the returned translation does have the same ending as the original
+    translatedText = checkStartEnd(original, translatedText);
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -163,7 +165,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     // check if the returned translation does have the same start/ending as the original
-    translatedText = checkStartEnd(original, translatedText);
+    translatedText = checkStartEnd(original, translatedText);					  
     return translatedText;
 }
 
