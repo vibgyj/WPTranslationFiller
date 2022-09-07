@@ -1652,20 +1652,38 @@ function savetranslateEntryClicked(event) {
                    glotpress_approve.click();
                 }
                 else {
-                    glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-                    setTimeout(() => {
-                        glotpress_save.click();
-                        confirm = "button.gp-js-message-dismiss";
-                        // PSS confirm the message for dismissal
-                        elementReady(".gp-js-message-dismiss").then(elm => { elm.click(); }
-                        );
-                        toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving", myWindow);
-
-                    }, timeout);
-                    timeout += 1000;
+                    // 25-08-2022 PSS changes made to fix issue #238
+                    let preview = document.querySelector(`#preview-${rowId}`);
+                    let editor = preview.nextElementSibling;
+                    let glotpress_suggest = editor.querySelector(".translation-actions__save");
                     
+                    //glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
+                    //setTimeout(() => { 
+                    glotpress_suggest.click();
+                      //  foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {
+                       //     return new Promise((resolve, reject) => {
+                        //        if (typeof confirm != 'undefined') {
+                         //           if (confirm != "No suggestions") {
+                         //               confirm.click();
+                         //               resolve(foundlabel);
+                         //           }
+                                    
+                          //      }
+                           //     else {
+                            //        reject("No suggestions");
+                           //     }
+                           // });
+                       // });
+
+                       // confirm = "button.gp-js-message-dismiss";
+                        // PSS confirm the message for dismissal
+                      //  elementReady(".gp-js-message-dismiss").then(elm => { elm.click(); }
+                      //  );
+                      //  toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving", myWindow);
+
+                   // }, timeout);
+                    //timeout += 1000;    
                 }
-                
                 status.innerText = "current";
                 glotpress_close.click();
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
