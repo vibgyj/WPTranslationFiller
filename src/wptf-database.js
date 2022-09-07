@@ -147,12 +147,13 @@ function getDbSchema() {
         columns: {
             id: {
                 autoIncrement: true,
-                primaryKey: true
+                //primaryKey: true
             },
             source: {
                 dataType: "string",
                 notNull: true,
-                primaryKey: true
+                primaryKey: true,
+
             },
             translation: {
                 dataType: "string",
@@ -161,6 +162,10 @@ function getDbSchema() {
             country: {
                 dataType: "string",
                 notNull: true
+            },
+            sourceCountry: {
+                keyPath: ['source', 'country'],
+                enableSearch:true          
             }
         }
     };
@@ -176,8 +181,8 @@ async function addTransDb(orig, trans, cntry) {
     var transl = { source: orig, translation: trans, country: cntry };
     var myWindow = window.self;
     // 05-06-2021 PSS fixed a problem with wrong var names
-    count = await countTransline(orig,cntry);
-    if (count == "0") {
+    count = await findTransline(orig,cntry);
+    if (count == "notFound") {
         reslt = "Inserted";
         try {
            var noOfDataInserted = await jsstoreCon.insert({
@@ -196,7 +201,7 @@ async function addTransDb(orig, trans, cntry) {
        }
     }
     else{
-        res =updateTransDb(orig,trans,cntry);
+        res = updateTransDb(orig, trans, cntry);
         reslt="updated";
     }
   return reslt;
@@ -232,13 +237,13 @@ const results = await jsstoreCon.count({
 return results;
 }
 
+
 async function findTransline(orig,cntry){
     var trans = "notFound";
     const results = await jsstoreCon.select({
     from: "Translation",
         where: {
-        country: cntry,
-        source: orig
+        sourceCountry: [orig,cntry]
     }
 }).then((value) => {
     if (value !=""){

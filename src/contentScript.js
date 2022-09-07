@@ -1,4 +1,9 @@
 //console.debug("Content script...");
+if (!window.indexedDB) {
+    messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
+    console.log(`Your browser doesn't support IndexedDB`);
+    
+}
 // PSS added function from GlotDict to save records in editor
 // PSS added glob_row to determine the actual row from the editor
 var glob_row = 0;
@@ -136,7 +141,7 @@ document.addEventListener("keydown", function (event) {
         toastbox("info", "Switching conversion off", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "%")) {
-        // This switches convert to lowercase off
+        // copy to clipboard
         event.preventDefault();
         copyToClipBoard(detailRow);
     }
@@ -260,8 +265,6 @@ document.addEventListener("keydown", function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
         event.preventDefault();
-        // console.debug("F8")
-        
         let int = localStorage.getItem(['switchTM']);
         if (int == "false") {
             toastbox("info", "Switching TM to foreign", "1200", "TM switch");
@@ -288,8 +291,8 @@ document.addEventListener("keydown", function (event) {
     if (event.altKey && event.shiftKey && (event.key === "F11")) {
         console.debug("F11")
         event.preventDefault();
-        toastbox("info", "checkFormal is started wait for the result!!", "10000", "CheckFormal");
-        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\n';
+        toastbox("info", "checkFormal is started wait for the result!!", "2000", "CheckFormal");
+        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\nmet je,met uw\n';
         checkPageClicked(event);
       //  checkFormalPage(dataFormal);
         close_toast();
@@ -650,7 +653,7 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "checkPage is started wait for the result!!", "10000", "CheckPage");
+    toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.sync
         .get(
             ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
@@ -737,50 +740,54 @@ function addTranslateButtons() {
     //16 - 06 - 2021 PSS fixed this function addTranslateButtons to prevent double buttons issue #74
     for (let e of document.querySelectorAll("tr.editor")) {
         let rowId = e.getAttribute("row");
-        
+
         let panelHeaderActions = e.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
-        var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
-        currentcel.innerText = "";
-        // Add translate button
-        let translateButton = document.createElement("my-button");
-        importButton.href = "#";
-        translateButton.id = `translate-${rowId}-translation-entry-my-button`;
-        translateButton.className = "translation-entry-my-button";
-        translateButton.onclick = translateEntryClicked;
-        translateButton.innerText = "Translate";
-        translateButton.style.cursor = "pointer";
-        panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
+        if (panelHeaderActions != null) {
+            var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
+            if (currentcel != null) {
+                currentcel.innerText = "";
+            }
+            // Add translate button
+            let translateButton = document.createElement("my-button");
+            translateButton.href = "#";
+            translateButton.id = `translate-${rowId}-translation-entry-my-button`;
+            translateButton.className = "translation-entry-my-button";
+            translateButton.onclick = translateEntryClicked;
+            translateButton.innerText = "Translate";
+            translateButton.style.cursor = "pointer";
+            panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
 
-        // Add addtranslate button
-        let addTranslateButton = document.createElement("my-button");
-       
-        importButton.href = "#";
-        addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
-        addTranslateButton.className = "addtranslation-entry-my-button";
-        addTranslateButton.onclick = addtranslateEntryClicked;
-        addTranslateButton.innerText = "Add Translation";
-        addTranslateButton.style.cursor = "pointer";
-        panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
+            // Add addtranslate button
+            let addTranslateButton = document.createElement("my-button");
 
-        let TranslocalButton = document.createElement("local-button");
-        TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
-        TranslocalButton.className = "translocal-entry-local-button";
-        TranslocalButton.innerText = "Local";
-        TranslocalButton.style.visibility = "hidden";
-        panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
+            addTranslateButton.href = "#";
+            addTranslateButton.id = `translate-${rowId}-addtranslation-entry-my-button`;
+            addTranslateButton.className = "addtranslation-entry-my-button";
+            addTranslateButton.onclick = addtranslateEntryClicked;
+            addTranslateButton.innerText = "Add Translation";
+            addTranslateButton.style.cursor = "pointer";
+            panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
 
-        let translationActions = e.querySelector("#editor-" + rowId + " div.editor-panel__left .panel-content .translation-actions");
-        let panelCont = document.createElement("copy-button"); 
-        panelCont.className = "with-tooltip";
-        panelCont.id = `meta-copy-to-clipboard`;
-        panelCont.ariaLabel = "Copy original to clipboard";
-        panelCont.style.cursor = "pointer";
-        panelCont.onclick = addtoClipBoardClicked;
-        let panelTool = document.createElement("span");
-        panelTool.className = "tooltiptext";
-        panelTool.className = "dashicons dashicons-clipboard";
-        panelCont.appendChild(panelTool);
-        translationActions.appendChild(panelCont);
+            let TranslocalButton = document.createElement("local-button");
+            TranslocalButton.id = `translate-${rowId}-translocal-entry-local-button`;
+            TranslocalButton.className = "translocal-entry-local-button";
+            TranslocalButton.innerText = "Local";
+            TranslocalButton.style.visibility = "hidden";
+            panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
+
+            let translationActions = e.querySelector("#editor-" + rowId + " div.editor-panel__left .panel-content .translation-actions");
+            let panelCont = document.createElement("copy-button");
+            panelCont.className = "with-tooltip";
+            panelCont.id = `meta-copy-to-clipboard`;
+            panelCont.ariaLabel = "Copy original to clipboard";
+            panelCont.style.cursor = "pointer";
+            panelCont.onclick = addtoClipBoardClicked;
+            let panelTool = document.createElement("span");
+            panelTool.className = "tooltiptext";
+            panelTool.className = "dashicons dashicons-clipboard";
+            panelCont.appendChild(panelTool);
+            translationActions.appendChild(panelCont);
+        }
     }
 }
 
@@ -825,8 +832,6 @@ function importPageClicked(event) {
 }
 
 async function parseDataBase(data) {
-    toastbox("info", "Import is started wait for the result!!", "2000", "Import database");
-    //messageBox("info", "Import is started wait for the result");
     let csvData = [];
     let lbreak = data.split("\n");
     let counter = 0;
@@ -836,16 +841,22 @@ async function parseDataBase(data) {
         csvData.push(res.split("|"));
         ++counter;
     });
+    // 24-08-2022 PSS fixes enhancement #237
+    toastbox("info", "Import of: " + counter + " records is started wait for the result!!", "3000", "Import database");
+    let importButton = document.querySelector(".paging a.import_translation-button");
+    importButton.innerText="Started"
     if (counter > 0) {
         var arrayLength = csvData.length;
         for (var i = 0; i < arrayLength; i++) {
             if (i > 1) {
+                importButton.innerText =  i;
                 // Store it into the database
                 //Prevent adding empty line
                 if (csvData[i][0] != "") {
-                    if (i == 200 || i == 400 || i == 600 || i == 800 || i == 1000 || i == 1200) {
-                        toastbox("info", "Adding is running <br>Records added:"+i, "2000", "Import database");
+                    if (i == 100 || i == 200 || i == 300 || i == 400 || i == 500 || i == 600 || i == 700 || i == 800 || i == 900 || i == 1000 || i == 1100 || i == 1200 || i == 1300 || i == 1400 || i == 1500) {
+                        toastbox("info", "Adding is running <br>Records added:"+i, "1500", "Import database");
                     }
+                   // console.debug("before addDB record:"+i);
                     res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
                 }
             }
@@ -854,7 +865,7 @@ async function parseDataBase(data) {
         messageBox("info", "Import is ready records imported: " + i);
 
     }
-    let importButton = document.querySelector(".paging a.import_translation-button");
+    //importButton = document.querySelector(".paging a.import_translation-button");
     importButton.className += " ready";
 }
 
