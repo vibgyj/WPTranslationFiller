@@ -5,8 +5,17 @@ var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
 var errorstate = "OK";
+
 gd_wait_table_alter();
 addCheckBox();
+
+var parrotActive ;
+//localStorage.setItem('interXHR', 'false');
+const script = document.createElement('script');
+script.src = chrome.runtime.getURL('wptf-inject.js');
+(document.head || document.documentElement).prepend(script);
+
+
 ;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.sync
     .get(
@@ -89,6 +98,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
+   // event.preventDefault();
     //console.debug("eventkey:", event.key);
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
@@ -185,7 +195,7 @@ document.addEventListener("keydown", function (event) {
         event.preventDefault();
         chrome.storage.sync
             .get(
-                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree","TMwait"],
+                ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
                 function (data) {
                     if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
 
@@ -200,9 +210,9 @@ document.addEventListener("keydown", function (event) {
                                     var TMwait = 500;
                                 }
                                 else {
-                                   var TMwait = data.TMwait;
+                                    var TMwait = data.TMwait;
                                 }
-                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree,TMwait);
+                                result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait);
                             }
                             else {
                                 messageBox("error", "You need to set the translator API");
@@ -233,6 +243,58 @@ document.addEventListener("keydown", function (event) {
         resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
         //console.debug("blockres:"), resblock;
     }
+    if (event.altKey && event.shiftKey && (event.key === "F8")) {
+        event.preventDefault();
+       // console.debug("F8")
+        let int = localStorage.getItem(['interXHR']);
+        if (int == "false") {
+            toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
+            localStorage.setItem('interXHR', 'true');
+        }
+        else {
+            toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
+            localStorage.setItem('interXHR', 'false');
+        }
+        location.reload();
+    };
+
+    if (event.altKey && event.shiftKey && (event.key === "F9")) {
+        event.preventDefault();
+        // console.debug("F8")
+        
+        let int = localStorage.getItem(['switchTM']);
+        if (int == "false") {
+            toastbox("info", "Switching TM to foreign", "1200", "TM switch");
+            localStorage.setItem('switchTM', 'true');       
+        }
+        else {
+            toastbox("info", "Switching TM to local", "1200", "TM switch");
+            localStorage.setItem('switchTM', 'false');
+        }
+        location.reload();
+    };
+
+    if (event.altKey && event.shiftKey && (event.key === "F10")) {
+        event.preventDefault();
+        //$(document).ready(function () {
+        var mysimple = window['wpgpt_load_history_status'];
+        console.log(mysimple);
+        console.log($gp_editor_options['can_approve'])
+        alert("Editor options:" + mysimple)
+       // })
+        
+    };
+
+    if (event.altKey && event.shiftKey && (event.key === "F11")) {
+        console.debug("F11")
+        event.preventDefault();
+        toastbox("info", "checkFormal is started wait for the result!!", "10000", "CheckFormal");
+        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\n';
+        checkPageClicked(event);
+      //  checkFormalPage(dataFormal);
+        close_toast();
+
+    };
 
     if (event.altKey && event.shiftKey && (event.key === "F7")) {
         //event.preventDefault();
@@ -355,6 +417,7 @@ let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
     bulkbutton.addEventListener("click", () => {
         bulkSave(event);
+        
     });
 }
 
@@ -374,11 +437,11 @@ if (el3 != null) {
 //Add option link
 var optionlink = document.createElement("li");
 var a = document.createElement('a');
-
 a.href = chrome.runtime.getURL('wptf-options.html');
 var link = document.createTextNode("WPTF options");
-a.appendChild(link)
+a.appendChild(link);
 optionlink.className = 'menu-item wptf_settings_menu'
+
 
 var divMenu = document.querySelector("#menu-headline-nav");
 optionlink.appendChild(a)
@@ -401,9 +464,16 @@ localtransButton.onclick = localTransClicked;
 localtransButton.innerText = "Local";
 
 //12-05-2022 PSS added a new button for local translate
+let TM = localStorage.getItem(['switchTM']);
 var tmtransButton = document.createElement("a");
 tmtransButton.href = "#";
-tmtransButton.className = "tm-trans-button";
+
+if (TM == "false") {
+    tmtransButton.className = "tm-trans-button";
+}
+else {
+    tmtransButton.className = "tm-trans-button foreighn"
+}
 tmtransButton.onclick = tmTransClicked;
 tmtransButton.innerText = "TM";
 
@@ -430,6 +500,16 @@ importButton.id = "ImportDb";
 importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
+var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+if (is_pte) {
+    //07-05-2021 PSS added a bulksave button on first page
+    var bulksaveButton = document.createElement("a");
+    bulksaveButton.href = "#";
+    bulksaveButton.id = "BulkSave";
+    bulksaveButton.className = "bulksave-button";
+    bulksaveButton.onclick = bulkSave;
+    bulksaveButton.innerText = "Bulksave";
+}
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
 if (divPaging != null && divProjects == null) {
@@ -439,6 +519,9 @@ if (divPaging != null && divProjects == null) {
     divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
     divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+    if (is_pte) {
+        divPaging.insertBefore(bulksaveButton, divPaging.childNodes[0]);
+    }
 }
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
@@ -566,12 +649,13 @@ function checkFormal(formal) {
 
 function checkPageClicked(event) {
     event.preventDefault();
+    var formal = checkFormal(false);
     toastbox("info", "checkPage is started wait for the result!!", "10000", "CheckPage");
     chrome.storage.sync
         .get(
             ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
             function (data) {
-                checkPage(data.postTranslationReplace);
+                checkPage(data.postTranslationReplace,formal);
                 close_toast();
             }); 
 }
@@ -836,12 +920,12 @@ function checkbuttonClick(event) {
             // Necessary to prevent showing old translation exist if started from link "Translation history"
             // alert(action);
             // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
-            if (action == "Details" || action == "✓Details") {
+        if (action == "Details" || action == "✓Details") {    
                 let rowId = event.target.parentElement.parentElement.getAttribute("row");
                 glob_row = rowId;
                 detailRow = rowId;
                 let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-
+                //localStorage.setItem('interXHR', 'false');
                 // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
                 // if the translator is a PTE then we do not need to do this, as there is already an extra column
                 let myrec = document.querySelector(`#editor-${detailRow}`);
@@ -1292,12 +1376,15 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
     else if (result.percent > 66) {
         //checkElem.style.cssText = "padding-left:0px; text-align: right";
         newtitle = checkElem.title;
-        checkElem.innerHTML = "66";
+        checkElem.innerHTML = '<span style="color:black">66</span>';
+       
+        
         var separator1 = document.createElement("div");
         separator1.setAttribute("class", "checkElem_save");
         checkElem.appendChild(separator1);
         SavelocalButton.style.backgroundColor = "#0085ba";
         checkElem.style.backgroundColor = "yellow";
+        
         if (typeof headerElem.style != "undefined") {
             headerElem.style.backgroundColor = "yellow";
             checkElem.title = "Approve the string";
@@ -1495,7 +1582,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         if (typeof headerElem.title != "undefined") {
             headerElem.setAttribute("title", headertitle);
         }
-        //checkElem.setAttribute("title", result.toolTip);
+        checkElem.setAttribute("title", result.toolTip);
 }
 
 function savetranslateEntryClicked(event) {
@@ -1532,8 +1619,11 @@ function savetranslateEntryClicked(event) {
                 }
                 // PSS confirm the message for dismissal
                 foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                   if (confirm != '.gp-js-message-dismiss') {
-                       confirm.click();
+                    if (confirm != '.gp-js-message-dismiss') {
+                        console.debug("confirm value:", confirm)
+                        if (typeof confirm === 'function') {
+                            confirm.click();
+                        }
                    }
                 });
        }, timeout);
@@ -1898,54 +1988,53 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     var doc = parser.parseFromString(data, "text/html");
                     //console.log("html:", doc);
                     var table = doc.getElementById("translations");
-                    let tr = table.rows;
-                    if (table != undefined) {
-                        const tbodyRowCount = table.tBodies[0].rows.length;
-                        // 04-07-2021 PSS added counter to message for existing translations
-                        var rejected = table.querySelectorAll("tr.preview.status-rejected");
-                        var waiting = table.querySelectorAll("tr.preview.status-waiting");
-                        var fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
-                        var current = table.querySelectorAll("tr.preview.status-current");
-                        var old = table.querySelectorAll("tr.preview.status-old");
-                        if (typeof current != "null" && current.length != 0) {
-                            currcount = " Current:" + current.length;
-                        }
-                        else {
-                            currcount = "";
-                        }
-                        if (waiting.length != 0) {
-                            wait = " Waiting:" + waiting.length;
-                        }
-                        else {
-                            wait = "";
-                        }
-                        if (rejected.length != 0) {
-                            rejec = " Rejected:" + rejected.length;
-                        }
-                        else {
-                            rejec = "";
-                        }
-                        if (fuzzy.length != 0) {
-                            fuz = " Fuzzy:" + fuzzy.length;
-                        }
-                        else {
-                            fuz = "";
-                        }
-                        if (old.length != 0) {
-                            old = " Old:" + old.length;
-                        }
-                        else {
-                            old = "";
-                        }
-                        if (tbodyRowCount > 2 && single == "False") {
-                                               
-                            updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
-                        }
-                        else if (tbodyRowCount > 2 && single == "True") {
-                            updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
-                            //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
-                            //window.open(url, "_blank", windowFeatures);
-                        }
+                    if (table != null) {
+                           let tr = table.rows;
+                           const tbodyRowCount = table.tBodies[0].rows.length;
+                           // 04-07-2021 PSS added counter to message for existing translations
+                           var rejected = table.querySelectorAll("tr.preview.status-rejected");
+                           var waiting = table.querySelectorAll("tr.preview.status-waiting");
+                           var fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
+                           var current = table.querySelectorAll("tr.preview.status-current");
+                           var old = table.querySelectorAll("tr.preview.status-old");
+                           if (typeof current != "null" && current.length != 0) {
+                               currcount = " Current:" + current.length;
+                           }
+                           else {
+                              currcount = "";
+                           }
+                           if (waiting.length != 0) {
+                               wait = " Waiting:" + waiting.length;
+                           }
+                           else {
+                               wait = "";
+                           }
+                           if (rejected.length != 0) {
+                               rejec = " Rejected:" + rejected.length;
+                           }
+                           else {
+                                rejec = "";
+                           }
+                           if (fuzzy.length != 0) {
+                               fuz = " Fuzzy:" + fuzzy.length;
+                           }
+                           else {
+                              fuz = "";
+                           }
+                           if (old.length != 0) {
+                              old = " Old:" + old.length;
+                           }
+                           else {
+                               old = "";
+                           }
+                           if (tbodyRowCount > 2 && single == "False") {
+                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, "", "", currcount);
+                           }
+                           else if (tbodyRowCount > 2 && single == "True") {
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, "", "",currcount);
+                               //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+                               //window.open(url, "_blank", windowFeatures);
+                           }
                     }
                 }
             }).catch(error => console.debug(error));

@@ -139,14 +139,21 @@ local.paging a.local-trans-button {
     margin: 5px !important;
 }
 
-local.paging a.tm-trans-button {
+.paging a.tm-trans-button {
     background: blue;
-    color: white;
+    color: white !important;
     padding-left: 5px;
     padding-right: 5px;
-    width: 28px;
 }
 
+
+
+.paging a.tm-trans-button.foreighn {
+    background: grey;
+    color: white !important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
 
 .paging a.tm-trans-button:hover {
     color: lightgray !important;
@@ -163,13 +170,6 @@ local.paging a.tm-trans-button {
     font: normal 20px/1 'dashicons';
     vertical-align: middle;
     width: 28px;
-}
-
-.paging a.tm-trans-button {
-    background: blue;
-    color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
 }
 
 .paging a.tm-trans-button.started {
@@ -209,6 +209,13 @@ local.paging a.tm-trans-button {
         padding-bottom: 0.1em !important;
         margin: 5px !important;
  }
+
+.paging a.bulksave-button {
+    background: blue;
+    color: white !important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
 
 
 .panel-header-actions .translation-filler-button {
@@ -732,6 +739,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     cursor:pointer !important;
 }
 
+
 #tf-save-button.ready {
     display:none;
 }
@@ -793,6 +801,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
 }
 
 .alert-frame {
+    margin-top: inherit;
     background: #fff;
     min-height: 400px;
     width: 300px;
@@ -1133,6 +1142,13 @@ table.translations tr.preview.wptf-translated {
     background-color: #FFFFC2;
 }
 
+table.translations tr.preview.status-rejected {
+    background-color: #eb9090 !important;
+}
+
+table.translations tr.preview.status-fuzzy {
+    background-color: #f6a983 !important;
+}
 .highlight {
     background: lightpink;
 }

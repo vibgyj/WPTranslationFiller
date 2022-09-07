@@ -84,7 +84,13 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                         }
                     }
                 }
-            }
+             }
+             // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
+             // we need to change the state of the record
+             var previewClass = document.querySelector(`#preview-${row}`);
+             previewClass.classList.replace("no-translations", "has-translations");
+             previewClass.classList.replace("untranslated", "status-waiting");
+             previewClass.classList.add("wptf-translated");
          }
          else {
              // if it is as single with local then we need also update the preview
@@ -105,6 +111,11 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                    rowchecked.checked = true;
                 }
              }
+             // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
+             // we need to change the state of the record 
+             preview.classList.replace("no-translations", "has-translations");
+             preview.classList.replace("untranslated", "status-waiting");
+             preview.classList.add("wptf-translated");
          }
     }
     if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
