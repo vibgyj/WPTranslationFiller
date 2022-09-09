@@ -682,6 +682,12 @@ async function checkPage(postTranslationReplace,formal) {
                         // console.debug("replaced:", replaced,result.repl_verb)
                         if (replaced) {
                             repl_verb = result.repl_verb;
+                            // 09-09-2022 PSS fix for issue #244
+                            if (currec != null) {
+                                var current = currec.querySelector("span.panel-header__bubble");
+                                var prevstate = current.innerText;
+                                current.innerText = "transFill";
+                            }
                         }
                         textareaElem.innerText = result.translatedText;
                         textareaElem.value = result.translatedText;
