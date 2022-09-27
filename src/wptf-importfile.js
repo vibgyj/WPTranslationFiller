@@ -98,7 +98,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                 translatedText=result.translatedText; 
                                 textareaElem.innerText = translatedText;
                                 textareaElem.value = translatedText;
-                                console.debug("na:", "'" + translatedText + "'");
+                                //console.debug("na:", "'" + translatedText + "'");
                                 if (typeof current != "undefined") {
                                     current.innerText = "transFill";
                                     current.value = "transFill";
@@ -121,7 +121,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                     // previewElem.innerText = translatedText;
                                 }
                                 else {
-                                    console.debug("it seems to be a single as li is not found");
+                                    //console.debug("it seems to be a single as li is not found");
                                     let preview = document.querySelector("#preview-" + row + " td.translation");
                                     let spanmissing = preview.querySelector(" span.missing");
                                     if (spanmissing != null) {
@@ -159,9 +159,9 @@ async function new_import_po(destlang,myFile,allrows) {
                                             myspan2.appendChild(document.createTextNode("empty"));
                                         }
                                         else {
-                                            console.debug("jey it is a single!!");
+                                           // console.debug("jey it is a single!!");
                                             let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
-                                            console.debug("newtext:","'"+translatedText+"'")
+                                           // console.debug("newtext:","'"+translatedText+"'")
                                             preview.innerText = translatedText;
                                             current.innerText = "transFill";
                                             current.value = "transFill";
@@ -183,7 +183,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                     }
                                     else {
                                         let preview = document.querySelector("#preview-" + row + " td.translation");
-                                        console.debug("no span:",preview)
+                                        //console.debug("no span:",preview)
                                         // if it is as single with local then we need also update the preview
                                         // console.debug("single:", "'" + translatedText + "'");
                                         preview.innerText = translatedText;

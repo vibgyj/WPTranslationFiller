@@ -801,6 +801,9 @@ tr.preview.status-hidden {
     display:none !important;
 }
 
+tr.preview.wptf-saved {
+    display: none !important;
+}
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
     margin-left: calc(-.5em - 48px) !important;
