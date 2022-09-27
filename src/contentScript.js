@@ -103,7 +103,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
-   // event.preventDefault();
+    // event.preventDefault();
     //console.debug("eventkey:", event.key);
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
@@ -144,6 +144,56 @@ document.addEventListener("keydown", function (event) {
         // copy to clipboard
         event.preventDefault();
         copyToClipBoard(detailRow);
+    }
+    if (event.altKey && event.shiftKey && (event.key === "U")) {
+        // import .po file
+        event.preventDefault();
+        chrome.storage.sync
+            .get(
+                ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
+                function (data) {
+                    var allrows = [];
+                    var myrows = [];
+                    var myFile;
+                    var pretrans;
+                    var transtype;
+                    toastbox("info", "Select file is started", "2000", "Select file");
+                    var input = document.createElement('input');
+                    input.type = 'file';
+                    input.onchange = _this => {
+                        let files = Array.from(input.files);
+                        //   console.log(files);
+                        if (files && files[0]) {
+                            myFile = files[0];
+                            var reader = new FileReader();
+                            reader.addEventListener('load', function (e) {
+                                //output.textContent = e.target.result;
+                                myrows = e.target.result.replace(/\r/g, "").split(/\n/);
+                                // allrows = e.target.result.split(/\r|\n/);
+                                // remove all unnessesary lines as those will take time to process
+                                var regel = '';
+                                for (var i = 0; i < myrows.length - 1; i++) {
+                                    regel = myrows[i];
+                                    if (regel.startsWith("msgid") || regel.startsWith("msgstr") || regel.startsWith("msgctxt") || regel.startsWith("msgid_plural") || regel.startsWith("msgstr[0]") || regel.startsWith("msgstr[1]")) {
+                                        allrows.push(regel);
+                                        //console.debug(allrows)
+                                    }
+                                }
+
+                                countimported = new_import_po(data.destlang, myFile,allrows);
+                            });
+                            reader.readAsText(myFile);
+                        }
+                        else {
+                            messageBox(info, "No file selected")
+                        }
+                    };
+                    input.click();
+                });
+       
+   
+        //modal.style.display = "none";
+        //messageBox("info", "Import translation ready " + countimported);
     }
     if (event.altKey && event.shiftKey && (event.key === "#")) {
         event.preventDefault();

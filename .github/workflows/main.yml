@@ -47,8 +47,9 @@ jobs:
           cp src/wptf-purify.min.js src/chrome/wptf-purify.min.js
           cp src/wptf-functions.js src/chrome/wptf-functions.js
           cp src/wptf-consistency.js src/chrome/wptf-consistency.js
+          cp src/wptf-importfile.js src/chrome/wptf-importfile.js
           cp src/wptf-block_rules.json src/chrome/wptf-block_rules.json
-          cp src/wptf-inject.json src/chrome/wptf-inject.json
+          cp src/wptf-inject.js src/chrome/wptf-inject.js
           mkdir src/chrome/img
           cp src/img/error.svg src/chrome/img/error.svg
           cp src/img/info.svg src/chrome/img/info.svg
@@ -74,7 +75,8 @@ jobs:
           cp src/wptf-functions.js src/firefox/wptf-functions.js
           cp src/wptf-consistency.js src/firefox/wptf-consistency.js
           cp src/wptf-block_rules.json src/firefox/wptf-block_rules.json
-          cp src/wptf-inject.json src/chrome/wptf-inject.json
+          cp src/wptf-inject.js src/chrome/wptf-inject.js
+          cp src/wptf-importfile.js src/chrome/wptf-importfile.js
           mkdir src/firefox/img
           cp src/img/error.svg src/firefox/img/error.svg
           cp src/img/info.svg src/firefox/img/info.svg
