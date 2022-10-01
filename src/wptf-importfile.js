@@ -1,24 +1,22 @@
 async function new_import_po(destlang,myFile,allrows) {
-   // var allrows = [];
-  //  var myrows = [];
-   // var myFile;
     var pretrans;
     var transtype;
+    
     // here we start processing the table
     // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".paging a.local-trans-button");
-    translateButton.innerText = "Translate";
+    let impLocButton = document.querySelector(".paging a.impLoc-button");
+    impLocButton.innerText = "Importing";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-           if (translateButton.className == "local-trans-button") {
-                    translateButton.className += " started";
+    if (impLocButton.className == "impLoc-button") {
+        impLocButton.className += " started";
                 }
-                else {
-
-                    translateButton.classList.remove("local-trans-button", "started", "translated");
-                    translateButton.classList.remove("local-trans-button", "restarted", "translated");
-                    translateButton.className = "local-trans-button restarted";
-                }
+    else {
+        impLocButton.classList.remove("started", "translated");
+        impLocButton.classList.remove("restarted", "translated");
+        impLocButton.className = "impLoc-button restarted";
+    }
+    toastbox("info", "Import started", "3000", "Importing");
                 for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                     transtype = "single";
                     // 16-08-2021 PSS fixed retranslation issue #118
@@ -347,14 +345,15 @@ async function new_import_po(destlang,myFile,allrows) {
                         // Hiding the row is done through CSS tr.preview.status-hidden
                         prevcurrentClass.classList.replace("untranslated", "status-hidden");
                     }
-
-                // Translation completed  
-                translateButton = document.querySelector(".paging a.local-trans-button");
-                translateButton.className += " translated";
-                translateButton.innerText = "Translated";
-                parrotActive = 'false';
-                // end of processing
+                    
     };
+    // Translation completed  
+    impLocButton = document.querySelector(".paging a.impLoc-button");
+    impLocButton.classList.remove("started");
+    impLocButton.className += " imported";
+    impLocButton.innerText = "Imported";
+    parrotActive = 'false';
+   
 }
 
 

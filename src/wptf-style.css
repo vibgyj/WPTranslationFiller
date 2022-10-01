@@ -472,7 +472,52 @@ local.paging a.local-trans-button {
     background-color: green;
 }
 
+.paging a.impLoc-button {
+    background: blue;
+    color: white !important;
+    padding-left: 5px;
+    padding-right: 5px;
+}
 
+.paging a.impLoc-button:hover {
+    color: lightgray !important;
+}
+
+.paging a.impLoc-button {
+    color: lightgray;
+}
+
+.paging a.impLoc-button.ready {
+        background: green;
+}
+
+.paging a.impLoc-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+}
+.paging a.impLoc-button.started {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+}
+.paging a.impLoc-button.imported {
+        animation: none !important;
+        background: green;
+        border-radius: 0%;
+        border: 0px solid transparent;
+        display: inline-block;
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        margin: 5px !important;
+}
 
 .paging a.addtranslation-entry-my-button {
     background: blue;

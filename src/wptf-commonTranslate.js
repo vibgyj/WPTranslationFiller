@@ -2272,7 +2272,9 @@ async function saveLocal() {
                         let editorRow = rowfound.split("-")[1];
                         // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
                         let nothidden = document.querySelector(`#preview-${editorRow}`);
-                        nothidden.classList.add("wptf-saved");
+                        if (typeof nothidden != null) {
+                            nothidden.classList.add("wptf-saved");
+                        }
                         editor.querySelector(".translation-actions__save").click();
                         // PSS confirm the message for dismissal
                         foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
