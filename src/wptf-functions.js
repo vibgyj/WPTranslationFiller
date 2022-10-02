@@ -23,7 +23,7 @@ function findArrayLine(allrows, original, transtype, plural_line) {
     if (transtype == "single") {
         if (result != -1) {
             trans = allrows.find((el, idx) => typeof el === "string" && idx === result + 1);
-            console.debug("Translation:", trans)
+            //console.debug("Translation:", trans)
             res = trans.replace("msgstr ", "");
             res = res.slice(1, -1);
         }
