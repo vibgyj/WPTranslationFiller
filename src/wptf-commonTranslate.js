@@ -212,7 +212,7 @@ function convert_lower(text) {
 function applySentenceCase(str) {
     // Convert each first word in a sentence to uppercase
     // 03-01-2022 PSS modified the regex issue #169
-    return str.replace(/.+?[\.\?\!\/\. ](\s|$)/g, function (txt) {
+    return str.replace(/.+?[\.\?\!\/\. \:\: ](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);
     });
 }
@@ -646,7 +646,7 @@ async function checkPage(postTranslationReplace,formal) {
                         orgText = result.orgText;
                         repl_verb = result.repl_verb;
                         // PSS 22-07-2021 fix for the preview text is not updated #109
-                        let preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                        var preview = document.querySelector("#preview-" + newrowId + " td.translation");
                         if (preview == null) {
                             preview = document.querySelector("#preview-" + myrow + " td.translation");
                         }
@@ -683,15 +683,19 @@ async function checkPage(postTranslationReplace,formal) {
                             // Enhancement issue #123
                             var myspan1 = document.createElement("span");
                             myspan1.className = "translation-text";
-                            preview.appendChild(myspan1);
-                            myspan1.appendChild(document.createTextNode(previewNewText));
                             preview = document.querySelector("#preview-" + newrowId + " td.translation");
                             if (preview == null) {
                                 preview = document.querySelector("#preview-" + myrow + " td.translation");
                             }
-                            // PSS populate the preview before marking
-                            preview.innerText = DOMPurify.sanitize(previewNewText);
-                            markElements(preview, replaceVerb, orgText);
+                            // if there is no preview for the plural, we do not need to populate it
+                            if (preview != null) {
+                                preview.appendChild(myspan1);
+                                myspan1.appendChild(document.createTextNode(previewNewText));
+
+                                // PSS populate the preview before marking
+                                preview.innerText = DOMPurify.sanitize(previewNewText);
+                                markElements(preview, replaceVerb, orgText);
+                            }
 
                         }
                         result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
