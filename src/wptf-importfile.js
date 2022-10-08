@@ -1,24 +1,22 @@
 async function new_import_po(destlang,myFile,allrows) {
-   // var allrows = [];
-  //  var myrows = [];
-   // var myFile;
     var pretrans;
     var transtype;
+    
     // here we start processing the table
     // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".paging a.local-trans-button");
-    translateButton.innerText = "Translate";
+    let impLocButton = document.querySelector(".paging a.impLoc-button");
+    impLocButton.innerText = "Importing";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-           if (translateButton.className == "local-trans-button") {
-                    translateButton.className += " started";
+    if (impLocButton.className == "impLoc-button") {
+        impLocButton.className += " started";
                 }
-                else {
-
-                    translateButton.classList.remove("local-trans-button", "started", "translated");
-                    translateButton.classList.remove("local-trans-button", "restarted", "translated");
-                    translateButton.className = "local-trans-button restarted";
-                }
+    else {
+        impLocButton.classList.remove("started", "translated");
+        impLocButton.classList.remove("restarted", "translated");
+        impLocButton.className = "impLoc-button restarted";
+    }
+    toastbox("info", "Import started", "3000", "Importing");
                 for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                     transtype = "single";
                     // 16-08-2021 PSS fixed retranslation issue #118
@@ -98,7 +96,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                 translatedText=result.translatedText; 
                                 textareaElem.innerText = translatedText;
                                 textareaElem.value = translatedText;
-                                console.debug("na:", "'" + translatedText + "'");
+                                //console.debug("na:", "'" + translatedText + "'");
                                 if (typeof current != "undefined") {
                                     current.innerText = "transFill";
                                     current.value = "transFill";
@@ -121,7 +119,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                     // previewElem.innerText = translatedText;
                                 }
                                 else {
-                                    console.debug("it seems to be a single as li is not found");
+                                    //console.debug("it seems to be a single as li is not found");
                                     let preview = document.querySelector("#preview-" + row + " td.translation");
                                     let spanmissing = preview.querySelector(" span.missing");
                                     if (spanmissing != null) {
@@ -159,9 +157,9 @@ async function new_import_po(destlang,myFile,allrows) {
                                             myspan2.appendChild(document.createTextNode("empty"));
                                         }
                                         else {
-                                            console.debug("jey it is a single!!");
+                                           // console.debug("jey it is a single!!");
                                             let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
-                                            console.debug("newtext:","'"+translatedText+"'")
+                                           // console.debug("newtext:","'"+translatedText+"'")
                                             preview.innerText = translatedText;
                                             current.innerText = "transFill";
                                             current.value = "transFill";
@@ -183,7 +181,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                     }
                                     else {
                                         let preview = document.querySelector("#preview-" + row + " td.translation");
-                                        console.debug("no span:",preview)
+                                        //console.debug("no span:",preview)
                                         // if it is as single with local then we need also update the preview
                                         // console.debug("single:", "'" + translatedText + "'");
                                         preview.innerText = translatedText;
@@ -347,14 +345,15 @@ async function new_import_po(destlang,myFile,allrows) {
                         // Hiding the row is done through CSS tr.preview.status-hidden
                         prevcurrentClass.classList.replace("untranslated", "status-hidden");
                     }
-
-                // Translation completed  
-                translateButton = document.querySelector(".paging a.local-trans-button");
-                translateButton.className += " translated";
-                translateButton.innerText = "Translated";
-                parrotActive = 'false';
-                // end of processing
+                    
     };
+    // Translation completed  
+    impLocButton = document.querySelector(".paging a.impLoc-button");
+    impLocButton.classList.remove("started");
+    impLocButton.className += " imported";
+    impLocButton.innerText = "Imported";
+    parrotActive = 'false';
+   
 }
 
 

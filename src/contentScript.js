@@ -537,6 +537,13 @@ checkButton.className = "check_translation-button";
 checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
 
+//23-03-2021 PSS added a new button on first page
+var impLocButton = document.createElement("a");
+impLocButton.href = "#";
+impLocButton.className = "impLoc-button";
+impLocButton.onclick = impFileClicked;
+impLocButton.innerText = "Imp localfile";
+
 //07-05-2021 PSS added a export button on first page
 var exportButton = document.createElement("a");
 exportButton.href = "#";
@@ -570,12 +577,14 @@ if (divPaging != null && divProjects == null) {
     divPaging.insertBefore(localtransButton, divPaging.childNodes[0]);
     divPaging.insertBefore(tmtransButton, divPaging.childNodes[0]);
     divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
     divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     divPaging.insertBefore(importButton, divPaging.childNodes[0]);
     if (is_pte) {
         divPaging.insertBefore(bulksaveButton, divPaging.childNodes[0]);
     }
 }
+
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
@@ -615,6 +624,8 @@ function tmTransClicked(event) {
             });
 
 }
+
+
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
     event.preventDefault();
@@ -646,6 +657,56 @@ function localTransClicked(event) {
                 }
             });
 
+}
+
+function impFileClicked(event) {
+    event.preventDefault();
+    chrome.storage.sync
+        .get(
+            ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
+            function (data) {
+                var allrows = [];
+                var myrows = [];
+                var myFile;
+                var pretrans;
+                var transtype;
+                toastbox("info", "Select file is started", "2000", "Select file");
+                var input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = _this => {
+                    let files = Array.from(input.files);
+                    //   console.log(files);
+                    if (files && files[0]) {
+                        myFile = files[0];
+                        var reader = new FileReader();
+                        reader.addEventListener('load', function (e) {
+                            //output.textContent = e.target.result;
+                            myrows = e.target.result.replace(/\r/g, "").split(/\n/);
+                            // allrows = e.target.result.split(/\r|\n/);
+                            // remove all unnessesary lines as those will take time to process
+                            var regel = '';
+                            for (var i = 0; i < myrows.length - 1; i++) {
+                                regel = myrows[i];
+                                if (regel.startsWith("msgid") || regel.startsWith("msgstr") || regel.startsWith("msgctxt") || regel.startsWith("msgid_plural") || regel.startsWith("msgstr[0]") || regel.startsWith("msgstr[1]")) {
+                                    allrows.push(regel);
+                                    //console.debug(allrows)
+                                }
+                            }
+                            countimported = new_import_po(data.destlang, myFile, allrows);
+                            
+                        });
+                        reader.readAsText(myFile);
+                    }
+                    else {
+                        messageBox(info, "No file selected")
+                    }
+                    close_toast();
+                };
+                input.click();
+                
+                
+            });
+    
 }
 
 function translatePageClicked(event) {
@@ -724,6 +785,8 @@ function exportPageClicked(event) {
    // res= dbExport();
     
 }
+
+
 
 let glossary = [];
 chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
