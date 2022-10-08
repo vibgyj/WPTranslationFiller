@@ -682,6 +682,12 @@ async function checkPage(postTranslationReplace,formal) {
                         // console.debug("replaced:", replaced,result.repl_verb)
                         if (replaced) {
                             repl_verb = result.repl_verb;
+                            // 09-09-2022 PSS fix for issue #244
+                            if (currec != null) {
+                                var current = currec.querySelector("span.panel-header__bubble");
+                                var prevstate = current.innerText;
+                                current.innerText = "transFill";
+                            }
                         }
                         textareaElem.innerText = result.translatedText;
                         textareaElem.value = result.translatedText;
@@ -821,7 +827,8 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 }
 
 
-async function check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced,myrow) {
+async function check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, myrow) {
+   // console.debug("values:", translatedText, previewNewText, countreplaced, repl_verb, original, replaced, myrow)
     if (original.startsWith(" ")) {
        // console.debug("Original starts with blanc!"+ original);
         if (previewNewText.startsWith(" ")) {
@@ -895,7 +902,7 @@ async function check_start_end(translatedText, previewNewText, countreplaced, re
                 countreplaced++;
             }
         }
-   
+   // console.debug("After improvements:", translatedText, previewNewText, countreplaced, repl_verb, replaced)
     return { translatedText, previewNewText, countreplaced, repl_verb ,replaced};
 }
 async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
@@ -2255,7 +2262,7 @@ async function saveLocal() {
             //nextpreview = preview.nextElementSibling.nextElementSibling;
             if (checkset.checked) {
                 counter++;
-                setTimeout(() => {
+                setTimeout((timeout) => {
                     //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
                     let editor = preview.nextElementSibling;
                     preview.querySelector("td.actions .edit").click();
@@ -2281,7 +2288,7 @@ async function saveLocal() {
                         });
                     }
                 }, timeout);
-                timeout += 2500;
+                timeout += 2000;
             }
             else {
                 if (preview != null) {
@@ -2455,17 +2462,23 @@ function elementReady(selector) {
     });
 }
 
-async function waitForElm(selector) {
-   // console.debug("Selector:", selector);
+async function waitForElm(selector, newWind) {
+    var mydoc;
+    //console.debug("Selector:", selector,typeof newWind);
+    if (typeof newWind == 'undefined') {
+       //console.debug("No window supplied")
+        newWind = window;
+    }
+   
     return new Promise(resolve => {
-        if (document.querySelector(selector)) {
+        if (newWind.document.querySelector(selector)) {
             //console.debug("Selector found");
-            return resolve(document.querySelector(selector));
+            return resolve(newWind.document.querySelector(selector));
         }
         const observer = new MutationObserver(mutations => {
-            if (document.querySelector(selector)) {
+            if (newWind.document.querySelector(selector)) {
                 //console.debug("In observer found");
-                resolve(document.querySelector(selector));
+                resolve(newWind.document.querySelector(selector));
                 observer.disconnect();
             }
             else {
@@ -2474,7 +2487,7 @@ async function waitForElm(selector) {
             }
         });
 
-        observer.observe(document.body, {
+        observer.observe(newWind.document.body, {
             childList: true,
             subtree: true
         });

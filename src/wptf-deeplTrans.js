@@ -106,8 +106,12 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
                 errorstate = "Error 456";
             }
+            // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
+            else if (error == 'TypeError: Failed to fetch') {
+                errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
+            }
             else {
-                alert("Error message: " + error[1]);
+                //alert("Error message: " + error[1]);
                 console.debug("Error:",error)
                 errorstate = "Error " + error[1];
             }

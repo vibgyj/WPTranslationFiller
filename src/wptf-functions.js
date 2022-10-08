@@ -1,4 +1,73 @@
 // This file contains functions used within various files
+// this function searches for the translation of an original within the loaded array
+function findArrayLine(allrows, original, transtype, plural_line) {
+    var myorg;
+    var res = 'notFound';
+    var trans = " ";
+    var result;
+    //console.debug("transtype: ", transtype,original,plural_line)
+    if (transtype === "single") {
+        myorg = "msgid " + '"' + original + '"';
+    }
+    if (transtype === "plural" && plural_line == 1) {
+        myorg = "msgid " + '"' + original + '"';
+    }
+    if (transtype === "plural" && plural_line == 2) {
+        myorg = "msgid_plural " + '"' + original + '"';
+    }
+    //console.debug("in findArray orginal: ",original,myorg)
+
+    result = allrows.indexOf(myorg);
+    // console.debug("Did we find: ",myorg+" ",result)
+    //console.debug("found:", result)
+    if (transtype == "single") {
+        if (result != -1) {
+            trans = allrows.find((el, idx) => typeof el === "string" && idx === result + 1);
+            console.debug("Translation:", trans)
+            res = trans.replace("msgstr ", "");
+            res = res.slice(1, -1);
+        }
+        else {
+            res = 'notFound';
+        }
+    }
+    //console.debug("transtype = plural and plural_line =1:", result)
+    if (transtype == "plural" && plural_line == 1) {
+        // console.debug("transtype = plural and plural_line =1:",result)
+        if (result != -1) {
+            trans = allrows.find((el, idx) => typeof el === "string" && idx === result + 2);
+            if (trans != -1) {
+                res = trans.replace("msgstr[0] ", "");
+                res = res.slice(1, -1);
+                // console.debug("first line of plural: ", res);
+            }
+            else {
+                res = "notFound";
+            }
+        }
+        else {
+            res = 'notFound';
+        }
+    }
+    if (transtype == "plural" && plural_line == 2) {
+        if (result != -1) {
+            trans = allrows.find((el, idx) => typeof el === "string" && idx === result + 2);
+            if (trans != -1) {
+                res = trans.replace("msgstr[1] ", "");
+                res = res.slice(1, -1);
+                //console.debug("second line of plural:", res);
+            }
+            else {
+                res = "notFound";
+            }
+        }
+        else {
+            res = 'notFound';
+        }
+    }
+
+    return res;
+}
 
 // This function copies the original to the clipboard
 function addtoClipBoardClicked(event) {
