@@ -570,19 +570,39 @@ if (is_pte) {
     bulksaveButton.onclick = bulkSave;
     bulksaveButton.innerText = "Bulksave";
 }
+var divGpActions = document.querySelector("div.paging");
+var wptfNavBar = document.createElement("div");
+var wptfNavBarCont = document.createElement("div");
+wptfNavBarCont.className = 'wptfNavBarCont'
+wptfNavBar.appendChild(wptfNavBarCont);
+wptfNavBar.className = "wptfNavBar";
+wptfNavBar.id = "wptfNavBar";
+
+if (divPaging != null && divProjects == null) {
+    divGpActions.parentNode.insertBefore(wptfNavBar, divGpActions);
+    const divNavBar = document.querySelector("div.wptfNavBarCont")
+    if (is_pte) {
+        divNavBar.appendChild(bulksaveButton);
+    }
+    divNavBar.appendChild(importButton);
+    divNavBar.appendChild(exportButton);
+    divNavBar.appendChild(impLocButton);
+    divNavBar.appendChild(checkButton);
+    divNavBar.appendChild(tmtransButton);
+    divNavBar.appendChild(localtransButton);
+    divNavBar.appendChild(translateButton);
+}
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
 if (divPaging != null && divProjects == null) {
-    divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
-    divPaging.insertBefore(localtransButton, divPaging.childNodes[0]);
-    divPaging.insertBefore(tmtransButton, divPaging.childNodes[0]);
-    divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
-    divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
-    divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
-    divPaging.insertBefore(importButton, divPaging.childNodes[0]);
-    if (is_pte) {
-        divPaging.insertBefore(bulksaveButton, divPaging.childNodes[0]);
-    }
+   // divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
+   // divPaging.insertBefore(localtransButton, divPaging.childNodes[0]);
+   // divPaging.insertBefore(tmtransButton, divPaging.childNodes[0]);
+    //divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+   // divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
+  //  divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
+  //  divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+   
 }
 
 

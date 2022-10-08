@@ -1,4 +1,6 @@
-/* The Modal (background) */
+
+  
+    /* The Modal (background) */
 .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
@@ -83,30 +85,25 @@
     background-color: #5cb85c;
     color: white;
 }
-local.paging a.translation-filler-button {
-    background: blue;
-    color: white;
-    padding-left: 5px;
-    padding-right: 5px;
-    width: 28px;
-}
 
-.paging a.translation-filler-button {
+.gp-table-actions {
+    gap: 0.5rem !important;
+}
+.wptfNavBar {
+    margin-bottom: 0.8rem;
+    display: flex;
+    vertical-align: middle;
+    align-items: center;
+    min-height: 32px;
+}
+.wptfNavBarCont .translation-filler-button {
     background: blue;
     color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
 }
-
-.paging a.translation-filler-button:hover {
-    color: lightgray !important;
-}
-
-.paging a.translation-filler-button.translated {
-    background: green;
-}
-
-.paging a.translation-filler-button::before {
+.wptfNavBarCont .translation-filler-button::before {
     content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
@@ -114,8 +111,129 @@ local.paging a.translation-filler-button {
     vertical-align: middle;
     width: 28px;
 }
+.wptfNavBarCont .translation-filler-button:hover {
+        background: darkgray !important;
+}
 
-.paging a.translation-filler-button.started {
+.wptfNavBarCont .translation-filler-button.started {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+}
+
+.wptfNavBarCont .translation-filler-button.restarted {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    background-color: blue;
+    animation: button-loading-spinner 1s ease infinite;
+}
+
+.wptfNavBarCont .translation-filler-button.after_error {
+    animation: none;
+    background: red;
+}
+
+.wptfNavBarCont .translation-filler-button.translated {
+    animation: none !important;
+    background: green;
+    border-radius: 0%;
+    border: 0px solid transparent;
+    display: inline-block;
+    padding-top: 0.1em !important;
+    padding-bottom: 0.1em !important;
+    margin: 5px !important;
+}
+.wptfNavBarCont .translation-filler-button.translated {
+        background: green;
+    }
+.wptfNavBarCont .local-trans-button {
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left:5px;
+    margin-right:5px;
+}
+.wptfNavBarCont .local-trans-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+}
+.wptfNavBarCont .local-trans-button.translated {
+    background: green;
+}
+.wptfNavBarCont .local-trans-button:hover {
+        background: darkgray !important;
+}
+.wptfNavBarCont .local-trans-button.started {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+}
+
+.wptfNavBarCont .local-trans-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: button-loading-spinner 1s ease infinite;
+    }
+
+.wptfNavBarCont .local-trans-button.after_error {
+        animation: none;
+        background: red;
+    }
+
+.wptfNavBarCont .local-trans-button.translated {
+        animation: none !important;
+        background: green;
+        border-radius: 0%;
+        border: 0px solid transparent;
+        display: inline-block;
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        margin: 5px !important;
+    }
+
+.wptfNavBarCont .check_translation-button {
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+.wptfNavBarCont .check_translation-button.ready {
+    background: green;
+}
+.wptfNavBarCont .check_translation-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+}
+.wptfNavBarCont .check_translation-button:hover {
+        background: darkgray !important;
+}
+.wptfNavBarCont .check_translation-button.started {
         content: "";
         display: inline-block;
         margin: auto;
@@ -125,7 +243,8 @@ local.paging a.translation-filler-button {
         animation: button-loading-spinner 1s ease infinite;
 }
 
-.paging a.translation-filler-button.restarted {
+
+.wptfNavBarCont .check_translation-button.restarted {
         content: "";
         display: inline-block;
         margin: auto;
@@ -136,12 +255,12 @@ local.paging a.translation-filler-button {
         animation: button-loading-spinner 1s ease infinite;
 }
 
-.paging a.translation-filler-button.after_error {
+.wptfNavBarCont .check_translation-button.after_error {
         animation: none;
         background: red;
 }
 
-.paging a.translation-filler-button.translated {
+.wptfNavBarCont .check_translation-button.ready {
         animation: none !important;
         background: green;
         border-radius: 0%;
@@ -152,40 +271,28 @@ local.paging a.translation-filler-button {
         margin: 5px !important;
 }
 
-local.paging a.local-trans-button {
-    background: blue;
-    color: white;
-    padding-left: 5px;
-    padding-right: 5px;
-    width: 28px;
-}
-
-
-.paging a.local-trans-button:hover {
-    color: lightgray !important;
-}
-
-.paging a.local-trans-button.translated {
-    background: green;
-}
-
-.paging a.local-trans-button::before {
-    content: '\f326';
-    -webkit-font-smoothing: antialiased;
-    display: inline-block;
-    font: normal 20px/1 'dashicons';
-    vertical-align: middle;
-    width: 28px;
-}
-
-.paging a.local-trans-button {
+.wptfNavBarCont .tm-trans-button {
     background: blue;
     color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
 }
-
-.paging a.local-trans-button.started {
+.wptfNavBarCont .tm-trans-button.translated {
+        background: green;
+    }
+    .wptfNavBarCont .tm-trans-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+    }
+.wptfNavBarCont .tm-trans-button:hover {
+        background: darkgray !important;
+}
+.wptfNavBarCont .tm-trans-button.started {
         content: "";
         display: inline-block;
         margin: auto;
@@ -196,7 +303,7 @@ local.paging a.local-trans-button {
 }
 
 
-.paging a.local-trans-button.restarted {
+.wptfNavBarCont .tm-trans-button.restarted {
         content: "";
         display: inline-block;
         margin: auto;
@@ -207,12 +314,12 @@ local.paging a.local-trans-button {
         animation: button-loading-spinner 1s ease infinite;
 }
 
-.paging a.local-trans-button.after_error {
+.wptfNavBarCont .tm-trans-button.after_error {
     animation: none;
     background: red;
 }
 
-.paging a.local-trans-button.translated {
+.wptfNavBarCont .tm-trans-button.translated {
     animation: none !important;
     background: green;
     border-radius: 0%;
@@ -223,40 +330,28 @@ local.paging a.local-trans-button {
     margin: 5px !important;
 }
 
-.paging a.tm-trans-button {
+.wptfNavBarCont .impLoc-button {
     background: blue;
     color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
 }
-
-
-
-.paging a.tm-trans-button.foreighn {
-    background: grey;
-    color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
+.wptfNavBarCont .impLoc-button.imported {
+        background: green;
 }
-
-.paging a.tm-trans-button:hover {
-    color: lightgray !important;
+    .wptfNavBarCont .impLoc-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+    }
+.wptfNavBarCont .impLoc-button:hover {
+        background: darkgray !important;
 }
-
-.paging a.tm-trans-button.translated {
-    background: green;
-}
-
-.paging a.tm-trans-button::before {
-    content: '\f326';
-    -webkit-font-smoothing: antialiased;
-    display: inline-block;
-    font: normal 20px/1 'dashicons';
-    vertical-align: middle;
-    width: 28px;
-}
-
-.paging a.tm-trans-button.started {
+.wptfNavBarCont .impLoc-button.started {
         content: "";
         display: inline-block;
         margin: auto;
@@ -264,10 +359,10 @@ local.paging a.local-trans-button {
         border-top-color: #ffffff;
         border-radius: 50%;
         animation: button-loading-spinner 1s ease infinite;
- }
+}
 
 
- .paging a.tm-trans-button.restarted {
+.wptfNavBarCont .impLoc-button.restarted {
         content: "";
         display: inline-block;
         margin: auto;
@@ -276,14 +371,14 @@ local.paging a.local-trans-button {
         border-radius: 50%;
         background-color: blue;
         animation: button-loading-spinner 1s ease infinite;
- }
+    }
 
- .paging a.tm-trans-button.after_error {
+    .wptfNavBarCont .impLoc-button.after_error {
         animation: none;
         background: red;
- }
+    }
 
- .paging a.tm-trans-button.translated {
+    .wptfNavBarCont .impLoc-button.imported {
         animation: none !important;
         background: green;
         border-radius: 0%;
@@ -292,13 +387,61 @@ local.paging a.local-trans-button {
         padding-top: 0.1em !important;
         padding-bottom: 0.1em !important;
         margin: 5px !important;
- }
+    }
 
-.paging a.bulksave-button {
+.wptfNavBarCont .import_translation-button {
+    background: darkcyan;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+    .wptfNavBarCont .import_translation-button:hover {
+        background: darkgray !important;
+    }
+    .wptfNavBarCont .import_translation-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+    }
+.wptfNavBarCont .export_translation-button {
+    background: darkcyan;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+.wptfNavBarCont .export_translation-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+.wptfNavBarCont .export_translation-button:hover {
+        background: darkgray !important;
+}
+.wptfNavBarCont .bulksave-button {
     background: blue;
     color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+
+
+
+.wptfNavBarCont .tm-trans-button.foreighn {
+    background: grey;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
 }
 
 
@@ -344,15 +487,6 @@ local.paging a.local-trans-button {
     padding: 1px 1px !important;
     }
 
-    .paging a.translation-entry-my-button::before {
-    content: '\f326';
-    -webkit-font-smoothing: antialiased;
-    display: inline-block;
-    font: normal 20px/1 'dashicons';
-    vertical-align: middle;
-    width: 28px;
-}
-
 .panel-header-actions .translation-entry-my-button {
     width: auto;
     padding: 2px;
@@ -389,7 +523,7 @@ local.paging a.local-trans-button {
     width: 28px;
 }
 
-    .panel-header-actions .translation-entry-my-button.translated {
+.panel-header-actions .translation-entry-my-button.translated {
         animation: none !important;
         background: green;
         border-radius: 0%;
@@ -398,40 +532,11 @@ local.paging a.local-trans-button {
         padding-top: 0.1em !important;
         padding-bottom: 0.1em !important;
         margin: 5px !important;
-    }
+}
 
-    .panel-header-actions .translation-entry-my-button.translated_error {
+.panel-header-actions .translation-entry-my-button.translated_error {
         animation: none;
         background-color: red;
-    }
-
-
-.paging a.check_translation-button {
-    background: blue;
-    color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-.paging a.check_translation-button:hover {
-        color: lightgray !important;
-}
-
-.paging a.check_translation-button {
-    color: lightgray;
-}
-
-.paging a.check_translation-button.ready {
-    background: green;
-}
-
-.paging a.check_translation-button::before {
-    content: '\f326';
-    -webkit-font-smoothing: antialiased;
-    display: inline-block;
-    font: normal 20px/1 'dashicons';
-    vertical-align: middle;
-    width: 28px;
 }
 
 .panel-header-actions .check_translation-button {
@@ -470,79 +575,6 @@ local.paging a.local-trans-button {
 }
 .panel-header-actions .check_translation-button.ready {
     background-color: green;
-}
-
-.paging a.impLoc-button {
-    background: blue;
-    color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-.paging a.impLoc-button:hover {
-    color: lightgray !important;
-}
-
-.paging a.impLoc-button {
-    color: lightgray;
-}
-
-.paging a.impLoc-button.ready {
-        background: green;
-}
-
-.paging a.impLoc-button::before {
-        content: '\f326';
-        -webkit-font-smoothing: antialiased;
-        display: inline-block;
-        font: normal 20px/1 'dashicons';
-        vertical-align: middle;
-        width: 28px;
-}
-.paging a.impLoc-button.started {
-    content: "";
-    display: inline-block;
-    margin: auto;
-    border: 4px solid transparent;
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: button-loading-spinner 1s ease infinite;
-}
-.paging a.impLoc-button.imported {
-        animation: none !important;
-        background: green;
-        border-radius: 0%;
-        border: 0px solid transparent;
-        display: inline-block;
-        padding-top: 0.1em !important;
-        padding-bottom: 0.1em !important;
-        margin: 5px !important;
-}
-
-.paging a.addtranslation-entry-my-button {
-    background: blue;
-    color: white;
-    padding-left: 3px;
-    padding-right: 5px;
-    padding-top: 3px;
-    padding-bottom: 10px;
-}
-
-.paging a.addtranslation-entry-my-button {
-    color: lightgray;
-}
-
-.paging a.addtranslation-entry-my-button.ready {
-    background: green;
-}
-
-.paging a.addtranslation-entry-my-button::before {
-    content: '\f326';
-    -webkit-font-smoothing: antialiased;
-    display: inline-block;
-    font: normal 200px/1 'dashicons';
-    vertical-align: middle;
-    width: 28px;
 }
 
 .panel-header-actions my-button{
@@ -594,31 +626,6 @@ local.paging a.local-trans-button {
 }
 
 
-.paging a.export_translation-button {
-    background: darkcyan;
-    color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-
-.paging a.export_translation-button:hover {
-    color: lightgray !important;
-}
-
-.paging a.export_translation-button.ready {
-    background: green;
-}
-
-.paging a.export_translation-button::before {
-    content: '\f326';
-    -webkit-font-smoothing: antialiased;
-    display: inline-block;
-    font: normal 20px/1 'dashicons';
-    vertical-align: middle;
-    width: 28px;
-}
-
 .panel-header-actions .export_translation-button {
     width: auto;
     padding: 11px;
@@ -646,30 +653,6 @@ local.paging a.local-trans-button {
 
 .panel-header-actions .export_translation-button.ready {
     background-color: green;
-}
-
-.paging a.import_translation-button {
-    background: darkcyan;
-    color: white !important;
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-.paging a.import_translation-button:hover {
-    color: lightgray !important;
-}
-
-.paging a.import_translation-button.ready {
-    background: green;
-}
-
-.paging a.import_translation-button::before {
-    content: '\f326';
-    -webkit-font-smoothing: antialiased;
-    display: inline-block;
-    font: normal 20px/1 'dashicons';
-    vertical-align: middle;
-    width: 28px;
 }
 
 .panel-header-actions .import_translation-button {

@@ -212,7 +212,7 @@ function convert_lower(text) {
 function applySentenceCase(str) {
     // Convert each first word in a sentence to uppercase
     // 03-01-2022 PSS modified the regex issue #169
-    return str.replace(/.+?[\.\?\!\/\. ](\s|$)/g, function (txt) {
+    return str.replace(/.+?[\.\?\!\/\. \:\: ](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);
     });
 }
@@ -537,7 +537,7 @@ function checkFormalPage(dataFormal) {
 
         messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words<br>" + repl_verb);
         // Translation replacement completed
-        let checkButton = document.querySelector(".paging a.check_translation-button");
+        let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
         checkButton.className += " ready";
     }
     else {
@@ -555,6 +555,24 @@ async function checkPage(postTranslationReplace,formal) {
     var replaced = false;
     var newrowId;
     var myrow;
+    var checkButton = await document.querySelector(".wptfNavBarCont a.check_translation-button");
+    checkButton.innerText = "Checking";
+    //console.debug("Button classname:", translateButton.className);
+    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
+    if (checkButton.className == "check_translation-button") {
+        checkButton.className += " started";
+    }
+    else {
+        console.debug("checkbutton2:", typeof checkButton)
+        if (typeof checkbutton != null) {
+            checkButton.classList.remove("check_translation-button", "started", "translated");
+            checkButton.classList.remove("check_translation-button", "restarted", "translated");
+            checkButton.className = "check_translation-button restarted";
+        }
+            else {
+                checkButton.className = "check_translation-button started"
+            }
+    }
     
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
@@ -628,7 +646,7 @@ async function checkPage(postTranslationReplace,formal) {
                         orgText = result.orgText;
                         repl_verb = result.repl_verb;
                         // PSS 22-07-2021 fix for the preview text is not updated #109
-                        let preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                        var preview = document.querySelector("#preview-" + newrowId + " td.translation");
                         if (preview == null) {
                             preview = document.querySelector("#preview-" + myrow + " td.translation");
                         }
@@ -665,15 +683,19 @@ async function checkPage(postTranslationReplace,formal) {
                             // Enhancement issue #123
                             var myspan1 = document.createElement("span");
                             myspan1.className = "translation-text";
-                            preview.appendChild(myspan1);
-                            myspan1.appendChild(document.createTextNode(previewNewText));
                             preview = document.querySelector("#preview-" + newrowId + " td.translation");
                             if (preview == null) {
                                 preview = document.querySelector("#preview-" + myrow + " td.translation");
                             }
-                            // PSS populate the preview before marking
-                            preview.innerText = DOMPurify.sanitize(previewNewText);
-                            markElements(preview, replaceVerb, orgText);
+                            // if there is no preview for the plural, we do not need to populate it
+                            if (preview != null) {
+                                preview.appendChild(myspan1);
+                                myspan1.appendChild(document.createTextNode(previewNewText));
+
+                                // PSS populate the preview before marking
+                                preview.innerText = DOMPurify.sanitize(previewNewText);
+                                markElements(preview, replaceVerb, orgText);
+                            }
 
                         }
                         result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
@@ -766,11 +788,14 @@ async function checkPage(postTranslationReplace,formal) {
                 }
             }
 
-            messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words<br>" + repl_verb);
-            // Translation replacement completed
-            let checkButton = document.querySelector(".paging a.check_translation-button");
-            checkButton.className += " ready";
         }
+        messageBox("info", "Replace verbs done " + countreplaced + " replaced" + " words<br>" + repl_verb);
+        // Translation replacement completed
+        let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+        checkButton.classList.remove("started");
+        //checkButton.className += " translated";
+        checkButton.innerText = "Checked";
+        checkButton.className += " ready";
     }
     else {
         messageBox("error", "Your postreplace verbs are not populated add at least on line!");
@@ -920,7 +945,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     locale = checkLocale();
 
     // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".paging a.local-trans-button");
+    let translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
     translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -1258,10 +1283,10 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
         }
             }
             // Translation completed  
-            translateButton = document.querySelector(".paging a.local-trans-button");
+            translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
-parrotActive = 'false';
+            parrotActive = 'false';
     //console.timeEnd("translation");
 }
 // Part of the solution issue #204
@@ -1350,7 +1375,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     
     
         // 19-06-2021 PSS added animated button for translation at translatePage
-        let translateButton = document.querySelector(".paging a.tm-trans-button");
+    let translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
         translateButton.innerText = "Translate";
         //console.debug("Button classname:", translateButton.className);
         // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -1469,7 +1494,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
         }
     }
     // Translation completed  
-    translateButton = document.querySelector(".paging a.tm-trans-button");
+    translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
 }
@@ -1486,7 +1511,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
 
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".paging a.translation-filler-button");
+    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
     translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -1745,7 +1770,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 let textareaElem = preview.querySelector("span.translation-text");
                                // console.debug("textareaElem", textareaElem)
                                 // PSS 30-07-2022 fixed error when record is already present with span
-                                if (textareaElem == null) {
+                                if (typeof textareaElem == null) {
                                     var myspan1 = document.createElement("span");
                                     myspan1.className = "translation-text";
                                     textareaELem.appendChild(myspan1);
@@ -1957,7 +1982,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 prevcurrentClass.style.backgroundColor = "#ffe399";
             }
             // Translation completed  
-            let translateButton = document.querySelector(".paging a.translation-filler-button");
+            let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
 

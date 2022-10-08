@@ -4,7 +4,7 @@ async function new_import_po(destlang,myFile,allrows) {
     
     // here we start processing the table
     // 19-06-2021 PSS added animated button for translation at translatePage
-    let impLocButton = document.querySelector(".paging a.impLoc-button");
+    let impLocButton = document.querySelector(".wptfNavBarCont a.impLoc-button");
     impLocButton.innerText = "Importing";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -12,8 +12,8 @@ async function new_import_po(destlang,myFile,allrows) {
         impLocButton.className += " started";
                 }
     else {
-        impLocButton.classList.remove("started", "translated");
-        impLocButton.classList.remove("restarted", "translated");
+        impLocButton.classList.remove("started", "imported");
+        impLocButton.classList.remove("restarted", "imported");
         impLocButton.className = "impLoc-button restarted";
     }
     toastbox("info", "Import started", "3000", "Importing");
@@ -348,7 +348,7 @@ async function new_import_po(destlang,myFile,allrows) {
                     
     };
     // Translation completed  
-    impLocButton = document.querySelector(".paging a.impLoc-button");
+    impLocButton = document.querySelector(".wptfNavBarCont a.impLoc-button");
     impLocButton.classList.remove("started");
     impLocButton.className += " imported";
     impLocButton.innerText = "Imported";
