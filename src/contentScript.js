@@ -103,8 +103,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keydown", function (event) {
-    // event.preventDefault();
-    //console.debug("eventkey:", event.key);
+   
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -335,6 +334,22 @@ document.addEventListener("keydown", function (event) {
         console.log($gp_editor_options['can_approve'])
         alert("Editor options:" + mysimple)
        // })
+        
+    };
+
+    if (event.altKey && event.shiftKey && (event.key === "F12")) {
+        
+        
+            cuteToast({
+                type: "info",
+                message: "Counting is started",
+                timer: 1000,
+            }).then((e) => {
+                countWordsinTable();
+            }); 
+       
+        
+        //let wordCount = countWordsinTable();
         
     };
 

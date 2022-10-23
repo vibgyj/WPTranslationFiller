@@ -10,7 +10,35 @@ let replaceVerb = [];
 // It is also used to force google to translate informal
 // This is done by replacing the formal word for a informal word
 let replacePreVerb = [];
-// 06-05-2021 PSS These vars can probably removed after testen
+// 06-05-2021 PSS These vars can probably removed after testing
+
+// Count words in a given string
+function countWords(str) {
+    const arr = str.split(' ');
+    return arr.filter(word => word !== '').length;
+}
+function countWordsinTable() {
+    var counter = 0;
+    var wordCount = 0;
+    var pluralpresent;
+    var original;
+   // toastbox("info", "Counting started", "1000", "Counting");
+    for (let record of document.querySelectorAll("tr.preview")) {
+        counter++;
+        pluralpresent = record.querySelector(`.translation.foreign-text li:nth-of-type(1) span.translation-text`);
+        if (pluralpresent != null) {
+            wordCount = wordCount + countWords(pluralpresent.innerText);
+            pluralpresent = record.querySelector(`.translation.foreign-text li:nth-of-type(2) span.translation-text`).innerText;
+            wordCount = wordCount + countWords(pluralpresent);
+        }
+        else {
+            original = record.querySelector("span.original-text").innerText;
+            wordCount = wordCount + countWords(original);
+        }
+    }
+    console.debug("records counted:", counter, wordCount);
+    messageBox("info", "Records counted: " + counter+ " Words counted:" + wordCount);
+}
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];

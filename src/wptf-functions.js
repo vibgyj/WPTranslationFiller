@@ -1,5 +1,7 @@
 // This file contains functions used within various files
-// this function searches for the translation of an original within the loaded array
+
+
+// This function checks if we are on the discussion table
 function checkDiscussion() {
     const locString = window.location.href;
     if (locString.includes("discussions")) {
@@ -9,7 +11,7 @@ function checkDiscussion() {
         return false;
     }
 }
-
+// this function searches for the translation of an original within the loaded array
 function findArrayLine(allrows, original, transtype, plural_line) {
     var myorg;
     var res = 'notFound';
