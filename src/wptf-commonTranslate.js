@@ -232,7 +232,7 @@ function convert_lower(text) {
         counter++;
     });
     converted = capsArray.join(' ');
-    // Because now all sentences start with lowercase is longer texts, we need to put back the uppercase at the start of each sentence
+    // Because now all sentences start with lowercase in longer texts, we need to put back the uppercase at the start of the sentence
     converted = applySentenceCase(converted);
     return converted
 }
@@ -240,7 +240,15 @@ function convert_lower(text) {
 function applySentenceCase(str) {
     // Convert each first word in a sentence to uppercase
     // 03-01-2022 PSS modified the regex issue #169
-    return str.replace(/.+?[\.\?\!\/\. \:\: ](\s|$)/g, function (txt) {
+    // Below code is necessary to get the first char in the second sentense to uppercase if the line does not end with the regex
+    let myPosition = str.indexOf("! ");
+    if (myPosition != -1) {
+        firstpart = str.slice(0, myPosition + 2);
+        let secondpart = str.slice(myPosition + 2,);
+        secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        str = firstpart + secondpart;
+     }
+    return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);
     });
 }

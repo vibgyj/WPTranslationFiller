@@ -990,8 +990,8 @@ async function parseDataBase(data) {
         ++counter;
     });
     // 24-08-2022 PSS fixes enhancement #237
-    toastbox("info", "Import of: " + counter + " records is started wait for the result!!", "3000", "Import database");
-    let importButton = document.querySelector(".paging a.import_translation-button");
+    toastbox("info", "Import of: " + (counter-1) + " records is started wait for the result!!", "3000", "Import database");
+    let importButton = document.querySelector("a.import_translation-button");
     importButton.innerText="Started"
     if (counter > 0) {
         var arrayLength = csvData.length;
@@ -1010,7 +1010,7 @@ async function parseDataBase(data) {
             }
         }
         close_toast();
-        messageBox("info", "Import is ready records imported: " + i);
+        messageBox("info", "Import is ready records imported: " + (i-1));
 
     }
     //importButton = document.querySelector(".paging a.import_translation-button");
