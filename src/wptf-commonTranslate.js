@@ -36,7 +36,7 @@ function countWordsinTable() {
             wordCount = wordCount + countWords(original);
         }
     }
-    console.debug("records counted:", counter, wordCount);
+   // console.debug("records counted:", counter, wordCount);
     messageBox("info", "Records counted: " + counter+ " Words counted:" + wordCount);
 }
 
@@ -125,7 +125,9 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
+    //console.debug("before posrepl:'",translatedText,"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
+   // console.debug("after postrepl:'",translatedText,"'")
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     //console.debug('after replace spaces:', translatedText);
@@ -137,6 +139,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
             index++;
         }
+
     }
     else if (translator == "deepl") {
         const matches = original.matchAll(placeHolderRegex);
@@ -162,6 +165,12 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (found.substr(found.length - 1) != "." && found.substr(found.length - 1) != "<" && found.length ==5) {
             translatedText = translatedText.replace("</a>", "</a> ");
         }
+    }
+    // check if there is a blank between end tag ">" and "." as Google ads that automatically
+    // fix for issue #254
+    pos = translatedText.indexOf("> .");
+    if (pos != -1) {
+        translatedText = translatedText.replace("> .", ">");
     }
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     if (convertToLower == true) {
@@ -271,6 +280,7 @@ function CheckUrl(translated,searchword) {
 
 function checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
+    //console.debug("Translated: '", translatedText, "'");
     // strip or add "." at the end of the line
     if (original.endsWith(".") == true) {
         if (translatedText.endsWith(".") == false) {
