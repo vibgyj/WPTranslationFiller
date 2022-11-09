@@ -1,4 +1,16 @@
 // This file contains functions used within various files
+
+
+// This function checks if we are on the discussion table
+function checkDiscussion() {
+    const locString = window.location.href;
+    if (locString.includes("discussions")) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 // this function searches for the translation of an original within the loaded array
 function findArrayLine(allrows, original, transtype, plural_line) {
     var myorg;
@@ -96,30 +108,34 @@ function copyToClipBoard(detailRow) {
 
 function addCheckBox() {
     var BulkButton;
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    // if the translator is a PTE than we do not need to add the extra checkboxes
-    if (!is_pte) {
-        tablehead = document.getElementById("translations");
-        BulkButton = document.createElement("button");
-        BulkButton.id = "tf-bulk-button";
-        BulkButton.className = "tf-bulk-button";
-        BulkButton.innerText = "Start";
+    // 18-10-2022 Fix for issue #253 table header wrong within tab discussions
+    var discussion = checkDiscussion();
+    if (!discussion) {
+        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+        // if the translator is a PTE than we do not need to add the extra checkboxes
+        if (!is_pte) {
+            tablehead = document.getElementById("translations");
+            BulkButton = document.createElement("button");
+            BulkButton.id = "tf-bulk-button";
+            BulkButton.className = "tf-bulk-button";
+            BulkButton.innerText = "Start";
 
-        if (tablehead != null) {
-            hoofd = tablehead.rows[0];
-            var y = hoofd.insertCell(0);
+            if (tablehead != null) {
+                hoofd = tablehead.rows[0];
+                var y = hoofd.insertCell(0);
 
-            y.outerHTML = "<th class= 'thCheckBox' display:'table-cell'>Bulk</th>";
-            var blkButton = document.querySelector("th.thCheckBox");
-            //console.debug("bulk:", blkButton)
-            // if (blkButton == null) {
-            if (typeof blkButton != null) {
-                blkButton.appendChild(BulkButton);
-            }
-            //}
-            for (let e of document.querySelectorAll("tr.preview")) {
-                var x = e.insertCell(0);
-                x.className = "myCheckBox";
+                y.outerHTML = "<th class= 'thCheckBox' display:'table-cell'>Bulk</th>";
+                var blkButton = document.querySelector("th.thCheckBox");
+                //console.debug("bulk:", blkButton)
+                // if (blkButton == null) {
+                if (typeof blkButton != null) {
+                    blkButton.appendChild(BulkButton);
+                }
+                //}
+                for (let e of document.querySelectorAll("tr.preview")) {
+                    var x = e.insertCell(0);
+                    x.className = "myCheckBox";
+                }
             }
         }
     }
@@ -194,15 +210,19 @@ function validatePage(language, showHistory, locale) {
     // We need to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project
     var tr = document.getElementById("translations");
-    if (tr != null) {
-        trhead = tr.tHead.children[0]
-        // 26-06-2021 PSS set  the visibillity of the Priority column back to open
-        trprio = trhead.children[1];
-        trprio.style.display = "table-cell";
-        trprio.innerHTML = "Qual";
-        var all_col = document.getElementsByClassName("priority");
-        for (var i = 0; i < all_col.length; i++) {
-            all_col[i].style.display = "table-cell";
+    // 18-10-2022 Fix for issue #253 table header wrong within tab discussions
+    var discussion = checkDiscussion();
+    if (!discussion) {
+        if (tr != null) {
+            trhead = tr.tHead.children[0]
+            // 26-06-2021 PSS set  the visibillity of the Priority column back to open
+            trprio = trhead.children[1];
+            trprio.style.display = "table-cell";
+            trprio.innerHTML = "Qual";
+            var all_col = document.getElementsByClassName("priority");
+            for (var i = 0; i < all_col.length; i++) {
+                all_col[i].style.display = "table-cell";
+            }
         }
     }
 

@@ -10,7 +10,35 @@ let replaceVerb = [];
 // It is also used to force google to translate informal
 // This is done by replacing the formal word for a informal word
 let replacePreVerb = [];
-// 06-05-2021 PSS These vars can probably removed after testen
+// 06-05-2021 PSS These vars can probably removed after testing
+
+// Count words in a given string
+function countWords(str) {
+    const arr = str.split(' ');
+    return arr.filter(word => word !== '').length;
+}
+function countWordsinTable() {
+    var counter = 0;
+    var wordCount = 0;
+    var pluralpresent;
+    var original;
+   // toastbox("info", "Counting started", "1000", "Counting");
+    for (let record of document.querySelectorAll("tr.preview")) {
+        counter++;
+        pluralpresent = record.querySelector(`.translation.foreign-text li:nth-of-type(1) span.translation-text`);
+        if (pluralpresent != null) {
+            wordCount = wordCount + countWords(pluralpresent.innerText);
+            pluralpresent = record.querySelector(`.translation.foreign-text li:nth-of-type(2) span.translation-text`).innerText;
+            wordCount = wordCount + countWords(pluralpresent);
+        }
+        else {
+            original = record.querySelector("span.original-text").innerText;
+            wordCount = wordCount + countWords(original);
+        }
+    }
+   // console.debug("records counted:", counter, wordCount);
+    messageBox("info", "Records counted: " + counter+ " Words counted:" + wordCount);
+}
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
@@ -97,7 +125,9 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
+    //console.debug("before posrepl:'",translatedText,"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
+   // console.debug("after postrepl:'",translatedText,"'")
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     //console.debug('after replace spaces:', translatedText);
@@ -109,6 +139,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
             index++;
         }
+
     }
     else if (translator == "deepl") {
         const matches = original.matchAll(placeHolderRegex);
@@ -134,6 +165,12 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (found.substr(found.length - 1) != "." && found.substr(found.length - 1) != "<" && found.length ==5) {
             translatedText = translatedText.replace("</a>", "</a> ");
         }
+    }
+    // check if there is a blank between end tag ">" and "." as Google ads that automatically
+    // fix for issue #254
+    pos = translatedText.indexOf("> .");
+    if (pos != -1) {
+        translatedText = translatedText.replace("> .", ">");
     }
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     if (convertToLower == true) {
@@ -204,15 +241,31 @@ function convert_lower(text) {
         counter++;
     });
     converted = capsArray.join(' ');
-    // Because now all sentences start with lowercase is longer texts, we need to put back the uppercase at the start of each sentence
+    // Because now all sentences start with lowercase in longer texts, we need to put back the uppercase at the start of the sentence
     converted = applySentenceCase(converted);
     return converted
 }
 
 function applySentenceCase(str) {
+    var myPosition
     // Convert each first word in a sentence to uppercase
     // 03-01-2022 PSS modified the regex issue #169
-    return str.replace(/.+?[\.\?\!\/\. \:\: ](\s|$)/g, function (txt) {
+    // Below code is necessary to get the first char in the second sentense to uppercase if the line does not end with the regex
+    myPosition = str.indexOf("! ");
+    if (myPosition != -1) {
+        firstpart = str.slice(0, myPosition + 2);
+        let secondpart = str.slice(myPosition + 2,);
+        secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        str = firstpart + secondpart;
+    }
+    myPosition = str.indexOf("? ");
+    if (myPosition != -1) {
+        firstpart = str.slice(0, myPosition + 2);
+        let secondpart = str.slice(myPosition + 2,);
+        secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        str = firstpart + secondpart;
+    }
+    return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);
     });
 }
@@ -235,6 +288,7 @@ function CheckUrl(translated,searchword) {
 
 function checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
+    //console.debug("Translated: '", translatedText, "'");
     // strip or add "." at the end of the line
     if (original.endsWith(".") == true) {
         if (translatedText.endsWith(".") == false) {

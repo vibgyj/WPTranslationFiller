@@ -166,7 +166,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                             var element1 = document.createElement("div");
                                             element1.setAttribute("class", "trans_local_div");
                                             element1.setAttribute("id", "trans_local_div");
-                                            element1.appendChild(document.createTextNode("Local"));
+                                            element1.appendChild(document.createTextNode("Import"));
                                             preview.appendChild(element1);
 
                                             // we need to set the checkbox as marked
@@ -191,7 +191,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                         var element1 = document.createElement("div");
                                         element1.setAttribute("class", "trans_local_div");
                                         element1.setAttribute("id", "trans_local_div");
-                                        element1.appendChild(document.createTextNode("Local"));
+                                        element1.appendChild(document.createTextNode("Import"));
                                         preview.appendChild(element1);
                                         // we need to set the checkbox as marked
                                         preview = document.querySelector(`#preview-${row}`);
@@ -258,7 +258,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                                 var element1 = document.createElement("div");
                                                 element1.setAttribute("class", "trans_local_div");
                                                 element1.setAttribute("id", "trans_local_div");
-                                                element1.appendChild(document.createTextNode("Local"));
+                                                element1.appendChild(document.createTextNode("Import"));
                                                 preview.appendChild(element1);
                                             }
                                         }
@@ -276,7 +276,7 @@ async function new_import_po(destlang,myFile,allrows) {
                                             var element1 = document.createElement("div");
                                             element1.setAttribute("class", "trans_local_div");
                                             element1.setAttribute("id", "trans_local_div");
-                                            element1.appendChild(document.createTextNode("Local"));
+                                            element1.appendChild(document.createTextNode("Import"));
                                             previewElem.appendChild(element1);
                                         }
                                         current.innerText = "transFill";
