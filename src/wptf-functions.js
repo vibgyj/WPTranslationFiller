@@ -1,6 +1,4 @@
 // This file contains functions used within various files
-
-
 // This function checks if we are on the discussion table
 function checkDiscussion() {
     const locString = window.location.href;

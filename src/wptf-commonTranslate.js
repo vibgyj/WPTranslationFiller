@@ -258,12 +258,33 @@ function applySentenceCase(str) {
         secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
         str = firstpart + secondpart;
     }
-    myPosition = str.indexOf("? ");
+    //console.debug("string:" ,str)
+    myPosition = str.indexOf(". ");
+    //console.debug("found:",myPosition)
+    // PSS The code below needs improvement as the amount of sentences can vary
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
         let secondpart = str.slice(myPosition + 2,);
         secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        mySecondPosition = secondpart.indexOf(". ");
+        if (myPosition != -1) {
+            let thirdpart = secondpart.slice(0, mySecondPosition + 2);
+            let fourthpart = secondpart.slice(mySecondPosition + 2,);
+            secondpart = thirdpart+fourthpart[0].toUpperCase() + fourthpart.substr(1)
+        }
         str = firstpart + secondpart;
+    }
+    myPosition = str.indexOf("? ");
+    if (myPosition != -1) {
+        firstpart = str.slice(0, myPosition + 2);
+        let secondpart = str.slice(myPosition + 2,);
+        if (secondpart.length >0 ) {
+            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+            str = firstpart + secondpart;
+        }
+        else {
+            str = firstpart;
+        }
     }
     return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);

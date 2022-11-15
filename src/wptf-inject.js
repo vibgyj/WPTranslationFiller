@@ -222,3 +222,15 @@
     }
    
 })({ window });
+
+function checkLocale() {
+    const localeString = window.location.href;
+    locale = localeString.split("/");
+    if (localeString.includes("wp-plugins")) {
+        locale = locale[7]
+    }
+    else {
+        locale = locale[6]
+    }
+    return locale;
+}

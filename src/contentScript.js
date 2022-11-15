@@ -1,4 +1,5 @@
 //console.debug("Content script...");
+
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
     console.log(`Your browser doesn't support IndexedDB`);
@@ -102,8 +103,13 @@ document.addEventListener("keydown", function (event) {
     }
 });
 
-document.addEventListener("keydown", function (event) {
-   
+
+
+document.addEventListener("keydown", async function (event) {
+    if (event.altKey && event.shiftKey && (event.key === "?")) {
+        event.preventDefault();
+        await handleStats();
+    }
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -585,6 +591,14 @@ if (is_pte) {
     bulksaveButton.onclick = bulkSave;
     bulksaveButton.innerText = "Bulksave";
 }
+
+var statsButton = document.createElement("a");
+statsButton.href = "#";
+statsButton.id = "statsButton";
+statsButton.className = "stats-button";
+statsButton.onclick = handleStats;
+statsButton.innerText = "Stats";
+
 var divGpActions = document.querySelector("div.paging");
 var wptfNavBar = document.createElement("div");
 var wptfNavBarCont = document.createElement("div");
@@ -599,6 +613,8 @@ if (divPaging != null && divProjects == null) {
     if (is_pte) {
         divNavBar.appendChild(bulksaveButton);
     }
+
+    divNavBar.appendChild(statsButton);
     divNavBar.appendChild(importButton);
     divNavBar.appendChild(exportButton);
     divNavBar.appendChild(impLocButton);
@@ -619,6 +635,7 @@ if (divPaging != null && divProjects == null) {
   //  divPaging.insertBefore(importButton, divPaging.childNodes[0]);
    
 }
+
 
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
