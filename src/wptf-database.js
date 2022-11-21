@@ -347,8 +347,9 @@ async function dbExport(destlang) {
        hiddenElement.href = csvUrl;
        hiddenElement.target = "_blank";
        hiddenElement.download = export_file;
-       hiddenElement.click();
-       let exportButton = document.querySelector(".paging a.export_translation-button");
+    hiddenElement.click();
+    //21-11-2022 PSS changed the classname to meet the new navbar position
+       let exportButton = document.querySelector("a.export_translation-button");
     exportButton.className += " ready";
     //close_toast();
     messageBox("info", "Export database done amount of records exported: "+i);
