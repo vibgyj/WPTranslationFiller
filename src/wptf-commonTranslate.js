@@ -257,12 +257,13 @@ function applySentenceCase(str) {
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
         let secondpart = str.slice(myPosition + 2,);
-        secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        if (secondpart[0] != null) {
+            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        }
         str = firstpart + secondpart;
     }
     //console.debug("string:" ,str)
     myPosition = str.indexOf(". ");
-    //console.debug("found:",myPosition)
     // PSS The code below needs improvement as the amount of sentences can vary
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
@@ -274,8 +275,10 @@ function applySentenceCase(str) {
             mySecondPosition = secondpart.indexOf(". ");
             if (mySecondPosition != -1) {
                 let thirdpart = secondpart.slice(0, mySecondPosition + 2);
-                let fourthpart = secondpart.slice(mySecondPosition + 2,);
-                secondpart = thirdpart + fourthpart[0].toUpperCase() + fourthpart.substr(1)
+                let fourthpart = thirdpart.slice(mySecondPosition + 2,);
+                if (typeof fourthpart[0] != 'undefined') {
+                    secondpart = thirdpart + fourthpart[0].toUpperCase() + fourthpart.substr(1)
+                }
             }
         }
         str = firstpart + secondpart;
@@ -292,6 +295,8 @@ function applySentenceCase(str) {
             str = firstpart;
         }
     }
+    //sometimes a blank is present before the "." which is not OK
+    str = str.replaceAll(' .', '.')
     return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);
     });
