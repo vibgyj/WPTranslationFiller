@@ -794,15 +794,21 @@ function translatePageClicked(event) {
 
 function checkLocale() {
     const localeString = window.location.href;
-    locale = localeString.split("/");
-    if (localeString.includes("wp-plugins") ) {
-        locale = locale[7]
+    //console.debug("localestring:",localeString)
+    var local = localeString.split("/");
+    // console.debug("localestring:", local)
+    if (local.length == 8) {
+            locale = local[4];
     }
-    else {
-        locale = locale[6]
+    else if (local.length == 9) {
+            locale = local[5];
+    }
+    else if (local.length == 10) {
+            locale = local[6];
     }
     return locale;
 }
+
 function checkFormal(formal) {
     const locString = window.location.href;
     if (locString.includes("default")) {

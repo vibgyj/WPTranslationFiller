@@ -2,10 +2,69 @@
 async function mySelection() {
 	var eID = document.getElementById("stattypes");
 	var selVal = eID.options[eID.selectedIndex].value;
-	locale = checkLocale();
 	var modal = document.getElementById("myModal");
+	var myMaxPage;
 	modal.style.display = "none";
-	let res = await createStatsTable(locale, selVal);
+	console.debug("selVal:", selVal)
+	if (selVal === '1') {
+		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-themes/?s=&page="
+		myType = "Themes default"
+	}
+	else if (selVal === '2') {
+		query = "https://translate.wordpress.org/locale/" + locale +"/default/wp-plugins/?s=&page="
+		myType = "Plugins default"
+	}
+	else if (selVal === '3') {
+		query = "https://translate.wordpress.org/locale/" + locale +"/formal/wp-themes/?s=&page="
+		myType = "Themes formal"
+	}
+	else if (selVal === '4') {
+		myType = "Plugins formal"
+		query = "https://translate.wordpress.org/locale/" + locale +"/formal/wp-plugins/?s=&page="
+	}
+	else if (selVal === '5') {
+		myType = "Themes default 100%"
+		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-themes/?s=&page="
+	}
+	else if (selVal === '6') {
+		myType = "Themes formal 100%"
+		query = "https://translate.wordpress.org/locale/" + locale + "/formal/wp-themes/?s=&page="
+	}
+	else if (selVal === '7') {
+		myType = "Meta default"
+		query = "/default/meta/"
+	}
+	else if (selVal === '8') {
+		myType = "Meta formal"
+		query = "/formal/meta/"
+	}
+	else {
+		myType = "Themes"
+		query = "/default/wp-themes/?s=&page="
+	}
+	//console.debug("locale:", locale)
+	//let open_url = query + 1 + "&filter=percent-completed";
+	//console.debug("url:", open_url)
+	//const windowFeatures = "left=10,top=500,width=620,height=320";
+	//let windowObjectReference = null;
+	//var myWindow = await window.open("https://translate.wordpress.org/locale/nl/default/wp-themes/", target = '_blanc', windowFeatures);
+	
+		//location.href = open_url;
+	//	console.debug("url1:", open_url)
+	//	console.debug("myWind:", myWindow)
+		// fetch page count from new window
+		//var pagination = document.getElementsByClassName("paging");
+		//console.debug("pagination:", pagination)
+		// Fetch the last pageNo if multiple pages
+		//if (pagination.length != 0) {
+		//	myCountPages = document.getElementsByClassName("paging")[0].children;
+		//	myMaxPage = parseFloat(myCountPages[myCountPages.length - 2].innerText)
+		//}
+		//else {
+		//	myMaxPage = 1;
+		//}
+	//console.debug("maxPage:",myMaxPage)
+	let res = await createStatsTable(selVal,query,myType);
 	if (res == "done") {
 		toastbox("info", "", "5000", "Fetching page counts done!");
 		console.debug("Stats processed and done")
@@ -19,15 +78,24 @@ async function mySelection() {
     }
 	//return dayVal
 }
-async function showTypesel(myVal) {
+async function showTypesel(locale) {
 	//event.preventDefault();
 	var mySel;
 	var dayVal;
 	var myVal;
 	let body = document.querySelector('body');
+	// check if the user is logged in
+	var curruser = document.getElementsByClassName("username");
+	if (curruser.length == 0) {
+		//let mywait = toastbox("error", "", "3000", "No logged on user found! ");
+		messageBox("error", "No logged on user found!");
+		return;
+	}
+
 	body.insertAdjacentHTML(
 		'afterend',
-		'<div id="myModal" class="modal"><div class="modal-content"><span class="close">&times;</span><p>Select your stats type<br>For some stats it takes a while use "X" to stop</p><select id="stattypes"><option value="1">Themes default</option><option value="2">Plugins default</option><option value="3">Themes formal</option><option value="4">Plugins formal</option><option value="5">Meta default</option><option value="6">Meta formal</option></select><br><br><button id="mySelButton">Select stat and click me to start</button></div></div>',
+		'<div id="myModal" class="modal"><div class="modal-content"><span class="close">&times;</span><p>Select your stats type<br>For some stats it takes a while use "X" to stop</p><select id="stattypes"><option value="1">Themes default</option><option value="2">Plugins default</option><option value="3">Themes formal</option><option value="4">Plugins formal</option><option value="5">Themes default 100%</option>'+
+		'<option value = "6">Themes formal 100%</option>< option value = "7" > Meta default</option > <option value="8">Meta formal</option></select > <br><br><button id="mySelButton">Select stat and click me to start</button></div></div>',
 	);
 
 	let modal = document.getElementById("myModal");
@@ -50,125 +118,89 @@ async function showTypesel(myVal) {
 	}
 }
 
-async function createStatsTable(locale,selVal) {
+async function createStatsTable(selVal,query,myType) {
 	var newresult = 0;
 	var currentLocation = window.location;
 	var wind = "myWindow";
 	var myProjects = [];
-	locale = 'nl';
 	var pageNo = 0;
 	var query;
-	var myType;
 	var search_url;
+	var currusername;
+	var local = checkLocale();
+	var myCountPages;
+	var myMaxPage = 1;
+
+	console.debug("checkloc:",local,selVal)
 	const myInit = {
 		redirect: "error"
 	};
-	// check if the user is logged in
+	
 	var curruser = document.getElementsByClassName("username");
 	if (curruser.length == 0) {
 		//let mywait = toastbox("error", "", "3000", "No logged on user found! ");
 		messageBox("error", "No logged on user found!");
 		return;
 	}
-	// check if pagina exists
-	var pagination = document.getElementsByClassName("paging");
-	// Fetch the last pageNo if multiple pages
-	if (pagination.length != 0) {
-		var myCountPages = document.getElementsByClassName("paging")[0].children;
-		var myMaxPage = parseFloat(myCountPages[myCountPages.length - 2].innerText)
-	}
+	// 26-011-2022 PSS added collect username to select it from projects
 	else {
-		myMaxPage = 1;
-    }
-	//console.debug("next:", myMaxPage);
-	//if (typeof locale != "undefined" && locale != "") {
-	//cuteAlert({
-	//	type: "question",
-	//	title: "Create a back-up for check afterwards",
-	//	message: "To proceed it is necessary to create a back-up!",
-	//	confirmText: "Yes proceed",
-	//	cancelText: "No stop",
-	//	closeStyle: "",
-	//	myWindow: currentLocation,
-	//   }).then((e) => {
-	//if (e == "confirm") {
-	//		cuteToast({
-	//			type: "info",
-	//		message: "Please wait while data is fetched\n",
-	//		timer: 2000,
-	//		playSound: null,
-	//		title: "Fetching records",
-	//	img: "/img",
-	//	myWindow: currentLocation,
-	//});
-	
-	if (selVal === '1') {
-		query = "/default/wp-themes/?s=&page="
-		myType = "Themes default"
+		currusername = curruser[0].innerText;
 	}
-	else if (selVal === '2') {
-		query = "/default/wp-plugins/?s=&page="
-		myType="Plugins default"
-	}
-	else if (selVal === '3') {
-		query = "/formal/wp-themes/?s=&page="
-		myType = "Themes formal"
-	}
-	else if (selVal === '4') {
-		myType = "Plugins formal"
-		query = "/formal/wp-plugins/?s=&page="
-	}
-	else if (selVal === '5') {
-		myType = "Meta default"
-		query = "/default/meta/"
-	}
-	else if (selVal === '6') {
-		myType = "Meta formal"
-		query = "/formal/meta/"
-	}
-	else {
-		myType = "Themes"
-		query = "/default/wp-themes/?s=&page="
-    }
+
 	for (pageNo = 1; pageNo <= myMaxPage ; pageNo++) {
-		console.debug("page:", pageNo)
-		if (myType < 5) {
-			search_url = "https://translate.wordpress.org/locale/" + locale + query + pageNo + "&filter=percent-completed";
+		if (selVal < 5) {
+			search_url = query + pageNo + "&filter=percent-completed";
+			console.debug("search:", search_url)
+		}
+		else if (selVal == 5 || selVal ==6) {
+			search_url = query + pageNo + "&filter=completed-asc";
 		}
 		else {
-			search_url = "https://translate.wordpress.org/locale/" + locale + query;
-        }
+			search_url = local + query;
+		}
+		//console.debug("search in fetch:",search_url)
 		let result = await fetch(search_url, myInit)
 			.then(function (response) {
 				// When the page is loaded convert it to text
-				let mywait = toastbox("info", "", "3000", "Fetching page counts page<br>Page: "+ (pageNo) +" out of: "+ myMaxPage + "<br> For " + myType);
-				return response.text(myType);
+				if (myMaxPage > 1) {
+					let mywait = toastbox("info", "", "3000", "Fetching page counts page<br>Page: " + (pageNo) + " out of: " + myMaxPage + "<br> For " + myType);
+				}
+				else {
+					let mywait = toastbox("info", "", "3000", "Fetching page counts page<br>Page: " + (pageNo));
+
+                }
+				let myResponse = response.text();
+				return myResponse;
 			})
-			.then(function (html,myType) {
+			.then(function (html) {
 				// Initialize the DOM parser
-				//console.debug("html:",html);
 				var parser = new DOMParser();
 				// Parse the text
 				var doc = parser.parseFromString(html, "text/html");
+				// fetch page count from new window
+				var pagination = doc.getElementsByClassName("paging");
+				// Fetch the last pageNo if multiple pages
+				if (pagination.length != 0) {
+					myCountPages = doc.getElementsByClassName("paging")[0].children;
+					myMaxPage = parseFloat(myCountPages[myCountPages.length - 2].innerText)
+				}
+				else {
+					myMaxPage = 1;
+				}
 				//var trs = doc.getElementsByTagName("tr");
 				//var table = doc.getElementsByClassName("project-name");
 				var table = doc.getElementsByClassName("project");
 				//var mytable = doc.getElementsByTagName("table")[0];
-				//console.debug("myTable:", table);
 				if (typeof table != "undefined") {
 					myProjects = [];
 					//var mytablebody = mytable.getElementsByTagName("tbody")[0];
 					var Rows = table.length;
-					//console.debug("Projectlines:", Rows)
 					var rowCount = 0;
 					var replCount = 0;
 					for (i = 0; i < Rows; i++) {
-						
 						let progressline = table[i].getElementsByClassName("project-status-progress")
-						//console.debug("progressline:", progressline)
 						let progresslinevalue = progressline[0].getElementsByClassName("project-status-value")
 						progresslinevalue = progresslinevalue[0].innerText
-						//console.debug("progresslinevalue:", progresslinevalue)
 						if (progresslinevalue != "0%") {
 							let name = table[i].getElementsByTagName("h4");
 							let projectname = name[0].innerText;
@@ -185,25 +217,21 @@ async function createStatsTable(locale,selVal) {
                         }
 
 					}
-					//console.debug("myProjects:", myProjects)
-					//console.debug("Replcount:", rowCount);
 					if (rowCount == 0) {
 						close_toast();
 						console.debug("No projects found")
-						//console.debug("mywindow:", myWindow);
-						//cuteAlert({
-						//	type: "info",
-						//	title: "Message",
-						//	message: "OK no records to replace!",
-						//	buttonText: "OK",
-						//	myWindow: currWindow,
-						//	closeStyle: "alert-close",
-						//});
+						
+						cuteAlert({
+							type: "info",
+							title: "Message",
+							message: "OK no records to replace!",
+							buttonText: "OK",
+							myWindow: currentLocation,
+							closeStyle: "alert-close",
+						});
 					}
 					console.debug("Search ended:");
-					// now we can process the results
-
-					//consistsWindow.close();
+					
 				}
 				else {
 					cuteAlert({
@@ -211,24 +239,24 @@ async function createStatsTable(locale,selVal) {
 						title: "Message",
 						message: "No records found!",
 						buttonText: "OK",
-						myWindow:"",
+						myWindow: currentLocation,
 						closeStyle: "alert-close",
 					});
 				}
-				
-				return myProjects
+				return [myProjects,currusername,myType]
 
-			    }).then(async function (myProjects,currusername,myType) {
-				//console.debug("in then:", myProjects)
-				let result = await process_projects(myProjects,currusername);
-				newresult = newresult + result
-				console.debug(" result:", result)
-				console.debug("grandtotal: ", newresult)
-				//messageBox("info", "Page count result: " + result);
-				return newresult;
+			    }).then(async function (myProjects) {
+					let currusername = myProjects[1]
+					let myType = myProjects[2]
+				    let result = await process_projects(myProjects[0],currusername);
+				    newresult = newresult + result
+				    console.debug(" result:", result)
+				    console.debug("grandtotal: ", newresult)
+				    //messageBox("info", "Page count result: " + result);
+				    return [newresult,myType];
 				
 			}).then(function (newresult) {
-				messageBox("info", "Total count result: " + newresult + "<br>For " + myType);
+				messageBox("info", "Total count result: " + newresult[0] + "<br>For " + newresult[1]);
             })
 			.catch(function (err) {
 				console.log("Failed to fetch page: ", err);
@@ -251,6 +279,7 @@ async function createStatsTable(locale,selVal) {
 			});
 		
 	}
+	close_toast();
 	return "done"
 }
 
@@ -298,18 +327,16 @@ async function createStatsTable(locale,selVal) {
 							for (var i = 1; i < contributerLen; i++) {
 								let stats = contributer.item(i)
 								//console.debug("Stats found:", stats, "'" + stats.id + "'")
-								let contrib = stats.id;
-								//contrib = contrib.trim();
-								contrib = "contributer-" + currusername;
-								if (contrib == "contributer-" + currusername) {
-									//console.debug("found mycontributer:", contrib)
+								let idFound = stats.id;
+								let mycontrib = "contributor-" + currusername;
+								if (idFound == mycontrib) {
+									console.debug("found mycontributer:", mycontrib)
+									console.debug("Stats found:", search_url)
 									let myStats = stats.querySelector('[class="total"]')
 									totalVal = myStats.getElementsByTagName('p');
-
 									totalVal = totalVal[0].innerHTML;
 									console.debug('TotalValue:', parseFloat(totalVal))
 									grandTotal = grandTotal + parseFloat(totalVal)
-
 								}
 							}
 						}
@@ -332,7 +359,8 @@ async function createStatsTable(locale,selVal) {
 }
 function handleStats() {
 	var myVal;
-	var mySelection = showTypesel()
+	let locale = checkLocale;
+	var mySelection = showTypesel(locale)
 		.then((user) => {
 			//console.debug("user:", user)
 			//if (typeof user != 'undefined') {
@@ -348,5 +376,5 @@ function handleStats() {
 		//alert("result:", a)
 	};
 
-	mySelect();
+	mySelect(locale);
 }
