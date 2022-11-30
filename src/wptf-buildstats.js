@@ -5,7 +5,7 @@ async function mySelection() {
 	var modal = document.getElementById("myModal");
 	var myMaxPage;
 	modal.style.display = "none";
-	console.debug("selVal:", selVal,locale)
+	//console.debug("selVal:", selVal,locale)
 	if (selVal === '1') {
 		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-themes/?s=&page="
 		myType = "Themes default"
@@ -27,14 +27,22 @@ async function mySelection() {
 		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-themes/?s=&page="
 	}
 	else if (selVal === '6') {
+		myType = "Plugins default 100%"
+		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-plugins/?s=&page="
+	}
+	else if (selVal === '7') {
 		myType = "Themes formal 100%"
 		query = "https://translate.wordpress.org/locale/" + locale + "/formal/wp-themes/?s=&page="
 	}
-	else if (selVal === '7') {
+	else if (selVal === '8') {
+		myType = "Plugins formal 100%"
+		query = "https://translate.wordpress.org/locale/" + locale + "/formal/wp-plugins/?s=&page="
+	}
+	else if (selVal === '9') {
 		myType = "Meta default"
 		query = "/default/meta/"
 	}
-	else if (selVal === '8') {
+	else if (selVal === '10') {
 		myType = "Meta formal"
 		query = "/formal/meta/"
 	}
@@ -42,27 +50,7 @@ async function mySelection() {
 		myType = "Themes"
 		query = "/default/wp-themes/?s=&page="
 	}
-	//console.debug("locale:", locale)
-	//let open_url = query + 1 + "&filter=percent-completed";
-	//console.debug("url:", open_url)
-	//const windowFeatures = "left=10,top=500,width=620,height=320";
-	//let windowObjectReference = null;
-	//var myWindow = await window.open("https://translate.wordpress.org/locale/nl/default/wp-themes/", target = '_blanc', windowFeatures);
 	
-		//location.href = open_url;
-	//	console.debug("url1:", open_url)
-	//	console.debug("myWind:", myWindow)
-		// fetch page count from new window
-		//var pagination = document.getElementsByClassName("paging");
-		//console.debug("pagination:", pagination)
-		// Fetch the last pageNo if multiple pages
-		//if (pagination.length != 0) {
-		//	myCountPages = document.getElementsByClassName("paging")[0].children;
-		//	myMaxPage = parseFloat(myCountPages[myCountPages.length - 2].innerText)
-		//}
-		//else {
-		//	myMaxPage = 1;
-		//}
 	//console.debug("maxPage:",myMaxPage)
 	let res = await createStatsTable(selVal,query,myType);
 	if (res == "done") {
@@ -95,7 +83,7 @@ async function showTypesel(locale) {
 	body.insertAdjacentHTML(
 		'afterend',
 		'<div id="myModal" class="modal"><div class="modal-content"><span class="close">&times;</span><p>Select your stats type<br>For some stats it takes a while use "X" to stop</p><select id="stattypes"><option value="1">Themes default</option><option value="2">Plugins default</option><option value="3">Themes formal</option><option value="4">Plugins formal</option><option value="5">Themes default 100%</option>'+
-		'<option value = "6">Themes formal 100%</option>< option value = "7" > Meta default</option > <option value="8">Meta formal</option></select > <br><br><button id="mySelButton">Select stat and click me to start</button></div></div>',
+		'<option value = "6">Plugins default 100%</option><option value = "7">Themes formal 100%</option><option value= "8">Plugins formal 100%</option>< option value = "9" > Meta default</option > <option value="10">Meta formal</option></select > <br><br><button id="mySelButton">Select stat and click me to start</button></div></div>',
 	);
 
 	let modal = document.getElementById("myModal");
@@ -120,7 +108,7 @@ async function showTypesel(locale) {
 
 async function createStatsTable(selVal,query,myType) {
 	var newresult = 0;
-	var currentLocation = window.location;
+	var currWindow = window.self;
 	var wind = "myWindow";
 	var myProjects = [];
 	var pageNo = 0;
@@ -131,7 +119,7 @@ async function createStatsTable(selVal,query,myType) {
 	var myCountPages;
 	var myMaxPage = 1;
 
-	console.debug("checkloc:",local,selVal)
+	//console.debug("checkloc:",local,selVal)
 	const myInit = {
 		redirect: "error"
 	};
@@ -155,10 +143,13 @@ async function createStatsTable(selVal,query,myType) {
 		else if (selVal == 5 || selVal ==6) {
 			search_url = query + pageNo + "&filter=completed-asc";
 		}
+		else if (selVal == 7 || selVal == 8) {
+			search_url = query + pageNo + "&filter=completed-asc";
+		}
 		else {
 			search_url = local + query;
 		}
-		console.debug("search in fetch:",selVal, search_url)
+		//console.debug("search in fetch:",selVal, search_url)
 		let result = await fetch(search_url, myInit)
 			.then(function (response) {
 				// When the page is loaded convert it to text
@@ -187,13 +178,9 @@ async function createStatsTable(selVal,query,myType) {
 				else {
 					myMaxPage = 1;
 				}
-				//var trs = doc.getElementsByTagName("tr");
-				//var table = doc.getElementsByClassName("project-name");
 				var table = doc.getElementsByClassName("project");
-				//var mytable = doc.getElementsByTagName("table")[0];
 				if (typeof table != "undefined") {
 					myProjects = [];
-					//var mytablebody = mytable.getElementsByTagName("tbody")[0];
 					var Rows = table.length;
 					var rowCount = 0;
 					var replCount = 0;
@@ -226,7 +213,7 @@ async function createStatsTable(selVal,query,myType) {
 							title: "Message",
 							message: "OK no projects found!",
 							buttonText: "OK",
-							myWindow: "",
+							myWindow: currWindow,
 							closeStyle: "alert-close",
 						});
 					}
@@ -239,7 +226,7 @@ async function createStatsTable(selVal,query,myType) {
 						title: "Message",
 						message: "No records found!",
 						buttonText: "OK",
-						myWindow: currentLocation,
+						myWindow: currWindow,
 						closeStyle: "alert-close",
 					});
 				}
@@ -259,12 +246,13 @@ async function createStatsTable(selVal,query,myType) {
 				messageBox("info", "Total count result: " + newresult[0] + "<br>For " + newresult[1]);
             })
 			.catch(function (err) {
-				console.log("Failed to fetch page: ", err);
+				//console.log("Failed to fetch page: ", err);
 				cuteAlert({
 					type: "error",
 					title: "Message",
+					message:"Failed to fetch the page!",
 					buttonText: "OK",
-					myWindow: "",
+					myWindow: currWindow,
 					closeStyle: "alert-close",
 				});
 				
