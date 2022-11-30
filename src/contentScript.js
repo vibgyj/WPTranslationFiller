@@ -11,6 +11,7 @@ var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
 var errorstate = "OK";
+var locale;
 
 gd_wait_table_alter();
 addCheckBox();
@@ -793,18 +794,22 @@ function translatePageClicked(event) {
 }
 
 function checkLocale() {
+    // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
     //console.debug("localestring:",localeString)
     var local = localeString.split("/");
-    // console.debug("localestring:", local)
+    //console.debug("localestring:", local.length)
     if (local.length == 8) {
-            locale = local[4];
+        locale = local[4];
     }
     else if (local.length == 9) {
-            locale = local[5];
+        locale = local[6];
     }
     else if (local.length == 10) {
-            locale = local[6];
+        locale = local[7];
+    }
+    else {
+        locale ="";
     }
     return locale;
 }

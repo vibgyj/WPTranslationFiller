@@ -2382,7 +2382,8 @@ async function saveLocal() {
                         let editorRow = rowfound.split("-")[1];
                         // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
                         let nothidden = document.querySelector(`#preview-${editorRow}`);
-                        if (typeof nothidden != null) {
+                        // 30-11-2022 PSS corrected an errormessage when nothidden = null when saving a waiting suggestion
+                        if (nothidden != null) {
                             nothidden.classList.add("wptf-saved");
                         }
                         editor.querySelector(".translation-actions__save").click();

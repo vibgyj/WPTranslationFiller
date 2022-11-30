@@ -5,7 +5,7 @@ async function mySelection() {
 	var modal = document.getElementById("myModal");
 	var myMaxPage;
 	modal.style.display = "none";
-	console.debug("selVal:", selVal)
+	console.debug("selVal:", selVal,locale)
 	if (selVal === '1') {
 		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-themes/?s=&page="
 		myType = "Themes default"
@@ -158,7 +158,7 @@ async function createStatsTable(selVal,query,myType) {
 		else {
 			search_url = local + query;
 		}
-		//console.debug("search in fetch:",search_url)
+		console.debug("search in fetch:",selVal, search_url)
 		let result = await fetch(search_url, myInit)
 			.then(function (response) {
 				// When the page is loaded convert it to text
@@ -224,9 +224,9 @@ async function createStatsTable(selVal,query,myType) {
 						cuteAlert({
 							type: "info",
 							title: "Message",
-							message: "OK no records to replace!",
+							message: "OK no projects found!",
 							buttonText: "OK",
-							myWindow: currentLocation,
+							myWindow: "",
 							closeStyle: "alert-close",
 						});
 					}
