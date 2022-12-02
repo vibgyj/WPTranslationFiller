@@ -61,6 +61,8 @@ if (!isDbCreated){
 else {
     console.debug("Database is present");
 }
+// check if the index is present, if not create it
+checkIndex(db);
 
 
 //09-05-2021 PSS added fileselector for silent selection of file
