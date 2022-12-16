@@ -179,14 +179,14 @@ function getDbSchema() {
 
 // 02-12-2022 PSS added warning if the index is not present issue #262
 async function checkIndex(event) {
-    console.debug("Checking index:", event)
+   // console.debug("Checking index:", event)
     var result;
     var db;
     var request = window.indexedDB.open("My-Trans");
 
     request.onupgradeneeded = function() {
         var db = request.result;
-        console.debug("request result:", db)
+       // console.debug("request result:", db)
        // var transaction = db.transaction(["Translation"], "readwrite");
        // var objectStore = transaction.objectStore("Translation");
        // var storeName = db.createObjectStore("storeName", { keyPath: "keyAttribute" });
@@ -202,16 +202,16 @@ async function checkIndex(event) {
         var result = true
         // Do something with request.result!
         db = request.result;
-        console.log("opened DB")
+        //console.log("opened DB")
         var transaction = db.transaction(["Translation"], "readwrite");
         var objectStore = transaction.objectStore("Translation");
-        console.debug("objectstore:", objectStore.indexNames)
+       // console.debug("objectstore:", objectStore.indexNames)
         let indexNames = objectStore.indexNames;
         if (indexNames.contains('sourceCountry')){
             console.debug("index does exist");
          }
          else {
-              console.debug('index does not exist!');
+              //console.debug('index does not exist!');
               messageBox("error", "Error the index does not exist in your DB!<br>Please make a backup of your database<br>Then follow the steps described in the Wiki to reset your database<br>https://github.com/vibgyj/WPTranslationFiller/wiki/9.-Fix-broken-local-database");
             result= false;
             //return result;
