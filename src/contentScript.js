@@ -1,4 +1,5 @@
 //console.debug("Content script...");
+
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
     console.log(`Your browser doesn't support IndexedDB`);
@@ -10,6 +11,7 @@ var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
 var errorstate = "OK";
+var locale;
 
 gd_wait_table_alter();
 addCheckBox();
@@ -59,6 +61,8 @@ if (!isDbCreated){
 else {
     console.debug("Database is present");
 }
+// check if the index is present, if not create it
+checkIndex(db);
 
 
 //09-05-2021 PSS added fileselector for silent selection of file
@@ -102,8 +106,13 @@ document.addEventListener("keydown", function (event) {
     }
 });
 
-document.addEventListener("keydown", function (event) {
-   
+
+
+document.addEventListener("keydown", async function (event) {
+    if (event.altKey && event.shiftKey && (event.key === "?")) {
+        event.preventDefault();
+        await handleStats();
+    }
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         //event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -585,6 +594,14 @@ if (is_pte) {
     bulksaveButton.onclick = bulkSave;
     bulksaveButton.innerText = "Bulksave";
 }
+
+var statsButton = document.createElement("a");
+statsButton.href = "#";
+statsButton.id = "statsButton";
+statsButton.className = "stats-button";
+statsButton.onclick = handleStats;
+statsButton.innerText = "Stats";
+
 var divGpActions = document.querySelector("div.paging");
 var wptfNavBar = document.createElement("div");
 var wptfNavBarCont = document.createElement("div");
@@ -599,6 +616,8 @@ if (divPaging != null && divProjects == null) {
     if (is_pte) {
         divNavBar.appendChild(bulksaveButton);
     }
+
+    divNavBar.appendChild(statsButton);
     divNavBar.appendChild(importButton);
     divNavBar.appendChild(exportButton);
     divNavBar.appendChild(impLocButton);
@@ -619,6 +638,7 @@ if (divPaging != null && divProjects == null) {
   //  divPaging.insertBefore(importButton, divPaging.childNodes[0]);
    
 }
+
 
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
@@ -776,16 +796,26 @@ function translatePageClicked(event) {
 }
 
 function checkLocale() {
+    // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
-    locale = localeString.split("/");
-    if (localeString.includes("wp-plugins") ) {
-        locale = locale[7]
+    //console.debug("localestring:",localeString)
+    var local = localeString.split("/");
+    //console.debug("localestring:", local.length)
+    if (local.length == 8) {
+        locale = local[4];
+    }
+    else if (local.length == 9) {
+        locale = local[6];
+    }
+    else if (local.length == 10) {
+        locale = local[7];
     }
     else {
-        locale = locale[6]
+        locale ="";
     }
     return locale;
 }
+
 function checkFormal(formal) {
     const locString = window.location.href;
     if (locString.includes("default")) {

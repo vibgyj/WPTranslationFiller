@@ -406,6 +406,15 @@ file.addEventListener("change", function () {
         //console.log(glossaryA);
     };
     reader.readAsText(file);
+    let updatedfilename = document.getElementById("text_glossary_file");
+    const thisdate = new Date();
+    let myYear = thisdate.getFullYear();
+    let mymonth = thisdate.getMonth();
+    let myday = thisdate.getDate();
+    let thisDay = myday + "-" + (mymonth +1) + "-" + myYear;
+    let myfiledate = "   " + thisDay;
+    updatedfilename.innerText = file.name + myfiledate;
+    messageBox("info", "Glossary import ready, make sure you save the options and restart the addon afterwards!")
 });
 
 function checkLocale() {

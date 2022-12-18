@@ -88,7 +88,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 //We do have a result so process it
                 //console.debug('result:', data.translations[0].text);
                 translatedText = data.translations[0].text;
-
+                //console.debug("deepl original: ", original, "'", "translatedText: ", translatedText, "'")
                 translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                }

@@ -7,7 +7,7 @@
   
   "web_accessible_resources": [
     {
-      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "/_metadata", "wptf-options.html", "wptf-inject.js"],
+      "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "/_metadata", "wptf-options.html", "wptf-inject.js","wptf-buildstats"],
       "matches": [ "https://translate.wordpress.org/*" ]
     }
   ],
@@ -43,6 +43,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-buildstats.js",
         "wptf-functions.js",
         "wptf-purify.min.js",
         "wptf-cute-alert.js",

@@ -18,11 +18,13 @@
 /* Modal Content */
 .modal-content {
     position: relative;
-    background-color: #fefefe;
+    background-color: lightskyblue;
     margin: auto;
-    padding: 0;
+    padding-left: 180px;
+    padding-top: 10px;
     border: 1px solid #888;
-    width: 90%;
+    width: 40%;
+    
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.4s;
@@ -444,7 +446,44 @@
     margin-right: 5px;
 }
 
+.wptfNavBarCont .stats-button {
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
 
+.wptfNavBarCont .stats-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+    }
+
+.wptfNavBarCont .stats-button:hover {
+        background: darkgray !important;
+    }
+
+ .wptfNavBarCont .stats-button.after_error {
+        animation: none;
+        background: red;
+    }
+
+.wptfNavBarCont .stats-button.translated {
+        animation: none !important;
+        background: green;
+        border-radius: 0%;
+        border: 0px solid transparent;
+        display: inline-block;
+        padding-top: 0.1em !important;
+        padding-bottom: 0.1em !important;
+        margin: 5px !important;
+    }
+
+   
 .panel-header-actions .translation-filler-button {
     width: auto;
     padding: 5px;

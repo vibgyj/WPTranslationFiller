@@ -125,7 +125,7 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
-    //console.debug("before posrepl:'",translatedText,"'")
+    //console.debug("before posrepl: '"+ translatedText +"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
    // console.debug("after postrepl:'",translatedText,"'")
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
@@ -153,6 +153,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replaceAll("crlf", "\r\n");
         // Deepl does remove tabs so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("mytb", "	");
+        // Deepl pro adds "..." sometimes to the end of line, that is not what we expect
+        translatedText = translatedText.replaceAll("...", ".");
         //console.debug('after replace x:', translatedText);
     }
     
@@ -178,16 +180,16 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
 
     // Make translation to start with same case (upper/lower) as the original.
-    if (isStartsWithUpperCase(original)) {
-        if (!isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
-        }
-    }
-    else {
-        if (isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
-        }
-    }
+    //if (isStartsWithUpperCase(original)) {
+     //   if (!isStartsWithUpperCase(translatedText)) {
+     //       translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+     //   }
+  //  }
+   // else {
+      //  if (isStartsWithUpperCase(translatedText)) {
+        //    translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+      //  }
+  //  }
 
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
@@ -255,16 +257,46 @@ function applySentenceCase(str) {
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
         let secondpart = str.slice(myPosition + 2,);
-        secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        if (secondpart[0] != null) {
+            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+        }
+        str = firstpart + secondpart;
+    }
+    //console.debug("string:" ,str)
+    myPosition = str.indexOf(". ");
+    // PSS The code below needs improvement as the amount of sentences can vary
+    if (myPosition != -1) {
+        firstpart = str.slice(0, myPosition + 2);
+        let secondpart = str.slice(myPosition + 2,);
+        //sometimes a blank is at the last position, so there is no second sentence!
+        if (secondpart[0] != null) {
+            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1);
+            //console.debug("secondpart: '" + secondpart +"'")
+            mySecondPosition = secondpart.indexOf(". ");
+            if (mySecondPosition != -1) {
+                let thirdpart = secondpart.slice(0, mySecondPosition + 2);
+                let fourthpart = thirdpart.slice(mySecondPosition + 2,);
+                if (typeof fourthpart[0] != 'undefined') {
+                    secondpart = thirdpart + fourthpart[0].toUpperCase() + fourthpart.substr(1)
+                }
+            }
+        }
         str = firstpart + secondpart;
     }
     myPosition = str.indexOf("? ");
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
         let secondpart = str.slice(myPosition + 2,);
-        secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
-        str = firstpart + secondpart;
+        if (secondpart.length >0 ) {
+            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
+            str = firstpart + secondpart;
+        }
+        else {
+            str = firstpart;
+        }
     }
+    //sometimes a blank is present before the "." which is not OK
+    str = str.replaceAll(' .', '.')
     return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1);
     });
@@ -288,7 +320,6 @@ function CheckUrl(translated,searchword) {
 
 function checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
-    //console.debug("Translated: '", translatedText, "'");
     // strip or add "." at the end of the line
     if (original.endsWith(".") == true) {
         if (translatedText.endsWith(".") == false) {
@@ -617,7 +648,7 @@ async function checkPage(postTranslationReplace,formal) {
         checkButton.className += " started";
     }
     else {
-        console.debug("checkbutton2:", typeof checkButton)
+       // console.debug("checkbutton2:", typeof checkButton)
         if (typeof checkbutton != null) {
             checkButton.classList.remove("check_translation-button", "started", "translated");
             checkButton.classList.remove("check_translation-button", "restarted", "translated");
@@ -2351,7 +2382,8 @@ async function saveLocal() {
                         let editorRow = rowfound.split("-")[1];
                         // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
                         let nothidden = document.querySelector(`#preview-${editorRow}`);
-                        if (typeof nothidden != null) {
+                        // 30-11-2022 PSS corrected an errormessage when nothidden = null when saving a waiting suggestion
+                        if (nothidden != null) {
                             nothidden.classList.add("wptf-saved");
                         }
                         editor.querySelector(".translation-actions__save").click();
@@ -2734,9 +2766,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     if (originalPreProcessed == "") {
         //console.debug("preprocessed empty");
     }
-    //console.debug("processPlaceholderSpaces not translated", originalPreProcessed);
-    //console.debug("processPlaceholderSpaces translated", translatedText);
-
+    
     var placedictorg = {};
     var placedicttrans = {};
     var found = 0;
