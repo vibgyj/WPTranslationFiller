@@ -1863,6 +1863,7 @@ function savetranslateEntryClicked(event) {
                     //timeout += 1000;    
                 }
                 status.innerText = "current";
+                current.innerText = "current";
                 glotpress_close.click();
                 prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
                 prevrow.style.backgroundColor = "#b5e1b9";
