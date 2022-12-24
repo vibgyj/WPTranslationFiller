@@ -179,18 +179,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = convert_lower(translatedText);
     }
 
-    // Make translation to start with same case (upper/lower) as the original.
-    //if (isStartsWithUpperCase(original)) {
-     //   if (!isStartsWithUpperCase(translatedText)) {
-     //       translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
-     //   }
-  //  }
-   // else {
-      //  if (isStartsWithUpperCase(translatedText)) {
-        //    translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
-      //  }
-  //  }
-
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
@@ -350,6 +338,17 @@ function checkStartEnd(original, translatedText) {
     if (original.startsWith(" ") == false) {
         if (translatedText.startsWith(" ") == true) {
             translatedText = translatedText.substring(1, translatedText.length)
+        }
+    }
+    // Make translation to start with same case (upper/lower) as the original.
+    if (isStartsWithUpperCase(original)) {
+        if (!isStartsWithUpperCase(translatedText)) {
+            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+        }
+    }
+    else {
+        if (isStartsWithUpperCase(translatedText)) {
+            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
         }
     }
     return translatedText;
