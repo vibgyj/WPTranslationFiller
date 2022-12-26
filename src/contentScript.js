@@ -1749,9 +1749,9 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                     checkElem.title = "Current translation";
                 }
                 else if (current.innerText == "waiting"){
-                    SavelocalButton.innerText = ("Save");
+                    SavelocalButton.innerText = ("Appr");
                     SavelocalButton.disabled = false;
-                    checkElem.title = "Save the string";
+                    checkElem.title = "Approve the string";
                 }
                 else if (current.innerText == "transFill") {
                     SavelocalButton.innerText = ("Save");

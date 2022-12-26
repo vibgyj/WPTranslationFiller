@@ -2385,7 +2385,19 @@ async function saveLocal() {
                         if (nothidden != null) {
                             nothidden.classList.add("wptf-saved");
                         }
-                        editor.querySelector(".translation-actions__save").click();
+                        // if the record is a waiting we need to select the approve button issue #268
+                        let h = document.querySelector(`#editor-${editorRow} div.editor-panel__left div.panel-header`);
+                        if (h != null) {
+                            current = h.querySelector("span.panel-header__bubble");
+                        }
+                        //console.debug("state:", current.innerText);
+                        if (current.innerText == 'waiting') {
+                            editor.querySelector(".approve").click();
+                        }
+                        else {
+                            // else we need to select the save button
+                            editor.querySelector(".translation-actions__save").click();
+                        }
                         // PSS confirm the message for dismissal
                         foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
                         return new Promise((resolve, reject) => {
