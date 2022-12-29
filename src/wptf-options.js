@@ -84,10 +84,17 @@ chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "d
     if (data.showTransDiff != "null") {
         if (data.showTransDiff == true) {
             showDiffCheckbox.checked = true;
-           // document.getElementById("comp-translations").checked = true;
+            let value = true;
+            chrome.storage.local.set({ toonDiff: value }).then(() => {
+                console.log("Value toonDiff is set to true");
+            });
         }
         else {
             showDiffCheckbox.checked = false;
+            let value = false;
+            chrome.storage.local.set({ toonDiff: value }).then(() => {
+                console.log("Value toonDiff is set to false");
+            });
             //document.getElementById("comp-translations").checked = false;
         }
     }

@@ -2346,32 +2346,31 @@ async function saveLocal() {
     // 04-08-2022 PSS Bulksave does not save all records and "dismiss message" is not dismissed #228
     var counter = 0;
     var timeout = 0;
-    //localStorage.setItem('interXHR', 'true');
+    
+        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+        //console.debug("saveLocal started",is_pte)
+        document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
+            if (is_pte) {
+               checkset = preview.querySelector("th input");
+               //console.debug("checkset:",checkset)
+            }
+            else {
+                 checkset = preview.querySelector("td input");
+            }
+            let rowfound = preview.id;
+            row = rowfound.split("-")[1];
+            let newrow = rowfound.split("-")[2];
+            if (typeof newrow != "undefined") {
+               newrowId = row.concat("-", newrow);
+               row = newrowId;
+            }
 
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    //console.debug("saveLocal started",is_pte)
-    document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
-        if (is_pte) {
-            checkset = preview.querySelector("th input");
-            //console.debug("checkset:",checkset)
-        }
-        else {
-            checkset = preview.querySelector("td input");
-        }
-        let rowfound = preview.id;
-        row = rowfound.split("-")[1];
-        let newrow = rowfound.split("-")[2];
-        if (typeof newrow != "undefined") {
-            newrowId = row.concat("-", newrow);
-            row = newrowId;
-        }
-
-        // If a translation alreay has been saved, there is no checkbox available
-        if (checkset != null) {
-            //nextpreview = preview.nextElementSibling.nextElementSibling;
-            if (checkset.checked) {
-                counter++;
-                setTimeout((timeout) => {
+             // If a translation alreay has been saved, there is no checkbox available
+            if (checkset != null) {
+               //nextpreview = preview.nextElementSibling.nextElementSibling;
+               if (checkset.checked) {
+                  counter++;
+                  setTimeout((timeout) => {
                     //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
                     let editor = preview.nextElementSibling;
                     preview.querySelector("td.actions .edit").click();
@@ -2416,36 +2415,34 @@ async function saveLocal() {
                             });
                         });
                     }
-                }, timeout);
-                timeout += 2000;
-                
+                  }, timeout,counter);
+                  timeout += 2000;
+               }
+               else {
+                   if (preview != null) {
+                      if (!is_pte) {
+                          rowchecked = preview.querySelector("td input");
+                      }
+                      else {
+                          rowchecked = preview.querySelector("th input");
+                      }
+                      if (rowchecked != null) {
+                          if (rowchecked.checked) {
+                             rowchecked.checked = false;
+                          }
+                       }
+                   }
+               }
             }
             else {
-                if (preview != null) {
-                    if (!is_pte) {
-                        rowchecked = preview.querySelector("td input");
-                    }
-                    else {
-                        rowchecked = preview.querySelector("th input");
-                    }
-                    if (rowchecked != null) {
-                        if (rowchecked.checked) {
-                        rowchecked.checked = false;
-                          }
-                    }
-                }
+                 console.debug("No checkbox available");
             }
-        }
-        else {
-            console.debug("No checkbox available");
-        }
-    });
-    
+        });
     return counter;
 }
-
+   
 async function bulkSave(event) {
-     
+     event.preventDefault();
      var counter = 0;
      var checkboxCounter = 0;
      var row;
@@ -2453,7 +2450,8 @@ async function bulkSave(event) {
      var nextpreview;
      var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      currWindow = window.self;
-
+    //localStorage.setItem('interXHR', 'true');
+   
      var parrotMockDefinitions = [{
          "active": true,
          "description": "XHR",
@@ -2496,16 +2494,26 @@ async function bulkSave(event) {
              if (e == ("confirm")) {
                  setmyCheckBox(event);
                  counter = saveLocal();
+                 //When performing bulk save the difference is shown in Meta #269
+                 value = true;
+                 chrome.storage.local.set({ toonDiff: value }).then((result) => {
+                     console.log("Value toonDiff is set to true");
+                 });
              } else {
                  messageBox("info", "Bulk save cancelled");
              }
          })
      }
      else {
-         counter = saveLocal();
-     }
-    
-    return "done"
+         counter = await saveLocal();
+         //console.debug("counter:", counter)
+         //When performing bulk save the difference is shown in Meta #269
+         value = true;
+         chrome.storage.local.set({ toonDiff: value }).then((result) => {
+            console.log("Value toonDiff is set to true");
+         });
+        
+      }
 }
 
 function second(milliseconds) {

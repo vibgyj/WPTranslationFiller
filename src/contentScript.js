@@ -24,8 +24,7 @@ script.src = chrome.runtime.getURL('wptf-inject.js');
 
 
 ;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
-chrome.storage.sync
-    .get(
+chrome.storage.sync.get(
         ["glotDictGlos"],
         function (data) {
             var showGlosLine = data.glotDictGlos;
@@ -48,7 +47,26 @@ chrome.storage.sync
                 document.head.appendChild(style);
             }
 
-        });
+    });
+
+//When performing bulk save the difference is shown in Meta #269
+// We need to set the default value for showing differents
+chrome.storage.sync.get(["showTransDiff"], function (data) {
+    if (data.showTransDiff != "null") {
+        if (data.showTransDiff == true) {
+            let value = true;
+            chrome.storage.local.set({ toonDiff: value });
+        }
+        else {
+            let value = false;
+            chrome.storage.local.set({ toonDiff: value });
+        }
+    }
+    else {
+        let value = false;
+        chrome.storage.local.set({ toonDiff: value });
+    }
+});
 
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
@@ -492,9 +510,9 @@ document.addEventListener("keydown", function (event) {
 
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
-    bulkbutton.addEventListener("click", () => {
-        bulkSave(event);
-        
+    bulkbutton.addEventListener("click", (event) => {
+         event.preventDefault();
+         bulkSave(event);
     });
 }
 
@@ -502,12 +520,15 @@ if (bulkbutton != null){
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
 if (el != null) {
-    el.addEventListener("click", checkbuttonClick);
+    el.addEventListener("click", (event) => {
+        //event.preventDefault();
+        checkbuttonClick(event);
+    });
 }
 
 const el3 = document.getElementById("translations");
 if (el3 != null) {
-    el3.addEventListener("click", checkactionClick);
+    el3.addEventListener("click", checkactionClick());
 }
 
 
@@ -1080,7 +1101,10 @@ function checkactionClick(event) {
                         //rowsFound = fetchOld("","",url,"True");
                         chrome.storage.sync.get(["showTransDiff"], function (data) {
                             if (data.showTransDiff != "null") {
-                                fetchOldRec(url, newRowId);
+                                if (data.showTransDiff == true) {
+                                    console.debug("in content showTransDiff1 =true")
+                                    fetchOldRec(url, rowId);
+                                }
                             }
                         });
                     }
@@ -1101,6 +1125,7 @@ function checkactionClick(event) {
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 function checkbuttonClick(event) {
     //console.debug("eventAction:", event)
+    //event.preventDefault();
     if (event != undefined) {
             var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
             //event.preventDefault(); caused a problem within the single page enttry  
@@ -1140,7 +1165,13 @@ function checkbuttonClick(event) {
                     chrome.storage.sync.get(["showTransDiff"], function (data) {
                         if (data.showTransDiff != "null") {
                             if (data.showTransDiff == true) {
-                                fetchOldRec(url, rowId);
+                               // console.debug("in content showTransDiff =true")
+                                chrome.storage.local.get(["toonDiff"]).then((result) => {
+                                    //console.log("Value toonDiff currently is " + result.toonDiff);
+                                    if (result.toonDiff == true) {
+                                        fetchOldRec(url, rowId);
+                                    }
+                                });
                             }
                         }
                     });
@@ -1246,7 +1277,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
                 checkElem.title = "Approve the string";
             }
             else if (current.innerText == "transFill") {
-                SavelocalButton.innerText = ("1");
+                SavelocalButton.innerText = ("Save");
                 SavelocalButton.style.backgroundColor = "#0085ba";
                 checkElem.title = "Save the string";
             }
@@ -1274,7 +1305,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
             checkElem.appendChild(SavelocalButton);
         }
         else {
-            saveButton.innerText = ("2");
+            saveButton.innerText = ("Save");
             saveButton.style.backgroundColor = "#0085ba";
             checkElem.title = "Save the string";
         }
@@ -1322,7 +1353,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             if (myrec != "null") {
                 current = myrec.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
-                    SavelocalButton.innerText = "3";
+                    SavelocalButton.innerText = "Save";
                     SavelocalButton.disabled = false;
                     SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Save the string";
@@ -1367,7 +1398,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 let myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
                 current = myrec.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
-                    SavelocalButton.innerText = "4";
+                    SavelocalButton.innerText = "Save";
                     SavelocalButton.disabled = false;
                     SavelocalButton.style.backgroundColor = "#0085ba";
                     checkElem.title = "Save the string";
@@ -1460,7 +1491,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             if (h != null) {
                 current = h.querySelector("span.panel-header__bubble");
                 if (current.innerText == "transFill") {
-                    SavelocalButton.innerText = "5";
+                    SavelocalButton.innerText = "Save";
                     SavelocalButton.disabled = false;
                     SavelocalButton.style.backgroundColor = "#0085ba";
                     SavelocalButton.title = "Save the string";
@@ -1557,7 +1588,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
             if (current.innerText == "transFill") {
                 SavelocalButton.style.backgroundColor = "#0085ba";
                 SavelocalButton.disabled = false;
-                SavelocalButton.innerText = ("7");
+                SavelocalButton.innerText = ("Save");
                 checkElem.title = "Save the string";
             }
             else if (current.innerText == "waiting") {
