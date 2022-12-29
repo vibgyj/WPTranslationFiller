@@ -5,6 +5,67 @@ if (!window.indexedDB) {
     console.log(`Your browser doesn't support IndexedDB`);
     
 }
+const setToonDiff = async function (obj) {
+    return new Promise((resolve, reject) => {
+        try {
+            chrome.storage.local.set(obj, function () {
+                resolve();
+            });
+        } catch (ex) {
+            reject(ex);
+        }
+    });
+};
+const getToonDiff = async function (key) {
+    return new Promise((resolve, reject) => {
+        try {
+            chrome.storage.local.get(key, function (value) {
+                resolve(value[key]);
+            });
+        } catch (ex) {
+            reject(ex);
+        }
+    });
+};
+
+
+async function sampleUse() {
+    let sampleObject1 = {
+        'toonDiff': false
+    };
+    let sampleObject2 = {
+        'toonDiff': false
+    };
+    await setToonDiff(sampleObject1);
+
+    console.log(await getToonDiff('toonDiff'));
+
+}
+
+//sampleUse();
+//When performing bulk save the difference is shown in Meta #269
+// We need to set the default value for showing differents
+chrome.storage.sync.get(["showTransDiff"], function (data) {
+    if (data.showTransDiff != "null") {
+        let setToonDiffOn = {
+            'toonDiff': true
+        };
+        let setToonDiffOff = {
+            'toonDiff': false
+        };
+        if (data.showTransDiff == true) {
+            setToonDiff(setToonDiffOn);
+        }
+        else {
+            // set toonDiff to false
+            setToonDiff(setToonDiffOff);
+        }
+    }
+    else {
+        setToonDiff(setToonDiffOff);
+    }
+});
+
 // PSS added function from GlotDict to save records in editor
 // PSS added glob_row to determine the actual row from the editor
 var glob_row = 0;
@@ -49,24 +110,6 @@ chrome.storage.sync.get(
 
     });
 
-//When performing bulk save the difference is shown in Meta #269
-// We need to set the default value for showing differents
-chrome.storage.sync.get(["showTransDiff"], function (data) {
-    if (data.showTransDiff != "null") {
-        if (data.showTransDiff == true) {
-            let value = true;
-            chrome.storage.local.set({ toonDiff: value });
-        }
-        else {
-            let value = false;
-            chrome.storage.local.set({ toonDiff: value });
-        }
-    }
-    else {
-        let value = false;
-        chrome.storage.local.set({ toonDiff: value });
-    }
-});
 
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
@@ -612,7 +655,7 @@ if (is_pte) {
     bulksaveButton.href = "#";
     bulksaveButton.id = "BulkSave";
     bulksaveButton.className = "bulksave-button";
-    bulksaveButton.onclick = bulkSave;
+    bulksaveButton.onclick = startBulkSave;
     bulksaveButton.innerText = "Bulksave";
 }
 
@@ -660,7 +703,27 @@ if (divPaging != null && divProjects == null) {
    
 }
 
-
+async function startBulkSave(event) {
+    event.preventDefault(event);
+    let sampleObject1 = {
+        'toonDiff': true
+    };
+    let sampleObject2 = {
+        'toonDiff': false
+    };
+    var value = 'false';
+    //When performing bulk save the difference is shown in Meta #269
+    await setToonDiff(sampleObject2);
+    //chrome.storage.local.set({ toonDiff: value }).then((result) => {
+    //       console.log("Value toonDiff is set to false");
+   // });
+    await bulkSave("false");
+    //await saveObjectInLocalStorage(sampleObject1);
+   // value = true;
+   // chrome.storage.local.set({ toonDiff: value }).then((result) => {
+   // console.log("Value toonDiff is set to true");
+   // });
+}
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
@@ -1099,12 +1162,14 @@ function checkactionClick(event) {
                         //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + newRowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
                         url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + newRowId;
                         //rowsFound = fetchOld("","",url,"True");
-                        chrome.storage.sync.get(["showTransDiff"], function (data) {
+                        chrome.storage.sync.get(["showTransDiff"], async function (data) {
                             if (data.showTransDiff != "null") {
-                                if (data.showTransDiff == true) {
-                                    console.debug("in content showTransDiff1 =true")
-                                    fetchOldRec(url, rowId);
-                                }
+                                chrome.storage.local.get(["toonDiff"]).then((result) => {
+                                    console.log("Value toonDiff currently is " + result.toonDiff);
+                                    if (result.toonDiff == true) {
+                                        fetchOldRec(url, rowId);
+                                    }
+                                });
                             }
                         });
                     }
@@ -1123,7 +1188,7 @@ function checkactionClick(event) {
 }
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
-function checkbuttonClick(event) {
+async function checkbuttonClick(event) {
     //console.debug("eventAction:", event)
     //event.preventDefault();
     if (event != undefined) {
@@ -1162,16 +1227,17 @@ function checkbuttonClick(event) {
                     // Fetch only the current string to compaire with the waiting string
                     //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
                     url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
-                    chrome.storage.sync.get(["showTransDiff"], function (data) {
+                    chrome.storage.sync.get(["showTransDiff"], async function (data) {
                         if (data.showTransDiff != "null") {
                             if (data.showTransDiff == true) {
                                // console.debug("in content showTransDiff =true")
-                                chrome.storage.local.get(["toonDiff"]).then((result) => {
-                                    //console.log("Value toonDiff currently is " + result.toonDiff);
-                                    if (result.toonDiff == true) {
+                                let res = await getToonDiff('toonDiff');
+                                //chrome.storage.local.get(["toonDiff"]).then((result) => {
+                                    console.log("Value toonDiff currently is " + res);
+                                    if (res == true) {
                                         fetchOldRec(url, rowId);
                                     }
-                                });
+                               // });
                             }
                         }
                     });

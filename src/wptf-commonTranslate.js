@@ -2441,8 +2441,8 @@ async function saveLocal() {
     return counter;
 }
    
-async function bulkSave(event) {
-     event.preventDefault();
+async function bulkSave(noDiff) {
+     //event.preventDefault();
      var counter = 0;
      var checkboxCounter = 0;
      var row;
@@ -2486,33 +2486,37 @@ async function bulkSave(event) {
          cuteAlert({
              type: "question",
              title: "Bulk save",
-             message: "There are no records selected,you sure you want to select all records?",
+             message: "There are no records selected, <br>are you sure you want to select all records?",
              confirmText: "Confirm",
              cancelText: "Cancel",
              myWindow: currWindow
-         }).then((e) => {
+         }).then(async (e) => {
              if (e == ("confirm")) {
+                 //When performing bulk save the difference is shown in Meta #269
+                 //value = false;
+                 //chrome.storage.local.set({ toonDiff: value }).then((result) => {
+                   //  console.log("Value toonDiff is set to false");
+                 //});
                  setmyCheckBox(event);
+                 let value = noDiff;
+                 await setToonDiff({ toonDiff: value });
                  counter = saveLocal();
                  //When performing bulk save the difference is shown in Meta #269
-                 value = true;
-                 chrome.storage.local.set({ toonDiff: value }).then((result) => {
-                     console.log("Value toonDiff is set to true");
-                 });
+                 //value = true;
+                 //chrome.storage.local.set({ toonDiff: value }).then((result) => {
+                 //    console.log("Value toonDiff is set to true");
+                // });
              } else {
                  messageBox("info", "Bulk save cancelled");
              }
          })
      }
      else {
-         counter = await saveLocal();
-         //console.debug("counter:", counter)
          //When performing bulk save the difference is shown in Meta #269
-         value = true;
-         chrome.storage.local.set({ toonDiff: value }).then((result) => {
-            console.log("Value toonDiff is set to true");
-         });
-        
+         let value = noDiff;
+         console.debug("value:",value)
+         await setToonDiff({ toonDiff: value });
+         counter = saveLocal();
       }
 }
 
