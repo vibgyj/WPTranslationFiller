@@ -2346,32 +2346,31 @@ async function saveLocal() {
     // 04-08-2022 PSS Bulksave does not save all records and "dismiss message" is not dismissed #228
     var counter = 0;
     var timeout = 0;
-    //localStorage.setItem('interXHR', 'true');
+    
+        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+        //console.debug("saveLocal started",is_pte)
+        document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
+            if (is_pte) {
+               checkset = preview.querySelector("th input");
+               //console.debug("checkset:",checkset)
+            }
+            else {
+                 checkset = preview.querySelector("td input");
+            }
+            let rowfound = preview.id;
+            row = rowfound.split("-")[1];
+            let newrow = rowfound.split("-")[2];
+            if (typeof newrow != "undefined") {
+               newrowId = row.concat("-", newrow);
+               row = newrowId;
+            }
 
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    //console.debug("saveLocal started",is_pte)
-    document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
-        if (is_pte) {
-            checkset = preview.querySelector("th input");
-            //console.debug("checkset:",checkset)
-        }
-        else {
-            checkset = preview.querySelector("td input");
-        }
-        let rowfound = preview.id;
-        row = rowfound.split("-")[1];
-        let newrow = rowfound.split("-")[2];
-        if (typeof newrow != "undefined") {
-            newrowId = row.concat("-", newrow);
-            row = newrowId;
-        }
-
-        // If a translation alreay has been saved, there is no checkbox available
-        if (checkset != null) {
-            //nextpreview = preview.nextElementSibling.nextElementSibling;
-            if (checkset.checked) {
-                counter++;
-                setTimeout((timeout) => {
+             // If a translation alreay has been saved, there is no checkbox available
+            if (checkset != null) {
+               //nextpreview = preview.nextElementSibling.nextElementSibling;
+               if (checkset.checked) {
+                  counter++;
+                  setTimeout((timeout) => {
                     //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
                     let editor = preview.nextElementSibling;
                     preview.querySelector("td.actions .edit").click();
@@ -2385,7 +2384,19 @@ async function saveLocal() {
                         if (nothidden != null) {
                             nothidden.classList.add("wptf-saved");
                         }
-                        editor.querySelector(".translation-actions__save").click();
+                        // if the record is a waiting we need to select the approve button issue #268
+                        let h = document.querySelector(`#editor-${editorRow} div.editor-panel__left div.panel-header`);
+                        if (h != null) {
+                            current = h.querySelector("span.panel-header__bubble");
+                        }
+                        //console.debug("state:", current.innerText);
+                        if (current.innerText == 'waiting') {
+                            editor.querySelector(".approve").click();
+                        }
+                        else {
+                            // else we need to select the save button
+                            editor.querySelector(".translation-actions__save").click();
+                        }
                         // PSS confirm the message for dismissal
                         foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
                         return new Promise((resolve, reject) => {
@@ -2404,36 +2415,34 @@ async function saveLocal() {
                             });
                         });
                     }
-                }, timeout);
-                timeout += 2000;
-                
+                  }, timeout,counter);
+                  timeout += 2000;
+               }
+               else {
+                   if (preview != null) {
+                      if (!is_pte) {
+                          rowchecked = preview.querySelector("td input");
+                      }
+                      else {
+                          rowchecked = preview.querySelector("th input");
+                      }
+                      if (rowchecked != null) {
+                          if (rowchecked.checked) {
+                             rowchecked.checked = false;
+                          }
+                       }
+                   }
+               }
             }
             else {
-                if (preview != null) {
-                    if (!is_pte) {
-                        rowchecked = preview.querySelector("td input");
-                    }
-                    else {
-                        rowchecked = preview.querySelector("th input");
-                    }
-                    if (rowchecked != null) {
-                        if (rowchecked.checked) {
-                        rowchecked.checked = false;
-                          }
-                    }
-                }
+                 console.debug("No checkbox available");
             }
-        }
-        else {
-            console.debug("No checkbox available");
-        }
-    });
-    
+        });
     return counter;
 }
-
-async function bulkSave(event) {
-     
+   
+async function bulkSave(noDiff) {
+     //event.preventDefault();
      var counter = 0;
      var checkboxCounter = 0;
      var row;
@@ -2441,7 +2450,8 @@ async function bulkSave(event) {
      var nextpreview;
      var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      currWindow = window.self;
-
+    //localStorage.setItem('interXHR', 'true');
+   
      var parrotMockDefinitions = [{
          "active": true,
          "description": "XHR",
@@ -2476,24 +2486,38 @@ async function bulkSave(event) {
          cuteAlert({
              type: "question",
              title: "Bulk save",
-             message: "There are no records selected,you sure you want to select all records?",
+             message: "There are no records selected, <br>are you sure you want to select all records?",
              confirmText: "Confirm",
              cancelText: "Cancel",
              myWindow: currWindow
-         }).then((e) => {
+         }).then(async (e) => {
              if (e == ("confirm")) {
+                 //When performing bulk save the difference is shown in Meta #269
+                 //value = false;
+                 //chrome.storage.local.set({ toonDiff: value }).then((result) => {
+                   //  console.log("Value toonDiff is set to false");
+                 //});
                  setmyCheckBox(event);
+                 let value = noDiff;
+                 await setToonDiff({ toonDiff: value });
                  counter = saveLocal();
+                 //When performing bulk save the difference is shown in Meta #269
+                 //value = true;
+                 //chrome.storage.local.set({ toonDiff: value }).then((result) => {
+                 //    console.log("Value toonDiff is set to true");
+                // });
              } else {
                  messageBox("info", "Bulk save cancelled");
              }
          })
      }
      else {
+         //When performing bulk save the difference is shown in Meta #269
+         let value = noDiff;
+         console.debug("value:",value)
+         await setToonDiff({ toonDiff: value });
          counter = saveLocal();
-     }
-    
-    return "done"
+      }
 }
 
 function second(milliseconds) {
