@@ -45,7 +45,7 @@
         #text_glossary_file {
             display: block;
             font-style: italic;
-            width: 300px;
+            width: 250px;
         }
         #tmWait {
             width: 50px;
@@ -60,7 +60,14 @@
             width: calc(100% - 6px);
             min-height: 100px;
         }
-
+        #backbutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            padding: 5px 0;
+            background-color: #04AA6D;
+        }
         #save {
             display: flex;
             justify-content: center;
@@ -150,6 +157,9 @@
 <body>
     <div class="container" id="container">
         <h1>WP Translation Filler - Options</h1>
+        <div class="backbutton">
+            <input id="backbutton" type="button" value="Close options page" />
+        </div>
         <table id="options">
             <tr>
                 <td>
@@ -229,7 +239,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="glossary_file">Uploaded file</label>
+                    <label for="glossary_file">File uploaded at date</label>
                 </td>
                 <td colspan="1">
                     <div>
@@ -264,40 +274,40 @@ You,Je
 wrong2,right2
             </textarea>
         </div>
-    <div class="form-input">
-        <label for="export_verbs">Export post translation verbs </label>
-        <fieldset>
-            <button id="exportverbs">Export verbs</button>
-        </fieldset>
-    </div>
-    <div id="dvImportSegments" class="fileupload ">
-        <label>Upload post translation replace CSV File</label>
-        <fieldset>
-            <input id="importPost" type="file" />
-        </fieldset>
-    </div>
-    <br />
-    <div>
-        <input type="checkbox" id="show-history">
-        <label>Show history</label>
-    </div>
-    <div>
-        <input type="checkbox" id="comp-translations">
-        <label>Compare translations</label>
-    </div>
-    <div>
-        <input type="checkbox" id="show-glotDictGlos">
-        <label>Show GlotDict</label>
-    </div>
-    <div>
-        <input type="checkbox" id="show-convertToLower">
-        <label>Convert words to lowercase except first word</label>
-    </div>
+        <div class="form-input">
+            <label for="export_verbs">Export post translation verbs </label>
+            <fieldset>
+                <button id="exportverbs">Export verbs</button>
+            </fieldset>
+        </div>
+        <div id="dvImportSegments" class="fileupload ">
+            <label>Upload post translation replace CSV File</label>
+            <fieldset>
+                <input id="importPost" type="file" />
+            </fieldset>
+        </div>
+        <br />
+        <div>
+            <input type="checkbox" id="show-history">
+            <label>Show history</label>
+        </div>
+        <div>
+            <input type="checkbox" id="comp-translations">
+            <label>Compare translations</label>
+        </div>
+        <div>
+            <input type="checkbox" id="show-glotDictGlos">
+            <label>Show GlotDict</label>
+        </div>
+        <div>
+            <input type="checkbox" id="show-convertToLower">
+            <label>Convert words to lowercase except first word</label>
+        </div>
         <table id="options">
             <tr>
                 <td>
                     <div class="savebutton">
-                         <input id="save" type="button" value="Save" />
+                        <input id="save" type="button" value="Save" />
                     </div>
                 </td>
                 <td>

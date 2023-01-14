@@ -1,4 +1,83 @@
 // This file contains functions used within various files
+// This function checks if we are on the discussion table
+function checkDiscussion() {
+    const locString = window.location.href;
+    if (locString.includes("discussions")) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+// this function searches for the translation of an original within the loaded array
+function findArrayLine(allrows, original, transtype, plural_line) {
+    var myorg;
+    var res = 'notFound';
+    var trans = " ";
+    var result;
+    //console.debug("transtype: ", transtype,original,plural_line)
+    if (transtype === "single") {
+        myorg = "msgid " + '"' + original + '"';
+    }
+    if (transtype === "plural" && plural_line == 1) {
+        myorg = "msgid " + '"' + original + '"';
+    }
+    if (transtype === "plural" && plural_line == 2) {
+        myorg = "msgid_plural " + '"' + original + '"';
+    }
+    //console.debug("in findArray orginal: ",original,myorg)
+
+    result = allrows.indexOf(myorg);
+    // console.debug("Did we find: ",myorg+" ",result)
+    //console.debug("found:", result)
+    if (transtype == "single") {
+        if (result != -1) {
+            trans = allrows.find((el, idx) => typeof el === "string" && idx === result + 1);
+            //console.debug("Translation:", trans)
+            res = trans.replace("msgstr ", "");
+            res = res.slice(1, -1);
+        }
+        else {
+            res = 'notFound';
+        }
+    }
+    //console.debug("transtype = plural and plural_line =1:", result)
+    if (transtype == "plural" && plural_line == 1) {
+        // console.debug("transtype = plural and plural_line =1:",result)
+        if (result != -1) {
+            trans = allrows.find((el, idx) => typeof el === "string" && idx === result + 2);
+            if (trans != -1) {
+                res = trans.replace("msgstr[0] ", "");
+                res = res.slice(1, -1);
+                // console.debug("first line of plural: ", res);
+            }
+            else {
+                res = "notFound";
+            }
+        }
+        else {
+            res = 'notFound';
+        }
+    }
+    if (transtype == "plural" && plural_line == 2) {
+        if (result != -1) {
+            trans = allrows.find((el, idx) => typeof el === "string" && idx === result + 2);
+            if (trans != -1) {
+                res = trans.replace("msgstr[1] ", "");
+                res = res.slice(1, -1);
+                //console.debug("second line of plural:", res);
+            }
+            else {
+                res = "notFound";
+            }
+        }
+        else {
+            res = 'notFound';
+        }
+    }
+
+    return res;
+}
 
 // This function copies the original to the clipboard
 function addtoClipBoardClicked(event) {
@@ -27,30 +106,34 @@ function copyToClipBoard(detailRow) {
 
 function addCheckBox() {
     var BulkButton;
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    // if the translator is a PTE than we do not need to add the extra checkboxes
-    if (!is_pte) {
-        tablehead = document.getElementById("translations");
-        BulkButton = document.createElement("button");
-        BulkButton.id = "tf-bulk-button";
-        BulkButton.className = "tf-bulk-button";
-        BulkButton.innerText = "Start";
+    // 18-10-2022 Fix for issue #253 table header wrong within tab discussions
+    var discussion = checkDiscussion();
+    if (!discussion) {
+        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+        // if the translator is a PTE than we do not need to add the extra checkboxes
+        if (!is_pte) {
+            tablehead = document.getElementById("translations");
+            BulkButton = document.createElement("button");
+            BulkButton.id = "tf-bulk-button";
+            BulkButton.className = "tf-bulk-button";
+            BulkButton.innerText = "Start";
 
-        if (tablehead != null) {
-            hoofd = tablehead.rows[0];
-            var y = hoofd.insertCell(0);
+            if (tablehead != null) {
+                hoofd = tablehead.rows[0];
+                var y = hoofd.insertCell(0);
 
-            y.outerHTML = "<th class= 'thCheckBox' display:'table-cell'>Bulk</th>";
-            var blkButton = document.querySelector("th.thCheckBox");
-            //console.debug("bulk:", blkButton)
-            // if (blkButton == null) {
-            if (typeof blkButton != null) {
-                blkButton.appendChild(BulkButton);
-            }
-            //}
-            for (let e of document.querySelectorAll("tr.preview")) {
-                var x = e.insertCell(0);
-                x.className = "myCheckBox";
+                y.outerHTML = "<th class= 'thCheckBox' display:'table-cell'>Bulk</th>";
+                var blkButton = document.querySelector("th.thCheckBox");
+                //console.debug("bulk:", blkButton)
+                // if (blkButton == null) {
+                if (typeof blkButton != null) {
+                    blkButton.appendChild(BulkButton);
+                }
+                //}
+                for (let e of document.querySelectorAll("tr.preview")) {
+                    var x = e.insertCell(0);
+                    x.className = "myCheckBox";
+                }
             }
         }
     }
@@ -62,16 +145,39 @@ function setmyCheckBox(event) {
     if (!is_pte) {
         //document.getElementsByClassName("myCheckBox").checked = true;
         document.querySelectorAll("tr.preview").forEach((preview, i) => {
-            if (!is_pte) {
-                rowchecked = preview.querySelector("td input");
-                if (rowchecked != null) {
-                    if (!rowchecked.checked) {
+            // if (!is_pte) {
+            rowchecked = preview.querySelector("td input");
+            if (rowchecked != null) {
+                if (!rowchecked.checked) {
+                    prevtext = preview.querySelector("td.translation").innerText;
+                    // Do not tick the box if preview contaings "No suggestions" issue #221
+                    // Do not tick the box if preview has no translatione.g. "Double-click to add" issue #223
+                    if (prevtext.search("No suggestions") == -1 && prevtext.search("Double-click to add") == -1) {
                         preview.querySelector("td input").checked = true;
                     }
                 }
             }
+            // }
         });
     }
+    else {
+        document.querySelectorAll("tr.preview").forEach((preview, i) => {
+            // if (!is_pte) {
+            rowchecked = preview.querySelector("th input");
+            if (rowchecked != null) {
+                if (!rowchecked.checked) {
+                    prevtext = preview.querySelector("td.translation").innerText;
+                    // Do not tick the box if preview contaings "No suggestions" issue #221
+                    // Do not tick the box if preview has no translatione.g. "Double-click to add" issue #223
+                    if (prevtext.search("No suggestions") == -1 && prevtext.search("Double-click to add") == -1) {
+                        preview.querySelector("th input").checked = true;
+                    }
+                }
+            }
+            // }
+        });
+    }
+
 }
 
 function deselectCheckBox(event) {
@@ -102,15 +208,19 @@ function validatePage(language, showHistory, locale) {
     // We need to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project
     var tr = document.getElementById("translations");
-    if (tr != null) {
-        trhead = tr.tHead.children[0]
-        // 26-06-2021 PSS set  the visibillity of the Priority column back to open
-        trprio = trhead.children[1];
-        trprio.style.display = "table-cell";
-        trprio.innerHTML = "Qual";
-        var all_col = document.getElementsByClassName("priority");
-        for (var i = 0; i < all_col.length; i++) {
-            all_col[i].style.display = "table-cell";
+    // 18-10-2022 Fix for issue #253 table header wrong within tab discussions
+    var discussion = checkDiscussion();
+    if (!discussion) {
+        if (tr != null) {
+            trhead = tr.tHead.children[0]
+            // 26-06-2021 PSS set  the visibillity of the Priority column back to open
+            trprio = trhead.children[1];
+            trprio.style.display = "table-cell";
+            trprio.innerHTML = "Qual";
+            var all_col = document.getElementsByClassName("priority");
+            for (var i = 0; i < all_col.length; i++) {
+                all_col[i].style.display = "table-cell";
+            }
         }
     }
 

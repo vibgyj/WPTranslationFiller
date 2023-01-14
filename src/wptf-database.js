@@ -84,7 +84,13 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                         }
                     }
                 }
-            }
+             }
+             // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
+             // we need to change the state of the record
+             var previewClass = document.querySelector(`#preview-${row}`);
+             previewClass.classList.replace("no-translations", "has-translations");
+             previewClass.classList.replace("untranslated", "status-waiting");
+             previewClass.classList.add("wptf-translated");
          }
          else {
              // if it is as single with local then we need also update the preview
@@ -105,6 +111,11 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                    rowchecked.checked = true;
                 }
              }
+             // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
+             // we need to change the state of the record 
+             preview.classList.replace("no-translations", "has-translations");
+             preview.classList.replace("untranslated", "status-waiting");
+             preview.classList.add("wptf-translated");
          }
     }
     if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
@@ -136,12 +147,13 @@ function getDbSchema() {
         columns: {
             id: {
                 autoIncrement: true,
-                primaryKey: true
+                //primaryKey: true
             },
             source: {
                 dataType: "string",
                 notNull: true,
-                primaryKey: true
+                primaryKey: true,
+
             },
             translation: {
                 dataType: "string",
@@ -150,6 +162,10 @@ function getDbSchema() {
             country: {
                 dataType: "string",
                 notNull: true
+            },
+            sourceCountry: {
+                keyPath: ['source', 'country'],
+                enableSearch:true          
             }
         }
     };
@@ -161,12 +177,54 @@ function getDbSchema() {
     return db;
 }
 
+// 02-12-2022 PSS added warning if the index is not present issue #262
+async function checkIndex(event) {
+   // console.debug("Checking index:", event)
+    var result;
+    var db;
+    var request = window.indexedDB.open("My-Trans");
+
+    request.onupgradeneeded = function() {
+        var db = request.result;
+       // console.debug("request result:", db)
+       // var transaction = db.transaction(["Translation"], "readwrite");
+       // var objectStore = transaction.objectStore("Translation");
+       // var storeName = db.createObjectStore("storeName", { keyPath: "keyAttribute" });
+      //  objectStore.createIndex("sourceCountry", "country", { unique: false });
+    };
+    request.onerror = function(event) {
+        // Do something with request.errorCode!
+        console.log("failed opening DB: " + request.errorCode)
+        messageBox("error", "The database could not opened, please check if the local database is present");
+
+    };
+    request.onsuccess = await function(event, result) {
+        var result = true
+        // Do something with request.result!
+        db = request.result;
+        //console.log("opened DB")
+        var transaction = db.transaction(["Translation"], "readwrite");
+        var objectStore = transaction.objectStore("Translation");
+       // console.debug("objectstore:", objectStore.indexNames)
+        let indexNames = objectStore.indexNames;
+        if (indexNames.contains('sourceCountry')){
+            console.debug("index does exist");
+         }
+         else {
+              //console.debug('index does not exist!');
+              messageBox("error", "Error the index does not exist in your DB!<br>Please make a backup of your database<br>Then follow the steps described in the Wiki to reset your database<br>https://github.com/vibgyj/WPTranslationFiller/wiki/9.-Fix-broken-local-database");
+            result= false;
+            //return result;
+        }  
+    };
+}
+
 async function addTransDb(orig, trans, cntry) {
     var transl = { source: orig, translation: trans, country: cntry };
     var myWindow = window.self;
     // 05-06-2021 PSS fixed a problem with wrong var names
-    count = await countTransline(orig,cntry);
-    if (count == "0") {
+    count = await findTransline(orig,cntry);
+    if (count == "notFound") {
         reslt = "Inserted";
         try {
            var noOfDataInserted = await jsstoreCon.insert({
@@ -185,7 +243,7 @@ async function addTransDb(orig, trans, cntry) {
        }
     }
     else{
-        res =updateTransDb(orig,trans,cntry);
+        res = updateTransDb(orig, trans, cntry);
         reslt="updated";
     }
   return reslt;
@@ -221,13 +279,13 @@ const results = await jsstoreCon.count({
 return results;
 }
 
+
 async function findTransline(orig,cntry){
     var trans = "notFound";
     const results = await jsstoreCon.select({
     from: "Translation",
         where: {
-        country: cntry,
-        source: orig
+        sourceCountry: [orig,cntry]
     }
 }).then((value) => {
     if (value !=""){
@@ -331,8 +389,9 @@ async function dbExport(destlang) {
        hiddenElement.href = csvUrl;
        hiddenElement.target = "_blank";
        hiddenElement.download = export_file;
-       hiddenElement.click();
-       let exportButton = document.querySelector(".paging a.export_translation-button");
+    hiddenElement.click();
+    //21-11-2022 PSS changed the classname to meet the new navbar position
+       let exportButton = document.querySelector("a.export_translation-button");
     exportButton.className += " ready";
     //close_toast();
     messageBox("info", "Export database done amount of records exported: "+i);
@@ -469,7 +528,7 @@ function deleteDB() {
     }).then((e) => {
         if (e == ("confirm")) {
             var DBDeleteRequest = window.indexedDB.deleteDatabase("My-Trans");
-            var DBDeleteRequest = window.indexedDB.deleteDatabase("KeyStore");
+            var DBDeleteRequest1 = window.indexedDB.deleteDatabase("KeyStore");
             DBDeleteRequest.onerror = function (event) {
                 console.log("Error deleting database My-Trans.");
             };
@@ -480,11 +539,11 @@ function deleteDB() {
                 console.log(event.result); // should be undefined
             };
 
-            DBDeleteRequest.onerror = function (event) {
+            DBDeleteRequest1.onerror = function (event) {
                 console.log("Error deleting database KeyStore.");
             };
 
-            DBDeleteRequest.onsuccess = function (event) {
+            DBDeleteRequest1.onsuccess = function (event) {
                 console.log("Database KeyStore deleted successfully");
 
                 console.log(event.result); // should be undefined

@@ -130,17 +130,17 @@ const cuteAlert = ({
     });
 };
 
-const cuteToast = ({ type, message, timer = 5000, vibrate = [], playSound = "/error-alert.flac", img = "/img", title = "", myWindow }) => {
+const cuteToast = ({ type, message, timer = 2000, vibrate = [], playSound = "/error-alert.flac", img = "/img", title = "", myWindow }) => {
     var body;
     return new Promise(resolve => {
         //console.debug("params:", type, message, timer, vibrate, playSound, img, title, myWindow);
-        if (typeof myWindow == "undefined") {
-            body = document.querySelector("body");
+        if (typeof myWindow == 'undefined') {
+            body = document.querySelector('body');
         }
         else {
-             body = myWindow.document.querySelector("#consistency");
+            
+            body = myWindow.document.querySelector("#consistency");
         }
-
         const scripts = document.getElementsByTagName("script");
         let src = "";
 
@@ -158,7 +158,7 @@ const cuteToast = ({ type, message, timer = 5000, vibrate = [], playSound = "/er
             templateContainer = document.getElementById('toast-container');
         }
         else {
-            templateContainer = myWindow.document.getElementById('toast-container');
+            templateContainer = myWindow.getElementById('toast-container');
         }
         if (!templateContainer) {
             body.insertAdjacentHTML(
@@ -191,11 +191,11 @@ const cuteToast = ({ type, message, timer = 5000, vibrate = [], playSound = "/er
       </div>
     </div>
     `;
-        if (typeof myWindow == "undefined") {
+        if (typeof myWindow == 'undefined') {
             toasts = document.querySelectorAll('.toast-content');
         }
         else {
-             toasts = myWindow.document.querySelectorAll('.toast-content');
+             toasts = myWindow.querySelectorAll('.toast-content');
         }
 
         if (toasts.length) {
@@ -203,11 +203,11 @@ const cuteToast = ({ type, message, timer = 5000, vibrate = [], playSound = "/er
         } else {
             templateContainer.innerHTML = DOMPurify.sanitize(templateContent);
         }
-        if (typeof myWindow == "undefined") {
+        if (typeof myWindow == 'undefined') {
             toastContent = document.getElementById(`${toastId}-toast-content`);
        }
        else {
-            toastContent = myWindow.document.getElementsByClassName("toast-content info-bg")[0];
+            toastContent = myWindow.getElementsByClassName("toast-content info-bg")[0];
        }
 
         if (vibrate.length > 0) {
@@ -218,16 +218,15 @@ const cuteToast = ({ type, message, timer = 5000, vibrate = [], playSound = "/er
             let sound = new Audio(src + playSound);
             sound.play();
         }
-
         setTimeout(() => {
             toastContent.remove();
             resolve();
         }, timer);
-        if (typeof myWindow == "undefined") {
+        if (typeof myWindow == 'undefined') {
             toastClose = document.getElementById(`${toastId}-toast-close`);
         }
         else {
-            toastClose = myWindow.document.getElementsByClassName("toast-close")[0];
+            toastClose = myWindow.getElementsByClassName("toast-close")[0];
        }
 
         toastClose.addEventListener('click', () => {

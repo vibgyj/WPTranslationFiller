@@ -59,7 +59,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 link = "https://api-free.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
             }
             else {
-                link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+                // PSS 21-07-2020 When using Deepl in formal mode, the translation is not always formal #224
+                link = "https://api.deepl.com/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
             }
         }
     }
@@ -87,6 +88,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 //We do have a result so process it
                 //console.debug('result:', data.translations[0].text);
                 translatedText = data.translations[0].text;
+                //console.debug("deepl original: ", original, "'", "translatedText: ", translatedText, "'")
                 translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                }
@@ -104,8 +106,12 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
                 errorstate = "Error 456";
             }
+            // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
+            else if (error == 'TypeError: Failed to fetch') {
+                errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
+            }
             else {
-                alert("Error message: " + error[1]);
+                //alert("Error message: " + error[1]);
                 console.debug("Error:",error)
                 errorstate = "Error " + error[1];
             }
