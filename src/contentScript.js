@@ -77,7 +77,7 @@ var locale;
 gd_wait_table_alter();
 addCheckBox();
 
-var parrotActive ;
+var parrotActive;
 //localStorage.setItem('interXHR', 'false');
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('wptf-inject.js');
@@ -110,18 +110,19 @@ chrome.storage.sync.get(
 
     });
 
-
 // PSS added jsStore to be able to store and retrieve default translations
 var jsstoreCon = new JsStore.Connection();
 var db = getDbSchema();
 var isDbCreated = jsstoreCon.initDb(db);
 
 if (!isDbCreated){
-//console.debug("Database is not created, so we create one", isDbCreated);
+    //console.debug("Database is not created, so we create one", isDbCreated);
 }
 else {
     console.debug("Database is present");
 }
+
+
 // check if the index is present, if not create it
 checkIndex(db);
 
@@ -659,12 +660,15 @@ if (is_pte) {
     bulksaveButton.innerText = "Bulksave";
 }
 
-var statsButton = document.createElement("a");
-statsButton.href = "#";
-statsButton.id = "statsButton";
-statsButton.className = "stats-button";
-statsButton.onclick = handleStats;
-statsButton.innerText = "Stats";
+// add stats button if handleStats function is defined
+if (typeof handleStats === "function") {
+    var statsButton = document.createElement("a");
+    statsButton.href = "#";
+    statsButton.id = "statsButton";
+    statsButton.className = "stats-button";
+    statsButton.onclick = handleStats;
+    statsButton.innerText = "Stats";
+}
 
 var divGpActions = document.querySelector("div.paging");
 var wptfNavBar = document.createElement("div");
@@ -681,7 +685,9 @@ if (divPaging != null && divProjects == null) {
         divNavBar.appendChild(bulksaveButton);
     }
 
-    divNavBar.appendChild(statsButton);
+    if (statsButton != null) {
+        divNavBar.appendChild(statsButton);
+    }
     divNavBar.appendChild(importButton);
     divNavBar.appendChild(exportButton);
     divNavBar.appendChild(impLocButton);

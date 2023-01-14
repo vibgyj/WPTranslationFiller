@@ -118,10 +118,10 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              preview.classList.add("wptf-translated");
          }
     }
-    if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
-        document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "visible";
-    }
-    else {
+    let localButton = document.querySelector("#translate-" + row + "-translocal-entry-local-button");
+    if (localButton != null) {
+        localButton.style.visibility = "visible";
+    } else {
         // console.debug("TM not found single!");
         // console.debug("preview:", preview);
         if (preview != null) {
@@ -142,7 +142,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
 }
 
 function getDbSchema() {
-    var table = {
+    let table = {
         name: "Translation",
         columns: {
             id: {
@@ -165,16 +165,17 @@ function getDbSchema() {
             },
             sourceCountry: {
                 keyPath: ['source', 'country'],
-                enableSearch:true          
+                enableSearch: true,
+                unique: true
             }
         }
     };
 
-    var db = {
+    let dbSchema = {
         name: "My-Trans",
         tables: [table]
     }
-    return db;
+    return dbSchema;
 }
 
 // 02-12-2022 PSS added warning if the index is not present issue #262
@@ -186,11 +187,17 @@ async function checkIndex(event) {
 
     request.onupgradeneeded = function() {
         var db = request.result;
-       // console.debug("request result:", db)
-       // var transaction = db.transaction(["Translation"], "readwrite");
-       // var objectStore = transaction.objectStore("Translation");
-       // var storeName = db.createObjectStore("storeName", { keyPath: "keyAttribute" });
-      //  objectStore.createIndex("sourceCountry", "country", { unique: false });
+
+        var table = getDbSchema().tables[0];
+        var objectStore = db.createObjectStore(table.name, {
+            keyPath: table.columns.id.keyPath,
+            autoIncrement: table.columns.id.autoIncrement
+        });
+
+        // create index
+        objectStore.createIndex('sourceCountry', table.columns.sourceCountry.keyPath, {
+            unique: table.columns.sourceCountry.unique
+        });
     };
     request.onerror = function(event) {
         // Do something with request.errorCode!
@@ -201,20 +208,20 @@ async function checkIndex(event) {
     request.onsuccess = await function(event, result) {
         var result = true
         // Do something with request.result!
+
         db = request.result;
         //console.log("opened DB")
+
         var transaction = db.transaction(["Translation"], "readwrite");
         var objectStore = transaction.objectStore("Translation");
-       // console.debug("objectstore:", objectStore.indexNames)
+        // console.debug("objectstore:", objectStore.indexNames)
         let indexNames = objectStore.indexNames;
         if (indexNames.contains('sourceCountry')){
             console.debug("index does exist");
-         }
-         else {
-              //console.debug('index does not exist!');
-              messageBox("error", "Error the index does not exist in your DB!<br>Please make a backup of your database<br>Then follow the steps described in the Wiki to reset your database<br>https://github.com/vibgyj/WPTranslationFiller/wiki/9.-Fix-broken-local-database");
-            result= false;
-            //return result;
+        } else {
+            //console.debug('index does not exist!');
+            messageBox("error", 'Error the index does not exist in your DB!<br>Please make a backup of your database<br>Then follow the steps described in the Wiki to reset your database<br><a href="https://github.com/vibgyj/WPTranslationFiller/wiki/9.-Fix-broken-local-database">https://github.com/vibgyj/WPTranslationFiller/wiki/9.-Fix-broken-local-database</a>');
+            result = false;
         }  
     };
 }
@@ -460,7 +467,7 @@ function addtranslateEntryClicked(event) {
 async function resetDB() {
     var DBOpenRequest = window.indexedDB.open("My-Trans");
       DBOpenRequest.onsuccess = function (event) {
-        //console.debug("Database initialised");
+        // console.debug("Database initialised");
 
         // store the result of opening the database in the db variable.
         // This is used a lot below
@@ -516,7 +523,6 @@ function clearData() {
 function deleteDB() {
     event.preventDefault();
     currWindow = window.self;
-
 
     cuteAlert({
         type: "question",
