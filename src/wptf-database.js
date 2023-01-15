@@ -47,10 +47,10 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     // Fetch the first field Singular
     let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
     if (previewElem != null) {
-       // we found a plural obviously, we do not fetch TM for that
-       if (preview != null) {
-           preview.style.display = "none";
-       }
+        // we found a plural obviously, we do not fetch TM for that
+        if (preview != null) {
+            preview.style.display = "none";
+        }
     }
     else {
          let preview = document.querySelector("#preview-" + row + " td.translation");
@@ -234,26 +234,24 @@ async function addTransDb(orig, trans, cntry) {
     if (count == "notFound") {
         reslt = "Inserted";
         try {
-           var noOfDataInserted = await jsstoreCon.insert({
-            into: "Translation",
-            values: [transl]
-           });
-        if (noOfDataInserted == 1) {
-          reslt ="Inserted";
-        }
-        else if (noOfDataInserted != 1) {
-            messageBox("error", "Record not added!!");
-            reslt="Record not added";
-        }
+            var noOfDataInserted = await jsstoreCon.insert({
+                into: "Translation",
+                values: [transl]
+            });
+            if (noOfDataInserted == 1) {
+                reslt ="Inserted";
+            } else if (noOfDataInserted != 1) {
+                messageBox("error", "Record not added!!");
+                reslt="Record not added";
+            }
         } catch (ex) {
             messageBox("error", "Error: " + ex.message);
        }
-    }
-    else{
+    } else {
         res = updateTransDb(orig, trans, cntry);
-        reslt="updated";
+        reslt = "updated";
     }
-  return reslt;
+    return reslt;
 }
 
 async function updateTransDb(orig,trans,cntry) {
@@ -276,38 +274,38 @@ async function updateTransDb(orig,trans,cntry) {
 }
 
 async function countTransline(orig,cntry){
-const results = await jsstoreCon.count({
-    from: "Translation",
-    where: {
-        country: cntry,
-        source: orig
-    }
-})
-return results;
+    const results = await jsstoreCon.count({
+        from: "Translation",
+        where: {
+            country: cntry,
+            source: orig
+        }
+    })
+    return results;
 }
 
 
 async function findTransline(orig,cntry){
     var trans = "notFound";
     const results = await jsstoreCon.select({
-    from: "Translation",
-        where: {
-        sourceCountry: [orig,cntry]
-    }
-}).then((value) => {
-    if (value !=""){
-     trans= convPromise(value);
-    }
-    else {
-        trans= "notFound";
-    }
-  });
-return trans;
+        from: "Translation",
+            where: {
+            sourceCountry: [orig,cntry]
+        }
+    }).then((value) => {
+        if (value !=""){
+            trans = convPromise(value);
+        }
+        else {
+            trans = "notFound";
+        }
+    });
+    return trans;
 }
 
 async function convPromise(trans){
     res= trans[0]["translation"];
-    if (typeof res== "undefined"){
+    if (typeof res == "undefined"){
        res="notFound";
     }
     return res;
@@ -323,10 +321,9 @@ async function addTransline(rowId){
     var orig = e.querySelector("span.original-raw").innerText;
     let textareaElem = e.querySelector("textarea.foreign-text");
     var addTrans = textareaElem.value;
-        if (addTrans === "") {
-            messageBox("error", "No translation to store!");
-    }
-    else {
+    if (addTrans === "") {
+        messageBox("error", "No translation to store!");
+    } else {
         res = addTransDb(orig, addTrans, language);
         let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
         let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
@@ -360,92 +357,98 @@ async function addTransline(rowId){
     return;
 }
 async function dbExport(destlang) {
-  var export_file = "";
-  var arrayData = [];
-  // 09-07-2021 PSS altered the separator issue #104
-  var delimiter = "|";
-  var arrayHeader = ["original", "translation", "country"];
-  var header = arrayHeader.join(delimiter) + "\n";
+    var export_file = "";
+    var arrayData = [];
+    // 09-07-2021 PSS altered the separator issue #104
+    var delimiter = "|";
+    var arrayHeader = ["original", "translation", "country"];
+    var header = arrayHeader.join(delimiter) + "\n";
     var csv = header;
     // 01-02-2022 altered the messagebox into a toast so you do not need to dismiss it issue #181
     toastbox("info", "Export database in progress" + "<br>" + "Wait for saving the file!", "2500", "Saving");
     //messageBox("info", "Export database in progress" + "<br>" + "Wait for saving the file!");
-  const trans = await jsstoreCon.select({
-    from: "Translation"
-  });
+    const trans = await jsstoreCon.select({
+        from: "Translation"
+    });
+
     export_file = "export_database_" + destlang + ".csv";
     i = 1;
     trans.forEach(function (trans) {
-    arrayData[i] = { original : trans.source, translation : trans.translation, country : trans.country};
-    i++;
+        arrayData[i] = {
+            original : trans.source,
+            translation : trans.translation,
+            country : trans.country
+        };
+        i++;
     });
-       arrayData.forEach( obj => {
-           var row = [];
-           for (key in obj) {
-               if (obj.hasOwnProperty(key)) {
-                   row.push(obj[key]);
-               }
-           }
-           csv += row.join(delimiter)+"\n";
-       });
-       // 09-07-2021 The export of the database does convert characters #105
-       var csvData = new Blob([csv], { type: "text/csv;charset=utf-8" });
-       var csvUrl = URL.createObjectURL(csvData);
+    arrayData.forEach( obj => {
+        var row = [];
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                row.push(obj[key]);
+            }
+        }
+        csv += row.join(delimiter)+"\n";
+    });
+    
+    // 09-07-2021 The export of the database does convert characters #105
+    var csvData = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    var csvUrl = URL.createObjectURL(csvData);
 
-       var hiddenElement = document.createElement("a");
-       hiddenElement.href = csvUrl;
-       hiddenElement.target = "_blank";
-       hiddenElement.download = export_file;
+    var hiddenElement = document.createElement("a");
+    hiddenElement.href = csvUrl;
+    hiddenElement.target = "_blank";
+    hiddenElement.download = export_file;
     hiddenElement.click();
+    
     //21-11-2022 PSS changed the classname to meet the new navbar position
-       let exportButton = document.querySelector("a.export_translation-button");
+    let exportButton = document.querySelector("a.export_translation-button");
     exportButton.className += " ready";
     //close_toast();
-    messageBox("info", "Export database done amount of records exported: "+i);
-      
+    messageBox("info", "Export database done amount of records exported: "+i);  
 }
 
 async function tryPersistWithoutPromtingUser() {
-  if (!navigator.storage || !navigator.storage.persisted) {
-    return "never";
-  }
-  let persisted = await navigator.storage.persisted();
-  if (persisted) {
-    return "persisted";
-  }
-  if (!navigator.permissions || !navigator.permissions.query) {
-    return "prompt"; // It MAY be successful to prompt. Don't know.
-  }
-  const permission = await navigator.permissions.query({
-    name: "persistent-storage"
-  });
-  if (permission.state === "granted") {
-    persisted = await navigator.storage.persist();
-    if (persisted) {
-      return "persisted";
-    } else {
-      throw new Error("Failed to persist");
+    if (!navigator.storage || !navigator.storage.persisted) {
+        return "never";
     }
-  }
-  if (permission.state === "prompt") {
-    return "prompt";
-  }
-  return "never";
+    let persisted = await navigator.storage.persisted();
+    if (persisted) {
+        return "persisted";
+    }
+    if (!navigator.permissions || !navigator.permissions.query) {
+        return "prompt"; // It MAY be successful to prompt. Don't know.
+    }
+    const permission = await navigator.permissions.query({
+        name: "persistent-storage"
+    });
+    if (permission.state === "granted") {
+        persisted = await navigator.storage.persist();
+        if (persisted) {
+            return "persisted";
+        } else {
+            throw new Error("Failed to persist");
+        }
+    }
+    if (permission.state === "prompt") {
+        return "prompt";
+    }
+    return "never";
 }
 
 async function initStoragePersistence() {
-  const persist = await tryPersistWithoutPromtingUser();
-  switch (persist) {
-    case "never":
-      //console.debug("Not possible to persist storage");
-      break;
-    case "persisted":
-     // console.debug("Successfully persisted storage silently");
-      break;
-    case "prompt":
-     // console.debug("Not persisted, but we may prompt user when we want to.");
-      break;
-  }
+    const persist = await tryPersistWithoutPromtingUser();
+    switch (persist) {
+        case "never":
+            //console.debug("Not possible to persist storage");
+            break;
+        case "persisted":
+            // console.debug("Successfully persisted storage silently");
+            break;
+        case "prompt":
+            // console.debug("Not persisted, but we may prompt user when we want to.");
+            break;
+    }
 }
 
 // This function copies the current line from the editor into the local database
@@ -466,7 +469,7 @@ function addtranslateEntryClicked(event) {
 }
 async function resetDB() {
     var DBOpenRequest = window.indexedDB.open("My-Trans");
-      DBOpenRequest.onsuccess = function (event) {
+    DBOpenRequest.onsuccess = function (event) {
         // console.debug("Database initialised");
 
         // store the result of opening the database in the db variable.

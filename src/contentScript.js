@@ -389,7 +389,7 @@ document.addEventListener("keydown", async function (event) {
         let int = localStorage.getItem(['switchTM']);
         if (int == "false") {
             toastbox("info", "Switching TM to foreign", "1200", "TM switch");
-            localStorage.setItem('switchTM', 'true');       
+            localStorage.setItem('switchTM', 'true');
         }
         else {
             toastbox("info", "Switching TM to local", "1200", "TM switch");
@@ -417,8 +417,8 @@ document.addEventListener("keydown", async function (event) {
             timer: 1000,
         }).then((e) => {
             countWordsinTable();
-        }); 
-       
+        });
+
         //let wordCount = countWordsinTable();
 
     };
@@ -843,7 +843,7 @@ function impFileClicked(event) {
                 }
                 close_toast();
             };
-            input.click(); 
+            input.click();
         }
     );
 }
@@ -1071,7 +1071,7 @@ function importPageClicked(event) {
                     //File is imported so process it
                     parseDataBase(obj_csv.dataFile);
 
-                    //alert("Import is running please wait");          
+                    //alert("Import is running please wait");
                 }
             }
 
@@ -1629,7 +1629,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
                 // SavelocalButton.innerText = "Save";
                 checkElem.title = "Do not save the string";
             }
-            return; 
+            return;
         }
     }
     if (result.percent == 100) {
@@ -1711,7 +1711,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         checkElem.style.backgroundColor = "purple";
         checkElem.title = "Save the string";
         if (typeof headerElem.style != "undefined") {
-            headerElem.style.backgroundColor = "purple";   
+            headerElem.style.backgroundColor = "purple";
         }
     } else if (result.percent == 0) {
         //console.debug("checkElem:", checkElem.innerHTML, result.percent, result.wordCount, result.toolTip)
@@ -1970,7 +1970,7 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
 function savetranslateEntryClicked(event) {
     var myWindow;
     let timeout = 0;
-    //event.preventDefault();   
+    //event.preventDefault();
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
     
@@ -2009,7 +2009,7 @@ function savetranslateEntryClicked(event) {
                     }
                 });
             }, timeout);
-            timeout += 1500;        
+            timeout += 1500;
         }
         if (current.innerText == "waiting") {
             let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
@@ -2053,7 +2053,7 @@ function savetranslateEntryClicked(event) {
                 //  toastbox("info", "Saving suggestion: " + (i + 1), "1200", "Saving", myWindow);
 
             // }, timeout);
-                //timeout += 1000;    
+                //timeout += 1000;
             }
             status.innerText = "current";
             current.innerText = "current";

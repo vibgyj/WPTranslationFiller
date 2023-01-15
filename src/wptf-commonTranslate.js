@@ -429,7 +429,7 @@ async function pretranslate(original) {
     }
     else {
         console.debug("pretranslate line found:", translated);
-        //translated = res;   
+        //translated = res;
     }
     return translated;
 }
@@ -1998,7 +1998,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     current.value = "transFill";
                                 }
                    
-                                validateEntry(destlang, textareaElem1, "", "", row);   
+                                validateEntry(destlang, textareaElem1, "", "", row);
                             }
                             preview = document.querySelector(`#preview-${row}`);
                             rowchecked = preview.querySelector("td input");
@@ -2087,7 +2087,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
 }
 
 function check_span_missing(row,plural_line) {
-    let preview = document.querySelector("#preview-" + row + " td.translation");   
+    let preview = document.querySelector("#preview-" + row + " td.translation");
     let spanmissing = preview.querySelector(" span.missing");
     if (spanmissing != null) {
         //if (plural_line == "1") {
@@ -2231,7 +2231,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     textareaElem.value = translatedText;
                     current.innerText = "transFill";
                     current.value = "transFill";
-                    //let zoeken = "translate-" + rowId + ""-translocal-entry-local-button";  
+                    //let zoeken = "translate-" + rowId + ""-translocal-entry-local-button";
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                 }
             }
@@ -2352,30 +2352,30 @@ async function saveLocal() {
     var counter = 0;
     var timeout = 0;
     
-        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-        //console.debug("saveLocal started",is_pte)
-        document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
-            if (is_pte) {
-               checkset = preview.querySelector("th input");
-               //console.debug("checkset:",checkset)
-            }
-            else {
-                 checkset = preview.querySelector("td input");
-            }
-            let rowfound = preview.id;
-            row = rowfound.split("-")[1];
-            let newrow = rowfound.split("-")[2];
-            if (typeof newrow != "undefined") {
-               newrowId = row.concat("-", newrow);
-               row = newrowId;
-            }
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    //console.debug("saveLocal started",is_pte)
+    document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
+        if (is_pte) {
+            checkset = preview.querySelector("th input");
+            //console.debug("checkset:",checkset)
+        }
+        else {
+                checkset = preview.querySelector("td input");
+        }
+        let rowfound = preview.id;
+        row = rowfound.split("-")[1];
+        let newrow = rowfound.split("-")[2];
+        if (typeof newrow != "undefined") {
+            newrowId = row.concat("-", newrow);
+            row = newrowId;
+        }
 
-             // If a translation alreay has been saved, there is no checkbox available
-            if (checkset != null) {
-               //nextpreview = preview.nextElementSibling.nextElementSibling;
-               if (checkset.checked) {
-                  counter++;
-                  setTimeout((timeout) => {
+            // If a translation alreay has been saved, there is no checkbox available
+        if (checkset != null) {
+            //nextpreview = preview.nextElementSibling.nextElementSibling;
+            if (checkset.checked) {
+                counter++;
+                setTimeout((timeout) => {
                     //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
                     let editor = preview.nextElementSibling;
                     preview.querySelector("td.actions .edit").click();
@@ -2397,52 +2397,48 @@ async function saveLocal() {
                         //console.debug("state:", current.innerText);
                         if (current.innerText == 'waiting') {
                             editor.querySelector(".approve").click();
-                        }
-                        else {
+                        } else {
                             // else we need to select the save button
                             editor.querySelector(".translation-actions__save").click();
                         }
                         // PSS confirm the message for dismissal
                         foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
-                        return new Promise((resolve, reject) => {
+                            return new Promise((resolve, reject) => {
                                 if (typeof confirm != 'undefined') {
-                                        if (confirm != "No suggestions") {
-                                            confirm.click();
-                                            resolve(foundlabel);
-                                        }
-                                        else {
-                                            reject("No suggestions");
-                                        }
-                                }
-                                else {
-                                    reject("No suggestions");   
+                                    if (confirm != "No suggestions") {
+                                        confirm.click();
+                                        resolve(foundlabel);
+                                    } else {
+                                        reject("No suggestions");
+                                    }
+                                } else {
+                                    reject("No suggestions");
                                 }
                             });
                         });
                     }
-                  }, timeout,counter);
-                  timeout += 2000;
-               }
-               else {
-                   if (preview != null) {
-                      if (!is_pte) {
-                          rowchecked = preview.querySelector("td input");
-                      }
-                      else {
-                          rowchecked = preview.querySelector("th input");
-                      }
-                      if (rowchecked != null) {
-                          if (rowchecked.checked) {
-                             rowchecked.checked = false;
-                          }
-                       }
-                   }
-               }
+                }, timeout, counter);
+                timeout += 2000;
+            } else {
+                if (preview != null) {
+                    if (!is_pte) {
+                        rowchecked = preview.querySelector("td input");
+                    } else {
+                        rowchecked = preview.querySelector("th input");
+                    }
+                    if (rowchecked != null) {
+                        if (rowchecked.checked) {
+                            rowchecked.checked = false;
+                        }
+                    }
+                }
             }
-            else {
-                 console.debug("No checkbox available");
-            }
-        });
+        }
+        else {
+            console.debug("No checkbox available");
+        }
+    });
+
     return counter;
 }
    
@@ -2472,6 +2468,7 @@ async function bulkSave(noDiff) {
          parrotActive: true,
          parrotMockDefinitions
      }, location.origin);
+
      // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
      if (is_pte) {
          document.querySelectorAll('.checkbox input').forEach(function (elem) {
@@ -2515,8 +2512,7 @@ async function bulkSave(noDiff) {
                  messageBox("info", "Bulk save cancelled");
              }
          })
-     }
-     else {
+     } else {
          //When performing bulk save the difference is shown in Meta #269
          let value = noDiff;
          console.debug("value:",value)

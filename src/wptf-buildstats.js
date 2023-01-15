@@ -6,49 +6,54 @@ async function mySelection() {
 	var myMaxPage;
 	modal.style.display = "none";
 	//console.debug("selVal:", selVal,locale)
-	if (selVal === '1') {
-		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-themes/?s=&page="
-		myType = "Themes default"
-	}
-	else if (selVal === '2') {
-		query = "https://translate.wordpress.org/locale/" + locale +"/default/wp-plugins/?s=&page="
-		myType = "Plugins default"
-	}
-	else if (selVal === '3') {
-		query = "https://translate.wordpress.org/locale/" + locale +"/formal/wp-themes/?s=&page="
-		myType = "Themes formal"
-	}
-	else if (selVal === '4') {
-		myType = "Plugins formal"
-		query = "https://translate.wordpress.org/locale/" + locale +"/formal/wp-plugins/?s=&page="
-	}
-	else if (selVal === '5') {
-		myType = "Themes default 100%"
-		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-themes/?s=&page="
-	}
-	else if (selVal === '6') {
-		myType = "Plugins default 100%"
-		query = "https://translate.wordpress.org/locale/" + locale + "/default/wp-plugins/?s=&page="
-	}
-	else if (selVal === '7') {
-		myType = "Themes formal 100%"
-		query = "https://translate.wordpress.org/locale/" + locale + "/formal/wp-themes/?s=&page="
-	}
-	else if (selVal === '8') {
-		myType = "Plugins formal 100%"
-		query = "https://translate.wordpress.org/locale/" + locale + "/formal/wp-plugins/?s=&page="
-	}
-	else if (selVal === '9') {
-		myType = "Meta default"
-		query = "/default/meta/"
-	}
-	else if (selVal === '10') {
-		myType = "Meta formal"
-		query = "/formal/meta/"
-	}
-	else {
-		myType = "Themes"
-		query = "/default/wp-themes/?s=&page="
+
+	let baseUrl = "https://translate.wordpress.org/locale/" + locale;
+
+	switch (selVal) {
+		case "1":
+			query = baseUrl + "/default/wp-themes/?s=&page="
+			myType = "Themes default"
+			break;
+		case "2":
+			query = baseUrl +"/default/wp-plugins/?s=&page="
+			myType = "Plugins default"
+			break;
+		case "3":
+			query = baseUrl +"/formal/wp-themes/?s=&page="
+			myType = "Themes formal"
+			break;
+		case "4":
+			myType = "Plugins formal"
+			query = baseUrl +"/formal/wp-plugins/?s=&page="
+			break;
+		case "5":
+			myType = "Themes default 100%"
+			query = baseUrl + "/default/wp-themes/?s=&page="
+			break;
+		case "6":
+			myType = "Plugins default 100%"
+			query = baseUrl + "/default/wp-plugins/?s=&page="
+			break;
+		case "7":
+			myType = "Themes formal 100%"
+			query = baseUrl + "/formal/wp-themes/?s=&page="
+			break;
+		case "8":
+			myType = "Plugins formal 100%"
+			query = baseUrl + "/formal/wp-plugins/?s=&page="
+			break;
+		case "9":
+			myType = "Meta default"
+			query = "/default/meta/"
+			break;
+		case "10":
+			myType = "Meta formal"
+			query = "/formal/meta/"
+			break;
+		default:
+			myType = "Themes"
+			query = "/default/wp-themes/?s=&page="
+			break;
 	}
 	
 	//console.debug("maxPage:",myMaxPage)
