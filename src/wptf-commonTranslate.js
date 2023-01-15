@@ -1365,12 +1365,12 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             // Hiding the row is done through CSS tr.preview.status-hidden
             prevcurrentClass.classList.replace("untranslated", "status-hidden");
         }
-            }
-            // Translation completed  
-            translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
-            translateButton.className += " translated";
-            translateButton.innerText = "Translated";
-            parrotActive = 'false';
+    }
+    // Translation completed  
+    translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
+    translateButton.className += " translated";
+    translateButton.innerText = "Translated";
+    parrotActive = 'false';
     //console.timeEnd("translation");
 }
 // Part of the solution issue #204
@@ -1381,15 +1381,14 @@ function openEditor(preview) {
         editoropen = preview.querySelector("td.actions .edit");
         //console.debug("Editoropen:",editoropen)
         setTimeout(() => {
-       if (typeof editoropen != null) {
-           //console.debug("editor is open");
-           editoropen.click()
-        resolve("Open");
-       }
-       else {
-         reject("Closed");
-           }
-       }, 500);
+            if (typeof editoropen != null) {
+                //console.debug("editor is open");
+                editoropen.click()
+                resolve("Open");
+            } else {
+                reject("Closed");
+            }
+        }, 500);
         
     });
 }
