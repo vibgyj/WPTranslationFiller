@@ -201,7 +201,7 @@ async function createStatsTable(selVal,query,myType) {
 						}
 						else {
 							rowCount = 0;
-                        }
+            }
 
 					}
 					if (rowCount == 0) {
@@ -218,9 +218,7 @@ async function createStatsTable(selVal,query,myType) {
 						});
 					}
 					console.debug("Search ended:");
-					
-				}
-				else {
+				} else {
 					cuteAlert({
 						type: "error",
 						title: "Message",
@@ -232,19 +230,19 @@ async function createStatsTable(selVal,query,myType) {
 				}
 				return [myProjects,currusername,myType]
 
-			    }).then(async function (myProjects) {
-					let currusername = myProjects[1]
-					let myType = myProjects[2]
-				    let result = await process_projects(myProjects[0],currusername);
-				    newresult = newresult + result
-				    console.debug(" result:", result)
-				    console.debug("grandtotal: ", newresult)
-				    //messageBox("info", "Page count result: " + result);
-				    return [newresult,myType];
+			}).then(async function (myProjects) {
+				let currusername = myProjects[1];
+				let myType = myProjects[2];
+				let result = await process_projects(myProjects[0],currusername);
+				newresult = newresult + result;
+				console.debug(" result:", result);
+				console.debug("grandtotal: ", newresult);
+				//messageBox("info", "Page count result: " + result);
+				return [newresult,myType];
 				
 			}).then(function (newresult) {
 				messageBox("info", "Total count result: " + newresult[0] + "<br>For " + newresult[1]);
-            })
+      })
 			.catch(function (err) {
 				//console.log("Failed to fetch page: ", err);
 				cuteAlert({
@@ -275,11 +273,11 @@ async function createStatsTable(selVal,query,myType) {
  async function process_projects(myProjects,currusername) {
 	//console.debug("processing projects");
 	//console.debug("Projects found:", myProjects)
-	 var arrayLength = myProjects.length;
-	 //console.debug("Array length:",arrayLength)
+	var arrayLength = myProjects.length;
+	//console.debug("Array length:",arrayLength)
 	var contributer;
-	 var grandTotal = 0;
-	 var totalVal = 0;
+	var grandTotal = 0;
+	var totalVal = 0;
 	const myInit = {
 		redirect: "error"
 	};
@@ -331,11 +329,11 @@ async function createStatsTable(selVal,query,myType) {
 					}
 					else {
 						console.debug("No translators!",search_url)
-                    }
+          }
 				}
 				else {
 					console.debug("no gptable!")
-                }
+        }
 				
 			})
 			.catch(function (err) {
