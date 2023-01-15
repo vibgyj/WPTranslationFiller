@@ -3,8 +3,8 @@
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
     console.log(`Your browser doesn't support IndexedDB`);
-    
 }
+
 const setToonDiff = async function (obj) {
     return new Promise((resolve, reject) => {
         try {
@@ -410,7 +410,6 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F12")) {
         
-        
             cuteToast({
                 type: "info",
                 message: "Counting is started",
@@ -457,13 +456,13 @@ document.addEventListener("keydown", async function (event) {
         res = chrome.declarativeNetRequest.updateEnabledRuleset(
           {
               addRules: [{
-                    "id": 1,
-                   "priority": 1,
-                 "action": { "type": "block" },
+                "id": 1,
+                "priority": 1,
+                "action": { "type": "block" },
                 "condition": {
-                  "regexFilter": "-get-tm-suggestions",
-                     "resourceTypes": ["xmlhttprequest"]
-                 }
+                    "regexFilter": "-get-tm-suggestions",
+                    "resourceTypes": ["xmlhttprequest"]
+                }
               }
               ],
                removeRuleIds: [1]
@@ -588,6 +587,7 @@ optionlink.className = 'menu-item wptf_settings_menu'
 var divMenu = document.querySelector("#menu-headline-nav");
 optionlink.appendChild(a)
 divMenu.appendChild(optionlink);
+
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
