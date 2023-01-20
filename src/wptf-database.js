@@ -1,4 +1,42 @@
-res=initStoragePersistence();
+res = initStoragePersistence();
+
+async function openDB(db) {
+    console.debug("NewDB open started");
+    const request = indexedDB.open("My-Trans")
+    
+    request.onupgradeneeded = await function () {
+        // The database did not previously exist, so create object stores and indexes.
+        const mydb = request.result;
+        const transl = mydb.createObjectStore("Translation", {
+            keyPath: "id", autoincrement: true });
+        const sourceIndex = transl.createIndex("by_source", "source", { unique: false });
+        const sourceCountry = transl.createIndex("sourceCountry", ["source", "country"], { unique: false });
+        // Populate with initial data.
+        transl.put({ id:"0", source: "Activate", translation: "Activeren", country:"nl" });
+    };
+
+    request.onsuccess = function (db) {
+        
+        db = request.result;
+        console.debug("database opened", db);
+        
+        db = getDbSchema();
+        var isDbCreated = jsstoreCon.initDb(db);
+
+        if (!isDbCreated) {
+            console.debug("Database is not created, so we create one", isDbCreated);
+        }
+        else {
+            console.debug("Database is present");
+        }
+        // check if the index is present, if not create it
+        checkIndex(db);
+
+    };
+    request.onerror = function (db) {
+        console.debug("Error at opening DB!");
+    };
+}
 
 //async function initDb() {
  ///   var isDbCreated = await jsstoreCon.initDb(getDbSchema());
