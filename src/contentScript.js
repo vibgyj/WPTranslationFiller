@@ -2028,7 +2028,7 @@ function savetranslateEntryClicked(event) {
                 // PSS confirm the message for dismissal
                 foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
                     if (confirm != '.gp-js-message-dismiss') {
-                        console.debug("confirm value:", confirm)
+                       // console.debug("confirm value:", confirm)
                         if (typeof confirm === 'function') {
                             confirm.click();
                         }

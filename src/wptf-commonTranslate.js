@@ -192,7 +192,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     // check if the returned translation does have the same start/ending as the original
     translatedText = checkStartEnd(original, translatedText);
-    console.debug("after chack startend: '" + translatedText + "'")
+    //console.debug("after check startend: '" + translatedText + "'")
     return translatedText;
 }
 
@@ -309,7 +309,7 @@ function CheckUrl(translated,searchword) {
 function checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
     // strip or add "." at the end of the line
-    console.debug("in checkstartend:",translatedText)
+    //console.debug("in checkstartend:",translatedText)
     if (original.endsWith(".") == true) {
         if (translatedText.endsWith(".") == false) {
             translatedText = translatedText + ".";
@@ -2515,7 +2515,7 @@ async function bulkSave(noDiff) {
      else {
          //When performing bulk save the difference is shown in Meta #269
          let value = noDiff;
-         console.debug("value:",value)
+         // console.debug("value:",value)
          await setToonDiff({ toonDiff: value });
          counter = saveLocal();
       }
