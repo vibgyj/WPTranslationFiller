@@ -12,13 +12,13 @@ async function openDB(db) {
         const sourceIndex = transl.createIndex("by_source", "source", { unique: false });
         const sourceCountry = transl.createIndex("sourceCountry", ["source", "country"], { unique: false });
         // Populate with initial data.
-        transl.put({ id:"0", source: "Activate", translation: "Activeren", country:"nl" });
+        transl.put({ id: 0, source: "Activate", translation: "Activeren", country:"nl" });
     };
 
     request.onsuccess = function (db) {
         
-        db = request.result;
-        console.debug("database opened", db);
+        myDb = request.result;
+        console.debug("database opened",myDb);
         
         db = getDbSchema();
         var isDbCreated = jsstoreCon.initDb(db);
@@ -27,14 +27,14 @@ async function openDB(db) {
             console.debug("Database is not created, so we create one", isDbCreated);
         }
         else {
-            console.debug("Database is present");
+            console.debug("Database is present:",db);
         }
         // check if the index is present, if not create it
         checkIndex(db);
 
     };
-    request.onerror = function (db) {
-        console.debug("Error at opening DB!");
+    request.onerror = function (event) {
+        console.debug("Error at opening DB!",event);
     };
 }
 
