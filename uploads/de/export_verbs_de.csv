@@ -1,0 +1,17 @@
+original,translation,country
+admin,Admin
+comments,Kommentare
+comment,Kommentar
+content,Inhalt
+core,Kern
+# ,#
+&quot;,
+&quot,&quot\;
+&#39;,'
+class = ,class=
+ .,.
+</a> ),</a>)
+&gt; , > 
+ / ,/
+: //,://
+<strong />,<strong/>

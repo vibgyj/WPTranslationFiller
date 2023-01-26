@@ -69,6 +69,6 @@ describe("Google translation - processPlaceholderSpaces", function () {
         processPlaceholderSpaces(
           "Add Products to [0] Category",
           "Producten toevoegen aan categorie [0]"))
-        .toEqual("Producten toevoegen aan categorie [0] ");  
+        .toEqual("Producten toevoegen aan categorie [0] ");
   });
 });

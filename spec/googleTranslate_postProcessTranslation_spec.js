@@ -28,8 +28,8 @@ describe("Google translation - postProcessTranslation", function () {
                 "[0]files deleted, but we encountered the following errors with other files: [1]", [], '[0] files deleted, but we encountered the following errors with other files: [1]'))
             .toEqual("%1$d files deleted, but we encountered the following errors with other files: %2$s");
     });
-    
-    
+
+
     it("should replace placeholders in translation complex 1", function () {
         expect(
             postProcessTranslation(
@@ -45,7 +45,7 @@ describe("Google translation - postProcessTranslation", function () {
                 "[0] emos [1] modnar[2] txet [3]", [], '[0] emos [1] modnar[2] txet [3]'))
             .toEqual("%1$s emos &quot; modnar%d txet %l");
     });
-    
+
 
     it("should replace placeholders in verbs", function () {
         let verbs = [

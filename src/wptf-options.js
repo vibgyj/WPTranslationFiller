@@ -444,7 +444,7 @@ function export_verbs_csv() {
     var destlang = destLangTextbox.value;
     let export_file = "export_verbs_" + destlang + ".csv";
     setPostTranslationReplace(verbsTextbox.value);
-    let arrayData = [];  
+    let arrayData = [];
     for (let i = 0; i < replaceVerb.length; i++) {
           arrayData[i] = { original: replaceVerb[i][0], replacement:  replaceVerb[i][1] };
          }
@@ -463,7 +463,7 @@ function export_verbs_csv() {
            csv += row.join(delimiter) + "\n";
        });
 
-       let csvData = new Blob([csv], { type: "text/csv" });  
+       let csvData = new Blob([csv], { type: "text/csv" });
        let csvUrl = URL.createObjectURL(csvData);
 
        let hiddenElement = document.createElement("a");
@@ -503,7 +503,7 @@ if (input.files && input.files[0]) {
         obj_csv.dataFile = e.target.result;
        //console.log(obj_csv.dataFile)
        document.getElementById("text_verbs").value = "";
-       parseData(obj_csv.dataFile);             
+       parseData(obj_csv.dataFile);
     };
    }
 });
