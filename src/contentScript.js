@@ -1943,6 +1943,41 @@ function updateElementStyle(checkElem, headerElem, result, oldstring, originalEl
         // separator1.setAttribute("class", "checkElem_save");
         // checkElem.appendChild(separator1);
     // }
+       checkElem.appendChild(SavelocalButton);
+          
+    }
+    // 11-08-2021 PSS added aditional code to prevent duplicate missing verbs in individual translation
+    headerElem.title = "";
+    if (result.toolTip != "") {
+        // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
+        if (typeof headerElem.title != "undefined") {
+           headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+           newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+        }
+    }
+    else {
+      newtitle = checkElem.title.concat(result.toolTip);
+      headertitle = headerElem.title;
+    }
+    checkElem.setAttribute("title", newtitle);
+    // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
+    if (typeof headerElem.title != "undefined") {
+        headerElem.setAttribute("title", headertitle);
+    }
+    checkElem.setAttribute("title", result.toolTip);
+    // PSS 17-01-2023 below is a temporary fix for the fact that in case of 100% no title is shown
+    // This needs to be improved later
+    if (result.percent == 100) {
+        checkElem.title = "Save the string"
+    }
+
+    if (saveButton == null) {
+    // if (result.percent == 0) {
+        // checkElem.innerText = "0";
+        // var separator1 = document.createElement("div");
+        // separator1.setAttribute("class", "checkElem_save");
+        // checkElem.appendChild(separator1);
+    // }
         checkElem.appendChild(SavelocalButton);
         
     }
