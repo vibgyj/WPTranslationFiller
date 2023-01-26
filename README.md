@@ -30,3 +30,7 @@ This extension helps with Wordpress Translation and has the following features:
 4. The "Check" button is used to check if the translated page is using glossary verbs.
 5. For full documentation visit the Wiki: https://github.com/vibgyj/WPTranslationFiller/wiki
 6. If any bugs/problems are found, please add an issue within the repository.
+
+# Git versioning
+1. git tag v1.4.1
+2. git push --tags
