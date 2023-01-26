@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-    <meta content="utf-8" http-equiv="encoding">
+    <meta charset="utf-8">
+    <meta description="WP Translation Filler - Options">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" content-type="image/svg+xml">
+    <title>WP Translation Filler - Options</title>
     <script type="text/javascript" src="wptf-options.js" defer></script>
     <style>
         .form-input {
             margin: 5px 0;
+        }
+        .labeled-checkbox {
+            display: block;
         }
 
         .container {
@@ -15,6 +19,7 @@
             margin: auto;
             font-size: 12pt;
         }
+        #footer tr,
         #options tr {
             padding-top: 12px !important;
             padding-bottom: 12px !important;
@@ -25,6 +30,7 @@
             color: white;
             width:600px;
         }
+        #footer td,
         #options td {
             padding-left: 5px ;
             padding-right: 5px;
@@ -118,29 +124,29 @@
             border-color: rgba(0,0,0,.3) transparent transparent transparent;
             margin-left: -5px;
         }
-            .tooltip::after {
-                content: attr(data-tooltip);
-                transform: translate(-50%, -100%);
-                font-size: .75rem;
-                letter-spacing: 1px;
-                color: #eaeaea;
-                background-color: #0085ba;
-                /*background-color: rgba(0,0,0,.3); */
-                padding: .5rem;
-                border-radius: 5px;
-                min-width: 315px;
-            }
-              
-
-       /* Show the tooltip text when you mouse over the tooltip container */
+        .tooltip::after {
+            content: attr(data-tooltip);
+            transform: translate(-50%, -100%);
+            font-size: .75rem;
+            letter-spacing: 1px;
+            color: #eaeaea;
+            background-color: #0085ba;
+            /*background-color: rgba(0,0,0,.3); */
+            padding: .5rem;
+            border-radius: 5px;
+            min-width: 315px;
+        }
+        /* Show the tooltip text when you mouse over the tooltip container */
         .tooltip:hover::before {
             opacity: 1;
             visibility: visible;
         }
-
         .tooltip:hover::after {
-                opacity: 1;
-                visibility: visible;
+            opacity: 1;
+            visibility: visible;
+        }
+        fieldset {
+            border: 1px solid #000;
         }
         .wptf-info {
             display: block;
@@ -196,10 +202,10 @@
                     <label>License is for DeepL Free</label>
                 </td>
                 <td>
-                    <div>
+                    <label>
                         <input type="checkbox" id="DeeplFree">
                         <span class="tooltip" data-tooltip="Select this if you are using a free license from Deepl">?</span>
-                    </div>
+                    </label>
                 </td>
             </tr>
             <tr>
@@ -208,7 +214,7 @@
                 </td>
                 <td>
                     <div class="form-select">
-                        <select name="transsel" id="transselect">
+                        <select title="Select a translator" name="transsel" id="transselect">
                             <option value="deepl">Deepl</option>
                             <option value="google">Google</option>
                             <option value="microsoft">Microsoft</option>
@@ -274,36 +280,36 @@ You,Je
 wrong2,right2
             </textarea>
         </div>
-        <div class="form-input">
-            <label for="export_verbs">Export post translation verbs </label>
+        <label class="form-input">
+            <span for="export_verbs">Export post translation verbs </span>
             <fieldset>
-                <button id="exportverbs">Export verbs</button>
+                <button type="button" id="exportverbs">Export verbs</button>
             </fieldset>
-        </div>
-        <div id="dvImportSegments" class="fileupload ">
-            <label>Upload post translation replace CSV File</label>
+        </label>
+        <label id="dvImportSegments" class="fileupload ">
+            <span>Upload post translation replace CSV File</span>
             <fieldset>
                 <input id="importPost" type="file" />
             </fieldset>
-        </div>
+        </label>
         <br />
-        <div>
+        <label class="labeled-checkbox">
             <input type="checkbox" id="show-history">
-            <label>Show history</label>
-        </div>
-        <div>
+            <span>Show history</span>
+        </label>
+        <label class="labeled-checkbox">
             <input type="checkbox" id="comp-translations">
-            <label>Compare translations</label>
-        </div>
-        <div>
+            <span>Compare translations</span>
+        </label>
+        <label class="labeled-checkbox">
             <input type="checkbox" id="show-glotDictGlos">
-            <label>Show GlotDict</label>
-        </div>
-        <div>
+            <span>Show GlotDict</span>
+        </label>
+        <label class="labeled-checkbox">
             <input type="checkbox" id="show-convertToLower">
-            <label>Convert words to lowercase except first word</label>
-        </div>
-        <table id="options">
+            <span>Convert words to lowercase except first word</span>
+        </label>
+        <table id="footer">
             <tr>
                 <td>
                     <div class="savebutton">
@@ -312,7 +318,7 @@ wrong2,right2
                 </td>
                 <td>
                     <div class="wptf-info">
-                        <a href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
+                        <a rel="noopener" href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
                     </div>
                 </td>
             </tr>

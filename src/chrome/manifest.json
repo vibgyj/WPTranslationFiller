@@ -41,6 +41,7 @@
         "wptf-database.js",
         "wptf-inject.js",
         "wptf-importfile.js",
+        "wptf-buildstats.js",
         "contentScript.js"
       ],
       "css": [
