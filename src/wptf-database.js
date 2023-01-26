@@ -1,4 +1,46 @@
-res=initStoragePersistence();
+res = initStoragePersistence();
+
+async function openDB(db) {
+   // console.debug("NewDB open started");
+    const request = indexedDB.open("My-Trans")
+    
+    request.onupgradeneeded = await function () {
+        // The database did not previously exist, so create object stores and indexes.
+        const mydb = request.result;
+        const transl = mydb.createObjectStore("Translation", {
+            keyPath: "id", autoincrement: true });
+        const sourceIndex = transl.createIndex("source", "source", { unique: false, enableSearch: true });
+        //With improved indexDB it was no longer possible to update an existing translation #274
+        // added the below index
+        const countryIndex = transl.createIndex("country", "country", { unique: false, enableSearch: true });
+        const sourceCntry = transl.createIndex("sourceCountry", ["source", "country"], { unique: false, enableSearch: true });
+        
+        // Populate with initial data.
+        transl.put({source: "Activate", translation: "Activeren", country: "nl", id: 0,});
+    };
+
+    request.onsuccess = function (db) {
+        
+        myDb = request.result;
+        console.debug("database opened",myDb);
+        
+        db = getDbSchema();
+        var isDbCreated = jsstoreCon.initDb(db);
+
+        if (!isDbCreated) {
+            console.debug("Database is not created, so we create one", isDbCreated);
+        }
+        else {
+            console.debug("Database is present:",db);
+        }
+        // check if the index is present, if not create it
+        checkIndex(db);
+
+    };
+    request.onerror = function (event) {
+        console.debug("Error at opening DB!",event);
+    };
+}
 
 //async function initDb() {
  ///   var isDbCreated = await jsstoreCon.initDb(getDbSchema());
@@ -20,7 +62,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     convertToLower = false;
 
     translatedText = myLi;
-    //console.debug("myLI:", myLi, translatedText)
+    //z("myLI:", myLi, translatedText)
     if (translatedText != 'No suggestions') {
         translatedText = postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
     }
@@ -153,6 +195,7 @@ function getDbSchema() {
                 dataType: "string",
                 notNull: true,
                 primaryKey: true,
+                enableSearch: true
 
             },
             translation: {
@@ -161,12 +204,12 @@ function getDbSchema() {
             },
             country: {
                 dataType: "string",
-                notNull: true
+                notNull: true,
+                enableSearch: true
             },
             sourceCountry: {
                 keyPath: ['source', 'country'],
-                enableSearch: true,
-                unique: true
+                enableSearch: true 
             }
         }
     };
@@ -230,7 +273,8 @@ async function addTransDb(orig, trans, cntry) {
     var transl = { source: orig, translation: trans, country: cntry };
     var myWindow = window.self;
     // 05-06-2021 PSS fixed a problem with wrong var names
-    count = await findTransline(orig,cntry);
+    count = await findTransline(orig, cntry);
+    //console.debug("count:",count)
     if (count == "notFound") {
         reslt = "Inserted";
         try {
@@ -254,7 +298,8 @@ async function addTransDb(orig, trans, cntry) {
     return reslt;
 }
 
-async function updateTransDb(orig,trans,cntry) {
+async function updateTransDb(orig, trans, cntry) {
+    //console.debug("we are updating")
     var transl = {orig,trans,cntry};
     try {
         var noOfDataUpdated = await jsstoreCon.update({
@@ -269,6 +314,7 @@ async function updateTransDb(orig,trans,cntry) {
             }
         });
     } catch (ex) {
+        //console.debug("error:",ex)
         messageBox("error", "Error: " + ex.message + "record: " + orig);
     }
 }
@@ -304,8 +350,9 @@ async function findTransline(orig,cntry){
 }
 
 async function convPromise(trans){
-    res= trans[0]["translation"];
-    if (typeof res == "undefined"){
+    res = trans[0]["translation"];
+    //console.debug("convPromise:",res)
+    if (typeof res== "undefined"){
        res="notFound";
     }
     return res;

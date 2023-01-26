@@ -125,7 +125,7 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
-    //console.debug("before posrepl: '"+ translatedText +"'")
+    console.debug("before posrepl: '"+ translatedText +"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
    // console.debug("after postrepl:'",translatedText,"'")
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
@@ -154,12 +154,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // Deepl does remove tabs so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("mytb", "	");
         // Deepl pro adds "..." sometimes to the end of line, that is not what we expect
-        translatedText = translatedText.replaceAll("...", ".");
+        //translatedText = translatedText.replaceAll("...", ".");
         //console.debug('after replace x:', translatedText);
     }
     
-    // check if the returned translation does have the same ending as the original
-    translatedText = checkStartEnd(original, translatedText);
+   
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -192,7 +191,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     // check if the returned translation does have the same start/ending as the original
-    translatedText = checkStartEnd(original, translatedText);					  
+    translatedText = checkStartEnd(original, translatedText);
+    //console.debug("after check startend: '" + translatedText + "'")
     return translatedText;
 }
 
@@ -309,6 +309,7 @@ function CheckUrl(translated,searchword) {
 function checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
     // strip or add "." at the end of the line
+    //console.debug("in checkstartend:",translatedText)
     if (original.endsWith(".") == true) {
         if (translatedText.endsWith(".") == false) {
             translatedText = translatedText + ".";
@@ -2515,7 +2516,7 @@ async function bulkSave(noDiff) {
      } else {
          //When performing bulk save the difference is shown in Meta #269
          let value = noDiff;
-         console.debug("value:",value)
+         // console.debug("value:",value)
          await setToonDiff({ toonDiff: value });
          counter = saveLocal();
       }

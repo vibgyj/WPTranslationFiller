@@ -3,7 +3,21 @@
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
     console.log(`Your browser doesn't support IndexedDB`);
+    
 }
+else {
+    // PSS added jsStore to be able to store and retrieve default translations
+    var jsstoreCon = new JsStore.Connection();
+    var db;
+    db = myOpenDB(db);
+    console.debug("new db open:", db);  
+    
+}
+async function myOpenDB(db) {
+    let dbopen = await openDB(db);
+    //console.debug("after open:",dbopen)
+    return dbopen;
+ }
 
 const setToonDiff = async function (obj) {
     return new Promise((resolve, reject) => {
@@ -114,22 +128,6 @@ chrome.storage.sync.get( ["glotDictGlos"],
         }
 
 });
-
-// PSS added jsStore to be able to store and retrieve default translations
-var jsstoreCon = new JsStore.Connection();
-var db = getDbSchema();
-var isDbCreated = jsstoreCon.initDb(db);
-
-if (!isDbCreated){
-    //console.debug("Database is not created, so we create one", isDbCreated);
-}
-else {
-    console.debug("Database is present");
-}
-
-// check if the index is present, if not create it
-checkIndex(db);
-
 
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement("input");
@@ -2037,7 +2035,7 @@ function savetranslateEntryClicked(event) {
                 // PSS confirm the message for dismissal
                 foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
                     if (confirm != '.gp-js-message-dismiss') {
-                        console.debug("confirm value:", confirm)
+                       // console.debug("confirm value:", confirm)
                         if (typeof confirm === 'function') {
                             confirm.click();
                         }
