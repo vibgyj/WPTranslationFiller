@@ -799,7 +799,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     margin-bottom : 6px !important;
     /*margin: 0px !important;*/
     padding: 0px 2px !important; 
-    /* background: #0085ba;*/
+    background: #0085ba;
     border-color: #0073aa #006799 #006799;
     box-shadow: 0 1px 0 #006799;
     color: #fff;
@@ -808,7 +808,17 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     cursor:pointer !important;
 }
 
+/**The below code overrules an injection from other later loaded addons!!*/
+button[disabled] {
+    background: #0085ba !important;
+    color: #fff !important;
+}
 
+/**The below code is overruled by later loaded addons!!*/
+.tf-save-button-disabled {
+    background: #0085ba !important;
+    color: #fff !important;
+}
 #tf-save-button.ready {
     display:none;
 }
