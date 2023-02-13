@@ -1558,9 +1558,28 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     headerElem.style.backgroundColor = "purple";
                 }
             }
+            else if (result.percent < 33) {
+                newtitle = checkElem.title;
+                checkElem.innerHTML = result.percent;
+                separator1 = document.createElement("div");
+                separator1.setAttribute("class", "checkElem_save");
+                checkElem.appendChild(separator1);
+                res = addCheckButton(rowId, checkElem, "1561")
+                SavelocalButton = res.SavelocalButton
+                SavelocalButton.innerText = "Save";
+                checkElem.title = "Check the string";
+                checkElem.style.backgroundColor = "darkorange";
+
+                if (typeof headerElem.style != "undefined") {
+                    headerElem.style.backgroundColor = "darkorange";
+                    //headerElem.setAttribute("background", "orange");
+                }
+            }
+
             else if (result.percent == 0) {
                 // We need to set the title here also, otherwise it will occassionally not be shown
                 newtitle = checkElem.title;
+                //console.debug("perct is zero:",result.WordCount," ",result.foundCount)
                 if ((result.wordCount - result.foundCount) == 0) {
                     checkElem.innerText = "0";
                     checkElem.style.backgroundColor = "green";
@@ -1636,7 +1655,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     headerElem.style.backgroundColor = "green";
                 }
             }
-            document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
+            if (document.getElementById("translate-" + rowId + "-translocal-entry-missing-button") != null) {
+                document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
+            }
 
         }
         //console.debug("tooltip:",result.tooltip)
@@ -1840,8 +1861,14 @@ function validate(language, original, translation, locale) {
                let gItemKey = gItem["key"];
                let gItemValue = gItem["value"];
                // changed because the glossary is loaded differently, we need to fetch the first of the array
-               gItemValue = gItemValue[0];
-               
+               //console.debug("gItemValue", gItemValue)
+              // if (gItemValue.length > 1) {
+              //     gItemValue = gItemValue;
+             //  }
+             //  else {
+            //       gItemValue = gItemValue[0];
+             //  }
+              // console.debug("gItemValue")
                // Fix for not comparing properly due to special chars issue #279
                oWord = oWord.replace(/[^a-zA-Z0-9 ]/g, '');
                if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
@@ -1875,6 +1902,7 @@ function validate(language, original, translation, locale) {
          percent = 0;
     }
     // 12-02-2023 PSS Modified the code below as it was not correct
+    //console.debug("wordCount:",wordCount,"foundCount:",foundCount)
     if (wordCount == 0 && foundCount == 0) {
         percent = 100;
     }
@@ -1891,7 +1919,7 @@ function validate(language, original, translation, locale) {
 // Language specific matching.
 function match(language, gWord, tWord, gItemValue) {
     var glossaryverb;
-    console.debug("taal gWord tWord gItemvalue:",language,gWord,tWord,gItemValue)
+    //console.debug("taal gWord tWord gItemvalue:",language,gWord,tWord,gItemValue)
     if (typeof language != 'undefined') {
         // language is set to uppercase, so we need to return it to lowercase issue #281
         language = language.toLowerCase();
@@ -1902,13 +1930,13 @@ function match(language, gWord, tWord, gItemValue) {
                 // 13-02-2023 PSS fixed a problem when the original only includes one verb
                 if (!Array.isArray(gItemValue)) {
                     glossaryverb = gItemValue.toLowerCase();
-                    console.debug("it is not an array:",glossaryverb)
+                    //console.debug("it is not an array:",glossaryverb)
                 }
                 else {
                     // if the glossary contains an array we need to walk through the array
                     for (var i = 0; i < gItemValue.length; i++) {
                         glossaryverb = gItemValue[i].toLowerCase();
-                        console.debug('glossary verb:')
+                      //  console.debug("gloss verb1:", glossaryverb)
                         if (tWord.includes(glossaryverb) == true) {
                             break;
                         }
@@ -1929,6 +1957,7 @@ function match(language, gWord, tWord, gItemValue) {
                 // if the glossary contains an array we need to walk through the array
                 for (var i = 0; i < gItemValue.length; i++) {
                     glossaryverb = gItemValue[i].toLowerCase();
+                    //console.debug("gloss verb2:",glossaryverb)
                     if (tWord.includes(glossaryverb) == true) {
                         break;
                       }
