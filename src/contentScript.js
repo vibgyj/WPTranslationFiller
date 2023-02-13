@@ -1328,7 +1328,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     current = myrec.querySelector("span.panel-header__bubble");
    // console.debug("current:",current)
-    if (checkElem == null) {
+    if (typeof checkElem == "object") {
         if (SavelocalButton == null) {
             if (!is_pte) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
@@ -1891,7 +1891,7 @@ function validate(language, original, translation, locale) {
 // Language specific matching.
 function match(language, gWord, tWord, gItemValue) {
     var glossaryverb;
-    //console.debug("taal gWord tWord gItemvalue:",language,gWord,tWord,gItemValue)
+    console.debug("taal gWord tWord gItemvalue:",language,gWord,tWord,gItemValue)
     if (typeof language != 'undefined') {
         // language is set to uppercase, so we need to return it to lowercase issue #281
         language = language.toLowerCase();
@@ -1902,11 +1902,13 @@ function match(language, gWord, tWord, gItemValue) {
                 // 13-02-2023 PSS fixed a problem when the original only includes one verb
                 if (!Array.isArray(gItemValue)) {
                     glossaryverb = gItemValue.toLowerCase();
+                    console.debug("it is not an array:",glossaryverb)
                 }
                 else {
                     // if the glossary contains an array we need to walk through the array
                     for (var i = 0; i < gItemValue.length; i++) {
                         glossaryverb = gItemValue[i].toLowerCase();
+                        console.debug('glossary verb:')
                         if (tWord.includes(glossaryverb) == true) {
                             break;
                         }

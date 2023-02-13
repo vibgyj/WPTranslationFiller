@@ -315,9 +315,9 @@ file.addEventListener("change", function () {
                 }
                 else {
                     value = entry[1];
-                    console.debug("/ found:", value);
+                   // console.debug("/ found:", value);
                 }
-                console.debug("wefound:", value);
+                //console.debug("wefound:", value);
                 for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
