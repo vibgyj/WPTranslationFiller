@@ -1558,7 +1558,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     headerElem.style.backgroundColor = "purple";
                 }
             }
-            else if (result.percent < 33) {
+            else if (result.percent < 33 && result.percent >0) {
                 newtitle = checkElem.title;
                 checkElem.innerHTML = result.percent;
                 separator1 = document.createElement("div");
