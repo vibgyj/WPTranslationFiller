@@ -231,7 +231,7 @@ function validatePage(language, showHistory, locale) {
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
         textareaElem.addEventListener("input", function (e, locale) {
-            //    console.debug("target:", e.target);
+            //console.debug("target:", e.target);
             validateEntry(language, e.target, newurl, showHistory, rowId, locale);
         });
         let element = e.querySelector(".source-details__comment");

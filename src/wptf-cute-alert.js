@@ -64,9 +64,29 @@ const cuteAlert = ({
         }
 
         if (playSound !== null && type === "error") {
+            if (Notification.permission !== "denied") {
+                //   console.debug('permission:', Notification.permission)
+                Notification.requestPermission((permission) => {
+                    if (permission === "granted") {
+                        console.debug('granted:', permission)
+                    };
+                });
+            }
             let sound = new Audio(src + playSound);
-            sound.play();
+            const promise = sound.play();
+            if (promise !== undefined) {
+                promise.then(() => {
+                    console.debug("sound is played!")
+                    sound = new Audio(src + playSound);
+                    sound.muted = true;
+                    sound.play();
+                }).catch(error => {
+                    // Autoplay was prevented.
+                    console.debug("sound is not allowed!!")
+                });
+            }
         }
+
         const template = `
     <div class="alert-wrapper">
       <div class="alert-frame">
