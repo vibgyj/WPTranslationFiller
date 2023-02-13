@@ -1458,7 +1458,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     if (typeof rowId != "undefined") {
         current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
         if (current == null) {
-            console.debug("current is null", current)
+           // console.debug("current is null", current)
+            current = 'Empty';
         }
         if (current.innerText == 'current') {
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
@@ -1840,33 +1841,31 @@ function validate(language, original, translation, locale) {
                let gItemValue = gItem["value"];
                // changed because the glossary is loaded differently, we need to fetch the first of the array
                gItemValue = gItemValue[0];
+               
                // Fix for not comparing properly due to special chars issue #279
                oWord = oWord.replace(/[^a-zA-Z0-9 ]/g, '');
-                   // console.debug("word in original:",oWord," ",gItemKey)
-                    if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
-                        wordCount++;
-                        isFound = false;
-                        for (let gWord of gItemValue) {
-                            
-                            //console.debug("translation:", translation, "gWord:", gWord.toLowerCase(), "translation:", translation.toLowerCase())
-                            // here we match the translation against the glossary noun
-                            if (match(language, gWord.toLowerCase(), translation.toLowerCase(), gItemValue)) {
-                               // console.debug("found glossary word:", oWord)
-                                isFound = true;
-                                break;
-                            }
-                        }
-                        if (isFound) {
-                            foundCount++;
-                        }
-                        else {
-                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
-                                toolTip += `${gItemKey} - ${gItemValue}\n`;
-                               // console.debug("found not:", oWord, gItemValue)
-                            }
-                        }
-                         //break;
-                    }
+               if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
+                   wordCount++;
+                   isFound = false;
+                   for (let gWord of gItemValue) {
+                       // here we match the translation against the glossary noun
+                       if (match(language, gWord.toLowerCase(), translation.toLowerCase(), gItemValue)) {
+                           //console.debug("found glossary word:", oWord, gItemValue," ",translation)
+                           isFound = true;
+                           break;
+                       }
+                   }
+                   if (isFound) {
+                       foundCount++;
+                   }
+                   else {
+                       if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
+                           toolTip += `${gItemKey} - ${gItemValue}\n`;
+                           // console.debug("found not:", oWord, gItemValue)
+                       }
+                   }
+                   //break;
+               }
            }
        }
     }
@@ -1892,14 +1891,28 @@ function validate(language, original, translation, locale) {
 // Language specific matching.
 function match(language, gWord, tWord, gItemValue) {
     var glossaryverb;
+    //console.debug("taal gWord tWord gItemvalue:",language,gWord,tWord,gItemValue)
     if (typeof language != 'undefined') {
-        // language is set to uppercase, so we need to return it to lowercase
+        // language is set to uppercase, so we need to return it to lowercase issue #281
         language = language.toLowerCase();
         switch (language) {
             case "ta":
                 return taMatch(gWord, tWord);
             default:
-                return tWord.includes(gWord);
+                // 13-02-2023 PSS fixed a problem when the original only includes one verb
+                if (!Array.isArray(gItemValue)) {
+                    glossaryverb = gItemValue.toLowerCase();
+                }
+                else {
+                    // if the glossary contains an array we need to walk through the array
+                    for (var i = 0; i < gItemValue.length; i++) {
+                        glossaryverb = gItemValue[i].toLowerCase();
+                        if (tWord.includes(glossaryverb) == true) {
+                            break;
+                        }
+                    }
+                }
+                return tWord.includes(glossaryverb);
         }
     }
     else {
