@@ -881,10 +881,13 @@ async function checkPage(postTranslationReplace,formal) {
 
 function markElements(preview,replaceVerb,orgText) {
     // Highlight all keywords found in the page, so loop through the replacement array
+    if (previewNewText = 'undefined') {
+        let previewNewText = "";
+    }
     var arr = [];
     for (let i = 0; i < replaceVerb.length; i++) {
         if (typeof orgText != 'undefined') {
-            //console.debug("replverb:",replaceVerb[i][0],orgText)
+           //console.debug("replverb:",replaceVerb[i][0],orgText)
             if (orgText.includes(replaceVerb[i][0])) {
                 high = replaceVerb[i][1];
                 high = high.trim();
@@ -892,8 +895,7 @@ function markElements(preview,replaceVerb,orgText) {
                     // push the verb into the array
                     arr.push(high);
                 }
-            }
-            
+            } 
         }
         else {
             console.debug("no org")
