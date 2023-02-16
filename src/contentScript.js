@@ -1309,17 +1309,30 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     var checkElem;
     var current;
     var SavelocalButton;
+    var imgsrc;
+    imgsrc = chrome.runtime.getURL('/');
+    imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     if (typeof rowId == "undefined") {
         let rowId = textareaElem.parentElement.parentElement.parentElement
            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
     }
-    originalElem = document.querySelector("#preview-" + rowId + " .original");
+    let originalElem = document.querySelector("#preview-" + rowId + " .original");
+    let glossary = originalElem.querySelector('span .glossary-word');
+
     // if an original text contains a glossary verb that is not in the tranlation highlight it
-    if (result.newText != "") {
-        //console.debug("highlighted:", result.newText)
-       // console.debug("orgElem:", originalElem.innerText)
-        originalElem.innerHTML = result.newText;
+    if (result.newText != "" && typeof result.newText != "undefined") {
+        let markerimage = imgsrc + "/../img/warning-marker.png";
+        originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
+        let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+        let markimage = document.createElement("img");
+        markimage.src = markerimage;
+        markdiv.appendChild(markimage)
+        let markspan = document.createElement("span");
+        markspan.setAttribute("class", "mark-tooltiptext");
+        markdiv.appendChild(markspan);
+        markspan.innerHTML = result.newText;
     }
+
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
     checkElem = document.querySelector("#preview-" + rowId + " .priority");
     SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
@@ -1388,7 +1401,8 @@ function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale)
         .querySelector("span.original-raw");
     let originalText = original.innerText;
     result = validate(language, originalText, translation, locale);
-    updateStyle(textareaElem, result, newurl, showHistory,"True","",rowId);
+    updateStyle(textareaElem, result, newurl, showHistory, "True", "", rowId);
+    return result;
 }
 
 function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundCount, rowId, lineNo) {
@@ -1856,11 +1870,13 @@ function validate(language, original, translation, locale) {
                // Fix for not comparing properly due to special chars issue #279
                oWord = oWord.replace(/[^a-zA-Z0-9 ]/g, '');
                // we compare the original word against the key of the glossary
+               //console.debug("oWord:", oWord.toLowerCase(),"Itemkey", gItemKey.toLowerCase())
                if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
                    wordCount++;
                    isFound = false;
                    for (let gWord of gItemValue) {
                        // here we match the translation against the glossary noun
+                      // console.debug("compare:", gWord.toLowerCase(), translation.toLowerCase(), gItemValue)
                        if (match(language, gWord.toLowerCase(), translation.toLowerCase(), gItemValue)) {
                            isFound = true;
                            break;

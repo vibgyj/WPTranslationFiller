@@ -1239,7 +1239,6 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         rowchecked.checked = false;
                         //  }
                     }
-
                 }
             }
 
@@ -1394,7 +1393,6 @@ async function fetchsuggestions(row) {
     myTM = await document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .suggestions-wrapper`);
     return myTM;
 }
-
 
 // Part of the solution issue #204
 async function fetchli(result, editor, row, TMwait) {
@@ -2684,6 +2682,7 @@ function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
 
 // This function processes the result of the fetch
 function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {
+    var result;
     if (transtype == "single") {
         textareaElem = record.querySelector("textarea.foreign-text");
         textareaElem.innerText = translatedText;
@@ -2694,12 +2693,24 @@ function processTransl(original, translatedText, language, record, rowId, transt
         textareaElem.style.height = textareaElem.scrollHeight + "px";
         current.innerText = "transFill";
         current.value = "transFill";
-        //current.innerText = "waiting";
-        //current.value = "waiting";
         preview = document.querySelector("#preview-" + rowId + " td.translation");
         preview.innerText = translatedText;
-        validateEntry(language, textareaElem, "", "", rowId, locale);
-        
+        result = validateEntry(language, textareaElem, "", "", rowId, locale);
+        if (result.newText != "") {
+            let editorElem = document.querySelector("#editor-" + rowId + " .original");
+            let markdiv = document.createElement("div");
+            markdiv.setAttribute("class", "marker");
+            let markspan1 = document.createElement("span");
+            let markspan2 = document.createElement("span");
+            markspan1.setAttribute("class", "mark-devider");
+            //markspan1.style.color = "blue";
+            markspan2.setAttribute("class", "mark-explanation");
+            markdiv.appendChild(markspan1);
+            markdiv.appendChild(markspan2);
+            editorElem.appendChild(markdiv);
+            markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+            markspan2.innerHTML = result.newText;
+        } 
     }
     else {
         // PSS 09-04-2021 added populating plural text

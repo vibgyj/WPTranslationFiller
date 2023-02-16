@@ -57,6 +57,7 @@ jobs:
           cp src/img/question.svg src/chrome/img/question.svg
           cp src/img/success.svg src/chrome/img/success.svg
           cp src/img/warning.svg src/chrome/img/warning.svg
+          cp src/img/warning-marker.png src/chrome/img/warning-marker.png
           echo 'Copying Firefox files...'
           cp src/contentScript.js src/firefox/contentScript.js
           cp src/wptf-commonTranslate.js src/firefox/wptf-commonTranslate.js
@@ -85,6 +86,7 @@ jobs:
           cp src/img/question.svg src/firefox/img/question.svg
           cp src/img/success.svg src/firefox/img/success.svg
           cp src/img/warning.svg src/firefox/img/warning.svg
+          cp src/img/warning-marker.png src/chrome/img/warning-marker.png
           echo 'Creating Chrome zip...'
           cd ./src/chrome
           zip -r chrome-extension .
