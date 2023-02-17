@@ -1889,6 +1889,8 @@ function validate(language, original, translation, locale) {
                        // here we mark the verb if a glossary verb is not present issue #282
                        let re = new RegExp(oWord, "g"); // search for all instances
                        newText = original.replace(re, `<mark>${oWord}</mark>`);
+                       //17-02-2023 PSS fix for issue #283
+                       original = newText;
                        if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
                            toolTip += `${gItemKey} - ${gItemValue}\n`;
                        }
