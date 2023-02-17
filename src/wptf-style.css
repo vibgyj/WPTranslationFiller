@@ -1097,6 +1097,7 @@ button[disabled] {
     }
 }
 
+/** This container is used for the toast messages */
 .toast-container {
     top: 15px;
     right: 15px;
@@ -1306,15 +1307,15 @@ table.translations tr.preview.status-fuzzy {
         opacity: 1;
 }
 
-/* Tooltip container */
+/* Tooltip container for marking missing glossary verbs */
 .mark-tooltip {
     position: relative;
     display: inline-block;
     color: white;
     padding-right: 3px;
     padding-left: 3px;
-    min-width: 20;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     /* Other styles here */
 }
 /* Tooltip text */

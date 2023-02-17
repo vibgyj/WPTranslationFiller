@@ -34,7 +34,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     prevstate = current.innerText;
     //console.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
-    deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com/";
+    // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
+    let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
     if (language == "RO") {
         link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
     }
@@ -46,7 +47,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
         }
     }
-
+    //console.debug("deepl link:",link)
     const response = fetch(link)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
