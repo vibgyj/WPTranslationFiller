@@ -1820,11 +1820,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan1.innerText = translatedText;
                                     current.innerText = "transFill";
                                     current.value = "transFill";
-                                    var element1 = document.createElement("div");
-                                    element1.setAttribute("class", "trans_local_div");
-                                    element1.setAttribute("id", "trans_local_div");
-                                    element1.appendChild(document.createTextNode("Local"));
-                                    preview.appendChild(element1);
+
+                                    let localpresent = preview.querySelector("div.trans_local_div:nth-of-type(1)");
+                                    // 17-02-2034 PSS do not add the label twice
+                                    if (localpresent == null) {
+                                        let element1 = document.createElement("div");
+                                        element1.setAttribute("class", "trans_local_div");
+                                        element1.setAttribute("id", "trans_local_div");
+                                        element1.appendChild(document.createTextNode("Local"));
+                                        preview.appendChild(element1);
+                                    }
                                     preview = document.querySelector(`#preview-${row}`);
                                     rowchecked = preview.querySelector("td input");
                                     if (rowchecked != null) {
@@ -1835,8 +1840,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                             } else {
                                 // if it is as single with local then we need also update the preview
-                                // console.debug("testing two")
-                                // console.debug("preview in single:",preview)
                                 let spanmissing = preview.querySelector(" span.missing");
                                 if (spanmissing != null) {
                                    // console.debug("removing span");
@@ -1857,12 +1860,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                                 current.innerText = "transFill";
                                 current.value = "transFill";
-                                var element1 = document.createElement("div");
-                                element1.setAttribute("class", "trans_local_div");
-                                element1.setAttribute("id", "trans_local_div");
-                                element1.appendChild(document.createTextNode("Local"));
-                                preview.appendChild(element1);
-                                
+                                let localpresent = preview.querySelector("div.trans_local_div:nth-of-type(1)");
+                                // 17-02-2034 PSS do not add the label twice
+                                if (localpresent == null) {
+                                    let element1 = document.createElement("div");
+                                    element1.setAttribute("class", "trans_local_div");
+                                    element1.setAttribute("id", "trans_local_div");
+                                    element1.appendChild(document.createTextNode("Local"));
+                                    preview.appendChild(element1);
+                                }
                                 // we need to set the checkbox as marked
                                 preview = document.querySelector(`#preview-${row}`);
                                 rowchecked = preview.querySelector("td input");

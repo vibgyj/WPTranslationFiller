@@ -1318,19 +1318,22 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     }
     let originalElem = document.querySelector("#preview-" + rowId + " .original");
     let glossary = originalElem.querySelector('span .glossary-word');
-
-    // if an original text contains a glossary verb that is not in the tranlation highlight it
-    if (result.newText != "" && typeof result.newText != "undefined") {
-        let markerimage = imgsrc + "/../img/warning-marker.png";
-        originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
-        let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
-        let markimage = document.createElement("img");
-        markimage.src = markerimage;
-        markdiv.appendChild(markimage)
-        let markspan = document.createElement("span");
-        markspan.setAttribute("class", "mark-tooltiptext");
-        markdiv.appendChild(markspan);
-        markspan.innerHTML = result.newText;
+    let markerpresent = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+    // 17-02-2023 PSS do not add the marker twice if a retranslation is done
+    if (markerpresent == null) {
+        // if an original text contains a glossary verb that is not in the tranlation highlight it
+        if (result.newText != "" && typeof result.newText != "undefined") {
+            let markerimage = imgsrc + "/../img/warning-marker.png";
+            originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
+            let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+            let markimage = document.createElement("img");
+            markimage.src = markerimage;
+            markdiv.appendChild(markimage)
+            let markspan = document.createElement("span");
+            markspan.setAttribute("class", "mark-tooltiptext");
+            markdiv.appendChild(markspan);
+            markspan.innerHTML = result.newText;
+        }
     }
 
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
