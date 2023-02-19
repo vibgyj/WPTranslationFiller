@@ -1461,6 +1461,9 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
 }
 
 async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount) {
+																			  
+				  
+				  
     var current;
     var SavelocalButton;
     var separator1;
@@ -1499,8 +1502,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             // SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
         }
+	 
 
         if (current != null) {
+																		   
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             if (SavelocalButton == null) {
                 SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
@@ -1576,6 +1581,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 checkElem.innerHTML = result.percent;
                 separator1 = document.createElement("div");
                 separator1.setAttribute("class", "checkElem_save");
+									
                 checkElem.appendChild(separator1);
                 res = addCheckButton(rowId, checkElem, "1561")
                 SavelocalButton = res.SavelocalButton
@@ -1673,11 +1679,22 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         if ((result.toolTip).length > 0) {
             checkElem.setAttribute("title", result.toolTip);
+									  
+															 
+												 
         }
 
         // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author
+																																
+								  
+	
+																
+															
+																							
         if (showName == true) {
             showNameLabel(originalElem)
+													
+							 
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
@@ -1757,6 +1774,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
     }
     return { SavelocalButton };
 }
+
 
 function savetranslateEntryClicked(event) {
     var myWindow;

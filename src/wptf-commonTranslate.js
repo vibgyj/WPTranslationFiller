@@ -2704,18 +2704,28 @@ function processTransl(original, translatedText, language, record, rowId, transt
         result = validateEntry(language, textareaElem, "", "", rowId, locale);
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + rowId + " .original");
-            let markdiv = document.createElement("div");
-            markdiv.setAttribute("class", "marker");
-            let markspan1 = document.createElement("span");
-            let markspan2 = document.createElement("span");
-            markspan1.setAttribute("class", "mark-devider");
-            //markspan1.style.color = "blue";
-            markspan2.setAttribute("class", "mark-explanation");
-            markdiv.appendChild(markspan1);
-            markdiv.appendChild(markspan2);
-            editorElem.appendChild(markdiv);
-            markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-            markspan2.innerHTML = result.newText;
+            //19-02-2023 PSS we do not add the marker twice, but update it if present
+            let markerpresent = editorElem.querySelector("span.mark-explanation");
+            if (markerpresent == null) {
+                let markdiv = document.createElement("div");
+                markdiv.setAttribute("class", "marker");
+                let markspan1 = document.createElement("span");
+                let markspan2 = document.createElement("span");
+                markspan1.setAttribute("class", "mark-devider");
+                //markspan1.style.color = "blue";
+                markspan2.setAttribute("class", "mark-explanation");
+                markdiv.appendChild(markspan1);
+                markdiv.appendChild(markspan2);
+                editorElem.appendChild(markdiv);
+                markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+                markspan2.innerHTML = result.newText;
+            }
+            else {
+                if (markerpresent != null) {
+                    markerpresent.innerHTML = result.newText;
+                }
+                else { console.debug("markerpresent not found")}
+            }
         } 
     }
     else {
