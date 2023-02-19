@@ -217,7 +217,7 @@ button.addEventListener("click", function () {
         let myYear = thisdate.getFullYear();
         let mymonth = thisdate.getMonth();
         let myday = thisdate.getDate();
-        let thisDay = myday + "-" + mymonth + "-" + myYear;
+        let thisDay = myday + "-" + (mymonth +1) + "-" + myYear;
         
         myfile = glossaryFile.value.replace("C:\\fakepath\\", "");
         myfile = myfile + "   " + thisDay;
@@ -418,7 +418,7 @@ file.addEventListener("change", function () {
     let myYear = thisdate.getFullYear();
     let mymonth = thisdate.getMonth();
     let myday = thisdate.getDate();
-    let thisDay = myday + "-" + (mymonth +1) + "-" + myYear;
+    let thisDay = myday + "-" + (mymonth + 1) + "-" + myYear;
     let myfiledate = "   " + thisDay;
     updatedfilename.innerText = file.name + myfiledate;
     messageBox("info", "Glossary import ready, make sure you save the options and restart the addon afterwards!")
