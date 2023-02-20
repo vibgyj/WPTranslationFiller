@@ -1319,6 +1319,11 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     let originalElem = document.querySelector("#preview-" + rowId + " .original");
     let glossary = originalElem.querySelector('span .glossary-word');
     let markerpresent = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+    if (result.percent == 100) {
+        if (markerpresent != null){
+            markerpresent.remove();
+            }
+    }
     // 17-02-2023 PSS do not add the marker twice if a retranslation is done
     if (markerpresent == null) {
         // if an original text contains a glossary verb that is not in the tranlation highlight it
@@ -1526,6 +1531,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 checkElem.title = "Save the string";
                 if (typeof headerElem.style != "undefined") {
                     headerElem.style.backgroundColor = "green";
+                    // 20-02-2023 FIx for issue #286
+                    let markdiv = document.querySelector("#editor-" + rowId + " .marker");
+                    if (markdiv != null) {
+                        markdiv.remove();
+                    }
                 }
             }
             else if (result.percent > 66) {
