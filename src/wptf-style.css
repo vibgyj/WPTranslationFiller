@@ -1,16 +1,25 @@
+/* make ui smaller as it is unreadable with the new larg mask*/
+.gp-content {
+    max-width:1300px !important;
+}
+
+.panelTransMenu {
+    height:40px;
+}
+
 /* The Modal (background) */
 .modal {
-      display: none; /* Hidden by default */
-      position: fixed; /* Stay in place */
-      z-index: 1; /* Sit on top */
-      padding-top: 200px; /* Location of the box */
-      left: 0;
-      top: 0;
-      width: 100%; /* Full width */
-      height: 100%; /* Full height */
-      overflow: auto; /* Enable scroll if needed */
-      background-color: rgb(0,0,0); /* Fallback color */
-      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 200px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 
 /* Modal Content */
@@ -533,57 +542,67 @@
       padding: 1px 1px !important;
 }
 
-.panel-header-actions .translation-entry-my-button {
-      width: auto;
-      padding: 2px;
-      background-color: blue;
-      color: white;
-      vertical-align: middle;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+.translation-entry-my-button {
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
+    background-color: blue;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+    margin: 0.2em !important;
 }
 
-.panel-header-actions .translation-entry-my-button:focus {
+.translation-entry-my-button:focus {
       color: white;
 }
 
-.panel-header-actions .translation-entry-my-button:hover {
-      background-color: blue;
+.translation-entry-my-button:hover {
+      background-color: white !important;
       color: lightgray;
 }
 
-.panel-header-actions .translation-entry-my-button.started {
-        content: "";
-        display: inline-block;
-        margin: auto;
+.translation-entry-my-button.started {
+        background-color: #7FFFd4;
+        margin-top: 10px !important;
         border: 4px solid transparent;
         border-top-color: #ffffff;
         border-radius: 50%;
-        animation: button-loading-spinner 1s ease infinite;
+        /*animation: button-loading-spinner 1s ease infinite;*/
 }
 
-.panel-header-actions .translation-entry-my-button::before {
-      content: '\f326';
-      -webkit-font-smoothing: antialiased;
-      display: inline-block;
-      font: normal 20px/1 'dashicons';
-      vertical-align: middle;
-      width: 28px;
+.translation-entry-my-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        width: 28px;
+        padding-top: 5px !important;
 }
 
-.panel-header-actions .translation-entry-my-button.translated {
-      animation: none !important;
-      background: green;
-      border-radius: 0%;
-      border: 0px solid transparent;
-      display: inline-block;
-      padding-top: 0.1em !important;
-      padding-bottom: 0.1em !important;
-      margin: 5px !important;
+.my-translation-entry-my-button.translated {
+    height: 25px !important;
+    animation: none !important;
+    background: green;
+    border-radius: 0%;
+    border: 0px solid transparent;
+    display: inline-block;
+    padding-top: 20px !important;
 }
 
-.panel-header-actions .translation-entry-my-button.translated_error {
+.translation-entry-my-button.translated {
+    animation: none !important;
+    width: auto;
+    height: 28px !important;
+    background-color: #3CB371;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
+
+.translation-entry-my-button.translated_error {
       animation: none;
       background-color: red;
 }
@@ -602,61 +621,66 @@
       border-color: #135e96;
 }
 
-.panel-header-actions .addtranslation-entry-my-button {
-      width: 25px;
-      padding: 2px;
-      margin: 5px;
-      background-color: blue;
-      color: white;
-      vertical-align: middle;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+.addtranslation-entry-my-button {
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
+    background-color: blue;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+    margin: 0.2em !important;
 }
 
-.panel-header-actions .addtranslation-entry-my-button:focus {
+.addtranslation-entry-my-button:focus {
       color: white;
 }
 
-.panel-header-actions .addtranslation-entry-my-button:hover {
+.addtranslation-entry-my-button:hover {
       background-color: blue;
       color: lightgray;
 }
 
-.panel-header-actions .addtranslation-entry-my-button::before {
-      content: '\f326';
-      -webkit-font-smoothing: antialiased;
-      display: inline-block;
-      font: normal 20px/1 'dashicons';
-      vertical-align: middle;
-      width: 28px;
-}
+.addtranslation-entry-my-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        width: 28px;
+        padding-top: 5px !important;
+    }
 
-.panel-header-actions .addtranslation-entry-my-button.ready {
+.addtranslation-entry-my-button.ready {
       background-color: green;
 }
 
 .translocal-entry-missing-button {
-    display: inline-block;
-    vertical-align: middle;
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
     background: darkcyan;
     color: white;
-    padding-top: 2px;
-    padding-left: 3px;
-    padding-right: 5px;
-    padding-bottom: 3 px;
-    height: 27px;
-    font: normal 16px/1 'dashicons';
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
+    margin: 0.2em !important;
 }
 
+
 .translocal-entry-local-button {
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
+    background: darkcyan;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+    margin: 0.2em !important;
+}
+
+.my-translocal-entry-local-button {
     display: inline-block;
     vertical-align: middle;
     background: darkcyan;
@@ -1357,7 +1381,7 @@ table.translations tr.preview.status-fuzzy {
 
 
 .mark-tooltip .mark {
-    background-color:"yellow";
+    background-color: yellow;
 }
 
 .mark-devider {

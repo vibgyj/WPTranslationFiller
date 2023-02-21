@@ -2704,6 +2704,7 @@ function processTransl(original, translatedText, language, record, rowId, transt
         result = validateEntry(language, textareaElem, "", "", rowId, locale);
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + rowId + " .original");
+            console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
             let markerpresent = editorElem.querySelector("span.mark-explanation");
             if (markerpresent == null) {
