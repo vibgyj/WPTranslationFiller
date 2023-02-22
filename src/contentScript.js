@@ -1258,9 +1258,15 @@ async function checkbuttonClick(event) {
                 });
             }
             if (translateButton == null) {
-               // let panelHeaderActions = document.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
-                let panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
-                console.debug("check:",panelTransDiv)
+                let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)     
+                if (panelTransDiv == null) {
+                    // If the transdiv is not present we need to add it
+                    var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
+                    newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
+                }
+                // We need to repopulate the panelTransDiv as it now exists
+                panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+               // let panelHeaderActions = document.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");   
                 let translateButton = createElementWithId("my-button", `translate-${rowId}-translation-entry-my-button`);
                 translateButton.className = "translation-entry-my-button";
                 translateButton.onclick = translateEntryClicked;
@@ -1302,7 +1308,6 @@ async function checkbuttonClick(event) {
                         let markspan1 = document.createElement("span");
                         let markspan2 = document.createElement("span");
                         markspan1.setAttribute("class", "mark-devider");
-                        //markspan1.style.color = "blue";
                         markspan2.setAttribute("class", "mark-explanation");
                         markdiv.appendChild(markspan1);
                         markdiv.appendChild(markspan2);

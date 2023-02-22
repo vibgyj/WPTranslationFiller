@@ -4,7 +4,8 @@
 }
 
 .panelTransMenu {
-    height:40px;
+    height: 40px;
+    text-align: right;
 }
 
 /* The Modal (background) */
@@ -543,6 +544,7 @@
 }
 
 .translation-entry-my-button {
+    content: '\f326';
     width: auto;
     height: 25px !important;
     padding: 4px !important;
@@ -555,56 +557,61 @@
 }
 
 .translation-entry-my-button:focus {
-      color: white;
+    color: grey;
 }
 
 .translation-entry-my-button:hover {
-      background-color: white !important;
-      color: lightgray;
-}
-
-.translation-entry-my-button.started {
-        background-color: #7FFFd4;
-        margin-top: 10px !important;
-        border: 4px solid transparent;
-        border-top-color: #ffffff;
-        border-radius: 50%;
-        /*animation: button-loading-spinner 1s ease infinite;*/
+    background-color: white !important;
+    color: lightgray;
 }
 
 .translation-entry-my-button::before {
-        content: '\f326';
-        -webkit-font-smoothing: antialiased;
-        display: inline-block;
-        font: normal 20px/1 'dashicons';
-        width: 28px;
-        padding-top: 5px !important;
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
 }
 
-.my-translation-entry-my-button.translated {
-    height: 25px !important;
-    animation: none !important;
-    background: green;
-    border-radius: 0%;
-    border: 0px solid transparent;
+.translation-entry-my-button.started {
     display: inline-block;
-    padding-top: 20px !important;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
 }
+
 
 .translation-entry-my-button.translated {
     animation: none !important;
-    width: auto;
-    height: 28px !important;
     background-color: #3CB371;
+    border-radius: 0%;
+    border: 0px solid transparent;
+    display: inline-block;   
+    margin: 0px !important;
     color: white;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
+    width: auto;
+    height: 32px !important;
 }
 
 .translation-entry-my-button.translated_error {
       animation: none;
       background-color: red;
+}
+
+.translation-entry-my-button.restarted {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    background-color: blue;
+    animation: button-loading-spinner 1s ease infinite;
 }
 
 .translation-actions copy-button {

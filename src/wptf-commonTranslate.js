@@ -283,12 +283,22 @@ function applySentenceCase(str) {
             str = firstpart;
         }
     }
+    myPosition = str.indexOf('" ');
     //sometimes a blank is present before the "." which is not OK
     str = str.replaceAll(' .', '.')
     return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
-        return txt.charAt(0).toUpperCase() + txt.substr(1);
+        myPosition = str.indexOf('" ');
+        // if the string ends with '" ' then we do not need to set it to uppercase
+        if (myPosition != -1) {
+            return txt.charAt(0).toLowerCase() + txt.substr(1);
+        }
+        else {
+            return txt.charAt(0).toUpperCase() + txt.substr(1);
+        }
+
     });
 }
+
 function CheckUrl(translated,searchword) {
     // check if the text contains an URL
     const mymatches = translated.match(/\b((https?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
