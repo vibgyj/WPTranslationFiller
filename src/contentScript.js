@@ -1191,6 +1191,7 @@ function checkactionClick(event) {
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 async function checkbuttonClick(event) {
     var textareaElem;
+    var translateButton;
     if (event != undefined) {
             var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
             //event.preventDefault(); caused a problem within the single page enttry  
@@ -1202,7 +1203,7 @@ async function checkbuttonClick(event) {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
-            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+            translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
             //localStorage.setItem('interXHR', 'false');
@@ -1240,39 +1241,42 @@ async function checkbuttonClick(event) {
                     }
                 });
             }
-            if (translateButton == null) {
-                let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)     
-                if (panelTransDiv == null) {
-                    // If the transdiv is not present we need to add it
-                    var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
-                    newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
-                }
+            let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)
+            if (panelTransDiv == null) {
+                // If the transdiv is not present we need to add it
+                var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
+                newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
+
                 // We need to repopulate the panelTransDiv as it now exists
-                panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");   
-                let translateButton = createElementWithId("my-button", `translate-${rowId}-translation-entry-my-button`);
+                panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+                translateButton = document.querySelector(`#editor-${rowId}-translation-entry-my-button`);
+               
+                translateButton = createElementWithId("my-button", `translate-${rowId}--translation-entry-my-button`);
                 translateButton.className = "translation-entry-my-button";
                 translateButton.onclick = translateEntryClicked;
                 translateButton.innerText = "Translate";
-                // Add addtranslate button
-                let addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
+                panelTransDiv.insertBefore(translateButton, panelTransDiv.childNodes[0]);
+
+                addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
                 addTranslateButton.className = "addtranslation-entry-my-button";
                 addTranslateButton.onclick = addtranslateEntryClicked;
                 addTranslateButton.innerText = "Add Translation";
                 panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
 
-                let TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
+                TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
                 TranslocalButton.className = "translocal-entry-local-button";
                 TranslocalButton.innerText = "Local";
                 TranslocalButton.style.visibility = "hidden";
                 panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
 
-                let MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
+                MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
                 MissinglocalButton.className = "translocal-entry-missing-button";
                 MissinglocalButton.innerText = "Missing verbs";
                 MissinglocalButton.style.visibility = "hidden";
                 MissinglocalButton.style.animation = "blinking 1s infinite";
                 panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
             }
+               
             if (typeof textareaElem != "null") {
                 result = validateEntry('nl', textareaElem, "", "", rowId, "nl");
                 if (result.newText != "") {
