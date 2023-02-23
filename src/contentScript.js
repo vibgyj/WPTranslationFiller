@@ -1013,7 +1013,6 @@ function addTranslateButtons() {
             }
             var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
             newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
-            //#editor - 15325214 - 101155896 div.panelTransMenu
             let panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
            
             let translateButton = createElementWithId("my-button", `translate-${rowId}-translation-entry-my-button`);
@@ -1022,11 +1021,9 @@ function addTranslateButtons() {
             translateButton.onclick = translateEntryClicked;
             translateButton.innerText = "Translate";
             translateButton.style.cursor = "pointer";
-           // panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
             if (panelTransDiv != null) {
                 panelTransDiv.appendChild(translateButton);
             }
-
             // Add addtranslate button
             let addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
             addTranslateButton.href = "#";
@@ -1035,7 +1032,6 @@ function addTranslateButtons() {
             addTranslateButton.innerText = "Add Translation";
             addTranslateButton.style.cursor = "pointer";
             panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
-            //panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
 
             let TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
             TranslocalButton.className = "translocal-entry-local-button";
@@ -1049,8 +1045,6 @@ function addTranslateButtons() {
             MissinglocalButton.style.visibility = "hidden";
             MissinglocalButton.style.animation = "blinking 1s infinite";
             panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
-            //panelHeaderActions.insertBefore(MissinglocalButton, panelHeaderActions.childNodes[0]);
-
 
             let translationActions = e.querySelector("#editor-" + rowId + " div.editor-panel__left .panel-content .translation-actions");
             let panelCont = document.createElement("copy-button");
@@ -1085,21 +1079,16 @@ function importPageClicked(event) {
         if (file.type == "text/csv" || "application/vnd.ms-excel") {
             if (fileList[0]) {
                 let reader = new FileReader();
-                //reader.readAsBinaryString(fileList[0]);
                 // 30-10-2021 PSS added fix #156 for converting special chars
                 reader.readAsText(fileList[0]);
                 reader.onload = function (e) {
-                    //console.log("functions started:",e);
                     obj_csv.size = e.total;
                     obj_csv.dataFile = e.target.result;
                     //console.log(obj_csv.dataFile)
                     //File is imported so process it
                     parseDataBase(obj_csv.dataFile);
-
-                    //alert("Import is running please wait");
                 }
             }
-
         }
         else {
             // File is wrong type so do not process it
@@ -1142,7 +1131,6 @@ async function parseDataBase(data) {
         messageBox("info", "Import is ready records imported: " + (i-1));
 
     }
-    //importButton = document.querySelector(".paging a.import_translation-button");
     importButton.className += " ready";
 }
 
@@ -1157,7 +1145,6 @@ function addtoClipBoardClicked(event) {
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
 function checkactionClick(event) {
     if (event != undefined) {
-        //let action = event.target.textContent;
         // 19-06-2021 PSS changed the type to classname to prevent possible translation issue
         let classname = event.target.getAttribute("class");
         if (classname == "approve" || classname == "reject" || classname == "fuzzy" || classname == "dashicons dashicons - backup") {
@@ -1176,7 +1163,6 @@ function checkactionClick(event) {
                         // find the prev/old translations if present
                         //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + newRowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
                         url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + newRowId;
-                        //rowsFound = fetchOld("","",url,"True");
                         chrome.storage.sync.get(["showTransDiff"], async function (data) {
                             if (data.showTransDiff != "null") {
                                 chrome.storage.local.get(["toonDiff"]).then((result) => {
@@ -1211,7 +1197,6 @@ async function checkbuttonClick(event) {
             let action = event.target.textContent;
             // 30-06-2021 PSS added fetch status from local storage
             // Necessary to prevent showing old translation exist if started from link "Translation history"
-            // alert(action);
             // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
         if (action == "Details" || action == "✓Details") {    
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
@@ -1231,8 +1216,6 @@ async function checkbuttonClick(event) {
             myrec.scrollIntoView(true);
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
             chrome.storage.sync.set({ "noOldTrans": "True" }, function () {
-                // Notify that we saved.
-                // alert("Settings saved");
             });
             // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
             let f = document.getElementsByClassName("breadcrumb");
@@ -1265,20 +1248,16 @@ async function checkbuttonClick(event) {
                     newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
                 }
                 // We need to repopulate the panelTransDiv as it now exists
-                panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
-               // let panelHeaderActions = document.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");   
+                panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");   
                 let translateButton = createElementWithId("my-button", `translate-${rowId}-translation-entry-my-button`);
                 translateButton.className = "translation-entry-my-button";
                 translateButton.onclick = translateEntryClicked;
                 translateButton.innerText = "Translate";
-               // panelHeaderActions.insertBefore(translateButton, panelHeaderActions.childNodes[0]);
-               // panelTransDiv.insertBefore(translateButton, panelTransDiv.childNodes[0]);
                 // Add addtranslate button
                 let addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
                 addTranslateButton.className = "addtranslation-entry-my-button";
                 addTranslateButton.onclick = addtranslateEntryClicked;
                 addTranslateButton.innerText = "Add Translation";
-               // panelHeaderActions.insertBefore(addTranslateButton, panelHeaderActions.childNodes[0]);
                 panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
 
                 let TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
@@ -1286,7 +1265,6 @@ async function checkbuttonClick(event) {
                 TranslocalButton.innerText = "Local";
                 TranslocalButton.style.visibility = "hidden";
                 panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
-                //panelHeaderActions.insertBefore(TranslocalButton, panelHeaderActions.childNodes[0]);
 
                 let MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
                 MissinglocalButton.className = "translocal-entry-missing-button";
@@ -1294,7 +1272,6 @@ async function checkbuttonClick(event) {
                 MissinglocalButton.style.visibility = "hidden";
                 MissinglocalButton.style.animation = "blinking 1s infinite";
                 panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
-                //panelHeaderActions.insertBefore(MissinglocalButton, panelHeaderActions.childNodes[0]);
             }
             if (typeof textareaElem != "null") {
                 result = validateEntry('nl', textareaElem, "", "", rowId, "nl");
@@ -1467,10 +1444,10 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     if (typeof rowId != "undefined" && SavelocalButton !=null) {
         switch (current.innerText) {
             case "transFill":
-                    SavelocalButton.innerText = "Save";
-                    checkElem.title = "save the string";
-                    SavelocalButton.disabled = false;
-                break;
+                 SavelocalButton.innerText = "Save";
+                 checkElem.title = "save the string";
+                 SavelocalButton.disabled = false;
+                 break;
             case "waiting":
                  SavelocalButton.innerText = "Appr";
                  checkElem.title = "Approve the string";
@@ -1511,7 +1488,6 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
                 break;
         }
     }
-    //console.debug("Row or SavelocalButton empty!!");
 }
 
 async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount) {												   	  
@@ -1543,9 +1519,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if (typeof result.wordCount == "undefined") {
             if (SavelocalButton != null) {
                 current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-                //let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
                 if (current != null) {
-                    updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount,rowId,"1513");
+                    updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount,rowId,"1523");
                 }
                 else {
                     SavelocalButton.title = "Do not save!!";
@@ -1554,12 +1529,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             return;
         }
         if (result.wordCount == 0) {
-            // SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
         }
 
         if (current != null) {
-           
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             if (SavelocalButton == null) {
                 SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
@@ -1601,7 +1574,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 checkElem.title = "Save the string";
                 if (typeof headerElem.style != "undefined") {
                     panelTransDiv.style.backgroundColor = "yellow";
-                   // headerElem.style.backgroundColor = "yellow";
                 }
             }
             else if (result.percent > 33) {
@@ -1615,13 +1587,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 SavelocalButton.innerText = "Save";
                 checkElem.title = "Save the string";
                 checkElem.style.backgroundColor = "orange";
-               
                 if (typeof headerElem.style != "undefined") {
                     panelTransDiv.style.backgroundColor = "orange";
-                   // headerElem.style.backgroundColor = "orange";
                 }
             }
-
             else if (result.percent == 10) {
                 checkElem.innerHTML = "Mod";
                 separator1 = document.createElement("div");
@@ -1636,7 +1605,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 checkElem.title = "Save the string";
                 if (typeof headerElem.style != "undefined") {
                     panelTransDiv.style.backgroundColor = "purple";
-                   // headerElem.style.backgroundColor = "purple";
                 }
             }
             else if (result.percent < 33 && result.percent >0) {
@@ -1651,13 +1619,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 SavelocalButton.innerText = "Save";
                 checkElem.title = "Check the string";
                 checkElem.style.backgroundColor = "darkorange";
-
                 if (typeof headerElem.style != "undefined") {
                     panelTransDiv.style.backgroundColor = "darkorange";
-                    //headerElem.style.backgroundColor = "darkorange";
                 }
             }
-
             else if (result.percent == 0) {
                 // We need to set the title here also, otherwise it will occassionally not be shown
                 newtitle = checkElem.title;
@@ -1697,7 +1662,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     }
                     if (typeof headerElem.style != "undefined") {
                         panelTransDiv.style.backgroundColor = "red";
-                        //headerElem.style.backgroundColor = "red";
                     }
                 }
             }
@@ -1711,12 +1675,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if ((result.toolTip).length > 0) {
             headerElem.title = "";
             headertitle = '';
-            
             // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
             if (typeof headerElem.title != "undefined") {
                 headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
                 newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
-                //headerElem.setAttribute("title", headertitle);
                 if ((result.toolTip).length > 0) {
                    // console.debug('missing verbs:', result.toolTip)
                     missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
@@ -1748,12 +1710,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             if (document.getElementById("translate-" + rowId + "-translocal-entry-missing-button") != null) {
                 document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
             }
-
         }
         if ((result.toolTip).length > 0) {
             checkElem.setAttribute("title", result.toolTip);
         }
-
         // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author																										  																																	
         if (showName == true) {
             showNameLabel(originalElem)											 
