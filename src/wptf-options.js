@@ -38,7 +38,7 @@ let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 
-chrome.storage.sync.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -192,7 +192,7 @@ button.addEventListener("click", function () {
     else {
        let inter = parrotActive;
     }
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
         DeeplFree : showDeepl,
@@ -221,35 +221,35 @@ button.addEventListener("click", function () {
         
         myfile = glossaryFile.value.replace("C:\\fakepath\\", "");
         myfile = myfile + "   " + thisDay;
-        chrome.storage.sync.set({ glossaryFile: myfile });
+        chrome.storage.local.set({ glossaryFile: myfile });
 
-        chrome.storage.sync.set({ glossary: glossary });
-        chrome.storage.sync.set({ glossaryA: glossaryA });
-        chrome.storage.sync.set({ glossaryB: glossaryB });
-        chrome.storage.sync.set({ glossaryC: glossaryC });
-        chrome.storage.sync.set({ glossaryD: glossaryD });
-        chrome.storage.sync.set({ glossaryE: glossaryE });
-        chrome.storage.sync.set({ glossaryF: glossaryF });
-        chrome.storage.sync.set({ glossaryG: glossaryG });
-        chrome.storage.sync.set({ glossaryH: glossaryH });
-        chrome.storage.sync.set({ glossaryI: glossaryI });
-        chrome.storage.sync.set({ glossaryJ: glossaryJ });
-        chrome.storage.sync.set({ glossaryK: glossaryK });
-        chrome.storage.sync.set({ glossaryL: glossaryL });
-        chrome.storage.sync.set({ glossaryM: glossaryM });
-        chrome.storage.sync.set({ glossaryN: glossaryN });
-        chrome.storage.sync.set({ glossaryO: glossaryO });
-        chrome.storage.sync.set({ glossaryP: glossaryP });
-        chrome.storage.sync.set({ glossaryQ: glossaryQ });
-        chrome.storage.sync.set({ glossaryR: glossaryR });
-        chrome.storage.sync.set({ glossaryS: glossaryS });
-        chrome.storage.sync.set({ glossaryT: glossaryT });
-        chrome.storage.sync.set({ glossaryU: glossaryU });
-        chrome.storage.sync.set({ glossaryV: glossaryV });
-        chrome.storage.sync.set({ glossaryW: glossaryW });
-        chrome.storage.sync.set({ glossaryX: glossaryX });
-        chrome.storage.sync.set({ glossaryY: glossaryY });
-        chrome.storage.sync.set({ glossaryZ: glossaryZ });
+        chrome.storage.local.set({ glossary: glossary });
+        chrome.storage.local.set({ glossaryA: glossaryA });
+        chrome.storage.local.set({ glossaryB: glossaryB });
+        chrome.storage.local.set({ glossaryC: glossaryC });
+        chrome.storage.local.set({ glossaryD: glossaryD });
+        chrome.storage.local.set({ glossaryE: glossaryE });
+        chrome.storage.local.set({ glossaryF: glossaryF });
+        chrome.storage.local.set({ glossaryG: glossaryG });
+        chrome.storage.local.set({ glossaryH: glossaryH });
+        chrome.storage.local.set({ glossaryI: glossaryI });
+        chrome.storage.local.set({ glossaryJ: glossaryJ });
+        chrome.storage.local.set({ glossaryK: glossaryK });
+        chrome.storage.local.set({ glossaryL: glossaryL });
+        chrome.storage.local.set({ glossaryM: glossaryM });
+        chrome.storage.local.set({ glossaryN: glossaryN });
+        chrome.storage.local.set({ glossaryO: glossaryO });
+        chrome.storage.local.set({ glossaryP: glossaryP });
+        chrome.storage.local.set({ glossaryQ: glossaryQ });
+        chrome.storage.local.set({ glossaryR: glossaryR });
+        chrome.storage.local.set({ glossaryS: glossaryS });
+        chrome.storage.local.set({ glossaryT: glossaryT });
+        chrome.storage.local.set({ glossaryU: glossaryU });
+        chrome.storage.local.set({ glossaryV: glossaryV });
+        chrome.storage.local.set({ glossaryW: glossaryW });
+        chrome.storage.local.set({ glossaryX: glossaryX });
+        chrome.storage.local.set({ glossaryY: glossaryY });
+        chrome.storage.local.set({ glossaryZ: glossaryZ });
     }
     messageBox("info", "Settings successfully saved.<br>Please make sure that you enter<br>values in Destination Language<br> and select a Glossary File<br>and enter values in <br>Post Translation Replace");
 });

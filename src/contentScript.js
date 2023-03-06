@@ -58,7 +58,7 @@ function createElementWithId(type, id) {
 //sampleUse();
 //When performing bulk save the difference is shown in Meta #269
 // We need to set the default value for showing differents
-chrome.storage.sync.get(["showTransDiff"], function (data) {
+chrome.storage.local.get(["showTransDiff"], function (data) {
     if (data.showTransDiff != "null") {
         let setToonDiffOn = {
             'toonDiff': true
@@ -97,7 +97,7 @@ script.src = chrome.runtime.getURL('wptf-inject.js');
 (document.head || document.documentElement).prepend(script);
 
 ;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
-chrome.storage.sync.get( ["glotDictGlos"],
+chrome.storage.local.get( ["glotDictGlos"],
     function (data) {
         var showGlosLine = data.glotDictGlos;
         if (showGlosLine == "false") {
@@ -131,7 +131,7 @@ document.addEventListener("keydown", function (event) {
         var org_verb;
         var wrong_verb;
         event.preventDefault();
-        chrome.storage.sync.get( ["destlang"],
+        chrome.storage.local.get( ["destlang"],
             function (data) {
                 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
                 // issue #133 block non PTE/GTE users from using this function
@@ -178,10 +178,10 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "+")) {
         // This switches convert to lowercase on
         event.preventDefault();
-        chrome.storage.sync.set({
+        chrome.storage.local.set({
             convertToLower: true
         });
-        chrome.storage.sync.get(["convertToLower"], function (data) {
+        chrome.storage.local.get(["convertToLower"], function (data) {
             if (data.convertToLower != "null") {
                 convertToLow = data.convertToLower;
             }
@@ -191,10 +191,10 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "-")) {
         // This switches convert to lowercase off
         event.preventDefault();
-        chrome.storage.sync.set({
+        chrome.storage.local.set({
             convertToLower: false
         });
-        chrome.storage.sync.get(["convertToLower"], function (data) {
+        chrome.storage.local.get(["convertToLower"], function (data) {
             if (data.convertToLower != "null") {
                 convertToLow = data.convertToLower;
             }
@@ -209,7 +209,7 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "U")) {
         // import .po file
         event.preventDefault();
-        chrome.storage.sync.get( ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
+        chrome.storage.local.get( ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
             function (data) {
                 var allrows = [];
                 var myrows = [];
@@ -275,7 +275,7 @@ document.addEventListener("keydown", async function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "F3")) {
         event.preventDefault();
-        chrome.storage.sync.get(
+        chrome.storage.local.get(
             ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
             function (data) {
                 if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
@@ -306,7 +306,7 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F5")) {
         event.preventDefault();
-        chrome.storage.sync.get(
+        chrome.storage.local.get(
             ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
             function (data) {
                 if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
@@ -732,7 +732,7 @@ async function startBulkSave(event) {
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
     event.preventDefault();
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
         ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
@@ -771,7 +771,7 @@ function tmTransClicked(event) {
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
     event.preventDefault();
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
         ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
@@ -802,7 +802,7 @@ function localTransClicked(event) {
 
 function impFileClicked(event) {
     event.preventDefault();
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
         ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
         function (data) {
             var allrows = [];
@@ -849,7 +849,7 @@ function impFileClicked(event) {
 
 function translatePageClicked(event) {
     event.preventDefault();
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
         ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower","DeeplFree"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey !="" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl !="" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft !="" && data.transsel == "microsoft") {
@@ -907,7 +907,7 @@ function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
     toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
         ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
         function (data) {
             checkPage(data.postTranslationReplace,formal);
@@ -918,7 +918,7 @@ function checkPageClicked(event) {
 
 function exportPageClicked(event) {
     event.preventDefault();
-    chrome.storage.sync.get(
+    chrome.storage.local.get(
         ["apikey", "destlang"],
         function (data) {
             dbExport(data.destlang);
@@ -930,7 +930,7 @@ function exportPageClicked(event) {
 
 function loadGlossary() {
     glossary = [];
-    chrome.storage.sync.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
+    chrome.storage.local.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
         , "glossaryD", "glossaryE", "glossaryF", "glossaryG", "glossaryH", "glossaryI"
         , "glossaryJ", "glossaryK", "glossaryL", "glossaryM", "glossaryN", "glossaryO"
         , "glossaryP", "glossaryQ", "glossaryR", "glossaryS", "glossaryT", "glossaryU"
@@ -973,7 +973,7 @@ function loadGlossary() {
                 addTranslateButtons();
                 //console.debug("glossary:", glossary.length)
                 if (glossary.length > 27) {
-                    chrome.storage.sync.get(["showHistory"], function (data) {
+                    chrome.storage.local.get(["showHistory"], function (data) {
                         if (data.showHistory != "null") {
                             locale = checkLocale();
                             validatePage(data.destlang, data.showHistory, locale);
@@ -1163,7 +1163,7 @@ function checkactionClick(event) {
                         // find the prev/old translations if present
                         //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + newRowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
                         url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + newRowId;
-                        chrome.storage.sync.get(["showTransDiff"], async function (data) {
+                        chrome.storage.local.get(["showTransDiff"], async function (data) {
                             if (data.showTransDiff != "null") {
                                 chrome.storage.local.get(["toonDiff"]).then((result) => {
                                     console.log("Value toonDiff currently is " + result.toonDiff);
@@ -1216,7 +1216,7 @@ async function checkbuttonClick(event) {
             }
             myrec.scrollIntoView(true);
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
-            chrome.storage.sync.set({ "noOldTrans": "True" }, function () {
+            chrome.storage.local.set({ "noOldTrans": "True" }, function () {
             });
             // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
             let f = document.getElementsByClassName("breadcrumb");
@@ -1227,7 +1227,7 @@ async function checkbuttonClick(event) {
                 // Fetch only the current string to compaire with the waiting string
                 //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
                 url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
-                chrome.storage.sync.get(["showTransDiff"], async function (data) {
+                chrome.storage.local.get(["showTransDiff"], async function (data) {
                     if (data.showTransDiff != "null") {
                         if (data.showTransDiff == true) {
                             let res = await getToonDiff('toonDiff');
@@ -1324,8 +1324,7 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.sync
-        .get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
             var formal = checkFormal(false);
             var DeeplFree = data.DeeplFree;

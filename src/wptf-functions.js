@@ -267,7 +267,7 @@ function validatePage(language, showHistory, locale) {
         updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
     }
     // 30-06-2021 PSS set fetch status from local storage
-    chrome.storage.sync.set({ "noOldTrans": "False" }, function () {
+    chrome.storage.local.set({ "noOldTrans": "False" }, function () {
         // Notify that we saved.
         // alert("Settings saved");
     });
