@@ -701,12 +701,12 @@ async function checkPage(postTranslationReplace,formal) {
                 if (precomment != null) {
                     comment = precomment.innerText;
                     comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-                    toTranslate = checkComments(comment.trim());
+                    toTranslate = await checkComments(comment.trim());
                 }
                 else {
                     toTranslate = true;
                 }
-                if (toTranslate) {
+                if (toTranslate == true) {
                     // Check if it is a plural
                     // If in the original field "Singular is present we have a plural translation                
                     var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);

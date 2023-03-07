@@ -200,6 +200,7 @@ function deselectCheckBox(event) {
 
 // This function checks the quality of the current translations
 function validatePage(language, showHistory, locale) {
+    
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
     let url = f[0].firstChild.baseURI;
@@ -264,7 +265,9 @@ function validatePage(language, showHistory, locale) {
             nameDiff = false;
         }
         var result = validate(language, original, translation, locale);
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
+       
+       updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
+       
     }
     // 30-06-2021 PSS set fetch status from local storage
     chrome.storage.local.set({ "noOldTrans": "False" }, function () {
