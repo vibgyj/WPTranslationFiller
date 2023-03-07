@@ -200,6 +200,9 @@ function deselectCheckBox(event) {
 
 // This function checks the quality of the current translations
 function validatePage(language, showHistory, locale) {
+    // added timer to slow down the proces of fetching data
+    // without it we get 429 errors when fetching old records
+    var timeout = 1;
     
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
@@ -226,6 +229,7 @@ function validatePage(language, showHistory, locale) {
     }
 
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+        setTimeout(() => {
         let original = e.querySelector("span.original-raw").innerText;
         //console.debug("original:", original);
         let textareaElem = e.querySelector("textarea.foreign-text");
@@ -266,7 +270,9 @@ function validatePage(language, showHistory, locale) {
         }
         var result = validate(language, original, translation, locale);
        
-       updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
+            updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
+        }, timeout);
+        timeout += 1;
        
     }
     // 30-06-2021 PSS set fetch status from local storage
@@ -274,6 +280,7 @@ function validatePage(language, showHistory, locale) {
         // Notify that we saved.
         // alert("Settings saved");
     });
+    
 }
 
 function toastbox(type, message, time, titel, currWindow) {
@@ -312,4 +319,8 @@ function messageBox(type, message) {
         myWindow: currWindow,
         closeStyle: "alert-close",
     });
+}
+
+function sleep(milliseconds) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }

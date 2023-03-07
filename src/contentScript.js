@@ -49,13 +49,8 @@ async function sampleUse() {
 
 }
 
-function createElementWithId(type, id) {
-    let element = document.createElement(type);
-    element.id = id;
-    return element;
-}
 
-//sampleUse();
+
 //When performing bulk save the difference is shown in Meta #269
 // We need to set the default value for showing differents
 chrome.storage.local.get(["showTransDiff"], function (data) {
@@ -125,13 +120,14 @@ chrome.storage.local.get( ["glotDictGlos"],
 var fileSelector = document.createElement("input");
 fileSelector.setAttribute("type", "file");
 
-// PSS 31-07-2021 added new function to scrape consistency tool
-document.addEventListener("keydown", function (event) {
+
+document.addEventListener("keydown", async function (event) {
+    // PSS 31-07-2021 added new function to scrape consistency tool
     if (event.altKey && event.shiftKey && (event.key === "&")) {
         var org_verb;
         var wrong_verb;
         event.preventDefault();
-        chrome.storage.local.get( ["destlang"],
+        chrome.storage.local.get(["destlang"],
             function (data) {
                 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
                 // issue #133 block non PTE/GTE users from using this function
@@ -145,13 +141,13 @@ document.addEventListener("keydown", function (event) {
                         org_verb = "Original";
                     }
                     let f = document.querySelector("#editor-" + glob_row + " div.editor-panel__left .panel-content .foreign-text");
-                    if (f != "undefined" && e != null){
+                    if (f != "undefined" && e != null) {
                         wrong_verb = f.value;
                     }
                     else {
                         wrong_verb = "Wrong verb";
                     }
-                    scrapeconsistency(data.destlang,org_verb,wrong_verb);
+                    scrapeconsistency(data.destlang, org_verb, wrong_verb);
                 }
                 else {
                     messageBox("error", "You do not have permissions to start this function!");
@@ -159,9 +155,8 @@ document.addEventListener("keydown", function (event) {
             }
         );
     }
-});
 
-document.addEventListener("keydown", async function (event) {
+
     if (event.altKey && event.shiftKey && (event.key === "?")) {
         event.preventDefault();
         await handleStats();
@@ -456,11 +451,8 @@ document.addEventListener("keydown", async function (event) {
            },
         )
     }
-});
-
-// PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
-document.addEventListener("keydown", function (event) {
     if (event.altKey && (event.key === "r" || event.key === "R")) {
+        // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
         event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
@@ -537,6 +529,7 @@ document.addEventListener("keydown", function (event) {
         }
     }
 });
+
 
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
@@ -695,6 +688,12 @@ if (divPaging != null && divProjects == null) {
     //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+}
+
+function createElementWithId(type, id) {
+    let element = document.createElement(type);
+    element.id = id;
+    return element;
 }
 
 async function sampleUse() {
@@ -1334,7 +1333,7 @@ function translateEntryClicked(event) {
         });
 }
 
-function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId) {
+async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var currcount;
     var checkElem;
@@ -1428,6 +1427,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
         if (current.innerText != 'untranslated') {
+            
             fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName);
         }
     }
@@ -2234,7 +2234,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
            //     function (data) {
            //         single = data.noOldTrans;
             //    });
-
+       
         const data = fetch(url, {
             headers: new Headers({
                 "User-agent": "Mozilla/4.0 Custom User Agent"
@@ -2300,7 +2300,9 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     }
                 }
             }).catch(error => console.debug(error));
+   
 }
+
 
 /**
  * Auto hide next editor when status action open it.
