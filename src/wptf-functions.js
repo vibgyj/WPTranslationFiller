@@ -202,7 +202,7 @@ function deselectCheckBox(event) {
 function validatePage(language, showHistory, locale) {
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
-    var timeout = 1;
+    var timeout = 0;
     
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
@@ -269,10 +269,9 @@ function validatePage(language, showHistory, locale) {
             nameDiff = false;
         }
         var result = validate(language, original, translation, locale);
-       
-            updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
         }, timeout);
-        timeout += 1;
+        timeout += 20;
        
     }
     // 30-06-2021 PSS set fetch status from local storage

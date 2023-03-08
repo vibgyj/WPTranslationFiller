@@ -1824,12 +1824,14 @@ function addCheckButton(rowId, checkElem, lineNo) {
     else {
         //checkElem is present
         if (SavelocalButton == null) {
-            SavelocalButton = document.createElement("button");
-            SavelocalButton.id = "tf-save-button";
-            SavelocalButton.className = "tf-save-button";
-            SavelocalButton.innerText = ("Tmp");
-            SavelocalButton.onclick = savetranslateEntryClicked;
-            currentcel.appendChild(SavelocalButton);
+            if (currentcel != null) {
+               SavelocalButton = document.createElement("button");
+               SavelocalButton.id = "tf-save-button";
+               SavelocalButton.className = "tf-save-button";
+               SavelocalButton.innerText = ("Tmp");
+               SavelocalButton.onclick = savetranslateEntryClicked;
+               currentcel.appendChild(SavelocalButton);
+            }
         }
     }
     return { SavelocalButton };
