@@ -2137,8 +2137,15 @@ function check_span_missing(row,plural_line) {
 }
 
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
+    var translateButton;
     locale = checkLocale();
-    let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+   
+    translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
+    // if row is already translated the rowId has different format, so we need to search with this different format
+    if (translateButton == null) {
+        translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+    }
+
     translateButton.className += " started";
     translateButton.innerText = "Translate";
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
@@ -2341,7 +2348,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
             }
             
             // Translation completed
-            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+            translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+            // if row is already translated the rowId has different format, so we need to search with this different format
+            if (translateButton == null) {
+                translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+            }
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
             //validateEntry(destlang, textareaElem, "", "", rowId);
