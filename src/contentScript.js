@@ -451,6 +451,32 @@ document.addEventListener("keydown", async function (event) {
            },
         )
     }
+    if (event.altKey && event.shiftKey && (event.key === "S")) {
+        event.preventDefault();
+        chrome.storage.local.get(
+            ["LtKey","LtUser","LtLang"],
+            function (data) {
+                if (typeof data.LtKey != "undefined" && typeof data.LtUser != "undefined" && typeof data.LtLang != "undefined") {
+
+                    if (data.LtUser != "undefined" && data.LtLang != "undefined" ) {
+                        if (data.LtLang != "undefined") {
+                            startSpellCheck(data.LtKey, data.LtUser, data.LtLang);
+                        }
+                        else {
+                            messageBox("error", "You need to set the language");
+                        }
+                    }
+                    else {
+                        messageBox("error", "You need to set the parameter for the user");
+                    }
+                }
+                else {
+                    messageBox("error", "For " + data.LtKey + " no apikey is set!");
+                }
+            }
+        );
+    }
+
     if (event.altKey && (event.key === "r" || event.key === "R")) {
         // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
         event.preventDefault();
@@ -688,6 +714,10 @@ if (divPaging != null && divProjects == null) {
     //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+}
+
+async function startSpellCheck(LtKey, LtUser, LtLang) {
+    await spellcheck_page(LtKey, LtUser, LtLang)
 }
 
 function createElementWithId(type, id) {
@@ -1555,7 +1585,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     separator1 = document.createElement("div");
                     separator1.setAttribute("class", "checkElem_save");
                     checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1539")
+                    res = addCheckButton(rowId, checkElem, "1558")
                     SavelocalButton = res.SavelocalButton
                     SavelocalButton.innerText = "Appr";
                     checkElem.style.backgroundColor = "green";

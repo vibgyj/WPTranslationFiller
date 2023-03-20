@@ -43,6 +43,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-spellcheck.js",
         "wptf-buildstats.js",
         "wptf-functions.js",
         "wptf-purify.min.js",

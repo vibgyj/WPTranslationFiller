@@ -30,6 +30,9 @@ let transselectBox = document.getElementById("transselect");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("text_glossary_file");
 let glossaryFile = document.getElementById("glossary_file");
+let LtToolKeyTextbox = document.getElementById("languagetool_key");
+let LtToolUserTextbox = document.getElementById("languagetool_user");
+let LtToolLangTextbox = document.getElementById("languagetool_language");
 let TMwaitValue = document.getElementById("tmWait");
 let verbsTextbox = document.getElementById("text_verbs");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
@@ -38,7 +41,7 @@ let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -121,8 +124,26 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
     }
     else {
         let parrotActive = 'false';
-        }
-   // console.debug("parrotActive:",parrotActive)
+    }
+    if (data.LtKey != "null") {
+        LtToolKeyTextbox.value = data.LtKey;
+    }
+    else {
+        LtToolKeyTextbox.value = '-languagetool key->';
+    }
+    if (data.LtUser != "null") {
+        LtToolUserTextbox.value = data.LtUser;
+    }
+    else {
+        LtToolUserTextbox.value = '-languagetool user->';
+    }
+    if (data.LtLang != "null") {
+        LtToolLangTextbox.value = data.LtLang;
+    }
+    else {
+        LtToolLangTextbox.value = '-languagetool language->';
+    }
+   
 });
 
 let backbutton = document.getElementById("backbutton");
@@ -206,7 +227,10 @@ button.addEventListener("click", function () {
         glotDictGlos: showDictGlosLine,
         convertToLower: showConvertToLower,
         TMwait: TMwaitVal,
-        interXHR:inter
+        interXHR: inter,
+        LtKey: LtToolKeyTextbox.value,
+        LtUser: LtToolUserTextbox.value,
+        LtLang: LtToolLangTextbox.value
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  

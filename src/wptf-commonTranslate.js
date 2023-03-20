@@ -891,6 +891,7 @@ async function checkPage(postTranslationReplace,formal) {
 
 function markElements(preview,replaceVerb,orgText) {
     // Highlight all keywords found in the page, so loop through the replacement array
+    //console.debug("replaceVerb:",replaceVerb[0][0])
     if (previewNewText = 'undefined') {
         let previewNewText = "";
     }
@@ -1709,7 +1710,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 break;
                             }
                             else if (result == "Error 400") {
-                                messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                                messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                                 //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                 break;
                             }
@@ -1733,7 +1734,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                   break;
                                 }
                                 else if (result == "Error 403") {
-                                     messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
+                                     messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
                                     //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                    break;
                                 }
@@ -1929,7 +1930,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         break;
                                     }
                                     else if (result == "Error 400") {
-                                        messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                                        messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                                         //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
@@ -1953,7 +1954,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         break;
                                     }
                                     else if (result == "Error 403") {
-                                        messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
+                                        messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
                                         //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
@@ -2209,7 +2210,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
                         }
                         else if (result == "Error 400") {
-                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                         }
                         else if (result == "Error 456") {
                             messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
@@ -2228,7 +2229,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
                             //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
@@ -2286,6 +2287,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         }
                     }
                     else if (transsel == "deepl") {
+                        console.debug("language:",destlang)
                         result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == "Error 403") {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
@@ -2294,7 +2296,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
                         }
                         else if (result == "Error 400") {
-                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                         }
                         else if (result == "Error 456") {
                             messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
@@ -2312,7 +2314,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                             //alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
                            // alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
