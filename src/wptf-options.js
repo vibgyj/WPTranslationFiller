@@ -33,6 +33,7 @@ let glossaryFile = document.getElementById("glossary_file");
 let LtToolKeyTextbox = document.getElementById("languagetool_key");
 let LtToolUserTextbox = document.getElementById("languagetool_user");
 let LtToolLangTextbox = document.getElementById("languagetool_language");
+let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let verbsTextbox = document.getElementById("text_verbs");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
@@ -41,7 +42,7 @@ let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -143,6 +144,14 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
     else {
         LtToolLangTextbox.value = '-languagetool language->';
     }
+    if (data.LtFree != "null") {
+        if (data.LtFree == true) {
+            LtToolLangCheckbox.checked = true;
+        }
+        else {
+            LtToolLangCheckbox.checked = false;
+        }
+    }
    
 });
 
@@ -213,6 +222,15 @@ button.addEventListener("click", function () {
     else {
        let inter = parrotActive;
     }
+    if (document.querySelector("#LangToolFree:checked") !== null) {
+        
+        let LtFreeSet = document.querySelector("#LangToolFree:checked");
+        console.debug("free:",LtFreeSet)
+        LtFreeChecked = LtFreeSet.checked;
+    }
+    else {
+        LtFreeChecked = "false";
+    }
     chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
@@ -230,7 +248,8 @@ button.addEventListener("click", function () {
         interXHR: inter,
         LtKey: LtToolKeyTextbox.value,
         LtUser: LtToolUserTextbox.value,
-        LtLang: LtToolLangTextbox.value
+        LtLang: LtToolLangTextbox.value,
+        LtFree: LtFreeChecked
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  

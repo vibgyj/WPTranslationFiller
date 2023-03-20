@@ -1,6 +1,6 @@
 // JavaScript source code
 
-async function spellcheck_page(LtKey, LtUser, LtLang) {
+async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
     var replaced = false;
     var row;
     var newrowId;
@@ -38,9 +38,9 @@ async function spellcheck_page(LtKey, LtUser, LtLang) {
     var table = document.getElementById("translations");
     var tr = table.rows;
     var tbodyRowCount = table.tBodies[0].rows.length;
-       
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        setTimeout((timeout) => {
+        
+        setTimeout(async function(timeout,errorstate)  {
             found_verbs = [];
             countrows++;
             replaced = false;
@@ -98,7 +98,9 @@ async function spellcheck_page(LtKey, LtUser, LtLang) {
                         // Need to replace the existing html before replacing the verbs! issue #124
                         // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                        spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang)
+                        spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang,LtFree)
+                        //console.debug("na spell:", spell_result)
+                        errorstate = spell_result;
                         if (replaced) {
                                 repl_verb = result.repl_verb;
                                 // 09-09-2022 PSS fix for issue #244
@@ -116,7 +118,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang) {
                         previewNewText = previewElem.innerText;
                         translatedText = previewElem.innerText;
                         //console.debug("plural1 found:",previewElem,translatedText);
-                        spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText)
+                        spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree)
                        // result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced, original, countrows);
                        // previewNewText = result.previewNewText;
                       //  translatedText = result.translatedText;
@@ -191,16 +193,28 @@ async function spellcheck_page(LtKey, LtUser, LtLang) {
                 checkButton.className += " ready";
                 messageBox("info", "Check spelling done ");
             }
-        }, timeout);
+        }, timeout,errorstate);
         timeout += 50;
+        //console.debug("errorstate2:",errorstate)
+        if (errorstate != "OK") {
+            messageBox("error", "Error during spell check: " + errorstate[0])
+            checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+            checkButton.classList.remove("started");
+            checkButton.className += " translated";
+            checkButton.innerText = "Checked";
+            checkButton.className += " ready";
+            ; break;
+        }
     }
+    return errorstate
   }
 
 
-function spellcheck_entry(translation, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang) {
+async function spellcheck_entry(translation, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang,LtFree) {
     var spellcheck_verb;
     var response;
     var repl_verb;
+    var myurl;
     const update = {
         text: 'fout',
         language :'nl-NL',
@@ -219,8 +233,12 @@ function spellcheck_entry(translation, found_verbs, replaced, countfound, e, new
     
     // We need to convert the text to Utf8 otherwise the API does not accept it!!
     let text = encodeURI(translation);
-    let link = 'https://api.languagetoolplus.com/v2/check?text=' + text+ '&language=' + LtLang + '&username=' + LtUser + '&apiKey=' + LtKey + '&enabledOnly=false'
-    response = fetch(link, {
+    if (LtFree) {
+        myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
+    } else {
+        myurl = 'https://api.languagetoolplus.com/v2/check?text=' + text + '&language=' + LtLang + '&username=' + LtUser + '&apiKey=' + LtKey + '&enabledOnly=false'
+    }
+    response = fetch(myurl, {
         method: 'POST',
         mode: 'cors',
         credentials: "same-origin"
@@ -236,14 +254,14 @@ function spellcheck_entry(translation, found_verbs, replaced, countfound, e, new
             if (!response.ok) {
                 replaced=false
                 // get error message from body or default to response status
-                console.debug("data:", response.status)
+                //console.debug("data:", response.status)
                 if (typeof data != "undefined") {
-                    error = [data, error, response.status];
+                    error = [data, "", response.status];
                 }
                 else {
                     let message = 'NoData';
                     data = "noData";
-                    error = [ message, response.status];
+                    error = [ data,message,response.status];
                 }
                 return Promise.reject(error);
             }
@@ -265,7 +283,8 @@ function spellcheck_entry(translation, found_verbs, replaced, countfound, e, new
                                  } 
                                  found_verbs.push([spellcheck_verb, spellcheck_verb]);
                                  countfound++;
-                                 replaced = true
+                            replaced = true
+                            errorstate = "OK"
                                  entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText)
                                  //console.debug("res:", entry_res)
                          }
@@ -279,31 +298,37 @@ function spellcheck_entry(translation, found_verbs, replaced, countfound, e, new
         })
         .catch(error => {
             if (error[2] == "400") {
-                alert("Error 400 NoData.")
-            errorstate = '<br>We did not get data<br>';
+             //   alert("Error 400 NoData.")
+                errorstate = '<br>We did not get data<br>';
+                
             }
             if (error[2] == "403") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 errorstate = "Error 403";
+               
             }
             else if (error[2] == '404') {
-                alert("Error 404 The requested resource could not be found.")
+             //   alert("Error 404 The requested resource could not be found.")
                 errorstate = "Error 404";
+                
             }
             else if (error[2] == '456') {
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
                 errorstate = "Error 456";
+               
             }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
-                errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
+                errorstate = '<br>We did not get an answer from Languagetool<br>Check your internet connection';
+               
             }
             else {
-                //alert("Error message: " + error[1]);
+                //alert("Error message: " + error[1])
                 console.debug("Error:", error)
                 errorstate = "Error " + error[1];
             }
         });
+    return errorstate
 }
 
 function process_result(found_verbs, replaced, countfound, e, newrowId,currec, orgText) {

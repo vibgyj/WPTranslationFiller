@@ -454,13 +454,14 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "S")) {
         event.preventDefault();
         chrome.storage.local.get(
-            ["LtKey","LtUser","LtLang"],
+            ["LtKey","LtUser","LtLang", "LtFree"],
             function (data) {
-                if (typeof data.LtKey != "undefined" && typeof data.LtUser != "undefined" && typeof data.LtLang != "undefined") {
 
-                    if (data.LtUser != "undefined" && data.LtLang != "undefined" ) {
-                        if (data.LtLang != "undefined") {
-                            startSpellCheck(data.LtKey, data.LtUser, data.LtLang);
+                if (typeof data.LtKey != "undefined" && data.LtKey != "" ) {
+
+                    if (data.LtUser != "undefined" && data.LtUser != "" ) {
+                        if (data.LtLang != "undefined" && data.LtLang != "") {
+                            startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree);
                         }
                         else {
                             messageBox("error", "You need to set the language");
@@ -471,7 +472,7 @@ document.addEventListener("keydown", async function (event) {
                     }
                 }
                 else {
-                    messageBox("error", "For " + data.LtKey + " no apikey is set!");
+                    messageBox("error", "No apikey is set for languagetool!");
                 }
             }
         );
@@ -716,8 +717,8 @@ if (divPaging != null && divProjects == null) {
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
-async function startSpellCheck(LtKey, LtUser, LtLang) {
-    await spellcheck_page(LtKey, LtUser, LtLang)
+async function startSpellCheck(LtKey, LtUser, LtLang,LtFree) {
+    await spellcheck_page(LtKey, LtUser, LtLang,LtFree)
 }
 
 function createElementWithId(type, id) {
