@@ -209,7 +209,6 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
     return errorstate
   }
 
-
 async function spellcheck_entry(translation, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang,LtFree) {
     var spellcheck_verb;
     var response;
@@ -233,10 +232,11 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
     
     // We need to convert the text to Utf8 otherwise the API does not accept it!!
     let text = encodeURI(translation);
-    if (LtFree) {
+    //text = text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+    if (LtFree == true) {
         myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
     } else {
-        myurl = 'https://api.languagetoolplus.com/v2/check?text=' + text + '&language=' + LtLang + '&username=' + LtUser + '&apiKey=' + LtKey + '&enabledOnly=false'
+       myurl = 'https://api.languagetoolplus.com/v2/check?text=' + text + '&language=' + LtLang + '&username=' + LtUser + '&apiKey=' + LtKey + '&enabledOnly=false'
     }
     response = fetch(myurl, {
         method: 'POST',

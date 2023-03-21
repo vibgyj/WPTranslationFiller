@@ -451,28 +451,32 @@ document.addEventListener("keydown", async function (event) {
            },
         )
     }
-    if (event.altKey && event.shiftKey && (event.key === "S")) {
+    if (event.altKey && event.shiftKey && (event.key === "S" || event.key === "s")) {
         event.preventDefault();
         chrome.storage.local.get(
             ["LtKey","LtUser","LtLang", "LtFree"],
             function (data) {
+                if (data.LtFree == true) {
+                    startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree);
+                }
+                else {
+                    if (typeof data.LtKey != "undefined" && data.LtKey != "") {
 
-                if (typeof data.LtKey != "undefined" && data.LtKey != "" ) {
-
-                    if (data.LtUser != "undefined" && data.LtUser != "" ) {
-                        if (data.LtLang != "undefined" && data.LtLang != "") {
-                            startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree);
+                        if (data.LtUser != "undefined" && data.LtUser != "") {
+                            if (data.LtLang != "undefined" && data.LtLang != "") {
+                                startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree);
+                            }
+                            else {
+                                messageBox("error", "You need to set the language");
+                            }
                         }
                         else {
-                            messageBox("error", "You need to set the language");
+                            messageBox("error", "You need to set the parameter for the user");
                         }
                     }
                     else {
-                        messageBox("error", "You need to set the parameter for the user");
+                        messageBox("error", "No apikey is set for languagetool!");
                     }
-                }
-                else {
-                    messageBox("error", "No apikey is set for languagetool!");
                 }
             }
         );
