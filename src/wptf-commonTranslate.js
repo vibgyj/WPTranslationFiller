@@ -237,6 +237,7 @@ function convert_lower(text) {
 }
 
 function applySentenceCase(str) {
+    
     var myPosition
     // Convert each first word in a sentence to uppercase
     // 03-01-2022 PSS modified the regex issue #169
@@ -256,10 +257,11 @@ function applySentenceCase(str) {
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
         let secondpart = str.slice(myPosition + 2,);
+        console.debug("secondpart:",secondpart)
         //sometimes a blank is at the last position, so there is no second sentence!
         if (secondpart[0] != null) {
             secondpart = secondpart[0].toUpperCase() + secondpart.substr(1);
-            //console.debug("secondpart: '" + secondpart +"'")
+            console.debug("secondpart: '" + secondpart +"'")
             mySecondPosition = secondpart.indexOf(". ");
             if (mySecondPosition != -1) {
                 let thirdpart = secondpart.slice(0, mySecondPosition + 2);
@@ -271,11 +273,12 @@ function applySentenceCase(str) {
         }
         str = firstpart + secondpart;
     }
+    
     myPosition = str.indexOf("? ");
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
         let secondpart = str.slice(myPosition + 2,);
-        if (secondpart.length >0 ) {
+        if (secondpart.length > 0) {
             secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
             str = firstpart + secondpart;
         }
@@ -283,17 +286,22 @@ function applySentenceCase(str) {
             str = firstpart;
         }
     }
-    myPosition = str.indexOf('" ');
+    
     //sometimes a blank is present before the "." which is not OK
     str = str.replaceAll(' .', '.')
     return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
         myPosition = str.indexOf('" ');
         // if the string ends with '" ' then we do not need to set it to uppercase
+        console.debug("mypos:", myPosition)
+        console.debug("lengte:",str.length)
         if (myPosition != -1) {
-            return txt.charAt(0).toLowerCase() + txt.substr(1);
+            //21-03-2023 PSS rule switched because if within two sentences to first letter in second sentence was set to lowercase
+            return txt.charAt(0).toUpperCase() + txt.substr(1);
+            
+           // return txt.charAt(0).toLowerCase() + txt.substr(1);
         }
         else {
-            return txt.charAt(0).toUpperCase() + txt.substr(1);
+            return txt.charAt(0).toLowerCase() + txt.substr(1);
         }
 
     });
