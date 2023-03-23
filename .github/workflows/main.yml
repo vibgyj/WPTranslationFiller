@@ -51,6 +51,7 @@ jobs:
           cp src/wptf-block_rules.json src/chrome/wptf-block_rules.json
           cp src/wptf-inject.js src/chrome/wptf-inject.js
           cp src/wptf-buildstats.js src/chrome/wptf-buildstats.js
+          cp src/wptf-spellcheck.js src/chrome/wptf-spellcheck.js
           mkdir src/chrome/img
           cp src/img/error.svg src/chrome/img/error.svg
           cp src/img/info.svg src/chrome/img/info.svg
@@ -80,6 +81,7 @@ jobs:
           cp src/wptf-inject.js src/chrome/wptf-inject.js
           cp src/wptf-importfile.js src/chrome/wptf-importfile.js
           cp src/wptf-buildstats.js src/chrome/wptf-buildstats.js
+          cp src/wptf-spellcheck.js src/chrome/wptf-spellcheck.js
           mkdir src/firefox/img
           cp src/img/error.svg src/firefox/img/error.svg
           cp src/img/info.svg src/firefox/img/info.svg

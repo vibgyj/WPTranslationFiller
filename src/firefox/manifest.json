@@ -24,6 +24,11 @@
     "https://api.languagetoolplus.com/*",
     "https://api.cognitive.microsofttranslator.com/*"
   ],
+  "host_permissions": [
+    "*://translate.wordpress.org/*",
+    "*://api.languagetool.com/v2/*",
+    "*://api.languagetoolplus.com/v2/*"
+  ],
   "content_scripts": [
     {
       "matches": [
@@ -31,6 +36,7 @@
         "https://cdnjs.cloudflare.com/*"
       ],
       "js": [
+        "wptf-spellcheck.js",
         "wptf-buildstats.js",
         "wptf-functions.js",
         "wptf-purify.min.js",
