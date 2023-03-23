@@ -127,7 +127,10 @@ function preProcessOriginal(original, preverbs, translator) {
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
     //console.debug("before posrepl: '"+ translatedText +"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
-   // console.debug("after postrepl:'",translatedText,"'")
+    var urlRE = new RegExp("([a-zA-Z0-9]+://)?([a-zA-Z0-9_]+:[a-zA-Z0-9_]+@)?([a-zA-Z0-9.-]+\\.[A-Za-z]{2,4})(:[0-9]+)?([^ ])+");
+    let url_inresult = translatedText.match(urlRE)
+
+   console.debug("after postrepl:'",url_inresult[0],"'")
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     //console.debug('after replace spaces:', translatedText);
@@ -136,8 +139,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
-            index++;
+            myPosition = url_inresult[0].indexOf(match);
+            if (myPosition = -1) {
+                translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
+                index++;
+            }
         }
 
     }
@@ -145,8 +151,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
-            index++;
+            myPosition = url_inresult[0].indexOf(match);
+            if (myPosition = -1) {
+                translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
+                index++;
+            }
         }
         //console.debug('after replace x:', translatedText);
         // Deepl does remove crlf so we need to replace them after sending them to the API
@@ -257,11 +266,9 @@ function applySentenceCase(str) {
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
         let secondpart = str.slice(myPosition + 2,);
-        console.debug("secondpart:",secondpart)
         //sometimes a blank is at the last position, so there is no second sentence!
         if (secondpart[0] != null) {
             secondpart = secondpart[0].toUpperCase() + secondpart.substr(1);
-            console.debug("secondpart: '" + secondpart +"'")
             mySecondPosition = secondpart.indexOf(". ");
             if (mySecondPosition != -1) {
                 let thirdpart = secondpart.slice(0, mySecondPosition + 2);
@@ -273,7 +280,7 @@ function applySentenceCase(str) {
         }
         str = firstpart + secondpart;
     }
-    
+   
     myPosition = str.indexOf("? ");
     if (myPosition != -1) {
         firstpart = str.slice(0, myPosition + 2);
@@ -292,16 +299,23 @@ function applySentenceCase(str) {
     return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
         myPosition = str.indexOf('" ');
         // if the string ends with '" ' then we do not need to set it to uppercase
-        console.debug("mypos:", myPosition)
-        console.debug("lengte:",str.length)
+        //console.debug("mypos:", myPosition)
+       // console.debug("lengte:",str.length)
         if (myPosition != -1) {
             //21-03-2023 PSS rule switched because if within two sentences to first letter in second sentence was set to lowercase
-            return txt.charAt(0).toUpperCase() + txt.substr(1);
-            
+            myPosition = str.indexOf(".");
+            if (myPosition == -1) {
+               return txt.charAt(0).toLowerCase() + txt.substr(1);
+              }
+            else {
+                return txt;
+            }
            // return txt.charAt(0).toLowerCase() + txt.substr(1);
         }
         else {
-            return txt.charAt(0).toLowerCase() + txt.substr(1);
+            myPosition = str.indexOf(".");
+                //return txt.charAt(0).toLowerCase() + txt.substr(1);
+                return txt.charAt(0).toUpperCase() + txt.substr(1);
         }
 
     });
@@ -932,13 +946,14 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
         if (translatedText.includes(replaceVerb[i][0])) {
             var orgText = translatedText;
             // Enhencement issue #123
-            previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-            translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-            //console.debug("mark:", previewNewText, replaceVerb[i][1]);
-            repl_verb += myrow +": " + replaceVerb[i][0] + "->" + replaceVerb[i][1] + "<br>";
-            //console.debug("replaced:", replaceVerb[i][1], previewNewText, i)
-            countreplaced++;
-            replaced = true;
+            // fix for replacing verbs in url issue #290 check if the string does contain an URL
+            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                repl_verb += myrow + ": " + replaceVerb[i][0] + "->" + replaceVerb[i][1] + "<br>";
+                countreplaced++;
+                replaced = true;
+            }
         }
     }
     
