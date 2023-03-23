@@ -127,10 +127,7 @@ function preProcessOriginal(original, preverbs, translator) {
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
     //console.debug("before posrepl: '"+ translatedText +"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
-    var urlRE = new RegExp("([a-zA-Z0-9]+://)?([a-zA-Z0-9_]+:[a-zA-Z0-9_]+@)?([a-zA-Z0-9.-]+\\.[A-Za-z]{2,4})(:[0-9]+)?([^ ])+");
-    let url_inresult = translatedText.match(urlRE)
 
-   console.debug("after postrepl:'",url_inresult[0],"'")
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     //console.debug('after replace spaces:', translatedText);
@@ -139,11 +136,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            myPosition = url_inresult[0].indexOf(match);
-            if (myPosition = -1) {
                 translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
                 index++;
-            }
         }
 
     }
@@ -151,11 +145,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            myPosition = url_inresult[0].indexOf(match);
-            if (myPosition = -1) {
                 translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
                 index++;
-            }
         }
         //console.debug('after replace x:', translatedText);
         // Deepl does remove crlf so we need to replace them after sending them to the API
