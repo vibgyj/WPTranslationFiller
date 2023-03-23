@@ -245,8 +245,8 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
     };
     
     // We need to convert the text to Utf8 otherwise the API does not accept it!!
-    let text = translation.replaceAll('%d', '25d'); // This needs to be done before applying encodeURI !!
-    text = encodeURI(text);
+    let text = encodeURIComponent(translation);
+    //text = encodeURI(text);
     if (LtFree == true) {
         myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
     } else {
@@ -324,7 +324,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
             checkButton.innerText = "Checked";
             checkButton.className += " ready";
             if (errorstate != "OK") {
-                messageBox("error", "Error during spell check: " + error[2]+"<br>"+text.substr(0,30))
+                messageBox("error", "Error during spell check: " + error[2]+"<br>"+translation.substr(0,30))
             }
             if (error[2] == "400") {
                 //   alert("Error 400 NoData.")
