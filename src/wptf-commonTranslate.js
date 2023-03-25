@@ -173,10 +173,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     if (pos != -1) {
         translatedText = translatedText.replace("> .", ">");
     }
-    // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
-    if (convertToLower == true) {
-        translatedText = convert_lower(translatedText);
-    }
 
     // replverb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
@@ -189,6 +185,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         else {
             translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
         }
+    }
+    // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
+    if (convertToLower == true) {
+        translatedText = convert_lower(translatedText);
     }
     // check if the returned translation does have the same start/ending as the original
     translatedText = checkStartEnd(original, translatedText);
@@ -237,79 +237,17 @@ function convert_lower(text) {
 }
 
 function applySentenceCase(str) {
-    
-    var myPosition
-    // Convert each first word in a sentence to uppercase
-    // 03-01-2022 PSS modified the regex issue #169
-    // Below code is necessary to get the first char in the second sentense to uppercase if the line does not end with the regex
-    myPosition = str.indexOf("! ");
-    if (myPosition != -1) {
-        firstpart = str.slice(0, myPosition + 2);
-        let secondpart = str.slice(myPosition + 2,);
-        if (secondpart[0] != null) {
-            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
-        }
-        str = firstpart + secondpart;
+    //25-03-2023 PSS improved capitalizing first letter in sentence
+    var mySentences = str.match(/[^.!?\s][^.!?\n]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/g);
+    for (let i = 0; i < mySentences.length; i++) {
+       // console.log("zin:", mySentences[i]);
+        mySentences[i] = mySentences[i][0].toUpperCase() + mySentences[i].substring(1,);
     }
-    //console.debug("string:" ,str)
-    myPosition = str.indexOf(". ");
-    // PSS The code below needs improvement as the amount of sentences can vary
-    if (myPosition != -1) {
-        firstpart = str.slice(0, myPosition + 2);
-        let secondpart = str.slice(myPosition + 2,);
-        //sometimes a blank is at the last position, so there is no second sentence!
-        if (secondpart[0] != null) {
-            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1);
-            mySecondPosition = secondpart.indexOf(". ");
-            if (mySecondPosition != -1) {
-                let thirdpart = secondpart.slice(0, mySecondPosition + 2);
-                let fourthpart = thirdpart.slice(mySecondPosition + 2,);
-                if (typeof fourthpart[0] != 'undefined') {
-                    secondpart = thirdpart + fourthpart[0].toUpperCase() + fourthpart.substr(1)
-                }
-            }
-        }
-        str = firstpart + secondpart;
-    }
-   
-    myPosition = str.indexOf("? ");
-    if (myPosition != -1) {
-        firstpart = str.slice(0, myPosition + 2);
-        let secondpart = str.slice(myPosition + 2,);
-        if (secondpart.length > 0) {
-            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
-            str = firstpart + secondpart;
-        }
-        else {
-            str = firstpart;
-        }
-    }
-    
+    mySentences = mySentences.join(' ');
+    str = mySentences;   
     //sometimes a blank is present before the "." which is not OK
     str = str.replaceAll(' .', '.')
-    return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
-        myPosition = str.indexOf('" ');
-        // if the string ends with '" ' then we do not need to set it to uppercase
-        //console.debug("mypos:", myPosition)
-       // console.debug("lengte:",str.length)
-        if (myPosition != -1) {
-            //21-03-2023 PSS rule switched because if within two sentences to first letter in second sentence was set to lowercase
-            myPosition = str.indexOf(".");
-            if (myPosition == -1) {
-               return txt.charAt(0).toLowerCase() + txt.substr(1);
-              }
-            else {
-                return txt;
-            }
-           // return txt.charAt(0).toLowerCase() + txt.substr(1);
-        }
-        else {
-            myPosition = str.indexOf(".");
-                //return txt.charAt(0).toLowerCase() + txt.substr(1);
-                return txt.charAt(0).toUpperCase() + txt.substr(1);
-        }
-
-    });
+    return str
 }
 
 function CheckUrl(translated,searchword) {
