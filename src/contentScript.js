@@ -1590,9 +1590,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     separator1 = document.createElement("div");
                     separator1.setAttribute("class", "checkElem_save");
                     checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1558")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Appr";
+                    res = addCheckButton(rowId, checkElem, "1593")
+                    if (res != null) {
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.innerText = "Appr";
+                    }
                     checkElem.style.backgroundColor = "green";
                     checkElem.title = "Save the string";
                     if (typeof headerElem.style != "undefined") {

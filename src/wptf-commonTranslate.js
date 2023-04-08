@@ -179,10 +179,14 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
         if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                // PSS solution for issue #291
+                replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
         }
         else {
+            // PSS solution for issue #291
+            replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
             translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
         }
     }
@@ -667,13 +671,6 @@ async function checkPage(postTranslationReplace,formal) {
                     else {
                         transtype = "single";
                     }
-                    // Fetch the translations
-                    // let element = e.querySelector(".source-details__comment");
-                    //  let textareaElem = e.querySelector("textarea.foreign-text");
-                    // if (transtype == "single") {
-                    //     translatedText = textareaElem.innerText;
-                    // }
-
                     if (transtype == "single") {
                         // Fetch the translations
                         let element = e.querySelector(".source-details__comment");
@@ -871,8 +868,14 @@ function markElements(preview,replaceVerb,orgText) {
 }
 function replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced,original,myrow) {
     var replaced = false;
+    
     for (let i = 0; i < replaceVerb.length; i++) {
+        //console.debug("replverbs", replaceVerb[i][0])
+        // PSS solution for issue #291
+        replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+       // console.debug("replverbs", replaceVerb[i][0])
         if (translatedText.includes(replaceVerb[i][0])) {
+           // console.debug("replacement:", '"', replaceVerb[i][0], '"', '"', replaceVerb[i][1],'"')
             var orgText = translatedText;
             // Enhencement issue #123
             // fix for replacing verbs in url issue #290 check if the string does contain an URL
