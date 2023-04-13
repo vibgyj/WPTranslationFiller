@@ -41,8 +41,9 @@ let showHistCheckbox = document.getElementById("show-history");
 let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
+let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -152,6 +153,14 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
             LtToolLangCheckbox.checked = false;
         }
     }
+    if (data.Auto_spellcheck != "null") {
+        if (data.Auto_spellcheck == true) {
+            showLTCheckbox.checked = true;
+        }
+        else {
+            showLTCheckbox.checked = false;
+        }
+    }
    
 });
 
@@ -223,7 +232,6 @@ button.addEventListener("click", function () {
        let inter = parrotActive;
     }
     if (document.querySelector("#LangToolFree:checked") !== null) {
-        
         let LtFreeSet = document.querySelector("#LangToolFree:checked");
         console.debug("free:",LtFreeSet)
         LtFreeChecked = LtFreeSet.checked;
@@ -231,6 +239,17 @@ button.addEventListener("click", function () {
     else {
         LtFreeChecked = "false";
     }
+
+    if (document.querySelector("#Auto-LT-spellcheck:checked") !== null) {
+
+        let Auto_spellcheck_Set = document.querySelector("#Auto-LT-spellcheck:checked");
+        console.debug("spell:", Auto_spellcheck_Set)
+        LtAutoSpell = Auto_spellcheck_Set.checked;
+    }
+    else {
+        LtAutoSpell = "false";
+    }
+    console.debug("spell:",LtAutoSpell)
     chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
@@ -249,7 +268,8 @@ button.addEventListener("click", function () {
         LtKey: LtToolKeyTextbox.value,
         LtUser: LtToolUserTextbox.value,
         LtLang: LtToolLangTextbox.value,
-        LtFree: LtFreeChecked
+        LtFree: LtFreeChecked,
+        Auto_spellcheck: LtAutoSpell
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  

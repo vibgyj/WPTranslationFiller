@@ -322,18 +322,19 @@ You,Je
 wrong2,right2
             </textarea>
         </div>
-        <label class="form-input">
-            <span for="export_verbs">Export post translation verbs </span>
-            <fieldset>
+        <fieldset>
+            <label class="form-input">
+                <span for="export_verbs">Export post translation verbs </span>
                 <button type="button" id="exportverbs">Export verbs</button>
-            </fieldset>
-        </label>
-        <label id="dvImportSegments" class="fileupload ">
-            <span>Upload post translation replace CSV File</span>
-            <fieldset>
+            </label>
+        </fieldset>
+        <fieldset>
+            <label id="dvImportSegments" class="fileupload ">
+                <span>Upload post translation replace CSV File</span>
+
                 <input id="importPost" type="file" />
-            </fieldset>
-        </label>
+            </label>
+        </fieldset>
         <br />
         <label class="labeled-checkbox">
             <input type="checkbox" id="show-history">
@@ -350,6 +351,10 @@ wrong2,right2
         <label class="labeled-checkbox">
             <input type="checkbox" id="show-convertToLower">
             <span>Convert words to lowercase except first word</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="Auto-LT-spellcheck">
+            <span>Auto spellcheck after pagecheck</span>
         </label>
         <table id="footer">
             <tr>

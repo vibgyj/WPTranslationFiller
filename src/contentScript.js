@@ -944,10 +944,13 @@ function checkPageClicked(event) {
     var formal = checkFormal(false);
     toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.local.get(
-        ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
+        ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck"],
         function (data) {
-            checkPage(data.postTranslationReplace,formal);
+            checkPage(data.postTranslationReplace, formal);
             close_toast();
+            if (data.Auto_spellcheck == true) {
+                startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree);
+            }
         }
     );
 }
