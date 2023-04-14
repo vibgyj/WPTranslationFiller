@@ -37,13 +37,14 @@ let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let verbsTextbox = document.getElementById("text_verbs");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
+let spellcheckTextbox = document.getElementById("text_ignore_verbs");
 let showHistCheckbox = document.getElementById("show-history");
 let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -54,7 +55,7 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
             apikeydeeplCheckbox.checked = false
         }
     }
-    if (typeof data.TMwait == "undefined") {
+    if (typeof data.TMwait == 'undefined') {
         TMwait = 500;
     }
     else {
@@ -74,6 +75,12 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
     uploadedFile.innerText = `${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
+    if (typeof data.spellCheckIgnore == 'undefined') {
+        spellcheckTextbox.value = 'WordPress'
+    }
+    else {
+        spellcheckTextbox.value = data.spellCheckIgnore;
+    }
     if (data.showHistory != "null") {
         //console.debug(data.showHistory);
         if (data.showHistory == true) {
@@ -91,14 +98,14 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
             showDiffCheckbox.checked = true;
             let value = true;
             chrome.storage.local.set({ toonDiff: value }).then(() => {
-                console.log("Value toonDiff is set to true");
+                //console.log("Value toonDiff is set to true");
             });
         }
         else {
             showDiffCheckbox.checked = false;
             let value = false;
             chrome.storage.local.set({ toonDiff: value }).then(() => {
-                console.log("Value toonDiff is set to false");
+                //console.log("Value toonDiff is set to false");
             });
             //document.getElementById("comp-translations").checked = false;
         }
@@ -166,7 +173,7 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
 
 let backbutton = document.getElementById("backbutton");
 backbutton.addEventListener("click", function () {
-    console.debug("back clicked!!")
+   // console.debug("back clicked!!")
     window.history.back()
 });
 
@@ -196,6 +203,7 @@ button.addEventListener("click", function () {
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let preTranslation = preverbsTextbox.value;
+    let spellIgnoreverbs = spellcheckTextbox.value;
     let TMwaitVal = TMwaitValue.value;
     if (document.querySelector("#show-history:checked") !== null) {
         let Hist = document.querySelector("#show-history:checked");
@@ -259,6 +267,7 @@ button.addEventListener("click", function () {
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation,
+        spellCheckIgnore: spellIgnoreverbs,
         showHistory: showHist,
         showTransDiff: showDifference,
         glotDictGlos: showDictGlosLine,

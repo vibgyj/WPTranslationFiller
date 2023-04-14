@@ -53,7 +53,9 @@ function setPreTranslationReplace(preTranslationReplace) {
     }
 }
 
+function setIgnoreSpellCheck() {
 
+}
 function setPostTranslationReplace(postTranslationReplace, formal) {
     // PSS 21-07-2022 Currently when using formal, the translation is still default #225
     replaceVerb = [];
@@ -837,24 +839,40 @@ async function checkPage(postTranslationReplace,formal) {
     }
 }
 
-function markElements(preview,replaceVerb,orgText) {
-    // Highlight all keywords found in the page, so loop through the replacement array
-    //console.debug("replaceVerb:",replaceVerb[0][0])
+function needsMarking(markverb, spellcheckIgnore) {
+    console.debug("ignorelist1:", spellcheckIgnore)
+    var ignore = ["WooCommerce", "Yoast","strong","a href","href"];
+    
+    if ((ignore.find(element => element == markverb)) == undefined) {
+        return true
+    }
+    else {
+        return false
+    }
+}
+function markElements(preview, replaceVerb, orgText, spellcheckIgnore) {
+    // Highlight all keywords found in the page, so loop through the replacement array  
+    if (typeof spellcheckIgnore != 'undefined') {
+        spellcheckIgnore = spellcheckIgnore.split('\n');
+    }
     if (previewNewText = 'undefined') {
         let previewNewText = "";
     }
     var arr = [];
     for (let i = 0; i < replaceVerb.length; i++) {
         if (typeof orgText != 'undefined') {
-           //console.debug("replverb:",replaceVerb[i][0],orgText)
-            if (orgText.includes(replaceVerb[i][0])) {
-                high = replaceVerb[i][1];
-                high = high.trim();
-                if (high != "") {
-                    // push the verb into the array
-                    arr.push(high);
+            // Check if we need to mark the verb
+            if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
+            //if (needsMarking(replaceVerb[i][1]), spellcheckIgnore) {
+                if (orgText.includes(replaceVerb[i][0])) {
+                    high = replaceVerb[i][1];
+                    high = high.trim();
+                    if (high != "") {
+                        // push the verb into the array
+                        arr.push(high);
+                    }
                 }
-            } 
+            }
         }
         else {
             console.debug("no org")

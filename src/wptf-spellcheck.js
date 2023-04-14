@@ -1,19 +1,19 @@
 // JavaScript source code
 
-async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
+async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) {
     var replaced = false;
     var row;
     var newrowId;
     var myrow;
     var transtype;
     var toTranslate;
-    var found_verbs = [];
+    var found_verbs;
     const countfound = 0
     var myresult;
     var timeout = 50;
     var replaced = false;
     var translatedText = "";
-    var repl_verb = "";
+    var repl_verb = [];
     var end_table;
     var countrows = 0;
     var result;
@@ -105,7 +105,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
                             // Need to replace the existing html before replacing the verbs! issue #124
                             // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                            spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree)
+                            spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
                             //console.debug("na spell:", spell_result)
                             errorstate = spell_result;
                             if (replaced) {
@@ -126,7 +126,8 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
                             previewNewText = previewElem.innerText;
                             translatedText = previewElem.innerText;
                             //console.debug("plural1 found:",previewElem,translatedText);
-                            spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree)
+                            currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                            spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
                             // result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced, original, countrows);
                             // previewNewText = result.previewNewText;
                             //  translatedText = result.translatedText;
@@ -144,7 +145,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
                                 // Highlight all keywords found in the page, so loop through the replacement array
-                                markElements(previewElem, replaceVerb, orgText);
+                               // markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                             }
                             // plural line 2
                             previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
@@ -152,7 +153,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
                             if (previewElem != null) {
                                 previewNewText = previewElem.innerText;
                                 translatedText = previewElem.innerText;
-                                spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree)
+                                spell_result = spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
 
                                 //  previewNewText = result.previewNewText;
                                 //  translatedText = result.translatedText;
@@ -176,7 +177,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
                                     if (textareaElem1 != null) {
                                         textareaElem1.innerText = translatedText;
                                         textareaElem1.value = translatedText;
-                                        markElements(previewElem, replaceVerb, orgText);
+                                       // markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                                     }
                                 }
                             }
@@ -223,8 +224,9 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree) {
     return errorstate
   }
 
-async function spellcheck_entry(translation, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang,LtFree) {
-    var spellcheck_verb;
+async function spellcheck_entry(translation, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) {
+    var spellcheck_verb = [];
+    found_verbs = [];
     var response;
     var repl_verb;
     var myurl;
@@ -244,8 +246,8 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
         body: JSON.stringify(update),
     };
     
-    // We need to convert the text to Utf8 otherwise the API does not accept it!!
-    let text = encodeURIComponent(translation);
+  
+    let text = prepare_spellcheck(translation);
     //text = encodeURI(text);
     if (LtFree == true) {
         myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
@@ -300,17 +302,21 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                             countfound++;
                             replaced = true
 
-                            entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText)
+                          //  entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText)
                             errorstate = "OK"
                             //console.debug("res:", entry_res)
                         }
                         else {
                             errorstate = "NOK"
-                        }
+                        }   
                     }
+                    // PSS result only needs to be processed if all verb in sentence have been found
+                    entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, spellcheckIgnore)
 
                 }
-                else { console.debug("We did not find an error!") };
+                else {
+                    //console.debug("We did not find an error!")
+                };
                 if (typeof data.translations != 'undefined') {
                     translatedText = data.translations[0].text;
                 }
@@ -364,11 +370,19 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
     
 }
 
-function process_result(found_verbs, replaced, countfound, e, newrowId,currec, orgText) {
-    //console.debug("foundverbs:", found_verbs, countfound)
+function prepare_spellcheck(translation) {
+    // We need to convert the text to Utf8 otherwise the API does not accept it!!
+    let prepared = JSON.stringify(translation)
+    prepared = encodeURIComponent(prepared);
+    //console.debug("jason:",prepared)
+    return prepared
+}
+
+async function process_result(found_verbs, replaced, countfound, e, newrowId, currec, orgText, spellcheckIgnore) {
+    //console.debug("foundverbs:", found_verbs, countfound,spellcheckIgnore)
     repl_verb = found_verbs;
     if (replaced) {
-        //console.debug("We have found errors")
+        //console.debug("We have found errors",currec,newrowId,orgText)
         if (currec != null) {
             var current = currec.querySelector("span.panel-header__bubble");
             var prevstate = current.innerText;
@@ -414,7 +428,7 @@ function process_result(found_verbs, replaced, countfound, e, newrowId,currec, o
           //  console.debug("found_verbs:", found_verbs)
         
             if (typeof preview != "undefined") {
-                markElements(preview, found_verbs, orgText);
+                markElements(preview, found_verbs, orgText, spellcheckIgnore);
             }
         //}
 
