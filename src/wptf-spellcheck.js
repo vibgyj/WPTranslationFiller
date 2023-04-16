@@ -118,10 +118,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                                 }
                             }
                         }
-
-
                         else {
-
                             let previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
                             previewNewText = previewElem.innerText;
                             translatedText = previewElem.innerText;

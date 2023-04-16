@@ -518,7 +518,8 @@ function checkFormalPage(dataFormal) {
                         else {
                             preview = document.querySelector("#preview-" + myrow + " td.translation");
                         }
-                        markElements(preview, replaceVerb, orgText);
+                        // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                        markElements(preview, replaceVerb, orgText, spellcheckIgnore);
                     }
                 }
                 else {
@@ -542,7 +543,8 @@ function checkFormalPage(dataFormal) {
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
                         // Highlight all keywords found in the page, so loop through the replacement array
-                        markElements(previewElem, replaceVerb, orgText);
+                        // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                        markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                     }
                     // plural line 2
                     previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
@@ -571,7 +573,8 @@ function checkFormalPage(dataFormal) {
                             if (textareaElem1 != null) {
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
-                                markElements(previewElem, replaceVerb, orgText);
+                                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                             }
                         }
                     }
@@ -607,6 +610,7 @@ async function checkPage(postTranslationReplace,formal) {
     var replaced = false;
     var newrowId;
     var myrow;
+    var spellcheckIgnore = [];
     var checkButton = await document.querySelector(".wptfNavBarCont a.check_translation-button");
     checkButton.innerText = "Checking";
     //console.debug("Button classname:", translateButton.className);
@@ -636,6 +640,7 @@ async function checkPage(postTranslationReplace,formal) {
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
             countrows++;
             replaced = false;
+            replverb = []
             let original = e.querySelector("span.original-raw").innerText;
 
             let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
@@ -736,10 +741,10 @@ async function checkPage(postTranslationReplace,formal) {
                             if (preview != null) {
                                 preview.appendChild(myspan1);
                                 myspan1.appendChild(document.createTextNode(previewNewText));
-
                                 // PSS populate the preview before marking
                                 preview.innerText = DOMPurify.sanitize(previewNewText);
-                                markElements(preview, replaceVerb, orgText);
+                                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                markElements(preview, replaceVerb, orgText, spellcheckIgnore);
                             }
 
                         }
@@ -780,7 +785,8 @@ async function checkPage(postTranslationReplace,formal) {
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
                             // Highlight all keywords found in the page, so loop through the replacement array
-                            markElements(previewElem, replaceVerb, orgText);
+                            // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                            markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                         }
                         // plural line 2
                         previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
@@ -809,7 +815,8 @@ async function checkPage(postTranslationReplace,formal) {
                                 if (textareaElem1 != null) {
                                     textareaElem1.innerText = translatedText;
                                     textareaElem1.value = translatedText;
-                                    markElements(previewElem, replaceVerb, orgText);
+                                    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                    markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                                 }
                             }
                         }
@@ -851,9 +858,13 @@ function needsMarking(markverb, spellcheckIgnore) {
     }
 }
 function markElements(preview, replaceVerb, orgText, spellcheckIgnore) {
-    // Highlight all keywords found in the page, so loop through the replacement array  
-    if (typeof spellcheckIgnore != 'undefined') {
+    // Highlight all keywords found in the page, so loop through the replacement array 
+    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+    if (typeof spellcheckIgnore != 'undefined' && spellcheckIgnore.length != 0) {
         spellcheckIgnore = spellcheckIgnore.split('\n');
+    }
+    else {
+        spellcheckIgnore = [];
     }
     if (previewNewText = 'undefined') {
         let previewNewText = "";
@@ -862,14 +873,28 @@ function markElements(preview, replaceVerb, orgText, spellcheckIgnore) {
     for (let i = 0; i < replaceVerb.length; i++) {
         if (typeof orgText != 'undefined') {
             // Check if we need to mark the verb
-            if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
-            //if (needsMarking(replaceVerb[i][1]), spellcheckIgnore) {
+            // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+            if (spellcheckIgnore.length == 0) {
+                //if (needsMarking(replaceVerb[i][1]), spellcheckIgnore) {
                 if (orgText.includes(replaceVerb[i][0])) {
                     high = replaceVerb[i][1];
                     high = high.trim();
                     if (high != "") {
                         // push the verb into the array
                         arr.push(high);
+                    }
+                }
+
+            }
+            else {
+                if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
+                    if (orgText.includes(replaceVerb[i][0])) {
+                        high = replaceVerb[i][1];
+                        high = high.trim();
+                        if (high != "") {
+                            // push the verb into the array
+                            arr.push(high);
+                        }
                     }
                 }
             }
