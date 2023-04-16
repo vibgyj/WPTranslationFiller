@@ -127,7 +127,7 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
-    //console.debug("before posrepl: '"+ translatedText +"'")
+   // console.debug("before posrepl: '"+ translatedText +"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
 
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
@@ -182,6 +182,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                 // PSS solution for issue #291
+                //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
@@ -195,10 +196,29 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText);
+        // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
+        for (let i = 0; i < replaceVerb.length; i++) {
+            // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
+            if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
+                if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                    // PSS solution for issue #291
+                    //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
+                    replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                }
+            }
+            else {
+                // PSS solution for issue #291
+                replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+            }
+        }
+
     }
     // check if the returned translation does have the same start/ending as the original
     translatedText = checkStartEnd(original, translatedText);
     //console.debug("after check startend: '" + translatedText + "'")
+
     return translatedText;
 }
 
@@ -2678,7 +2698,7 @@ async function waitForElm(selector, newWind) {
  * @param {string} cls Class to apply to the highlighted keyword
  */
 function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
-    const flags = caseSensitive ? "gi" : "g";
+    const flags = caseSensitive ?  "gi" : "g";
     // Sort longer matches first to avoid
     // highlighting keywords within keywords.
     if (typeof keywords != "undefined") {
@@ -2708,7 +2728,7 @@ function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
 }
 
 // This function processes the result of the fetch
-function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {
+async function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {
     var result;
     if (transtype == "single") {
         textareaElem = record.querySelector("textarea.foreign-text");
