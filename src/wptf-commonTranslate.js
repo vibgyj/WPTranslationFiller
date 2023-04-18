@@ -176,7 +176,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replace("> .", ">");
     }
 
-    // replverb contains the verbs to replace
+    // replaceVerb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
         if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
@@ -631,6 +631,7 @@ async function checkPage(postTranslationReplace,formal) {
     var newrowId;
     var myrow;
     var spellcheckIgnore = [];
+    var repl_verb; //contains the list of found and replaced words
     var checkButton = await document.querySelector(".wptfNavBarCont a.check_translation-button");
     checkButton.innerText = "Checking";
     //console.debug("Button classname:", translateButton.className);
@@ -654,15 +655,12 @@ async function checkPage(postTranslationReplace,formal) {
         //setPreTranslationReplace(preTranslationReplace);
         let countreplaced = 0;
         var translatedText = "";
-        var repl_verb = "";
         var countrows = 0;
         var result;
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
             countrows++;
-            replaced = false;
-            replverb = []
+            replaced = false;    
             let original = e.querySelector("span.original-raw").innerText;
-
             let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
             let row = rowfound.split("-")[1];
             let newrow = rowfound.split("-")[2];
