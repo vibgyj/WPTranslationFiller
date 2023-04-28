@@ -261,7 +261,7 @@ button.addEventListener("click", function () {
     chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
-        apikeyOpenAI: "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",
+        apikeyOpenAI: "xxxxxxxxxxx",
         apikeyMicrosoft: apikeyMicrosoft,
         DeeplFree: showDeepl,
         transsel: transsel,
