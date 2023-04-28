@@ -44,7 +44,7 @@ let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -261,8 +261,9 @@ button.addEventListener("click", function () {
     chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
-        DeeplFree : showDeepl,
+        apikeyOpenAI: "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",
         apikeyMicrosoft: apikeyMicrosoft,
+        DeeplFree: showDeepl,
         transsel: transsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,

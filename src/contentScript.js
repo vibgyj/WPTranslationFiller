@@ -482,6 +482,30 @@ document.addEventListener("keydown", async function (event) {
         );
     }
 
+    if (event.altKey && event.shiftKey && (event.key === "A" || event.key === "a")) {
+        event.preventDefault();
+
+        console.debug("Translate started")
+        let rowId = document.querySelector("#editor");
+       // let myEditor = document.querySelector("source-string__singular");
+         console.debug("Translate started",rowId)
+        //let rowId = myEditor.getAttribute("row");
+        // rowId = event.target.id.split("-")[1];
+        //let myrowId = event.target.id.split("-")[2];
+        //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+        // So that needs to be added to the base rowId to find it
+        if (typeof myrowId != "undefined" && myrowId != "translation") {
+            newrowId = rowId.concat("-", myrowId);
+            rowId = newrowId;
+        }
+        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"], function (data) {
+            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+            var formal = checkFormal(false);
+            var DeeplFree = data.DeeplFree;
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+        });
+    }
+
     if (event.altKey && (event.key === "r" || event.key === "R")) {
         // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
         event.preventDefault();
@@ -1363,11 +1387,12 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
             var formal = checkFormal(false);
-            var DeeplFree = data.DeeplFree;
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+        var DeeplFree = data.DeeplFree;
+        console.debug("translator:",data.transsel)
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
         });
 }
 

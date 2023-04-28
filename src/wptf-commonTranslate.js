@@ -2153,7 +2153,7 @@ function check_span_missing(row,plural_line) {
     }
 }
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
     var translateButton;
     locale = checkLocale();
    
@@ -2162,7 +2162,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
     if (translateButton == null) {
         translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
     }
-
+    //console.debug("translate entry:",rowId,transsel)
     translateButton.className += " started";
     translateButton.innerText = "Translate";
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
@@ -2202,8 +2202,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
             }
             if (toTranslate) {
                 // console.debug("we need to translate");
+                
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
+                    console.debug("langsel:", transsel)
                     if (transsel == "google") {
                         result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 400") {
@@ -2218,7 +2220,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         }
                     }
                     else if (transsel == "deepl") {
-                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                        result = await AITranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == 'Error 403') {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                         }
@@ -2243,6 +2245,23 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
+                    else if (transsel == "OpenAI") {
+                        result = await AITranslate(original, destlang, e, apikeyOpenAI, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        if (result == "Error 401") {
+                            messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
                             messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
