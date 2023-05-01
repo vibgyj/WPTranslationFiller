@@ -4,15 +4,15 @@
  */
 
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
+async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    let result = await getTransAI(original, destlang, record, apikeyOpenAI, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+    let result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
     return errorstate;
 }
 
 
-async function getTransAI(original, language, record, apikeyOpenAI, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
+async function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -80,23 +80,23 @@ async function getTransAI(original, language, record, apikeyOpenAI, originalPreP
     var url = "https://api.openai.com/v1/engines/text-davinci-edit-001/edits";
 
     var xhr = new XMLHttpRequest();
-    var prompt = "I want you to translate from English to Dutch.";
+    var prompt = OpenAIPrompt;
 
     xhr.open("POST", url);
 
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", "Bearer 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");
+    xhr.setRequestHeader("Authorization", "Bearer " + apikeyOpenAI);
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 0) {
             console.log("status:",xhr.status);
             console.log("antwoord:", xhr.responseText);
             open_ai_response = xhr.responseText;
-            console.debug("result:", open_ai_response.split(","))
+            //console.debug("result:", open_ai_response.split(","))
             let jasonResult = JSON.parse(open_ai_response)
-            console.debug("json:", jasonResult, jasonResult.choices[0].text)
+          //  console.debug("json:", jasonResult, jasonResult.choices[0].text)
             let text = jasonResult.choices[0].text
-            console.debug("test:", text)
+          //  console.debug("test:", text)
            // if (typeof text != "undefined") {
             translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "deepl", convertToLower);
             processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);

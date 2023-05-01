@@ -26,6 +26,7 @@ let apikeyTextbox = document.getElementById("google_api_key");
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
+let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let transselectBox = document.getElementById("transselect");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("text_glossary_file");
@@ -36,6 +37,7 @@ let LtToolLangTextbox = document.getElementById("languagetool_language");
 let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let verbsTextbox = document.getElementById("text_verbs");
+let promptTextbox = document.getElementById("text_openai_prompt");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let spellcheckTextbox = document.getElementById("text_ignore_verbs");
 let showHistCheckbox = document.getElementById("show-history");
@@ -44,7 +46,7 @@ let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -65,6 +67,7 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI
     }
     apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
+    apikeyOpenAITextbox.value = data.apikeyOpenAI;
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -75,6 +78,12 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI
     uploadedFile.innerText = `${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
+    if (typeof data.OpenAIPrompt == 'undefined') {
+        promptTextbox.value = 'Enter prompt'
+    }
+    else {
+        promptTextbox.value = data.OpenAIPrompt;
+    }
     if (typeof data.spellCheckIgnore == 'undefined') {
         spellcheckTextbox.value = 'WordPress'
     }
@@ -191,6 +200,7 @@ button.addEventListener("click", function () {
         showDeepl = "false";
     }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
+    let apikeyOpenAI = apikeyOpenAITextbox.value;
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
     }
@@ -202,6 +212,7 @@ button.addEventListener("click", function () {
     }
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
+    let promptText = promptTextbox.value;
     let preTranslation = preverbsTextbox.value;
     let spellIgnoreverbs = spellcheckTextbox.value;
     let TMwaitVal = TMwaitValue.value;
@@ -261,13 +272,14 @@ button.addEventListener("click", function () {
     chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
-        apikeyOpenAI: "xxxxxxxxxxx",
+        apikeyOpenAI: apikeyOpenAI,
         apikeyMicrosoft: apikeyMicrosoft,
         DeeplFree: showDeepl,
         transsel: transsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation,
+        OpenAIPrompt: promptText,
         spellCheckIgnore: spellIgnoreverbs,
         showHistory: showHist,
         showTransDiff: showDifference,

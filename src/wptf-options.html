@@ -47,6 +47,9 @@
         #microsoft_api_key {
             width: 350px;
         }
+        #OpenAI_api_key {
+            width: 350px;
+        }
 
         #text_glossary_file {
             display: block;
@@ -62,6 +65,10 @@
             min-height: 100px;
         }
 
+        #text_openai_prompt {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
         #text_pre_verbs {
             width: calc(100% - 6px);
             min-height: 100px;
@@ -214,6 +221,16 @@
             </tr>
             <tr>
                 <td>
+                    <label for="OpenAI_api_key">OpenAI API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="OpenAI_api_key" type="text" value="-api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="translator">Select a translator:</label>
                 </td>
                 <td>
@@ -312,7 +329,12 @@
                 </td>
             </tr>
         </table>
-
+        <div class="form-input">
+            <label for="text_openai_prompt">OpenAI prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated">?</span>
+            <textarea id="text_openai_prompt">
+            </textarea>
+        </div>
         <div class="form-input">
             <label for="text_pre_verbs">Pre Translation Replace</label>
             <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
