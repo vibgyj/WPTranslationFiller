@@ -122,7 +122,19 @@ function preProcessOriginal(original, preverbs, translator) {
             //  console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
     }
-    // console.debug("After pre-processing:", original);
+    if (translator == "OpenAI") {
+        const matches = original.matchAll(placeHolderRegex);
+       // let index = 1;
+        //for (const match of matches) {
+        //    original = original.replace(match[0], `<x>${index}</x>`);
+//
+       //     index++;
+      //  }
+      //  if (index == 1) {
+            // console.debug("preProcessOriginal no placeholders found index === 0 ");
+       // }
+    }
+    //console.debug("After pre-processing:", original);
     return original;
 }
 
@@ -138,8 +150,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-                translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
-                index++;
+            translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
+            index++;
         }
 
     }
@@ -147,8 +159,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-                translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
-                index++;
+            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
+            index++;
         }
         //console.debug('after replace x:', translatedText);
         // Deepl does remove crlf so we need to replace them after sending them to the API
@@ -158,6 +170,37 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // Deepl pro adds "..." sometimes to the end of line, that is not what we expect
         //translatedText = translatedText.replaceAll("...", ".");
         //console.debug('after replace x:', translatedText);
+    }
+    else if (translator == "OpenAI") {
+        if (translatedText.startsWith("'") == true) {
+            if (original.startsWith("'") != true) {
+                translatedText = translatedText.substring(1, translatedText.length)
+            }
+
+        }
+        if (translatedText.endsWith("'") == true) {
+            if (original.endsWith("'") != true) {
+                translatedText = translatedText.substring(0, translatedText.length - 1)
+            }
+        }
+        if (translatedText.startsWith('"') == true) {
+            if (original.startsWith('"') != true) {
+                translatedText = translatedText.substring(1, translatedText.length)
+            }
+
+        }
+        if (translatedText.endsWith('"') == true) {
+            if (original.endsWith('"') != true) {
+                translatedText = translatedText.substring(0, translatedText.length - 1)
+            }
+        }
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 1;
+        for (const match of matches) {
+            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
+            index++;
+        }
+
     }
     
    
@@ -297,6 +340,16 @@ function checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
     // strip or add "." at the end of the line
     //console.debug("in checkstartend:",translatedText)
+    if (original.endsWith("\n") != true) {
+        if (translatedText.endsWith("\n") == true) {
+            translatedText = translatedText.substring(0, translatedText.length - 1);
+        }
+    }
+    if (original.endsWith(" ") != true) {
+        if (translatedText.endsWith(" ") == true) {
+            translatedText = translatedText.substring(0, translatedText.length - 1);
+        }
+    }
     if (original.endsWith(".") == true) {
         if (translatedText.endsWith(".") == false) {
             translatedText = translatedText + ".";
@@ -1604,7 +1657,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     translateButton.innerText = "Translated";
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
     //console.time("translation")
     var translate;
     var transtype = "";
@@ -1613,6 +1666,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
     var record = "";
     var row = "";
     var preview = "";
+    var pretrans;
+    var timeout = 10;
+    var stop = false;
+    var editor = false;
 
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
@@ -1639,6 +1696,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
             setPostTranslationReplace(postTranslationReplace,formal);
             setPreTranslationReplace(preTranslationReplace);
             for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+                //setTimeout(stop, timeout, (async function () { 
+                    console.debug("stopval:",stop,transsel)
                 transtype = "single";
                 // 16-08-2021 PSS fixed retranslation issue #118
                 let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
@@ -1696,7 +1755,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 // Do we need to translate ??
                 
                 if (toTranslate) {
-                    let pretrans = await findTransline(original, destlang);
+                    pretrans = await findTransline(original, destlang);
                     // 07-05-2021 PSS added pretranslate in pages
                     if (pretrans == "notFound") {
                         // 20-06-2021 PSS fixed that translation stopped when the page already is completely translated issue #85
@@ -1761,6 +1820,29 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                       break;
                                   }
                                }
+                        }
+                        else if (transsel == "OpenAI") {
+                            let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor);
+                            console.debug("OpenAi result:", result,errorstate)
+                            if (errorstate == "Error 401") {
+                                messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                                // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                                stop = true;
+                                break;
+                            }
+                            else if (result == "Error 403") {
+                                messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                                //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                break;
+                            }
+                            else {
+                                if (errorstate != "OK") {
+                                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                                    stop = true;
+                                    break;
+                                    //alert("There has been some uncatched error: " + errorstate);
+                                }
+                            }
                         }
                     } else {
                         // Pretranslation found!
@@ -1923,7 +2005,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
                                 if (transsel == "google") {
-                                    result = await googleTranslate(plural, destlang, e, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                                    result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower,editor);
                                     if (errorstate == "Error 400") {
                                         messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                                         //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
@@ -1963,7 +2045,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     }
                                 }
                                 else if (transsel == "microsoft") {
-                                    result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
+                                    result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree);
                                     if (result == "Error 401") {
                                         messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
                                         //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -1982,6 +2064,28 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         }
                                     }
                                 }
+                                else if (transsel == "OpenAI") {
+                                     result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                                    console.debug("OpenAi result:",result)
+                                    if (result == "Error 401") {
+                                         messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                                        // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                                        break;
+                                        stop = true;
+                                     }
+                                     else if (result == "Error 403") {
+                                         messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                                         //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                     }
+                                     else {
+                                         if (errorstate != "OK") {
+                                             stop = true;
+                                             messageBox("error", "There has been some uncatched error: " + errorstate);
+                                             break;
+                                             //alert("There has been some uncatched error: " + errorstate);
+                                       }
+                                }
+                    }
                             }
                             else {
                                 // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
@@ -2095,7 +2199,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 if (completedCallback) {
                     let textareaElem = record.querySelector("textarea.foreign-text");
                     completedCallback(original, textareaElem.innerText);
-                }
+                    }
+                    console.debug("stop before end:", stop,errorstate)
+                    //return stop;
+              //  })()), stop, errorstate;
+               // timeout += 10;
+                console.debug("stop value:",stop,errorstate)
+              //  if (errorstate != "OK") {
+               //     console.debug("stoppen = true!!!")
+              //      break;
+               // }
             }
             // Translation completed  
             let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
@@ -2156,7 +2269,6 @@ function check_span_missing(row,plural_line) {
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
     var translateButton;
     locale = checkLocale();
-   
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
     // if row is already translated the rowId has different format, so we need to search with this different format
     if (translateButton == null) {
@@ -2202,10 +2314,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             }
             if (toTranslate) {
                 // console.debug("we need to translate");
-                
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
-                    console.debug("langsel:", transsel)
                     if (transsel == "google") {
                         result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
                         if (errorstate == "Error 400") {
@@ -2258,7 +2368,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "OpenAI") {
-                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        let editor = true;
+                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor);
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");

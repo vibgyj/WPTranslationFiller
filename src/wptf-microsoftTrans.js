@@ -82,14 +82,10 @@ async function getTransMicrosoft(record, language, apikeyMicrosoft, original, or
             }
             else {
                 //We do have a result so process it
-                //console.debug('result:', data.translations[0].text);
-
                 translatedText = data[0].translations[0].text;
-                //console.debug("translated text:", translatedText);
-                // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
                 translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-                //console.debug("sendAPIRequest translatedText after postProces:", translatedText);
+                return Promise.resolve("OK");
             }
         })
         .catch(error => {
