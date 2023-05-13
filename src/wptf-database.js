@@ -67,10 +67,17 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
         translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
 
     }
-
-    let textareaElem = record.querySelector("textarea.foreign-text");
+    //console.debug("editor in database:",record)
+    let textareaElem = await record.querySelector("textarea.foreign-text");
+    //console.debug("textareaElem:",textareaElem)
+    textareaElem = record.querySelector("textarea.foreign-text");
     textareaElem.innerText = translatedText;
+    // PSS 29-03-2021 Added populating the value of the property to retranslate            
     textareaElem.value = translatedText;
+    //PSS 25-03-2021 Fixed problem with description box issue #13
+    textareaElem.style.height = "auto";
+    textareaElem.style.height = textareaElem.scrollHeight + "px";
+    
     if (typeof current != "undefined") {
         current.innerText = "transFill";
         current.value = "transFill";

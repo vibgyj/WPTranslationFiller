@@ -1613,13 +1613,13 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         setTimeout(() => {
                         //glotpress_close.click();
                             resolve(myTM);
-                        }, TMwait);
+                        }, 400);
                     }
                     else {
                         setTimeout(() => {
                         resolve("No suggestions");
                        // glotpress_close.click();
-                        }, TMwait);
+                        }, 400);
                     }
                 });
             });
@@ -1629,6 +1629,15 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     if (typeof res != null) {
                         //console.debug("Fetchli result:",res)
                         res = getTM(res, row, record, destlang, original, replaceVerb, transtype);
+                        let textareaElem = record.querySelector("textarea.foreign-text");
+                       // console.debug("textareaElem:", textareaElem)
+                        
+                        //textareaElem.innerText = res;
+                        // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                       // textareaElem.value = res;
+                        //PSS 25-03-2021 Fixed problem with description box issue #13
+                       // textareaElem.style.height = "auto";
+                       // textareaElem.style.height = textareaElem.scrollHeight + "px";
                         // With center it works best, but it can be put on the top, center, bottom
                         //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
                         // Determine which row we need to push to the top
@@ -1655,7 +1664,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
 
         }
         let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
-        glotpress_close.click();
+        //glotpress_close.click();
     }
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
