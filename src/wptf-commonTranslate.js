@@ -1628,10 +1628,26 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 let myresult = await fetchli(result, editor, row, TMwait).then(res => {
                     if (typeof res != null) {
                         //console.debug("Fetchli result:",res)
-                        res = getTM(res, row, record, destlang, original, replaceVerb, transtype);
+                        myres = getTM(res, row, record, destlang, original, replaceVerb, transtype);
                         let textareaElem = record.querySelector("textarea.foreign-text");
                        // console.debug("textareaElem:", textareaElem)
-                        
+                        if (is_pte) {
+                            rowchecked = preview.querySelector("th input");
+                        }
+                        else {
+                            rowchecked = preview.querySelector("td input");
+                       }
+                        if (rowchecked != null) {
+                            if (!rowchecked.checked) {
+                                //if (transtype == 'single') {
+                                if (res == "No suggestions") {
+                                    rowchecked.checked = false;
+                                }
+                                else {
+                                    rowchecked.checked = true;
+                                }
+                            }
+                        }
                         //textareaElem.innerText = res;
                         // PSS 29-03-2021 Added populating the value of the property to retranslate            
                        // textareaElem.value = res;
@@ -1645,6 +1661,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                        // newRow = oldRow.replace("editor", "preview")
                        // myRow = document.querySelector(`#${newRow}`);
                        // myRow.scrollIntoView(true);
+                       
                     }
                     else {
                         console.debug("notfound");
@@ -2215,11 +2232,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     let textareaElem = record.querySelector("textarea.foreign-text");
                     completedCallback(original, textareaElem.innerText);
                     }
-                    console.debug("stop before end:", stop,errorstate)
+                    //console.debug("stop before end:", stop,errorstate)
                     //return stop;
               //  })()), stop, errorstate;
                // timeout += 10;
-                console.debug("stop value:",stop,errorstate)
+               // console.debug("stop value:",stop,errorstate)
               //  if (errorstate != "OK") {
                //     console.debug("stoppen = true!!!")
               //      break;

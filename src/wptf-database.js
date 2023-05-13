@@ -119,22 +119,9 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              preview.appendChild(element1);
 
             // we need to set the checkbox as marked
-            rowchecked = preview.querySelector("td input");
-            if (rowchecked != null) {
-                if (!rowchecked.checked) {
-                    if (transtype == 'single') {
-                       //console.debug("single:", transtype)
-                       rowchecked.checked = true;
-                    }
-                    else {
-                        //console.debug("plural:", transtype)
-                        //console.debug("TM not found plural!");
-                        if (preview != null) {
-                            preview.style.display = "none";
-                        }
-                    }
-                }
-             }
+             // we need to set the checkbox as marked
+            
+           
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record
              var previewClass = document.querySelector(`#preview-${row}`);
@@ -172,8 +159,8 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     if (localButton != null) {
         localButton.style.visibility = "visible";
     } else {
-        // console.debug("TM not found single!");
-        // console.debug("preview:", preview);
+         console.debug("TM not found single!");
+         console.debug("preview:", preview);
         if (preview != null) {
             preview.style.display = "none";
             rowchecked = preview.querySelector("td input");
