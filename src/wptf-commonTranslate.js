@@ -1610,12 +1610,16 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 return new Promise((resolve, reject) => {
                     myTM = fetchsuggestions(row);
                     if (typeof myTM != 'undefined') {
-                        glotpress_close.click();
-                        resolve(myTM);
+                        setTimeout(() => {
+                        //glotpress_close.click();
+                            resolve(myTM);
+                        }, TMwait);
                     }
                     else {
-                        reject("No suggestions");
-                        glotpress_close.click();
+                        setTimeout(() => {
+                        resolve("No suggestions");
+                       // glotpress_close.click();
+                        }, TMwait);
                     }
                 });
             });
@@ -1650,6 +1654,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             console.debug('Found plural!');
 
         }
+        let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
+        glotpress_close.click();
     }
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");

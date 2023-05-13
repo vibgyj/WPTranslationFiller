@@ -60,11 +60,12 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     var result = "";
     var translatedText;
     convertToLower = false;
-
+    //console.debug("myLi:",myLi)
     translatedText = myLi;
     //z("myLI:", myLi, translatedText)
     if (translatedText != 'No suggestions') {
-        translatedText = postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
+        translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
+
     }
 
     let textareaElem = record.querySelector("textarea.foreign-text");
