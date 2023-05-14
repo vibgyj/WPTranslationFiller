@@ -1600,7 +1600,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             //Needs to be put into a function, because now it is unnessary double code
             toTranslate = true;
             // we need to remember which editor to close
-            let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
+           // let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
             editoropen = await openEditor(preview);
             if (editoropen == "Open") {
                 //editor.style.display = "none";
@@ -1619,7 +1619,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         setTimeout(() => {
                         resolve("No suggestions");
                        // glotpress_close.click();
-                        }, 400);
+                        }, 1000);
                     }
                 });
             });
@@ -1648,12 +1648,17 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                                 }
                             }
                         }
+                        //console.debug("ttt:", res,row)
+
+                       // processTransl(original, translatedText, "NL", record, row, transtype, plural_line, locale, convertToLower, current)
+                        
                         //textareaElem.innerText = res;
+                       // textareaElem.innerHTML = res;
                         // PSS 29-03-2021 Added populating the value of the property to retranslate            
                        // textareaElem.value = res;
                         //PSS 25-03-2021 Fixed problem with description box issue #13
                        // textareaElem.style.height = "auto";
-                       // textareaElem.style.height = textareaElem.scrollHeight + "px";
+                     //   textareaElem.style.height = textareaElem.scrollHeight + "px";
                         // With center it works best, but it can be put on the top, center, bottom
                         //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
                         // Determine which row we need to push to the top
@@ -1674,19 +1679,37 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             else {
                 console.debug("No suggestions");
             }
-            // glotpress_close.click();
         }
         else {
             console.debug('Found plural!');
 
-        }
-        let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
-        //glotpress_close.click();
+        }   
     }
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
+    
+    // we need to set the checkbox as marked
+    preview = document.querySelector(`#preview-${row}`);
+    if (is_pte) {
+        rowchecked = preview.querySelector("th input");
+    }
+    else {
+        rowchecked = preview.querySelector("td input");
+    }
+    if (rowchecked != null) {
+        if (rowchecked.checked) {
+                rowchecked.checked = false;
+            }
+    }
+    // PSS the last record in the list is not updated properly, so it is better to hide it so it cannot be saved
+    preview.querySelector(`#preview-${row}`);
+    preview.classList.replace("status-waiting", "status-hidden");
+    //preview.classList.replace("status-waiting", "status-hidden");
+    // We only need to close the last record otherwise we will get errors due to GlotPress behavior
+    let glotpress_close = document.querySelector(`#editor-${row} button.panel-header-actions__cancel`);
+    glotpress_close.click() 
 }
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {

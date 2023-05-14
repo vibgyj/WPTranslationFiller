@@ -67,10 +67,11 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
         translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
 
     }
-    //console.debug("editor in database:",record)
+    //console.debug("editor in database:",record,translatedText)
+
     let textareaElem = await record.querySelector("textarea.foreign-text");
     //console.debug("textareaElem:",textareaElem)
-    textareaElem = record.querySelector("textarea.foreign-text");
+    //textareaElem = record.querySelector("textarea.foreign-text");
     textareaElem.innerText = translatedText;
     // PSS 29-03-2021 Added populating the value of the property to retranslate            
     textareaElem.value = translatedText;
@@ -107,6 +108,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          let spanmissing = preview.querySelector(" span.missing");
          if (spanmissing != null) {
              preview.innerText = translatedText;
+             preview.value = translatedText;
              if (translatedText != 'No suggestions') {
                  current.innerText = "transFill";
                  current.value = "transFill";
@@ -132,6 +134,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          else {
              // if it is as single with local then we need also update the preview
              preview.innerText = translatedText;
+             preview.value = translatedText;
              current.innerText = "transFill";
              current.value = "transFill";
              var element1 = document.createElement("div");
@@ -142,11 +145,22 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              
              // we need to set the checkbox as marked
              preview = document.querySelector(`#preview-${row}`);
-             rowchecked = preview.querySelector("td input");
+             if (is_pte) {
+                 rowchecked = preview.querySelector("th input");
+             }
+             else {
+                 rowchecked = preview.querySelector("td input");
+             }
              if (rowchecked != null) {
-                if (!rowchecked.checked) {
-                   rowchecked.checked = true;
-                }
+                 if (!rowchecked.checked) {
+                     //if (transtype == 'single') {
+                     if (res == "No suggestions") {
+                         rowchecked.checked = false;
+                     }
+                     else {
+                         rowchecked.checked = true;
+                     }
+                 }
              }
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record 

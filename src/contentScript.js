@@ -822,6 +822,7 @@ function tmTransClicked(event) {
             else {
                 messageBox("error", "For " + data.transsel + " no apikey is set!");
             }
+            
         }
     );
 }
