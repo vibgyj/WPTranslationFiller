@@ -1752,7 +1752,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             setPreTranslationReplace(preTranslationReplace);
             for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
                 //setTimeout(stop, timeout, (async function () { 
-                    console.debug("stopval:",stop,transsel)
                 transtype = "single";
                 // 16-08-2021 PSS fixed retranslation issue #118
                 let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
@@ -1878,7 +1877,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         }
                         else if (transsel == "OpenAI") {
                             let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor);
-                            console.debug("OpenAi result:", result,errorstate)
+                            //console.debug("OpenAi result:", result,errorstate)
                             if (errorstate == "Error 401") {
                                 messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                                 // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -2121,7 +2120,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                                 else if (transsel == "OpenAI") {
                                      result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
-                                    console.debug("OpenAi result:",result)
+                                   // console.debug("OpenAi result:",result)
                                     if (result == "Error 401") {
                                          messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                                         // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -2488,7 +2487,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "deepl") {
-                        console.debug("language:",destlang)
+                       // console.debug("language:",destlang)
                         result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == "Error 403") {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
