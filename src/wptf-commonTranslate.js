@@ -1599,85 +1599,128 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             // PSS 09-03-2021 added check to see if we need to translate
             //Needs to be put into a function, because now it is unnessary double code
             toTranslate = true;
+            // Check if the comment is present, if not then if will block the request for the details name etc.
+            let element = record.querySelector(".source-details__comment");
+            if (element != null) {
+                let comment = record.querySelector(".source-details__comment p").innerText;
+                comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                toTranslate = checkComments(comment.trim());
+            }
             // we need to remember which editor to close
            // let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
-            editoropen = await openEditor(preview);
-            if (editoropen == "Open") {
-                //editor.style.display = "none";
-                preview.style.backgroundColor = "#ffe399";
-            }
-            result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
-                return new Promise((resolve, reject) => {
-                    myTM = fetchsuggestions(row);
-                    if (typeof myTM != 'undefined') {
-                        setTimeout(() => {
-                        //glotpress_close.click();
-                            resolve(myTM);
-                        }, 400);
-                    }
-                    else {
-                        setTimeout(() => {
-                        resolve("No suggestions");
-                       // glotpress_close.click();
-                        }, 1000);
-                    }
-                });
-            });
-            
-            if (result != "No suggestions") {
-                let myresult = await fetchli(result, editor, row, TMwait).then(res => {
-                    if (typeof res != null) {
-                        //console.debug("Fetchli result:",res)
-                        myres = getTM(res, row, record, destlang, original, replaceVerb, transtype);
-                        let textareaElem = record.querySelector("textarea.foreign-text");
-                       // console.debug("textareaElem:", textareaElem)
-                        if (is_pte) {
-                            rowchecked = preview.querySelector("th input");
+            if (toTranslate) {
+                editoropen = await openEditor(preview);
+                if (editoropen == "Open") {
+                    //editor.style.display = "none";
+                    preview.style.backgroundColor = "#ffe399";
+                }
+                result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
+                    return new Promise((resolve, reject) => {
+                        myTM = fetchsuggestions(row);
+                        if (typeof myTM != 'undefined') {
+                            setTimeout(() => {
+                                //glotpress_close.click();
+                                resolve(myTM);
+                            }, 400);
                         }
                         else {
-                            rowchecked = preview.querySelector("td input");
-                       }
-                        if (rowchecked != null) {
-                            if (!rowchecked.checked) {
-                                //if (transtype == 'single') {
-                                if (res == "No suggestions") {
-                                    rowchecked.checked = false;
-                                }
-                                else {
-                                    rowchecked.checked = true;
+                            setTimeout(() => {
+                                resolve("No suggestions");
+                                // glotpress_close.click();
+                            }, 1000);
+                        }
+                    });
+                });
+
+                if (result != "No suggestions") {
+                    let myresult = await fetchli(result, editor, row, TMwait).then(resli => {
+                        if (typeof resli != null) {
+                            //console.debug("Fetchli result:",res)
+                            myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype);
+                            let textareaElem = record.querySelector("textarea.foreign-text");
+                            // console.debug("textareaElem:", textareaElem)
+                            if (is_pte) {
+                                rowchecked = preview.querySelector("th input");
+                            }
+                            else {
+                                rowchecked = preview.querySelector("td input");
+                            }
+                            if (rowchecked != null) {
+                                if (!rowchecked.checked) {
+                                    //if (transtype == 'single') {
+                                    if (resli == "No suggestions") {
+                                        rowchecked.checked = false;
+                                    }
+                                    else {
+                                        rowchecked.checked = true;
+                                    }
                                 }
                             }
+
+
+                            // processTransl(original, translatedText, "NL", record, row, transtype, plural_line, locale, convertToLower, current)
+
+                            //textareaElem.innerText = res;
+                            // textareaElem.innerHTML = res;
+                            // PSS 29-03-2021 Added populating the value of the property to retranslate            
+                            // textareaElem.value = res;
+                            //PSS 25-03-2021 Fixed problem with description box issue #13
+                            // textareaElem.style.height = "auto";
+                            // textareaElem.style.height = textareaElem.scrollHeight + "px";
+                            // With center it works best, but it can be put on the top, center, bottom
+                            //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
+                            // Determine which row we need to push to the top
+                            // oldRow = editor.id;
+                            // newRow = oldRow.replace("editor", "preview")
+                            // myRow = document.querySelector(`#${newRow}`);
+                            // myRow.scrollIntoView(true);
+
                         }
-                        //console.debug("ttt:", res,row)
+                        else {
+                            console.debug("notfound");
+                        }
 
-                       // processTransl(original, translatedText, "NL", record, row, transtype, plural_line, locale, convertToLower, current)
-                        
-                        //textareaElem.innerText = res;
-                       // textareaElem.innerHTML = res;
-                        // PSS 29-03-2021 Added populating the value of the property to retranslate            
-                       // textareaElem.value = res;
-                        //PSS 25-03-2021 Fixed problem with description box issue #13
-                       // textareaElem.style.height = "auto";
-                     //   textareaElem.style.height = textareaElem.scrollHeight + "px";
-                        // With center it works best, but it can be put on the top, center, bottom
-                        //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
-                        // Determine which row we need to push to the top
-                       // oldRow = editor.id;
-                       // newRow = oldRow.replace("editor", "preview")
-                       // myRow = document.querySelector(`#${newRow}`);
-                       // myRow.scrollIntoView(true);
-                       
-                    }
-                    else {
-                        console.debug("notfound");
-                    }
-
-                }).catch((error) => {
-                    console.error("Error in fetching li:", error);
-                });
+                    }).catch((error) => {
+                        console.error("Error in fetching li:", error);
+                    });
+                }
+                else {
+                    console.debug("No suggestions");
+                }
             }
             else {
-                console.debug("No suggestions");
+                let translatedText = original;
+                let textareaElem = record.querySelector("textarea.foreign-text");
+                textareaElem.innerText = translatedText;
+                let preview = document.querySelector("#preview-" + row + " td.translation");
+                if (preview != null) {
+                    preview.innerText = translatedText;
+                    preview.value = translatedText;
+                    pretrans = "FoundName";
+                    // We need to alter the status otherwise the save button does not work
+                    current.innerText = "transFill";
+                    current.value = "transFill";
+                    //10-05-2022 PSS added poulation of status
+                    select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                    var status = select.querySelector("dt").nextElementSibling;
+                    status.innerText = "transFill";
+                    status.value = "transFill";
+                    // we need to set the checkbox as marked
+                    preview = document.querySelector(`#preview-${row}`);
+                    if (is_pte) {
+                        rowchecked = preview.querySelector("th input");
+                    }
+                    else {
+                        rowchecked = preview.querySelector("td input");
+                    }
+                    if (rowchecked != null) {
+                        rowchecked.checked = true;
+                    }
+                    preview.classList.replace("no-translations", "has-translations");
+                    preview.classList.replace("untranslated", "status-waiting");
+                    preview.classList.add("wptf-translated");
+                    validateEntry(destlang, textareaElem, "", "", row);
+                }
             }
         }
         else {
@@ -1691,25 +1734,55 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     translateButton.innerText = "Translated";
     
     // we need to set the checkbox as marked
-    preview = document.querySelector(`#preview-${row}`);
-    if (is_pte) {
-        rowchecked = preview.querySelector("th input");
-    }
-    else {
-        rowchecked = preview.querySelector("td input");
-    }
-    if (rowchecked != null) {
-        if (rowchecked.checked) {
-                rowchecked.checked = false;
-            }
-    }
+  //  preview = document.querySelector(`#preview-${row}`);
+   // if (is_pte) {
+  //      rowchecked = preview.querySelector("th input");
+  //  }
+   // else {
+   //     rowchecked = preview.querySelector("td input");
+   // }
+   // if (rowchecked != null) {
+   //     if (rowchecked.checked) {
+     //           rowchecked.checked = false;
+        //    }
+  //  }
     // PSS the last record in the list is not updated properly, so it is better to hide it so it cannot be saved
-    preview.querySelector(`#preview-${row}`);
-    preview.classList.replace("status-waiting", "status-hidden");
+   // preview.querySelector(`#preview-${row}`);
+    //preview.classList.replace("status-waiting", "status-hidden");
     //preview.classList.replace("status-waiting", "status-hidden");
     // We only need to close the last record otherwise we will get errors due to GlotPress behavior
-    let glotpress_close = document.querySelector(`#editor-${row} button.panel-header-actions__cancel`);
-    glotpress_close.click() 
+     result = await waitForElm(".meta translation-memory __web-inspector-hide-shortcut__").then(metares => {
+         return new Promise((resolve, reject) => {
+            // we need to set the preview back in row state
+            let lastPreview = document.querySelector(`#preview-${row}`);
+            lastPreview.style = ""
+            preview = document.querySelector(`#preview-${row}`);
+            if (is_pte) {
+                rowchecked = preview.querySelector("th input");
+            }
+            else {
+                rowchecked = preview.querySelector("td input");
+            }
+            if (rowchecked == null) {
+                if (metares == "No suggestions") {
+                    rowchecked.checked = false;
+                }
+                else {
+                    console.debug("textarea:")
+                    rowchecked.checked = true;
+                }
+            }
+            if (typeof metares != 'undefined') {
+                setTimeout(() => {
+                    // We need to close the last opened editor we cannot use the cancel button because then the translation is removed
+                   let hideEditor = document.querySelector(`#editor-${row}`)
+                   hideEditor.style = "display:None"
+                    resolve();
+                }, 800);
+            }
+            
+        });
+    });
 }
 
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
@@ -2710,7 +2783,7 @@ async function bulkSave(noDiff) {
          "pattern": "-get-tm-suggestions",
          "status": "200",
          "type": "JSON",
-         "response": '{"success":true,"data":"No suggestieeeees."}',
+         "response": '{"success":true,"data":"No suggestions"}',
          "delay": "0"
      }];
      window.postMessage({

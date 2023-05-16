@@ -1511,9 +1511,8 @@ function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale)
 }
 
 function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundCount, rowId, lineNo) {
-
     if (typeof rowId != "undefined" && SavelocalButton !=null) {
-        switch (current.innerText) {
+        switch (current) {
             case "transFill":
                  SavelocalButton.innerText = "Save";
                  checkElem.title = "save the string";
@@ -1571,14 +1570,13 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var panelTransTitle = '';
     var panelTransDiv;
     var missingVerbsButton;
-
     if (typeof rowId != "undefined") {
-        current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-        if (current == null) {
+        current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerText;
+        if (current == 'untranslated') {
            // console.debug("current is null", current)
             current = 'Empty';
         }
-        if (current.innerText == 'current') {
+        if (current == 'current') {
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         }
         else {
@@ -1601,7 +1599,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
            // return;
         //}
         if (result.wordCount == 0) {
-            current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+            current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerText;
         }
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
@@ -1687,7 +1685,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     checkElem.innerHTML = result.percent;
                     separator1 = document.createElement("div");
                     separator1.setAttribute("class", "checkElem_save");
-
                     checkElem.appendChild(separator1);
                     res = addCheckButton(rowId, checkElem, "1561")
                     SavelocalButton = res.SavelocalButton
@@ -1731,7 +1728,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         checkElem.appendChild(separator1);
                         res = addCheckButton(rowId, checkElem, "1612")
                         SavelocalButton = res.SavelocalButton
-                        if (current.innerText != "untranslated" && current.innerText != 'current') {
+                        if (current != "untranslated" && current != 'current') {
                             SavelocalButton.innerText = "Rej";
                             //SavelocalButton.disabled = true;
                         }
@@ -1747,22 +1744,24 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             }
         }
         else {
-            checkElem.innerHTML = "100";
-            separator1 = document.createElement("div");
-            separator1.setAttribute("class", "checkElem_save");
-            checkElem.appendChild(separator1);
-            res = addCheckButton(rowId, checkElem, "1539")
-            SavelocalButton = res.SavelocalButton
-            SavelocalButton.innerText = "Curr";
-            checkElem.style.backgroundColor = "green";
-            checkElem.title = "Current translation";
-            if (typeof headerElem.style != "undefined") {
-                panelTransDiv.style.backgroundColor = "green";
-                //headerElem.style.backgroundColor = "green";
-                // 20-02-2023 FIx for issue #286
-                let markdiv = document.querySelector("#editor-" + rowId + " .marker");
-                if (markdiv != null) {
-                    markdiv.remove();
+            if (current != "untranslated") {
+                checkElem.innerHTML = "100";
+                separator1 = document.createElement("div");
+                separator1.setAttribute("class", "checkElem_save");
+                checkElem.appendChild(separator1);
+                res = addCheckButton(rowId, checkElem, "1539")
+                SavelocalButton = res.SavelocalButton
+                SavelocalButton.innerText = "Curr";
+                checkElem.style.backgroundColor = "green";
+                checkElem.title = "Current translation";
+                if (typeof headerElem.style != "undefined") {
+                    panelTransDiv.style.backgroundColor = "green";
+                    //headerElem.style.backgroundColor = "green";
+                    // 20-02-2023 FIx for issue #286
+                    let markdiv = document.querySelector("#editor-" + rowId + " .marker");
+                    if (markdiv != null) {
+                        markdiv.remove();
+                    }
                 }
             }
         }
@@ -1894,7 +1893,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
                SavelocalButton = document.createElement("button");
                SavelocalButton.id = "tf-save-button";
                SavelocalButton.className = "tf-save-button";
-               SavelocalButton.innerText = ("Tmp");
+               SavelocalButton.innerText = ("Empt");
                SavelocalButton.onclick = savetranslateEntryClicked;
                currentcel.appendChild(SavelocalButton);
             }
