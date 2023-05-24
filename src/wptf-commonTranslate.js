@@ -1798,6 +1798,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var timeout = 10;
     var stop = false;
     var editor = false;
+    var counter = 0;
+    var myrecCount = 0;
 
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
@@ -1823,7 +1825,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             // PSS 21-07-2022 Currently when using formal, the translation is still default #225
             setPostTranslationReplace(postTranslationReplace,formal);
             setPreTranslationReplace(preTranslationReplace);
+            myrecCount = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")
+            console.debug("myRecCount length:",myrecCount.length)
             for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+                counter++;
                 //setTimeout(stop, timeout, (async function () { 
                 transtype = "single";
                 // 16-08-2021 PSS fixed retranslation issue #118
@@ -2327,20 +2332,14 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     let textareaElem = record.querySelector("textarea.foreign-text");
                     completedCallback(original, textareaElem.innerText);
                     }
-                    //console.debug("stop before end:", stop,errorstate)
-                    //return stop;
-              //  })()), stop, errorstate;
-               // timeout += 10;
-               // console.debug("stop value:",stop,errorstate)
-              //  if (errorstate != "OK") {
-               //     console.debug("stoppen = true!!!")
-              //      break;
-               // }
+                if (counter == myrecCount.length - 1) {
+                    // Translation completed we need to stop spinning the translate button
+                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                    translateButton.className += " translated";
+                    translateButton.innerText = "Translated";
+                }
             }
-            // Translation completed  
-            let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-            translateButton.className += " translated";
-            translateButton.innerText = "Translated";
+           
         } else {
             messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!");
             // 07-07-2021 Fix for issue #98
@@ -2528,6 +2527,14 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     //let zoeken = "translate-" + rowId + ""-translocal-entry-local-button";
                     validateEntry(destlang, textareaElem, "", "", rowId);
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
+                    // Translation completed
+                    translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+                    // if row is already translated the rowId has different format, so we need to search with this different format
+                    if (translateButton == null) {
+                        translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+                    }
+                    translateButton.className += " translated";
+                    translateButton.innerText = "Translated";
                 }
             }
             else {
@@ -2539,6 +2546,14 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 current.innerText = "transFill";
                 current.value = "transFill";
                 validateEntry(destlang, textareaElem, "", "", rowId);
+                // Translation completed
+                translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+                // if row is already translated the rowId has different format, so we need to search with this different format
+                if (translateButton == null) {
+                    translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+                }
+                translateButton.className += " translated";
+                translateButton.innerText = "Translated";
             }
             let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
             let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
@@ -2640,13 +2655,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             }
             
             // Translation completed
-            translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+           // translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // if row is already translated the rowId has different format, so we need to search with this different format
-            if (translateButton == null) {
+           // if (translateButton == null) {
                 translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
-            }
-            translateButton.className += " translated";
-            translateButton.innerText = "Translated";
+          //  }
+           // translateButton.className += " translated";
+           // translateButton.innerText = "Translated";
             //validateEntry(destlang, textareaElem, "", "", rowId);
 
             if (completedCallback) {
@@ -3129,6 +3144,15 @@ async function processTransl(original, translatedText, language, record, rowId, 
     status.innerText = "transFill";
    // status.innerText = "waiting";
         //status.value = "waiting";
+    // Translation completed
+    translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+    // if row is already translated the rowId has different format, so we need to search with this different format
+    if (translateButton == null) {
+        translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+    }
+    translateButton.className += " translated";
+    translateButton.innerText = "Translated";
+            //validateEntry(destlang, textareaElem, "", "", rowId);
 
 }
 

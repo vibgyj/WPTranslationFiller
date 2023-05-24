@@ -96,7 +96,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
-            console.debug("Response:", data);
+            //console.debug("Response:", data);
             // check for error response
             if (!response.ok) {
                 // get error message from body or default to response status
@@ -116,11 +116,11 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             else {
                 errorstate = "OK";
                 //We do have a result so process it
-                console.debug('result:', data);
+                //console.debug('result:', data);
                 open_ai_response = data.choices[0];
                 if (typeof open_ai_response.message.content != 'undefined') {
                     let text = open_ai_response.message.content;
-                    console.debug("text:", text)
+                    //console.debug("text:", text)
                     //text = text.trim('\n');
                     translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
                     processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
@@ -136,7 +136,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             }
         })
         .catch(error => {
-            console.debug("error3:",error[0])
+            //console.debug("error3:",error[0])
             if (error[2] == "400") {
                 errorstate = "Error 400";
                 if (editor) {
