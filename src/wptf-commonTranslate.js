@@ -1610,10 +1610,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
            // let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
             if (toTranslate) {
                 editoropen = await openEditor(preview);
-                if (editoropen == "Open") {
-                    //editor.style.display = "none";
-                    preview.style.backgroundColor = "#ffe399";
-                }
                 result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
                     return new Promise((resolve, reject) => {
                         myTM = fetchsuggestions(row);
@@ -1732,20 +1728,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
-    
-    // we need to set the checkbox as marked
-  //  preview = document.querySelector(`#preview-${row}`);
-   // if (is_pte) {
-  //      rowchecked = preview.querySelector("th input");
-  //  }
-   // else {
-   //     rowchecked = preview.querySelector("td input");
-   // }
-   // if (rowchecked != null) {
-   //     if (rowchecked.checked) {
-     //           rowchecked.checked = false;
-        //    }
-  //  }
+ 
     // PSS the last record in the list is not updated properly, so it is better to hide it so it cannot be saved
    // preview.querySelector(`#preview-${row}`);
     //preview.classList.replace("status-waiting", "status-hidden");
