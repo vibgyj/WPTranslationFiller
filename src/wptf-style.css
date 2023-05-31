@@ -1268,7 +1268,7 @@ button[disabled] {
 }
 
 table.translations tr.preview.wptf-translated {
-    background-color: #FFFFC2;
+    background-color: #ffe399;
 }
 
 table.translations tr.preview.status-rejected {

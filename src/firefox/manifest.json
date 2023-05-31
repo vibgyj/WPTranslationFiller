@@ -24,6 +24,7 @@
     "storage",
     "activeTab",
     "tabs",
+    "https://api-free.deepl.com/*",
     "https://api.deepl.com/*",
     "https://translation.googleapis.com/*",
     "https://translate.wordpress.org/*",

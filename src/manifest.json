@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
 
   
@@ -37,6 +37,8 @@
   ],
   "host_permissions": [
     "*://translate.wordpress.org/*",
+    "*://api-free.deepl.com/*",
+    "*://api.deepl.com/*",
     "*://api.languagetool.com/v2/*",
     "*://api.languagetoolplus.com/v2/*",
     "*://api.cognitive.microsofttranslator.com/*",
