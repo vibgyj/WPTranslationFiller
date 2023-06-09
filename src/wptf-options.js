@@ -45,8 +45,9 @@ let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
+let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -167,6 +168,14 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI
             showLTCheckbox.checked = false;
         }
     }
+    if (data.Auto_review_OpenAI != "null") {
+        if (data.Auto_review_OpenAI == true) {
+            showReviewCheckbox.checked = true;
+        }
+        else {
+            showReviewCheckbox.checked = false;
+        }
+    }
    
 });
 
@@ -242,7 +251,6 @@ button.addEventListener("click", function () {
     }
     if (document.querySelector("#LangToolFree:checked") !== null) {
         let LtFreeSet = document.querySelector("#LangToolFree:checked");
-        console.debug("free:",LtFreeSet)
         LtFreeChecked = LtFreeSet.checked;
     }
     else {
@@ -250,15 +258,20 @@ button.addEventListener("click", function () {
     }
 
     if (document.querySelector("#Auto-LT-spellcheck:checked") !== null) {
-
         let Auto_spellcheck_Set = document.querySelector("#Auto-LT-spellcheck:checked");
-        console.debug("spell:", Auto_spellcheck_Set)
         LtAutoSpell = Auto_spellcheck_Set.checked;
     }
     else {
         LtAutoSpell = "false";
     }
-    console.debug("spell:",LtAutoSpell)
+
+    if (document.querySelector("#Auto-review-OpenAI:checked") !== null) {
+        let Auto_review_Set = document.querySelector("#Auto-review-OpenAI:checked");
+        OpenAIreview = Auto_review_Set.checked;
+    }
+    else {
+        OpenAIreview = "false";
+    }
     chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
@@ -281,7 +294,9 @@ button.addEventListener("click", function () {
         LtUser: LtToolUserTextbox.value,
         LtLang: LtToolLangTextbox.value,
         LtFree: LtFreeChecked,
-        Auto_spellcheck: LtAutoSpell
+        Auto_spellcheck: LtAutoSpell,
+        Auto_review_OpenAI: OpenAIreview
+
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  

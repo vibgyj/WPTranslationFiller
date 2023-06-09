@@ -968,7 +968,7 @@ function checkPageClicked(event) {
     var formal = checkFormal(false);
     toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel","postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "Auto_review_OpenAI"],
         function (data) {
             var promise = new Promise(function (resolve, reject) {
                 checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
@@ -983,10 +983,12 @@ function checkPageClicked(event) {
 
             promise.then(function (val) {
                 if (data.transsel == "OpenAI") {
-                    if (data.apikeyOpenAI != "") {
-                        //console.debug("review started:", val)
-                        toastbox("info", "OpenAI review is started wait for the result!!", "8000", "Review");
-                        startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt);
+                    if (data.Auto_review_OpenAI == true){
+                        if (data.apikeyOpenAI != "") {
+                            //console.debug("review started:", val)
+                            toastbox("info", "OpenAI review is started wait for the result!!", "8000", "Review");
+                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt);
+                        }
                     }
                 }
             });
