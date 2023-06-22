@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
 
 
