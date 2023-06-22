@@ -431,7 +431,9 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt) {
     var result;
     var countreplaced = 0;
     var checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+    var progressbar;
     checkButton.innerText = "Checking";
+    
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
     if (checkButton.className == "check_translation-button") {
         checkButton.className += " started";
@@ -447,6 +449,16 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt) {
             checkButton.className = "check_translation-button started"
         }
     }
+    toastbox("info", "OpenAI review is started wait for the result!!", "8000", "Review");
+    var myheader = document.querySelector('header');
+    
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>
+    `;
+
+    myheader.insertAdjacentHTML('beforebegin', template);
     // We need to know the amount of rows to show the finished message at the end of the process
     var table = document.getElementById("translations");
     var tr = table.rows;
@@ -539,6 +551,9 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt) {
                 checkButton.className += " translated";
                 checkButton.innerText = "Checked";
                 checkButton.className += " ready";
+                progressbar = document.querySelector(".indeterminate-progress-bar");
+                progressbar.style.display = "none";
+                //close_toast();
                 messageBox("info", "Check OpenAI review done ");
             }
         }

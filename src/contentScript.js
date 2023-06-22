@@ -986,7 +986,7 @@ function checkPageClicked(event) {
                     if (data.Auto_review_OpenAI == true){
                         if (data.apikeyOpenAI != "") {
                             //console.debug("review started:", val)
-                            toastbox("info", "OpenAI review is started wait for the result!!", "8000", "Review");
+                            
                             startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt);
                         }
                     }
@@ -1121,7 +1121,7 @@ function addTranslateButtons() {
 
             let MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
             MissinglocalButton.className = "translocal-entry-missing-button";
-            MissinglocalButton.innerText = "Missing verbs";
+            MissinglocalButton.innerText = "Missing glossary entry";
             MissinglocalButton.style.visibility = "hidden";
             MissinglocalButton.style.animation = "blinking 1s infinite";
             panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
@@ -1351,7 +1351,7 @@ async function checkbuttonClick(event) {
 
                 MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
                 MissinglocalButton.className = "translocal-entry-missing-button";
-                MissinglocalButton.innerText = "Missing verbs";
+                MissinglocalButton.innerText = "Missing glossary entry";
                 MissinglocalButton.style.visibility = "hidden";
                 MissinglocalButton.style.animation = "blinking 1s infinite";
                 panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
@@ -1755,7 +1755,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     }
                 }
                 newline = "\n";
-                missingverbs = "Missing verbs \n";
+                missingverbs = "Missing glossary entry\n";
                 // We need to update the rowbutton
                  await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "1677");
             }
