@@ -12,13 +12,13 @@ async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPromp
     return errorstate;
 }
 
-async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
+async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
     // First we have to preprocess the original to remove unwanted chars
     //var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
     var originalPreProcessed = original;
     //errorstate = "NOK"
     if (apikeyOpenAI != "") {
-        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview);
+        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview);
     }
     else {
 
@@ -210,7 +210,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     
 }
 
-async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
+async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
     var row = "";
     var ul = "";
     var current = "";
@@ -232,19 +232,13 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
     language = language.toUpperCase();
-    
-   // var prompt = OpenAIPrompt;
-   // $openai_query.= 'For the english text  "'.$original_singular. '", is "'.$translation. '" a correct translation in '.$gp_locale -> english_name. '?';
-    var prompt = 'I want you to act as a translation reviewer for the provided English text: "' + original + '", translated into Dutch text: "' + translatedText + '". Please check if all words are completely translated, review the interpunctuation to match the English text, and ensure that placeholders are accurately preserved. Please maintain HTML in their respective places. Please answer with "Yes" or "No".'
-
-
-
-  //  var prompt = 'I want you to act as translation improver. I do not want you to explain improvements. Give the answer in English. For the English text  "' + original + '", is "' + translatedText + '\" the correct translation in "Dutch"?';
-    console.debug("prompt:", prompt)
-  
-    // var prompt = 'I want you to translate from English to strickt Informal tone Dutch while respecting casing within every sentence. I want you to provide a clear and accurate translation without suggestions. I do not want you to add hyphen. I want you to use HTML in their appropiate places. I do not want you to use completion in HTML. If the English text does not start with a capital or the second position has no capital, then the translated result should also not start with a capital. I want you to transform all words within the text to lowercase, except for Brand names, start of the sentence and all other sentences, and if the word contains more then one uppercase letter. Example "Page Title Position" should be translated as "Pagina titelpositie". You should use placeholders like "%1$s", "%2$s", "%s", "%d" in their appropriate places in the translation. You should translate "your" as "je", "website" as "site", "Plugin" as "Plugin", "addon" as "add-on", "Addon" as "Add-on", "logboeken" as "logs", "foutenlogboek" as "foutlog" in every sentence I provide. I want you to transform "Add new" into "Nieuwe toevoegen", "please check" into "controleer", "Howdy" into "Hallo". I want you to transform sentences like this "Please test it." into "Test het." I want you to transform "Please download" into "Download". I want you to remove the following keywords "alstublieft" and "alsjeblieft" from the Dutch translation.'
-    //var prompt = 'Act as a Dutch language translator. I want you to transform all words within the sentence to lowercase also for English words except brandnames like "Google". I want you to use placeholders like "%1$s", "%2$s", "%3$s", "%4$s", "%5$s", "%s", "%d", "xx", "<x>?</>" in their appropriate places in the translation. Do not add hyphens into Dutch translation. Remove the words "Please", "Sorry" from the English text. I will provide sentences that needs to be translated into Dutch which can contain HTML. You should keep the HTML in their appropriate places. Your role is to provide a clear and concise translation that accurately conveys the meaning of the original text, tailored to the intended Dutch speaking audience and spelling corrector. Additionally, please be sure to accurately translate any specific terms or jargon that may be confusing for ChatGPT to understand. Finally, please evaluate the quality of the translation based on its accuracy, readability, and relevance of the original text. I do not want you to add Evaluation of the text. Do not justify your answers. Do not report Accuracy. Do not report conveys. I do not want you to translate the following words, "Toggle", "toggle". You should translate "your" as "je", "website" as "site", "Website" as "Site", "Select" as "Selecteer", "Plugin" as "Plugin", "addon" as "add-on", "Addon" as "Add-on", "logboeken" as "logs", "foutenlogboek" as "foutlog" in every sentence I provide. Do not use the following words "alstublieft" and "alsjeblieft" in the translation.'
-    //var prompt = 'I want you to translate from English to Assertive tone Dutch while respecting casing within every sentence. I want you to provide a clear and accurate translation without suggestions. I do not want you to use hyphens in the text. I want you to use HTML in their appropiate places. I do not want you to use completion in HTML. If the English text does not start with a capital or the second position has no capital, then the translated result should also not start with a capital. I want you to transform all words within the translation after the start of sentence to lowercase. You should use placeholders like "%1$s", "%2$s", "%s", "%d" in their appropriate places in the translation. You should translate "your" as "je", "website" as "site", "Plugin" as "plugin", "addon" as "add-on", "Addon" as "Add-on", "logboeken" as "logs", "foutenlogboek" as "foutlog" in every sentence I provide. I want you to transform "Add new" into "Nieuwe toevoegen", "please check" into "controleer", "Howdy" into "Hallo". I want you to transform sentences like this "Please test it." into "Test het." I want you to transform "Please download" into "Download". I want you to remove the following keywords "alstublieft" and "alsjeblieft" from the Dutch translation.'
+    // $openai_query.= 'For the english text  "'.$original_singular. '", is "'.$translation. '" a correct translation in '.$gp_locale -> english_name. '?';
+    //console.debug("Review prompt:", reviewPrompt)
+    var prompt = reviewPrompt.replace('placeholder_original', original)
+    prompt = prompt.replace('placeholder_translated',translatedText)
+    //var prompt = 'I want you to act as a translation reviewer for the provided English text: "' + original + '", translated into Dutch text: "' + translatedText + '". Please check if all words are completely translated, review the interpunctuation to match the English text, and ensure that placeholders are accurately preserved. Please maintain HTML in their respective places. Please answer with "Yes" or "No".'
+    //  var prompt = 'I want you to act as translation improver. I do not want you to explain improvements. Give the answer in English. For the English text  "' + original + '", is "' + translatedText + '\" the correct translation in "Dutch"?';
+    // console.debug("prompt:", prompt)
     //var prompt = encodeURIComponent(prompt);
     originalPreProcessed = "'" + originalPreProcessed + "'" + "\n"
     var message = [{ 'role': 'user', 'content': prompt }];
@@ -411,7 +405,7 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
 
 }
 
-async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt) {
+async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt) {
     
     var replaced = false;
     var row;
@@ -523,7 +517,7 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt) {
                         plural_line=""
                         if (apikeyOpenAI != "") {
                             if (translatedText != "") {
-                                result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview);
+                                result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt,reviewPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview);
                                 //console.debug("Result:", result)
                             }
                         }  

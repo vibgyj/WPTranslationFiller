@@ -69,6 +69,10 @@
             width: calc(100% - 6px);
             min-height: 100px;
         }
+        #text_openai_review {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
         #text_pre_verbs {
             width: calc(100% - 6px);
             min-height: 100px;
@@ -210,7 +214,7 @@
             </tr>
             <tr>
                 <td>
-                    <label>License is for DeepL Free</label>
+                    <label for="DeeplFree">License is for DeepL Free</label>
                 </td>
                 <td>
                     <label>
@@ -231,7 +235,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="translator">Select a translator:</label>
+                    <label for="transselect">Select a translator:</label>
                 </td>
                 <td>
                     <div class="form-select">
@@ -267,11 +271,11 @@
             </tr>
             <tr>
                 <td>
-                    <label for="glossary_file">File uploaded at date</label>
+                    <label>File uploaded at date</label>
                 </td>
                 <td colspan="1">
                     <div>
-                        <span style="width:320px" id="text_glossary_file"></span>
+                        <span style="width:320px" id="glossary_file_uploaded"></span>
                     </div>
                 </td>
             </tr>
@@ -287,7 +291,7 @@
             </tr>
             <tr>
                 <td>
-                    <label>Set this for languagetool free</label>
+                    <label for="LangToolFree">Set this for languagetool free</label>
                 </td>
                 <td>
                     <label>
@@ -333,6 +337,12 @@
             <label for="text_openai_prompt">OpenAI prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated">?</span>
             <textarea id="text_openai_prompt">
+            </textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_openai_review">OpenAI review prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
+            <textarea id="text_openai_review">
             </textarea>
         </div>
         <div class="form-input">

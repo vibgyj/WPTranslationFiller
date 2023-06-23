@@ -968,7 +968,7 @@ function checkPageClicked(event) {
     var formal = checkFormal(false);
     toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "Auto_review_OpenAI"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt","reviewPrompt", "Auto_review_OpenAI"],
         function (data) {
             var promise = new Promise(function (resolve, reject) {
                 checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
@@ -987,7 +987,7 @@ function checkPageClicked(event) {
                         if (data.apikeyOpenAI != "") {
                             //console.debug("review started:", val)
                             
-                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt);
+                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt,data.reviewPrompt);
                         }
                     }
                 }
