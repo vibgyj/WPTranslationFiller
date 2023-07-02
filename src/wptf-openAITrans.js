@@ -46,6 +46,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     var data;
     var link;
     var timeout = 1000;
+    var lang = window.navigator.language;
+    //console.debug("taal:",lang)
     //console.debug("origpre:", originalPreProcessed)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
@@ -56,7 +58,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
        myprompt = OpenAIPrompt +'\n';
     }
     else {
-       myprompt = "Vertaal naar Nederlands volgens eerder opgegeven instructies: ";
+        myprompt = "Translate into " + lang + "according previously given instructions: ";
+       //myprompt = "Vertaal naar Nederlands volgens eerder opgegeven instructies: ";
     }
     
    // var prompt = 'I want you to translate from English to strickt Informal tone Dutch while respecting casing within every sentence. I want you to provide a clear and accurate translation without suggestions. I do not want you to add hyphen. I want you to use HTML in their appropiate places. I do not want you to use completion in HTML. If the English text does not start with a capital or the second position has no capital, then the translated result should also not start with a capital. I want you to transform all words within the text to lowercase, except for Brand names, start of the sentence and all other sentences, and if the word contains more then one uppercase letter. Example "Page Title Position" should be translated as "Pagina titelpositie". You should use placeholders like "%1$s", "%2$s", "%s", "%d" in their appropriate places in the translation. You should translate "your" as "je", "website" as "site", "Plugin" as "Plugin", "addon" as "add-on", "Addon" as "Add-on", "logboeken" as "logs", "foutenlogboek" as "foutlog" in every sentence I provide. I want you to transform "Add new" into "Nieuwe toevoegen", "please check" into "controleer", "Howdy" into "Hallo". I want you to transform sentences like this "Please test it." into "Test het." I want you to transform "Please download" into "Download". I want you to remove the following keywords "alstublieft" and "alsjeblieft" from the Dutch translation.'

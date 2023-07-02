@@ -1589,7 +1589,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var missingVerbsButton;
     if (typeof rowId != "undefined") {
         current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerText;
-        console.debug("current:",typeof current,current)
         if (typeof current === 'string') {
             if (current == 'untranslated') {
                 // console.debug("current is null", current)
