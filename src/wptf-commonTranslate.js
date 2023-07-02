@@ -124,12 +124,12 @@ function preProcessOriginal(original, preverbs, translator) {
     }
     if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
-       // let index = 1;
-        //for (const match of matches) {
-        //    original = original.replace(match[0], `<x>${index}</x>`);
-//
-       //     index++;
-      //  }
+        let index = 1;
+        for (const match of matches) {
+            original = original.replace(match[0], `{var ${index}}`);
+            original = original.replace('.{', '. {');
+            index++;
+        }
       //  if (index == 1) {
             // console.debug("preProcessOriginal no placeholders found index === 0 ");
        // }
@@ -150,7 +150,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
+            translatedText = translatedText.replaceAll(`{${index}}`, match[0]);
             index++;
         }
 
@@ -172,6 +172,19 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         //console.debug('after replace x:', translatedText);
     }
     else if (translator == "OpenAI") {
+        const matches = original.matchAll(placeHolderRegex);
+        let index = 1;
+        for (const match of matches) {
+            //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
+            translatedText = translatedText.replace(`{var ${index}}`, match[0]);
+            //translatedText = translatedText.replace(`var ${index}'`, match[0]);
+           index++;
+        }
+        if (translatedText.endsWith(".") == true) {
+            if (original.endsWith(".") != true) {
+                translatedText = translatedText.substring(0, translatedText.length - 1)
+            }
+        }
         if (translatedText.startsWith("'") == true) {
             if (original.startsWith("'") != true) {
                 translatedText = translatedText.substring(1, translatedText.length)
@@ -194,13 +207,19 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.substring(0, translatedText.length - 1)
             }
         }
-        const matches = original.matchAll(placeHolderRegex);
-        let index = 1;
-        for (const match of matches) {
-            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
-            index++;
+        // OpenAI adds sometimes a "'" due to the placeholder at te beginning of the line like '<x>1</x>'
+        // So we need to remove the "'"
+        if (translatedText.startsWith("'") == true) {
+           if (original.startsWith("'") != true) {
+               translatedText = translatedText.substring(1, translatedText.length)
+           }
         }
-
+        console.debug("orig:",original,translatedText)
+        if (translatedText.endsWith("'") == true) {
+            if (original.endsWith("'") != true) {
+               translatedText = translatedText.substring(0, translatedText.length - 1)
+            }
+        }
     }
     
    
@@ -1976,7 +1995,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                }
                         }
                         else if (transsel == "OpenAI") {
-                            let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor);
+                            let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter);
                             //console.debug("OpenAi result:", result,errorstate)
                             if (errorstate == "Error 401") {
                                 messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");

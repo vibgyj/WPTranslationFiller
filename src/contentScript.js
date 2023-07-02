@@ -1589,15 +1589,21 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var missingVerbsButton;
     if (typeof rowId != "undefined") {
         current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerText;
-        if (current == 'untranslated') {
-           // console.debug("current is null", current)
-            current = 'Empty';
-        }
-        if (current == 'current') {
-            SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+        console.debug("current:",typeof current,current)
+        if (typeof current === 'string') {
+            if (current == 'untranslated') {
+                // console.debug("current is null", current)
+                current = 'Empty';
+            }
+            if (current == 'current') {
+                SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+            }
+            else {
+                SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+            }
         }
         else {
-             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+            console.debug("Bubble not found!");
         }
         // We need to have the new bar to be able to set the color
         panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
