@@ -1,6 +1,18 @@
 // This file contains functions used within various files
-// This function checks if we are on the discussion table
+
+function unEscape(htmlStr) {
+    // function is a fix for issue #300 remove those chars from innerHTML result
+    htmlStr = htmlStr.replace(/&lt;/g, "<");
+    htmlStr = htmlStr.replace(/&gt;/g, ">");
+    htmlStr = htmlStr.replace(/&quot;/g, "\"");
+    htmlStr = htmlStr.replace(/&#39;/g, "\'");
+    htmlStr = htmlStr.replace(/&amp;/g, "&");
+    return htmlStr;
+}
+
+
 function checkDiscussion() {
+    // This function checks if we are on the discussion table
     const locString = window.location.href;
     if (locString.includes("discussions")) {
         return true;
@@ -9,8 +21,9 @@ function checkDiscussion() {
         return false;
     }
 }
-// this function searches for the translation of an original within the loaded array
+
 function findArrayLine(allrows, original, transtype, plural_line) {
+    // this function searches for the translation of an original within the loaded array
     var myorg;
     var res = 'notFound';
     var trans = " ";
@@ -79,8 +92,9 @@ function findArrayLine(allrows, original, transtype, plural_line) {
     return res;
 }
 
-// This function copies the original to the clipboard
+
 function addtoClipBoardClicked(event) {
+    // This function copies the original to the clipboard
     if (event != undefined) {
         event.preventDefault();
         copyToClipBoard(detailRow);
@@ -198,8 +212,9 @@ function deselectCheckBox(event) {
     }
 }
 
-// This function checks the quality of the current translations
+
 function validatePage(language, showHistory, locale) {
+    // This function checks the quality of the current translations
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
     var timeout = 0;

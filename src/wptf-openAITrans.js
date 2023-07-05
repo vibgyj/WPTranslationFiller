@@ -47,6 +47,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     var link;
     var timeout = 1000;
     var lang = window.navigator.language;
+    //console.debug("orginal:",original)
     //console.debug("taal:",lang)
     //console.debug("origpre:", originalPreProcessed)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
@@ -58,7 +59,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
        myprompt = OpenAIPrompt +'\n';
     }
     else {
-        myprompt = "Translate into " + lang + "according previously given instructions: ";
+        myprompt = "Translate into " + lang + " according previously given instructions: ";
        //myprompt = "Vertaal naar Nederlands volgens eerder opgegeven instructies: ";
     }
     
@@ -66,10 +67,10 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
    // prompt = 'Act as a Dutch language translator. I want you to transform all words within the sentence to lowercase also for English words except brandnames like "Google". I want you to use placeholders like "%1$s", "%2$s", "%3$s", "%4$s", "%5$s", "%s", "%d", "xx", "<x>?</>" in their appropriate places in the translation. Do not add hyphens into Dutch translation. Remove the words "Please", "Sorry" from the English text. I will provide sentences that needs to be translated into Dutch which can contain HTML. You should keep the HTML in their appropriate places. Your role is to provide a clear and concise translation that accurately conveys the meaning of the original text, tailored to the intended Dutch speaking audience and spelling corrector. Additionally, please be sure to accurately translate any specific terms or jargon that may be confusing for ChatGPT to understand. Finally, please evaluate the quality of the translation based on its accuracy, readability, and relevance of the original text. I do not want you to add Evaluation of the text. Do not justify your answers. Do not report Accuracy. Do not report conveys. I do not want you to translate the following words, "Toggle", "toggle". You should translate "your" as "je", "website" as "site", "Website" as "Site", "Select" as "Selecteer", "Plugin" as "Plugin", "addon" as "add-on", "Addon" as "Add-on", "logboeken" as "logs", "foutenlogboek" as "foutlog" in every sentence I provide. Do not use the following words "alstublieft" and "alsjeblieft" in the translation.'
     //var prompt = 'I want you to translate from English to Assertive tone Dutch while respecting casing within every sentence. I want you to provide a clear and accurate translation without suggestions. I do not want you to use hyphens in the text. I want you to use HTML in their appropiate places. I do not want you to use completion in HTML. If the English text does not start with a capital or the second position has no capital, then the translated result should also not start with a capital. I want you to transform all words within the translation after the start of sentence to lowercase. You should use placeholders like "%1$s", "%2$s", "%s", "%d" in their appropriate places in the translation. You should translate "your" as "je", "website" as "site", "Plugin" as "plugin", "addon" as "add-on", "Addon" as "Add-on", "logboeken" as "logs", "foutenlogboek" as "foutlog" in every sentence I provide. I want you to transform "Add new" into "Nieuwe toevoegen", "please check" into "controleer", "Howdy" into "Hallo". I want you to transform sentences like this "Please test it." into "Test het." I want you to transform "Please download" into "Download". I want you to remove the following keywords "alstublieft" and "alsjeblieft" from the Dutch translation.'
     //var prompt = encodeURIComponent(prompt);
-    console.debug("counter:", counter, myprompt)
+    //console.debug("counter:", counter, myprompt)
     
     originalPreProcessed = '"' + originalPreProcessed + '"';
-    console.debug("pre:", originalPreProcessed);
+    //console.debug("pre:", originalPreProcessed);
     var message = [{ 'role': 'system', 'content': myprompt }, { 'role': 'user', 'content': originalPreProcessed }];
     let mymodel = 'gpt-3.5-turbo-16k';
     var data1 = {
@@ -77,7 +78,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         model: mymodel,
         max_tokens: 1500,
         n:1,
-        temperature: 0.8,
+        temperature: 0.5,
         frequency_penalty: 0,
         presence_penalty: 0,
         top_p: 1,
@@ -147,7 +148,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 open_ai_response = data.choices[0];
                 if (typeof open_ai_response.message.content != 'undefined') {
                     let text = open_ai_response.message.content;
-                    console.debug("text:", text)
+                    //console.debug("text:", text)
                     //text = text.trim('\n');
                     translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
                     processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
@@ -163,6 +164,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             }
         })
         .catch(error => {
+            //console.debug("error:",error)
             if (error[2] == "400") {
                 errorstate = "Error 400";
                 if (editor) {
@@ -194,6 +196,11 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             else if (error[2] == '456') {
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
                 errorstate = "Error 456";
+            }
+            else if (error[2] == '503') {
+                messageBox("error", "Error 503 has been encountered" + error)
+                //alert("Error 456 Quota exceeded. The character limit has been reached")
+                errorstate = "Error 503";
             }
             else {
                 if (editor) {
@@ -252,7 +259,7 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
     //  var prompt = 'I want you to act as translation improver. I do not want you to explain improvements. Give the answer in English. For the English text  "' + original + '", is "' + translatedText + '\" the correct translation in "Dutch"?';
     // console.debug("prompt:", prompt)
     //var prompt = encodeURIComponent(prompt);
-    originalPreProcessed = "'" + originalPreProcessed + "'" + "\n"
+    originalPreProcessed = "'" + originalPreProcessed + "'" + "|\n"
     var message = [{ 'role': 'user', 'content': prompt }];
     let mymodel = "gpt-3.5-turbo"
     var data1 = {
@@ -263,6 +270,8 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
         temperature: 0,
         frequency_penalty: 0,
         presence_penalty: 0,
+        top_p: 0,
+        stop: '|\n',
     }
 
     var mydata = {
@@ -309,7 +318,7 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
             // check for error response
             if (!response.ok) {
                 // get error message from body or default to response status
-                console.debug("data:", data, response.status)
+                //console.debug("data:", data, response.status)
                 if (typeof data != "undefined") {
                     errorstate = "NOK"
                     error = [data, error, response.status, errorstate];
@@ -356,7 +365,7 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
             }
         })
         .catch(error => {
-            //console.debug("error3:",error[0])
+            //console.debug("error:",error)
             if (error[2] == "400") {
                 errorstate = "Error 400";
                 if (editor) {
@@ -382,6 +391,11 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
             else if (error[2] == '456') {
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
                 errorstate = "Error 456";
+            }
+            else if (error[2] == '503') {
+                messageBox("error", "The server cannot handle the request")
+                //alert("Error 456 Quota exceeded. The character limit has been reached")
+                errorstate = "Error 503";
             }
             else {
                 if (editor) {

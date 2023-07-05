@@ -214,7 +214,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                translatedText = translatedText.substring(1, translatedText.length)
            }
         }
-        console.debug("orig:",original,translatedText)
+       // console.debug("orig:",original,translatedText)
         if (translatedText.endsWith("'") == true) {
             if (original.endsWith("'") != true) {
                translatedText = translatedText.substring(0, translatedText.length - 1)
@@ -970,14 +970,14 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
 async function reviewTrans() {
     if (apikeyOpenAI != "") {
         if (translatedText != "") {
-            console.debug("openkey ", apikeyOpenAI)
+            //console.debug("openkey ", apikeyOpenAI)
             result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview);
-            console.debug("Result:", result)
+           // console.debug("Result:", result)
         }
     }
 }
 function needsMarking(markverb, spellcheckIgnore) {
-    console.debug("ignorelist1:", spellcheckIgnore)
+   // console.debug("ignorelist1:", spellcheckIgnore)
     var ignore = ["WooCommerce", "Yoast","strong","a href","href"];
     
     if ((ignore.find(element => element == markverb)) == undefined) {
@@ -1569,13 +1569,17 @@ async function fetchli(result, editor, row, TMwait) {
                 textFound = liSuggestion.innerHTML;
                 //sometimes we have a second <span> within the text, we need to drop that
                 //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
-                resolve(textFound.split("<span")[0]);
+                // PSS made a fix for issue #300
+                textFound = textFound.split("<span")[0]
+                textFound =unEscape(textFound)
+                resolve(textFound);
             } else {
                 resolve("No suggestions");
             }
         }, TMwait);
     });
 }
+
 
 // Part of the solution issue #204
 async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait) {
@@ -1690,7 +1694,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 if (result != "No suggestions") {
                     let myresult = await fetchli(result, editor, row, TMwait).then(resli => {
                         if (typeof resli != null) {
-                            //console.debug("Fetchli result:",res)
+                            //console.debug("Fetchli result:",resli)
                             myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype);
                             let textareaElem = record.querySelector("textarea.foreign-text");
                             // console.debug("textareaElem:", textareaElem)
@@ -1711,25 +1715,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                                     }
                                 }
                             }
-
-
-                            // processTransl(original, translatedText, "NL", record, row, transtype, plural_line, locale, convertToLower, current)
-
-                            //textareaElem.innerText = res;
-                            // textareaElem.innerHTML = res;
-                            // PSS 29-03-2021 Added populating the value of the property to retranslate            
-                            // textareaElem.value = res;
-                            //PSS 25-03-2021 Fixed problem with description box issue #13
-                            // textareaElem.style.height = "auto";
-                            // textareaElem.style.height = textareaElem.scrollHeight + "px";
-                            // With center it works best, but it can be put on the top, center, bottom
-                            //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
-                            // Determine which row we need to push to the top
-                            // oldRow = editor.id;
-                            // newRow = oldRow.replace("editor", "preview")
-                            // myRow = document.querySelector(`#${newRow}`);
-                            // myRow.scrollIntoView(true);
-
                         }
                         else {
                             console.debug("notfound");
@@ -1810,7 +1795,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     rowchecked.checked = false;
                 }
                 else {
-                    console.debug("textarea:")
+                   // console.debug("textarea:")
                     rowchecked.checked = true;
                 }
             }
@@ -2173,8 +2158,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         if (checkplural != null) {
                             transtype = "plural";
                             plural_line = "2";
-                           // console.debug("Plural: ", plural_line, original)
+                            
                             let plural = checkplural.innerText;
+                            console.debug("Plural: ", plural_line, plural)
                             let pretrans = await findTransline(plural, destlang);
                             if (pretrans == "notFound") {
                                 if (transsel == "google") {
@@ -2238,7 +2224,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     }
                                 }
                                 else if (transsel == "OpenAI") {
-                                     result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+                                     result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree,counter);
                                    // console.debug("OpenAi result:",result)
                                     if (result == "Error 401") {
                                          messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
@@ -2536,7 +2522,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "OpenAI") {
                         let editor = true;
-                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor);
+                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor,"1");
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -2654,7 +2640,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "OpenAI") {
-                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree);
+                        let editor = true;
+                        result = await AITranslate(plural, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree,editor,"1");
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
