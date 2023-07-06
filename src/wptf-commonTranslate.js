@@ -2749,7 +2749,7 @@ async function saveLocal() {
             row = newrowId;
         }
 
-            // If a translation alreay has been saved, there is no checkbox available
+        // If a translation alreay has been saved, there is no checkbox available
         if (checkset != null) {
             //nextpreview = preview.nextElementSibling.nextElementSibling;
             if (checkset.checked) {
@@ -2757,8 +2757,8 @@ async function saveLocal() {
                 setTimeout((timeout) => {
                     //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
                     let editor = preview.nextElementSibling;
-                    preview.querySelector("td.actions .edit").click();
-                    //console.debug("Preview:",editor)
+                    // 06-07-2023 PSS changed to not open the editor anymore
+                    //preview.querySelector("td.actions .edit").click();
                     if (editor != null) {
                         let rowfound = editor.id;
                         let editorRow = rowfound.split("-")[1];
@@ -2775,22 +2775,29 @@ async function saveLocal() {
                         }
                         // if the record is a waiting we need to select the approve button issue #268
                         let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
-                        //console.debug("state:", current.innerText);
                         if (current.innerText == 'waiting') {
-                            editor.querySelector(".approve").click();
+                            // 06-07-2023 PSS changed to not open the editor anymore
+                            let bulk_save = preview.querySelector(".tf-save-button");
+                            bulk_save.click();
+                           // editor.querySelector(".approve").click();
                         } else {
+                            // 06-07-2023 PSS changed to not open the editor anymore
+                            let bulk_save = preview.querySelector(".tf-save-button");
+                            bulk_save.click();
                             // else we need to select the save button
-                            editor.querySelector(".translation-actions__save").click();
+                           // editor.querySelector(".translation-actions__save").click();
                         }
                         // PSS confirm the message for dismissal
                         foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
                             return new Promise((resolve, reject) => {
+                                console.debug("confirm:",confirm)
                                 if (typeof confirm != 'undefined') {
                                     if (confirm != "No suggestions") {
                                         confirm.click();
                                         resolve(foundlabel);
                                     } else {
-                                        reject("No suggestions");
+                                        console.debug("No label shown!")
+                                       // reject("No suggestions");
                                     }
                                 } else {
                                     reject("No suggestions");
@@ -2799,7 +2806,7 @@ async function saveLocal() {
                         });
                     }
                 }, timeout, counter);
-                timeout += 2000;
+                timeout += 1500;
             } else {
                 if (preview != null) {
                     if (!is_pte) {
