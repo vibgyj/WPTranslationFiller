@@ -79,6 +79,7 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 }
 
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
+const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
 function preProcessOriginal(original, preverbs, translator) {
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
@@ -130,11 +131,16 @@ function preProcessOriginal(original, preverbs, translator) {
             original = original.replace('.{', '. {');
             index++;
         }
-      //  if (index == 1) {
-            // console.debug("preProcessOriginal no placeholders found index === 0 ");
-       // }
+
+        // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
+        const linkmatches = original.matchAll(linkRegex);
+        index = 1;
+        for (const linkmatch of linkmatches) {
+            original = original.replace(linkmatch[0], `{linkvar ${index}}`);
+            original = original.replace('.{', '. {');
+            index++;
+        }
     }
-    //console.debug("After pre-processing:", original);
     return original;
 }
 
@@ -179,6 +185,15 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`{var ${index}}`, match[0]);
             //translatedText = translatedText.replace(`var ${index}'`, match[0]);
            index++;
+        }
+        // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
+        const linkmatches = original.matchAll(linkRegex);
+        index = 1;
+        for (const match of linkmatches) {
+            //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
+            translatedText = translatedText.replace(`{linkvar ${index}}`, match[0]);
+            //translatedText = translatedText.replace(`var ${index}'`, match[0]);
+            index++;
         }
         if (translatedText.endsWith(".") == true) {
             if (original.endsWith(".") != true) {

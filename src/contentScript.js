@@ -1588,21 +1588,28 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var panelTransDiv;
     var missingVerbsButton;
     if (typeof rowId != "undefined") {
-        current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerText;
-        if (typeof current === 'string') {
-            if (current == 'untranslated') {
-                // console.debug("current is null", current)
-                current = 'Empty';
-            }
-            if (current == 'current') {
-                SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+        current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+        // 05-07-2023 PSS corrected this to prevent error when innerText is not found
+        if (current != null) {
+            current = current.innerText;
+            if (typeof current == 'string') {
+                if (current == 'untranslated') {
+                    // console.debug("current is null", current)
+                    current = 'Empty';
+                }
+                if (current == 'current') {
+                    SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+                }
+                else {
+                    SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+                }
             }
             else {
-                SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+                console.debug("Bubble not found!");
             }
         }
         else {
-            console.debug("Bubble not found!");
+            console.debug("current is not found!");
         }
         // We need to have the new bar to be able to set the color
         panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
@@ -1647,7 +1654,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     checkElem.style.backgroundColor = "green";
                     checkElem.title = "Save the string";
                     if (typeof headerElem.style != "undefined") {
-                        panelTransDiv.style.backgroundColor = "green";
+                        if (panelTransDiv != null) {
+                            panelTransDiv.style.backgroundColor = "green";
+                        }
                         //headerElem.style.backgroundColor = "green";
                         // 20-02-2023 FIx for issue #286
                         let markdiv = document.querySelector("#editor-" + rowId + " .marker");
@@ -1818,7 +1827,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             headertitle = headerElem.title;
             if (typeof headerElem.style != "undefined") {
                 if (result.percent == 100) {
-                    if (typeof panelTransDiv != 'undefined') {
+                    if (panelTransDiv != null) {
                         panelTransDiv.style.backgroundColor = "green";
                         // headerElem.style.backgroundColor = "green";
                     }
