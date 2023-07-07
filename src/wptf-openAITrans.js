@@ -3,12 +3,16 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,counter) {
+async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect) {
+    var timeout = 100;
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
     //errorstate = "NOK"
-    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter);
+    setTimeout(async function (timeout) {
+    var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter,OpenAISelect);
     //console.debug("OpenAI errorstate:",errorstate,result)
+    }, timeout);
+    timeout += 1;
     return errorstate;
 }
 
@@ -28,7 +32,7 @@ async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, 
     return errorstate;
 }
 
-function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter) {
+function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -45,7 +49,6 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     var error;
     var data;
     var link;
-    var timeout = 1000;
     var lang = window.navigator.language;
     //console.debug("orginal:",original)
     //console.debug("taal:",lang)
@@ -72,7 +75,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     originalPreProcessed = '"' + originalPreProcessed + '"';
     //console.debug("pre:", originalPreProcessed);
     var message = [{ 'role': 'system', 'content': myprompt }, { 'role': 'user', 'content': originalPreProcessed }];
-    let mymodel = 'gpt-3.5-turbo-16k';
+    let mymodel = OpenAISelect.toLowerCase();
+    //let mymodel = 'gpt-4';
     var data1 = {
         messages : message,
         model: mymodel,
@@ -165,6 +169,9 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         })
         .catch(error => {
             //console.debug("error:",error)
+            let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+            translateButton.className += " translated";
+            translateButton.innerText = "Translated";
             if (error[2] == "400") {
                 errorstate = "Error 400";
                 if (editor) {
@@ -184,14 +191,15 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             else if (error[2] == '429') {
                 if (editor) {
                     messageBox("error", "The model: " + mymodel + " is currently overloaded with other requests")
+                    errorstate = "Error 429";
                 }
                 else {
                     text = "No suggestions due to overload OpenAI!!"
                     translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
                     processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-                    errorstate = "OK"
+                    errorstate = "Error 429";
                 }
-                errorstate = "Error 429" + error[0].error.message;
+               
             }
             else if (error[2] == '456') {
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
@@ -201,6 +209,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 messageBox("error", "Error 503 has been encountered" + error)
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
                 errorstate = "Error 503";
+
             }
             else {
                 if (editor) {
@@ -210,7 +219,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                     errorstate = error[0].error.message
                 }
                 else {
-                    errorstate = "OK"
+                    errorstate = "NOK"
                 }
             }
             

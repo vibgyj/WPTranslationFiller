@@ -28,6 +28,7 @@ let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let transselectBox = document.getElementById("transselect");
+let OpenAIselectBox = document.getElementById("OpenAIselect");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("glossary_file_uploaded");
 let glossaryFile = document.getElementById("glossary_file");
@@ -48,7 +49,8 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
+    console.debug("getvalue:",data.OpenAISelect)
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -76,6 +78,16 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI
     else {
         transselectBox.value = data.transsel;
     }
+    if (typeof data.OpenAISelect == 'undefined') {
+        OpenAIselectBox.value = "gpt-3.5-turbo";
+    }
+    else if (data.OpenAISelect == "") {
+        OpenAIselectBox.value = "gpt-3.5-turbo";
+    }
+    else {
+        OpenAIselectBox.value = data.OpenAISelect;
+    }
+    
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
@@ -208,6 +220,7 @@ button.addEventListener("click", function () {
     }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
+
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
     }
@@ -217,6 +230,17 @@ button.addEventListener("click", function () {
     else {
         transsel = transselectBox.value;
     }
+
+    if (typeof OpenAIselectBox.value == "undefined") {
+        OpenAIsel = "GPT-3.5-turbo";
+    }
+    else if (OpenAIselectBox.value == "") {
+        OpenAIsel = "GPT-3.5-turbo";
+    }
+    else {
+        OpenAIsel = OpenAIselectBox.value;
+    }
+    console.debug("Openvalue:",OpenAIsel)
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
@@ -288,6 +312,7 @@ button.addEventListener("click", function () {
         apikeyMicrosoft: apikeyMicrosoft,
         DeeplFree: showDeepl,
         transsel: transsel,
+        OpenAISelect: OpenAIsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation,
