@@ -37,6 +37,7 @@ let LtToolUserTextbox = document.getElementById("languagetool_user");
 let LtToolLangTextbox = document.getElementById("languagetool_language");
 let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
+let OpenAIwaitValue = document.getElementById("OpenAIWait");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
@@ -49,8 +50,8 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
-    console.debug("getvalue:",data.OpenAISelect)
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
+   // console.debug("getvalue:",data.OpenAIWait)
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -67,6 +68,14 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI
     else {
         TMwait = data.TMwait;
         TMwaitValue.value = TMwait;
+
+    }
+    if (typeof data.OpenAIWait == 'undefined') {
+        OpenAIWait = 7500;
+    }
+    else {
+        OpenAIWaitVal = data.OpenAIWait;
+        OpenAIWait.value = OpenAIWaitVal;
 
     }
     apikeydeeplCheckbox = data.DeeplFree;
@@ -248,6 +257,7 @@ button.addEventListener("click", function () {
     let preTranslation = preverbsTextbox.value;
     let spellIgnoreverbs = spellcheckTextbox.value;
     let TMwaitVal = TMwaitValue.value;
+    let OpenAIVal = OpenAIwaitValue.value;
     if (document.querySelector("#show-history:checked") !== null) {
         let Hist = document.querySelector("#show-history:checked");
         showHist = Hist.checked;
@@ -324,6 +334,7 @@ button.addEventListener("click", function () {
         glotDictGlos: showDictGlosLine,
         convertToLower: showConvertToLower,
         TMwait: TMwaitVal,
+        OpenAIWait: OpenAIVal,
         interXHR: inter,
         LtKey: LtToolKeyTextbox.value,
         LtUser: LtToolUserTextbox.value,

@@ -59,7 +59,9 @@
         #tmWait {
             width: 50px;
         }
-
+        #OpenAIWait {
+            width: 50px;
+        }
         #text_verbs {
             width: calc(100% - 6px);
             min-height: 100px;
@@ -340,8 +342,11 @@
                     <label for="tmWait">TM waiting time</label>
                 </td>
                 <td>
-                    <div class="form-input">
+                    <div  class="form-input">
                         <input id="tmWait" type="text" value="500" />
+                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>       
+                        <label style="margin: 10px" for="OpenAIWait">OpenAI waiting time</label>
+                        <input id="OpenAIWait" type="text" value="7500" />
                         <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
                     </div>
                 </td>

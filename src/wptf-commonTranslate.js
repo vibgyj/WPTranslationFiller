@@ -1827,7 +1827,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     });
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait) {
     //console.time("translation")
     var translate;
     var transtype = "";
@@ -1838,7 +1838,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var preview = "";
     var pretrans;
     var timeout = 100;
-    var vartime = 6500;
+    var vartime = openAIWait;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -2815,7 +2815,6 @@ async function saveLocal() {
                         // PSS confirm the message for dismissal
                         foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
                             return new Promise((resolve, reject) => {
-                                console.debug("confirm:",confirm)
                                 if (typeof confirm != 'undefined') {
                                     if (confirm != "No suggestions") {
                                         confirm.click();
