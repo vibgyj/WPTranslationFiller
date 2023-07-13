@@ -77,7 +77,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     var data;
     var link;
     var lang = window.navigator.language;
-    var show_debug = true;
+    var show_debug = false;
     var link = "";
     //console.debug("orginal:",original)
     //console.debug("taal:",lang)
@@ -87,13 +87,13 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     prevstate = current.innerText;
     language = language.toUpperCase();
    
-    if (counter == 1 || typeof counter == 'undefined') {
+  //  if (counter == 1 || typeof counter == 'undefined') {
        myprompt = OpenAIPrompt +'\n';
-    }
-    else {
-        myprompt = "Translate into " + lang + " according previously given instructions: ";
+  //  }
+  //  else {
+   //     myprompt = "Translate into " + lang + " with my previously given instructions: " + "\n";
        //myprompt = "Vertaal naar Nederlands volgens eerder opgegeven instructies: ";
-    }
+   // }
     
     //var prompt = encodeURIComponent(prompt);
     //console.debug("counter:", counter, myprompt)
@@ -111,7 +111,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         temperature: 0,
         frequency_penalty: 0,
         presence_penalty: 0,
-        top_p: 1
+        top_p: 0.5
     }
 
     var mydata = {
@@ -192,7 +192,10 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 open_ai_response = data.choices[0];
                 if (typeof open_ai_response.message.content != 'undefined') {
                     let text = open_ai_response.message.content;
-                    //console.debug("text:", text)
+                    if (show_debug == true) {
+                        let token = data.usage.total_tokens
+                        console.debug("token:", token)
+                    }
                     //text = text.trim('\n');
                     translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
                     processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
@@ -257,7 +260,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 if (editor) {
                     messageBox("error", "Some uncatched error has been found." + error[0])
                 }
-                if (typeof error != "undefined") {
+                if (typeof error != 'undefined') {
                     console.debug("error final:",error)
                     errorstate = error[0].error.message
                 }
