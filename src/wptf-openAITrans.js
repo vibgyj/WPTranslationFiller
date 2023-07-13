@@ -108,7 +108,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         model: mymodel,
         max_tokens: 1000,
         n:1,
-        temperature: 0,
+        temperature: 1,
         frequency_penalty: 0,
         presence_penalty: 0,
         top_p: 0.5

@@ -2463,13 +2463,17 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     var translateButton;
     locale = checkLocale();
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
-    // if row is already translated the rowId has different format, so we need to search with this different format
-    if (translateButton == null) {
-        translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+    // if row is already translated we need to remove the classes
+    if (translateButton.className == "translation-entry-my-button") {
+        console.debug("it is not started")
+        translateButton.className += " started";
     }
-    //console.debug("translate entry:",rowId,transsel)
-    translateButton.className += " started";
-    translateButton.innerText = "Translate";
+    else {
+        translateButton.classList.remove("translation-entry-my-button", "started", "translated");
+        translateButton.classList.remove("translation-entry-my-button", "restarted", "translated");
+        translateButton.className = "translation-entry-my-button restarted";
+        translateButton.innerText = "Translate"
+    }
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     // 07-07-2021 PSS need to determine if current record
     let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -2505,6 +2509,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
                 toTranslate = checkComments(comment.trim());
             }
+            let textareaElem = e.querySelector("textarea.foreign-text");
+            textareaElem.innerText = "";
+            textareaElem.value = "";
             if (toTranslate) {
                 // console.debug("we need to translate");
                 let pretrans = await findTransline(original, destlang);
