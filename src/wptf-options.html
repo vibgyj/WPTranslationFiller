@@ -62,6 +62,10 @@
         #OpenAIWait {
             width: 50px;
         }
+        #OpenAI_temp {
+            width: 40px;
+        }
+
         #text_verbs {
             width: calc(100% - 6px);
             min-height: 100px;
@@ -255,12 +259,14 @@
                     <label for="OpenAIselect">Select a model for OpenAI:</label>
                 </td>
                 <td>
-                    <div class="form-select">
+                    <div class="form-input">
                         <select title="Select a model for OpenAI" name="OpenAIsel" id="OpenAIselect">
                             <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                             <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
                             <option value="gpt-4">gpt-4</option>
                         </select>
+                        <label for="OpenAI_temp">Temperature:</label>
+                        <input type = "number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
                     </div>
                 </td>
             </tr>

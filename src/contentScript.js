@@ -910,7 +910,7 @@ function impFileClicked(event) {
 function translatePageClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined')
             {
@@ -922,7 +922,8 @@ function translatePageClicked(event) {
                         convertToLow = data.convertToLower;
                         var DeeplFree = data.DeeplFree;
                         var openAIWait = Number(data.OpenAIWait);
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait);
+                        var OpenAItemp = parseFloat(data.OpenAItemp);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait,OpenAItemp);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -1405,13 +1406,14 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI","OpenAIPrompt", "OpenAISelect", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         var formal = checkFormal(false);
         var DeeplFree = data.DeeplFree;
+        var OpenAItemp = parseFloat(data.OpenAItemp);
         //console.debug("translator:", data.transsel, data.convertToLower)
 
-        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete,data.OpenAISelect);
+        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp);
         });
 }
 
@@ -1955,7 +1957,7 @@ function savetranslateEntryClicked(event) {
             status.innerText = "waiting";
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
             setTimeout(() => {
-                toastbox("info", "" , "700", "Saving suggestion", myWindow);
+                //toastbox("info", "" , "600", "Saving suggestion", myWindow);
                 let preview = document.querySelector(`#preview-${rowId}`);
                 preview.querySelector("td.actions .edit").click();
                 const editor = preview.nextElementSibling;
@@ -1968,6 +1970,7 @@ function savetranslateEntryClicked(event) {
                     if (confirm != '.gp-js-message-dismiss') {
                         if (typeof confirm === 'function') {
                             confirm.click();
+                           // close_toast();
                         }
                     }
                 });

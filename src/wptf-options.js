@@ -29,6 +29,7 @@ let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
+let OpenAItempBox = document.getElementById("OpenAI_temp");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("glossary_file_uploaded");
 let glossaryFile = document.getElementById("glossary_file");
@@ -50,8 +51,8 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
-   // console.debug("getvalue:",data.OpenAIWait)
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
+    console.debug("getvalue:",data.OpenAItemp)
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -77,6 +78,13 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI
         OpenAIWaitVal = data.OpenAIWait;
         OpenAIWait.value = OpenAIWaitVal;
 
+    }
+    if (typeof data.OpenAItemp == 'undefined') {
+        OpenAItemp = 1;
+    }
+    else {
+        OpenAItempBox.value = data.OpenAItemp;
+        OpenAItemp = data.OpenAItemp
     }
     apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
@@ -249,7 +257,8 @@ button.addEventListener("click", function () {
     else {
         OpenAIsel = OpenAIselectBox.value;
     }
-    console.debug("Openvalue:",OpenAIsel)
+
+    console.debug("Openvalue:",OpenAItemp)
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
@@ -258,6 +267,7 @@ button.addEventListener("click", function () {
     let spellIgnoreverbs = spellcheckTextbox.value;
     let TMwaitVal = TMwaitValue.value;
     let OpenAIVal = OpenAIwaitValue.value;
+    let OpenAItempVal = OpenAItempBox.value;
     if (document.querySelector("#show-history:checked") !== null) {
         let Hist = document.querySelector("#show-history:checked");
         showHist = Hist.checked;
@@ -315,80 +325,88 @@ button.addEventListener("click", function () {
     else {
         OpenAIreview = "false";
     }
-    chrome.storage.local.set({
-        apikey: apikey,
-        apikeyDeepl: apikeyDeepl,
-        apikeyOpenAI: apikeyOpenAI,
-        apikeyMicrosoft: apikeyMicrosoft,
-        DeeplFree: showDeepl,
-        transsel: transsel,
-        OpenAISelect: OpenAIsel,
-        destlang: destlang,
-        postTranslationReplace: postTranslation,
-        preTranslationReplace: preTranslation,
-        OpenAIPrompt: promptText,
-        reviewPrompt: reviewText,
-        spellCheckIgnore: spellIgnoreverbs,
-        showHistory: showHist,
-        showTransDiff: showDifference,
-        glotDictGlos: showDictGlosLine,
-        convertToLower: showConvertToLower,
-        TMwait: TMwaitVal,
-        OpenAIWait: OpenAIVal,
-        interXHR: inter,
-        LtKey: LtToolKeyTextbox.value,
-        LtUser: LtToolUserTextbox.value,
-        LtLang: LtToolLangTextbox.value,
-        LtFree: LtFreeChecked,
-        Auto_spellcheck: LtAutoSpell,
-        Auto_review_OpenAI: OpenAIreview
+    if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
+        chrome.storage.local.set({
+            apikey: apikey,
+            apikeyDeepl: apikeyDeepl,
+            apikeyOpenAI: apikeyOpenAI,
+            apikeyMicrosoft: apikeyMicrosoft,
+            DeeplFree: showDeepl,
+            transsel: transsel,
+            OpenAISelect: OpenAIsel,
+            OpenAItemp: OpenAItempVal,
+            destlang: destlang,
+            postTranslationReplace: postTranslation,
+            preTranslationReplace: preTranslation,
+            OpenAIPrompt: promptText,
+            reviewPrompt: reviewText,
+            spellCheckIgnore: spellIgnoreverbs,
+            showHistory: showHist,
+            showTransDiff: showDifference,
+            glotDictGlos: showDictGlosLine,
+            convertToLower: showConvertToLower,
+            TMwait: TMwaitVal,
+            OpenAIWait: OpenAIVal,
+            interXHR: inter,
+            LtKey: LtToolKeyTextbox.value,
+            LtUser: LtToolUserTextbox.value,
+            LtLang: LtToolLangTextbox.value,
+            LtFree: LtFreeChecked,
+            Auto_spellcheck: LtAutoSpell,
+            Auto_review_OpenAI: OpenAIreview
 
-    });
-    //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
- 
-    if (glossaryFile.value !== "") {
-        //console.debug("Options: ", glossaryFile);
-        // 06-05-2022 PSS fix for issue #208
-        const thisdate = new Date();
-        let myYear = thisdate.getFullYear();
-        let mymonth = thisdate.getMonth();
-        let myday = thisdate.getDate();
-        let thisDay = myday + "-" + (mymonth +1) + "-" + myYear;
-        
-        myfile = glossaryFile.value.replace("C:\\fakepath\\", "");
-        myfile = myfile + "   " + thisDay;
-        chrome.storage.local.set({ glossaryFile: myfile });
+        });
 
-        chrome.storage.local.set({ glossary: glossary });
-        chrome.storage.local.set({ glossaryA: glossaryA });
-        chrome.storage.local.set({ glossaryB: glossaryB });
-        chrome.storage.local.set({ glossaryC: glossaryC });
-        chrome.storage.local.set({ glossaryD: glossaryD });
-        chrome.storage.local.set({ glossaryE: glossaryE });
-        chrome.storage.local.set({ glossaryF: glossaryF });
-        chrome.storage.local.set({ glossaryG: glossaryG });
-        chrome.storage.local.set({ glossaryH: glossaryH });
-        chrome.storage.local.set({ glossaryI: glossaryI });
-        chrome.storage.local.set({ glossaryJ: glossaryJ });
-        chrome.storage.local.set({ glossaryK: glossaryK });
-        chrome.storage.local.set({ glossaryL: glossaryL });
-        chrome.storage.local.set({ glossaryM: glossaryM });
-        chrome.storage.local.set({ glossaryN: glossaryN });
-        chrome.storage.local.set({ glossaryO: glossaryO });
-        chrome.storage.local.set({ glossaryP: glossaryP });
-        chrome.storage.local.set({ glossaryQ: glossaryQ });
-        chrome.storage.local.set({ glossaryR: glossaryR });
-        chrome.storage.local.set({ glossaryS: glossaryS });
-        chrome.storage.local.set({ glossaryT: glossaryT });
-        chrome.storage.local.set({ glossaryU: glossaryU });
-        chrome.storage.local.set({ glossaryV: glossaryV });
-        chrome.storage.local.set({ glossaryW: glossaryW });
-        chrome.storage.local.set({ glossaryX: glossaryX });
-        chrome.storage.local.set({ glossaryY: glossaryY });
-        chrome.storage.local.set({ glossaryZ: glossaryZ });
+        //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
+
+        if (glossaryFile.value !== "") {
+            //console.debug("Options: ", glossaryFile);
+            // 06-05-2022 PSS fix for issue #208
+            const thisdate = new Date();
+            let myYear = thisdate.getFullYear();
+            let mymonth = thisdate.getMonth();
+            let myday = thisdate.getDate();
+            let thisDay = myday + "-" + (mymonth + 1) + "-" + myYear;
+
+            myfile = glossaryFile.value.replace("C:\\fakepath\\", "");
+            myfile = myfile + "   " + thisDay;
+            chrome.storage.local.set({ glossaryFile: myfile });
+
+            chrome.storage.local.set({ glossary: glossary });
+            chrome.storage.local.set({ glossaryA: glossaryA });
+            chrome.storage.local.set({ glossaryB: glossaryB });
+            chrome.storage.local.set({ glossaryC: glossaryC });
+            chrome.storage.local.set({ glossaryD: glossaryD });
+            chrome.storage.local.set({ glossaryE: glossaryE });
+            chrome.storage.local.set({ glossaryF: glossaryF });
+            chrome.storage.local.set({ glossaryG: glossaryG });
+            chrome.storage.local.set({ glossaryH: glossaryH });
+            chrome.storage.local.set({ glossaryI: glossaryI });
+            chrome.storage.local.set({ glossaryJ: glossaryJ });
+            chrome.storage.local.set({ glossaryK: glossaryK });
+            chrome.storage.local.set({ glossaryL: glossaryL });
+            chrome.storage.local.set({ glossaryM: glossaryM });
+            chrome.storage.local.set({ glossaryN: glossaryN });
+            chrome.storage.local.set({ glossaryO: glossaryO });
+            chrome.storage.local.set({ glossaryP: glossaryP });
+            chrome.storage.local.set({ glossaryQ: glossaryQ });
+            chrome.storage.local.set({ glossaryR: glossaryR });
+            chrome.storage.local.set({ glossaryS: glossaryS });
+            chrome.storage.local.set({ glossaryT: glossaryT });
+            chrome.storage.local.set({ glossaryU: glossaryU });
+            chrome.storage.local.set({ glossaryV: glossaryV });
+            chrome.storage.local.set({ glossaryW: glossaryW });
+            chrome.storage.local.set({ glossaryX: glossaryX });
+            chrome.storage.local.set({ glossaryY: glossaryY });
+            chrome.storage.local.set({ glossaryZ: glossaryZ });
+        }
+        messageBox("info", "Settings successfully saved.<br>Please make sure that you enter<br>values in Destination Language<br> and select a Glossary File<br>and enter values in <br>Post Translation Replace");
     }
-    messageBox("info", "Settings successfully saved.<br>Please make sure that you enter<br>values in Destination Language<br> and select a Glossary File<br>and enter values in <br>Post Translation Replace");
-});
+    else {
+        messageBox("error","The value you have entered for temperature is wrong<br>It should be between 0 and 2<br>You can add a value like 0.4");
+
+    }
+    });
 
 let file = document.getElementById("glossary_file");
 let glossary = [];
