@@ -2465,7 +2465,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     locale = checkLocale();
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
     // if row is already translated we need to remove the classes
-    if (translateButton.className == "translation-entry-my-button") {
+    if (translateButton.ClassName == "translation-entry-my-button") {
         console.debug("it is not started")
         translateButton.className += " started";
     }
