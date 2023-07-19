@@ -1498,7 +1498,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "", "", "", rowId, showName, nameDiff, currcount);
+    let currstring = "";
+    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount,currstring);
     let row = rowId.split("-")[0];
     
     // 12-06-2021 PSS do not fetch old if within the translation
@@ -1580,7 +1581,7 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     }
 }
 
-async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount) {												   	  
+async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring) {												   	  
     var current;
     var SavelocalButton;
     var separator1;
@@ -1852,7 +1853,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring);
         }
     }
     else {
@@ -1882,7 +1883,7 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old) {
+function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old,currstring) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
     if (originalElem != undefined) {
@@ -1895,6 +1896,11 @@ function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old) {
         element1.setAttribute("class", "trans_exists_div");
         originalElem.appendChild(element1);
         element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
+        currcount = currcount.replace("Current:", "");
+        if ((+currcount) > 0) {
+            
+           element1.insertAdjacentHTML('afterend','<span class="current-string">' +currstring+ '</span>')
+        }
     }
     else {
         console.debug("updateElementStyle empty!:", originalElem);
@@ -2343,7 +2349,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
             })
         })
             .then(response => response.text())
-            .then(data => {
+            .then(async data => {
                 //05-11-2021 PSS added fix for issue #159 causing an error message after restarting the add-on
                 currURL = window.location.href;
                 // &historypage is added by GlotDict or WPGPT, so no extra parameter is necessary for now
@@ -2351,9 +2357,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     var parser = new DOMParser();
                     var doc = parser.parseFromString(data, "text/html");
                     //console.log("html:", doc);
-                    var table = doc.getElementById("translations");
+                    var table = await doc.getElementById("translations");
                     if (table != null) {
-                           let tr = table.rows;
+                        let tr = table.rows;
+                        let currstring = "";
                            const tbodyRowCount = table.tBodies[0].rows.length;
                            // 04-07-2021 PSS added counter to message for existing translations
                            let rejected = table.querySelectorAll("tr.preview.status-rejected");
@@ -2363,6 +2370,13 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                            let old = table.querySelectorAll("tr.preview.status-old");
                            if (typeof current != "null" && current.length != 0) {
                                currcount = " Current:" + current.length;
+                               //console.debug("table:",table)
+                               currstring = table.querySelector("tr.preview.status-current");
+                               currstring = currstring.querySelector(".translation-text")
+                               if (currstring.innerText == null) {
+                                   currstring = "";
+                               }
+                               else {currstring = currstring.innerText }
                            }
                            else {
                               currcount = "";
@@ -2392,10 +2406,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                                old = "";
                            }
                            if (tbodyRowCount > 2 && single == "False") {
-                              updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount);
+                              updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring);
                            }
                            else if (tbodyRowCount > 2 && single == "True") {
-                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount);
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring);
                                //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                                //window.open(url, "_blank", windowFeatures);
                            }

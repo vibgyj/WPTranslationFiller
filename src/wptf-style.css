@@ -1439,13 +1439,21 @@ table.translations tr.preview.status-fuzzy {
      opacity: 1;
     }
 
-
 .mark-tooltip .mark {
      background-color: yellow;
 }
 
 .mark-devider {
      color:blue;
+}
+
+.mymark-tooltip:hover .mark-tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+.mymark-tooltip .mark {
+    background-color: yellow;
 }
 
 @keyframes blinking {
