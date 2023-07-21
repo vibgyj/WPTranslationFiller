@@ -2464,17 +2464,22 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     var translateButton;
     locale = checkLocale();
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
+    if (translateButton == null) {
+        // original is already translated
+        translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+    }
     // if row is already translated we need to remove the classes
-    if (translateButton.ClassName == "translation-entry-my-button") {
-        console.debug("it is not started")
-        translateButton.className += " started";
+    if (translateButton.className == "translation-entry-my-button") {
+            console.debug("it is not started")
+            translateButton.className += " started";
     }
     else {
-        translateButton.classList.remove("translation-entry-my-button", "started", "translated");
-        translateButton.classList.remove("translation-entry-my-button", "restarted", "translated");
-        translateButton.className = "translation-entry-my-button restarted";
-        translateButton.innerText = "Translate"
+            translateButton.classList.remove("translation-entry-my-button", "started", "translated");
+            translateButton.classList.remove("translation-entry-my-button", "restarted", "translated");
+            translateButton.className = "translation-entry-my-button restarted";
+            translateButton.innerText = "Translate"
     }
+    
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     // 07-07-2021 PSS need to determine if current record
     let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
