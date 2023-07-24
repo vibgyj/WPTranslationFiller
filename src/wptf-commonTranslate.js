@@ -1838,14 +1838,20 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var row = "";
     var preview = "";
     var pretrans;
-    var timeout = 100;
-    var vartime = openAIWait;
+    var timeout = 0;
+    var vartime = 750;
     const stop = false;
     var editor = false;
     var counter = 0;
     var myrecCount = 0;
-    if (OpenAISelect != 'gpt-4') {
-        var vartime = 100;
+    //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
+    if (transsel == 'OpenAI') {
+        if (OpenAISelect != 'gpt-4') {
+            vartime = 650;
+        }
+        else {
+            vartime = openAIWait;
+        }
     }
     locale = checkLocale();
     // 19-06-2021 PSS added animated button for translation at translatePage
@@ -2381,18 +2387,21 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         validateEntry(destlang, textareaElem, "", "", row);
                     }
                     //14-09-2021 PSS changed the class to meet GlotDict behavior
-                    var currentClass = document.querySelector(`#editor-${row}`);
-                    var prevcurrentClass = document.querySelector(`#preview-${row}`);
-                    //currentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                    currentClass.classList.add("wptf-translated");
+                    let currentClass = document.querySelector(`#editor-${row}`);
+                    let prevcurrentClass = document.querySelector(`#preview-${row}`);
+                    
                     currentClass.classList.replace("no-translations", "has-translations");
                     currentClass.classList.replace("untranslated", "status-waiting");
+                    currentClass.classList.add("wptf-translated");
+
                     //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
                     prevcurrentClass.classList.replace("no-translations", "has-translations");
                     prevcurrentClass.classList.replace("untranslated", "status-waiting");
                     prevcurrentClass.classList.add("wptf-translated");
                     // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
                     prevcurrentClass.style.backgroundColor = "#ffe399";
+                   // console.debug("prevClassList:", prevcurrentClass.classList)
+                   // console.debug("translation:", textareaElem.innerText)
 
                     // single translation completed
                     if (completedCallback) {
