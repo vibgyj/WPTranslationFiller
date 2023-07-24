@@ -1853,7 +1853,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current);
         }
     }
     else {
@@ -1883,7 +1883,7 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old,currstring) {
+function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old,currstring,current) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
     if (originalElem != undefined) {
@@ -1897,7 +1897,7 @@ function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old,currstring
         originalElem.appendChild(element1);
         element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
         currcount = currcount.replace("Current:", "");
-        if ((+currcount) > 0) {
+        if ((+currcount) > 0 && current !='current') {
             
            element1.insertAdjacentHTML('afterend','<span class="current-string">' +currstring+ '</span>')
         }
