@@ -374,7 +374,7 @@ function CheckUrl(translated, searchword) {
 function checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
     // strip or add "." at the end of the line
-    console.debug("in checkstartend:", translatedText.substring(translatedText.length - 1, translatedText.length));
+    //console.debug("in checkstartend:", translatedText.substring(translatedText.length - 1, translatedText.length));
     if (original.endsWith("\n") != true) {
         if (translatedText.endsWith("\n") == true) {
             translatedText = translatedText.substring(0, translatedText.length - 1);
@@ -715,15 +715,25 @@ function checkFormalPage(dataFormal) {
 async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt) {
     var timeout = 10;
     var countrows = 0;
-    var tableRecords = 0
+    var tableRecords = 0;
     var orgText = ""
+    var progressbar = "";
+
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
     </div>
     `;
     var myheader = document.querySelector('header');
-    myheader.insertAdjacentHTML('beforebegin', template);
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+       // progressbar = document.querySelector(".indeterminate-progress-bar");
+       // progressbar.style.display = 'block';
+    }
+    else {
+        progressbar.style.display = 'block';
+    }
     //console.debug('postrepl content:', postTranslationReplace)
     //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
     //var formal = checkFormal(false);
@@ -1084,7 +1094,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         }
                     }
                 }
-                if (countrows == tableRecords) {
+                if (countrows == tableRecords-2) {
                     messageBox("info", "Replace verbs done " + countreplaced + " replaced words<br>" + repl_verb);
 
                     // Translation replacement completed

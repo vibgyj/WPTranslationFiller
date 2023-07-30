@@ -19,6 +19,24 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     var result;
     var countreplaced = 0;
     var checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>
+    `;
+    var myheader = document.querySelector('header');
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    //console.debug("progressbar:", progressbar)
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+       // progressbar = document.querySelector(".indeterminate-progress-bar");
+       // progressbar.style.display = 'block;';
+    }
+    else {
+        progressbar.style.display = 'block';
+    }
+
     checkButton.innerText = "Checking";
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
     if (checkButton.className == "check_translation-button") {
@@ -140,6 +158,8 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                     checkButton.innerText = "Checked";
                     checkButton.className += " ready";
                     messageBox("info", "Check spelling done ");
+                    progressbar = document.querySelector(".indeterminate-progress-bar");
+                    progressbar.style.display = "none";
                 }  
         }
         }, timeout, errorstate, countrows);
