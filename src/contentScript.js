@@ -968,31 +968,50 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
+    toastbox("info", "Checkpage is started wait for the result!!", "3000", "CheckPage");
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt","reviewPrompt", "Auto_review_OpenAI"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI"],
         function (data) {
             var promise = new Promise(function (resolve, reject) {
+                //toastbox("info", "Replace words is started wait for the result!!", "50", "CheckPage");
                 checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
-                close_toast();
-                //console.debug("checkpage done")
+               // console.debug("replace words done")
+                resolve(data);
+
+            });
+            var promise2 = new Promise(async function (resolve, reject) {
+                await promise;
+               
                 if (data.Auto_spellcheck == true) {
-                    startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+                  //  toastbox("info", "Spellcheck is started wait for the result!!", "500", "CheckPage");
+                    await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+                    //console.debug("spellcheck done:")
+                    resolve(data)
                 }
-                
-                resolve("Done");
             });
 
-            promise.then(function (val) {
+            var promise3 = new Promise(async function (resolve, reject) {
+                await promise2;
                 if (data.transsel == "OpenAI") {
-                    if (data.Auto_review_OpenAI == true){
+                    if (data.Auto_review_OpenAI == true) {
                         if (data.apikeyOpenAI != "") {
                             //console.debug("review started:", val)
-                            
-                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt,data.reviewPrompt);
+                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt, data.reviewPrompt);
+                            resolve(data)
                         }
                     }
                 }
+            });
+            promise.then(function (data) {
+                console.debug("promise1:");
+            });
+
+            promise2.then(function (data) {
+                console.debug("promise2:");
+            });
+
+            promise3.then(function (data) {
+                console.debug("promise3:");
             });
         }
     );
