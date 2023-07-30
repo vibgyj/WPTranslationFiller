@@ -968,29 +968,34 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "Checkpage is started wait for the result!!", "2000", "CheckPage");
+    toastbox("info", "Checkpage is started wait for the result!!", "3000", "CheckPage");
     chrome.storage.local.get(
         ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI"],
         function (data) {
-            var promise = new Promise(function (resolve, reject) {
-                //toastbox("info", "Replace words is started wait for the result!!", "50", "CheckPage");
-                checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
+           
+            const promise1 = new Promise(async function (resolve, reject) {
+
+                //toastbox("info", "Replace words is started wait for the result!!", "500", "CheckPage");
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
                // console.debug("replace words done")
                 resolve(data);
+                
 
             });
-            var promise2 = new Promise(async function (resolve, reject) {
-                await promise;
+            const promise2 = new Promise(async function (resolve, reject) {
+                await promise1;
                
                 if (data.Auto_spellcheck == true) {
-                  //  toastbox("info", "Spellcheck is started wait for the result!!", "500", "CheckPage");
+                    //toastbox("info", "Spellcheck is started wait for the result!!", "500", "CheckPage");
                     await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
                     //console.debug("spellcheck done:")
                     resolve(data)
+                   
+                   
                 }
             });
 
-            var promise3 = new Promise(async function (resolve, reject) {
+            const promise3 = new Promise(async function (resolve, reject) {
                 await promise2;
                 if (data.transsel == "OpenAI") {
                     if (data.Auto_review_OpenAI == true) {
@@ -1002,19 +1007,23 @@ function checkPageClicked(event) {
                     }
                 }
             });
-            promise.then(function (data) {
+            promise1.then(function (data) {
                 console.debug("promise1:");
+                
             });
 
             promise2.then(function (data) {
                 console.debug("promise2:");
+               
             });
 
             promise3.then(function (data) {
                 console.debug("promise3:");
             });
+           // close_toast()
         }
     );
+
 }
 
 function exportPageClicked(event) {
@@ -1676,7 +1685,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     }
                     checkElem.style.backgroundColor = "green";
                     checkElem.title = "Save the string";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         if (panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "green";
                         }
@@ -1730,7 +1739,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.onclick = savetranslateEntryClicked;
                     checkElem.style.backgroundColor = "purple";
                     checkElem.title = "Save the string";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem!= "undefined") {
                         panelTransDiv.style.backgroundColor = "purple";
                     }
                 }
@@ -2193,6 +2202,7 @@ function taMatch(gWord, tWord) {
 // 22-06-2021 PSS added functionality to show differences in the translations
 async function fetchOldRec(url, rowId) {
     // 23-06-2021 PSS added original translation to show in Meta
+    var tbodyRowCount = 0;
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     if (e != null) {
         let original = e.querySelector("#editor-" + rowId + " .foreign-text").textContent;
@@ -2235,8 +2245,14 @@ async function fetchOldRec(url, rowId) {
                 var doc = parser.parseFromString(data, "text/html");
                 //console.log("html:", doc);
                 var table = doc.getElementById("translations");
-                let tr = table.rows;
-                var tbodyRowCount = table.tBodies[0].rows.length;
+                // if there is no table with results, then we do need to set the value to 0
+                if (typeof table != 'undefined') {
+                    let tr = table.rows;
+                    tbodyRowCount = table.tBodies[0].rows.length;
+                }
+                else {
+                    tbodyRowCount = 0;
+                }
                 if (tbodyRowCount > 1) {
                     // 16-06-2021 The below code fixes issue  #82
                     let translateorigsep = document.getElementById("translator_sep1");

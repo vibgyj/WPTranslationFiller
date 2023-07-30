@@ -26,16 +26,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     </div>
     `;
     var myheader = document.querySelector('header');
-    progressbar = document.querySelector(".indeterminate-progress-bar");
-    //console.debug("progressbar:", progressbar)
-    if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
-       // progressbar = document.querySelector(".indeterminate-progress-bar");
-       // progressbar.style.display = 'block;';
-    }
-    else {
-        progressbar.style.display = 'block';
-    }
+   
 
     checkButton.innerText = "Checking";
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -56,8 +47,21 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     // We need to know the amount of rows to show the finished message at the end of the process
     var table = document.getElementById("translations");
     var tr = table.rows;
-    var tbodyRowCount = table.tBodies[0].rows.length;
+    //var tbodyRowCount = table.tBodies[0].rows.length;
+    var tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
+    console.debug("records:",tableRecords)
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    //console.debug("progressbar:", progressbar)
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+        // progressbar = document.querySelector(".indeterminate-progress-bar");
+        // progressbar.style.display = 'block;';
+    }
+    else {
+        progressbar.style.display = 'block';
+    }
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+
         setTimeout(async function (timeout) {
             countrows++;
             end_table = false;
@@ -75,11 +79,11 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
             else {
                 rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
                 row = rowfound.split("_")[1];
-             }
-        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header span.panel-header__bubble`);
-        // We only need to process the actual lines not the untranslated
-        if (currec.innerText == "transFill" || currec.innerText == "current" || currec.innerText == "waiting") {
-            countrows++;
+            }
+            let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header span.panel-header__bubble`);
+            // We only need to process the actual lines not the untranslated
+            if (currec.innerText == "transFill" || currec.innerText == "current" || currec.innerText == "waiting") {
+                countrows++;
                 let spanmissing = document.querySelector(`#preview-${row} span.missing`);
                 // If the page does not contain translations, we do not need to handle the
                 if (spanmissing == null) {
@@ -111,14 +115,15 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                             translatedText = textareaElem.innerText;
                             // Enhencement issue #123
                             previewNewText = textareaElem.innerText;
+                            //console.debug("spellcheck:",translatedText)
                             // Need to replace the existing html before replacing the verbs! issue #124
                             // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                             spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
                             //console.debug("na spell single:", spell_result)
                             errorstate = spell_result;
-                           // console.debug("single replaced val:",replaced)
-                            
+                            // console.debug("single replaced val:",replaced)
+
                         }
                         else {
                             replaced = false;
@@ -128,7 +133,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                             //console.debug("plural1 found:",previewElem,translatedText,previewNewText);
                             currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                             spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
-  
+
                             // plural line 2
                             previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
                             //console.debug("plural2:", previewNewText, translatedText);
@@ -149,22 +154,22 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                         updateStyle(textareaElem, result, "", true, false, false, row);
                     }
                 }
-                // tbodyRowCount includes also the editor rows, so we need to devide by "2"
-                if (countrows == (tbodyRowCount / 2) - 2) {
-                    // Translation replacement completed
-                    checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-                    checkButton.classList.remove("started");
-                    checkButton.className += " translated";
-                    checkButton.innerText = "Checked";
-                    checkButton.className += " ready";
-                    messageBox("info", "Check spelling done ");
-                    progressbar = document.querySelector(".indeterminate-progress-bar");
-                    progressbar.style.display = "none";
-                }  
-        }
-        }, timeout, errorstate, countrows);
+               
+            }
+            // tbodyRowCount includes also the editor rows, so we need to devide by "2"
+            if (countrows == (tableRecords - 2)) {
+                // Translation replacement completed
+                checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+                checkButton.classList.remove("started");
+                checkButton.className += " translated";
+                checkButton.innerText = "Checked";
+                checkButton.className += " ready";
+                messageBox("info", "Check spelling done ");
+                progressbar = document.querySelector(".indeterminate-progress-bar");
+                progressbar.style.display = "none";
+            }
+            }, timeout, errorstate, countrows);
         timeout += 100;
-
     }
     return errorstate
   }
