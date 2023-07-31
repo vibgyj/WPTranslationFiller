@@ -147,7 +147,9 @@ function preProcessOriginal(original, preverbs, translator) {
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
    // console.debug("before posrepl: '"+ translatedText +"'")
-    translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
+    if (originalPreProcessed != "") {
+        translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
+    }
 
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
@@ -1696,6 +1698,7 @@ async function fetchli(result, editor, row, TMwait) {
     var ulfound;
     var lires;
     var newres;
+    var liscore;
     var liSuggestion;
     var TMswitch;
     var TMswitch = localStorage.getItem('switchTM')
@@ -1718,16 +1721,39 @@ async function fetchli(result, editor, row, TMwait) {
             //console.debug("object:", newres)
             if (newres !== null) {
                 // Get the li list from the suggestions
-                lires =newres.getElementsByTagName("li");
-                liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
-                // We need to fetch Text otherwise characters get converted!!
-                //console.debug("li:",liSuggestion)
-                textFound = liSuggestion.innerHTML;
-                //sometimes we have a second <span> within the text, we need to drop that
-                //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
-                // PSS made a fix for issue #300
-                textFound = textFound.split("<span")[0]
-                textFound =unEscape(textFound)
+                lires = newres.getElementsByTagName("li");
+                //console.debug("li found:", lires);
+                if (lires[0] != null) {
+                    liscore = lires[0].querySelector(`span.translation-suggestion__score`);
+                    if (liscore != null) {
+                        liscore = liscore.innerText;
+                        liscore= Number(liscore.substring(0, liscore.length - 1))
+                    }
+                }
+                if (liscore > 90) {
+                    liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                    // We need to fetch Text otherwise characters get converted!!
+                    //console.debug("li:",liSuggestion)
+                    textFound = liSuggestion.innerHTML;
+                    //sometimes we have a second <span> within the text, we need to drop that
+                    //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
+                    // PSS made a fix for issue #300
+                    textFound = textFound.split("<span")[0]
+                    textFound = unEscape(textFound)
+                }
+                else {
+                    OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
+                    if (OpenAIres != null) {
+                        liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
+                        textFound = liSuggestion.innerText
+                        let original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
+                        original = original.querySelector("span.original-raw").innerText;
+                        textFound = postProcessTranslation(original, textFound, [], "", "", true)
+                    }
+                    else {
+                        textFound = "No suggestions";
+                    }
+                }
                 resolve(textFound);
             } else {
                 resolve("No suggestions");
