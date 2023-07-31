@@ -49,8 +49,6 @@ async function sampleUse() {
 
 }
 
-
-
 //When performing bulk save the difference is shown in Meta #269
 // We need to set the default value for showing differents
 chrome.storage.local.get(["showTransDiff"], function (data) {
@@ -120,7 +118,6 @@ chrome.storage.local.get( ["glotDictGlos"],
 var fileSelector = document.createElement("input");
 fileSelector.setAttribute("type", "file");
 
-
 document.addEventListener("keydown", async function (event) {
     // PSS 31-07-2021 added new function to scrape consistency tool
     if (event.altKey && event.shiftKey && (event.key === "&")) {
@@ -155,7 +152,6 @@ document.addEventListener("keydown", async function (event) {
             }
         );
     }
-
 
     if (event.altKey && event.shiftKey && (event.key === "?")) {
         event.preventDefault();
@@ -245,8 +241,6 @@ document.addEventListener("keydown", async function (event) {
                 input.click();
             }
         );  
-        //modal.style.display = "none";
-        //messageBox("info", "Import translation ready " + countimported);
     }
     if (event.altKey && event.shiftKey && (event.key === "#")) {
         event.preventDefault();
@@ -347,7 +341,6 @@ document.addEventListener("keydown", async function (event) {
                 "resourceTypes": ["xmlhttprequest"]
             }
         };
-
         resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
         //console.debug("blockres:"), resblock;
     }
@@ -577,14 +570,12 @@ document.addEventListener("keydown", async function (event) {
                     setTimeout(() => { window.close(); }, 1000);
                 }
             }
-
         }
         else {
             messageBox("error", "You do not have permissions to start this function!");
         }
     }
 });
-
 
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
@@ -609,7 +600,6 @@ if (el3 != null) {
     el3.addEventListener("click", checkactionClick());
 }
 
-
 //Add option link
 var optionlink = document.createElement("li");
 var a = document.createElement('a');
@@ -617,7 +607,6 @@ a.href = chrome.runtime.getURL('wptf-options.html');
 var link = document.createTextNode("WPTF options");
 a.appendChild(link);
 optionlink.className = 'menu-item wptf_settings_menu'
-
 
 var divMenu = document.querySelector("#menu-headline-nav");
 if (divMenu != null) {
@@ -721,7 +710,6 @@ if (divPaging != null && divProjects == null) {
     if (is_pte) {
         divNavBar.appendChild(bulksaveButton);
     }
-
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
     }
@@ -826,7 +814,6 @@ function tmTransClicked(event) {
         }
     );
 }
-
 
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
@@ -968,35 +955,33 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "Checkpage is started wait for the result!!", "2000", "CheckPage");
+    var timeout = 500;
+   
+    //toastbox("info", "Checkpage is started wait for the result!!", "2000", "CheckPage");
+   
+    
     chrome.storage.local.get(
         ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI"],
-        function (data) {
-           
+        function (data) { 
             const promise1 = new Promise(async function (resolve, reject) {
-
-                //toastbox("info", "Replace words is started wait for the result!!", "500", "CheckPage");
                 await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
-               // console.debug("replace words done")
-                resolve(data);
-                
-
+                resolve(data);     
             });
             const promise2 = new Promise(async function (resolve, reject) {
                 await promise1;
-               
+                console.debug("data spellcheck:", data)
                 if (data.Auto_spellcheck == true) {
-                    //toastbox("info", "Spellcheck is started wait for the result!!", "500", "CheckPage");
                     await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
-                    //console.debug("spellcheck done:")
                     resolve(data)
-                   
-                   
+                }
+                else {
+                    resolve(data)
                 }
             });
 
             const promise3 = new Promise(async function (resolve, reject) {
                 await promise2;
+                console.debug("data review:",data)
                 if (data.transsel == "OpenAI") {
                     if (data.Auto_review_OpenAI == true) {
                         if (data.apikeyOpenAI != "") {
@@ -1008,22 +993,16 @@ function checkPageClicked(event) {
                 }
             });
             promise1.then(function (data) {
-                console.debug("promise1:");
-                
+                console.debug("promise1:");   
             });
-
             promise2.then(function (data) {
-                console.debug("promise2:");
-               
+                console.debug("promise2:");   
             });
-
             promise3.then(function (data) {
                 console.debug("promise3:");
             });
-           // close_toast()
         }
     );
-
 }
 
 function exportPageClicked(event) {
