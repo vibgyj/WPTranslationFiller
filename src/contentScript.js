@@ -968,7 +968,7 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "Checkpage is started wait for the result!!", "3000", "CheckPage");
+    toastbox("info", "Checkpage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.local.get(
         ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI"],
         function (data) {
