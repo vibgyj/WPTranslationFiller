@@ -296,7 +296,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     }
     // check if the returned translation does have the same start/ending as the original
-    translatedText = checkStartEnd(original, translatedText);
+    result = check_start_end(translatedText, "", 0, "", original, "", 0);
+    //console.debug("after checking:", result)
+    //translatedText = checkStartEnd(original, translatedText);
     //console.debug("after check startend: '" + translatedText + "'")
 
     return translatedText;
@@ -720,13 +722,23 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     var tableRecords = 0;
     var orgText = ""
     var progressbar = "";
-
+    var countreplaced = 0;
+    var wordCount = 0;
+    var recWordCount = 0;
+    var replaced = false;
+    var row;
+    var newrowId;
+    var myrow;
+    var result;
+    var spellcheckIgnore = [];
+    var repl_verb = []; //contains the list of found and replaced words
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
     </div>
     `;
     var myheader = document.querySelector('header');
+    setPostTranslationReplace(postTranslationReplace, formal);
     progressbar = document.querySelector(".indeterminate-progress-bar");
     if (progressbar == null) {
         myheader.insertAdjacentHTML('beforebegin', template);
@@ -742,11 +754,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     setPostTranslationReplace(postTranslationReplace, formal);
    // console.debug('repl:',replaceVerb,formal)
     // 15-05-2021 PSS added fix for issue #73add
-    var replaced = false;
-    var newrowId;
-    var myrow;
-    var spellcheckIgnore = [];
-    var repl_verb =[]; //contains the list of found and replaced words
+    
     var checkButton = await document.querySelector(".wptfNavBarCont a.check_translation-button");
     checkButton.innerText = "Checking";
     //console.debug("Button classname:", translateButton.className);
@@ -768,17 +776,16 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
-        let countreplaced = 0;
+        
         var translatedText = "";
-        var result;
         tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-            setTimeout(async function() {
             countrows++;
+          //  setTimeout(() => {
             replaced = false;    
             let original = e.querySelector("span.original-raw").innerText;
             let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
-            let row = rowfound.split("-")[1];
+            row = rowfound.split("-")[1];
             let newrow = rowfound.split("-")[2];
             if (typeof newrow != "undefined") {
                 newrowId = row.concat("-", newrow);
@@ -786,11 +793,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
             }
             else {
                 rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
-                let row = rowfound.split("_")[1];
+                row = rowfound.split("_")[1];
             }
             let spanmissing = document.querySelector(`#preview-${row} span.missing`);
             // If the page does not contain translations, we do not need to handle them
-            //console.debug("spanmissing:",spanmissing)
             if (spanmissing == null) {
                 // 30-08-2021 PSS fix for issue # 125
                 let precomment = e.querySelector(".source-details__comment p");
@@ -820,19 +826,17 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         if (translatedText != "No suggestions") {
                             previewNewText = textareaElem.innerText;
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                            //console.debug("before checkstart:",original)
-                            // PSS we need to check for missing periods en blanks before replacing verbs
-                            result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
-                            countreplaced = result.countreplaced;
+                            // PSS we need to check for missing periods en blanks before replacing verbs 
+                            result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                            recWordCount = result.countReplaced;
                             replaced = result.replaced;
                             
                             if (replaced) {
                                 var preview = document.querySelector("#preview-" + newrowId + " td.translation");
                                 if (preview == null) {
-                                    preview = document.querySelector("#preview-" + myrow + " td.translation");
+                                    preview = document.querySelector("#preview-" + row + " td.translation");
                                 }
-                                //console.debug("preview:", preview)
-                                repl_verb += result.repl_verb;
+                                repl_verb = result.repl_verb;
                                 preview.innerHTML = result.previewNewText
                                 previewNewText = result.previewNewText
                                 textareaElem.innerText = result.previewNewText;
@@ -851,20 +855,21 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     current.innerText = "transFill";
                                 }
                                 // Only update the style if verbs are replaced!!
-                                let wordCount = countreplaced;
+                                let wordCount = recWordCount;
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                await updateStyle(textareaElem, result, "", true, false, false, row);
+                                updateStyle(textareaElem, result, "", true, false, false, row);
                             }
 
                             // Need to replace the existing html before replacing the verbs! issue #124
                             // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                            // let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                            result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced, original, countrows);
+                            result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, recWordCount, original, countrows);
                             previewNewText = result.previewNewText;
                             translatedText = result.translatedText;
-                            countreplaced = result.countreplaced;
+                            recWordCount = result.countreplaced;
+                           // countreplaced += result.countreplaced;
                             replaced = result.replaced;
                             orgText = result.orgText;
                             repl_verb = result.repl_verb;
@@ -914,7 +919,6 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     // PSS populate the preview before marking
                                     preview.innerText = DOMPurify.sanitize(previewNewText);
                                     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                    
                                     await markElements(preview, replaceVerb, orgText, spellcheckIgnore);
                                 }
                             }
@@ -926,6 +930,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     }
                     else {
                             // plural line 1
+                            replaced = false;
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                             let previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
                             if (previewElem == null) {
@@ -934,9 +939,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             previewNewText = previewElem.innerText;
                             translatedText = previewElem.innerText;
                             if (translatedText != "No suggestions") {
-                            result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
-                            countreplaced = result.countreplaced;
-                            replaced = result.replaced;
+                                result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                                recWordCount = result.countReplaced;
+                                replaced = result.replaced;
                                 if (replaced) {
                                     // We need to fetch the updatet data again
                                     var preview = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
@@ -969,20 +974,23 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                         current.innerText = "transFill";
                                     }
                                     // Only update the style if verbs are replaced!!
-                                    let wordCount = countreplaced;
+                                    let wordCount = recWordCount;
                                     let percent = 10;
                                     let toolTip = "";
                                     result = { wordCount, percent, toolTip };
-                                    await updateStyle(textareaElem, result, "", true, false, false, row);
+                                    updateStyle(textareaElem, result, "", true, false, false, row);
                                 }
                                //console.debug("plural1 found:",previewElem,translatedText);
-                               result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced, original, countrows);
+                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, recWordCount, original, countrows);
                                previewNewText = result.previewNewText;
                                translatedText = result.translatedText;
-                               countreplaced = result.countreplaced;
+                               recWordCount = result.countreplaced;
                                replaced = result.replaced;
                                orgText = result.orgText;
-                               if (replaced) {
+                               repl_verb = result.repl_verb;
+                               
+                                if (replaced) {
+                                    repl_verb += result.repl_verb
                                     previewElem.innerText = previewNewText;
                                     let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                                     // if current translation we need to split the rownumber
@@ -992,7 +1000,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     textareaElem1.value = translatedText;
                                     // Highlight all keywords found in the page, so loop through the replacement array
                                     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                   await markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
+                                    await markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                                 }
                                 
                             }
@@ -1000,6 +1008,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 replaced = false;
                             }
                             // plural line 2
+                            replaced = false;
                             previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
                             if (previewElem == null) {
                                 previewElem = document.querySelector("#preview-" + myrow + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
@@ -1009,17 +1018,17 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 previewNewText = previewElem.innerText;
                                 translatedText = previewElem.innerText;
                                 if (translatedText != "No suggestions") {
-                                    result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
-                                    countreplaced = result.countreplaced;
+                                    result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                                    recWordCount = result.countReplaced;
                                     replaced = result.replaced;
-
+                                    orgText = result.orgText;
+                                    repl_verb = result.repl_verb;
                                     if (replaced) {
                                         var preview = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
                                         if (preview == null) {
                                             preview = document.querySelector("#preview-" + myrow + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
                                         }
-                                        //console.debug("preview:", preview)
-                                        repl_verb += result.repl_verb;
+                                       
                                         preview.innerHTML = result.previewNewText
                                         previewNewText = result.previewNewText
                                         let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
@@ -1044,22 +1053,21 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                             current.innerText = "transFill";
                                         }
                                         // Only update the style if verbs are replaced!!
-                                        let wordCount = countreplaced;
+                                        let wordCount = recWordCount;
                                         let percent = 10;
                                         let toolTip = "";
                                         result = { wordCount, percent, toolTip };
-                                        await updateStyle(textareaElem, result, "", true, false, false, row);
+                                        updateStyle(textareaElem, result, "", true, false, false, row);
                                     }
 
-
-
-
-                                    result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced, original, countrows);
+                                    result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, recWordCount, original, countrows);
                                     previewNewText = result.previewNewText;
                                     translatedText = result.translatedText;
-                                    countreplaced = result.countreplaced;
+                                    recWordCount = result.countreplaced;
                                     replaced = result.replaced;
                                     orgText = result.orgText;
+                                    repl_verb = result.repl_verb;
+                
                                     if (replaced) {
                                         // PSS fix for #188 label Transfill needs to be set
                                         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
@@ -1077,7 +1085,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                             textareaElem1.innerText = translatedText;
                                             textareaElem1.value = translatedText;
                                             // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                            markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
+                                            await markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                                         }
                                     }
                                 }
@@ -1088,7 +1096,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         }
                         if (replaced) {
                             // Only update the style if verbs are replaced!!
-                            let wordCount = countreplaced;
+                            let wordCount = recWordCount;
                             let percent = 10;
                             let toolTip = "";
                             result = { wordCount, percent, toolTip };
@@ -1096,22 +1104,19 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         }
                     }
                 }
-                if (countrows == tableRecords-2) {
-                    messageBox("info", "Replace verbs done " + countreplaced + " replaced words<br>" + repl_verb);
-
-                    // Translation replacement completed
-                    let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-                    checkButton.classList.remove("started");
-                    //checkButton.className += " translated";
-                    checkButton.innerText = "Checked";
-                    checkButton.className += " ready";
-                    progressbar = document.querySelector(".indeterminate-progress-bar");
-                    progressbar.style.display = "none";
-                }
-                
-            }, timeout,countrows,tableRecords,countreplaced);
-            timeout += 100;
-            
+           // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
+            //timeout += 100;
+            if (countrows == tableRecords) {
+                messageBox("info", "Replace verbs done " + recWordCount + " replaced words<br>" + repl_verb);
+                // Translation replacement completed
+                let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+                checkButton.classList.remove("started");
+                //checkButton.className += " translated";
+                checkButton.innerText = "Checked";
+                checkButton.className += " ready";
+                progressbar = document.querySelector(".indeterminate-progress-bar");
+                progressbar.style.display = "none";
+            }
         }
 
         
@@ -1222,41 +1227,51 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
     return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb};
 }
 
+function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow) {
+    let debug = false;
+    if (debug == true) {
+        console.debug("value1:", translatedText)
+        console.debug("value2:", previewNewText)
+        console.debug("value3:", "countreplaced: ", counter)
+        console.debug("value4:" + "repl_verb: ", repl_verb)
+        console.debug("value5:" + "original: ", original)
+        console.debug("value6:", replaced)
+        console.debug("values7:", myrow)
+    }
+    countReplaced = Number(counter)
+    if (original.endsWith("\n") != true) {
+        if (translatedText.endsWith("\n") == true) {
+            translatedText = translatedText.substring(0, translatedText.length - 1);
+            countReplaced++;
+            replaced = true;
+        }
+    }
 
-async function check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, myrow) {
-   // console.debug("values:", translatedText, previewNewText, countreplaced, repl_verb, original, replaced, myrow)
     if (original.startsWith(" ")) {
        // console.debug("Original starts with blanc!"+ original);
-        if (previewNewText.startsWith(" ")) {
-         //   console.debug("Preview starts with blanc!", previewNewText);
-            //replace = false;
-        }
-        else {
+        if (!previewNewText.startsWith(" ")) {
           //  console.debug("Preview does not start with blanc!", previewNewText);
             previewNewText = " " + previewNewText;
             translatedText = " " + translatedText;
             replaced = true;
             repl_verb += myrow+ " :blanc before added" + "<br>";
-            countreplaced++;
+            countReplaced++;
         }
     }
+
     if (original.endsWith(" ")) {
       // console.debug("Original end with blanc!" + original);
        // console.debug("Preview:",previewNewText);
-        if (previewNewText.endsWith(" ")) {
-         //   console.debug("Preview ends with blanc!", previewNewText);
-            //replace = false;
-        }
-        else {
+        if (!previewNewText.endsWith(" ")) {
           //  console.debug("Preview does not end with blanc!", previewNewText);
             previewNewText = previewNewText + " ";
             translatedText = translatedText + " ";
-            replaced = true;
             repl_verb += myrow + ": blanc after added" + "<br>";
-            countreplaced++;
-           // countreplaced++;
+            countReplaced++;
+            replaced = true;
         }
     }
+
     if (previewNewText.startsWith(" ")) {
         if (!original.startsWith(" ")) {
            // console.debug("Original does not start with blanc!", '"' + original + '"');
@@ -1264,10 +1279,11 @@ async function check_start_end(translatedText, previewNewText, countreplaced, re
             translatedText = translatedText.substring(1, translatedText.length);
             replaced = true;
             repl_verb += myrow + ": blanc before removed" + "<br>";
-            countreplaced++;
+            countReplaced++;
             //countreplaced++;
         }
     }
+
     if (previewNewText.endsWith(" ")) {   
         if (!original.endsWith(" ")) {
            // console.debug("Original does not end with blanc!", '"' + original + '"');
@@ -1275,7 +1291,7 @@ async function check_start_end(translatedText, previewNewText, countreplaced, re
             translatedText = translatedText.substring(0, translatedText.length - 1);
             repl_verb += myrow + ": blanc after removed" + "<br>";
           //  console.debug("repl_verb:", repl_verb)
-            countreplaced++;
+            countReplaced++;
             replaced = true;
         }
     }
@@ -1286,25 +1302,62 @@ async function check_start_end(translatedText, previewNewText, countreplaced, re
                 previewNewText = previewNewText + "."
                 translatedText = translatedText + ".";
                 repl_verb += myrow + " '.' " + "->" + "added" + "<br>";
-                countreplaced++;
+                let verb = myrow + " '.' " + "->" + "added" + "<br>";
+                //repl_verb.push(verb);
+                countReplaced++;
                 replaced = true;
-        }
+            }
         }
     }
      // 29-07-2023 PSS we need to check if the original does not end with three dots otherwise one period will be added or removed
     if (!original.endsWith('\u2026') && !original.endsWith('\u002e\u002e\u002e')) {
         if (previewNewText.endsWith(".")) {
             if (!original.endsWith(".")) {
-                previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
+                previewNewText = previewNewText.substring(0, previewNewText.length - 1);
                 translatedText = translatedText.substring(0, translatedText.length - 1);
                 repl_verb += myrow + " '.' " + "->" + "removed" + "<br>";
-                countreplaced++;
+                countReplaced++;
                 replaced = true;
             }
         }
     }
-    // console.debug("After improvements:", translatedText, previewNewText, countreplaced, repl_verb, replaced)
-    return { translatedText, previewNewText, countreplaced, repl_verb ,replaced};
+    
+    if (original.endsWith(":")) {      
+        if (!previewNewText.endsWith(":")) {
+            previewNewText = previewNewText + ":";
+            translatedText = translatedText + ":";
+           // repl_verb += myrow + ": ':' after added" + "<br>";
+            let verb = myrow + ": ':' after added" + "<br>";
+            repl_verb.push(verb);
+            countReplaced++;
+            replaced = true;
+        } 
+    }
+
+    if (!original.endsWith(":")) {
+        if (previewNewText.endsWith(":")) {
+            previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
+            translatedText = translatedText.substring(0, translatedText.length - 1);
+            let verb = myrow + ": " + '->' + "':' after removed" + "<br>"
+           // repl_verb.push(verb);
+            repl_verb += myrow + ": " + '->' + "':' after removed" + "<br>"
+            countReplaced++;
+            replaced = true;
+        }
+    }
+
+    if (original.endsWith("!")) {
+        if (!previewNewText.endsWith("!")) {
+            previewNewText = previewNewText + "!";
+            translatedText = translatedText + "!";
+            repl_verb += myrow + ": '!' after added" + "<br>";
+            countReplaced++;
+            replaced = true;
+        }
+    }
+
+   // console.debug("After improvements:", translatedText, previewNewText + " countreplaced: " + countReplaced, repl_verb, replaced)
+    return { translatedText, previewNewText, countReplaced, repl_verb, replaced }
 }
 async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
     //console.time("translation")
@@ -1692,7 +1745,7 @@ async function fetchsuggestions(row) {
 }
 
 // Part of the solution issue #204
-async function fetchli(result, editor, row, TMwait) {
+async function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower,formal) {
     var res;
     //var myres;
     var ulfound;
@@ -1702,6 +1755,9 @@ async function fetchli(result, editor, row, TMwait) {
     var liSuggestion;
     var TMswitch;
     var TMswitch = localStorage.getItem('switchTM')
+    var textFound = "No suggestions";
+    // We need to prepare the replacement list
+    setPostTranslationReplace(postTranslationReplace, formal);
     //console.debug("TMwait:",TMwait)
     return new Promise((resolve, reject) => {
         //res = elementReady(`#editor-${row} .suggestions__translation-memory.initialized`);
@@ -1741,18 +1797,25 @@ async function fetchli(result, editor, row, TMwait) {
                     textFound = textFound.split("<span")[0]
                     textFound = unEscape(textFound)
                 }
-                else {
-                    OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
-                    if (OpenAIres != null) {
-                        liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                        textFound = liSuggestion.innerText
-                        let original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
-                        original = original.querySelector("span.original-raw").innerText;
-                        textFound = postProcessTranslation(original, textFound, [], "", "", true)
-                    }
-                    else {
-                        textFound = "No suggestions";
-                    }
+                else { 
+                        OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
+                        if (OpenAIres != null) {
+                            liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
+                            console.debug("liSuggestion:",liSuggestion)
+                            textFound = liSuggestion.innerText
+                            let original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
+                            original = original.querySelector("span.original-raw").innerText;
+                            //   (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower
+                            textFound = postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower)
+                            console.debug("after postProcessTranslation:", textFound)
+                            if (textFound == "") {
+                                console.debug("liSuggestion present but not result from postProcessTranslation!")
+                            }
+                        }
+                        else {
+                            console.debug("OpenAIres == null!")
+                            textFound = "No suggestions";
+                        }
                 }
                 resolve(textFound);
             } else {
@@ -1764,7 +1827,7 @@ async function fetchli(result, editor, row, TMwait) {
 
 
 // Part of the solution issue #204
-async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait) {
+async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower) {
     var timeout = 0;
     var editoropen;
     var editor;
@@ -1874,7 +1937,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 });
 
                 if (result != "No suggestions") {
-                    let myresult = await fetchli(result, editor, row, TMwait).then(resli => {
+                    let myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower,formal).then(resli => {
                         if (typeof resli != null) {
                             //console.debug("Fetchli result:",resli)
                             myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype);
@@ -2773,7 +2836,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 else {
                     let translatedText = pretrans;
                     // check if the returned translation does have the same start/ending as the original
-                    translatedText = checkStartEnd(original, translatedText);
+                    result = await check_start_end(translatedText, "", 0, "", original, "", 0);
+                    console.debug("after checking:",result)
+                    //translatedText = checkStartEnd(original, translatedText);
                     let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
                     textareaElem.value = translatedText;
