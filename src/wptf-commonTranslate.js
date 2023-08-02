@@ -296,11 +296,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     }
     // check if the returned translation does have the same start/ending as the original
-    result = check_start_end(translatedText, "", 0, "", original, "", 0);
-    //console.debug("after checking:", result)
-    //translatedText = checkStartEnd(original, translatedText);
-    //console.debug("after check startend: '" + translatedText + "'")
-
+    //console.debug("before checkend:",translatedText,original)
+    let previewNewText=translatedText
+    result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
+    //console.debug("after checking:", result, result.previewNewText)
+    translatedText = result.translatedText;
     return translatedText;
 }
 
@@ -1355,7 +1355,17 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
             replaced = true;
         }
     }
-
+    // Make translation to start with same case (upper/lower) as the original.
+    if (isStartsWithUpperCase(original)) {
+        if (!isStartsWithUpperCase(translatedText)) {
+            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+        }
+    }
+    else {
+        if (isStartsWithUpperCase(translatedText)) {
+            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+        }
+    }
    // console.debug("After improvements:", translatedText, previewNewText + " countreplaced: " + countReplaced, repl_verb, replaced)
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced }
 }
@@ -1739,9 +1749,10 @@ function openEditor(preview) {
 }
 // Part of the solution issue #204
 async function fetchsuggestions(row) {
-    
-    myTM = await document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .suggestions-wrapper`);
-    return myTM;
+    setTimeout(async function() {
+        myTM = await document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .suggestions-wrapper`);
+        return myTM;
+    }, 800);
 }
 
 // Part of the solution issue #204
@@ -1756,6 +1767,7 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
     var TMswitch;
     var TMswitch = localStorage.getItem('switchTM')
     var textFound = "No suggestions";
+    var OpenAIscore;
     // We need to prepare the replacement list
     setPostTranslationReplace(postTranslationReplace, formal);
     //console.debug("TMwait:",TMwait)
@@ -1783,41 +1795,51 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                     liscore = lires[0].querySelector(`span.translation-suggestion__score`);
                     if (liscore != null) {
                         liscore = liscore.innerText;
-                        liscore= Number(liscore.substring(0, liscore.length - 1))
+                        OpenAIscore = liscore;
+                        liscore = Number(liscore.substring(0, liscore.length - 1))
                     }
-                }
-                if (liscore > 90) {
-                    liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
-                    // We need to fetch Text otherwise characters get converted!!
-                    //console.debug("li:",liSuggestion)
-                    textFound = liSuggestion.innerHTML;
-                    //sometimes we have a second <span> within the text, we need to drop that
-                    //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
-                    // PSS made a fix for issue #300
-                    textFound = textFound.split("<span")[0]
-                    textFound = unEscape(textFound)
-                }
-                else { 
+                    if (liscore == 100) {
+                        liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                        textFound = liSuggestion.innerHTML;
+                    }   
+                    else if (liscore > 90 && liscore <100) {
+                        liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                        // We need to fetch Text otherwise characters get converted!!
+                        textFound = liSuggestion.innerHTML;
+                    }
+                    else if (OpenAIscore = "OpenAI") {
                         OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
                         if (OpenAIres != null) {
                             liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                            console.debug("liSuggestion:",liSuggestion)
                             textFound = liSuggestion.innerText
-                            let original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
-                            original = original.querySelector("span.original-raw").innerText;
-                            //   (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower
-                            textFound = postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower)
-                            console.debug("after postProcessTranslation:", textFound)
-                            if (textFound == "") {
-                                console.debug("liSuggestion present but not result from postProcessTranslation!")
-                            }
+                        }
+                    }
+                    else {
+                        OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
+                        if (OpenAIres != null) {
+                            liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
+                            textFound = liSuggestion.innerText
                         }
                         else {
                             console.debug("OpenAIres == null!")
                             textFound = "No suggestions";
                         }
+                    }
+                    //sometimes we have a second <span> within the text, we need to drop thatOpenAI
+                    //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
+                    // PSS made a fix for issue #300
+                    textFound = textFound.split("<span")[0]
+                    textFound = unEscape(textFound)
+                    let original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
+                    original = original.querySelector("span.original-raw").innerText;
+                    //   (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower
+                    textFound = postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower)
+                    if (textFound == "") {
+                        console.debug("liSuggestion present but no result from postProcessTranslation!")
+                        textFound = "No suggestions";
+                    }
+                    resolve(textFound);
                 }
-                resolve(textFound);
             } else {
                 resolve("No suggestions");
             }
@@ -1931,7 +1953,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                             setTimeout(() => {
                                 resolve("No suggestions");
                                 // glotpress_close.click();
-                            }, 1000);
+                            }, 500);
                         }
                     });
                 });
