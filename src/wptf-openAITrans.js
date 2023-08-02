@@ -3,13 +3,13 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp) {
+async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore) {
     var timeout = 100;
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
     //errorstate = "NOK"
     setTimeout(async function (timeout) {
-    var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter,OpenAISelect, OpenAItemp);
+        var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore);
     //console.debug("OpenAI errorstate:",errorstate,result)
     }, timeout);
     timeout += 1;
@@ -59,7 +59,7 @@ const fetchPlus = (url, options = {}, retries) =>
         .catch(error => console.debug(error.message))
 
 
-function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp) {
+function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -186,17 +186,17 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         let text = open_ai_response.message.content;
                         if (show_debug == true) {
                             let token = data.usage.total_tokens
-                            console.debug("token:", token)
+                            //console.debug("token:", token)
                         }
                         //text = text.trim('\n');
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore);
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)
                     }
                     else {
                         text = "No suggestions"
                         translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
-                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current, spellCheckIgnore);
                         errorstate = "NOK";
                     }
                     return Promise.resolve(errorstate)
@@ -230,7 +230,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                     }
                     else {
                         text = "No suggestions due to overload OpenAI!!"
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore);
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         errorstate = "Error 429";
                     }
@@ -243,7 +243,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 else if (error[2] == '503') {
                     //messageBox("error", "Error 503 has been encountered" + error)
                     text = "No suggestions server cannot be reached!!"
-                    translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
+                    translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore);
                     processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                     errorstate = "Error 503";
 

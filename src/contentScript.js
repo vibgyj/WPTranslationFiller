@@ -491,11 +491,11 @@ document.addEventListener("keydown", async function (event) {
             newrowId = rowId.concat("-", myrowId);
             rowId = newrowId;
         }
-        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"], function (data) {
+        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree","spellCheckIgnore"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
             var formal = checkFormal(false);
             var DeeplFree = data.DeeplFree;
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, spellCheckIgnore);
         });
     }
 
@@ -781,7 +781,7 @@ async function startBulkSave(event) {
 function tmTransClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower", "spellCheckIgnore"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -797,7 +797,7 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
-                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower);
+                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower,data.spellCheckIgnore);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -897,7 +897,7 @@ function impFileClicked(event) {
 function translatePageClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined')
             {
@@ -910,7 +910,7 @@ function translatePageClicked(event) {
                         var DeeplFree = data.DeeplFree;
                         var openAIWait = Number(data.OpenAIWait);
                         var OpenAItemp = parseFloat(data.OpenAItemp);
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait,OpenAItemp);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -1411,14 +1411,12 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         var formal = checkFormal(false);
         var DeeplFree = data.DeeplFree;
         var OpenAItemp = parseFloat(data.OpenAItemp);
-        //console.debug("translator:", data.transsel, data.convertToLower)
-
-        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp);
+        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore);
         });
 }
 
@@ -1685,7 +1683,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.innerText = "Save";
                     checkElem.style.backgroundColor = "yellow";
                     checkElem.title = "Save the string";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "yellow";
                     }
                 }
@@ -1700,7 +1698,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
                     checkElem.style.backgroundColor = "orange";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "orange";
                     }
                 }
@@ -1716,7 +1714,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.onclick = savetranslateEntryClicked;
                     checkElem.style.backgroundColor = "purple";
                     checkElem.title = "Save the string";
-                    if (typeof headerElem!= "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "purple";
                     }
                 }
@@ -1731,7 +1729,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Check the string";
                     checkElem.style.backgroundColor = "darkorange";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "darkorange";
                     }
                 }
@@ -1754,7 +1752,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             checkElem.title = "Save the string";
                             SavelocalButton.innerText = "NoGlos";
                         }
-                        if (typeof headerElem.style != "undefined") {
+                        if (typeof headerElem != "undefined") {
                             panelTransDiv.style.backgroundColor = "";
                             //headerElem.style.backgroundColor = "";
                         }
@@ -1772,7 +1770,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             SavelocalButton.innerText = "Rej";
                             //SavelocalButton.disabled = true;
                         }
-                        if (typeof headerElem.style != "undefined") {
+                        if (typeof headerElem != "undefined") {
                             panelTransDiv.style.backgroundColor = "red";
                         }
                     }
