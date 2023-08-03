@@ -150,10 +150,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     if (originalPreProcessed != "") {
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
-
+   
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
-    //console.debug('after replace spaces:', translatedText);
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
@@ -171,7 +170,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
-        //console.debug('after replace x:', translatedText);
         // Deepl does remove crlf so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("crlf", "\r\n");
         // Deepl does remove tabs so we need to replace them after sending them to the API
@@ -240,7 +238,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     
-   
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -282,7 +279,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
                 if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                     // PSS solution for issue #291
-                    //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
                     replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
                     translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                 }
@@ -295,6 +291,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
 
     }
+   
     // check if the returned translation does have the same start/ending as the original
     //console.debug("before checkend:",translatedText,original)
     let previewNewText=translatedText
@@ -315,7 +312,7 @@ function isUpperCase(myString, pos) {
     return (myString.charAt(pos) == myString.charAt(pos).toUpperCase());
 }
 
-function convert_lower(text,spellCheckIgnore) {
+function convert_lower(text, spellCheckIgnore) {
     let wordsArray = text.split(' ')
     let capsArray = []
     var counter = 0;
@@ -332,7 +329,6 @@ function convert_lower(text,spellCheckIgnore) {
                 }
             }
             else {
-
                 capsArray.push(word);
             }
         }
@@ -345,6 +341,7 @@ function convert_lower(text,spellCheckIgnore) {
         counter++;
     });
     converted = capsArray.join(' ');
+
     // Because now all sentences start with lowercase in longer texts, we need to put back the uppercase at the start of the sentence
     converted = applySentenceCase(converted);
     return converted
@@ -352,15 +349,27 @@ function convert_lower(text,spellCheckIgnore) {
 
 function applySentenceCase(str) {
     //25-03-2023 PSS improved capitalizing first letter in sentence
-    var mySentences = str.match(/[^.!?\s][^.!?\n]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/g);
-    for (let i = 0; i < mySentences.length; i++) {
-       // console.log("zin:", mySentences[i]);
-        mySentences[i] = mySentences[i][0].toUpperCase() + mySentences[i].substring(1,);
+    //03-08-2023 Fixed the problem with tabs present in the text, which were not added
+    // So the regex needed to be altered to include the tabs
+    var mySentences = str.match(/[^.?!\/t]*[^.!?\s][^.!?\n]*(?:[.!?](?!['\"]?\s|$)[^.!?]*)*[.!?]?['\"]?(?=\s|$)/gm)
+   // var mySentences = str.match(/[^.!?\s][^.!?\n]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/gm);
+    if (mySentences != null) {
+        for (let i = 0; i < mySentences.length; i++) {
+            if (!mySentences[i][0].startsWith(" ")){
+                mySentences[i] = mySentences[i][0].toUpperCase() + mySentences[i].substring(1,);
+            }
+            else {
+                // 03-08-2023 PSs fixed a problem where the second sentence did not get converted back to uppercase because it started with a blanc
+                mySentences[i] = mySentences[i][1].toUpperCase() + mySentences[i].substring(2,)
+            }
+        }
+        mySentences = mySentences.join(' ');
+        str = mySentences;
+        //sometimes a blank is present before the "." which is not OK
+        str = str.replaceAll(' .', '.')
+    } else {
+        console.debug("Regex error !");
     }
-    mySentences = mySentences.join(' ');
-    str = mySentences;   
-    //sometimes a blank is present before the "." which is not OK
-    str = str.replaceAll(' .', '.')
     return str
 }
 
@@ -1245,13 +1254,13 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         console.debug("values7:", myrow)
     }
     countReplaced = Number(counter)
-    if (original.endsWith("\n") != true) {
-        if (translatedText.endsWith("\n") == true) {
-            translatedText = translatedText.substring(0, translatedText.length - 1);
-            countReplaced++;
-            replaced = true;
-        }
-    }
+    //if (original.endsWith("\n") != true) {
+    //    if (translatedText.endsWith("\n") == true) {
+    //        translatedText = translatedText.substring(0, translatedText.length - 1);
+    //        countReplaced++;
+    //        replaced = true;
+    //    }
+   // }
 
     if (original.startsWith(" ")) {
        // console.debug("Original starts with blanc!"+ original);

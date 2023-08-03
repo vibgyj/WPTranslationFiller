@@ -186,7 +186,6 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         let text = open_ai_response.message.content;
                         if (show_debug == true) {
                             let token = data.usage.total_tokens
-                            //console.debug("token:", token)
                         }
                         //text = text.trim('\n');
                         translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore);
