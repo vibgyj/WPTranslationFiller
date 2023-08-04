@@ -103,14 +103,16 @@ function preProcessOriginal(original, preverbs, translator) {
     }
     else if (translator == "deepl") {
         // Deepl does remove crlf so we need to replace them before sending them to the API
-        original = original.replace(/(\r\n|\n|\r)/gm, "crlf");
+        //original = original.replaceAll('\r', "mylinefeed");
+        original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
         // Deepl does remove tabs so we need to replace them before sending them to the API
-        original = original.replaceAll(/\t/g, "mytb");
+        //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
+        original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
+       // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
             original = original.replace(match[0], `<x>${index}</x>`);
-
             index++;
         }
         if (index == 0) {
@@ -146,7 +148,7 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower,spellCheckIgnore) {
-   // console.debug("before posrepl: '"+ translatedText +"'")
+    //console.debug("before posrepl: '"+ translatedText +"'")
     if (originalPreProcessed != "") {
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
@@ -161,7 +163,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replaceAll(`{${index}}`, match[0]);
             index++;
         }
-
     }
     else if (translator == "deepl") {
         const matches = original.matchAll(placeHolderRegex);
@@ -170,13 +171,12 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
+        
         // Deepl does remove crlf so we need to replace them after sending them to the API
-        translatedText = translatedText.replaceAll("crlf", "\r\n");
+        translatedText = translatedText.replaceAll("<x>mylinefeed</x>", "\r\n");
         // Deepl does remove tabs so we need to replace them after sending them to the API
-        translatedText = translatedText.replaceAll("mytb", "	");
-        // Deepl pro adds "..." sometimes to the end of line, that is not what we expect
-        //translatedText = translatedText.replaceAll("...", ".");
-        //console.debug('after replace x:', translatedText);
+        translatedText = translatedText.replaceAll("<x>mytb</x>", "\t");
+       // translatedText = translatedText.replaceAll("[mytb] ", "\t");
     }
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
@@ -270,6 +270,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
         }
     }
+    
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
@@ -294,7 +295,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
    
     // check if the returned translation does have the same start/ending as the original
     //console.debug("before checkend:",translatedText,original)
-    let previewNewText=translatedText
+    let previewNewText = translatedText
     result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
     //console.debug("after checking:", result, result.previewNewText)
     translatedText = result.translatedText;
@@ -1261,124 +1262,124 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
     //        replaced = true;
     //    }
    // }
-
-    if (original.startsWith(" ")) {
-       // console.debug("Original starts with blanc!"+ original);
-        if (!previewNewText.startsWith(" ")) {
-          //  console.debug("Preview does not start with blanc!", previewNewText);
-            previewNewText = " " + previewNewText;
-            translatedText = " " + translatedText;
-            replaced = true;
-            repl_verb += myrow+ " :blanc before added" + "<br>";
-            countReplaced++;
+    if (previewNewText != "No suggestions") {
+        if (original.startsWith(" ")) {
+            // console.debug("Original starts with blanc!"+ original);
+            if (!previewNewText.startsWith(" ")) {
+                //  console.debug("Preview does not start with blanc!", previewNewText);
+                previewNewText = " " + previewNewText;
+                translatedText = " " + translatedText;
+                replaced = true;
+                repl_verb += myrow + " :blanc before added" + "<br>";
+                countReplaced++;
+            }
         }
-    }
 
-    if (original.endsWith(" ")) {
-      // console.debug("Original end with blanc!" + original);
-       // console.debug("Preview:",previewNewText);
-        if (!previewNewText.endsWith(" ")) {
-          //  console.debug("Preview does not end with blanc!", previewNewText);
-            previewNewText = previewNewText + " ";
-            translatedText = translatedText + " ";
-            repl_verb += myrow + ": blanc after added" + "<br>";
-            countReplaced++;
-            replaced = true;
-        }
-    }
-
-    if (previewNewText.startsWith(" ")) {
-        if (!original.startsWith(" ")) {
-           // console.debug("Original does not start with blanc!", '"' + original + '"');
-            previewNewText = previewNewText.substring(1, previewNewText.length);
-            translatedText = translatedText.substring(1, translatedText.length);
-            replaced = true;
-            repl_verb += myrow + ": blanc before removed" + "<br>";
-            countReplaced++;
-            //countreplaced++;
-        }
-    }
-
-    if (previewNewText.endsWith(" ")) {   
-        if (!original.endsWith(" ")) {
-           // console.debug("Original does not end with blanc!", '"' + original + '"');
-            previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
-            translatedText = translatedText.substring(0, translatedText.length - 1);
-            repl_verb += myrow + ": blanc after removed" + "<br>";
-          //  console.debug("repl_verb:", repl_verb)
-            countReplaced++;
-            replaced = true;
-        }
-    }
-    // 29-07-2023 PSS we need to check if the original does not end with three dots otherwise one period will be added or removed
-    if (!original.endsWith('\u2026') && !original.endsWith('\u002e\u002e\u002e')) {
-        if (original.endsWith(".")) {
-            if (!previewNewText.endsWith(".")) {
-                previewNewText = previewNewText + "."
-                translatedText = translatedText + ".";
-                repl_verb += myrow + " '.' " + "->" + "added" + "<br>";
-                let verb = myrow + " '.' " + "->" + "added" + "<br>";
-                //repl_verb.push(verb);
+        if (original.endsWith(" ")) {
+            // console.debug("Original end with blanc!" + original);
+            // console.debug("Preview:",previewNewText);
+            if (!previewNewText.endsWith(" ")) {
+                //  console.debug("Preview does not end with blanc!", previewNewText);
+                previewNewText = previewNewText + " ";
+                translatedText = translatedText + " ";
+                repl_verb += myrow + ": blanc after added" + "<br>";
                 countReplaced++;
                 replaced = true;
             }
         }
-    }
-     // 29-07-2023 PSS we need to check if the original does not end with three dots otherwise one period will be added or removed
-    if (!original.endsWith('\u2026') && !original.endsWith('\u002e\u002e\u002e')) {
-        if (previewNewText.endsWith(".")) {
-            if (!original.endsWith(".")) {
-                previewNewText = previewNewText.substring(0, previewNewText.length - 1);
+
+        if (previewNewText.startsWith(" ")) {
+            if (!original.startsWith(" ")) {
+                // console.debug("Original does not start with blanc!", '"' + original + '"');
+                previewNewText = previewNewText.substring(1, previewNewText.length);
+                translatedText = translatedText.substring(1, translatedText.length);
+                replaced = true;
+                repl_verb += myrow + ": blanc before removed" + "<br>";
+                countReplaced++;
+                //countreplaced++;
+            }
+        }
+
+        if (previewNewText.endsWith(" ")) {
+            if (!original.endsWith(" ")) {
+                // console.debug("Original does not end with blanc!", '"' + original + '"');
+                previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
                 translatedText = translatedText.substring(0, translatedText.length - 1);
-                repl_verb += myrow + " '.' " + "->" + "removed" + "<br>";
+                repl_verb += myrow + ": blanc after removed" + "<br>";
+                //  console.debug("repl_verb:", repl_verb)
                 countReplaced++;
                 replaced = true;
             }
         }
-    }
-    
-    if (original.endsWith(":")) {      
-        if (!previewNewText.endsWith(":")) {
-            previewNewText = previewNewText + ":";
-            translatedText = translatedText + ":";
-           // repl_verb += myrow + ": ':' after added" + "<br>";
-            let verb = myrow + ": ':' after added" + "<br>";
-            repl_verb.push(verb);
-            countReplaced++;
-            replaced = true;
-        } 
-    }
+        // 29-07-2023 PSS we need to check if the original does not end with three dots otherwise one period will be added or removed
+        if (!original.endsWith('\u2026') && !original.endsWith('\u002e\u002e\u002e')) {
+            if (original.endsWith(".")) {
+                if (!previewNewText.endsWith(".")) {
+                    previewNewText = previewNewText + "."
+                    translatedText = translatedText + ".";
+                    repl_verb += myrow + " '.' " + "->" + "added" + "<br>";
+                    let verb = myrow + " '.' " + "->" + "added" + "<br>";
+                    //repl_verb.push(verb);
+                    countReplaced++;
+                    replaced = true;
+                }
+            }
+        }
+        // 29-07-2023 PSS we need to check if the original does not end with three dots otherwise one period will be added or removed
+        if (!original.endsWith('\u2026') && !original.endsWith('\u002e\u002e\u002e')) {
+            if (previewNewText.endsWith(".")) {
+                if (!original.endsWith(".")) {
+                    previewNewText = previewNewText.substring(0, previewNewText.length - 1);
+                    translatedText = translatedText.substring(0, translatedText.length - 1);
+                    repl_verb += myrow + " '.' " + "->" + "removed" + "<br>";
+                    countReplaced++;
+                    replaced = true;
+                }
+            }
+        }
+        if (original.endsWith(":")) {
+            if (!previewNewText.endsWith(":")) {
+                previewNewText = previewNewText + ":";
+                translatedText = translatedText + ":";
+                // repl_verb += myrow + ": ':' after added" + "<br>";
+                let verb = myrow + ": ':' after added" + "<br>";
+                repl_verb += myrow + ": " + '->' + "':' after added" + "<br>"
+                countReplaced++;
+                replaced = true;
+            }
+        }
 
-    if (!original.endsWith(":")) {
-        if (previewNewText.endsWith(":")) {
-            previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
-            translatedText = translatedText.substring(0, translatedText.length - 1);
-            let verb = myrow + ": " + '->' + "':' after removed" + "<br>"
-           // repl_verb.push(verb);
-            repl_verb += myrow + ": " + '->' + "':' after removed" + "<br>"
-            countReplaced++;
-            replaced = true;
+        if (!original.endsWith(":")) {
+            if (previewNewText.endsWith(":")) {
+                previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
+                translatedText = translatedText.substring(0, translatedText.length - 1);
+                let verb = myrow + ": " + '->' + "':' after removed" + "<br>"
+                // repl_verb.push(verb);
+                repl_verb += myrow + ": " + '->' + "':' after removed" + "<br>"
+                countReplaced++;
+                replaced = true;
+            }
         }
-    }
 
-    if (original.endsWith("!")) {
-        if (!previewNewText.endsWith("!")) {
-            previewNewText = previewNewText + "!";
-            translatedText = translatedText + "!";
-            repl_verb += myrow + ": '!' after added" + "<br>";
-            countReplaced++;
-            replaced = true;
+        if (original.endsWith("!")) {
+            if (!previewNewText.endsWith("!")) {
+                previewNewText = previewNewText + "!";
+                translatedText = translatedText + "!";
+                repl_verb += myrow + ": '!' after added" + "<br>";
+                countReplaced++;
+                replaced = true;
+            }
         }
-    }
-    // Make translation to start with same case (upper/lower) as the original.
-    if (isStartsWithUpperCase(original)) {
-        if (!isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+        // Make translation to start with same case (upper/lower) as the original.
+        if (isStartsWithUpperCase(original)) {
+            if (!isStartsWithUpperCase(translatedText)) {
+                translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+            }
         }
-    }
-    else {
-        if (isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+        else {
+            if (isStartsWithUpperCase(translatedText)) {
+                translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+            }
         }
     }
    // console.debug("After improvements:", translatedText, previewNewText + " countreplaced: " + countReplaced, repl_verb, replaced)
@@ -1816,11 +1817,15 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                     if (liscore == 100) {
                         liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                         textFound = liSuggestion.innerHTML;
-                    }   
-                    else if (liscore > 90 && liscore <100) {
+                    }
+                    else if (liscore > 90 && liscore < 100) {
                         liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                         // We need to fetch Text otherwise characters get converted!!
                         textFound = liSuggestion.innerHTML;
+                    }
+                    else if (liscore < 91 && OpenAIscore != "OpenAI") {
+                        console.debug("We do have nothing to populate")
+                        textFound = "No suggestions";
                     }
                     else if (OpenAIscore = "OpenAI") {
                         OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
@@ -1828,18 +1833,19 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                             liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
                             textFound = liSuggestion.innerText
                         }
-                    }
-                    else {
-                        OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
-                        if (OpenAIres != null) {
-                            liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                            textFound = liSuggestion.innerText
-                        }
                         else {
-                            console.debug("OpenAIres == null!")
-                            textFound = "No suggestions";
+                            OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
+                            if (OpenAIres != null) {
+                                liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
+                                textFound = liSuggestion.innerText
+                            }
+                            else {
+                                console.debug("OpenAIres == null!")
+                                textFound = "No suggestions";
+                            }
                         }
                     }
+                    
                     //sometimes we have a second <span> within the text, we need to drop thatOpenAI
                     //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
                     // PSS made a fix for issue #300
@@ -1847,7 +1853,8 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                     textFound = unEscape(textFound)
                     let original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
                     original = original.querySelector("span.original-raw").innerText;
-                    //   (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower
+                    // (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower
+                    // console.debug("before postprocess:"," '"+original+"' ",textFound,replaceVerb)
                     textFound = postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellCheckIgnore)
                     if (textFound == "") {
                         console.debug("liSuggestion present but no result from postProcessTranslation!")
@@ -2873,7 +2880,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 else {
                     let translatedText = pretrans;
                     // check if the returned translation does have the same start/ending as the original
-                    result = await check_start_end(translatedText, "", 0, "", original, "", 0);
+                    if (translatedText != "No suggestions") {
+                        result = await check_start_end(translatedText, "", 0, "", original, "", 0);
+                    }
                     console.debug("after checking:",result)
                     //translatedText = checkStartEnd(original, translatedText);
                     let textareaElem = e.querySelector("textarea.foreign-text");
