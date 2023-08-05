@@ -149,10 +149,16 @@ function preProcessOriginal(original, preverbs, translator) {
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower,spellCheckIgnore) {
     //console.debug("before posrepl: '"+ translatedText +"'")
+    let debug = false;
     if (originalPreProcessed != "") {
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
-   
+    if (debug == true) {
+        console.debug("original: ", original);
+        console.debug("translatedText :", translatedText);
+        console.debug("replaceVerb :", replaceVerb);
+        console.debug("originalPreProcessed :");
+    }
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
@@ -1779,11 +1785,14 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
     var lires;
     var newres;
     var liscore;
+    var APIScore;
     var liSuggestion;
     var TMswitch;
     var TMswitch = localStorage.getItem('switchTM')
     var textFound = "No suggestions";
-    var OpenAIscore;
+    var original;
+    var DeepLres;
+    var OpenAIres;
     // We need to prepare the replacement list
     setPostTranslationReplace(postTranslationReplace, formal);
     //console.debug("TMwait:",TMwait)
@@ -1793,77 +1802,173 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
       
         //const myres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized`);
         setTimeout(() => {
-           // console.debug("switchTM:", TMswitch);
+            original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
+            original = original.querySelector("span.original-raw").innerText;
             if (TMswitch == 'false') {
-                newres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized .suggestions-list`);
-               // console.debug("local")
-            } else {
-                newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
-                // console.debug("foreighn")
-            }
-        
-            //console.debug("object:", newres)
-            if (newres !== null) {
+              newres = editor.querySelector(`#editor-${row} .suggestions__translation-memory.initialized .suggestions-list`);
+              if (newres !== null) {
                 // Get the li list from the suggestions
                 lires = newres.getElementsByTagName("li");
                 //console.debug("li found:", lires);
                 if (lires[0] != null) {
                     liscore = lires[0].querySelector(`span.translation-suggestion__score`);
+                   // console.debug("liscore:",liscore)
                     if (liscore != null) {
                         liscore = liscore.innerText;
-                        OpenAIscore = liscore;
                         liscore = Number(liscore.substring(0, liscore.length - 1))
+                        if (liscore == null) {
+                            liscore = 0;
+                            //console.debug("liscore nul", liscore)
+                            APIScore = editor.querySelector(`span.translation-suggestion__score.openai`)
+                           // console.debug("Apiscore indien liscore null:", APIScore)
+                            if (typeof APIScore == 'undefined') {
+                                APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`)
+                                if (typeof APIScore != 'undefined') {
+                                    APIScore = "DeepL"
+                                }
+                                else {
+                                    APIScore = "None"
+                                }
+                            }
+                        }
+                        else {
+                            APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`)
+                            if (APIScore != null) {
+                                liSuggestion = APIScore.querySelector(`span.translation-suggestion__translation`);
+                                if (typeof liSuggestion != 'undefined') {
+                                    textFound = liSuggestion.innerText
+                                }
+                                else {
+                                    textFound = 'No results'
+                                }
+                            }
+                            else {
+                                if (typeof APIScore == 'undefined') {
+                                    APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`)
+                                    if (typeof APIScore != 'undefined') {
+                                        APIScore = "DeepL"
+                                    }
+                                    else {
+                                        APIScore = "None"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`)
+                        if (APIScore != null) {
+                            APIScore = "OpenAI"
+                        }
+                        else {
+                            APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`)
+                            if (APIScore != null) {
+                                APIScore = "DeepL"
+                            }
+                            else {
+                                APIScore ="None"
+                            }
+                        }
                     }
                     if (liscore == 100) {
                         liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                         textFound = liSuggestion.innerHTML;
+                        textFoundSplit = textFound.split("<span")[0]
+                        //console.debug("suggestion >90:", textFoundSplit)
+                        if (textFoundSplit != null) {
+                            textFound = textFoundSplit;
+                        }
+                        else {
+                            textFound = liSuggestion.innerText;
+                        }
                     }
                     else if (liscore > 90 && liscore < 100) {
                         liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                         // We need to fetch Text otherwise characters get converted!!
+                        // GlotPress can indicate differences between the original
+                        // So we need to remove the indication
                         textFound = liSuggestion.innerHTML;
+                        textFoundSplit = textFound.split("<span")[0]
+                        //console.debug("suggestion >90:",textFoundSplit)
+                        if (textFoundSplit != null) {
+                            textFound = textFoundSplit;
+                        }
+                        else {
+                            textFound = liSuggestion.innerText;
+                        }
+
                     }
-                    else if (liscore < 91 && OpenAIscore != "OpenAI") {
+                    else if (liscore < 91 && APIScore != "OpenAI" && APIScore !="DeepL") {
+                        //console.debug("nothing:",liscore)
                         console.debug("We do have nothing to populate")
                         textFound = "No suggestions";
                     }
-                    else if (OpenAIscore = "OpenAI") {
+                    else if (APIScore == "OpenAI") {
                         OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
                         if (OpenAIres != null) {
                             liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
                             textFound = liSuggestion.innerText
                         }
-                        else {
-                            OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
-                            if (OpenAIres != null) {
-                                liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                                textFound = liSuggestion.innerText
-                            }
-                            else {
-                                console.debug("OpenAIres == null!")
-                                textFound = "No suggestions";
-                            }
+                        else {  
+                             console.debug("OpenAIres == null!")
+                             textFound = "No suggestions";    
                         }
+                    }
+                    else if (APIScore == "DeepL") {
+                        DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
+                        if (DeepLres != null) {
+                            liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
+                            textFound = liSuggestion.innerText
+                            console.debug("suggestion:", textFound)
+                        }
+                        else {
+                            console.debug("DeepLres == null!")
+                            textFound = "No suggestions";
+                            //resolve(textFound);
+                         } 
                     }
                     
                     //sometimes we have a second <span> within the text, we need to drop thatOpenAI
                     //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
                     // PSS made a fix for issue #300
-                    textFound = textFound.split("<span")[0]
+                    
+                    //textFound = textFound.split("<span")[0]
                     textFound = unEscape(textFound)
-                    let original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
-                    original = original.querySelector("span.original-raw").innerText;
-                    // (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower
-                    // console.debug("before postprocess:"," '"+original+"' ",textFound,replaceVerb)
+                   // console.debug("before postprocess:"," '"+original+"' ",textFound)
                     textFound = postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellCheckIgnore)
                     if (textFound == "") {
                         console.debug("liSuggestion present but no result from postProcessTranslation!")
                         textFound = "No suggestions";
+                        resolve(textFound);
                     }
                     resolve(textFound);
                 }
+                else {
+                    textFound ="No suggestions"
+                    resolve(textFound);
+                  }
+              }
+              else {
+                  textFound = "No suggestions"
+                  resolve(textFound);
+                   }
             } else {
-                resolve("No suggestions");
+                newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
+                if (newres !== null) {
+                    // Get the li list from the foreighn suggestions
+                    lires = newres.getElementsByTagName("li");
+                    liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                    // We need to fetch Text otherwise characters get converted!!
+                    textFound = liSuggestion.innerHTML
+                    textFound = textFound.split("<span")[0]
+                    textFound = unEscape(textFound)
+                    textFound = postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellCheckIgnore)
+                    resolve(textFound);
+                }
+                else {
+                    textFound = "No suggestions"
+                    resolve(textFound);
+                }
             }
         }, TMwait);
     });
@@ -1985,6 +2090,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         if (typeof resli != null) {
                             //console.debug("Fetchli result:",resli)
                             myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype);
+                           // console.debug("myres: ",myres)
                             let textareaElem = record.querySelector("textarea.foreign-text");
                             // console.debug("textareaElem:", textareaElem)
                             if (is_pte) {
