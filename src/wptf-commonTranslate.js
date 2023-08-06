@@ -397,7 +397,7 @@ function CheckUrl(translated, searchword) {
     return foundmysearch;
 }
 
-function checkStartEnd(original, translatedText) {
+function old_checkStartEnd(original, translatedText) {
     // 20-09-2021 Fix for issue #143
     // strip or add "." at the end of the line
     //console.debug("in checkstartend:", translatedText.substring(translatedText.length - 1, translatedText.length));
@@ -2426,7 +2426,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             // Pretranslation found!
                             let translatedText = pretrans;
                             // check if the returned translation does have the same start/ending as the original
-                            translatedText = checkStartEnd(original, translatedText);
+                            if (translatedText != "No suggestions") {
+                                result = await check_start_end(translatedText, "", 0, "", original, "", 0);
+                            }
                             let textareaElem = record.querySelector("textarea.foreign-text");
                             textareaElem.innerText = translatedText;
                             textareaElem.value = translatedText;
@@ -2989,8 +2991,6 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     if (translatedText != "No suggestions") {
                         result = await check_start_end(translatedText, "", 0, "", original, "", 0);
                     }
-                    console.debug("after checking:",result)
-                    //translatedText = checkStartEnd(original, translatedText);
                     let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
                     textareaElem.value = translatedText;

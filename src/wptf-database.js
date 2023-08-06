@@ -461,7 +461,7 @@ async function dbExport(destlang) {
     let exportButton = document.querySelector("a.export_translation-button");
     exportButton.className += " ready";
     //close_toast();
-    messageBox("info", "Export database done amount of records exported: "+i);  
+    messageBox("info", "Export database done amount of records exported: " + i + "<br>Wait until explorer is shown to save the file");  
 }
 
 async function tryPersistWithoutPromtingUser() {
