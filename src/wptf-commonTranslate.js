@@ -2218,7 +2218,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var preview = "";
     var pretrans;
     var timeout = 0;
-    var vartime = 750;
+    var vartime = 800;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -2316,7 +2316,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         toTranslate = checkComments(comment.trim());
                     }
                     // Do we need to translate ??
-
                     if (toTranslate) {
                         pretrans =  await findTransline(original, destlang);
                         // 07-05-2021 PSS added pretranslate in pages
@@ -2449,7 +2448,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                             // console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
                             //validate(destlang, textareaElem, original, locale);
-                            validateEntry(destlang, textareaElem, "", "", row);
+                            await validateEntry(destlang, textareaElem, "", "", row);
                             // PSS 10-05-2021 added populating the preview field issue #68
                             // Fetch the first field Singular
                             let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
@@ -2717,7 +2716,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         current.value = "transFill";
                                     }
 
-                                    validateEntry(destlang, textareaElem1, "", "", row);
+                                   await validateEntry(destlang, textareaElem1, "", "", row);
                                 }
                                 preview = document.querySelector(`#preview-${row}`);
                                 rowchecked = preview.querySelector("td input");
@@ -2765,24 +2764,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                         }
                         // we need to validate this string to get the colors and labels correct
-                        validateEntry(destlang, textareaElem, "", "", row);
+                        await validateEntry(destlang, textareaElem, "", "", row);
                     }
-                    //14-09-2021 PSS changed the class to meet GlotDict behavior
-                    let currentClass = document.querySelector(`#editor-${row}`);
-                    let prevcurrentClass = document.querySelector(`#preview-${row}`);
                     
-                    currentClass.classList.replace("no-translations", "has-translations");
-                    currentClass.classList.replace("untranslated", "status-waiting");
-                    currentClass.classList.add("wptf-translated");
-
-                    //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-                    prevcurrentClass.classList.replace("no-translations", "has-translations");
-                    prevcurrentClass.classList.replace("untranslated", "status-waiting");
-                    prevcurrentClass.classList.add("wptf-translated");
-                    // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
-                    prevcurrentClass.style.backgroundColor = "#ffe399";
-                   // console.debug("prevClassList:", prevcurrentClass.classList)
-                   // console.debug("translation:", textareaElem.innerText)
 
                     // single translation completed
                     if (completedCallback) {
@@ -2794,9 +2778,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                         translateButton.className += " translated";
                         translateButton.innerText = "Translated";
-                    }    
+                    }
+                    
                 }, timeout,stop);
                 timeout += vartime;
+                
             } 
         } else {
             messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!");
@@ -2997,7 +2983,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     current.innerText = "transFill";
                     current.value = "transFill";
                     //let zoeken = "translate-" + rowId + ""-translocal-entry-local-button";
-                    validateEntry(destlang, textareaElem, "", "", rowId);
+                    await validateEntry(destlang, textareaElem, "", "", rowId);
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                     // Translation completed
                     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
@@ -3017,7 +3003,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 textareaElem.value = translatedText;
                 current.innerText = "transFill";
                 current.value = "transFill";
-                validateEntry(destlang, textareaElem, "", "", rowId);
+                await validateEntry(destlang, textareaElem, "", "", rowId);
                 // Translation completed
                 translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
                 // if row is already translated the rowId has different format, so we need to search with this different format
@@ -3112,13 +3098,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
-                        validateEntry(destlang, textareaElem1, "", "", rowId);
+                        await validateEntry(destlang, textareaElem1, "", "", rowId);
                     }
                     else {
                         textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
-                        validateEntry(destlang, textareaElem1, "", "", rowId);
+                        await validateEntry(destlang, textareaElem1, "", "", rowId);
                         document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                     }
                 }
@@ -3610,6 +3596,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         current.innerText = "transFill";
         current.value = "transFill";
         validateEntry(language, textareaElem1, "", "", rowId, locale);
+
         
     }
     myRow = document.querySelector(`#editor-${rowId}`);
@@ -3634,6 +3621,22 @@ async function processTransl(original, translatedText, language, record, rowId, 
         translateButton.className += " translated";
         translateButton.innerText = "Translated";
     }
+    //14-09-2021 PSS changed the class to meet GlotDict behavior
+    let currentClass = document.querySelector(`#editor-${rowId}`);
+    let prevcurrentClass = document.querySelector(`#preview-${rowId}`);
+
+    currentClass.classList.replace("no-translations", "has-translations");
+    currentClass.classList.replace("untranslated", "status-waiting");
+    currentClass.classList.add("wptf-translated");
+
+    //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+    prevcurrentClass.classList.replace("no-translations", "has-translations");
+    prevcurrentClass.classList.replace("untranslated", "status-waiting");
+    prevcurrentClass.classList.add("wptf-translated");
+    // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
+    prevcurrentClass.style.backgroundColor = "#ffe399";
+    // console.debug("prevClassList:", prevcurrentClass.classList)
+   
 }
 
 // PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks

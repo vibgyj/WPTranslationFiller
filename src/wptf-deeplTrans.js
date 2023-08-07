@@ -4,16 +4,15 @@
  */
 
 
-async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
+async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
+    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
     return errorstate;
 }
 
 
-async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
-    var row = "";
+async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
     var translatedText = "";
     var ul = "";
     var current = "";
@@ -30,7 +29,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var data;
     var link;
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+    current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
     //console.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
@@ -70,7 +69,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 translatedText = data.translations[0].text;
                 //console.debug("result:",translatedText)
                 translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
-                processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
                }
         })
