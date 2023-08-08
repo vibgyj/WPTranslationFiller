@@ -154,7 +154,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         console.debug("original: ", original);
         console.debug("translatedText :", translatedText);
         console.debug("replaceVerb :", replaceVerb);
-        console.debug("originalPreProcessed :");
+        console.debug("originalPreProcessed :",originalPreProcessed);
+        console.debug("originalPreProcessed :", spellCheckIgnore);
+        console.debug("translator :", translator);
     }
     if (originalPreProcessed != "") {
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
@@ -178,12 +180,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
             index++;
         }
-        
         // Deepl does remove crlf so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("<x>mylinefeed</x>", "\r\n");
         // Deepl does remove tabs so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("<x>mytb</x>", "\t");
-       // translatedText = translatedText.replaceAll("[mytb] ", "\t");
     }
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
@@ -739,7 +739,7 @@ function checkFormalPage(dataFormal) {
     }
 }
 
-async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt) {
+async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt, spellcheckIgnore) {
     var timeout = 10;
     var countrows = 0;
     var tableRecords = 0;
@@ -753,7 +753,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     var newrowId;
     var myrow;
     var result;
-    var spellcheckIgnore = [];
+    //var spellcheckIgnore = [];
     var repl_verb = []; //contains the list of found and replaced words
     const template = `
     <div class="indeterminate-progress-bar">
@@ -2857,6 +2857,7 @@ function check_span_missing(row,plural_line) {
 
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore) {
     var translateButton;
+    var result;
     locale = checkLocale();
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
     if (translateButton == null) {
@@ -2945,7 +2946,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                             messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
                         }
                         else {
-                            if (errorstate != "OK") {
+                            if (errorstate != "OK" && errorstate !=false) {
                                 messageBox("error", "There has been some uncatched error: " + errorstate);
                                // alert("There has been some uncatched error: " + errorstate);
                             }
@@ -3655,7 +3656,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
     // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
     prevcurrentClass.style.backgroundColor = "#ffe399";
     // console.debug("prevClassList:", prevcurrentClass.classList)
-   
+    return "OK";
 }
 
 // PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks

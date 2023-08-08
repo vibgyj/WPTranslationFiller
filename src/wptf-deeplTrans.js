@@ -28,10 +28,11 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var error;
     var data;
     var link;
+    var deepLresult;
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
-    //console.debug("Original:", originalPreProcessed)
+    console.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
@@ -67,9 +68,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             else {
                 //We do have a result so process it
                 translatedText = data.translations[0].text;
-                //console.debug("result:",translatedText)
                 translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
-                processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
+                deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
                }
         })
@@ -91,11 +91,9 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
             }
             else {
-                //alert("Error message: " + error[1]);
+                alert("Error message: " + error[1]);
                 console.debug("Error:",error)
                 errorstate = "Error " + error[1];
             }
         });
-    //console.debug("endres:", response)
-    return response;
 }

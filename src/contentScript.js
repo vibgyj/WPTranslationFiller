@@ -964,12 +964,15 @@ function checkPageClicked(event) {
         ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower"],
         function (data) { 
             const promise1 = new Promise(async function (resolve, reject) {
-                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore);
                 resolve(data);     
             });
             const promise2 = new Promise(async function (resolve, reject) {
                 await promise1;
                 if (data.Auto_spellcheck == true) {
+                    if (typeof data.spellcheckIgnore == 'undefined') {
+                        data.spellcheckIgnore = []
+                        }
                     await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
                     resolve(data)
                 }

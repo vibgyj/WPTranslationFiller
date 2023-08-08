@@ -26,8 +26,6 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     </div>
     `;
     var myheader = document.querySelector('header');
-   
-
     checkButton.innerText = "Checking";
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
     if (checkButton.className == "check_translation-button") {
@@ -67,7 +65,6 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
             found_verbs = [];
             replaced = false;
             let original = e.querySelector("span.original-raw").innerText;
-
             let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
             row = rowfound.split("-")[1];
             let newrow = rowfound.split("-")[2];
@@ -114,9 +111,9 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                             translatedText = textareaElem.innerText;
                             // Enhencement issue #123
                             previewNewText = textareaElem.innerText;
-                            //console.debug("spellcheck:",translatedText)
                             // Need to replace the existing html before replacing the verbs! issue #124
                             // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                           // console.debug("line to check:",translatedText,previewNewText)
                             if (translatedText != "") {
                                 let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                                 spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
@@ -210,7 +207,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
   
     let text = prepare_spellcheck(translation);
     //let text=translation
-    //text = encodeURI(text);
+    text = encodeURI(text);
     
     if (LtFree == true) {
         myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
@@ -246,7 +243,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
             }
             else {
                 //We do have a result so process it
-                // console.debug('result:', data);
+                console.debug('result:', data);
                 if (typeof data.matches[0] != 'undefined') {
                     // The matches is an array and can have multiple entries
                     for (var i = 0; i < data.matches.length; i++) {
