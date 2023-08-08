@@ -799,10 +799,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     
     if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
         //setPreTranslationReplace(preTranslationReplace);
-        
         var translatedText = "";
         tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+
             countrows++;
           //  setTimeout(() => {
             replaced = false;    
@@ -941,8 +941,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     myspan1.appendChild(document.createTextNode(previewNewText));
                                     // PSS populate the preview before marking
                                     preview.innerText = DOMPurify.sanitize(previewNewText);
+                                    //console.debug("before markelements", preview, replaceVerb, orgText, spellcheckIgnore)
                                     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                    await markElements(preview, replaceVerb, orgText, spellcheckIgnore);
+                                    await markElements(preview, replaceVerb, original, spellcheckIgnore);
                                 }
                             }
                             let plural_line = "";
@@ -965,6 +966,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
                                 recWordCount = result.countReplaced;
                                 replaced = result.replaced;
+                                orgText = result.orgText;
                                 if (replaced) {
                                     // We need to fetch the updatet data again
                                     var preview = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
@@ -989,7 +991,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     repl.push(rec.split(","))
                                     //rec = ' , '
                                     // repl.push(rec.split(","))
-                                    await markElements(preview, repl, original, spellcheckIgnore);
+                                    await markElements(preview, repl, orgText, spellcheckIgnore);
                                     // 09-09-2022 PSS fix for issue #244
                                     if (currec != null) {
                                         var current = currec.querySelector("span.panel-header__bubble");
@@ -1004,7 +1006,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     updateStyle(textareaElem, result, "", true, false, false, row);
                                 }
                                //console.debug("plural1 found:",previewElem,translatedText);
-                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, recWordCount, original, countrows);
+                               result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, recWordCount, original, countrows);
                                previewNewText = result.previewNewText;
                                translatedText = result.translatedText;
                                recWordCount = result.countreplaced;

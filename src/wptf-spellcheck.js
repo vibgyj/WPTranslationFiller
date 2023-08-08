@@ -243,7 +243,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
             }
             else {
                 //We do have a result so process it
-                console.debug('result:', data);
+                //console.debug('result:', data);
                 if (typeof data.matches[0] != 'undefined') {
                     // The matches is an array and can have multiple entries
                     for (var i = 0; i < data.matches.length; i++) {
