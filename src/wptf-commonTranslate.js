@@ -150,15 +150,16 @@ function preProcessOriginal(original, preverbs, translator) {
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower,spellCheckIgnore) {
     //console.debug("before posrepl: '"+ translatedText +"'")
     let debug = false;
-    if (originalPreProcessed != "") {
-        translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
-    }
     if (debug == true) {
         console.debug("original: ", original);
         console.debug("translatedText :", translatedText);
         console.debug("replaceVerb :", replaceVerb);
         console.debug("originalPreProcessed :");
     }
+    if (originalPreProcessed != "") {
+        translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
+    }
+    
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
@@ -1919,7 +1920,6 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                         if (DeepLres != null) {
                             liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
                             textFound = liSuggestion.innerText
-                            console.debug("suggestion:", textFound)
                         }
                         else {
                             console.debug("DeepLres == null!")
@@ -2207,6 +2207,23 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     });
 }
 
+async function mark_as_translated(row){
+    //14-09-2021 PSS changed the class to meet GlotDict behavior
+    let currentClass = document.querySelector(`#editor-${row}`);
+    let prevcurrentClass = document.querySelector(`#preview-${row}`);
+
+    currentClass.classList.replace("no-translations", "has-translations");
+    currentClass.classList.replace("untranslated", "status-waiting");
+    currentClass.classList.add("wptf-translated");
+
+    //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+    prevcurrentClass.classList.replace("no-translations", "has-translations");
+    prevcurrentClass.classList.replace("untranslated", "status-waiting");
+    prevcurrentClass.classList.add("wptf-translated");
+    // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
+    prevcurrentClass.style.backgroundColor = "#ffe399";
+}
+
 async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore) {
     //console.time("translation")
     var translate;
@@ -2315,7 +2332,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         comment = comment.replace(/(\r\n|\n|\r)/gm, "");
                         toTranslate = checkComments(comment.trim());
                     }
-                    // Do we need to translate ??
+                    // Do we need to translate as we did not find a comment??
                     if (toTranslate) {
                         pretrans =  await findTransline(original, destlang);
                         // 07-05-2021 PSS added pretranslate in pages
@@ -2525,6 +2542,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                                 rowchecked.checked = true;
                                             }
                                         }
+                                        await mark_as_translated(row);
+                                       
                                     }
                                 } else {
                                     // if it is as single with local then we need also update the preview
@@ -2763,7 +2782,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 rowchecked.checked = true;
                             }
                         }
-                        // we need to validate this string to get the colors and labels correct
+                        await mark_as_translated(row)              
                         await validateEntry(destlang, textareaElem, "", "", row);
                     }
                     
