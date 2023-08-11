@@ -207,7 +207,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
   
     let text = prepare_spellcheck(translation);
     //let text=translation
-    text = encodeURI(text);
+    //text = encodeURI(text);
     
     if (LtFree == true) {
         myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
@@ -222,7 +222,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
-            //console.debug("response:", isJson, response)
+           // console.debug("response:", isJson, response)
 
             //data = isJson && await response.json();
             //console.debug("Response:", data);
@@ -254,7 +254,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                             // console.debug("context length:", data.matches[0].context.length)
                             // console.debug("context length:", data.matches[0].context.text)
                             spellcheck_verb = data.matches[i].context.text.substr(data.matches[i].context.offset, data.matches[i].context.length)
-                           // console.debug("spellcheck_verb:", spellcheck_verb)
+                            //console.debug("spellcheck_verb:", spellcheck_verb)
                             if (spellcheck_verb == "  ") {
                                 spellcheck_verb = "[]";
                             }
@@ -273,6 +273,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                         }   
                     }
                     // PSS result only needs to be processed if all verb in sentence have been found
+                    //console.debug("found verbs:",found_verbs)
                     entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, spellcheckIgnore)
                     if (typeof data.translations != 'undefined') {
                         translatedText = data.translations[0].text;
@@ -282,7 +283,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                     replaced = false;
                   //  console.debug("We did not find a result!")
                     
-                };
+                }
                // if (typeof data.translations != 'undefined') {
                //     translatedText = data.translations[0].text;
                // }
@@ -346,7 +347,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
 function prepare_spellcheck(translation) {
     
     // We need to convert the text to Utf8 otherwise the API does not accept it!!
-    let prepared = translation.replace(/[&\/\\#,+()$~%'":*<>{}]/g, '')
+    let prepared = translation.replace(/[&\/\\#,+()$~%'":*<>{}]/g, ' ')
     //let prepared = JSON.stringify(translation)
     prepared = encodeURIComponent(prepared);
     //console.debug("jason:",prepared)
@@ -403,8 +404,9 @@ async function process_result(found_verbs, replaced, countfound, e, newrowId, cu
           //  console.debug("preview:", preview)
           //  console.debug("found_verbs:", found_verbs)
         
-            if (typeof preview != "undefined") {
-                markElements(preview, found_verbs, orgText, spellcheckIgnore);
+        if (typeof preview != "undefined") {
+               // console.debug("spellcheck:",found_verbs)
+                markElements(preview, found_verbs, orgText, spellcheckIgnore,repl_verb);
             }
         //}
 

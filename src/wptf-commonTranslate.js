@@ -609,6 +609,7 @@ function checkFormalPage(dataFormal) {
                     replaced = result.replaced;
                     orgText = result.orgText;
                     repl_verb = result.repl_verb;
+                    repl_arry = result.repl_array
                     
                     // PSS 22-07-2021 fix for the preview text is not updated #109
                     if (replaced) {
@@ -658,7 +659,7 @@ function checkFormalPage(dataFormal) {
                             preview = document.querySelector("#preview-" + myrow + " td.translation");
                         }
                         // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                        markElements(preview, replaceVerb, orgText, spellcheckIgnore);
+                        markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl_array);
                     }
                 }
                 else {
@@ -673,6 +674,7 @@ function checkFormalPage(dataFormal) {
                     countreplaced = result.countreplaced;
                     replaced = result.replaced;
                     orgText = result.orgText;
+                    repl_verb = result.repl_verb;
                     if (replaced) {
                         previewElem.innerText = previewNewText;
                         let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
@@ -683,7 +685,7 @@ function checkFormalPage(dataFormal) {
                         textareaElem1.value = translatedText;
                         // Highlight all keywords found in the page, so loop through the replacement array
                         // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                        markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
+                        markElements(previewElem, replaceVerb, orgText, spellcheckIgnore,repl_verb);
                     }
                     // plural line 2
                     previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
@@ -696,6 +698,7 @@ function checkFormalPage(dataFormal) {
                         translatedText = result.translatedText;
                         countreplaced = result.countreplaced;
                         replaced = result.replaced;
+                        repl_verb = result.repl_verb;
                         if (replaced) {
                             // PSS fix for #188 label Transfill needs to be set
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
@@ -713,7 +716,7 @@ function checkFormalPage(dataFormal) {
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
                                 // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
+                                markElements(previewElem, replaceVerb, orgText, spellcheckIgnore,repl_verb);
                             }
                         }
                     }
@@ -753,6 +756,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     var newrowId;
     var myrow;
     var result;
+    var preview;
     //var spellcheckIgnore = [];
     var repl_verb = []; //contains the list of found and replaced words
     const template = `
@@ -850,27 +854,36 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             previewNewText = textareaElem.innerText;
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                             // PSS we need to check for missing periods en blanks before replacing verbs 
+                            //console.debug("before check_start:",translatedText)
                             result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
                             recWordCount = result.countReplaced;
                             replaced = result.replaced;
-                            
+                            repl_array = result.repl_array;
+                            //console.debug("repl_array:",repl_array,replaced)
+                            //replaced=false
                             if (replaced) {
-                                var preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                                preview = document.querySelector("#preview-" + newrowId + " span.translation-text");
                                 if (preview == null) {
-                                    preview = document.querySelector("#preview-" + row + " td.translation");
+                                    preview = document.querySelector("#preview-" + myrow + " span.translation-text");
                                 }
                                 repl_verb = result.repl_verb;
                                 preview.innerHTML = result.previewNewText
                                 previewNewText = result.previewNewText
                                 textareaElem.innerText = result.previewNewText;
-                                textareaElem.value = result.previewNewText;
+                                //textareaElem.value = result.previewNewText;
                                 // PSS this needs to be improved
-                                let repl = []
-                                let rec = '.,.'
-                                repl.push(rec.split(","))
+                                //let repl = []
+                                //let rec = '.,.'
+                                //repl.push(rec.split(","))
                                 //rec = ' , '
                                // repl.push(rec.split(","))
-                                await markElements(preview, repl, original, spellcheckIgnore);
+                                preview = document.querySelector("#preview-" + newrowId + " span.translation-text");
+                                if (preview == null) {
+                                    preview = document.querySelector("#preview-" + myrow + " span.translation-text");
+                                }
+                                
+                                //console.debug("newpreview:",preview)
+                                await markElements(preview, repl_array, original, spellcheckIgnore,repl_array,translatedText);
                                 // 09-09-2022 PSS fix for issue #244
                                 if (currec != null) {
                                     var current = currec.querySelector("span.panel-header__bubble");
@@ -896,9 +909,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             replaced = result.replaced;
                             orgText = result.orgText;
                             repl_verb = result.repl_verb;
+                            repl_array=result.repl_array
 
                             // PSS 22-07-2021 fix for the preview text is not updated #109
-                            var preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                            preview = document.querySelector("#preview-" + newrowId + " td.translation");
                             if (preview == null) {
                                 preview = document.querySelector("#preview-" + myrow + " td.translation");
                             }
@@ -935,15 +949,17 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 if (preview == null) {
                                     preview = document.querySelector("#preview-" + myrow + " td.translation");
                                 }
+                                //console.debug("preview:",preview)
                                 // if there is no preview for the plural, we do not need to populate it
                                 if (preview != null) {
                                     preview.appendChild(myspan1);
                                     myspan1.appendChild(document.createTextNode(previewNewText));
                                     // PSS populate the preview before marking
                                     preview.innerText = DOMPurify.sanitize(previewNewText);
-                                    //console.debug("before markelements", preview, replaceVerb, orgText, spellcheckIgnore)
+                                    //console.debug("before markelements", preview, repl_verb, orgText, spellcheckIgnore)
                                     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                    await markElements(preview, replaceVerb, original, spellcheckIgnore);
+
+                                    await markElements(preview, repl_verb, orgText, spellcheckIgnore,repl_array,translatedText);
                                 }
                             }
                             let plural_line = "";
@@ -966,15 +982,15 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
                                 recWordCount = result.countReplaced;
                                 replaced = result.replaced;
-                                orgText = result.orgText;
+                                repl_array = result.repl_array;
                                 if (replaced) {
                                     // We need to fetch the updatet data again
-                                    var preview = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
+                                    preview = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
                                     if (preview == null) {
                                         preview = document.querySelector("#preview-" + myrow + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
                                     }
                                     //console.debug("preview:", preview)
-                                    repl_verb += result.repl_verb;
+                                    repl_verb = result.repl_verb;
                                     preview.innerHTML = result.previewNewText
                                     previewNewText = result.previewNewText
                                     let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
@@ -1025,7 +1041,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     textareaElem1.value = translatedText;
                                     // Highlight all keywords found in the page, so loop through the replacement array
                                     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                    await markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
+                                    await markElements(preview, repl_array,orgText, spellcheckIgnore, repl_array, translatedText);
+                                    //await markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                                 }
                                 
                             }
@@ -1046,14 +1063,13 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
                                     recWordCount = result.countReplaced;
                                     replaced = result.replaced;
-                                    orgText = result.orgText;
-                                    repl_verb = result.repl_verb;
+                                    repl_array = result.repl_array;
                                     if (replaced) {
                                         var preview = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
                                         if (preview == null) {
                                             preview = document.querySelector("#preview-" + myrow + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
                                         }
-                                       
+                                        repl_verb = result.repl_verb;
                                         preview.innerHTML = result.previewNewText
                                         previewNewText = result.previewNewText
                                         let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
@@ -1070,7 +1086,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                         repl.push(rec.split(","))
                                         //rec = ' , '
                                         // repl.push(rec.split(","))
-                                        await markElements(preview, repl, original, spellcheckIgnore);
+                                        await markElements(preview, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
                                         // 09-09-2022 PSS fix for issue #244
                                         if (currec != null) {
                                             var current = currec.querySelector("span.panel-header__bubble");
@@ -1101,7 +1117,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                             var prevstate = current.innerText;
                                             current.innerText = "transFill";
                                         }
-                                        previewElem.innerText = previewNewText;
+                                        repl_verb = result.repl_verb;
+                                        preview.innerHTML = result.previewNewText
+                                        previewNewText = result.previewNewText
                                         let f = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                                         // if current translation we need to split the rownumber
                                         let rowId = row.split("-")[0];
@@ -1110,7 +1128,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                             textareaElem1.innerText = translatedText;
                                             textareaElem1.value = translatedText;
                                             // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                            await markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
+                                            await markElements(previewElem, replaceVerb, orgText, spellcheckIgnore,repl_array, translatedText);
                                         }
                                     }
                                 }
@@ -1172,8 +1190,9 @@ function needsMarking(markverb, spellcheckIgnore) {
     }
 }
 
-async function markElements(preview, replaceVerb, orgText, spellcheckIgnore) {
+async function markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl_array,translatedText) {
     // Highlight all keywords found in the page, so loop through the replacement array
+    //console.debug("replaceverbs array:",repl_array)
     var arr = [];
     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
     if (typeof spellcheckIgnore != 'undefined' && spellcheckIgnore.length != 0) {
@@ -1182,53 +1201,86 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore) {
     else {
         spellcheckIgnore = [];
     }
+    if (typeof repl_array != 'undefined') {
+      //  console.debug("we are in markelements:",repl_array)
+    }
     // 27-07-2023 PSS we need to escape the double quotes otherwise replacing crashes
     nwText = orgText.toString().replace(/"/g, '\\"')
-    for (let i = 0; i < replaceVerb.length; i++) {
-        if (typeof nwText != 'undefined') {
-            // Check if we need to mark the verb
-            // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-            if (spellcheckIgnore.length == 0) {
-                if (nwText.includes(replaceVerb[i][0])) {
-                    high = replaceVerb[i][1];
-                    if (typeof high != 'undefined') {
-                        if (high != " ") {
-                            high = high.replace(/[&\/\\#,+()$~%'":*<>{}]/g, '')
-                            high = high.trim();
-                        }
-                        // push the verb into the array
-                        arr.push(high);
-                    }     
-                }
-            }
-            else {
-                if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
-                    if (orgText.includes(replaceVerb[i][0])) {
-                        //console.debug("highlight:", replaceVerb[i][1])
-                        high = replaceVerb[i][1];
-                        high = high.replace(/[&\/\\#,+()$~%'":*<>{}]/g, '')
-                        high = high.trim();
-                        if (high != "" ) {
+    let debug = false;
+    if (debug == true) {
+        console.debug("old text:", translatedText)
+        console.debug("new text:", orgText)
+        console.debug("nwText:", nwText);
+        console.debug("preview:", preview);
+    }
+    
+    if (typeof repl_array != "undefined") {
+       if (typeof nwText != 'undefined') {
+           for (let i = 0; i < repl_array.length; i++) {
+                // Check if we need to mark the verb
+                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                if (spellcheckIgnore.length == 0) {
+                    //console.debug("we are in no spellcheckIgnore", repl_array[i][0])
+                    if (nwText.includes(repl_array[i][0])) {
+                        //console.debug("newText includes:", repl_array[i][0], "two:" + repl_array[i][1])
+                        high = repl_array[i][1];
+                        if (typeof high != 'undefined') {
+                            if (high != " ") {
+                                // 09-08-2023 PSS removed the backslash from the regex, otherwise it is not marked
+                                high = high.replace(/[&\#,+()$~%'":*<>{}]/g, '')                        
+                                high = high.trim();
+                                //console.debug("high:",high)
+                            }
                             // push the verb into the array
-                            arr.push(high);
+                            // but do not push single brackets !
+                            if (high != '[' && high != ']') {
+                                arr.push(high);
+                               // console.debug("array:", arr)
+                            }
                         }
                     }
                 }
-            }
-        }
+                else {
+                    if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
+                       // console.debug("We are with spellcheckignore")
+                        if (nwText.includes(repl_array[i][0])) {
+                           // console.debug("highlight:", replaceVerb[i][1])
+                            high = repl_array[i][1];
+                            high = high.replace(/[&\#,+()$~%'":*<>{}]/g, '')
+                            high = high.trim();
+                            if (high != "") {
+                                // push the verb into the array
+                                // but do not push single brackets !
+                                if (high != '[' && high != ']') {
+                                    arr.push(high);
+                                }
+                            }
+                        }
+                    }
+               }
+            
+               // PSS we found everything to mark, so mark it issue #157
+               if (arr.length > 0) {
+                   //console.debug("arr:",arr)
+                   highlight(preview, arr);
+               }
+           }
+            
+       }
         else {
-            console.debug("no org")
-        }
-        // PSS we found everything to mark, so mark it issue #157
-        if (arr.length > 0) {
-            //console.debug("arr:",arr)
-            highlight(preview, arr);
+           console.debug("newTextin inmark:", newText)
+           console.debug("translatedText inmark:", translatedText)
+            
+            
         }
     }
-    return;
+    else {
+        console.debug("no org")
+    }
 }
 
-function replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced,original,countrows) {
+function replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced, original, countrows) {
+    repl_array=[]
     var replaced = false;
     var orgText =translatedText
     for (let i = 0; i < replaceVerb.length; i++) {
@@ -1241,6 +1293,7 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
                 previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                 repl_verb += countrows + " : " + replaceVerb[i][0] + "->" + replaceVerb[i][1] + "<br>";
+                repl_array.push(replaceVerb[i]);
                 countreplaced++;
                 replaced = true;
             }
@@ -1249,10 +1302,12 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
     if (i == 2) {
         replaced = false
     }
-    return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb};
+    //console.debug("repl_array:",repl_array)
+    return { replaced, previewNewText, translatedText, countreplaced, orgText ,repl_verb,repl_array};
 }
 
 function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow) {
+    repl_array = [];
     let debug = false;
     if (debug == true) {
         console.debug("value1:", translatedText)
@@ -1328,7 +1383,8 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                     translatedText = translatedText + ".";
                     repl_verb += myrow + " '.' " + "->" + "added" + "<br>";
                     let verb = myrow + " '.' " + "->" + "added" + "<br>";
-                    //repl_verb.push(verb);
+                    let mark = "."
+                    repl_array.push([mark, mark])
                     countReplaced++;
                     replaced = true;
                 }
@@ -1353,6 +1409,8 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                 // repl_verb += myrow + ": ':' after added" + "<br>";
                 let verb = myrow + ": ':' after added" + "<br>";
                 repl_verb += myrow + ": " + '->' + "':' after added" + "<br>"
+                let mark = ":"
+                repl_array.push([mark, mark])
                 countReplaced++;
                 replaced = true;
             }
@@ -1375,6 +1433,35 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                 previewNewText = previewNewText + "!";
                 translatedText = translatedText + "!";
                 repl_verb += myrow + ": '!' after added" + "<br>";
+                let mark = "!"
+                repl_array.push([mark, mark])
+                countReplaced++;
+                replaced = true;
+            }
+        }
+        if (original.endsWith("?")) {
+            if (!previewNewText.endsWith("?")) {
+                previewNewText = previewNewText + "?";
+                translatedText = translatedText + "?";
+                // repl_verb += myrow + ": ':' after added" + "<br>";
+                let verb = myrow + ": '?' after added" + "<br>";
+                repl_verb += myrow + ": " + '->' + "'?' after added" + "<br>"
+                let mark = "?"
+                repl_array.push([mark,mark])
+                countReplaced++;
+                replaced = true;
+            }
+        }
+
+        if (!original.endsWith("?")) {
+            if (previewNewText.endsWith("?")) {
+                previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
+                translatedText = translatedText.substring(0, translatedText.length - 1);
+                let verb = myrow + ": " + '->' + "'?' after removed" + "<br>"
+                // repl_verb.push(verb);
+                repl_verb += myrow + ": " + '->' + "'?' after removed" + "<br>"
+                let question_mark = '?'
+                // PSS we cannot mark a removed character
                 countReplaced++;
                 replaced = true;
             }
@@ -1392,7 +1479,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         }
     }
    // console.debug("After improvements:", translatedText, previewNewText + " countreplaced: " + countReplaced, repl_verb, replaced)
-    return { translatedText, previewNewText, countReplaced, repl_verb, replaced }
+    return { translatedText, previewNewText, countReplaced, repl_verb, replaced ,repl_array}
 }
 async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
     //console.time("translation")
@@ -3464,22 +3551,23 @@ async function waitForElm(selector, newWind) {
 
 /**
  ** function copied from stackoverflow created by eclanrs
- ** https://stackoverflow.com/questions/8644428/how-to-highlight-text-using-javascript
+ /**
  * Highlight keywords inside a DOM element
  * @param {string} elem Element to search for keywords in
  * @param {string[]} keywords Keywords to highlight
  * @param {boolean} caseSensitive Differenciate between capital and lowercase letters
  * @param {string} cls Class to apply to the highlighted keyword
  */
-function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
-    const flags = caseSensitive ?  "gi" : "g";
+function highlight(elem, keywords, caseSensitive = false, cls = 'highlight') {
+    const flags = caseSensitive ? 'gi' : 'g';
     // Sort longer matches first to avoid
     // highlighting keywords within keywords.
-    if (typeof keywords != "undefined") {
-        keywords.sort((a, b) => b.length - a.length);
-        
-        Array.from(elem.childNodes).forEach(child => {
-            const keywordRegex = RegExp(keywords.join("|"), flags);
+    //console.debug("keywords:",keywords)
+    keywords.sort((a, b) => b.length - a.length);
+    //console.debug("is ? in keywords:", keywords[0].includes('?'))
+    Array.from(elem.childNodes).forEach(child => {
+        if (!keywords[0].includes('?')) {
+            const keywordRegex = RegExp(keywords.join('|'), flags)
             if (child.nodeType !== 3) { // not a text node
                 highlight(child, keywords, caseSensitive, cls);
             } else if (keywordRegex.test(child.textContent)) {
@@ -3487,7 +3575,7 @@ function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
                 let lastIdx = 0;
                 child.textContent.replace(keywordRegex, (match, idx) => {
                     const part = document.createTextNode(child.textContent.slice(lastIdx, idx));
-                    const highlighted = document.createElement("span");
+                    const highlighted = document.createElement('span');
                     highlighted.textContent = match;
                     highlighted.classList.add(cls);
                     frag.appendChild(part);
@@ -3498,9 +3586,30 @@ function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
                 frag.appendChild(end);
                 child.parentNode.replaceChild(frag, child);
             }
-        });
-    }
+        }
+        else {
+            const frag = document.createDocumentFragment();
+            let lastIdx = 0;
+            keywordRegex = keywords.join('|')
+            child.textContent.replace(keywordRegex, (match, idx) => {
+
+                const part = document.createTextNode(child.textContent.slice(lastIdx, idx));
+                const highlighted = document.createElement('span');
+                highlighted.textContent = match;
+                highlighted.classList.add(cls);
+                frag.appendChild(part);
+                frag.appendChild(highlighted);
+                lastIdx = idx + match.length;
+            });
+            const end = document.createTextNode(child.textContent.slice(lastIdx));
+            frag.appendChild(end);
+            if (child.parentNode != null) {
+                child.parentNode.replaceChild(frag, child);
+            }
+        }
+    });
 }
+
 
 // This function processes the result of the fetch
 async function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {

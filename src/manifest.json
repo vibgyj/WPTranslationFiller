@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "2.1.5",
-  "description": "Automatically fill translations from APIs and indicate the accuracy of translation according to locale glossary.",
+  "version": "2.1.6",
+  "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's' and indicate the accuracy of translation according to locale glossary.",
   "web_accessible_resources": [
     {
       "resources": [
@@ -48,7 +48,7 @@
     "*://api.deepl.com/*",
     "*://api.languagetool.com/v2/*",
     "*://api.languagetoolplus.com/v2/*",
-	  "*://analytics.languagetoolplus.com/*",
+    "*://analytics.languagetoolplus.com/*",
     "*://api.cognitive.microsofttranslator.com/*",
     "*://api.openai.com/*"
   ],
