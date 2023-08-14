@@ -177,6 +177,7 @@ document.addEventListener("keydown", async function (event) {
                 convertToLow = data.convertToLower;
             }
         });
+        UpperCaseButton.className = "UpperCase-button uppercase"
         toastbox("info", "Switching conversion on", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "-")) {
@@ -190,6 +191,7 @@ document.addEventListener("keydown", async function (event) {
                 convertToLow = data.convertToLower;
             }
         });
+        UpperCaseButton.className = "UpperCase-button"
         toastbox("info", "Switching conversion off", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "%")) {
@@ -361,16 +363,7 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
         event.preventDefault();
-        let int = localStorage.getItem(['switchTM']);
-        if (int == "false") {
-            toastbox("info", "Switching TM to foreign", "1200", "TM switch");
-            localStorage.setItem('switchTM', 'true');
-        }
-        else {
-            toastbox("info", "Switching TM to local", "1200", "TM switch");
-            localStorage.setItem('switchTM', 'false');
-        }
-        location.reload();
+        SwitchTMClicked();
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F10")) {
@@ -722,10 +715,30 @@ if (divPaging != null && divProjects == null) {
     divNavBar.appendChild(translateButton);
 }
 
+//12-05-2022 PSS added a new buttons specials
+var UpperCaseButton = document.createElement("a");
+UpperCaseButton.href = "#";
+let UpperCase = localStorage.getItem(['switchUpper'])
+if (UpperCase == 'false') {
+    UpperCaseButton.className = "UpperCase-button";
+}
+else {
+    UpperCaseButton.className = "UpperCase-button uppercase"
+}
+UpperCaseButton.onclick = UpperCaseClicked;
+UpperCaseButton.innerText = "Casing";
+
+var SwitchTMButton = document.createElement("a");
+SwitchTMButton.href = "#";
+SwitchTMButton.className = "Switch-TM-button";
+SwitchTMButton.onclick = SwitchTMClicked;
+SwitchTMButton.innerText = "SwitchTM";
+
 // 12-05-2022 PSS here we add all buttons in the pagina together
-if (divPaging != null && divProjects == null) {
-    //divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
-    //divPaging.insertBefore(localtransButton, divPaging.childNodes[0]);
+var GpSpecials = document.querySelector("span.previous.disabled");
+if (GpSpecials != null && divProjects == null) {
+    divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(tmtransButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
@@ -733,6 +746,47 @@ if (divPaging != null && divProjects == null) {
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
+function UpperCaseClicked() {
+    event.preventDefault();
+    // This switches convert to lowercase on/off
+    chrome.storage.local.get(["convertToLower"], function (data, UpperCaseButton) {
+        var UpperCaseButton = document.querySelector('.UpperCase-button')
+        if (data.convertToLower != "null") {
+            convertToLow = data.convertToLower;
+            if (convertToLow == true) {
+                toastbox("info", "Switching conversion off", "1200", "Conversion");
+                UpperCaseButton.className = "UpperCase-button"
+                localStorage.setItem('switchUpper', 'false');
+                chrome.storage.local.set({
+                    convertToLower: false 
+                });
+            }
+            else {
+                toastbox("info", "Switching conversion on", "1200", "Conversion");
+                UpperCaseButton.className = "UpperCase-button uppercase"
+                localStorage.setItem('switchUpper', 'true');
+                chrome.storage.local.set({
+                    convertToLower: true
+                });
+            }
+        }
+    });
+}
+
+function SwitchTMClicked() {
+    event.preventDefault();
+    let int = localStorage.getItem(['switchTM']);
+    if (int == "false") {
+        toastbox("info", "Switching TM to foreign", "1200", "TM switch");
+        localStorage.setItem('switchTM', 'true');
+    }
+    else {
+        toastbox("info", "Switching TM to local", "1200", "TM switch");
+        localStorage.setItem('switchTM', 'false');
+    }
+    location.reload();
+
+}
 async function startSpellCheck(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore) {
     await spellcheck_page(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore)
 }

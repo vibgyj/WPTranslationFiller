@@ -321,29 +321,66 @@ function isUpperCase(myString, pos) {
 }
 
 function convert_lower(text, spellCheckIgnore) {
+    // if the word is found in spellCheckIgnore, then the uppercasing should not be applied
+    // Sometimes the word contains a '-', then we only need to find the first part
     let wordsArray = text.split(' ')
     let capsArray = []
     var counter = 0;
     wordsArray.forEach(word => {
         // do not convert the first word in sentence to lowercase
+        let myword = word.split('-')
+        console.debug("myword:", myword)
+        if (myword.length != 1) {
+            word = myword[0]
+        }
         if (counter != 0) {
             // if word contains all uppercase, then do not convert it to lowercase!!
             if (isUpperCase(word, 1) == false) {
                 if (spellCheckIgnore.indexOf(word) == -1) {
-                    capsArray.push(word[0].toLowerCase() + word.slice(1));
+                    if (myword.length == 1) {
+                        capsArray.push(word[0].toLowerCase() + word.slice(1));
+                    }
+                    else {
+                        capsArray.push(word[0].toLowerCase() + word.slice(1))+ myword[1];
+                    }
                 }
                 else {
-                    capsArray.push(word);
+                    if (myword.length == 1) {
+                        capsArray.push(word);
+                    }
+                    else {
+                        capsArray.push(word + '-' + myword[1])
+                    }
                 }
             }
             else {
-                capsArray.push(word);
+                if (myword.length == 1) {
+                    capsArray.push(word);
+                }
+                else {
+                    capsArray.push(word + '-' + myword[1])
+                }
             }
         }
         else {
             // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
             if (typeof word[0] != "undefined") {
-                capsArray.push(word[0].toUpperCase() + word.slice(1))
+                if (spellCheckIgnore.indexOf(word) == -1) {
+                    if (myword.length == 1) {
+                        capsArray.push(word[0].toLowerCase() + word.slice(1));
+                    }
+                    else {
+                        capsArray.push(word[0].toLowerCase() + word.slice(1)) + myword[1];
+                    }
+                }
+                else {
+                    if (myword.length == 1) {
+                        capsArray.push(word);
+                    }
+                    else {
+                        capsArray.push(word + '-' + myword[1])
+                    }
+                }
             }
         }
         counter++;
