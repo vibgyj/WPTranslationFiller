@@ -329,7 +329,6 @@ function convert_lower(text, spellCheckIgnore) {
     wordsArray.forEach(word => {
         // do not convert the first word in sentence to lowercase
         let myword = word.split('-')
-        console.debug("myword:", myword)
         if (myword.length != 1) {
             word = myword[0]
         }
@@ -341,7 +340,7 @@ function convert_lower(text, spellCheckIgnore) {
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
                     else {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1))+ myword[1];
+                        capsArray.push(word[0].toLowerCase() + word.slice(1)+ myword[1]);
                     }
                 }
                 else {
@@ -363,6 +362,7 @@ function convert_lower(text, spellCheckIgnore) {
             }
         }
         else {
+            console.debug("counter is nul")
             // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
             if (typeof word[0] != "undefined") {
                 if (spellCheckIgnore.indexOf(word) == -1) {
@@ -370,7 +370,7 @@ function convert_lower(text, spellCheckIgnore) {
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
                     else {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1)) + myword[1];
+                        capsArray.push(word[0].toLowerCase() + word.slice(1) + myword[1]);
                     }
                 }
                 else {
