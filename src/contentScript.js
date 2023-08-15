@@ -736,6 +736,9 @@ SwitchTMButton.innerText = "SwitchTM";
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
 var GpSpecials = document.querySelector("span.previous.disabled");
+if (GpSpecials == null) {
+    var GpSpecials = document.querySelector("a.previous");
+}
 if (GpSpecials != null && divProjects == null) {
     divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
