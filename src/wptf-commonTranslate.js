@@ -335,29 +335,38 @@ function convert_lower(text, spellCheckIgnore) {
         if (counter != 0) {
             // if word contains all uppercase, then do not convert it to lowercase!!
             if (isUpperCase(word, 1) == false) {
+                console.debug("we are in the first convert",word)
+                console.debug(spellCheckIgnore)
                 if (spellCheckIgnore.indexOf(word) == -1) {
                     if (myword.length == 1) {
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
                     else {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1) + ' ' + myword[1]);
+                        capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
                     }
                 }
                 else {
+                    console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen")
                     if (myword.length == 1) {
                         capsArray.push(word);
                     }
                     else {
-                        capsArray.push(word + '-' + myword[1])
+                        capsArray.push(word + ' ' + myword[1])
                     }
                 }
             }
             else {
+                console.debug("we are in convert",word)
                 if (myword.length == 1) {
                     capsArray.push(word);
                 }
                 else {
-                    capsArray.push(word + '-' + myword[1])
+                    if (spellCheckIgnore.indexOf(word) == -1) {
+                        capsArray.push(word + '-' + myword[1])
+                    }
+                    else {
+                        capsArray.push(word + ' ' + myword[1])
+                    }
                 }
             }
         }
@@ -369,7 +378,7 @@ function convert_lower(text, spellCheckIgnore) {
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
                     else {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1) + ' ' + myword[1]);
+                        capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
                     }
                 }
                 else {
@@ -377,7 +386,7 @@ function convert_lower(text, spellCheckIgnore) {
                         capsArray.push(word);
                     }
                     else {
-                        capsArray.push(word + '-' + myword[1])
+                        capsArray.push(word + ' ' + myword[1])
                     }
                 }
             }
@@ -434,74 +443,10 @@ function CheckUrl(translated, searchword) {
     return foundmysearch;
 }
 
-function old_checkStartEnd(original, translatedText) {
-    // 20-09-2021 Fix for issue #143
-    // strip or add "." at the end of the line
-    //console.debug("in checkstartend:", translatedText.substring(translatedText.length - 1, translatedText.length));
-    if (original.endsWith("\n") != true) {
-        if (translatedText.endsWith("\n") == true) {
-            translatedText = translatedText.substring(0, translatedText.length - 1);
-        }
-    }
-    if (original.endsWith(" ") != true) {
-        if (translatedText.endsWith(" ") == true) {
-            translatedText = translatedText.substring(0, translatedText.length - 1);
-        }
-    }
-    if (!original.endsWith('\u8230')) {
-        if (original.endsWith(".") == true) {
-            if (translatedText.endsWith(".") == false) {
-                translatedText = translatedText + ".";
-            }
-        }
-    }
-    if (!original.endsWith('\u8230')) {
-        if (original.endsWith(".") == false) {
-            if (translatedText.endsWith(".") == true) {
-                translatedText = translatedText.substring(0, translatedText.length - 1);
-            }
-        }
-    }
-    // Strip or add blank at the end of the line
-    if (original.endsWith(" ") == true) {
-        if (translatedText.endsWith(" ") == false) {
-            translatedText = translatedText + " ";
-        }
-    }
-    if (original.endsWith(" ") == false) {
-        if (translatedText.endsWith(" ") == true) {
-            translatedText = translatedText.substring(0, translatedText.length - 1);
-        }
-    }
-    if (original.startsWith(" ") == true) {
-        if (translatedText.startsWith(" ") == false) {
-            translatedText = " " + translatedText ;
-        }
-    }
-    if (original.startsWith(" ") == false) {
-        if (translatedText.startsWith(" ") == true) {
-            translatedText = translatedText.substring(1, translatedText.length)
-        }
-    }
-    // Make translation to start with same case (upper/lower) as the original.
-    if (isStartsWithUpperCase(original)) {
-        if (!isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
-        }
-    }
-    else {
-        if (isStartsWithUpperCase(translatedText)) {
-            translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
-        }
-    }
-    return translatedText;
-}
-
 // Function to check if start of line is capital
 function isStartsWithUpperCase(str) {
     return str.charAt(0) === str.charAt(0).toUpperCase();
 }
-
 
 function checkComments(comment) {
     // PSS 09-03-2021 added check to see if we need to translate
