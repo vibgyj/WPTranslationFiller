@@ -52,6 +52,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
+            console.debug("response:", data);
             // check for error response
             if (!response.ok) {
                 // get error message from body or default to response status
@@ -74,6 +75,11 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                }
         })
         .catch(error => {
+            if (error[2] == "400") {
+                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
+                console.debug("glossary value is not supported")
+                errorstate = "Error 400";
+            }
             if (error[2] == "403") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 errorstate = "Error 403";
@@ -97,3 +103,4 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             }
         });
 }
+

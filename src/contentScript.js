@@ -36,6 +36,11 @@ const getToonDiff = async function (key) {
     });
 };
 
+const csvParser = data => {
+    const rows = data.split(/\r\n|\n/)
+    return rows
+}
+
 async function sampleUse() {
     let sampleObject1 = {
         'toonDiff': false
@@ -346,6 +351,43 @@ document.addEventListener("keydown", async function (event) {
         resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
         //console.debug("blockres:"), resblock;
     }
+
+    if (event.altKey && event.shiftKey && (event.key === "F7")) {
+        //event.preventDefault();
+        let userAgent = navigator.userAgent;
+        let browser;
+
+        if (userAgent.match(/chrome|chromium|crios/i)) {
+            browser = "chrome";
+        } else if (userAgent.match(/firefox|fxios/i)) {
+            browser = "firefox";
+        } else if (userAgent.match(/safari/i)) {
+            browser = "safari";
+        } else if (userAgent.match(/opr\//i)) {
+            browser = "opera";
+        } else if (userAgent.match(/edg/i)) {
+            browser = "edge";
+        } else {
+            browser = "No browser detection";
+        }
+
+        res = chrome.declarativeNetRequest.updateEnabledRuleset(
+            {
+                addRules: [{
+                    "id": 1,
+                    "priority": 1,
+                    "action": { "type": "block" },
+                    "condition": {
+                        "regexFilter": "-get-tm-suggestions",
+                        "resourceTypes": ["xmlhttprequest"]
+                    }
+                }
+                ],
+                removeRuleIds: [1]
+            },
+        )
+    }
+
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
        // console.debug("F8")
@@ -377,8 +419,19 @@ document.addEventListener("keydown", async function (event) {
         
     };
 
+    if (event.altKey && event.shiftKey && (event.key === "F11")) {
+       // console.debug("F11")
+        event.preventDefault();
+        toastbox("info", "checkFormal is started wait for the result!!", "2000", "CheckFormal");
+        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\nmet je,met uw\n';
+        checkPageClicked(event);
+      //  checkFormalPage(dataFormal);
+        close_toast();
+
+    };
+
     if (event.altKey && event.shiftKey && (event.key === "F12")) {
-        
+
         cuteToast({
             type: "info",
             message: "Counting is started",
@@ -391,52 +444,7 @@ document.addEventListener("keydown", async function (event) {
 
     };
 
-    if (event.altKey && event.shiftKey && (event.key === "F11")) {
-       // console.debug("F11")
-        event.preventDefault();
-        toastbox("info", "checkFormal is started wait for the result!!", "2000", "CheckFormal");
-        var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\nmet je,met uw\n';
-        checkPageClicked(event);
-      //  checkFormalPage(dataFormal);
-        close_toast();
 
-    };
-
-    if (event.altKey && event.shiftKey && (event.key === "F7")) {
-        //event.preventDefault();
-        let userAgent = navigator.userAgent;
-        let browser;
-
-        if (userAgent.match(/chrome|chromium|crios/i)) {
-            browser = "chrome";
-        } else if (userAgent.match(/firefox|fxios/i)) {
-            browser = "firefox";
-        } else if (userAgent.match(/safari/i)) {
-            browser = "safari";
-        } else if (userAgent.match(/opr\//i)) {
-            browser = "opera";
-        } else if (userAgent.match(/edg/i)) {
-            browser = "edge";
-        } else {
-            browser = "No browser detection";
-        }
-       
-        res = chrome.declarativeNetRequest.updateEnabledRuleset(
-          {
-              addRules: [{
-                "id": 1,
-                "priority": 1,
-                "action": { "type": "block" },
-                "condition": {
-                    "regexFilter": "-get-tm-suggestions",
-                    "resourceTypes": ["xmlhttprequest"]
-                }
-              }
-              ],
-               removeRuleIds: [1]
-           },
-        )
-    }
     if (event.altKey && event.shiftKey && (event.key === "S" || event.key === "s")) {
         event.preventDefault();
         chrome.storage.local.get(
@@ -466,6 +474,46 @@ document.addEventListener("keydown", async function (event) {
                 }
             }
         );
+    }
+
+    if (event.altKey && event.shiftKey && (event.key === "G" || event.key === "g")) {
+        event.preventDefault();
+        console.debug("Glossary loading started")
+    
+        fileSelector.click();
+        fileSelector.addEventListener("change", (event) => {
+            fileList = event.target.files;
+            const arrayFiles = Array.from(event.target.files)
+            const file = fileList[0];
+      
+            if (file.type == 'text/csv') {
+                if (fileList[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var contents = e.target.result;
+                        console.debug("contents:", contents)
+                        var glossary = csvParser(contents)
+                        console.debug("glossary:", glossary)
+                        glossary = Array.from(glossary);
+                        chrome.storage.local.get(["apikeyDeepl", "DeeplFree","destlang"], function (data) {
+                            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                            var formal = checkFormal(false);
+                            var DeeplFree = data.DeeplFree;
+                            load_glossary(glossary, data.apikeyDeepl, DeeplFree, data.destlang)
+                        });
+
+                        reader.onerror = function () {
+                            console.log(reader.error);
+                        };
+                    };
+                    reader.readAsText(fileList[0]);
+                }
+            }
+            else {
+                // File is wrong type so do not process it
+                messageBox("error", "File is not a csv!");
+            }
+        });
     }
 
     if (event.altKey && event.shiftKey && (event.key === "A" || event.key === "a")) {

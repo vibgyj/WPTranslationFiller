@@ -14,7 +14,8 @@
         "/_metadata",
         "wptf-options.html",
         "wptf-inject.js",
-        "wptf-buildstats"
+        "wptf-buildstats.js",
+        "wptf-glossary.csv"
       ],
       "matches": [
         "https://translate.wordpress.org/*"
@@ -23,6 +24,7 @@
   ],
   "background.service_worker": {
     "scripts": [
+      "background.js",
       "jsstore.js",
       "jsstore.worker.js"
     ]
@@ -59,6 +61,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "background.js",
         "wptf-spellcheck.js",
         "wptf-buildstats.js",
         "wptf-functions.js",
@@ -84,6 +87,9 @@
       ],
       "json": [
         "wptf-block_rules.json"
+      ],
+      "csv": [
+        "wptf-glossary.csv"
       ]
     }
   ]
