@@ -29,6 +29,9 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var data;
     var link;
     var deepLresult;
+    var deeplGlossary;
+    deeplGlossary = await localStorage.getItem('deeplGlossary'); 
+    //console.debug("glossary_id:", deeplGlossary)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
@@ -41,10 +44,20 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     }
     else {
         if (!formal) {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
+            if (deeplGlossary != null) {
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=en" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
+            }
+            else {
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&glossary_id=" + "My%20Glossary"
+            }
         }
         else {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+             if (deeplGlossary != null){
+               link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+             }
+             else {
+                  link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+             }
         }
     }
     //console.debug("deepl link:",link)
@@ -52,7 +65,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
-            console.debug("response:", data);
+            //console.debug("response:", data);
             // check for error response
             if (!response.ok) {
                 // get error message from body or default to response status
@@ -68,10 +81,18 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             }
             else {
                 //We do have a result so process it
-                translatedText = data.translations[0].text;
-                translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
-                deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
-                return Promise.resolve("OK");
+                if (typeof data.translations != 'undefined') {
+                    translatedText = data.translations[0].text;
+                    translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
+                    deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
+                    return Promise.resolve("OK");
+                }
+                else {
+                    errorstate = '<br>We did not get a translation!<br>Message received:<br>' + error;
+                    message="Error in recieving data"
+                    error = [data, message, response.status];
+                    return Promise.reject(error);
+                }
                }
         })
         .catch(error => {
@@ -97,7 +118,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
             }
             else {
-                alert("Error message: " + error[1]);
+                messageBox("warning", "There has been an error<br>"+ data.message);
+               // alert("Error message: " + error[1]);
                 console.debug("Error:",error)
                 errorstate = "Error " + error[1];
             }

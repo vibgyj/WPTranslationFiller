@@ -335,8 +335,6 @@ function convert_lower(text, spellCheckIgnore) {
         if (counter != 0) {
             // if word contains all uppercase, then do not convert it to lowercase!!
             if (isUpperCase(word, 1) == false) {
-                console.debug("we are in the first convert",word)
-                console.debug(spellCheckIgnore)
                 if (spellCheckIgnore.indexOf(word) == -1) {
                     if (myword.length == 1) {
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
@@ -356,7 +354,6 @@ function convert_lower(text, spellCheckIgnore) {
                 }
             }
             else {
-                console.debug("we are in convert",word)
                 if (myword.length == 1) {
                     capsArray.push(word);
                 }

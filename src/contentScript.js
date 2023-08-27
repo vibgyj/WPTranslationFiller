@@ -476,30 +476,35 @@ document.addEventListener("keydown", async function (event) {
         );
     }
 
-    if (event.altKey && event.shiftKey && (event.key === "G" || event.key === "g")) {
-        event.preventDefault();
+    if (event.altKey && event.shiftKey && (event.key === "L" || event.key === "l")) {
+        //event.preventDefault();
         console.debug("Glossary loading started")
-    
+        var file;
+        var arrayFiles;
         fileSelector.click();
+        // console.debug("after fileSelector")
         fileSelector.addEventListener("change", (event) => {
             fileList = event.target.files;
-            const arrayFiles = Array.from(event.target.files)
-            const file = fileList[0];
-      
+            arrayFiles = Array.from(event.target.files)
+            file = fileList[0];
+            // console.debug("before checking file:",file)
             if (file.type == 'text/csv') {
+                //console.debug("after file selection")
                 if (fileList[0]) {
                     var reader = new FileReader();
                     reader.onload = function (e) {
                         var contents = e.target.result;
-                        console.debug("contents:", contents)
+                        // console.debug("contents:", contents)
                         var glossary = csvParser(contents)
-                        console.debug("glossary:", glossary)
-                        glossary = Array.from(glossary);
-                        chrome.storage.local.get(["apikeyDeepl", "DeeplFree","destlang"], function (data) {
+                        //console.debug("glossary:", glossary)
+                       // glossary = Array.from(glossary);
+                        chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
                             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
                             var formal = checkFormal(false);
                             var DeeplFree = data.DeeplFree;
+                            console.debug("before load_glossary")
                             load_glossary(glossary, data.apikeyDeepl, DeeplFree, data.destlang)
+                            file = ""
                         });
 
                         reader.onerror = function () {
@@ -507,6 +512,9 @@ document.addEventListener("keydown", async function (event) {
                         };
                     };
                     reader.readAsText(fileList[0]);
+                }
+                else {
+                    console.debug("No file selected")
                 }
             }
             else {
@@ -516,6 +524,16 @@ document.addEventListener("keydown", async function (event) {
         });
     }
 
+    if (event.altKey && event.shiftKey && (event.key === "D" || event.key === "d")) {
+        //event.preventDefault();
+        console.debug("Glossary showing started")
+  
+       chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
+                var formal = checkFormal(false);
+                var DeeplFree = data.DeeplFree;
+                show_glossary(data.apikeyDeepl, DeeplFree, data.destlang)
+       });                  
+    }
     if (event.altKey && event.shiftKey && (event.key === "A" || event.key === "a")) {
         event.preventDefault();
 
@@ -2076,21 +2094,23 @@ function savetranslateEntryClicked(event) {
             setTimeout(() => {
                 //toastbox("info", "" , "600", "Saving suggestion", myWindow);
                 let preview = document.querySelector(`#preview-${rowId}`);
-                preview.querySelector("td.actions .edit").click();
-                const editor = preview.nextElementSibling;
-                if (editor != null) {
-                    editor.style.display = "none";
-                    editor.querySelector(".translation-actions__save").click();
-                }
-                // PSS confirm the message for dismissal
-                foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                    if (confirm != '.gp-js-message-dismiss') {
-                        if (typeof confirm === 'function') {
-                            confirm.click();
-                           // close_toast();
-                        }
+                if (preview != null) {
+                    preview.querySelector("td.actions .edit").click();
+                    const editor = preview.nextElementSibling;
+                    if (editor != null) {
+                        editor.style.display = "none";
+                        editor.querySelector(".translation-actions__save").click();
                     }
-                });
+                    // PSS confirm the message for dismissal
+                    foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
+                        if (confirm != '.gp-js-message-dismiss') {
+                            if (typeof confirm === 'function') {
+                                confirm.click();
+                                // close_toast();
+                            }
+                        }
+                    });
+                }
             }, timeout);
             timeout += 1500;
         }

@@ -24,7 +24,6 @@
   ],
   "background.service_worker": {
     "scripts": [
-      "background.js",
       "jsstore.js",
       "jsstore.worker.js"
     ]
@@ -61,7 +60,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
-        "background.js",
+        "wptf-deeplGloss.js",
         "wptf-spellcheck.js",
         "wptf-buildstats.js",
         "wptf-functions.js",
