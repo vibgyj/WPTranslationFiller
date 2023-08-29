@@ -3009,7 +3009,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         else if (result == "Error 400") {
                             messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                         }
-                        else if (result == "Error 456") {
+                        else if (errorstate == "Error 456") {
                             messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
                         }
                         else {

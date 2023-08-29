@@ -90,14 +90,14 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
     console.debug("We are showing")
     let formal = false
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
+    link = deeplServer + "/v2/glossaries?auth_key=" + apikeyDeepl
     const url = deeplServer + "/v2/glossaries"
     let response = await fetch(url, {
-        method: "GET",
         headers: {
-            'Content-Type': 'application/json',
             'Authorization': 'DeepL-Auth-Key '+ apikeyDeepl
         }
     }).then(async response => {
+        console.debug("responseurl:",response.url)
         const isJson = response.headers.get('content-type')?.includes('application/json; charset=utf-8');
         //const isJson = response.headers.get('content-type')
         var data = isJson && await response.json();

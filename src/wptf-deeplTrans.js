@@ -29,9 +29,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var data;
     var link;
     var deepLresult;
-    var deeplGlossary;
-    deeplGlossary = await localStorage.getItem('deeplGlossary'); 
-    //console.debug("glossary_id:", deeplGlossary)
+    var deeplGlossary = localStorage.getItem('deeplGlossary');
+    console.debug("glossary_id:", deeplGlossary)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
@@ -44,24 +43,24 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     }
     else {
         if (!formal) {
-            if (deeplGlossary != null) {
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=en" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
+            if (deeplGlossary == null) {
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
             }
             else {
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&glossary_id=" + "My%20Glossary"
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=en" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
             }
         }
         else {
-             if (deeplGlossary != null){
-               link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+             if (deeplGlossary == null){
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
              }
              else {
-                  link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
              }
         }
     }
     //console.debug("deepl link:",link)
-    const response = fetch(link)
+    const response = await fetch(link)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
@@ -71,11 +70,13 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 // get error message from body or default to response status
                 if (typeof data != "undefined") {
                     error = [data, error, response.status];
+                    errorstate="NOK"
                 }
                 else {
                     let message = 'Noresponse';
                     data = "noData";
                     error = [data, message, response.status];
+                    errorstate="NOK"
                 }
                 return Promise.reject(error);
             }
@@ -110,7 +111,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 errorstate = "Error 404";
             }
             else if (error[2] == '456') {
-                //alert("Error 456 Quota exceeded. The character limit has been reached")
+                messageBox("warning", "Error 456 Quota exceeded.<br> The character limit has been reached");
                 errorstate = "Error 456";
             }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
@@ -118,11 +119,12 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
             }
             else {
-                messageBox("warning", "There has been an error<br>"+ data.message);
+                //messageBox("warning", "There has been an error<br>"+ data.message);
                // alert("Error message: " + error[1]);
                 console.debug("Error:",error)
                 errorstate = "Error " + error[1];
             }
+            return errorstate
         });
 }
 
