@@ -59,6 +59,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
              }
         }
     }
+
     //console.debug("deepl link:",link)
     const response = await fetch(link)
         .then(async response => {

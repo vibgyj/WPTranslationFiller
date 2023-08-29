@@ -16,39 +16,50 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
         
     }).then(async response => {      
         const isJson = response.headers.get('content-type')?.includes('application/json; charset=utf-8');
-        console.debug("response:", response, response.text,isJson);
+        //console.debug("response:", response, response.text,isJson);
             //const isJson = response.headers.get('content-type')
         data = isJson && await response.json();
-       // console.debug("data:",data)
+        console.debug("data:",data)
            //check for error response
          if (response.ok) {
              let result = data.glossary_id
-             currWindow = window.self;
-            // console.debug("houston we have a result:", result)
-             if (data.message != "Wrong host") {
-                 cuteAlert({
-                     type: "question",
-                     title: "Glossary Id",
-                     message: "Do you want to store the glossary ID?<br>"+data.glossary_id,
-                     confirmText: "Confirm",
-                     cancelText: "Cancel",
-                     myWindow: currWindow
-                 }).then(async (e) => {
-                     if (e == ("confirm")) {
-                         let glossId = data.glossary_id
-                         localStorage.setItem('deeplGlossary', glossId);
-                         messageBox("info", "Glossary ID: <br>" + glossId + "<br>saved ");
+             if (typeof result != 'undefined') {
+                 currWindow = window.self;
+                 // console.debug("houston we have a result:", result)
+                 if (data.message != "Wrong host") {
+                     cuteAlert({
+                         type: "question",
+                         title: "Glossary Id",
+                         message: "Do you want to store the glossary ID?<br>" + data.glossary_id,
+                         confirmText: "Confirm",
+                         cancelText: "Cancel",
+                         myWindow: currWindow
+                     }).then(async (e) => {
+                         if (e == ("confirm")) {
+                             let glossId = data.glossary_id
+                             await localStorage.setItem('deeplGlossary', glossId);              
+                             let is_stored = await localStorage.getItem('deeplGlossary')
+                             if (is_stored == null) {
+                                 messageBox('warning', 'The glossary ID is not stored<br>Check your privacy settings!')
+                             }
+                             else {
+                                 messageBox("info", "Glossary ID: <br>" + glossId + "<br>saved ");
+                             }
 
-                     } else {
-                          messageBox("info", "Glossary ID: <br>" + data.glossary_id +"<br>not saved ");
-                     }
-                     return Promise.resolve("OK");
-                 })
-             }
-             else {
-                 messageBox("warning", "Wrong host!");
-                 return Promise.resolve("NOK");
-             }   
+                         } else {
+                             messageBox("info", "Glossary ID: <br>" + data.glossary_id + "<br>not saved ");
+                         }
+                         return Promise.resolve("OK");
+                     })
+                 }
+                 else {
+                     messageBox("warning", "Wrong host!");
+                     return Promise.resolve("NOK");
+                    }
+                }
+                else {
+                 messageBox("warning","There is an error retrieving the glossary ID" + data.message)
+                 }
             }
          else {
              messageBox("info","We did not get a result of the request")
@@ -92,7 +103,8 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
     link = deeplServer + "/v2/glossaries?auth_key=" + apikeyDeepl
     const url = deeplServer + "/v2/glossaries"
-    let response = await fetch(url, {
+
+    let response = await fetch(url,{
         headers: {
             'Authorization': 'DeepL-Auth-Key '+ apikeyDeepl
         }
