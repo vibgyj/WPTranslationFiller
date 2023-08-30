@@ -2291,7 +2291,7 @@ async function mark_as_translated(row){
     prevcurrentClass.style.backgroundColor = "#ffe399";
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary) {
     //console.time("translation")
     var translate;
     var transtype = "";
@@ -2426,7 +2426,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                             else if (transsel == "deepl") {
-                                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                                 if (result == "Error 403") {
                                     messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -2687,7 +2687,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     }
                                     else if (transsel == "deepl") {
                                         // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-                                        result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                                        result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                                         if (result == "Error 403") {
                                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                             //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -2922,7 +2922,7 @@ function check_span_missing(row,plural_line) {
     }
 }
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary) {
     var translateButton;
     var result;
     locale = checkLocale();
@@ -2999,7 +2999,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "deepl") {
-                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                         if (result == 'Error 403') {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                         }
@@ -3121,7 +3121,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "deepl") {
                        // console.debug("language:",destlang)
-                        result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                        result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                         if (result == "Error 403") {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                         }

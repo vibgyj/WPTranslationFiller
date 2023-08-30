@@ -1033,7 +1033,9 @@ function translatePageClicked(event) {
                         var DeeplFree = data.DeeplFree;
                         var openAIWait = Number(data.OpenAIWait);
                         var OpenAItemp = parseFloat(data.OpenAItemp);
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore);
+                        var deeplGlossary = localStorage.getItem('deeplGlossary');
+                        console.debug("glossary_id:", deeplGlossary)
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore,deeplGlossary);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -1542,7 +1544,9 @@ function translateEntryClicked(event) {
         var formal = checkFormal(false);
         var DeeplFree = data.DeeplFree;
         var OpenAItemp = parseFloat(data.OpenAItemp);
-        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore);
+        var deeplGlossary = localStorage.getItem('deeplGlossary');
+        console.debug("glossary_id:", deeplGlossary)
+        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary);
         });
 }
 
