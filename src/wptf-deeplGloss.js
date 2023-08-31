@@ -4,10 +4,11 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
     let formal = false
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
     const url = deeplServer + "/v2/glossaries"
+    
     let response = await fetch(url, {
         method: "POST",
-       // body: JSON.stringify({ "name": "My Glossary", "source_lang": "en", "target_lang": "nl", "entries": "Aria,Gebied\naria,gebied\nHeader,Header\nheader,header\nLayouts,Lay-outs\nlayout,lay-out\nWebsite,Site", "entries_format": "csv" }),
-       // body :JSON.stringify({ "name": "My Glossary", "source_lang": "en", "target_lang": "nl", "entries": "Headings,kopteksten\nheadings,kopteksten\nHeading,koptekst\nheading,koptekst\nHeader,header\nheader,header\nLayouts,Lay-outs\nLayout,lay-out\nlayout,lay-out\nWebsites,sites\nwebsites,sites\nWebsite,site\nwebsite,site", "entries_format": "csv" }),
+        accept: "*/*",
+        Encoding: "gzip, deflate, br",
         body: gloss,
         headers: {
              'Content-Type' : 'application/json',
@@ -43,6 +44,12 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
                                  messageBox('warning', 'The glossary ID is not stored<br>Check your privacy settings!')
                              }
                              else {
+                                 let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-red`);
+                                 console.debug("load:", loadGlossButton)
+                                 if (loadGlossButton != null) {
+                                     loadGlossButton.classList.remove("LoadGloss-button-red");
+                                     loadGlossButton.classList.add("LoadGloss-button-green");
+                                 }
                                  messageBox("info", "Glossary ID: <br>" + glossId + "<br>saved ");
                              }
 
@@ -101,26 +108,27 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
     console.debug("We are showing")
     let formal = false
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
-    link = deeplServer + "/v2/glossaries?auth_key=" + apikeyDeepl
+   // link = deeplServer + "/v2/glossaries?auth_key=" + apikeyDeepl
     const url = deeplServer + "/v2/glossaries"
-
-    let response = await fetch(url,{
+    let response = await fetch(url, {
         headers: {
-            'Authorization': 'DeepL-Auth-Key '+ apikeyDeepl
+            'Content-Type': 'application/json',
+           'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
         }
     }).then(async response => {
-        console.debug("responseurl:",response.url)
+       // console.debug("responseurl:", response.url)
+      // console.debug("responsejson:", response.json)
         const isJson = response.headers.get('content-type')?.includes('application/json; charset=utf-8');
         //const isJson = response.headers.get('content-type')
         var data = isJson && await response.json();
 
-        //console.debug("response:", response, response.text);
+       // console.debug("response:", response, response.text);
         //check for error response
         if (response.ok) {
             var glossaryId = data.glossaries
             currWindow = window.self;
-            //console.debug("all the glossaries:", glossaryId, glossaryId.length)
-            if (glossaryId.length != 0) {
+           // console.debug("all the glossaries:", glossaryId)
+            if (typeof glossaryId != 'undefined' && glossaryId.length != 0) {
                 var gloss = ""
                 for (let i = 0, len = glossaryId.length, text = ""; i < len; i++) {
                     gloss += glossaryId[i].glossary_id + "<br>";
@@ -136,6 +144,13 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                 }).then(async (e) => {
                     if (e == ("confirm")) {
                         localStorage.setItem('deeplGlossary', glossaryId[0].glossary_id);
+                        // We need to check if we have a glossary ID if button is red we need to alter it
+                        let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-red`);
+                        console.debug("load:", loadGlossButton)
+                        if (loadGlossButton != null) {
+                            loadGlossButton.classList.remove("LoadGloss-button-red");
+                            loadGlossButton.classList.add("LoadGloss-button-green");
+                        }
                         messageBox("info", "Glossary ID: <br>" + glossaryId[0].glossary_id + "<br>saved ");
                     } else {
                         messageBox("info", "Glossary ID: <br>" + glossaryId[0].glossary_id + "<br>not saved ");

@@ -488,7 +488,7 @@ document.addEventListener("keydown", async function (event) {
             arrayFiles = Array.from(event.target.files)
             file = fileList[0];
             // console.debug("before checking file:",file)
-            if (file.type == 'text/csv') {
+            if (file.type == 'text/csv' || "application/vnd.ms-excel") {
                 //console.debug("after file selection")
                 if (fileList[0]) {
                     var reader = new FileReader();
@@ -800,6 +800,25 @@ SwitchTMButton.className = "Switch-TM-button";
 SwitchTMButton.onclick = SwitchTMClicked;
 SwitchTMButton.innerText = "SwitchTM";
 
+var LoadGloss = document.createElement("a");
+// We need to check if we have a glossary ID
+var glossloaded = localStorage.getItem(['deeplGlossary'])
+LoadGloss.href = "#";
+if (glossloaded == null) {
+    LoadGloss.className = "LoadGloss-button-red";
+} else {
+    LoadGloss.className = "LoadGloss-button-green"
+}
+LoadGloss.onclick = LoadGlossClicked;
+LoadGloss.innerText = "LoadGloss";
+
+
+var DispGloss = document.createElement("a");
+DispGloss.href = "#";
+DispGloss.className = "DispGloss-button";
+DispGloss.onclick = DispGlossClicked;
+DispGloss.innerText = "DispGloss";
+
 // 12-05-2022 PSS here we add all buttons in the pagina together
 var GpSpecials = document.querySelector("span.previous.disabled");
 if (GpSpecials == null) {
@@ -808,11 +827,74 @@ if (GpSpecials == null) {
 if (GpSpecials != null && divProjects == null) {
     divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
-    //divPaging.insertBefore(tmtransButton, divPaging.childNodes[0]);
-    //divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
+    chrome.storage.local.get(["apikeyDeepl"], function (data) {
+        let apikey=data.apikeyDeepl
+        console.debug("DeeplKey:",data.apikeyDeepl)
+        if (data.apikeyDeepl != null && data.apikeyDeepl !="" && typeof data.apikeyDeepl != 'undefined') {
+            divPaging.insertBefore(LoadGloss, divPaging.childNodes[0]);
+            divPaging.insertBefore(DispGloss, divPaging.childNodes[0]);
+        }
+    });
     //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+}
+
+function DispGlossClicked() {
+    console.debug("Glossary showing started")
+    chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
+        var formal = checkFormal(false);
+        var DeeplFree = data.DeeplFree;
+        show_glossary(data.apikeyDeepl, DeeplFree, data.destlang)
+    });
+}
+
+function LoadGlossClicked() {
+//event.preventDefault();
+console.debug("Glossary loading started")
+var file;
+var arrayFiles;
+fileSelector.click();
+// console.debug("after fileSelector")
+fileSelector.addEventListener("change", (event) => {
+    fileList = event.target.files;
+    arrayFiles = Array.from(event.target.files)
+    file = fileList[0];
+    // console.debug("before checking file:",file)
+    if (file.type == 'text/csv' || "application/vnd.ms-excel") {
+        //console.debug("after file selection")
+        if (fileList[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var contents = e.target.result;
+                // console.debug("contents:", contents)
+                var glossary = csvParser(contents)
+                //console.debug("glossary:", glossary)
+                // glossary = Array.from(glossary);
+                chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
+                    //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+                    var formal = checkFormal(false);
+                    var DeeplFree = data.DeeplFree;
+                    console.debug("before load_glossary")
+                    load_glossary(glossary, data.apikeyDeepl, DeeplFree, data.destlang)
+                    file = ""
+                });
+
+                reader.onerror = function () {
+                    console.log(reader.error);
+                };
+            };
+            reader.readAsText(fileList[0]);
+        }
+        else {
+            console.debug("No file selected")
+        }
+    }
+    else {
+        // File is wrong type so do not process it
+        messageBox("error", "File is not a csv!");
+    }
+});
 }
 
 function UpperCaseClicked() {

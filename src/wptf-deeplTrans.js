@@ -29,7 +29,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var data;
     var link;
     var deepLresult;
-    console.debug("deeplGlossaryId:",deeplGlossary)
+    //console.debug("deeplGlossaryId:",deeplGlossary)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
