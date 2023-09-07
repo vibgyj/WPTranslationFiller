@@ -3,14 +3,12 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-
 async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary);
     return errorstate;
 }
-
 
 async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary) {
     var translatedText = "";
@@ -33,10 +31,11 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
-    //console.debug("Original:", originalPreProcessed)
+    //xconsole.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
+    //console.debug("glossary:",deeplGlossary)
     if (language == "RO") {
         link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
     }
@@ -44,6 +43,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
         if (!formal) {
             if (deeplGlossary == null) {
                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
+
             }
             else {
                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=en" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
@@ -59,7 +59,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
         }
     }
 
-    //console.debug("deepl link:",link)
+   // console.debug("deepl link:",link)
     const response = await fetch(link)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
@@ -84,7 +84,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 //We do have a result so process it
                 if (typeof data.translations != 'undefined') {
                     translatedText = data.translations[0].text;
-                    translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
+                   // console.debug("deepl result",translatedText)
+                    translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore,locale);
                     deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
                     return Promise.resolve("OK");
                 }

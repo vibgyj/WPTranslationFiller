@@ -1,4 +1,3 @@
-//console.debug("Content script...");
 var glossary;
 loadGlossary();
 if (!window.indexedDB) {
@@ -804,7 +803,7 @@ var LoadGloss = document.createElement("a");
 // We need to check if we have a glossary ID
 var glossloaded = localStorage.getItem(['deeplGlossary'])
 LoadGloss.href = "#";
-if (glossloaded == null) {
+if (glossloaded == null || glossloaded == "") {
     LoadGloss.className = "LoadGloss-button-red";
 } else {
     LoadGloss.className = "LoadGloss-button-green"
@@ -829,7 +828,6 @@ if (GpSpecials != null && divProjects == null) {
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     chrome.storage.local.get(["apikeyDeepl"], function (data) {
         let apikey=data.apikeyDeepl
-        console.debug("DeeplKey:",data.apikeyDeepl)
         if (data.apikeyDeepl != null && data.apikeyDeepl !="" && typeof data.apikeyDeepl != 'undefined') {
             divPaging.insertBefore(LoadGloss, divPaging.childNodes[0]);
             divPaging.insertBefore(DispGloss, divPaging.childNodes[0]);
@@ -2036,7 +2034,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 newtitle = checkElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
             }
             else {
-                document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
+                entrymissing = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button")
+                if (entrymissing != null && typeof entrymissing != 'undefined') {
+                    entrymissing.style.visibility = "hidden";
+                }
                 newtitle = checkElem.title.concat(result.toolTip);
                 headertitle = headerElem.title;
             }

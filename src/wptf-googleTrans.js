@@ -85,7 +85,7 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
                 translatedText = data.data.translations[0].translatedText;
                 //console.debug("translated text:", translatedText);
                 // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
-                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower, spellCheckIgnore);
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower, spellCheckIgnore,locale);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
             }

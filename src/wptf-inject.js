@@ -3,7 +3,6 @@
     const { window } = data;
     const originalXMLHttpRequest = window.XMLHttpRequest;
     const originalOpen = originalXMLHttpRequest.prototype.open;
-
     let parrotActive;
     let parrotMockDefinitions = [];
 
@@ -23,12 +22,13 @@
         if (evt.data.sender === 'commontranslate') {
             parrotActive = !!evt.data.parrotActive;
             parrotMockDefinitions = [...evt.data.parrotMockDefinitions];
-
+            //console.debug("mock:", parrotMockDefinitions,parrotActive)
             if (parrotActive && !hostedLocally) {
-                console.debug("fake called!!")
                 window.XMLHttpRequest = instrumentedXMLHttpRequest;
+                console.debug("fake called:", window.XMLHttpRequest)
             } else {
-                console.debug("original called!")
+                console.debug("original called!", originalXMLHttpRequest)
+                
                 window.XMLHttpRequest = originalXMLHttpRequest;
             }
         }
@@ -43,8 +43,8 @@
         var myStatus = original.status;
         var myreadyState = original.readyState;
         var myoriginal = original;
-        original.onreadystatechange = function () {
-
+        //console.debug("instrumented:",myStatus,original.response)
+        original.onreadystatechange = function (myresponseText,mystatusText) {
             function removePrefix(responseInfo) {
                 const newResponseInfo = { ...responseInfo };
                 if (responseInfo?.response?.substr(0, 5) === ")]}',") {
@@ -99,7 +99,10 @@
             }
             //console.debug("readystate:",this.readyState,instrumented.readyState,original.readyState,myreadyState,myresponseText)
             if (instrumented.readyState === 4) {
-                //console.debug("ResponseText:", original.response);
+               // console.debug("instrumented:", myStatus)
+               // console.debug("Response:", original.response);
+               // console.debug("before mock ", myresponseText, myresponse, original.response, original.status);
+
                 // Gets an array of mocks to be used for this URL
                 const parrotMockDefinitions = parrotActive && getParrotMockDefinitions(this);
                 if (parrotMockDefinitions?.length) {
@@ -135,7 +138,7 @@
                         compositeMockData.delay = parrotMockDefinition.delay;
                     });
 
-                   //console.debug(compositeMockData.response);
+                  // console.debug(compositeMockData.response);
 
                     instrumented.statusText = original.statusText;
                     instrumented.status = compositeMockData.status * 1;
@@ -144,24 +147,28 @@
 
                     setTimeout(() => {
                         if (instrumented.onreadystatechange) {
-                            //console.debug("in return 1:", instrumented.onreadystatechange)
+                            console.debug("in return 1:", instrumented.onreadystatechange)
                             return instrumented.onreadystatechange();
                         }
 
                     }, (compositeMockData.delay || 0) * 1);
                 } else {
-                    //console.debug("mock leeg", myresponseText,myresponse,mystatusText,myStatus);
+                    //console.debug("mock leeg", myresponseText); 
                     instrumented.statusText = myresponseText;
-                    instrumented.status = myStatus * 1;
                     instrumented.response = myresponse;
                     //instrumented.statusText = original.responseText;
-                    //  instrumented.status = original.status * 1;
+                    if (myStatus == "") {
+                        instrumented.status = original.status * 1;
+                    }
+                    else {
+                        instrumented.status = myStatus * 1;
+                    }
                     // instrumented.response = original.response;
 
                     if (instrumented.responseType === '' || instrumented.responseType === 'text') {
                         instrumented.responseText = original.responseText;
                     }
-                    // console.debug("before return", original.onreadystatechange,myoriginal.onreadystatechange)
+                     //console.debug("before return", original.onreadystatechange,myoriginal.onreadystatechange)
                     if (instrumented.onreadystatechange) {
                         //console.debug("in return2", instrumented.onreadystatechange)
                         return instrumented.onreadystatechange();
@@ -179,6 +186,7 @@
             Object.defineProperty(instrumented, item, {
                 get: function () {
                     try {
+                        //console.debug("original item1:", original[item])
                         return original[item];
                     } catch (e) {
                     }
@@ -190,12 +198,14 @@
             Object.defineProperty(instrumented, item, {
                 get: function () {
                     try {
+                       // console.debug("original item2:", original[item])
                         return original[item];
                     } catch (e) {
                     }
                 },
                 set: function (val) {
                     try {
+                       // console.debug("original item3:", original[item])
                         original[item] = val;
                     } catch (e) {
                     }
@@ -207,7 +217,7 @@
             Object.defineProperty(instrumented, item, {
 
                 value: function () {
-                    // console.debug("before return:",original[item],arguments)
+                   //x  console.debug("before return:",original[item],arguments)
                     try {
                         return original[item].apply(original, arguments);
                     } catch (e) {

@@ -1,11 +1,11 @@
 [
-    {
-      "id": 1,
-      "priority": 1,
-      "action": { "type": "allow" },
-      "condition": {
+  {
+    "id": 1,
+    "priority": 1,
+    "action": { "type": "allow" },
+    "condition": {
       "regexFilter": "-get-tm-suggestions",
       "resourceTypes": [ "xmlhttprequest" ]
-      }
     }
+  }
 ]

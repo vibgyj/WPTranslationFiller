@@ -147,7 +147,8 @@ function preProcessOriginal(original, preverbs, translator) {
     return original;
 }
 
-function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower,spellCheckIgnore) {
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore,locale) {
+    var pos;
     //console.debug("before posrepl: '"+ translatedText +"'")
     let debug = false;
     if (debug == true) {
@@ -297,9 +298,17 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
         }
-
     }
-   
+    // check if a sentence has ": " and check if next letter is uppercase
+    // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
+    if (locale == "nl" || locale == "nl-be") {
+        pos = translatedText.indexOf(": ");
+        if (pos != -1) {
+            // if we find the semicolon, then determine next char after the blank
+            let mychar = translatedText.substr(pos + 2, 1)
+            translatedText = translatedText.substring(0, pos + 2) + mychar.toLowerCase() + translatedText.substring(pos + 3);
+        }
+    }
     // check if the returned translation does have the same start/ending as the original
     //console.debug("before checkend:",translatedText,original)
     let previewNewText = translatedText
@@ -326,25 +335,46 @@ function convert_lower(text, spellCheckIgnore) {
     let wordsArray = text.split(' ')
     let capsArray = []
     var counter = 0;
+    var myword;
+    
     wordsArray.forEach(word => {
         // do not convert the first word in sentence to lowercase
-        let myword = word.split('-')
-        if (myword.length != 1) {
-            word = myword[0]
+        // if the line contains "--" we do not split it
+        if (word != '--') {
+            myword = word.split('-')
+
+            if (myword.length != 1) {
+                word = myword[0]
+            }
+        }
+        else {
+            myword = word
         }
         if (counter != 0) {
             // if word contains all uppercase, then do not convert it to lowercase!!
-            if (isUpperCase(word, 1) == false) {
-                if (spellCheckIgnore.indexOf(word) == -1) {
+            var upper = word.toUpperCase();
+
+           // console.debug("is equal:",word === upper)
+          //  console.debug("isupper:", word, isUpperCase(word))
+            if ((word === upper) == false) {
+                // We need to convert the ignore tabel in an array to find an exact match of the word
+                let lines = spellCheckIgnore.split("\n");
+                //console.debug("lines:",lines)
+                if (lines.indexOf(word) === -1) {
                     if (myword.length == 1) {
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
                     else {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                        if (myword != "--") {
+                            capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                        }
+                        else {
+                            capsArray.push(myword);
+                        }
                     }
                 }
                 else {
-                    console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen")
+                   // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
                     if (myword.length == 1) {
                         capsArray.push(word);
                     }
@@ -354,12 +384,33 @@ function convert_lower(text, spellCheckIgnore) {
                 }
             }
             else {
-                if (myword.length == 1) {
-                    capsArray.push(word);
+                //console.debug("we do have uppercase")
+                let lines = spellCheckIgnore.split("\n");
+                //console.debug("lines:",lines)
+                if (lines.indexOf(word) === -1) {
+                    if (myword.length == 1) {
+                        capsArray.push(word);
+                    }
+                    else {
+                        if (spellCheckIgnore.indexOf(word) == -1) {
+                            if (myword != "--") {
+
+                                capsArray.push(word + '-' + myword[1])
+                            }
+                            else {
+                                capsArray.push(myword)
+                            }
+                        }
+                        else {
+                            capsArray.push(word + ' ' + myword[1])
+                        }
+                    }
+
                 }
                 else {
-                    if (spellCheckIgnore.indexOf(word) == -1) {
-                        capsArray.push(word + '-' + myword[1])
+                   // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
+                    if (myword.length == 1) {
+                        capsArray.push(word);
                     }
                     else {
                         capsArray.push(word + ' ' + myword[1])
@@ -370,15 +421,17 @@ function convert_lower(text, spellCheckIgnore) {
         else {
             // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
             if (typeof word[0] != "undefined") {
-                if (spellCheckIgnore.indexOf(word) == -1) {
+                let lines = spellCheckIgnore.split("\n");
+                if (lines.indexOf(word) === -1) {
                     if (myword.length == 1) {
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
-                    else {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                    else {   
+                       capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
                     }
                 }
                 else {
+                   // console.debug("we are in spellcheck list for first word, so it is a brandname do not add the hyphen", word)
                     if (myword.length == 1) {
                         capsArray.push(word);
                     }

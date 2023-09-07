@@ -109,20 +109,48 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
     let formal = false
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
    // link = deeplServer + "/v2/glossaries?auth_key=" + apikeyDeepl
-    const url = deeplServer + "/v2/glossaries"
-    let response = await fetch(url, {
+   // var parrotMockDefinitions = [{
+    //    "active": true,
+    //    "description": "GET",
+    //    "method": "OPTIONS",
+    //    "pattern": "/v2/glossaries",
+    //    "status": "200",
+    //    "type": "JSON",
+    //    "response": 'Access-Control-Allow-Origin: *',
+    //    "Access-Control-Allow-Methods": 'GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS',
+    //    "Access-Control-Allow-Headers": 'Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With',
+    //    "delay": "100"
+   // }];
+  //  window.postMessage({
+    //    sender: 'commontranslate',
+    //    parrotActive: true,
+    //    parrotMockDefinitions
+   // }, location.origin);
+    // Create a new XMLHttpRequest object
+    // Create a new XMLHttpRequest object
+  //  var xhr = new XMLHttpRequest();
+
+   
+    const req = new Request('https://api.deepl.com/v2/glossaries', {
         headers: {
-            'Content-Type': 'application/json',
-           'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
+            method: 'GET',
+            'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
         }
-    }).then(async response => {
+    });
+
+    const headers = Object.fromEntries(Array.from(req.headers.entries()));
+    // console.debug(" headers:",headers)
+  //  myheader = JSON.stringify(headers);
+  //  let link = url+ headers
+    var url = deeplServer + "/v2/glossaries"
+    let response = await fetch(url, { headers })
+        .then(async response => {
        // console.debug("responseurl:", response.url)
-      // console.debug("responsejson:", response.json)
+       // console.debug("responsejson:", response.json)
         const isJson = response.headers.get('content-type')?.includes('application/json; charset=utf-8');
         //const isJson = response.headers.get('content-type')
         var data = isJson && await response.json();
-
-       // console.debug("response:", response, response.text);
+        // console.debug("response:", response, response.text);
         //check for error response
         if (response.ok) {
             var glossaryId = data.glossaries
@@ -134,8 +162,8 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                     gloss += glossaryId[i].glossary_id + "<br>";
                     //console.debug("text:", gloss)
                 }
-                cuteAlert({
-                    type: "question",
+               cuteAlert({
+                   type: "question",
                     title: "Glossary Id",
                     message: "Glossaries found <br>" + gloss + "<br>Do you want to store this glossary ID?<br>" + glossaryId[0].glossary_id,
                     confirmText: "Confirm",
@@ -155,12 +183,12 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                     } else {
                         messageBox("info", "Glossary ID: <br>" + glossaryId[0].glossary_id + "<br>not saved ");
                     }
-                    return data
+                   return data
                 }).then(data => {
-                    //console.debug("before delete:", data, data.glossaries)
+             //       //console.debug("before delete:", data, data.glossaries)
                     var glossaryId = data.glossaries
                     if (glossaryId != 'undefined') {
-                        //console.debug("glossaries not undefined")
+                      //console.debug("glossaries not undefined")
                         if (glossaryId[1] != null) {
                             var to_delete = glossaryId[1].glossary_id
                         }
@@ -177,19 +205,41 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                         }).then(async (e) => {
                             if (e == ("confirm")) {
                                 await delete_glossary(apikeyDeepl, DeeplFree, language, to_delete)
+                                is_stored = await localStorage.getItem('deeplGlossary')
+                                if (is_stored == to_delete) {
+                                    await localStorage.setItem('deeplGlossary', "");
+                                    let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-green`);
+                                    if (loadGlossButton != null) {
+                                        loadGlossButton.classList.remove("LoadGloss-button-green");
+                                        loadGlossButton.classList.add("LoadGloss-button-red");
+                                    }
+                                }
+
                                 messageBox("info", "Glossary ID: <br>" + to_delete + "<br>deleted ");
                             } else {
-                                messageBox("info", "Glossary ID: <br>" + to_delete + "<br>not deleted ");
+                               messageBox("info", "Glossary ID: <br>" + to_delete + "<br>not deleted ");
                             }
                         })
                     }
                     else {
                         console.debug("No glossaries found!!")
+                        localStorage.setItem('deeplGlossary', "");
+                        let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-green`);
+                        if (loadGlossButton != null) {
+                            loadGlossButton.classList.remove("LoadGloss-button-green");
+                            loadGlossButton.classList.add("LoadGloss-button-red");
+                        }
                     }
                 })
             }
             else {
                 messageBox("warning", "No glossaries found!!");
+                localStorage.setItem('deeplGlossary', "");
+                let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-green`);
+                if (loadGlossButton != null) {
+                    loadGlossButton.classList.remove("LoadGloss-button-green");
+                    loadGlossButton.classList.add("LoadGloss-button-red");
+                }
             }
         }
         else {
@@ -212,10 +262,10 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                 //     alert("Error 404 The requested resource could not be found.")
                 errorstate = "Error 404";
             }
-            //   else if (error[2] == '456') {
+               else if (error[2] == '456') {
             //alert("Error 456 Quota exceeded. The character limit has been reached")
-            //        errorstate = "Error 456";
-            //    }
+                   errorstate = "Error 456";
+                }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
@@ -227,6 +277,7 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
             }
         });
 }
+
 async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
    // console.debug("We are deleting:",glossary_id)
     //console.debug(apikeyDeepl, DeeplFree, language, glossary_id)

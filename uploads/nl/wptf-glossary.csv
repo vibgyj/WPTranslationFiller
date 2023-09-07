@@ -1,3 +1,5 @@
+Box,box
+box,box
 Global,Globale
 global,globale
 Gradient,Gradient
@@ -17,6 +19,8 @@ Layout,lay-out
 layout,lay-out
 Merchant,verkoper
 merchant,verkoper
+Padding,padding
+padding,padding
 Radius,Radius
 radius,radius
 Rating,Waardering
