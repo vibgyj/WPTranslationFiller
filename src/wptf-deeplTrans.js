@@ -59,7 +59,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
         }
     }
 
-   // console.debug("deepl link:",link)
+    //console.debug("deepl link:",link)
     const response = await fetch(link)
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
@@ -85,7 +85,9 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 if (typeof data.translations != 'undefined') {
                     translatedText = data.translations[0].text;
                    // console.debug("deepl result",translatedText)
-                    translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore,locale);
+                    translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
+                   // console.debug("deepl resultaat:", translatedText)
+                   // console.debug("deepl preprocessed:",originalPreProcessed)
                     deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
                     return Promise.resolve("OK");
                 }

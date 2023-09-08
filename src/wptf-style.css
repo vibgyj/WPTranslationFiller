@@ -669,10 +669,12 @@
     height: 32px !important;
 }
 
-.translation-entry-my-button.translated_error {
-      animation: none;
-      background-color: red;
-}
+    .translation-entry-my-button.translated_error {
+        animation: none;
+        background-color: red;
+        width: auto;
+        height: 32px !important;
+    }
 
 .translation-entry-my-button.restarted {
     content: "";

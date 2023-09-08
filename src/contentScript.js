@@ -783,13 +783,14 @@ if (divPaging != null && divProjects == null) {
 //12-05-2022 PSS added a new buttons specials
 var UpperCaseButton = document.createElement("a");
 UpperCaseButton.href = "#";
-let UpperCase = localStorage.getItem(['switchUpper'])
+UpperCase = localStorage.getItem(['switchUpper'])
 if (UpperCase == 'false') {
     UpperCaseButton.className = "UpperCase-button";
 }
 else {
     UpperCaseButton.className = "UpperCase-button uppercase"
 }
+
 UpperCaseButton.onclick = UpperCaseClicked;
 UpperCaseButton.innerText = "Casing";
 
@@ -799,15 +800,10 @@ SwitchTMButton.className = "Switch-TM-button";
 SwitchTMButton.onclick = SwitchTMClicked;
 SwitchTMButton.innerText = "SwitchTM";
 
-var LoadGloss = document.createElement("a");
 // We need to check if we have a glossary ID
-var glossloaded = localStorage.getItem(['deeplGlossary'])
+
+var LoadGloss = document.createElement("a");
 LoadGloss.href = "#";
-if (glossloaded == null || glossloaded == "") {
-    LoadGloss.className = "LoadGloss-button-red";
-} else {
-    LoadGloss.className = "LoadGloss-button-green"
-}
 LoadGloss.onclick = LoadGlossClicked;
 LoadGloss.innerText = "LoadGloss";
 
@@ -831,11 +827,22 @@ if (GpSpecials != null && divProjects == null) {
         if (data.apikeyDeepl != null && data.apikeyDeepl !="" && typeof data.apikeyDeepl != 'undefined') {
             divPaging.insertBefore(LoadGloss, divPaging.childNodes[0]);
             divPaging.insertBefore(DispGloss, divPaging.childNodes[0]);
+            glossloaded = checkGlossary(LoadGloss)
         }
     });
     //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
+}
+
+async function checkGlossary() {
+    var glos_isloaded = await localStorage.getItem(['deeplGlossary']);
+    console.debug("in check gloss:", glos_isloaded)
+    if (glos_isloaded == null || glos_isloaded=="") {
+        LoadGloss.className = "LoadGloss-button-red";
+    } else {
+        LoadGloss.className = "LoadGloss-button-green"
+    }
 }
 
 function DispGlossClicked() {
@@ -1625,7 +1632,7 @@ function translateEntryClicked(event) {
         var DeeplFree = data.DeeplFree;
         var OpenAItemp = parseFloat(data.OpenAItemp);
         var deeplGlossary = localStorage.getItem('deeplGlossary');
-        console.debug("glossary_id:", deeplGlossary)
+        //console.debug("glossary_id:", deeplGlossary)
         translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary);
         });
 }

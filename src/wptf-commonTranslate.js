@@ -336,32 +336,36 @@ function convert_lower(text, spellCheckIgnore) {
     let capsArray = []
     var counter = 0;
     var myword;
-    
+    // We need to convert the ignore tabel in an array to find an exact match of the word
+    let lines = spellCheckIgnore.split("\n");
+                //console.debug("lines:",lines)
+
     wordsArray.forEach(word => {
-        // do not convert the first word in sentence to lowercase
+        
         // if the line contains "--" we do not split it
         if (word != '--') {
-            myword = word.split('-')
-
-            if (myword.length != 1) {
-                word = myword[0]
+           // console.debug("word:", word)
+            // for some words we do not want to remove the "-", then we need to put it into the ignore list
+            if (lines.indexOf(word) === -1) {
+                myword = word.split('-')
+                if (myword.length != 1) {
+                    word = myword[0]
+                }
             }
         }
         else {
             myword = word
         }
+        // do not convert the first word in sentence to lowercase
         if (counter != 0) {
             // if word contains all uppercase, then do not convert it to lowercase!!
-            var upper = word.toUpperCase();
-
+            var upper = word.toUpperCase();  
            // console.debug("is equal:",word === upper)
-          //  console.debug("isupper:", word, isUpperCase(word))
+            //console.debug("isupper:", word, isUpperCase(word),myword)
             if ((word === upper) == false) {
-                // We need to convert the ignore tabel in an array to find an exact match of the word
-                let lines = spellCheckIgnore.split("\n");
-                //console.debug("lines:",lines)
                 if (lines.indexOf(word) === -1) {
                     if (myword.length == 1) {
+                       // console.debug("we are in conversion:",)
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
                     else {
@@ -369,6 +373,7 @@ function convert_lower(text, spellCheckIgnore) {
                             capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
                         }
                         else {
+                            //console.debug("we have no uppercase:",word,myword)
                             capsArray.push(myword);
                         }
                     }
@@ -394,7 +399,6 @@ function convert_lower(text, spellCheckIgnore) {
                     else {
                         if (spellCheckIgnore.indexOf(word) == -1) {
                             if (myword != "--") {
-
                                 capsArray.push(word + '-' + myword[1])
                             }
                             else {
@@ -432,12 +436,18 @@ function convert_lower(text, spellCheckIgnore) {
                 }
                 else {
                    // console.debug("we are in spellcheck list for first word, so it is a brandname do not add the hyphen", word)
-                    if (myword.length == 1) {
-                        capsArray.push(word);
+                    if (typeof myword != 'undefined') {
+                        if (myword.length == 1) {
+                            capsArray.push(word);
+                        }
+                        else {
+                            capsArray.push(word + ' ' + myword[1])
+                        }
                     }
                     else {
-                        capsArray.push(word + ' ' + myword[1])
+                        capsArray.push(word)
                     }
+
                 }
             }
         }
@@ -3057,7 +3067,14 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                         }
                         else if (result == 'Error 404') {
-                            messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
+                            messageBox("error", "Error in translation received status 404 The requested resource could not be found.<br>Or the glossary provided is not present<br>" + deeplGlossary);
+                            translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+                            // if row is already translated the rowId has different format, so we need to search with this different format
+                            if (translateButton == null) {
+                                translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+                            }
+                            translateButton.className += " translated_error";
+                            translateButton.innerText = "Error";
                         }
                         else if (result == "Error 400") {
                             messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
