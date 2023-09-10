@@ -31,7 +31,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
-    //xconsole.debug("Original:", originalPreProcessed)
+    //console.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";

@@ -48,7 +48,6 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
     var data;
     var message;
     var link;
-
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
@@ -91,7 +90,7 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
             }
         })
         .catch(error => {
-            //console.debug("error:",error)
+            console.debug("error:",error)
             if (error[0].status == '401') {
                 //alert("Error in translation received status 401, Credentials are not valid!");
                 errorstate = "Error 401";

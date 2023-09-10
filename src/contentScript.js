@@ -783,14 +783,6 @@ if (divPaging != null && divProjects == null) {
 //12-05-2022 PSS added a new buttons specials
 var UpperCaseButton = document.createElement("a");
 UpperCaseButton.href = "#";
-UpperCase = localStorage.getItem(['switchUpper'])
-if (UpperCase == 'false') {
-    UpperCaseButton.className = "UpperCase-button";
-}
-else {
-    UpperCaseButton.className = "UpperCase-button uppercase"
-}
-
 UpperCaseButton.onclick = UpperCaseClicked;
 UpperCaseButton.innerText = "Casing";
 
@@ -830,6 +822,13 @@ if (GpSpecials != null && divProjects == null) {
             glossloaded = checkGlossary(LoadGloss)
         }
     });
+    UpperCase = localStorage.getItem(['switchUpper'])
+    if (UpperCase == 'false') {
+        UpperCaseButton.className = "UpperCase-button";
+    }
+    else {
+        UpperCaseButton.className = "UpperCase-button uppercase"
+    }
     //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);

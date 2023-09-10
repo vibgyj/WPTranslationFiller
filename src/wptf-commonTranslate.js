@@ -115,8 +115,13 @@ function preProcessOriginal(original, preverbs, translator) {
             original = original.replace(match[0], `<x>${index}</x>`);
             index++;
         }
-        if (index == 0) {
-            // console.debug("preProcessOriginal no placeholders found index === 0 ");
+        // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
+        const linkmatches = original.matchAll(linkRegex);
+        index = 1;
+        for (const linkmatch of linkmatches) {
+            original = original.replace(linkmatch[0], `{linkvar ${index}}`);
+            original = original.replace('.{', '. {');
+            index++;
         }
     }
     else if (translator == "microsoft") {
@@ -163,6 +168,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
     
+     
+
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
@@ -185,6 +192,14 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replaceAll("<x>mylinefeed</x>", "\r\n");
         // Deepl does remove tabs so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("<x>mytb</x>", "\t");
+        const linkmatches = original.matchAll(linkRegex);
+        index = 1;
+        for (const match of linkmatches) {
+            //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
+            translatedText = translatedText.replace(`{linkvar ${index}}`, match[0]);
+            //translatedText = translatedText.replace(`var ${index}'`, match[0]);
+            index++;
+        }
     }
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
@@ -245,7 +260,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
     }
-    
+
+    //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
+    // removing the hyphens is also done in lower_case function, so this needs improvement in future
+    translatedText = check_hyphen(translatedText, spellCheckIgnore);
+
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -299,6 +318,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
     }
+
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -316,6 +336,35 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("after checking:", result, result.previewNewText)
     translatedText = result.translatedText;
     return translatedText;
+}
+
+function check_hyphen(translatedText,spellCheckIgnore){
+    //console.debug("we are in check_hyphen");
+    let lines = spellCheckIgnore.split("\n");
+    let capsArray = []
+    let wordsArray = translatedText.split(' ')
+    wordsArray.forEach(word => {
+        //console.debug("word:","'"+word+"'")
+        // we need to check what char the word ends, otherwise it will not be found in the ignore list
+        if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
+            checkword = word.substr(0, word.length - 1)
+        }
+        else {
+            checkword = word
+        }
+        // check if the word is in the ignore list, if so we remove the "-" by a blank as it does not belong into the word
+        // but we should not do that within a link!!
+        if (lines.indexOf(checkword) == -1) {
+            if (!CheckUrl(translatedText, word)) {
+                // console.debug("word is not in ignore")
+                if (word != "--" && word != "-")
+                    word = word.replace("-", " ")
+            }
+        }
+        capsArray.push(word)
+    })
+    converted = capsArray.join(' ');
+    return converted
 }
 
 function capt(word) {
@@ -336,20 +385,30 @@ function convert_lower(text, spellCheckIgnore) {
     let capsArray = []
     var counter = 0;
     var myword;
+    var cleanword;
     // We need to convert the ignore tabel in an array to find an exact match of the word
     let lines = spellCheckIgnore.split("\n");
                 //console.debug("lines:",lines)
 
     wordsArray.forEach(word => {
         
-        // if the line contains "--" we do not split it
-        if (word != '--') {
+        // if the word contains "--" or single "-" we do not split it
+        if (word != '--' && word !="-") {
            // console.debug("word:", word)
             // for some words we do not want to remove the "-", then we need to put it into the ignore list
             if (lines.indexOf(word) === -1) {
                 myword = word.split('-')
                 if (myword.length != 1) {
                     word = myword[0]
+                }
+            }
+            else {
+                if (word.includes("-")) {
+                   // console.debug("we are in spellcheck with -")
+                    myword = word.split('-')
+                    if (myword.length != 1) {
+                        word = myword[0]
+                    }
                 }
             }
         }
@@ -359,17 +418,25 @@ function convert_lower(text, spellCheckIgnore) {
         // do not convert the first word in sentence to lowercase
         if (counter != 0) {
             // if word contains all uppercase, then do not convert it to lowercase!!
-            var upper = word.toUpperCase();  
-           // console.debug("is equal:",word === upper)
+            let allUpper = false;
+            if (word != '') {
+                cleanword = removeTags(word)
+                var upper = cleanword.toUpperCase();
+                if ((cleanword === upper) == true) {
+                    allUpper == true;
+                }
+
+            }
+            //console.debug("is equal:",clean_word === upper,word,upper)
             //console.debug("isupper:", word, isUpperCase(word),myword)
-            if ((word === upper) == false) {
+            if (allUpper == false) {
                 if (lines.indexOf(word) === -1) {
                     if (myword.length == 1) {
                        // console.debug("we are in conversion:",)
                         capsArray.push(word[0].toLowerCase() + word.slice(1));
                     }
                     else {
-                        if (myword != "--") {
+                        if (myword != "--" && myword !='-') {
                             capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
                         }
                         else {
@@ -398,7 +465,7 @@ function convert_lower(text, spellCheckIgnore) {
                     }
                     else {
                         if (spellCheckIgnore.indexOf(word) == -1) {
-                            if (myword != "--") {
+                            if (myword != "--"  && myword != '-') {
                                 capsArray.push(word + '-' + myword[1])
                             }
                             else {
@@ -458,6 +525,18 @@ function convert_lower(text, spellCheckIgnore) {
     // Because now all sentences start with lowercase in longer texts, we need to put back the uppercase at the start of the sentence
     converted = applySentenceCase(converted);
     return converted
+}
+
+function removeTags(str) {
+    if ((str === null) || (str === ''))
+        return false;
+    else
+        str = str.toString();
+
+    // Regular expression to identify HTML tags in
+    // the input string. Replacing the identified
+    // HTML tag with a null string.
+    return str.replace(/(<([^>]+)>)/ig, '');
 }
 
 function applySentenceCase(str) {
@@ -2472,7 +2551,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "hide";
                             }
                             if (transsel == "google") {
-                                result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                                result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                                 if (errorstate == "Error 400") {
                                     messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                                     //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
@@ -2517,7 +2596,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                             else if (transsel == "microsoft") {
-                                result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                                result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                                 if (result == "Error 401") {
                                     messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
                                     //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -2774,7 +2853,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         }
                                     }
                                     else if (transsel == "microsoft") {
-                                        result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                                        result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                                         if (result == "Error 401") {
                                             messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
                                             //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -2922,7 +3001,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         let textareaElem = record.querySelector("textarea.foreign-text");
                         completedCallback(original, textareaElem.innerText);
                     }
-                    if (counter == myrecCount.length - 1) {
+                    if (counter == myrecCount.length - 1 || myrecCount.length == 1) {
                         // Translation completed we need to stop spinning the translate button
                         let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                         translateButton.className += " translated";
@@ -3049,7 +3128,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                        result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                         if (errorstate == "Error 400") {
                             messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                            // alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
@@ -3090,7 +3169,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "microsoft") {
-                        result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                        result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -3179,7 +3258,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 plural_line = "2";
                 if (pretrans == "notFound") {
                     if (transsel == "google") {
-                        result = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                        result = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                         if (errorstate == "Error 400") {
                             messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
                         }
@@ -3211,7 +3290,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "microsoft") {
-                        result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, spellCheckIgnore);
+                        result = await microsoftTranslate(plural, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401000<br>The request is not authorized because credentials are missing or invalid.");
                             //alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
