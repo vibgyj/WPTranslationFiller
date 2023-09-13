@@ -188,6 +188,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                             let token = data.usage.total_tokens
                         }
                         //text = text.trim('\n');
+                        //console.debug("text:",text)
                         translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore,locale);
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)

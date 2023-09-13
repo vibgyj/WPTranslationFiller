@@ -283,8 +283,9 @@ function validatePage(language, showHistory, locale) {
         else {
             nameDiff = false;
         }
-        var result = validate(language, original, translation, locale);
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
+            var result = validate(language, original, translation, locale);
+            let record = e.previousSibling.previousSibling.previousSibling
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record);
         }, timeout);
         timeout += 20;
        

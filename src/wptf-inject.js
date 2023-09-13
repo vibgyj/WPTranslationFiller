@@ -25,10 +25,9 @@
             //console.debug("mock:", parrotMockDefinitions,parrotActive)
             if (parrotActive && !hostedLocally) {
                 window.XMLHttpRequest = instrumentedXMLHttpRequest;
-                console.debug("fake called:", window.XMLHttpRequest)
+                //console.debug("fake called:", window.XMLHttpRequest)
             } else {
-                console.debug("original called!", originalXMLHttpRequest)
-                
+               // console.debug("original called!", originalXMLHttpRequest)
                 window.XMLHttpRequest = originalXMLHttpRequest;
             }
         }
@@ -100,9 +99,6 @@
             //console.debug("readystate:",this.readyState,instrumented.readyState,original.readyState,myreadyState,myresponseText)
             if (instrumented.readyState === 4) {
                // console.debug("instrumented:", myStatus)
-               // console.debug("Response:", original.response);
-               // console.debug("before mock ", myresponseText, myresponse, original.response, original.status);
-
                 // Gets an array of mocks to be used for this URL
                 const parrotMockDefinitions = parrotActive && getParrotMockDefinitions(this);
                 if (parrotMockDefinitions?.length) {
@@ -147,7 +143,7 @@
 
                     setTimeout(() => {
                         if (instrumented.onreadystatechange) {
-                            console.debug("in return 1:", instrumented.onreadystatechange)
+                            //console.debug("in return 1:", instrumented.onreadystatechange)
                             return instrumented.onreadystatechange();
                         }
 

@@ -3,17 +3,18 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary) {
+async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary);
+    //console.debug("original:",original,row,record)
+    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry);
     return errorstate;
 }
 
-async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary) {
+async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
     var translatedText = "";
     var ul = "";
-    var current = "";
+    //var current = "";
     var prevstate = "";
     var pluralpresent = "";
     var responseObj = "";
@@ -27,10 +28,11 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var data;
     var link;
     var deepLresult;
-    //console.debug("deeplGlossaryId:",deeplGlossary)
+    console.debug("is_entry:",is_entry)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
-    prevstate = current.innerText;
+    let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
+   // console.debug("current in deepl:", deepLcurrent)
+    prevstate = deepLcurrent.innerText;
     //console.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
@@ -83,12 +85,15 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             else {
                 //We do have a result so process it
                 if (typeof data.translations != 'undefined') {
+                   // console.debug("deepl result complete:",data.translations)
                     translatedText = data.translations[0].text;
-                   // console.debug("deepl result",translatedText)
-                    translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
-                   // console.debug("deepl resultaat:", translatedText)
-                   // console.debug("deepl preprocessed:",originalPreProcessed)
-                    deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
+                   // console.debug("deepl result", translatedText, deepLcurrent)
+
+                    translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
+                  //  console.debug("deepl resultaat:", translatedText, deepLcurrent,convertToLower)
+                  //  console.debug("deepl preprocessed:",originalPreProcessed,record)
+
+                    deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent,is_entry);
                     return Promise.resolve("OK");
                 }
                 else {
@@ -116,6 +121,10 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             else if (error[2] == '456') {
                 messageBox("warning", "Error 456 Quota exceeded.<br> The character limit has been reached");
                 errorstate = "Error 456";
+            }
+            else if (error[2] == '503') {
+                messageBox("warning", "Dienst niet beschikbaar");
+                errorstate = "Error 503";
             }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
