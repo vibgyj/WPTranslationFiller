@@ -392,31 +392,50 @@ function isUpperCase(myString, pos) {
 function convert_lower(text, spellCheckIgnore) {
     // if the word is found in spellCheckIgnore, then the uppercasing should not be applied
     // Sometimes the word contains a '-', then we only need to find the first part
+    console.debug("text:", "'" + text + "'")
+    text = text.trim()
     let wordsArray = text.split(' ')
+    console.debug("wordsArray after split:",wordsArray)
     let capsArray = []
     var counter = 0;
-    var myword;
+    //var myword = "";
     var cleanword;
     var allUpper;
+    var myword;
     // We need to convert the ignore tabel in an array to find an exact match of the word
     let lines = spellCheckIgnore.split("\n");
     wordsArray.forEach(word => {
         // if the word contains "--" or single "-" we do not split it
         if (word != '--' && word !="-") {
-           // console.debug("word:", word)
+            
             // for some words we do not want to remove the "-", then we need to put it into the ignore list
-            if (lines.indexOf(word) === -1) {
+           // console.debug("word:", "'" + word + "'")
+            if (word.endsWith(".") && word.endsWith(",") && word.endsWith("!") && word.endsWith("?") && word.endsWith(")")) {
+                searchword = word.substr(0,(word.length) - 1)
+              //  console.debug("search:", searchword)
+
+            }
+            else {
+                searchword = word
+               // console.debug("search1:", searchword)
+            }
+            if (lines.indexOf(searchword) === -1) {
+               // console.debug("we have splitted:",searchword,word)
                 myword = word.split('-')
                 if (myword.length != 1) {
                     word = myword[0]
                 }
+               // console.debug("splitted:",myword)
             }
             else {
                 if (word.includes("-")) {
-                   // console.debug("we are in spellcheck with -")
+                    //console.debug("we are in spellcheck with -",word)
+
+                    //myword = word
                     myword = word.split('-')
                     if (myword.length != 1) {
                         word = myword[0]
+                    myword = word;
                     }
                 }
             }
@@ -424,113 +443,149 @@ function convert_lower(text, spellCheckIgnore) {
         else {
             myword = word
         }
+        
         // do not convert the first word in sentence to lowercase
         if (counter != 0) {
-            // if word contains all uppercase, then do not convert it to lowercase!!
-            allUpper = false;
-            if (word != '') {
-                cleanword = removeTags(word)
-                var upper = cleanword.toUpperCase();
-                console.debug("word counter !0:",cleanword,upper,(cleanword == upper))
-                if ((cleanword == upper) == true) {
-                    allUpper = true;
-                }
-            }
-            if (allUpper == false) {
-                if (lines.indexOf(word) === -1) {
-                    if (myword.length == 1) {
-                        //capsArray.push(word[0].toLowerCase() + word.slice(1));
-                        if (word != '') {
-                            capsArray.push(word[0].toLowerCase() + word.slice(1));
-                        }
+            if (word != "") {
+                // if word contains all uppercase, then do not convert it to lowercase!!
+                allUpper = false;
+                if (word != ' ') {
+                    cleanword = removeTags(word)
+                    var upper = cleanword.toUpperCase();
+                   // console.debug("word counter !0:",cleanword,upper,(cleanword == upper))
+                    if ((cleanword == upper) == true) {
+                        allUpper = true;
                     }
-                    else {
-                        if (myword != "--" && myword != '-') {
+                }
+               
+                if (allUpper == false) {
+                    if (lines.indexOf(searchword) === -1) {
+                        if (myword.length == 1) {
+                            //capsArray.push(word[0].toLowerCase() + word.slice(1));
                             if (word != '') {
-                                capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                                capsArray.push(word[0].toLowerCase() + word.slice(1));
                             }
                         }
                         else {
-                            //console.debug("we have no uppercase:",word,myword)
-                            capsArray.push(myword);
+                            if (myword != "--" && myword != '-') {
+                                if (word != '') {
+                                    capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                                }
+                            }
+                            else {
+                                console.debug("we have no uppercase:", word, myword)
+                                capsArray.push(myword);
+                            }
                         }
-                    }
-                }
-                else {
-                   // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
-                    if (myword.length == 1) {
-                        capsArray.push(word);
+                        //console.debug("caps:", capsArray)
                     }
                     else {
-                        if (!CheckUrl(translatedText, word)) {
-                            capsArray.push(word + ' ' + myword[1])
+                        // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
+                        //if (myword.length == 1) {
+                            capsArray.push(word);
+                            console.debug("we have pushed:", capsArray)
+                       // }
+                       // else {
+                       //     if (!CheckUrl(translatedText, word)) {
+                               // capsArray.push(word + ' ' + myword[1])
+                         //       console.debug("myword:",myword)
+                        //        capsArray.push(word)
+                         //   }
+                        //    else {
+                               // capsArray.push(word)
+                       //     }
+                       // }
+                       // console.debug("caps:", capsArray)
+                    }
+
+                }
+
+                else {
+                    let lines = spellCheckIgnore.split("\n");
+                    if (lines.indexOf(word) === -1) {
+                        if (myword.length == 1) {
+                            capsArray.push(word);
+                        }
+                        else {
+                            if (spellCheckIgnore.indexOf(word) == -1) {
+                                if (myword != "--" && myword != '-') {
+                                    capsArray.push(word + '-' + myword[1])
+                                }
+                                else {
+                                    console.debug()
+                                    capsArray.push(myword)
+                                }
+                            }
+                            else {
+                                if (!CheckUrl(translatedText, word)) {
+                                    capsArray.push(word + ' ' + myword[1])
+                                }
+                            }
+                        }
+                       // console.debug("caps:", capsArray)
+                    }
+                    else {
+                        // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
+                        //console.debug("myword:",myword)
+                        if (typeof myword != 'undefined' && myword.length == 1) {
+                            console.debug("in spellcheck:", "'" + word + "'")
+                            capsArray.push(word);
+                        }
+                        else {
+                            if (!CheckUrl(translatedText, word)) {
+                                if (typeof myword != 'undefined') {
+                                    capsArray.push(word + ' ' + myword[1])
+                                }
+                                else {
+                                    capsArray.push(word)
+                                }
+                            }
+                            else {
+                                capsArray.push(word)
+                            }
                         }
                     }
                 }
             }
             else {
-                let lines = spellCheckIgnore.split("\n");
-                if (lines.indexOf(word) === -1) {
-                    if (myword.length == 1) {
-                        capsArray.push(word);
+                capsArray.push(word)
+            }
+
+        }
+        else {
+            // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
+            // first letter of the word, but do nothing with it as it is empty
+            if (word != "") {
+                if (typeof word[0] != "undefined") {
+                    let lines = spellCheckIgnore.split("\n");
+                    if (lines.indexOf(searchword) === -1) {
+                        if (myword.length == 1) {
+                            capsArray.push(word[0].toLowerCase() + word.slice(1));
+                        }
+                        else {
+                            capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                        }
                     }
                     else {
-                        if (spellCheckIgnore.indexOf(word) == -1) {
-                            if (myword != "--"  && myword != '-') {
-                                capsArray.push(word + '-' + myword[1])
+                        // console.debug("we are in spellcheck list for first word, so it is a brandname do not add the hyphen", word)
+                        if (typeof myword != 'undefined') {
+                            if (myword.length == 1) {
+                                capsArray.push(word);
                             }
                             else {
-                                capsArray.push(myword)
+                                if (!CheckUrl(translatedText, word)) {
+                                    capsArray.push(word + ' ' + myword[1])
+                                }
                             }
                         }
                         else {
-                            if (!CheckUrl(translatedText, word)) {
-                                capsArray.push(word + ' ' + myword[1])
-                            }
-                        }
-                    }
-                }
-                else {
-                   // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
-                    if (myword.length == 1) {
-                        capsArray.push(word);
-                    }
-                    else {
-                        if (!CheckUrl(translatedText, word)) {
-                            capsArray.push(word + ' ' + myword[1])
+                            capsArray.push(word)
                         }
                     }
                 }
             }
-        }
-        else {
-            // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
-            if (typeof word[0] != "undefined") {
-                let lines = spellCheckIgnore.split("\n");
-                if (lines.indexOf(word) === -1) {
-                    if (myword.length == 1) {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1));
-                    }
-                    else {   
-                       capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
-                    }
-                }
-                else {
-                   // console.debug("we are in spellcheck list for first word, so it is a brandname do not add the hyphen", word)
-                    if (typeof myword != 'undefined') {
-                        if (myword.length == 1) {
-                            capsArray.push(word);
-                        }
-                        else {
-                            if (!CheckUrl(translatedText, word)) {
-                                capsArray.push(word + ' ' + myword[1])
-                            }
-                        }
-                    }
-                    else {
-                        capsArray.push(word)
-                    }
-                }
+            else {
+                capsArray.push(word)
             }
         }
         counter++;
