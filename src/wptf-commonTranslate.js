@@ -397,6 +397,7 @@ function convert_lower(text, spellCheckIgnore) {
     var counter = 0;
     var myword;
     var cleanword;
+    var allUpper;
     // We need to convert the ignore tabel in an array to find an exact match of the word
     let lines = spellCheckIgnore.split("\n");
     wordsArray.forEach(word => {
@@ -426,22 +427,28 @@ function convert_lower(text, spellCheckIgnore) {
         // do not convert the first word in sentence to lowercase
         if (counter != 0) {
             // if word contains all uppercase, then do not convert it to lowercase!!
-            let allUpper = false;
+            allUpper = false;
             if (word != '') {
                 cleanword = removeTags(word)
                 var upper = cleanword.toUpperCase();
-                if ((cleanword === upper) == true) {
-                    allUpper == true;
+                console.debug("word counter !0:",cleanword,upper,(cleanword == upper))
+                if ((cleanword == upper) == true) {
+                    allUpper = true;
                 }
             }
             if (allUpper == false) {
                 if (lines.indexOf(word) === -1) {
                     if (myword.length == 1) {
-                        capsArray.push(word[0].toLowerCase() + word.slice(1));
+                        //capsArray.push(word[0].toLowerCase() + word.slice(1));
+                        if (word != '') {
+                            capsArray.push(word[0].toLowerCase() + word.slice(1));
+                        }
                     }
                     else {
-                        if (myword != "--" && myword !='-') {
-                            capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                        if (myword != "--" && myword != '-') {
+                            if (word != '') {
+                                capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
+                            }
                         }
                         else {
                             //console.debug("we have no uppercase:",word,myword)
@@ -991,7 +998,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             if (replaced) {
                                 preview = document.querySelector("#preview-" + newrowId + " span.translation-text");
                                 if (preview == null) {
-                                    preview = document.querySelector("#preview-" + myrow + " span.translation-text");
+                                    preview = document.querySelector("#preview-" + row + " span.translation-text");
                                 }
                                 repl_verb = result.repl_verb;
                                 preview.innerHTML = result.previewNewText
@@ -1006,7 +1013,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                // repl.push(rec.split(","))
                                 preview = document.querySelector("#preview-" + newrowId + " span.translation-text");
                                 if (preview == null) {
-                                    preview = document.querySelector("#preview-" + myrow + " span.translation-text");
+                                    preview = document.querySelector("#preview-" + row + " span.translation-text");
                                 }
                                 
                                 //console.debug("newpreview:",preview)
@@ -2447,7 +2454,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var preview = "";
     var pretrans;
     var timeout = 0;
-    var vartime = 300;
+    var vartime = 500;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -2573,7 +2580,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                             else if (transsel == "deepl") {
-                                console.debug("before translate:",original,row)
+                               // console.debug("before translate:",original,row)
                                 result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                                 if (result == "Error 403") {
                                     messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
@@ -2671,7 +2678,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
                             //select = next_editor.getElementsByClassName("meta");
                             var status = select.querySelector("dt").nextElementSibling;
-
                             status.innerText = "transFill";
                             status.value = "transFill";
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
@@ -3146,8 +3152,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "deepl") {
-                        let is_entry = true;
-                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary,is_entry);
+                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                         if (result == 'Error 403') {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                         }
@@ -3743,7 +3748,7 @@ function highlight(elem, keywords, caseSensitive = false, cls = 'highlight') {
 
 
 // This function processes the result of the fetch
-async function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, deepLcurrent,is_entry) {
+async function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, deepLcurrent) {
     var result;
     var myRowId = rowId;
     var previousCurrent = deepLcurrent.innerText
@@ -3757,6 +3762,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
         console.debug("current:", deepLcurrent)
     }
     if (transtype == "single") {
+        deepLcurrent.innerText = "transFill";
+        deepLcurrent.value = "transFill";
         textareaElem = record.querySelector("textarea.foreign-text");
         textareaElem.innerText = translatedText;
         textareaElem1 = textareaElem
@@ -3784,8 +3791,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
             td_preview.innerValue = translatedText;
         }
         myRowId = record.getAttribute("row");
-        deepLcurrent.innerText = "transFill";
-        deepLcurrent.value = "transFill";
+        
        // result =  validateEntry(language, textareaElem, "", "", myRowId, locale,record);
        // console.debug(("result after validateEntry:",result))
        //if (result.newText != "") {

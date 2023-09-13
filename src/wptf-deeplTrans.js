@@ -28,7 +28,6 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var data;
     var link;
     var deepLresult;
-    console.debug("is_entry:",is_entry)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
    // console.debug("current in deepl:", deepLcurrent)
@@ -93,7 +92,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                   //  console.debug("deepl resultaat:", translatedText, deepLcurrent,convertToLower)
                   //  console.debug("deepl preprocessed:",originalPreProcessed,record)
 
-                    deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent,is_entry);
+                    deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);
                     return Promise.resolve("OK");
                 }
                 else {
