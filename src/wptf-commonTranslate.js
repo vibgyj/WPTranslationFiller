@@ -153,6 +153,10 @@ function preProcessOriginal(original, preverbs, translator) {
     return original;
 }
 
+function startsWithCapital(word) {
+    return /[A-Z]/.test(word.charAt(0))
+}
+
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore,locale) {
     var pos;
     //console.debug("before posrepl: '"+ translatedText +"'")
@@ -346,35 +350,50 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 }
 
 function check_hyphen(translatedText,spellCheckIgnore){
-    var lines= [];
+    var lines = [];
+    var myword;
     if (typeof spellCheckIgnore != 'undefined') {
         lines = spellCheckIgnore.split("\n");
     }
-    
     let capsArray = []
     let wordsArray = translatedText.split(' ')
     wordsArray.forEach(word => {
-        //console.debug("word:",word)
-        // we need to check what char the word ends, otherwise it will not be found in the ignore list
-        if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
-            checkword = word.substr(0, word.length - 1)
+       // console.debug("word:",word)
+        myword = word.split("-");
+        //console.debug("myword:",myword)
+        if (myword.length == 1) {
+            // we need to check what char the word ends, otherwise it will not be found in the ignore list
+            if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
+                checkword = word.substr(0, word.length - 1)
+            }
+            else {
+                checkword = word
+            }
         }
         else {
-            checkword = word
+            //we need to remove wrong characters at the start of the word
+            if (myword[0].startsWith("(")) {
+                checkword = myword[0].substr(1, myword[0].length)
+            }
+            else {
+                checkword = myword[0];
+            }
         }
         // check if the word is in the ignore list, if not we remove the "-" by a blank as it does not belong into the word
         // but we should not do that within a link!!
-        if (lines.indexOf(checkword) == -1) {
-            
+        //console.debug("in :", lines.indexOf(checkword))
+        if (lines.indexOf(checkword) != -1) {
+           // console.debug("we found in ignorelist:",checkword,word)
             if (word != "--" && word != "-")
                 // if the word is a URL we do not remove the "-"
-                if (word.substr('http') == -1) {
+               // if (word.substr('http') == -1) {
                     word = word.replace("-", " ")
-            }
+               // }
         }
         capsArray.push(word)
     })
     converted = capsArray.join(' ');
+    //console.debug("converted:",converted)
     return converted
 }
 
@@ -390,6 +409,7 @@ function isUpperCase(myString, pos) {
 }
 
 function convert_lower(text, spellCheckIgnore) {
+    var myword;
     // if the word is found in spellCheckIgnore, then the uppercasing should not be applied
     // Sometimes the word contains a '-', then we only need to find the first part
     console.debug("text:", "'" + text + "'")
@@ -402,193 +422,92 @@ function convert_lower(text, spellCheckIgnore) {
     var cleanword;
     var allUpper;
     var myword;
+    var searchword;
+    var upper;
     // We need to convert the ignore tabel in an array to find an exact match of the word
     let lines = spellCheckIgnore.split("\n");
     wordsArray.forEach(word => {
-        // if the word contains "--" or single "-" we do not split it
-        if (word != '--' && word !="-") {
-            
-            // for some words we do not want to remove the "-", then we need to put it into the ignore list
-           // console.debug("word:", "'" + word + "'")
-            if (word.endsWith(".") && word.endsWith(",") && word.endsWith("!") && word.endsWith("?") && word.endsWith(")")) {
-                searchword = word.substr(0,(word.length) - 1)
-              //  console.debug("search:", searchword)
-
-            }
-            else {
-                searchword = word
-               // console.debug("search1:", searchword)
-            }
-            if (lines.indexOf(searchword) === -1) {
-               // console.debug("we have splitted:",searchword,word)
-                myword = word.split('-')
-                if (myword.length != 1) {
-                    word = myword[0]
-                }
-               // console.debug("splitted:",myword)
-            }
-            else {
-                if (word.includes("-")) {
-                    //console.debug("we are in spellcheck with -",word)
-
-                    //myword = word
-                    myword = word.split('-')
-                    if (myword.length != 1) {
-                        word = myword[0]
-                    myword = word;
-                    }
-                }
-            }
-        }
-        else {
-            myword = word
-        }
-        
         // do not convert the first word in sentence to lowercase
         if (counter != 0) {
             if (word != "") {
-                // if word contains all uppercase, then do not convert it to lowercase!!
-                allUpper = false;
-                if (word != ' ') {
-                    cleanword = removeTags(word)
-                    var upper = cleanword.toUpperCase();
-                   // console.debug("word counter !0:",cleanword,upper,(cleanword == upper))
-                    if ((cleanword == upper) == true) {
+                console.debug("word in the middle:",word)
+                // if the word contains "--" or single "-" we do not split it
+                if (word != "--" && word != "-") {
+                    // for some words we do not want to remove the "-", then we need to put it into the ignore list
+                    myword = word.split("-");
+                    console.debug("myword:", myword)
+                    if (myword.length == 1) {
+                        if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
+                            checkword = word.substr(0, word.length - 1)
+                        }
+                        else {
+                            checkword = word
+                        }
+                    }
+                    else {
+                        checkword = myword[0];
+                    }
+                    // check if the first letter of the word is a capital and it is not in the ignorelist
+                    allUpper = false;
+                    console.debug("checkword:", word, checkword)
+                    
+                    upper = checkword.toUpperCase();
+                   
+                    // console.debug("word counter !0:",cleanword,upper,(cleanword == upper))
+                    if ((checkword == upper) == true) {
                         allUpper = true;
                     }
-                }
-               
-                if (allUpper == false) {
-                    if (lines.indexOf(searchword) === -1) {
-                        if (myword.length == 1) {
-                            //capsArray.push(word[0].toLowerCase() + word.slice(1));
-                            if (word != '') {
+                    if (lines.indexOf(checkword) === -1) {
+                        if (allUpper != true) {
+                            if (startsWithCapital(word)) {
                                 capsArray.push(word[0].toLowerCase() + word.slice(1));
-                            }
-                        }
-                        else {
-                            if (myword != "--" && myword != '-') {
-                                if (word != '') {
-                                    capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
-                                }
-                            }
-                            else {
-                                console.debug("we have no uppercase:", word, myword)
-                                capsArray.push(myword);
-                            }
-                        }
-                        //console.debug("caps:", capsArray)
-                    }
-                    else {
-                        // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
-                        //if (myword.length == 1) {
-                            capsArray.push(word);
-                            console.debug("we have pushed:", capsArray)
-                       // }
-                       // else {
-                       //     if (!CheckUrl(translatedText, word)) {
-                               // capsArray.push(word + ' ' + myword[1])
-                         //       console.debug("myword:",myword)
-                        //        capsArray.push(word)
-                         //   }
-                        //    else {
-                               // capsArray.push(word)
-                       //     }
-                       // }
-                       // console.debug("caps:", capsArray)
-                    }
-
-                }
-
-                else {
-                    let lines = spellCheckIgnore.split("\n");
-                    if (lines.indexOf(word) === -1) {
-                        if (myword.length == 1) {
-                            capsArray.push(word);
-                        }
-                        else {
-                            if (spellCheckIgnore.indexOf(word) == -1) {
-                                if (myword != "--" && myword != '-') {
-                                    capsArray.push(word + '-' + myword[1])
-                                }
-                                else {
-                                    console.debug()
-                                    capsArray.push(myword)
-                                }
-                            }
-                            else {
-                                if (!CheckUrl(translatedText, word)) {
-                                    capsArray.push(word + ' ' + myword[1])
-                                }
-                            }
-                        }
-                       // console.debug("caps:", capsArray)
-                    }
-                    else {
-                        // console.debug("we are in spellcheck list, so it is a brandname do not add the hyphen", word)
-                        //console.debug("myword:",myword)
-                        if (typeof myword != 'undefined' && myword.length == 1) {
-                            console.debug("in spellcheck:", "'" + word + "'")
-                            capsArray.push(word);
-                        }
-                        else {
-                            if (!CheckUrl(translatedText, word)) {
-                                if (typeof myword != 'undefined') {
-                                    capsArray.push(word + ' ' + myword[1])
-                                }
-                                else {
-                                    capsArray.push(word)
-                                }
                             }
                             else {
                                 capsArray.push(word)
                             }
                         }
+                        else {
+                            capsArray.push(word)
+                            }
+                    }
+                    else {
+                        //it is in the ignore list so keep the first letter as capital
+                        capsArray.push(word)
                     }
                 }
+                else {
+                    // we have a single "--" or "-"
+                    capsArray.push(word)
+                }
             }
-            else {
-                capsArray.push(word)
-            }
-
         }
         else {
+            // it is the first word of the sentence
             // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
             // first letter of the word, but do nothing with it as it is empty
             if (word != "") {
-                if (typeof word[0] != "undefined") {
-                    let lines = spellCheckIgnore.split("\n");
-                    if (lines.indexOf(searchword) === -1) {
-                        if (myword.length == 1) {
-                            capsArray.push(word[0].toLowerCase() + word.slice(1));
-                        }
-                        else {
-                            capsArray.push(word[0].toLowerCase() + word.slice(1) + '-' + myword[1]);
-                        }
-                    }
-                    else {
-                        // console.debug("we are in spellcheck list for first word, so it is a brandname do not add the hyphen", word)
-                        if (typeof myword != 'undefined') {
-                            if (myword.length == 1) {
-                                capsArray.push(word);
-                            }
-                            else {
-                                if (!CheckUrl(translatedText, word)) {
-                                    capsArray.push(word + ' ' + myword[1])
-                                }
-                            }
-                        }
-                        else {
-                            capsArray.push(word)
-                        }
-                    }
+                //if (typeof word[0] != "undefined") {
+                let lines = spellCheckIgnore.split("\n");
+                console.debug("word at start:", word)
+                if (word.endsWith(".") || word.endsWith(",") || word.endsWith("!") || word.endsWith("?") || word.endsWith(")")) {
+                    searchword = word.substr(0, (word.length) - 1)
+                    console.debug("search:", searchword)
+
+                }
+                else {
+                    searchword = word
+                    // console.debug("search1:", searchword)
+                }
+                if (lines.indexOf(searchword) === -1) {
+                    //if (myword.length == 1) {
+                    capsArray.push(word[0].toLowerCase() + word.slice(1));
+                }
+                else {
+                     capsArray.push(word);
                 }
             }
-            else {
-                capsArray.push(word)
-            }
         }
-        counter++;
+     counter++;
     });
     converted = capsArray.join(' ');
     // Because now all sentences start with lowercase in longer texts, we need to put back the uppercase at the start of the sentence
@@ -3846,36 +3765,37 @@ async function processTransl(original, translatedText, language, record, rowId, 
             td_preview.innerValue = translatedText;
         }
         myRowId = record.getAttribute("row");
-        
-       // result =  validateEntry(language, textareaElem, "", "", myRowId, locale,record);
-       // console.debug(("result after validateEntry:",result))
-       //if (result.newText != "") {
-        //    let editorElem = document.querySelector("#editor-" + myRowId + " .original");
+        if (myRowId == null) {
+            myRowId =rowId
+        }
+        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record);
+        if (result.newText != "") {
+            let editorElem = document.querySelector("#editor-" + myRowId + " .original");
             //console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
-          //  let markerpresent = editorElem.querySelector("span.mark-explanation");
-           // if (markerpresent == null) {
-             //   let markdiv = document.createElement("div");
-               // markdiv.setAttribute("class", "marker");
-              //  let markspan1 = document.createElement("span");
-              //  let markspan2 = document.createElement("span");
-              //  markspan1.setAttribute("class", "mark-devider");
-                // markspan1.style.color = "blue";
-                 // markspan2.setAttribute("class", "mark-explanation");
-               // markdiv.appendChild(markspan1);
-               // markdiv.appendChild(markspan2);
-               // editorElem.appendChild(markdiv);
-               // markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-               // markspan2.innerHTML = result.newText;
-           // }
-           //else {
-            //    if (markerpresent != null) {
-                   // markerpresent.innerHTML = result.newText;
-             //   }
-              //  else { console.debug("markerpresent not found")}
-              // }
+            let markerpresent = editorElem.querySelector("span.mark-explanation");
+            if (markerpresent == null) {
+                let markdiv = document.createElement("div");
+                markdiv.setAttribute("class", "marker");
+                let markspan1 = document.createElement("span");
+                let markspan2 = document.createElement("span");
+                markspan1.setAttribute("class", "mark-devider");
+                markspan1.style.color = "blue";
+                markspan2.setAttribute("class", "mark-explanation");
+                markdiv.appendChild(markspan1);
+                markdiv.appendChild(markspan2);
+                editorElem.appendChild(markdiv);
+                markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+                markspan2.innerHTML = result.newText;
+            }
+           else {
+                if (markerpresent != null) {
+                    markerpresent.innerHTML = result.newText;
+                }
+                else { console.debug("markerpresent not found")}
+               }
        
-         //   } 
+          } 
     }
     else {
         // PSS 09-04-2021 added populating plural text

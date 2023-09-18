@@ -32,7 +32,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
    // console.debug("current in deepl:", deepLcurrent)
     prevstate = deepLcurrent.innerText;
-    //console.debug("Original:", originalPreProcessed)
+    console.debug("Original preprocessed:", originalPreProcessed)
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
@@ -86,7 +86,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 if (typeof data.translations != 'undefined') {
                    // console.debug("deepl result complete:",data.translations)
                     translatedText = data.translations[0].text;
-                   // console.debug("deepl result", translatedText, deepLcurrent)
+                    console.debug("deepl result", translatedText)
 
                     translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
                   //  console.debug("deepl resultaat:", translatedText, deepLcurrent,convertToLower)

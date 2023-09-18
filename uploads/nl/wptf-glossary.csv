@@ -1,3 +1,5 @@
+Block,Blok
+block,blok
 Box,box
 box,box
 Emails,e-mails
@@ -17,6 +19,8 @@ Hero,Hero
 hero,hero
 Item,Item
 item,item
+Keys,Sleutels
+Key,sleutel
 Layouts,Lay-outs
 Layout,lay-out
 layout,lay-out
@@ -26,6 +30,8 @@ Padding,padding
 padding,padding
 Radius,Radius
 radius,radius
+Ratings,Waarderingen
+ratings,waarderingen
 Rating,Waardering
 rating,waardering
 Review,Beoordeling

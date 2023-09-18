@@ -1579,7 +1579,8 @@ async function checkbuttonClick(event) {
             }
                
             if (typeof textareaElem != "null") {
-                result = validateEntry('nl', textareaElem, "", "", rowId, "nl");
+                // we need to use await otherwise there is not result.newText
+                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl");
                 if (result.newText != "") {
                     let editorElem = document.querySelector("#editor-" + rowId + " .original");
                     //19-02-2023 PSS we do not add the marker twice, but update it if present
@@ -1646,6 +1647,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var imgsrc;
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
+    current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof rowId == "undefined") {
         let rowId = textareaElem.parentElement.parentElement.parentElement
            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
@@ -1666,15 +1668,17 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         if (result.newText != "" && typeof result.newText != "undefined") {
             if (showName != true) {
                 let markerimage = imgsrc + "/../img/warning-marker.png";
-                originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
-                let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
-                let markimage = document.createElement("img");
-                markimage.src = markerimage;
-                markdiv.appendChild(markimage)
-                let markspan = document.createElement("span");
-                markspan.setAttribute("class", "mark-tooltiptext");
-                markdiv.appendChild(markspan);
-                markspan.innerHTML = result.newText;
+                if (current.innerText != "current") {
+                    originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
+                    let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+                    let markimage = document.createElement("img");
+                    markimage.src = markerimage;
+                    markdiv.appendChild(markimage)
+                    let markspan = document.createElement("span");
+                    markspan.setAttribute("class", "mark-tooltiptext");
+                    markdiv.appendChild(markspan);
+                    markspan.innerHTML = result.newText;
+                }
             }
         }
     }
@@ -1689,7 +1693,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     // we need to take care that the save button is not added twice
     //myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     // pss 12-10-2023 this one needs to be improved as we now have the record containing the editor details
-    current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
+    //current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof checkElem == "object") {
         if (SavelocalButton == null) {
             if (!is_pte) {
@@ -1722,8 +1726,9 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     let currstring = "";
-    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount,currstring,current,record);
-    let row = rowId.split("-")[0];
+    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, current.innerText, record);
+    
+        let row = rowId.split("-")[0];
     
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
@@ -1736,7 +1741,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
         if (current.innerText != 'untranslated') {
             
-            fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName);
+            fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText);
         }
     }
 }
@@ -1804,14 +1809,14 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
         }
     }
 }
-
+                                          
 async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring,current,record) {												   	  
     //var current;
     var SavelocalButton;
     var separator1;
     var newtitle='';
     var headertitle = '';
-    headerElem.title = "";
+    //headerElem.title = "";
     var panelTransTitle = '';
     var panelTransDiv;
     var missingVerbsButton;
@@ -1823,11 +1828,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
        // console.debug("current in updateElementStyle:",rowId,current)
         // 05-07-2023 PSS corrected this to prevent error when innerText is not found
         if (current != null) {
-            //console.debug("in updateElementStyle:",await current.innerText, await current.value)
-            current = await current.innerText;
+           // current = current.innerText;
             if (typeof current == 'string') {
                 if (current == 'untranslated') {
-                   // console.debug("current is null", current)
                     current = 'Empty';
                 }
                 if (current == 'current') {
@@ -2116,7 +2119,7 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old,currstring,current) {
+function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
     if (originalElem != undefined) {
@@ -2148,35 +2151,38 @@ function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old,currstring
 function addCheckButton(rowId, checkElem, lineNo) {
     //console.debug("addCeckButton!", rowId, checkElem, lineNo)
     var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
-    let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
-    if (SavelocalButton == null) {
-        let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
-    }
-    if (checkElem == null) {
-        separator1 = document.createElement("div");
-        separator1.setAttribute("class", "checkElem_save");
-        currentcel.appendChild(separator1);
-        SavelocalButton = document.createElement("button");
-        SavelocalButton.id = "tf-save-button";
-        SavelocalButton.className = "tf-save-button";
-        SavelocalButton.innerText = ("Curr");
-        SavelocalButton.onclick = savetranslateEntryClicked;
-        currentcel.appendChild(SavelocalButton);
-
-    }
-    else {
-        //checkElem is present
+    // we came from translate entry, so there is not save button
+        let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         if (SavelocalButton == null) {
-            if (currentcel != null) {
+            let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+        }
+        if (currentcel != null) {
+           if (checkElem == null) {
+               separator1 = document.createElement("div");
+               separator1.setAttribute("class", "checkElem_save");
+               currentcel.appendChild(separator1);
                SavelocalButton = document.createElement("button");
                SavelocalButton.id = "tf-save-button";
                SavelocalButton.className = "tf-save-button";
-               SavelocalButton.innerText = ("Empt");
+               SavelocalButton.innerText = ("Curr");
                SavelocalButton.onclick = savetranslateEntryClicked;
                currentcel.appendChild(SavelocalButton);
-            }
+
+           }
+           else {
+            //checkElem is present
+               if (SavelocalButton == null) {
+                 if (currentcel != null) {
+                    SavelocalButton = document.createElement("button");
+                    SavelocalButton.id = "tf-save-button";
+                    SavelocalButton.className = "tf-save-button";
+                    SavelocalButton.innerText = ("Empt");
+                    SavelocalButton.onclick = savetranslateEntryClicked;
+                    currentcel.appendChild(SavelocalButton);
+                 }
+               }
+           }
         }
-    }
     return { SavelocalButton };
 }
 
@@ -2581,7 +2587,8 @@ var stringToHTML = function (str) {
 };
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(checkElem, result, url, single, originalElem, row, rowId,showName) {
+async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current) {
+    var mycurrent = current;
         // 30-06-2021 PSS added fetch status from local storage
         //chrome.storage.sync
           //  .get(
@@ -2652,11 +2659,11 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                            else {
                                old = "";
                            }
-                           if (tbodyRowCount > 2 && single == "False") {
-                              updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring);
+                        if (tbodyRowCount > 2 && single == "False") {
+                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent);
                            }
                            else if (tbodyRowCount > 2 && single == "True") {
-                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring);
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent);
                                //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                                //window.open(url, "_blank", windowFeatures);
                            }
