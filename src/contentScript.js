@@ -1739,9 +1739,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             single = "False";
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
-        if (current.innerText != 'untranslated') {
-            
-            fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText);
+        if (current.innerText != 'untranslated') {  
+           fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText);
         }
     }
 }
@@ -1755,7 +1754,8 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
-    result = validate(language, originalText, translation, locale,record);
+    result = validate(language, originalText, translation, locale, record);
+    console.debug("result validate:",result,translation)
     updateStyle(textareaElem, result, newurl, showHistory, "True", "", rowId,record);
     return result;
 }

@@ -412,10 +412,10 @@ function convert_lower(text, spellCheckIgnore) {
     var myword;
     // if the word is found in spellCheckIgnore, then the uppercasing should not be applied
     // Sometimes the word contains a '-', then we only need to find the first part
-    console.debug("text:", "'" + text + "'")
+    //console.debug("text:", "'" + text + "'")
     text = text.trim()
     let wordsArray = text.split(' ')
-    console.debug("wordsArray after split:",wordsArray)
+    //console.debug("wordsArray after split:",wordsArray)
     let capsArray = []
     var counter = 0;
     //var myword = "";
@@ -430,12 +430,12 @@ function convert_lower(text, spellCheckIgnore) {
         // do not convert the first word in sentence to lowercase
         if (counter != 0) {
             if (word != "") {
-                console.debug("word in the middle:",word)
+                //console.debug("word in the middle:",word)
                 // if the word contains "--" or single "-" we do not split it
                 if (word != "--" && word != "-") {
                     // for some words we do not want to remove the "-", then we need to put it into the ignore list
                     myword = word.split("-");
-                    console.debug("myword:", myword)
+                   // console.debug("myword:", myword)
                     if (myword.length == 1) {
                         if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
                             checkword = word.substr(0, word.length - 1)
@@ -449,7 +449,7 @@ function convert_lower(text, spellCheckIgnore) {
                     }
                     // check if the first letter of the word is a capital and it is not in the ignorelist
                     allUpper = false;
-                    console.debug("checkword:", word, checkword)
+                   // console.debug("checkword:", word, checkword)
                     
                     upper = checkword.toUpperCase();
                    
@@ -488,18 +488,13 @@ function convert_lower(text, spellCheckIgnore) {
             if (word != "") {
                 //if (typeof word[0] != "undefined") {
                 let lines = spellCheckIgnore.split("\n");
-                console.debug("word at start:", word)
                 if (word.endsWith(".") || word.endsWith(",") || word.endsWith("!") || word.endsWith("?") || word.endsWith(")")) {
                     searchword = word.substr(0, (word.length) - 1)
-                    console.debug("search:", searchword)
-
                 }
                 else {
                     searchword = word
-                    // console.debug("search1:", searchword)
                 }
                 if (lines.indexOf(searchword) === -1) {
-                    //if (myword.length == 1) {
                     capsArray.push(word[0].toLowerCase() + word.slice(1));
                 }
                 else {
@@ -2428,7 +2423,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var preview = "";
     var pretrans;
     var timeout = 0;
-    var vartime = 500;
+    var vartime = 400;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -2490,8 +2485,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     if (currec != null) {
                         var current = await currec.querySelector("span.panel-header__bubble");
                         var prevstate = current.innerText;
-                    }
-                   
+                    }  
                     let original = record.querySelector("div.editor-panel__left div.panel-content span.original").innerText;
                     // 14-08-2021 PSS we need to put the status back of the label after translating
 
@@ -2659,8 +2653,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 var current = currec.querySelector("span.panel-header__bubble");
                             }
                             // console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
-                            //validate(destlang, textareaElem, original, locale);
-                           // await validateEntry(destlang, textareaElem, "", "", row);
+                            // if it is a local translation we still need to set the quality of the translation!!
+                            await validateEntry(destlang, textareaElem, "", "", row, locale, record);
                             // PSS 10-05-2021 added populating the preview field issue #68
                             // Fetch the first field Singular
                             let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
@@ -2688,7 +2682,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         myspan1.className = "translation-text";
                                         li1.appendChild(myspan1);
                                         myspan1.appendChild(document.createTextNode(translatedText));
-
 
                                         // Also create the second li
                                         var li2 = document.createElement("li");
@@ -2737,8 +2730,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                                 rowchecked.checked = true;
                                             }
                                         }
-                                        await mark_as_translated(row);
-                                       
+                                        await mark_as_translated(row);   
                                     }
                                 } else {
                                     // if it is as single with local then we need also update the preview
@@ -2793,7 +2785,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             if (checkplural != null) {
                                 transtype = "plural";
                                 plural_line = "2";
-
                                 let plural = checkplural.innerText;
                                // console.debug("Plural: ", plural_line, plural)
                                 let pretrans =  await findTransline(plural, destlang);
@@ -2929,8 +2920,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         current.innerText = "transFill";
                                         current.value = "transFill";
                                     }
-
-                                   //await validateEntry(destlang, textareaElem1, "", "", row);
                                 }
                                 preview = document.querySelector(`#preview-${row}`);
                                 rowchecked = preview.querySelector("td input");
@@ -3768,8 +3757,9 @@ async function processTransl(original, translatedText, language, record, rowId, 
         if (myRowId == null) {
             myRowId =rowId
         }
-        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record);
-        if (result.newText != "") {
+          result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record);
+       
+      //  if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + myRowId + " .original");
             //console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
@@ -3786,16 +3776,16 @@ async function processTransl(original, translatedText, language, record, rowId, 
                 markdiv.appendChild(markspan2);
                 editorElem.appendChild(markdiv);
                 markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-                markspan2.innerHTML = result.newText;
+               // markspan2.innerHTML = result.newText;
             }
            else {
                 if (markerpresent != null) {
-                    markerpresent.innerHTML = result.newText;
+                  //  markerpresent.innerHTML = result.newText;
                 }
                 else { console.debug("markerpresent not found")}
                }
        
-          } 
+        //  } 
     }
     else {
         // PSS 09-04-2021 added populating plural text
@@ -3924,7 +3914,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
     preview = document.querySelector("#preview-" + myRowId)
     // if we do not have a preview, then it is not necessary to mark the quality
     if (preview != null && preview !='undefined') {
-        validateEntry(language, textareaElem1, "", "", myRowId, locale, record)
+       // await validateEntry(language, textareaElem1, "", "", myRowId, locale, record)
        preview.scrollIntoView({ block: "end" });
     }
     return "OK";
