@@ -45,7 +45,7 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
                              }
                              else {
                                  let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-red`);
-                                 console.debug("load:", loadGlossButton)
+                                 //console.debug("load:", loadGlossButton)
                                  if (loadGlossButton != null) {
                                      loadGlossButton.classList.remove("LoadGloss-button-red");
                                      loadGlossButton.classList.add("LoadGloss-button-green");
@@ -190,7 +190,7 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                     if (glossaryId != 'undefined') {
                       //console.debug("glossaries not undefined")
                         //let lastElement = arry[arry.length - 1];
-                        console.debug("last:", glossaryId[0])
+                       // console.debug("last:", glossaryId[0])
                         var to_delete = glossaryId[0].glossary_id
                         cuteAlert({
                             type: "question",
@@ -211,7 +211,18 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                                         loadGlossButton.classList.add("LoadGloss-button-red");
                                     }
                                 }
-                                messageBox("info", "Glossary ID: <br>" + to_delete + "<br>deleted ");
+                                cuteAlert({
+                                    type: "question",
+                                    title: "Glossary Id",
+                                    message: "Glossary ID below is deleted<br> " + to_delete + "<br>It is necessary to refresh the window<br>Do you want to refresh?",
+                                    confirmText: "Confirm",
+                                    cancelText: "Cancel",
+                                    myWindow: currWindow
+                                }).then(async (e) => {
+                                    if (e == ("confirm")) {
+                                        location.reload()
+                                    }
+                                });      
                             } else {
                                messageBox("info", "Glossary ID: <br>" + to_delete + "<br>not deleted ");
                             }
