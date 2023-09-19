@@ -189,12 +189,9 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                     var glossaryId = data.glossaries
                     if (glossaryId != 'undefined') {
                       //console.debug("glossaries not undefined")
-                        if (glossaryId[1] != null) {
-                            var to_delete = glossaryId[1].glossary_id
-                        }
-                        else {
-                            to_delete = glossaryId[0].glossary_id
-                        }
+                        //let lastElement = arry[arry.length - 1];
+                        console.debug("last:", glossaryId[0])
+                        var to_delete = glossaryId[0].glossary_id
                         cuteAlert({
                             type: "question",
                             title: "Glossary Id",
@@ -214,7 +211,6 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                                         loadGlossButton.classList.add("LoadGloss-button-red");
                                     }
                                 }
-
                                 messageBox("info", "Glossary ID: <br>" + to_delete + "<br>deleted ");
                             } else {
                                messageBox("info", "Glossary ID: <br>" + to_delete + "<br>not deleted ");
@@ -300,7 +296,7 @@ async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
         if (response.ok) {
             let glossaryId = data
             currWindow = window.self;
-            console.debug("glossarie deleted:")
+            console.debug("glossarie deleted:", glossary_id)
             messageBox("info", "Glossary ID: <br>" + glossary_id + "<br>deleted ");
             return Promise.resolve("OK");
         }
@@ -309,6 +305,7 @@ async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
         }
     })
         .catch(error => {
+            console.debug("error:",error)
             if (error[2] == "400") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 //          console.debug("glossary value is not supported")

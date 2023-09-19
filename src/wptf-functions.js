@@ -333,7 +333,13 @@ function messageBox(type, message) {
         buttonText: "OK",
         myWindow: currWindow,
         closeStyle: "alert-close",
-    });
+    }).then ((res) => {
+        //console.debug("res:", res)
+        if (res = "ok") {
+           location.reload()
+        }
+    })
+    
 }
 
 function sleep(milliseconds) {

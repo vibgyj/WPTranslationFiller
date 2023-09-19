@@ -1755,7 +1755,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
         .querySelector("span.original-raw");
     let originalText = original.innerText;
     result = validate(language, originalText, translation, locale, record);
-    console.debug("result validate:",result,translation)
+    //console.debug("result validate:",result,translation)
     updateStyle(textareaElem, result, newurl, showHistory, "True", "", rowId,record);
     return result;
 }
