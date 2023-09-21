@@ -82,7 +82,7 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
-const markupRegex = new RegExp(/&#[0-9]+;|&[a-z]+;|<a[^>]*>|<ul>|<li>/g);
+const markupRegex = new RegExp(/&#[0-9]+;|&[a-z]+;|<a[^>]*>|<ul>|<li>|<\/a>/g);
  
 function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
@@ -114,6 +114,7 @@ function preProcessOriginal(original, preverbs, translator) {
         //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
         original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
        // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
+
         const matches = original.matchAll(placeHolderRegex);
         index = 0;
         for (const match of matches) {
@@ -124,7 +125,6 @@ function preProcessOriginal(original, preverbs, translator) {
         const markupmatches = original.matchAll(markupRegex)
         index = 1;
         for (const markupmatch of markupmatches) {
-            console.debug("mark:", markupmatch[0])
             original = original.replace(markupmatch[0], `{mymarkvar ${index}}`);
             index++;
         }
@@ -312,7 +312,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
                 // PSS solution for issue #291
                 //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
-                replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+            replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+           // console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                // console.debug("replaceverb:", replaceVerb[i][1])
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
@@ -576,13 +577,12 @@ function applySentenceCase(str) {
 
 function CheckUrl(translated, searchword) {
     // check if the text contains an URL
-    if (!translated.includes("target") && !translated.includes("span")){
-        const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
+    // not only check http strings but also links starting with <a
+        const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a/ig);
         if (mymatches != null) {
             for (const match of mymatches) {
                 foundmysearch = match.includes(searchword);
                 if (foundmysearch) {
-                    console.debug("in url:", searchword)
                     foundmysearch = true
                     break;
                 }
@@ -591,10 +591,6 @@ function CheckUrl(translated, searchword) {
         else {
             foundmysearch = false;
         }
-    }
-    else {
-            foundmysearch = false;
-    }
     return foundmysearch;
 }
 

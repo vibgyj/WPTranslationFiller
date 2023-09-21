@@ -37,25 +37,24 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
     //console.debug("glossary:",deeplGlossary)
-    let DeepLignoretags = ["<p>","<ul>","<li>"]
     if (language == "RO") {
         link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
     }
     else {
         if (!formal) {
             if (deeplGlossary == null) {
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0&ignore_tags=" + DeepLignoretags
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0"
             }
             else {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0&ignore_tags="+DeepLignoretags
+            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0"
             }
         }
         else {
              if (deeplGlossary == null){
-                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines&outline_detection=0&ignore_tags=" + DeepLignoretags
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines&outline_detection=0"
              }
              else {
-                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&&split_sentences=nonewlines&outline_detection=0&ignore_tags=" + DeepLignoretags
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&&split_sentences=nonewlines&outline_detection=0"
              }
         }
     }

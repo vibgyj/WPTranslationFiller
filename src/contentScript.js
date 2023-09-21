@@ -1865,7 +1865,13 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
            // return;
         //}
         if (result.wordCount == 0) {
-            current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerText;
+            let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+            current = h.querySelector("span.panel-header__bubble");
+           // current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+            if (current != null) {
+                current = current.innerText
+            }
+
         }
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
