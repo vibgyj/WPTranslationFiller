@@ -32,30 +32,30 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
    // console.debug("current in deepl:", deepLcurrent)
     prevstate = deepLcurrent.innerText;
-    //console.debug("Original preprocessed:", originalPreProcessed)
+    console.debug("Original preprocessed:", originalPreProcessed)
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
     //console.debug("glossary:",deeplGlossary)
+    let DeepLignoretags = ["<p>","<ul>","<li>"]
     if (language == "RO") {
-        link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+        link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
     }
     else {
         if (!formal) {
             if (deeplGlossary == null) {
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
-
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0&ignore_tags=" + DeepLignoretags
             }
             else {
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=en" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
+            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0&ignore_tags="+DeepLignoretags
             }
         }
         else {
              if (deeplGlossary == null){
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines&outline_detection=0&ignore_tags=" + DeepLignoretags
              }
              else {
-                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines&non_splitting_tags=<x>"
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&&split_sentences=nonewlines&outline_detection=0&ignore_tags=" + DeepLignoretags
              }
         }
     }
@@ -89,7 +89,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                     //console.debug("deepl result", translatedText)
 
                     translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
-                  //  console.debug("deepl resultaat:", translatedText, deepLcurrent,convertToLower)
+                    console.debug("deepl resultaat:", translatedText, deepLcurrent,convertToLower)
                   //  console.debug("deepl preprocessed:",originalPreProcessed,record)
 
                     deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);

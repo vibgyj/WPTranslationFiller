@@ -81,7 +81,11 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+// the below regex is to prevent DeepL to crash or make no sence of the translation
+const markupRegex = new RegExp(/&#[0-9]+;|&[a-z]+;|<a[^>]*>|<ul>|<li>/g);
+ 
 function preProcessOriginal(original, preverbs, translator) {
+    var index = 0;
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
             if (!CheckUrl(original, preverbs[i][0])) {
@@ -91,7 +95,7 @@ function preProcessOriginal(original, preverbs, translator) {
     // 15-05-2021 PSS added check for translator
     if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
-        let index = 0;
+        index = 0;
         for (const match of matches) {
             original = original.replace(match[0], `[${index}]`);
 
@@ -102,6 +106,7 @@ function preProcessOriginal(original, preverbs, translator) {
         }
     }
     else if (translator == "deepl") {
+
         // Deepl does remove crlf so we need to replace them before sending them to the API
         //original = original.replaceAll('\r', "mylinefeed");
         original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
@@ -109,13 +114,22 @@ function preProcessOriginal(original, preverbs, translator) {
         //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
         original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
        // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
-        //original = original.replaceAll(/(;)/gm, "<x>semicolon</x>");
         const matches = original.matchAll(placeHolderRegex);
-        let index = 0;
+        index = 0;
         for (const match of matches) {
-            original = original.replace(match[0], `<x>${index}</x>`);
+            original = original.replace(match[0], `{replacevar ${index}}`);
             index++;
         }
+        // We need to remove markup that contains & and ; otherwise translation will fail
+        const markupmatches = original.matchAll(markupRegex)
+        console.debug("matches:", markupmatches)
+        index = 1;
+        for (const markupmatch of markupmatches) {
+            console.debug("mark:", markupmatch[0])
+            original = original.replace(markupmatch[0], `{markvar ${index}}`);
+            index++;
+        }
+       
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.matchAll(linkRegex);
         index = 1;
@@ -127,14 +141,14 @@ function preProcessOriginal(original, preverbs, translator) {
     }
     else if (translator == "microsoft") {
         // const matches = original.matchAll(placeHolderRegex);
-        let index = 0;
+        index = 0;
         if (index == 0) {
             //  console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
     }
     if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
-        let index = 1;
+        index = 1;
         for (const match of matches) {
             original = original.replace(match[0], `{var ${index}}`);
             original = original.replace('.{', '. {');
@@ -159,6 +173,7 @@ function startsWithCapital(word) {
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore,locale) {
     var pos;
+    var index = 0;
     //console.debug("before posrepl: '"+ translatedText +"'")
     let debug = false;
     if (debug == true) {
@@ -178,25 +193,34 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
-        let index = 0;
+        index = 0;
         for (const match of matches) {
             translatedText = translatedText.replaceAll(`{${index}}`, match[0]);
             index++;
         }
     }
     else if (translator == "deepl") {
+        
         const matches = original.matchAll(placeHolderRegex);
-        let index = 0;
+        index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
+            translatedText = translatedText.replace(`{replacevar ${index}}`, match[0]);
+            index++;
+        }
+        // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
+        const markupmatches = original.matchAll(markupRegex)
+        index = 1;
+        for (const markupmatch of markupmatches) {
+            translatedText = translatedText.replace(`{markvar ${index}}`, markupmatch[0]);
             index++;
         }
         // Deepl does remove crlf so we need to replace them after sending them to the API
-        translatedText = translatedText.replaceAll("<x>mylinefeed</x> ", "\n");
         translatedText = translatedText.replaceAll("<x>mylinefeed</x>", "\n");
+       // translatedText = translatedText.replaceAll("<x>mylinefeed</x>", "\n");
         // Deepl does remove tabs so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("<x>mytb</x>", "\t");
-        //translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
+        translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
+
         const linkmatches = original.matchAll(linkRegex);
         index = 1;
         for (const match of linkmatches) {
@@ -205,10 +229,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             //translatedText = translatedText.replace(`var ${index}'`, match[0]);
             index++;
         }
+        
     }
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
-        let index = 1;
+        index = 1;
         for (const match of matches) {
             //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
             translatedText = translatedText.replace(`{var ${index}}`, match[0]);
@@ -289,7 +314,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 // PSS solution for issue #291
                 //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
-                if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+               // console.debug("replaceverb:", replaceVerb[i][1])
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
         }
@@ -551,17 +577,24 @@ function applySentenceCase(str) {
 
 function CheckUrl(translated, searchword) {
     // check if the text contains an URL
-    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
-    if (mymatches != null) {
-        for (const match of mymatches) {
-            foundmysearch = match.includes(searchword);
-            if (foundmysearch) {
-                break;
+    if (!translated.includes("target") && !translated.includes("span")){
+        const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]/ig);
+        if (mymatches != null) {
+            for (const match of mymatches) {
+                foundmysearch = match.includes(searchword);
+                if (foundmysearch) {
+                    console.debug("in url:", searchword)
+                    foundmysearch = true
+                    break;
+                }
             }
+        }
+        else {
+            foundmysearch = false;
         }
     }
     else {
-        foundmysearch = false;
+            foundmysearch = false;
     }
     return foundmysearch;
 }
@@ -3798,7 +3831,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         }
           result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record);
        
-      //  if (result.newText != "") {
+        if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + myRowId + " .original");
             //console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
@@ -3815,16 +3848,16 @@ async function processTransl(original, translatedText, language, record, rowId, 
                 markdiv.appendChild(markspan2);
                 editorElem.appendChild(markdiv);
                 markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-               // markspan2.innerHTML = result.newText;
+                markspan2.innerHTML = result.newText;
             }
            else {
                 if (markerpresent != null) {
-                  //  markerpresent.innerHTML = result.newText;
+                    markerpresent.innerHTML = result.newText;
                 }
                 else { console.debug("markerpresent not found")}
                }
        
-        //  } 
+        } 
     }
     else {
         // PSS 09-04-2021 added populating plural text
