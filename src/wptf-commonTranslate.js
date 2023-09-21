@@ -122,11 +122,10 @@ function preProcessOriginal(original, preverbs, translator) {
         }
         // We need to remove markup that contains & and ; otherwise translation will fail
         const markupmatches = original.matchAll(markupRegex)
-        console.debug("matches:", markupmatches)
         index = 1;
         for (const markupmatch of markupmatches) {
             console.debug("mark:", markupmatch[0])
-            original = original.replace(markupmatch[0], `{markvar ${index}}`);
+            original = original.replace(markupmatch[0], `{mymarkvar ${index}}`);
             index++;
         }
        
@@ -211,7 +210,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const markupmatches = original.matchAll(markupRegex)
         index = 1;
         for (const markupmatch of markupmatches) {
-            translatedText = translatedText.replace(`{markvar ${index}}`, markupmatch[0]);
+            translatedText = translatedText.replace(`{mymarkvar ${index}}`, markupmatch[0]);
             index++;
         }
         // Deepl does remove crlf so we need to replace them after sending them to the API
