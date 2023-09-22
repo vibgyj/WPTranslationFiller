@@ -162,16 +162,18 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                     gloss += glossaryId[i].glossary_id + "<br>";
                     //console.debug("text:", gloss)
                 }
+                let lastId = glossaryId[glossaryId.length - 1]
+                console.debug("last:",lastId.glossary_id)
                cuteAlert({
                    type: "question",
                     title: "Glossary Id",
-                    message: "Glossaries found <br>" + gloss + "<br>Do you want to store this glossary ID?<br>" + glossaryId[0].glossary_id,
+                   message: "Glossaries found <br>" + gloss + "<br>Do you want to store this glossary ID?<br>" + lastId.glossary_id,
                     confirmText: "Confirm",
                     cancelText: "Cancel",
                     myWindow: currWindow
                 }).then(async (e) => {
                     if (e == ("confirm")) {
-                        localStorage.setItem('deeplGlossary', glossaryId[0].glossary_id);
+                        localStorage.setItem('deeplGlossary', lastId.glossary_id);
                         // We need to check if we have a glossary ID if button is red we need to alter it
                         let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-red`);
                         console.debug("load:", loadGlossButton)
@@ -179,9 +181,9 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                             loadGlossButton.classList.remove("LoadGloss-button-red");
                             loadGlossButton.classList.add("LoadGloss-button-green");
                         }
-                        messageBox("info", "Glossary ID: <br>" + glossaryId[0].glossary_id + "<br>saved ");
+                        messageBox("info", "Glossary ID: <br>" + lastId.glossary_id + "<br>saved ");
                     } else {
-                        messageBox("info", "Glossary ID: <br>" + glossaryId[0].glossary_id + "<br>not saved ");
+                        messageBox("info", "Glossary ID: <br>" + lastId.glossary_id + "<br>not saved ");
                     }
                    return data
                 }).then(data => {

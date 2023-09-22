@@ -88,7 +88,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                     console.debug("deepl result", translatedText)
 
                     translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
-                    console.debug("deepl resultaat:", translatedText, deepLcurrent,convertToLower)
+                    console.debug("deepl na postprocess:", translatedText, deepLcurrent,convertToLower)
                   //  console.debug("deepl preprocessed:",originalPreProcessed,record)
 
                     deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);

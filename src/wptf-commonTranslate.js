@@ -118,14 +118,14 @@ function preProcessOriginal(original, preverbs, translator) {
         const matches = original.matchAll(placeHolderRegex);
         index = 0;
         for (const match of matches) {
-            original = original.replace(match[0], `{replacevar ${index}}`);
+            original = original.replace(match[0], `{replacevar${index}}`);
             index++;
         }
         // We need to remove markup that contains & and ; otherwise translation will fail
         const markupmatches = original.matchAll(markupRegex)
         index = 1;
         for (const markupmatch of markupmatches) {
-            original = original.replace(markupmatch[0], `{mymarkvar ${index}}`);
+            original = original.replace(markupmatch[0], `{mymarkvar${index}}`);
             index++;
         }
        
@@ -133,7 +133,7 @@ function preProcessOriginal(original, preverbs, translator) {
         const linkmatches = original.matchAll(linkRegex);
         index = 1;
         for (const linkmatch of linkmatches) {
-            original = original.replace(linkmatch[0], `{linkvar ${index}}`);
+            original = original.replace(linkmatch[0], `{linkvar${index}}`);
             original = original.replace('.{', '. {');
             index++;
         }
@@ -203,14 +203,14 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replace(`{replacevar ${index}}`, match[0]);
+            translatedText = translatedText.replace(`{replacevar${index}}`, match[0]);
             index++;
         }
         // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
         const markupmatches = original.matchAll(markupRegex)
         index = 1;
         for (const markupmatch of markupmatches) {
-            translatedText = translatedText.replace(`{mymarkvar ${index}}`, markupmatch[0]);
+            translatedText = translatedText.replace(`{mymarkvar${index}}`, markupmatch[0]);
             index++;
         }
         // Deepl does remove crlf so we need to replace them after sending them to the API
@@ -224,7 +224,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         index = 1;
         for (const match of linkmatches) {
             //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
-            translatedText = translatedText.replace(`{linkvar ${index}}`, match[0]);
+            translatedText = translatedText.replace(`{linkvar${index}}`, match[0]);
             //translatedText = translatedText.replace(`var ${index}'`, match[0]);
             index++;
         }
@@ -355,9 +355,16 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     if (locale == "nl" || locale == "nl-be") {
         pos = translatedText.indexOf(": ");
         if (pos != -1) {
-            // if we find the semicolon, then determine next char after the blank
+            // if we find the semicolon, then determine next char after the blank, and check if the word after semicolon is not all capitalss
+            let allUpper = false;
+            upper = translatedText.substr(pos + 2, 2).toUpperCase();
+            if ((translatedText.substr(pos + 2, 2) == upper) == true) {
+                allUpper = true;
+            }
             let mychar = translatedText.substr(pos + 2, 1)
-            translatedText = translatedText.substring(0, pos + 2) + mychar.toLowerCase() + translatedText.substring(pos + 3);
+            if (allUpper != true) {
+                translatedText = translatedText.substring(0, pos + 2) + mychar.toLowerCase() + translatedText.substring(pos + 3);
+            }
         }
     }
     if (locale == "nl" || locale == "nl-be") {
@@ -578,7 +585,7 @@ function applySentenceCase(str) {
 function CheckUrl(translated, searchword) {
     // check if the text contains an URL
     // not only check http strings but also links starting with <a
-        const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a/ig);
+    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>/ig);
         if (mymatches != null) {
             for (const match of mymatches) {
                 foundmysearch = match.includes(searchword);
