@@ -62,7 +62,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     //console.debug("deepl link:",link)
     const response = await fetch(link)
         .then(async response => {
-            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const isJson = await response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
             //console.debug("response:", data);
             // check for error response
@@ -87,11 +87,11 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                     translatedText = data.translations[0].text;
                     console.debug("deepl result", translatedText)
 
-                    translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
+                    translatedText =  await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
                     console.debug("deepl na postprocess:", translatedText, deepLcurrent,convertToLower)
                   //  console.debug("deepl preprocessed:",originalPreProcessed,record)
 
-                    deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);
+                    deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);
                     return Promise.resolve("OK");
                 }
                 else {

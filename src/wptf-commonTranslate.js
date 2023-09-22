@@ -82,7 +82,7 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
-const markupRegex = new RegExp(/&#[0-9]+;|&[a-z]+;|<a[^>]*>|<ul>|<li>|<\/a>/g);
+const markupRegex = new RegExp(/<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
  
 function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
@@ -95,14 +95,13 @@ function preProcessOriginal(original, preverbs, translator) {
     // 15-05-2021 PSS added check for translator
     if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
-        index = 0;
-        for (const match of matches) {
-            original = original.replace(match[0], `[${index}]`);
+        if (matches != null) {
+            index = 0;
+            for (const match of matches) {
+                original = original.replace(match, `[${index}]`);
 
-            index++;
-        }
-        if (index == 0) {
-            // console.debug("preProcessOriginal no placeholders found index === 0 ");
+                index++;
+            }
         }
     }
     else if (translator == "deepl") {
@@ -116,27 +115,35 @@ function preProcessOriginal(original, preverbs, translator) {
        // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
 
         const matches = original.matchAll(placeHolderRegex);
-        index = 0;
-        for (const match of matches) {
-            original = original.replace(match[0], `{replacevar${index}}`);
-            index++;
+        if (matches != null) {
+            index = 0;
+            for (const match of matches) {
+                original = original.replace(match, `{replacevar${index}}`);
+                index++;
+            }
         }
         // We need to remove markup that contains & and ; otherwise translation will fail
-        const markupmatches = original.matchAll(markupRegex)
-        index = 1;
-        for (const markupmatch of markupmatches) {
-            original = original.replace(markupmatch[0], `{mymarkvar${index}}`);
-            index++;
+        let markupmatches = original.match(markupRegex)
+        if (markupmatches != null) {
+            index = 1;
+            for (const markupmatch of markupmatches) {
+                console.debug("before:",markupmatch)
+                original = original.replace(markupmatch, `{mymark_var${index}}`);
+                index++;
+            }
+        }
+        console.debug("original:",original)
+        // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
+        const linkmatches = original.match(linkRegex);
+        if (linkmatches != null) {
+            index = 1;
+            for (const linkmatch of linkmatches) {
+                original = original.replace(linkmatch, `{linkvar${index}}`);
+                original = original.replace('.{', '. {');
+                index++;
+            }
         }
        
-        // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-        const linkmatches = original.matchAll(linkRegex);
-        index = 1;
-        for (const linkmatch of linkmatches) {
-            original = original.replace(linkmatch[0], `{linkvar${index}}`);
-            original = original.replace('.{', '. {');
-            index++;
-        }
     }
     else if (translator == "microsoft") {
         // const matches = original.matchAll(placeHolderRegex);
@@ -147,18 +154,19 @@ function preProcessOriginal(original, preverbs, translator) {
     }
     if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
-        index = 1;
-        for (const match of matches) {
-            original = original.replace(match[0], `{var ${index}}`);
-            original = original.replace('.{', '. {');
-            index++;
+        if (matches != null) {
+            index = 1;
+            for (const match of matches) {
+                original = original.replace(match, `{var ${index}}`);
+                original = original.replace('.{', '. {');
+                index++;
+            }
         }
-
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-        const linkmatches = original.matchAll(linkRegex);
+        const linkmatches = original.match(linkRegex);
         index = 1;
         for (const linkmatch of linkmatches) {
-            original = original.replace(linkmatch[0], `{linkvar ${index}}`);
+            original = original.replace(linkmatch, `{linkvar ${index}}`);
             original = original.replace('.{', '. {');
             index++;
         }
@@ -192,27 +200,34 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
-        index = 0;
-        for (const match of matches) {
-            translatedText = translatedText.replaceAll(`{${index}}`, match[0]);
-            index++;
+        if (matches != null) {
+            index = 0;
+            for (const match of matches) {
+                translatedText = translatedText.replaceAll(`{${index}}`, match);
+                index++;
+            }
         }
     }
     else if (translator == "deepl") {
         
         const matches = original.matchAll(placeHolderRegex);
-        index = 0;
-        for (const match of matches) {
-            translatedText = translatedText.replace(`{replacevar${index}}`, match[0]);
-            index++;
+        if (matches != null) {
+            index = 0;
+            for (const match of matches) {
+                translatedText = translatedText.replace(`{replacevar${index}}`, match);
+                index++;
+            }
         }
         // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
-        const markupmatches = original.matchAll(markupRegex)
+        const markupmatches = original.match(markupRegex);
         index = 1;
-        for (const markupmatch of markupmatches) {
-            translatedText = translatedText.replace(`{mymarkvar${index}}`, markupmatch[0]);
-            index++;
+        if (markupmatches !=null ) {
+            for (const markupmatch of markupmatches) {
+                translatedText = translatedText.replace(`{mymark_var${index}}`, markupmatch);
+                index++;
+            }
         }
+        
         // Deepl does remove crlf so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("<x>mylinefeed</x>", "\n");
        // translatedText = translatedText.replaceAll("<x>mylinefeed</x>", "\n");
@@ -220,13 +235,15 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replaceAll("<x>mytb</x>", "\t");
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
 
-        const linkmatches = original.matchAll(linkRegex);
-        index = 1;
-        for (const match of linkmatches) {
-            //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
-            translatedText = translatedText.replace(`{linkvar${index}}`, match[0]);
-            //translatedText = translatedText.replace(`var ${index}'`, match[0]);
-            index++;
+        const linkmatches = original.match(linkRegex);
+        if (linkmatches != null) {
+            index = 1;
+            for (const match of linkmatches) {
+                //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
+                translatedText = translatedText.replace(`{linkvar${index}}`, match);
+                //translatedText = translatedText.replace(`var ${index}'`, match[0]);
+                index++;
+            }
         }
         
     }
@@ -235,7 +252,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         index = 1;
         for (const match of matches) {
             //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
-            translatedText = translatedText.replace(`{var ${index}}`, match[0]);
+            translatedText = translatedText.replace(`{var ${index}}`, match);
             //translatedText = translatedText.replace(`var ${index}'`, match[0]);
            index++;
         }
@@ -244,7 +261,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         index = 1;
         for (const match of linkmatches) {
             //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
-            translatedText = translatedText.replace(`{linkvar ${index}}`, match[0]);
+            translatedText = translatedText.replace(`{linkvar ${index}}`, match);
             //translatedText = translatedText.replace(`var ${index}'`, match[0]);
             index++;
         }
@@ -2467,7 +2484,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var preview = "";
     var pretrans;
     var timeout = 0;
-    var vartime = 800;
+    var vartime = 400;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -3807,15 +3824,12 @@ async function processTransl(original, translatedText, language, record, rowId, 
         //PSS 25-03-2021 Fixed problem with description box issue #13
         textareaElem.style.height = "auto";
         textareaElem.style.height = textareaElem.scrollHeight + "px";
-      // console.debug("current in process:",deepLcurrent.innerText)
-       // deepLcurrent.innerText = "transFill";
-       // deepLcurrent.value = "transFill";
-        console.debug("deepLcurrent innertext",deepLcurrent.innerText)
+      
         if (deepLcurrent.innerText != "waiting" && deepLcurrent.innerText != "fuzzy") {
             preview = record.previousElementSibling
         }
         else {
-            preview = document.querySelector("#preview-" + myRowId)
+            preview = await document.querySelector("#preview-" + myRowId)
         }
         deepLcurrent.innerText = "transFill";
         deepLcurrent.value = "transFill";
@@ -3831,7 +3845,22 @@ async function processTransl(original, translatedText, language, record, rowId, 
         if (myRowId == null) {
             myRowId =rowId
         }
-          result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record);
+        // PSS this needs improvement
+        let process_current = document.querySelector(`#editor-${myRowId} span.panel-header__bubble`);
+        if (typeof process_current != 'undefined') {
+            process_current.innerText = "transFill"
+        }
+       // preview = document.querySelector(`#preview-${myRowId}`);
+        //console.debug("my preview:",preview)
+        let prevcurrentClass = preview;
+        //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
+        //console.debug("previouscurrentClass:", typeof prevcurrentClass)
+        //console.debug("DeeplCurrent:",typeof deepLcurrent)
+        prevcurrentClass.classList.replace("no-translations", "has-translations");
+        prevcurrentClass.classList.replace("untranslated", "status-waiting");
+        prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
+        prevcurrentClass.classList.add("wptf-translated");
+        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record);
        
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + myRowId + " .original");
@@ -3859,7 +3888,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
                 else { console.debug("markerpresent not found")}
                }
        
-        } 
+        }
     }
     else {
         // PSS 09-04-2021 added populating plural text
