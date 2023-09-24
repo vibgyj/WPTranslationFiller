@@ -2804,10 +2804,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                             preview.appendChild(element1);
                                         }
                                         preview = document.querySelector(`#preview-${row}`);
-                                        rowchecked = preview.querySelector("td input");
-                                        if (rowchecked != null) {
-                                            if (!rowchecked.checked) {
-                                                rowchecked.checked = true;
+                                        if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
+                                            rowchecked = preview.querySelector("td input");
+                                            if (rowchecked == null) {
+                                                rowchecked = preview.querySelector("th input");
+                                            }
+                                            if (rowchecked != null) {
+                                                if (!rowchecked.checked) {
+                                                    rowchecked.checked = true;
+                                                }
                                             }
                                         }
                                         await mark_as_translated(row);
@@ -2847,9 +2852,14 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     // we need to set the checkbox as marked
                                     preview = document.querySelector(`#preview-${row}`);
                                     rowchecked = preview.querySelector("th input");
-                                    if (rowchecked != null) {
-                                        if (!rowchecked.checked) {
-                                            rowchecked.checked = true;
+                                    if (rowchecked == null) {
+                                        rowchecked = preview.querySelector("th input");
+                                    }
+                                    if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
+                                        if (rowchecked != null) {
+                                            if (!rowchecked.checked) {
+                                                rowchecked.checked = true;
+                                            }
                                         }
                                     }
                                 }
@@ -3019,13 +3029,18 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 //let rowId = row.split("-")[0];
                                 preview = document.querySelector(`#preview-${row}`);
                                // console.debug("preview after plural:",preview)
-                                rowchecked = preview.querySelector("th input");
-                                if (rowchecked == null) {
-                                    rowchecked = preview.querySelector("td input");
-                                }
-                                if (rowchecked != null) {
-                                    if (!rowchecked.checked) {
-                                        rowchecked.checked = true;
+                                if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
+                                    rowchecked = preview.querySelector("th input");
+                                    if (rowchecked == null) {
+                                        rowchecked = preview.querySelector("th input");
+                                    }
+                                    if (rowchecked == null) {
+                                        rowchecked = preview.querySelector("td input");
+                                    }
+                                    if (rowchecked != null) {
+                                        if (!rowchecked.checked) {
+                                            rowchecked.checked = true;
+                                        }
                                     }
                                 }
                                 previewClass = preview;
@@ -3066,9 +3081,14 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         }
                         preview = document.querySelector(`#preview-${row}`);
                         rowchecked = preview.querySelector("td input");
-                        if (rowchecked != null) {
-                            if (!rowchecked.checked) {
-                                rowchecked.checked = true;
+                        if (rowchecked == null) {
+                            rowchecked = preview.querySelector("th input");
+                        }
+                        if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
+                            if (rowchecked != null) {
+                                if (!rowchecked.checked) {
+                                    rowchecked.checked = true;
+                                }
                             }
                         }
                         await mark_as_translated(row)              
