@@ -195,8 +195,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                     }
                     else {
                         text = "No suggestions"
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
-                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current, spellCheckIgnore,locale);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         errorstate = "NOK";
                     }
                     return Promise.resolve(errorstate)

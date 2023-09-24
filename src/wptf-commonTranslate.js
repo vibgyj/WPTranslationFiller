@@ -164,11 +164,13 @@ function preProcessOriginal(original, preverbs, translator) {
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
-        index = 1;
-        for (const linkmatch of linkmatches) {
-            original = original.replace(linkmatch, `{linkvar ${index}}`);
-            original = original.replace('.{', '. {');
-            index++;
+        if (linkmatches != null) {
+            index = 1;
+            for (const linkmatch of linkmatches) {
+                original = original.replace(linkmatch, `{linkvar ${index}}`);
+                original = original.replace('.{', '. {');
+                index++;
+            }
         }
     }
     return original;
@@ -181,6 +183,7 @@ function startsWithCapital(word) {
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore,locale) {
     var pos;
     var index = 0;
+    var foundIgnore;
     //console.debug("before posrepl: '"+ translatedText +"'")
     let debug = false;
     if (debug == true) {
@@ -239,9 +242,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
-                //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
                 translatedText = translatedText.replace(`{linkvar${index}}`, match);
-                //translatedText = translatedText.replace(`var ${index}'`, match[0]);
                 index++;
             }
         }
@@ -251,18 +252,14 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         index = 1;
         for (const match of matches) {
-            //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
             translatedText = translatedText.replace(`{var ${index}}`, match);
-            //translatedText = translatedText.replace(`var ${index}'`, match[0]);
            index++;
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.matchAll(linkRegex);
         index = 1;
         for (const match of linkmatches) {
-            //translatedText = translatedText.replace(`'[var ${index}]'`, match[0]);
             translatedText = translatedText.replace(`{linkvar ${index}}`, match);
-            //translatedText = translatedText.replace(`var ${index}'`, match[0]);
             index++;
         }
         if (translatedText.endsWith(".") == true) {
@@ -371,15 +368,32 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
         pos = translatedText.indexOf(": ");
+        let positionOfFirstBlank = findFirstBlankAfter(translatedText, pos +2);
+        if (positionOfFirstBlank !== -1) {
+            if (typeof spellCheckIgnore != 'undefined') {
+                lines = spellCheckIgnore.split("\n");
+            }
+            // we need the complete word to check if it is in the ignore list before setting it to lowercase
+            let checkword = translatedText.substr(pos + 2, positionOfFirstBlank - (pos + 2))
+            if (lines.indexOf(checkword) != -1) {
+                foundIgnore = true
+            }
+            else {
+                foundIgnore = false
+            }
+        } else {
+              foundIgnore = false;
+        }
+
         if (pos != -1) {
-            // if we find the semicolon, then determine next char after the blank, and check if the word after semicolon is not all capitalss
+            // if we find the semicolon, then determine next char after the blank, and check if the word after semicolon is not all capitals
             let allUpper = false;
             upper = translatedText.substr(pos + 2, 2).toUpperCase();
             if ((translatedText.substr(pos + 2, 2) == upper) == true) {
                 allUpper = true;
             }
             let mychar = translatedText.substr(pos + 2, 1)
-            if (allUpper != true) {
+            if (allUpper != true && foundIgnore == false) {
                 translatedText = translatedText.substring(0, pos + 2) + mychar.toLowerCase() + translatedText.substring(pos + 3);
             }
         }
@@ -3802,10 +3816,10 @@ function highlight(elem, keywords, caseSensitive = false, cls = 'highlight') {
 
 
 // This function processes the result of the fetch
-async function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, deepLcurrent) {
+async function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {
     var result;
     var myRowId = rowId;
-    var previousCurrent = deepLcurrent
+    var previousCurrent = current
     let debug=false
     if (debug == true) {
         console.debug("translatedText:", translatedText)
@@ -3813,7 +3827,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         console.debug("rowId:", myRowId)
         console.debug("transtype:", transtype)
         console.debug("plural_line:", plural_line)
-        console.debug("current:", deepLcurrent)
+        console.debug("current:", current)
     }
     if (transtype == "single") {
         textareaElem = record.querySelector("textarea.foreign-text");
@@ -3825,14 +3839,14 @@ async function processTransl(original, translatedText, language, record, rowId, 
         textareaElem.style.height = "auto";
         textareaElem.style.height = textareaElem.scrollHeight + "px";
       
-        if (deepLcurrent.innerText != "waiting" && deepLcurrent.innerText != "fuzzy") {
+        if (current.innerText != "waiting" && current.innerText != "fuzzy") {
             preview = record.previousElementSibling
         }
         else {
             preview = await document.querySelector("#preview-" + myRowId)
         }
-        deepLcurrent.innerText = "transFill";
-        deepLcurrent.value = "transFill";
+        current.innerText = "transFill";
+        current.value = "transFill";
        // console.debug("in process:",preview)
         td_preview = preview.querySelector("td.translation");
        // console.debug("preview:", preview, myRowId)
@@ -3855,7 +3869,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         let prevcurrentClass = preview;
         //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
         //console.debug("previouscurrentClass:", typeof prevcurrentClass)
-        //console.debug("DeeplCurrent:",typeof deepLcurrent)
+        //console.debug("current:",typeof current)
         prevcurrentClass.classList.replace("no-translations", "has-translations");
         prevcurrentClass.classList.replace("untranslated", "status-waiting");
         prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
@@ -3893,8 +3907,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
     else {
         // PSS 09-04-2021 added populating plural text
         // PSS 09-07-2021 additional fix for issue #102 plural not updated
-        //console.debug("deepLcurrent innertext", deepLcurrent.innerText)
-        if (deepLcurrent != "null" && deepLcurrent.innerText == "current" && deepLcurrent.innerText == "waiting") {
+        //console.debug("current innertext", current.innerText)
+        if (current != "null" && current.innerText == "current" && current.innerText == "waiting") {
             plural_row = myRowId.split("-")[0];
             //console.debug('rowId plural:', row)
             textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_0");
@@ -3969,7 +3983,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         }
     }
     
-    current = deepLcurrent.innerText;
+    current = current.innerText;
     // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
     if (previousCurrent == "untranslated" || current == "TransFill" || current == "Waiting" ) {
         select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
@@ -3990,8 +4004,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
     
     status.innerText = "transFill";
     // The line below is necessary to update the save button on the left in the panel
-    deepLcurrent.innerText = "transFill";
-    deepLcurrent.value = "transFill";
+    current.innerText = "transFill";
+    current.value = "transFill";
     // Translation completed
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
     // if row is already translated the rowId has different format, so we need to search with this different format
@@ -4018,7 +4032,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
     let prevcurrentClass = preview;
     //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
     //console.debug("previouscurrentClass:", typeof prevcurrentClass)
-    //console.debug("DeeplCurrent:",typeof deepLcurrent)
+    //console.debug("current:",typeof current)
     prevcurrentClass.classList.replace("no-translations", "has-translations");
     prevcurrentClass.classList.replace("untranslated", "status-waiting");
     prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
