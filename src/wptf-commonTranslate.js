@@ -251,16 +251,19 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
         index = 1;
+
         for (const match of matches) {
             translatedText = translatedText.replace(`{var ${index}}`, match);
            index++;
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-        const linkmatches = original.matchAll(linkRegex);
-        index = 1;
-        for (const match of linkmatches) {
-            translatedText = translatedText.replace(`{linkvar ${index}}`, match);
-            index++;
+        const linkmatches = original.match(linkRegex);
+        if (linkmatches != null) {
+            index = 1;
+            for (const match of linkmatches) {
+                translatedText = translatedText.replace(`{linkvar ${index}}`, match);
+                index++;
+            }
         }
         if (translatedText.endsWith(".") == true) {
             if (original.endsWith(".") != true) {
