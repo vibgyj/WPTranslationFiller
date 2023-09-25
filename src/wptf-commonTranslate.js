@@ -82,7 +82,7 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
-const markupRegex = new RegExp(/<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
+const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
  
 function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
