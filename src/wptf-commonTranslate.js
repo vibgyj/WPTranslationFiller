@@ -79,11 +79,11 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
     }
 }
 
-const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi);
+const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
- 
+const specialChar = new RegExp(/ # | #|->/ig);
 function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
     // prereplverb contains the verbs to replace before translation
@@ -140,6 +140,16 @@ function preProcessOriginal(original, preverbs, translator) {
             for (const linkmatch of linkmatches) {
                 original = original.replace(linkmatch, `{linkvar${index}}`);
                 original = original.replace('.{', '. {');
+                index++;
+            }
+        }
+        // DeepL does not like # and -> so we need to replace them before translating
+        const charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            index = 1;
+            for (const charmatch of charmatches) {
+                console.debug("charmatch:", charmatch)
+                original = original.replace(charmatch, `{special_var${index}}`);
                 index++;
             }
         }
@@ -246,6 +256,15 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 index++;
             }
         }
+        const charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            index = 1;
+            for (const charmatch of charmatches) {
+                console.debug("char:", charmatch)
+                translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+                index++;
+            }
+        }
         
     }
     else if (translator == "OpenAI") {
@@ -304,10 +323,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
     }
-
+    
     //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
     translatedText = check_hyphen(translatedText, spellCheckIgnore);
+   
    // console.debug("after:",translatedText)
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
@@ -426,39 +446,44 @@ function check_hyphen(translatedText,spellCheckIgnore){
     let capsArray = []
     let wordsArray = translatedText.split(' ')
     wordsArray.forEach(word => {
-       // console.debug("word:",word)
-        myword = word.split("-");
-        //console.debug("myword:",myword)
-        if (myword.length == 1) {
-            // we need to check what char the word ends, otherwise it will not be found in the ignore list
-            if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
-                checkword = word.substr(0, word.length - 1)
+        console.debug("word:", word)
+        if (word != "->") {
+            myword = word.split("-");
+            //console.debug("myword:",myword)
+            if (myword.length == 1) {
+                // we need to check what char the word ends, otherwise it will not be found in the ignore list
+                if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
+                    checkword = word.substr(0, word.length - 1)
+                }
+                else {
+                    checkword = word
+                }
             }
             else {
-                checkword = word
+                //we need to remove wrong characters at the start of the word
+                if (myword[0].startsWith("(")) {
+                    checkword = myword[0].substr(1, myword[0].length)
+                }
+                else {
+                    checkword = myword[0];
+                }
             }
+            // check if the word is in the ignore list, if not we remove the "-" by a blank as it does not belong into the word
+            // but we should not do that within a link!!
+            //console.debug("in :", lines.indexOf(checkword))
+            if (lines.indexOf(checkword) != -1) {
+                // console.debug("we found in ignorelist:",checkword,word)
+                if (word != "--" && word != "-")
+                    // if the word is a URL we do not remove the "-"
+                    // if (word.substr('http') == -1) {
+                    word = word.replace("-", " ")
+                // }
+            }
+            capsArray.push(word)
         }
         else {
-            //we need to remove wrong characters at the start of the word
-            if (myword[0].startsWith("(")) {
-                checkword = myword[0].substr(1, myword[0].length)
-            }
-            else {
-                checkword = myword[0];
-            }
+            capsArray.push(word)
         }
-        // check if the word is in the ignore list, if not we remove the "-" by a blank as it does not belong into the word
-        // but we should not do that within a link!!
-        //console.debug("in :", lines.indexOf(checkword))
-        if (lines.indexOf(checkword) != -1) {
-           // console.debug("we found in ignorelist:",checkword,word)
-            if (word != "--" && word != "-")
-                // if the word is a URL we do not remove the "-"
-               // if (word.substr('http') == -1) {
-                    word = word.replace("-", " ")
-               // }
-        }
-        capsArray.push(word)
     })
     converted = capsArray.join(' ');
     //console.debug("converted:",converted)
