@@ -2228,6 +2228,8 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                     //textFound = textFound.split("<span")[0]
                     textFound = unEscape(textFound)
                    // console.debug("before postprocess:"," '"+original+"' ",textFound,spellIgnore)
+                    // We need to convert to lower if that is set
+                    textFound = convert_lower(textFound,spellIgnore)
                    // textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
                     if (textFound == "") {
                         console.debug("liSuggestion present but no result from postProcessTranslation!")
