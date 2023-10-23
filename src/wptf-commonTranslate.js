@@ -127,12 +127,12 @@ function preProcessOriginal(original, preverbs, translator) {
         if (markupmatches != null) {
             index = 1;
             for (const markupmatch of markupmatches) {
-                console.debug("before:",markupmatch)
+                //console.debug("before:",markupmatch)
                 original = original.replace(markupmatch, `{mymark_var${index}}`);
                 index++;
             }
         }
-        console.debug("original:",original)
+       // console.debug("original:",original)
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
         if (linkmatches != null) {
@@ -446,7 +446,7 @@ function check_hyphen(translatedText,spellCheckIgnore){
     let capsArray = []
     let wordsArray = translatedText.split(' ')
     wordsArray.forEach(word => {
-        console.debug("word:", word)
+        //console.debug("word:", word)
         if (word != "->") {
             myword = word.split("-");
             //console.debug("myword:",myword)
@@ -2530,7 +2530,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var preview = "";
     var pretrans;
     var timeout = 0;
-    var vartime = 400;
+    var mytimeout = 1000;
+    var vartime = 600;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -2613,6 +2614,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     
 
                     pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
+                    //console.debug(" plural present:",pluralpresent)
                     if (pluralpresent != null) {
                         original = pluralpresent.innerText;
                         transtype = "plural";
@@ -2660,7 +2662,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                             else if (transsel == "deepl") {
                                // console.debug("before translate:",original,row)
-                                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
+                                result =  deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                                 if (result == "Error 403") {
                                     messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -2866,6 +2868,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         textareaELem.appendChild(myspan1);
                                         myspan1.appendChild(document.createTextNode("empty"));
                                         myspan1.innerText = translatedText;
+                                        myspan1.value = translatedText;
                                     }
                                     else {
                                         textareaElem.innerText = translatedText;
@@ -2911,7 +2914,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         let e = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                         if (e != null) {
                             checkplural = e.querySelector(`#editor-${row} .source-string__plural span.original`);
-                            //console.debug("we are in plural")
+                           // console.debug("we are in plural:",checkplural.innerText)
                             if (checkplural != null) {
                                 transtype = "plural";
                                 plural_line = "2";
@@ -2919,93 +2922,93 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                // console.debug("Plural: ", plural_line, plural)
                                 let pretrans =  await findTransline(plural, destlang);
                                 if (pretrans == "notFound") {
-                                    if (transsel == "google") {
-                                        result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore);
-                                        if (errorstate == "Error 400") {
-                                            messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
-                                            //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
-                                            // break;
-                                        }
-                                        else {
-                                            if (errorstate != "OK") {
-                                                messageBox("error", "There has been some uncatched error: " + errorstate);
-                                                //alert("There has been some uncatched error: " + errorstate);
+                                        if (transsel == "google") {
+                                            result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore);
+                                            if (errorstate == "Error 400") {
+                                                messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
+                                                //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                                 // break;
                                             }
-                                        }
-                                    }
-                                    else if (transsel == "deepl") {
-                                        // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-                                        result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
-                                        if (result == "Error 403") {
-                                            messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
-                                            //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
-                                            //  break;
-                                        }
-                                        else if (result == "Error 400") {
-                                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
-                                            //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                            // break;
-                                        }
-                                        else if (result == "Error 456") {
-                                            messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
-                                            // break;
-                                        }
-                                        else {
-                                            if (errorstate != "OK") {
-                                                messageBox("error", "There has been some uncatched error: " + errorstate);
-                                                //alert("There has been some uncatched error: " + errorstate);
-                                                // break;
+                                            else {
+                                                if (errorstate != "OK") {
+                                                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                                                    //alert("There has been some uncatched error: " + errorstate);
+                                                    // break;
+                                                }
                                             }
                                         }
-                                    }
-                                    else if (transsel == "microsoft") {
-                                        result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
-                                        if (result == "Error 401") {
-                                            messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
-                                            //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
-                                            //break;
-                                        }
-                                        else if (result == "Error 403") {
-                                            messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
-                                            //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
-                                            // break;
-                                        }
-                                        else {
-                                            if (errorstate != "OK") {
-                                                messageBox("error", "There has been some uncatched error: " + errorstate);
-                                                //alert("There has been some uncatched error: " + errorstate);
+                                        else if (transsel == "deepl") {
+                                            // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
+                                            result =  deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
+                                            if (result == "Error 403") {
+                                                messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
+                                                //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
+                                                //  break;
+                                            }
+                                            else if (result == "Error 400") {
+                                                messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
+                                                //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                                 // break;
                                             }
+                                            else if (result == "Error 456") {
+                                                messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
+                                                // break;
+                                            }
+                                            else {
+                                                if (errorstate != "OK") {
+                                                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                                                    //alert("There has been some uncatched error: " + errorstate);
+                                                    // break;
+                                                }
+                                            }
                                         }
-                                    }
-                                    else if (transsel == "OpenAI") {
-                                        result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore);
+                                        else if (transsel == "microsoft") {
+                                            result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
+                                            if (result == "Error 401") {
+                                                messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
+                                                //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
+                                                //break;
+                                            }
+                                            else if (result == "Error 403") {
+                                                messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
+                                                //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
+                                                // break;
+                                            }
+                                            else {
+                                                if (errorstate != "OK") {
+                                                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                                                    //alert("There has been some uncatched error: " + errorstate);
+                                                    // break;
+                                                }
+                                            }
+                                        }
+                                        else if (transsel == "OpenAI") {
+                                            result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore);
 
-                                        if (result == "Error 401") {
-                                            messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
-                                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
-                                            // break;
-                                            stop = true;
-                                        }
-                                        else if (result == "Error 403") {
-                                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
-                                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                        }
-                                        else if (result == "Error 429") {
-                                            //messageBox("error", "Error in translation received status 429 :" + errorstate);
-                                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                            stop = true;
-                                        }
-                                        else {
-                                            if (errorstate != "OK") {
-                                                stop = true;
-                                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                            if (result == "Error 401") {
+                                                messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                                                // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                                                 // break;
-                                                //alert("There has been some uncatched error: " + errorstate);
+                                                stop = true;
+                                            }
+                                            else if (result == "Error 403") {
+                                                messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                                                //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                            }
+                                            else if (result == "Error 429") {
+                                                //messageBox("error", "Error in translation received status 429 :" + errorstate);
+                                                //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                                                stop = true;
+                                            }
+                                            else {
+                                                if (errorstate != "OK") {
+                                                    stop = true;
+                                                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                                                    // break;
+                                                    //alert("There has been some uncatched error: " + errorstate);
+                                                }
                                             }
                                         }
-                                    }
                                 }
                                 else {
                                     //console.debug("we are in plural")
@@ -3039,23 +3042,24 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         // If the span missing is present it needs to be removed and the ul added otherwise the second line cannot be populated
                                         check_span_missing(row, plural_line);
                                         //console.debug("after span missing:",current.innerText)
-                                        let rowId = row.split("-")[0];
-                                        textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
-                                        //console.debug()
+                                       // let rowId = row.split("-")[0];
+                                        //console.debug("translated plural row:",row,rowId)
+                                        textareaElem1 = document.querySelector("textarea#translation_" + rowId + "_1");  
                                         textareaElem1.innerText = translatedText;
                                         textareaElem1.value = translatedText;
                                         let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
-                                        //console.debug("previewElem 2917:",previewElem)
+                                       //console.debug("previewElem 3052:",previewElem)
                                         if (previewElem != null) {
                                             previewElem.innerText = translatedText;
+                                            previewElem.value = translatedText;
                                             var element1 = document.createElement("div");
                                             element1.setAttribute("class", "trans_local_div");
                                             element1.setAttribute("id", "trans_local_div");
                                             element1.appendChild(document.createTextNode("Local"));
                                             previewElem.appendChild(element1);
                                         }
-                                        current.innerText = "transFill";
-                                        current.value = "transFill";
+                                       // current.innerText = "transFill";
+                                       // current.value = "transFill";
                                     }
                                 }
                                 //let rowId = row.split("-")[0];
@@ -3978,7 +3982,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
                 }
                 if (plural_line == 1) {
                     //populate plural line if not already translated, so we can take original rowId
-                    textareaElem1 = record.querySelector("textarea#translation_" + myRowId + "_0");
+                    textareaElem1 = document.querySelector("textarea#translation_" + myRowId + "_0");
                     textareaElem1.innerText = translatedText;
                     textareaElem1.value = translatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
@@ -3991,7 +3995,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
                     }
                 }
                 if (plural_line == 2) {
-                    textareaElem1 = record.querySelector("textarea#translation_" + myRowId + "_1");
+                    textareaElem1 = document.querySelector("textarea#translation_" + myRowId + "_1");
                     textareaElem1.innerText = translatedText;
                     textareaElem1.value = translatedText;
                     // Select the second li
@@ -4009,9 +4013,9 @@ async function processTransl(original, translatedText, language, record, rowId, 
                     //populate first line of plural line if already translated
                    // console.debug("record:", record)
                     let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-                    console.debug("f:",f)
+                    //console.debug("f:",f)
                     textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_0");
-                    console.debug("textareaElem1:",textareaElem1)
+                    //console.debug("textareaElem1:",textareaElem1)
                     textareaElem1.innerText = translatedText;
                     textareaElem1.value = translatedText;
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
@@ -4055,9 +4059,6 @@ async function processTransl(original, translatedText, language, record, rowId, 
     }
     
     status.innerText = "transFill";
-    // The line below is necessary to update the save button on the left in the panel
-    current.innerText = "transFill";
-    current.value = "transFill";
     // Translation completed
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
     // if row is already translated the rowId has different format, so we need to search with this different format
@@ -4097,6 +4098,9 @@ async function processTransl(original, translatedText, language, record, rowId, 
        // await validateEntry(language, textareaElem1, "", "", myRowId, locale, record)
        preview.scrollIntoView({ block: "end" });
     }
+    // The line below is necessary to update the save button on the left in the panel
+    previousCurrent.innerText = "transFill";
+    previousCurrent.value = "transFill";
     return "OK";
 }
 
