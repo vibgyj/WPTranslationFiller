@@ -203,8 +203,14 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 }
             })
             .catch(error => {
-                //console.debug("error:",error)
-                let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                console.debug("error:", error)
+                if (editor) {
+                    let translateButton = document.querySelector("translation-entry-mybutton");
+                }
+                else {
+                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                }
+                console.debug("translateButton:",translateButton)
                 translateButton.className += " translated";
                 translateButton.innerText = "Translated";
                 if (error[2] == "400") {
@@ -247,6 +253,11 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                     processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                     errorstate = "Error 503";
 
+                }
+                else if (error == "TypeError: Failed to fetch")
+                {
+                    messageBox("error", "Fetch does not get an answer all from the API")
+                    errorstate = "Undefined error";
                 }
                 else {
                     if (editor) {
