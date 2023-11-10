@@ -636,6 +636,25 @@
       background-color: green;
 }
 
+.translocal-entry-missing-button {
+    display: inline-block;
+    vertical-align: middle;
+    background: darkcyan;
+    color: white;
+    padding-top: 2px;
+    padding-left: 3px;
+    padding-right: 5px;
+    padding-bottom: 3 px;
+    height: 27px;
+    font: normal 16px/1 'dashicons';
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
 
 .translocal-entry-local-button {
     display: inline-block;
@@ -799,7 +818,7 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     margin-bottom : 6px !important;
     /*margin: 0px !important;*/
     padding: 0px 2px !important; 
-    /* background: #0085ba;*/
+    background: #0085ba;
     border-color: #0073aa #006799 #006799;
     box-shadow: 0 1px 0 #006799;
     color: #fff;
@@ -808,7 +827,17 @@ table.translations tr.preview.has-glotdict.has-warnings th + .priority + .origin
     cursor:pointer !important;
 }
 
+/**The below code overrules an injection from other later loaded addons!!*/
+button[disabled] {
+    background: #0085ba !important;
+    color: #fff !important;
+}
 
+/**The below code is overruled by later loaded addons!!*/
+.tf-save-button-disabled {
+    background: #0085ba !important;
+    color: #fff !important;
+}
 #tf-save-button.ready {
     display:none;
 }

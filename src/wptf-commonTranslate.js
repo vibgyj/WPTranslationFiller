@@ -125,7 +125,7 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
-    console.debug("before posrepl: '"+ translatedText +"'")
+    //console.debug("before posrepl: '"+ translatedText +"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
    // console.debug("after postrepl:'",translatedText,"'")
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
@@ -798,14 +798,6 @@ async function checkPage(postTranslationReplace,formal) {
                         }
                         textareaElem.innerText = result.translatedText;
                         textareaElem.value = result.translatedText;
-                        //if (replaced) {
-                        // Only update the style if verbs are replaced!!
-                        //  let wordCount = countreplaced;
-                        //  let percent = 10;
-                        //  let toolTip = "";
-                        // result = { wordCount, percent, toolTip };
-                        //  updateStyle(textareaElem, result, "", true, false, false, row);
-                        // }
                     }
                     else {
                         // plural line 1
@@ -1075,6 +1067,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
             curbut.style.backgroundColor = "#0085ba";
             curbut.innerText = "Save";
+            curbut.title = "Save the string";
             transtype = "single";
         }
 
@@ -1506,6 +1499,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
             curbut.style.backgroundColor = "#0085ba";
             curbut.innerText = "Save";
+            curbut.title = "Save the string";
             transtype = "single";
         }
         // If in the original field "Singular is present we have a plural translation
@@ -1648,6 +1642,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                     let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
                     curbut.style.backgroundColor = "#0085ba";
                     curbut.innerText = "Save";
+                    curbut.title = "Save the string";
                     transtype = "single";
                 }
                 // If in the original field "Singular is present we have a plural translation
@@ -1825,11 +1820,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan1.innerText = translatedText;
                                     current.innerText = "transFill";
                                     current.value = "transFill";
-                                    // var element1 = document.createElement("div");
-                                    // element1.setAttribute("class", "trans_local_div");
-                                    // element1.setAttribute("id", "trans_local_div");
-                                    // element1.appendChild(document.createTextNode("Local"));
-                                    //  preview.appendChild(element1);
+                                    var element1 = document.createElement("div");
+                                    element1.setAttribute("class", "trans_local_div");
+                                    element1.setAttribute("id", "trans_local_div");
+                                    element1.appendChild(document.createTextNode("Local"));
+                                    preview.appendChild(element1);
                                     preview = document.querySelector(`#preview-${row}`);
                                     rowchecked = preview.querySelector("td input");
                                     if (rowchecked != null) {
@@ -2013,7 +2008,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                 } else {
                     // This is when urls/plugin/theme names are present or local translation is present
                     let translatedText = original;
-                   
                     let preview = document.querySelector("#preview-" + row + " td.translation");
                     if (preview == null) {
                         preview = document.querySelector("#preview-" + myrow + " td.translation");
@@ -2047,6 +2041,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                             rowchecked.checked = true;
                         }
                     }
+                    // we need to validate this string to get the colors and labels correct
+                    validateEntry(destlang, textareaElem, "", "", row);
                 }
                 //14-09-2021 PSS changed the class to meet GlotDict behavior
                 var currentClass = document.querySelector(`#editor-${row}`);
@@ -2233,6 +2229,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                     current.innerText = "transFill";
                     current.value = "transFill";
                     //let zoeken = "translate-" + rowId + ""-translocal-entry-local-button";
+                    validateEntry(destlang, textareaElem, "", "", rowId);
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                 }
             }
@@ -2244,6 +2241,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                 textareaElem.value = translatedText;
                 current.innerText = "transFill";
                 current.value = "transFill";
+                validateEntry(destlang, textareaElem, "", "", rowId);
             }
             let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
             let checkplural = f.querySelector(`#editor-${rowId} .source-string__plural span.original`);
@@ -2311,11 +2309,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
+                        validateEntry(destlang, textareaElem1, "", "", rowId);
                     }
                     else {
                         textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
+                        validateEntry(destlang, textareaElem1, "", "", rowId);
                         document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                     }
                 }
@@ -2323,11 +2323,12 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
             else {
                 console.debug("checkplural null");
             }
-
+            
             // Translation completed
             let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
+            //validateEntry(destlang, textareaElem, "", "", rowId);
 
             if (completedCallback) {
                 let textareaElem = e.querySelector("textarea.foreign-text");
@@ -2390,11 +2391,13 @@ async function saveLocal() {
                         if (nothidden != null) {
                             nothidden.classList.add("wptf-saved");
                         }
-                        // if the record is a waiting we need to select the approve button issue #268
-                        let h = document.querySelector(`#editor-${editorRow} div.editor-panel__left div.panel-header`);
-                        if (h != null) {
-                            current = h.querySelector("span.panel-header__bubble");
+                       
+                        // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                        if (rowfound.split("-")[2] != null){
+                           editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
                         }
+                        // if the record is a waiting we need to select the approve button issue #268
+                        let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
                         //console.debug("state:", current.innerText);
                         if (current.innerText == 'waiting') {
                             editor.querySelector(".approve").click();
