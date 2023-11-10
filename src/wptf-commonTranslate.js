@@ -2120,7 +2120,7 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                 //console.debug("li found:", lires);
                 if (lires[0] != null) {
                     liscore = lires[0].querySelector(`span.translation-suggestion__score`);
-                    console.debug("liscore:",liscore)
+                   // console.debug("liscore:",liscore)
                     if (liscore != null) {
                         liscore = liscore.innerText;
                         liscore = Number(liscore.substring(0, liscore.length - 1))
@@ -2160,7 +2160,7 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                                 textFound = liSuggestion.innerText
                             }
                             else {
-                                console.debug("OpenAIres == null!")
+                               // console.debug("OpenAIres == null!")
                                 textFound = "No suggestions";
                             }
                         }
@@ -2177,10 +2177,9 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                             }
                         }
                         else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore < 90) {
-                            console.debug("There are no suggestions!")
+                            //console.debug("There are no suggestions!")
                             textFound = "No suggestions";
                         }
-
                     }
                     // We do have no suggestions!
                     else {
@@ -2219,9 +2218,12 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                     if (convertToLower == true) {
                         textFound = convert_lower(textFound, spellIgnore)
                     }
+                    else {
+                        textFound = check_hyphen(textFound, spellIgnore);
+                    }
                    // textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
                     if (textFound == "") {
-                        console.debug("liSuggestion present but no result from postProcessTranslation!")
+                       // console.debug("liSuggestion present but no result from postProcessTranslation!")
                         textFound = "No suggestions";
                         resolve(textFound);
                     }
@@ -2250,7 +2252,16 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                         textFound = "No suggestions";
                         resolve(textFound);
                     }
-                    resolve(textFound);
+                    else {
+                        // We need to convert to lower if that is setconveert
+                        if (convertToLower == true) {
+                            textFound = convert_lower(textFound, spellIgnore)
+                        }
+                        else {
+                            textFound = check_hyphen(textFound, spellIgnore);
+                        }
+                        resolve(textFound);
+                    }
                 }
                 else {
                     textFound = "No suggestions"
