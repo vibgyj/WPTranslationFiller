@@ -1,16 +1,30 @@
+/* make ui smaller as it is unreadable with the new larg mask*/
+.gp-content {
+    max-width:1300px !important;
+}
+/* If Wordpress team decides to change the title position, this can be removed*/
+.site-title {
+    margin-left:-60px !important;
+}
+
+.panelTransMenu {
+    height: 40px;
+    text-align: right;
+}
+
 /* The Modal (background) */
 .modal {
-      display: none; /* Hidden by default */
-      position: fixed; /* Stay in place */
-      z-index: 1; /* Sit on top */
-      padding-top: 200px; /* Location of the box */
-      left: 0;
-      top: 0;
-      width: 100%; /* Full width */
-      height: 100%; /* Full height */
-      overflow: auto; /* Enable scroll if needed */
-      background-color: rgb(0,0,0); /* Fallback color */
-      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+     display: none; /* Hidden by default */
+     position: fixed; /* Stay in place */
+     z-index: 1; /* Sit on top */
+     padding-top: 200px; /* Location of the box */
+     left: 0;
+     top: 0;
+     width: 100%; /* Full width */
+     height: 100%; /* Full height */
+     overflow: auto; /* Enable scroll if needed */
+     background-color: rgb(0,0,0); /* Fallback color */
+     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 
 /* Modal Content */
@@ -367,7 +381,7 @@
 }
 
 .wptfNavBarCont .impLoc-button.imported {
-        background: green;
+      background: green;
 }
 
 .wptfNavBarCont .impLoc-button::before {
@@ -380,7 +394,7 @@
 }
 
 .wptfNavBarCont .impLoc-button:hover {
-        background: darkgray !important;
+      background: darkgray !important;
 }
 .wptfNavBarCont .impLoc-button.started {
       content: "";
@@ -476,7 +490,6 @@
       border-radius: 5px !important;
 }
 
-
 .wptfNavBarCont .tm-trans-button.foreighn {
       background: grey;
       color: white !important;
@@ -533,59 +546,74 @@
       padding: 1px 1px !important;
 }
 
-.panel-header-actions .translation-entry-my-button {
-      width: auto;
-      padding: 2px;
-      background-color: blue;
-      color: white;
-      vertical-align: middle;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+.translation-entry-my-button {
+    content: '\f326';
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
+    background-color: blue;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+    margin: 0.2em !important;
 }
 
-.panel-header-actions .translation-entry-my-button:focus {
-      color: white;
+.translation-entry-my-button:focus {
+    color: grey;
 }
 
-.panel-header-actions .translation-entry-my-button:hover {
-      background-color: blue;
-      color: lightgray;
+.translation-entry-my-button:hover {
+    background-color: white !important;
+    color: lightgray;
 }
 
-.panel-header-actions .translation-entry-my-button.started {
-        content: "";
-        display: inline-block;
-        margin: auto;
-        border: 4px solid transparent;
-        border-top-color: #ffffff;
-        border-radius: 50%;
-        animation: button-loading-spinner 1s ease infinite;
+.translation-entry-my-button::before {
+    content: '\f326';
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
 }
 
-.panel-header-actions .translation-entry-my-button::before {
-      content: '\f326';
-      -webkit-font-smoothing: antialiased;
-      display: inline-block;
-      font: normal 20px/1 'dashicons';
-      vertical-align: middle;
-      width: 28px;
+.translation-entry-my-button.started {
+    display: inline-block;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
 }
 
-.panel-header-actions .translation-entry-my-button.translated {
-      animation: none !important;
-      background: green;
-      border-radius: 0%;
-      border: 0px solid transparent;
-      display: inline-block;
-      padding-top: 0.1em !important;
-      padding-bottom: 0.1em !important;
-      margin: 5px !important;
+.translation-entry-my-button.translated {
+    animation: none !important;
+    background-color: #3CB371;
+    border-radius: 0%;
+    border: 0px solid transparent;
+    display: inline-block;   
+    margin: 0px !important;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+    width: auto;
+    height: 32px !important;
 }
 
-.panel-header-actions .translation-entry-my-button.translated_error {
+.translation-entry-my-button.translated_error {
       animation: none;
       background-color: red;
+}
+
+.translation-entry-my-button.restarted {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    background-color: blue;
+    animation: button-loading-spinner 1s ease infinite;
 }
 
 .translation-actions copy-button {
@@ -602,61 +630,65 @@
       border-color: #135e96;
 }
 
-.panel-header-actions .addtranslation-entry-my-button {
-      width: 25px;
-      padding: 2px;
-      margin: 5px;
-      background-color: blue;
-      color: white;
-      vertical-align: middle;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+.addtranslation-entry-my-button {
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
+    background-color: blue;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+    margin: 0.2em !important;
 }
 
-.panel-header-actions .addtranslation-entry-my-button:focus {
+.addtranslation-entry-my-button:focus {
       color: white;
 }
 
-.panel-header-actions .addtranslation-entry-my-button:hover {
+.addtranslation-entry-my-button:hover {
       background-color: blue;
       color: lightgray;
 }
 
-.panel-header-actions .addtranslation-entry-my-button::before {
-      content: '\f326';
-      -webkit-font-smoothing: antialiased;
-      display: inline-block;
-      font: normal 20px/1 'dashicons';
-      vertical-align: middle;
-      width: 28px;
-}
+.addtranslation-entry-my-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        width: 28px;
+        padding-top: 5px !important;
+    }
 
-.panel-header-actions .addtranslation-entry-my-button.ready {
+.addtranslation-entry-my-button.ready {
       background-color: green;
 }
 
 .translocal-entry-missing-button {
-    display: inline-block;
-    vertical-align: middle;
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
     background: darkcyan;
     color: white;
-    padding-top: 2px;
-    padding-left: 3px;
-    padding-right: 5px;
-    padding-bottom: 3 px;
-    height: 27px;
-    font: normal 16px/1 'dashicons';
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
+    margin: 0.2em !important;
 }
 
 .translocal-entry-local-button {
+    width: auto;
+    height: 25px !important;
+    padding: 4px !important;
+    background: darkcyan;
+    color: white;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+    margin: 0.2em !important;
+}
+
+.my-translocal-entry-local-button {
     display: inline-block;
     vertical-align: middle;
     background: darkcyan;
@@ -700,7 +732,6 @@
 }
 
 .trans_name_div {
-    
     font-weight: 600;
     color: #ffffff;
     font-size: 12px;
@@ -714,7 +745,6 @@
 }
 
 .trans_name_div_true {
-    
     font-weight: 600;
     color: #ffffff;
     font-size: 12px;
@@ -791,7 +821,7 @@ table.translations td.priority {
 
 /** The change below is for issue# 137 modification in GlotDict*/
 table.translations tr.preview.has-glotdict th + .priority + .original::before {
-        margin-left: calc(-0.5em - 45px) !important;
+     margin-left: calc(-0.5em - 45px) !important;
 }
 
 tr.editor {
@@ -1321,47 +1351,47 @@ table.translations tr.preview.status-fuzzy {
 /* Tooltip text */
 .mark-tooltip .mark-tooltiptext {
     visibility: hidden;
-        width: 500px;
-        background-color: darkgrey;
-        color: #fff;
-        text-align: center;
-        padding: 10px 0;
-        border-radius: 6px;
-        /* Position the tooltip text */
-        position: absolute;
-        z-index: 1;
-        bottom: 140%;
-        left: 0%;
-        margin-left: 240px;
-        /* Fade in tooltip */
-        opacity: 0;
-        transition: opacity 0.3s;
+    width: 500px;
+    background-color: darkgrey;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    border-radius: 6px;
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 140%;
+    left: 0%;
+    margin-left: 240px;
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
     }
 
 /* Tooltip arrow */
 .mark-tooltip .mark-tooltiptext::after {
-        content: "";
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: #555 transparent transparent transparent;
+     content: "";
+     position: absolute;
+     top: 100%;
+     left: 50%;
+     margin-left: -5px;
+     border-width: 5px;
+     border-style: solid;
+     border-color: #555 transparent transparent transparent;
     }
 /* Show the tooltip text when you mouse over the tooltip container */
 .mark-tooltip:hover .mark-tooltiptext {
-        visibility: visible;
-        opacity: 1;
+     visibility: visible;
+     opacity: 1;
     }
 
 
 .mark-tooltip .mark {
-    background-color:"yellow";
+     background-color: yellow;
 }
 
 .mark-devider {
-    color:blue;
+     color:blue;
 }
 
 @keyframes blinking {
@@ -1410,9 +1440,9 @@ table.translations th.thCheckBox {
 }
 
 .wp-block-group.global-footer [class*=wp-container-].global-footer__logos-container {
-      margin-top: 0px !important;
-      top: 0px !important;
-      top: var(--wp-admin--admin-bar--height,0) !important;
+     margin-top: 0px !important;
+     top: 0px !important;
+     top: var(--wp-admin--admin-bar--height,0) !important;
 }
 
 /*After Glotpress has improved remove this header change
