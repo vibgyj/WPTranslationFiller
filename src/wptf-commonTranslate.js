@@ -701,12 +701,12 @@ async function checkPage(postTranslationReplace,formal) {
                 if (precomment != null) {
                     comment = precomment.innerText;
                     comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-                    toTranslate = checkComments(comment.trim());
+                    toTranslate = await checkComments(comment.trim());
                 }
                 else {
                     toTranslate = true;
                 }
-                if (toTranslate) {
+                if (toTranslate == true) {
                     // Check if it is a plural
                     // If in the original field "Singular is present we have a plural translation                
                     var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
@@ -2137,8 +2137,15 @@ function check_span_missing(row,plural_line) {
 }
 
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback) {
+    var translateButton;
     locale = checkLocale();
-    let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+   
+    translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
+    // if row is already translated the rowId has different format, so we need to search with this different format
+    if (translateButton == null) {
+        translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+    }
+
     translateButton.className += " started";
     translateButton.innerText = "Translate";
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
@@ -2341,7 +2348,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
             }
             
             // Translation completed
-            let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+            translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+            // if row is already translated the rowId has different format, so we need to search with this different format
+            if (translateButton == null) {
+                translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+            }
             translateButton.className += " translated";
             translateButton.innerText = "Translated";
             //validateEntry(destlang, textareaElem, "", "", rowId);
@@ -2714,7 +2725,7 @@ function processTransl(original, translatedText, language, record, rowId, transt
         result = validateEntry(language, textareaElem, "", "", rowId, locale);
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + rowId + " .original");
-            console.debug("We are in editor!:",editorElem)
+            //console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
             let markerpresent = editorElem.querySelector("span.mark-explanation");
             if (markerpresent == null) {

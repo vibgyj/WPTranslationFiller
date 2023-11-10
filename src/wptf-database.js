@@ -362,7 +362,7 @@ async function addTransline(rowId){
     // 07-05-2021 PSS added language read from config to store in database
     var res = "";
     var row = "";
-    chrome.storage.sync.get(["destlang"], function (data) {
+    chrome.storage.local.get(["destlang"], function (data) {
     language = data.destlang;
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     var orig = e.querySelector("span.original-raw").innerText;
