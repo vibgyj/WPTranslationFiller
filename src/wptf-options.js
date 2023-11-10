@@ -625,7 +625,7 @@ function export_verbs_csv() {
        hiddenElement.target = "_blank";
        hiddenElement.download = export_file;
        hiddenElement.click();
-       messageBox("info", "Export verbs ready");
+       messageBox("info", "Export verbs ready <br>Wait until explorer is shown to save the file");
 
    }
 // PSS 08-03-2021 added this to prepare data for export to csv   

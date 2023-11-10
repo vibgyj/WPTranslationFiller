@@ -4,16 +4,15 @@
  */
 
 
-async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
+async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
+    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
     return errorstate;
 }
 
 
-async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree) {
-    var row = "";
+async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
     var translatedText = "";
     var ul = "";
     var current = "";
@@ -29,8 +28,9 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var error;
     var data;
     var link;
+    var deepLresult;
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+    current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = current.innerText;
     //console.debug("Original:", originalPreProcessed)
     language = language.toUpperCase();
@@ -41,7 +41,7 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     }
     else {
         if (!formal) {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
         }
         else {
             link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
@@ -68,8 +68,8 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             else {
                 //We do have a result so process it
                 translatedText = data.translations[0].text;
-                translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
-                processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
+                deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
                }
         })
@@ -91,11 +91,9 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
             }
             else {
-                //alert("Error message: " + error[1]);
+                alert("Error message: " + error[1]);
                 console.debug("Error:",error)
                 errorstate = "Error " + error[1];
             }
         });
-    //console.debug("endres:", response)
-    return response;
 }

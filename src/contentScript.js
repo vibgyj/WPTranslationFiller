@@ -49,8 +49,6 @@ async function sampleUse() {
 
 }
 
-
-
 //When performing bulk save the difference is shown in Meta #269
 // We need to set the default value for showing differents
 chrome.storage.local.get(["showTransDiff"], function (data) {
@@ -120,7 +118,6 @@ chrome.storage.local.get( ["glotDictGlos"],
 var fileSelector = document.createElement("input");
 fileSelector.setAttribute("type", "file");
 
-
 document.addEventListener("keydown", async function (event) {
     // PSS 31-07-2021 added new function to scrape consistency tool
     if (event.altKey && event.shiftKey && (event.key === "&")) {
@@ -156,7 +153,6 @@ document.addEventListener("keydown", async function (event) {
         );
     }
 
-
     if (event.altKey && event.shiftKey && (event.key === "?")) {
         event.preventDefault();
         await handleStats();
@@ -181,6 +177,7 @@ document.addEventListener("keydown", async function (event) {
                 convertToLow = data.convertToLower;
             }
         });
+        UpperCaseButton.className = "UpperCase-button uppercase"
         toastbox("info", "Switching conversion on", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "-")) {
@@ -194,6 +191,7 @@ document.addEventListener("keydown", async function (event) {
                 convertToLow = data.convertToLower;
             }
         });
+        UpperCaseButton.className = "UpperCase-button"
         toastbox("info", "Switching conversion off", "1200", "Conversion");
     }
     if (event.altKey && event.shiftKey && (event.key === "%")) {
@@ -245,8 +243,6 @@ document.addEventListener("keydown", async function (event) {
                 input.click();
             }
         );  
-        //modal.style.display = "none";
-        //messageBox("info", "Import translation ready " + countimported);
     }
     if (event.altKey && event.shiftKey && (event.key === "#")) {
         event.preventDefault();
@@ -347,7 +343,6 @@ document.addEventListener("keydown", async function (event) {
                 "resourceTypes": ["xmlhttprequest"]
             }
         };
-
         resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
         //console.debug("blockres:"), resblock;
     }
@@ -368,16 +363,7 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
         event.preventDefault();
-        let int = localStorage.getItem(['switchTM']);
-        if (int == "false") {
-            toastbox("info", "Switching TM to foreign", "1200", "TM switch");
-            localStorage.setItem('switchTM', 'true');
-        }
-        else {
-            toastbox("info", "Switching TM to local", "1200", "TM switch");
-            localStorage.setItem('switchTM', 'false');
-        }
-        location.reload();
+        SwitchTMClicked();
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F10")) {
@@ -498,11 +484,11 @@ document.addEventListener("keydown", async function (event) {
             newrowId = rowId.concat("-", myrowId);
             rowId = newrowId;
         }
-        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"], function (data) {
+        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree","spellCheckIgnore"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
             var formal = checkFormal(false);
             var DeeplFree = data.DeeplFree;
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, spellCheckIgnore);
         });
     }
 
@@ -577,14 +563,12 @@ document.addEventListener("keydown", async function (event) {
                     setTimeout(() => { window.close(); }, 1000);
                 }
             }
-
         }
         else {
             messageBox("error", "You do not have permissions to start this function!");
         }
     }
 });
-
 
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
@@ -609,7 +593,6 @@ if (el3 != null) {
     el3.addEventListener("click", checkactionClick());
 }
 
-
 //Add option link
 var optionlink = document.createElement("li");
 var a = document.createElement('a');
@@ -617,7 +600,6 @@ a.href = chrome.runtime.getURL('wptf-options.html');
 var link = document.createTextNode("WPTF options");
 a.appendChild(link);
 optionlink.className = 'menu-item wptf_settings_menu'
-
 
 var divMenu = document.querySelector("#menu-headline-nav");
 if (divMenu != null) {
@@ -721,7 +703,6 @@ if (divPaging != null && divProjects == null) {
     if (is_pte) {
         divNavBar.appendChild(bulksaveButton);
     }
-
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
     }
@@ -734,10 +715,33 @@ if (divPaging != null && divProjects == null) {
     divNavBar.appendChild(translateButton);
 }
 
+//12-05-2022 PSS added a new buttons specials
+var UpperCaseButton = document.createElement("a");
+UpperCaseButton.href = "#";
+let UpperCase = localStorage.getItem(['switchUpper'])
+if (UpperCase == 'false') {
+    UpperCaseButton.className = "UpperCase-button";
+}
+else {
+    UpperCaseButton.className = "UpperCase-button uppercase"
+}
+UpperCaseButton.onclick = UpperCaseClicked;
+UpperCaseButton.innerText = "Casing";
+
+var SwitchTMButton = document.createElement("a");
+SwitchTMButton.href = "#";
+SwitchTMButton.className = "Switch-TM-button";
+SwitchTMButton.onclick = SwitchTMClicked;
+SwitchTMButton.innerText = "SwitchTM";
+
 // 12-05-2022 PSS here we add all buttons in the pagina together
-if (divPaging != null && divProjects == null) {
-    //divPaging.insertBefore(translateButton, divPaging.childNodes[0]);
-    //divPaging.insertBefore(localtransButton, divPaging.childNodes[0]);
+var GpSpecials = document.querySelector("span.previous.disabled");
+if (GpSpecials == null) {
+    var GpSpecials = document.querySelector("a.previous");
+}
+if (GpSpecials != null && divProjects == null) {
+    divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(tmtransButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(checkButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
@@ -745,6 +749,47 @@ if (divPaging != null && divProjects == null) {
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
+function UpperCaseClicked() {
+    event.preventDefault();
+    // This switches convert to lowercase on/off
+    chrome.storage.local.get(["convertToLower"], function (data, UpperCaseButton) {
+        var UpperCaseButton = document.querySelector('.UpperCase-button')
+        if (data.convertToLower != "null") {
+            convertToLow = data.convertToLower;
+            if (convertToLow == true) {
+                toastbox("info", "Switching conversion off", "1200", "Conversion");
+                UpperCaseButton.className = "UpperCase-button"
+                localStorage.setItem('switchUpper', 'false');
+                chrome.storage.local.set({
+                    convertToLower: false 
+                });
+            }
+            else {
+                toastbox("info", "Switching conversion on", "1200", "Conversion");
+                UpperCaseButton.className = "UpperCase-button uppercase"
+                localStorage.setItem('switchUpper', 'true');
+                chrome.storage.local.set({
+                    convertToLower: true
+                });
+            }
+        }
+    });
+}
+
+function SwitchTMClicked() {
+    event.preventDefault();
+    let int = localStorage.getItem(['switchTM']);
+    if (int == "false") {
+        toastbox("info", "Switching TM to foreign", "1200", "TM switch");
+        localStorage.setItem('switchTM', 'true');
+    }
+    else {
+        toastbox("info", "Switching TM to local", "1200", "TM switch");
+        localStorage.setItem('switchTM', 'false');
+    }
+    location.reload();
+
+}
 async function startSpellCheck(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore) {
     await spellcheck_page(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore)
 }
@@ -793,7 +838,7 @@ async function startBulkSave(event) {
 function tmTransClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower", "spellCheckIgnore"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -809,7 +854,7 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
-                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait);
+                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower,data.spellCheckIgnore);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -826,7 +871,6 @@ function tmTransClicked(event) {
         }
     );
 }
-
 
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
@@ -910,7 +954,7 @@ function impFileClicked(event) {
 function translatePageClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined')
             {
@@ -923,7 +967,7 @@ function translatePageClicked(event) {
                         var DeeplFree = data.DeeplFree;
                         var openAIWait = Number(data.OpenAIWait);
                         var OpenAItemp = parseFloat(data.OpenAItemp);
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait,OpenAItemp);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -968,29 +1012,33 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "Checkpage is started wait for the result!!", "3000", "CheckPage");
+    var timeout = 500;
+   
+    //toastbox("info", "Checkpage is started wait for the result!!", "2000", "CheckPage");
+   
+    
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI"],
-        function (data) {
-            var promise = new Promise(function (resolve, reject) {
-                //toastbox("info", "Replace words is started wait for the result!!", "50", "CheckPage");
-                checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
-               // console.debug("replace words done")
-                resolve(data);
-
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower"],
+        function (data) { 
+            const promise1 = new Promise(async function (resolve, reject) {
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore);
+                resolve(data);     
             });
-            var promise2 = new Promise(async function (resolve, reject) {
-                await promise;
-               
+            const promise2 = new Promise(async function (resolve, reject) {
+                await promise1;
                 if (data.Auto_spellcheck == true) {
-                  //  toastbox("info", "Spellcheck is started wait for the result!!", "500", "CheckPage");
+                    if (typeof data.spellcheckIgnore == 'undefined') {
+                        data.spellcheckIgnore = []
+                        }
                     await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
-                    //console.debug("spellcheck done:")
+                    resolve(data)
+                }
+                else {
                     resolve(data)
                 }
             });
 
-            var promise3 = new Promise(async function (resolve, reject) {
+            const promise3 = new Promise(async function (resolve, reject) {
                 await promise2;
                 if (data.transsel == "OpenAI") {
                     if (data.Auto_review_OpenAI == true) {
@@ -1002,14 +1050,12 @@ function checkPageClicked(event) {
                     }
                 }
             });
-            promise.then(function (data) {
-                console.debug("promise1:");
+            promise1.then(function (data) {
+                console.debug("promise1:");   
             });
-
             promise2.then(function (data) {
-                console.debug("promise2:");
+                console.debug("promise2:");   
             });
-
             promise3.then(function (data) {
                 console.debug("promise3:");
             });
@@ -1425,14 +1471,12 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         var formal = checkFormal(false);
         var DeeplFree = data.DeeplFree;
         var OpenAItemp = parseFloat(data.OpenAItemp);
-        //console.debug("translator:", data.transsel, data.convertToLower)
-
-        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp);
+        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore);
         });
 }
 
@@ -1676,7 +1720,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     }
                     checkElem.style.backgroundColor = "green";
                     checkElem.title = "Save the string";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         if (panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "green";
                         }
@@ -1699,7 +1743,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.innerText = "Save";
                     checkElem.style.backgroundColor = "yellow";
                     checkElem.title = "Save the string";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "yellow";
                     }
                 }
@@ -1714,7 +1758,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Save the string";
                     checkElem.style.backgroundColor = "orange";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "orange";
                     }
                 }
@@ -1730,7 +1774,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.onclick = savetranslateEntryClicked;
                     checkElem.style.backgroundColor = "purple";
                     checkElem.title = "Save the string";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "purple";
                     }
                 }
@@ -1745,7 +1789,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "Check the string";
                     checkElem.style.backgroundColor = "darkorange";
-                    if (typeof headerElem.style != "undefined") {
+                    if (typeof headerElem != "undefined") {
                         panelTransDiv.style.backgroundColor = "darkorange";
                     }
                 }
@@ -1768,7 +1812,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             checkElem.title = "Save the string";
                             SavelocalButton.innerText = "NoGlos";
                         }
-                        if (typeof headerElem.style != "undefined") {
+                        if (typeof headerElem != "undefined") {
                             panelTransDiv.style.backgroundColor = "";
                             //headerElem.style.backgroundColor = "";
                         }
@@ -1786,7 +1830,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             SavelocalButton.innerText = "Rej";
                             //SavelocalButton.disabled = true;
                         }
-                        if (typeof headerElem.style != "undefined") {
+                        if (typeof headerElem != "undefined") {
                             panelTransDiv.style.backgroundColor = "red";
                         }
                     }
@@ -2193,6 +2237,7 @@ function taMatch(gWord, tWord) {
 // 22-06-2021 PSS added functionality to show differences in the translations
 async function fetchOldRec(url, rowId) {
     // 23-06-2021 PSS added original translation to show in Meta
+    var tbodyRowCount = 0;
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     if (e != null) {
         let original = e.querySelector("#editor-" + rowId + " .foreign-text").textContent;
@@ -2235,8 +2280,14 @@ async function fetchOldRec(url, rowId) {
                 var doc = parser.parseFromString(data, "text/html");
                 //console.log("html:", doc);
                 var table = doc.getElementById("translations");
-                let tr = table.rows;
-                var tbodyRowCount = table.tBodies[0].rows.length;
+                // if there is no table with results, then we do need to set the value to 0
+                if (typeof table != 'undefined') {
+                    let tr = table.rows;
+                    tbodyRowCount = table.tBodies[0].rows.length;
+                }
+                else {
+                    tbodyRowCount = 0;
+                }
                 if (tbodyRowCount > 1) {
                     // 16-06-2021 The below code fixes issue  #82
                     let translateorigsep = document.getElementById("translator_sep1");

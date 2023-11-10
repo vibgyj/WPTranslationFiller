@@ -7,7 +7,7 @@ var textareaElem = "";
 var preview = "";
 var translatedText = "";
 var trntype = "";
-async function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype, plural_line, locale, convertToLower) {
+async function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore) {
     var originalPreProcessed = preProcessOriginal(original, preverbs, "microsoft");
     //console.debug("microsoftTranslate result of preProcessOriginal:", originalPreProcessed);
     //var myRe = |(\</?([a-zA-Z]+[1-6]?)(\s[^>]*)?(\s?/)?\>|)/gm;
@@ -19,11 +19,11 @@ async function microsoftTranslate(original, destlang, e, apikeyMicrosoft, prever
     else {
         trntype = "html";
     }
-    let result = await getTransMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line, locale, convertToLower);
+    let result = await getTransMicrosoft(e, destlang, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
     return errorstate;
 }
 
-async function getTransMicrosoft(record, language, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line, locale, convertToLower) {
+async function getTransMicrosoft(record, language, apikeyMicrosoft, original, originalPreProcessed, rowId, trntype, transtype, plural_line, locale, convertToLower, spellCheckIgnore) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -83,7 +83,7 @@ async function getTransMicrosoft(record, language, apikeyMicrosoft, original, or
             else {
                 //We do have a result so process it
                 translatedText = data[0].translations[0].text;
-                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
             }

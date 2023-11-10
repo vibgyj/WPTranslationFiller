@@ -8,7 +8,7 @@ var textareaElem = "";
 var preview = "";
 var translatedText = "";
 var trntype = "";
-async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, transtype, plural_line, locale, convertToLower) {
+async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore) {
     var trntype;
     let originalPreProcessed = preProcessOriginal(original, preverbs, "google");
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
@@ -26,11 +26,11 @@ async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, t
         "target": destlang,
         "format": trntype
     };
-    let result = await getTransGoogle(e, destlang, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower);
+    let result = await getTransGoogle(e, destlang, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
     return errorstate;
 }
 
-async function getTransGoogle(record, language, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower) {
+async function getTransGoogle(record, language, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -85,7 +85,7 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
                 translatedText = data.data.translations[0].translatedText;
                 //console.debug("translated text:", translatedText);
                 // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
-                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower);
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower, spellCheckIgnore);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
             }

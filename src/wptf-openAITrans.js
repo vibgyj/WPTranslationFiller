@@ -3,13 +3,13 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp) {
+async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore) {
     var timeout = 100;
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
     //errorstate = "NOK"
     setTimeout(async function (timeout) {
-    var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter,OpenAISelect, OpenAItemp);
+        var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore);
     //console.debug("OpenAI errorstate:",errorstate,result)
     }, timeout);
     timeout += 1;
@@ -59,7 +59,7 @@ const fetchPlus = (url, options = {}, retries) =>
         .catch(error => console.debug(error.message))
 
 
-function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp) {
+function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -186,17 +186,16 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         let text = open_ai_response.message.content;
                         if (show_debug == true) {
                             let token = data.usage.total_tokens
-                            console.debug("token:", token)
                         }
                         //text = text.trim('\n');
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore);
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)
                     }
                     else {
                         text = "No suggestions"
                         translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
-                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current, spellCheckIgnore);
                         errorstate = "NOK";
                     }
                     return Promise.resolve(errorstate)
@@ -230,7 +229,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                     }
                     else {
                         text = "No suggestions due to overload OpenAI!!"
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore);
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         errorstate = "Error 429";
                     }
@@ -243,7 +242,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 else if (error[2] == '503') {
                     //messageBox("error", "Error 503 has been encountered" + error)
                     text = "No suggestions server cannot be reached!!"
-                    translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
+                    translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore);
                     processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                     errorstate = "Error 503";
 
@@ -393,25 +392,24 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
                     let text = open_ai_response.message.content;
                     //console.debug("text:", text,original,translatedText);
                     if (text.indexOf("Yes") != -1) {
-                        //preview.style.background = 'green';
+                        // We need to remove the existing checkmark if present
+                        if (preview.innerHTML.startsWith('\u{2705}')){
+                            preview.innerHTML = preview.innerHTML.replace('\u{2705}',"")
+                        }
                         preview.innerHTML = '\u{2705}' + " " + preview.innerHTML
+                        
                     }
                     else {
+                        if (preview.innerHTML.startsWith('\u{26A0}}')) {
+                            preview.innerHTML = preview.innerHTML.replace('\u{26A0}', "")
+                        }
                         preview.innerHTML = '\u{26A0}' + " "+ preview.innerHTML
-                        //review.style.background = 'red';
                     }
-                    //preview.style.color = 'white';
-
-                    //text = text.trim('\n');
-                   // translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
-                    //processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                     return Promise.resolve(errorstate)
                 }
                 else {
                     text = "No text received"
                     console.debug("No text received!")
-                    //translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower);
-                   // processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                     errorstate = "NOK";
                 }
                 return Promise.resolve(errorstate)
@@ -495,7 +493,7 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
     var found_verbs;
     const countfound = 0
     var myresult;
-    var timeout = 700;
+    var timeout = 100;
     var replaced = false;
     var translatedText = "";
     var repl_verb = [];
@@ -522,7 +520,7 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
             checkButton.className = "check_translation-button started"
         }
     }
-    toastbox("info", "OpenAI review is started wait for the result!!", "8000", "Review");
+    //toastbox("info", "OpenAI review is started wait for the result!!", "3000", "Review");
     var myheader = document.querySelector('header');
     
     const template = `
@@ -531,18 +529,28 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
     </div>
     `;
 
-    myheader.insertAdjacentHTML('beforebegin', template);
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    //console.debug("progressbar:", progressbar)
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+        // progressbar = document.querySelector(".indeterminate-progress-bar");
+        // progressbar.style.display = 'block;';
+    }
+    else {
+        progressbar.style.display = 'block';
+    }
     // We need to know the amount of rows to show the finished message at the end of the process
     var table = document.getElementById("translations");
     var tr = table.rows;
-    var tbodyRowCount = table.tBodies[0].rows.length;
+    //var tbodyRowCount = table.tBodies[0].rows.length;
+    var tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        setTimeout(async function () {
+        countrows++;
+        setTimeout(async function (timeout, countrows) {
         end_table = false;
         found_verbs = [];
         replaced = false;
         let original = e.querySelector("span.original-raw").innerText;
-
         let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
         row = rowfound.split("-")[1];
         let newrow = rowfound.split("-")[2];
@@ -557,7 +565,6 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header span.panel-header__bubble`);
         // We only need to process the actual lines not the untranslated
         if (currec.innerText == "transFill" || currec.innerText == "current" || currec.innerText == "waiting") {
-            countrows++;
             //  setTimeout(async function (timeout, errorstate, countrows) {
             let spanmissing = document.querySelector(`#preview-${row} span.missing`);
             // If the page does not contain translations, we do not need to handle them
@@ -615,34 +622,25 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
                     }
                 }
             }
-            // tbodyRowCount includes also the editor rows, so we need to devide by "2"
-            // console.debug("rows:", countrows, tbodyRowCount, tbodyRowCount / 2)
-            if (countrows == (tbodyRowCount / 2) - 1) {
-                // Translation replacement completed
-                checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-                checkButton.classList.remove("started");
-                checkButton.className += " translated";
-                checkButton.innerText = "Checked";
-                checkButton.className += " ready";
-                progressbar = document.querySelector(".indeterminate-progress-bar");
-                progressbar.style.display = "none";
-                //close_toast();
-                messageBox("info", "Check OpenAI review done ");
-            }
         }
-        else {
-            //  console.debug("We have no more records")
-            messageBox("info", "Check review done ");
+        
+        }, timeout);
+        timeout += 1000;
+        if (countrows == tableRecords) {
+            // Translation replacement completed
             checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
             checkButton.classList.remove("started");
             checkButton.className += " translated";
             checkButton.innerText = "Checked";
-            checkButton.className += " ready";
-            //break;
-
-            }
-        }, timeout);
-        timeout += 700;
+            checkButton.className += " ready";  
+            setTimeout(() => {
+                close_toast();
+                toastbox("info", "OpenAI review ready wait till all records are flagged!", "2000", "OpenAI review");
+                progressbar = document.querySelector(".indeterminate-progress-bar");
+                progressbar.style.display = "none";
+            }, 200);
+            
+        }
     }
     return errorstate
 }
