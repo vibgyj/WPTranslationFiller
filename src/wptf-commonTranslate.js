@@ -881,10 +881,13 @@ async function checkPage(postTranslationReplace,formal) {
 
 function markElements(preview,replaceVerb,orgText) {
     // Highlight all keywords found in the page, so loop through the replacement array
+    if (previewNewText = 'undefined') {
+        let previewNewText = "";
+    }
     var arr = [];
     for (let i = 0; i < replaceVerb.length; i++) {
         if (typeof orgText != 'undefined') {
-            //console.debug("replverb:",replaceVerb[i][0],orgText)
+           //console.debug("replverb:",replaceVerb[i][0],orgText)
             if (orgText.includes(replaceVerb[i][0])) {
                 high = replaceVerb[i][1];
                 high = high.trim();
@@ -892,8 +895,7 @@ function markElements(preview,replaceVerb,orgText) {
                     // push the verb into the array
                     arr.push(high);
                 }
-            }
-            
+            } 
         }
         else {
             console.debug("no org")
@@ -1237,7 +1239,6 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         rowchecked.checked = false;
                         //  }
                     }
-
                 }
             }
 
@@ -1392,7 +1393,6 @@ async function fetchsuggestions(row) {
     myTM = await document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .suggestions-wrapper`);
     return myTM;
 }
-
 
 // Part of the solution issue #204
 async function fetchli(result, editor, row, TMwait) {
@@ -1820,11 +1820,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                     myspan1.innerText = translatedText;
                                     current.innerText = "transFill";
                                     current.value = "transFill";
-                                    var element1 = document.createElement("div");
-                                    element1.setAttribute("class", "trans_local_div");
-                                    element1.setAttribute("id", "trans_local_div");
-                                    element1.appendChild(document.createTextNode("Local"));
-                                    preview.appendChild(element1);
+
+                                    let localpresent = preview.querySelector("div.trans_local_div:nth-of-type(1)");
+                                    // 17-02-2034 PSS do not add the label twice
+                                    if (localpresent == null) {
+                                        let element1 = document.createElement("div");
+                                        element1.setAttribute("class", "trans_local_div");
+                                        element1.setAttribute("id", "trans_local_div");
+                                        element1.appendChild(document.createTextNode("Local"));
+                                        preview.appendChild(element1);
+                                    }
                                     preview = document.querySelector(`#preview-${row}`);
                                     rowchecked = preview.querySelector("td input");
                                     if (rowchecked != null) {
@@ -1835,8 +1840,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                             } else {
                                 // if it is as single with local then we need also update the preview
-                                // console.debug("testing two")
-                                // console.debug("preview in single:",preview)
                                 let spanmissing = preview.querySelector(" span.missing");
                                 if (spanmissing != null) {
                                    // console.debug("removing span");
@@ -1857,12 +1860,15 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 }
                                 current.innerText = "transFill";
                                 current.value = "transFill";
-                                var element1 = document.createElement("div");
-                                element1.setAttribute("class", "trans_local_div");
-                                element1.setAttribute("id", "trans_local_div");
-                                element1.appendChild(document.createTextNode("Local"));
-                                preview.appendChild(element1);
-                                
+                                let localpresent = preview.querySelector("div.trans_local_div:nth-of-type(1)");
+                                // 17-02-2034 PSS do not add the label twice
+                                if (localpresent == null) {
+                                    let element1 = document.createElement("div");
+                                    element1.setAttribute("class", "trans_local_div");
+                                    element1.setAttribute("id", "trans_local_div");
+                                    element1.appendChild(document.createTextNode("Local"));
+                                    preview.appendChild(element1);
+                                }
                                 // we need to set the checkbox as marked
                                 preview = document.querySelector(`#preview-${row}`);
                                 rowchecked = preview.querySelector("td input");
@@ -2682,6 +2688,7 @@ function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
 
 // This function processes the result of the fetch
 function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {
+    var result;
     if (transtype == "single") {
         textareaElem = record.querySelector("textarea.foreign-text");
         textareaElem.innerText = translatedText;
@@ -2692,12 +2699,34 @@ function processTransl(original, translatedText, language, record, rowId, transt
         textareaElem.style.height = textareaElem.scrollHeight + "px";
         current.innerText = "transFill";
         current.value = "transFill";
-        //current.innerText = "waiting";
-        //current.value = "waiting";
         preview = document.querySelector("#preview-" + rowId + " td.translation");
         preview.innerText = translatedText;
-        validateEntry(language, textareaElem, "", "", rowId, locale);
-        
+        result = validateEntry(language, textareaElem, "", "", rowId, locale);
+        if (result.newText != "") {
+            let editorElem = document.querySelector("#editor-" + rowId + " .original");
+            //19-02-2023 PSS we do not add the marker twice, but update it if present
+            let markerpresent = editorElem.querySelector("span.mark-explanation");
+            if (markerpresent == null) {
+                let markdiv = document.createElement("div");
+                markdiv.setAttribute("class", "marker");
+                let markspan1 = document.createElement("span");
+                let markspan2 = document.createElement("span");
+                markspan1.setAttribute("class", "mark-devider");
+                //markspan1.style.color = "blue";
+                markspan2.setAttribute("class", "mark-explanation");
+                markdiv.appendChild(markspan1);
+                markdiv.appendChild(markspan2);
+                editorElem.appendChild(markdiv);
+                markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+                markspan2.innerHTML = result.newText;
+            }
+            else {
+                if (markerpresent != null) {
+                    markerpresent.innerHTML = result.newText;
+                }
+                else { console.debug("markerpresent not found")}
+            }
+        } 
     }
     else {
         // PSS 09-04-2021 added populating plural text

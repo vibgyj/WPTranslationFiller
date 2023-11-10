@@ -1194,8 +1194,7 @@ function checkactionClick(event) {
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 async function checkbuttonClick(event) {
-    //console.debug("eventAction:", event)
-    //event.preventDefault();
+    
     if (event != undefined) {
             var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
             //event.preventDefault(); caused a problem within the single page enttry  
@@ -1235,7 +1234,6 @@ async function checkbuttonClick(event) {
                 chrome.storage.sync.get(["showTransDiff"], async function (data) {
                     if (data.showTransDiff != "null") {
                         if (data.showTransDiff == true) {
-                            // console.debug("in content showTransDiff =true")
                             let res = await getToonDiff('toonDiff');
                             //chrome.storage.local.get(["toonDiff"]).then((result) => {
                                 //console.log("Value toonDiff currently is " + res);
@@ -1311,12 +1309,38 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     var checkElem;
     var current;
     var SavelocalButton;
+    var imgsrc;
+    imgsrc = chrome.runtime.getURL('/');
+    imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     if (typeof rowId == "undefined") {
         let rowId = textareaElem.parentElement.parentElement.parentElement
            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
     }
-    //console.debug("row:",rowId)
-    originalElem = document.querySelector("#preview-" + rowId + " .original");
+    let originalElem = document.querySelector("#preview-" + rowId + " .original");
+    let glossary = originalElem.querySelector('span .glossary-word');
+    let markerpresent = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+    if (result.percent == 100) {
+        if (markerpresent != null){
+            markerpresent.remove();
+            }
+    }
+    // 17-02-2023 PSS do not add the marker twice if a retranslation is done
+    if (markerpresent == null) {
+        // if an original text contains a glossary verb that is not in the tranlation highlight it
+        if (result.newText != "" && typeof result.newText != "undefined") {
+            let markerimage = imgsrc + "/../img/warning-marker.png";
+            originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
+            let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+            let markimage = document.createElement("img");
+            markimage.src = markerimage;
+            markdiv.appendChild(markimage)
+            let markspan = document.createElement("span");
+            markspan.setAttribute("class", "mark-tooltiptext");
+            markdiv.appendChild(markspan);
+            markspan.innerHTML = result.newText;
+        }
+    }
+
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
     checkElem = document.querySelector("#preview-" + rowId + " .priority");
     SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
@@ -1327,8 +1351,7 @@ function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDi
     // we need to take care that the save button is not added twice
     myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     current = myrec.querySelector("span.panel-header__bubble");
-   // console.debug("current:",current)
-    if (checkElem == null) {
+    if (typeof checkElem == "object") {
         if (SavelocalButton == null) {
             if (!is_pte) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
@@ -1386,20 +1409,18 @@ function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale)
         .querySelector("span.original-raw");
     let originalText = original.innerText;
     result = validate(language, originalText, translation, locale);
-    //console.debug("result:", result);
-    updateStyle(textareaElem, result, newurl, showHistory,"True","",rowId);
+    updateStyle(textareaElem, result, newurl, showHistory, "True", "", rowId);
+    return result;
 }
 
-function updateRowButton(current, SavelocalButton, checkElem, GlossCount,foundCount,rowId,lineNo) {
-   // console.debug("updateRow before:", SavelocalButton, rowId,lineNo,GlossCount)
+function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundCount, rowId, lineNo) {
+
     if (typeof rowId != "undefined" && SavelocalButton !=null) {
         switch (current.innerText) {
             case "transFill":
-               // console.debug("glosscount:",GlossCount)
                     SavelocalButton.innerText = "Save";
                     checkElem.title = "save the string";
                     SavelocalButton.disabled = false;
-                    //checkElem.style.backgroundColor = "green";
                 break;
             case "waiting":
                  SavelocalButton.innerText = "Appr";
@@ -1408,9 +1429,7 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount,foundCo
                  break;
             case "current":
                 SavelocalButton.innerText = "Curr";
-                //SavelocalButton.disabled = true;
                 SavelocalButton.className = "tf-save-button-disabled"
-                //SavelocalButton.style.cursor = "none";
                 checkElem.title = "Current translation";
                 break;
             case "fuzzy":
@@ -1447,18 +1466,21 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount,foundCo
 }
 
 async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount) {
+																			  
+				  
+				  
     var current;
     var SavelocalButton;
     var separator1;
     var newtitle='';
     var headertitle = '';
-    headerElem.title =""
-    //console.debug("updateElementStyle:", rowId," ",headerElem,originalElem)
+    headerElem.title = ""
 
     if (typeof rowId != "undefined") {
         current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
         if (current == null) {
-            console.debug("current is null", current)
+           // console.debug("current is null", current)
+            current = 'Empty';
         }
         if (current.innerText == 'current') {
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
@@ -1485,8 +1507,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             // SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
         }
+	 
 
         if (current != null) {
+																		   
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
             if (SavelocalButton == null) {
                 SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
@@ -1507,6 +1531,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 checkElem.title = "Save the string";
                 if (typeof headerElem.style != "undefined") {
                     headerElem.style.backgroundColor = "green";
+                    // 20-02-2023 FIx for issue #286
+                    let markdiv = document.querySelector("#editor-" + rowId + " .marker");
+                    if (markdiv != null) {
+                        markdiv.remove();
+                    }
                 }
             }
             else if (result.percent > 66) {
@@ -1557,6 +1586,24 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     headerElem.style.backgroundColor = "purple";
                 }
             }
+            else if (result.percent < 33 && result.percent >0) {
+                newtitle = checkElem.title;
+                checkElem.innerHTML = result.percent;
+                separator1 = document.createElement("div");
+                separator1.setAttribute("class", "checkElem_save");
+									
+                checkElem.appendChild(separator1);
+                res = addCheckButton(rowId, checkElem, "1561")
+                SavelocalButton = res.SavelocalButton
+                SavelocalButton.innerText = "Save";
+                checkElem.title = "Check the string";
+                checkElem.style.backgroundColor = "darkorange";
+
+                if (typeof headerElem.style != "undefined") {
+                    headerElem.style.backgroundColor = "darkorange";
+                }
+            }
+
             else if (result.percent == 0) {
                 // We need to set the title here also, otherwise it will occassionally not be shown
                 newtitle = checkElem.title;
@@ -1635,17 +1682,29 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     headerElem.style.backgroundColor = "green";
                 }
             }
-            document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
+            if (document.getElementById("translate-" + rowId + "-translocal-entry-missing-button") != null) {
+                document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
+            }
 
         }
-        //console.debug("tooltip:",result.tooltip)
         if ((result.toolTip).length > 0) {
             checkElem.setAttribute("title", result.toolTip);
+									  
+															 
+												 
         }
 
         // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author
+																																
+								  
+	
+																
+															
+																							
         if (showName == true) {
             showNameLabel(originalElem)
+													
+							 
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
@@ -1695,7 +1754,7 @@ function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old) {
 
 function addCheckButton(rowId, checkElem, lineNo) {
     //console.debug("addCeckButton!", rowId, checkElem, lineNo)
-    let currentcel = document.querySelector(`#preview-${rowId} td.priority`);
+    var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
     let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
     if (SavelocalButton == null) {
         let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
@@ -1713,7 +1772,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
 
     }
     else {
-        //console.debug("checkelem is present:",checkElem,SavelocalButton)
+        //checkElem is present
         if (SavelocalButton == null) {
             SavelocalButton = document.createElement("button");
             SavelocalButton.id = "tf-save-button";
@@ -1723,9 +1782,9 @@ function addCheckButton(rowId, checkElem, lineNo) {
             currentcel.appendChild(SavelocalButton);
         }
     }
-    //console.debug("addCeckButton2!", rowId, SavelocalButton, checkElem)
     return { SavelocalButton };
 }
+
 
 function savetranslateEntryClicked(event) {
     var myWindow;
@@ -1831,6 +1890,7 @@ function validate(language, original, translation, locale) {
     let percent = 0;
     var toolTip = [];
     var isFound = false;
+    var newText = "";
     //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
         
     if (translation.length > 0) {
@@ -1838,35 +1898,35 @@ function validate(language, original, translation, locale) {
            for (let gItem of glossary) {
                let gItemKey = gItem["key"];
                let gItemValue = gItem["value"];
-               // changed because the glossary is loaded differently, we need to fetch the first of the array
-               gItemValue = gItemValue[0];
                // Fix for not comparing properly due to special chars issue #279
                oWord = oWord.replace(/[^a-zA-Z0-9 ]/g, '');
-                   // console.debug("word in original:",oWord," ",gItemKey)
-                    if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
-                        wordCount++;
-                        isFound = false;
-                        for (let gWord of gItemValue) {
-                            
-                            //console.debug("translation:", translation, "gWord:", gWord.toLowerCase(), "translation:", translation.toLowerCase())
-                            // here we match the translation against the glossary noun
-                            if (match(language, gWord.toLowerCase(), translation.toLowerCase(), gItemValue)) {
-                               // console.debug("found glossary word:", oWord)
-                                isFound = true;
-                                break;
-                            }
-                        }
-                        if (isFound) {
-                            foundCount++;
-                        }
-                        else {
-                            if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
-                                toolTip += `${gItemKey} - ${gItemValue}\n`;
-                               // console.debug("found not:", oWord, gItemValue)
-                            }
-                        }
-                         //break;
-                    }
+               // we compare the original word against the key of the glossary
+               //console.debug("oWord:", oWord.toLowerCase(),"Itemkey", gItemKey.toLowerCase())
+               if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
+                   wordCount++;
+                   isFound = false;
+                   for (let gWord of gItemValue) {
+                       // here we match the translation against the glossary noun
+                      // console.debug("compare:", gWord.toLowerCase(), translation.toLowerCase(), gItemValue)
+                       if (match(language, gWord.toLowerCase(), translation.toLowerCase(), gItemValue)) {
+                           isFound = true;
+                           break;
+                       }
+                   }
+                   if (isFound) {
+                       foundCount++;
+                   }
+                   else {
+                       // here we mark the verb if a glossary verb is not present issue #282
+                       let re = new RegExp(oWord, "g"); // search for all instances
+                       newText = original.replace(re, `<mark>${oWord}</mark>`);
+                       //17-02-2023 PSS fix for issue #283
+                       original = newText;
+                       if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
+                           toolTip += `${gItemKey} - ${gItemValue}\n`;
+                       }
+                   }
+               }
            }
        }
     }
@@ -1885,7 +1945,7 @@ function validate(language, original, translation, locale) {
     else if ((wordCount - foundCount) >0) {      
         percent = (foundCount * 100) / wordCount;
     }
-    return { wordCount, foundCount, percent, toolTip };
+    return { wordCount, foundCount, percent, toolTip, newText };
 }
 
 
@@ -1893,13 +1953,26 @@ function validate(language, original, translation, locale) {
 function match(language, gWord, tWord, gItemValue) {
     var glossaryverb;
     if (typeof language != 'undefined') {
-        // language is set to uppercase, so we need to return it to lowercase
+        // language is set to uppercase, so we need to return it to lowercase issue #281
         language = language.toLowerCase();
         switch (language) {
             case "ta":
                 return taMatch(gWord, tWord);
             default:
-                return tWord.includes(gWord);
+                // 13-02-2023 PSS fixed a problem when the original only includes one verb
+                if (!Array.isArray(gItemValue)) {
+                    glossaryverb = gItemValue.toLowerCase();
+                }
+                else {
+                    // if the glossary contains an array we need to walk through the array
+                    for (var i = 0; i < gItemValue.length; i++) {
+                        glossaryverb = gItemValue[i].toLowerCase();
+                        if (tWord.includes(glossaryverb) == true) {
+                            break;
+                        }
+                    }
+                }
+                return tWord.includes(glossaryverb);
         }
     }
     else {
