@@ -910,9 +910,9 @@ function impFileClicked(event) {
 function translatePageClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"],
         function (data) {
-            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI")
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined')
             {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang !="") {
                     if (data.transsel != "undefined") {
@@ -921,7 +921,9 @@ function translatePageClicked(event) {
                         //var locale = checkLocale();
                         convertToLow = data.convertToLower;
                         var DeeplFree = data.DeeplFree;
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+                        var openAIWait = Number(data.OpenAIWait);
+                        var OpenAItemp = parseFloat(data.OpenAItemp);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait,OpenAItemp);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -966,31 +968,50 @@ function checkFormal(formal) {
 function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
+    toastbox("info", "Checkpage is started wait for the result!!", "3000", "CheckPage");
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt","reviewPrompt", "Auto_review_OpenAI"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI"],
         function (data) {
             var promise = new Promise(function (resolve, reject) {
+                //toastbox("info", "Replace words is started wait for the result!!", "50", "CheckPage");
                 checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
-                close_toast();
-                //console.debug("checkpage done")
+               // console.debug("replace words done")
+                resolve(data);
+
+            });
+            var promise2 = new Promise(async function (resolve, reject) {
+                await promise;
+               
                 if (data.Auto_spellcheck == true) {
-                    startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+                  //  toastbox("info", "Spellcheck is started wait for the result!!", "500", "CheckPage");
+                    await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+                    //console.debug("spellcheck done:")
+                    resolve(data)
                 }
-                
-                resolve("Done");
             });
 
-            promise.then(function (val) {
+            var promise3 = new Promise(async function (resolve, reject) {
+                await promise2;
                 if (data.transsel == "OpenAI") {
-                    if (data.Auto_review_OpenAI == true){
+                    if (data.Auto_review_OpenAI == true) {
                         if (data.apikeyOpenAI != "") {
                             //console.debug("review started:", val)
-                            
-                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt,data.reviewPrompt);
+                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt, data.reviewPrompt);
+                            resolve(data)
                         }
                     }
                 }
+            });
+            promise.then(function (data) {
+                console.debug("promise1:");
+            });
+
+            promise2.then(function (data) {
+                console.debug("promise2:");
+            });
+
+            promise3.then(function (data) {
+                console.debug("promise3:");
             });
         }
     );
@@ -1404,13 +1425,14 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI","OpenAIPrompt", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         var formal = checkFormal(false);
         var DeeplFree = data.DeeplFree;
+        var OpenAItemp = parseFloat(data.OpenAItemp);
         //console.debug("translator:", data.transsel, data.convertToLower)
 
-        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp);
         });
 }
 
@@ -1495,7 +1517,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "", "", "", rowId, showName, nameDiff, currcount);
+    let currstring = "";
+    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount,currstring);
     let row = rowId.split("-")[0];
     
     // 12-06-2021 PSS do not fetch old if within the translation
@@ -1577,7 +1600,7 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     }
 }
 
-async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount) {												   	  
+async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring) {												   	  
     var current;
     var SavelocalButton;
     var separator1;
@@ -1849,7 +1872,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current);
         }
     }
     else {
@@ -1879,7 +1902,7 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old) {
+function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old,currstring,current) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
     if (originalElem != undefined) {
@@ -1892,6 +1915,11 @@ function showOldstringLabel(originalElem,currcount,wait,rejec,fuz,old) {
         element1.setAttribute("class", "trans_exists_div");
         originalElem.appendChild(element1);
         element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
+        currcount = currcount.replace("Current:", "");
+        if ((+currcount) > 0 && current !='current') {
+            
+           element1.insertAdjacentHTML('afterend','<span class="current-string">' +currstring+ '</span>')
+        }
     }
     else {
         console.debug("updateElementStyle empty!:", originalElem);
@@ -1954,7 +1982,7 @@ function savetranslateEntryClicked(event) {
             status.innerText = "waiting";
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
             setTimeout(() => {
-                toastbox("info", "" , "700", "Saving suggestion", myWindow);
+                //toastbox("info", "" , "600", "Saving suggestion", myWindow);
                 let preview = document.querySelector(`#preview-${rowId}`);
                 preview.querySelector("td.actions .edit").click();
                 const editor = preview.nextElementSibling;
@@ -1967,6 +1995,7 @@ function savetranslateEntryClicked(event) {
                     if (confirm != '.gp-js-message-dismiss') {
                         if (typeof confirm === 'function') {
                             confirm.click();
+                           // close_toast();
                         }
                     }
                 });
@@ -2339,7 +2368,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
             })
         })
             .then(response => response.text())
-            .then(data => {
+            .then(async data => {
                 //05-11-2021 PSS added fix for issue #159 causing an error message after restarting the add-on
                 currURL = window.location.href;
                 // &historypage is added by GlotDict or WPGPT, so no extra parameter is necessary for now
@@ -2347,9 +2376,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     var parser = new DOMParser();
                     var doc = parser.parseFromString(data, "text/html");
                     //console.log("html:", doc);
-                    var table = doc.getElementById("translations");
+                    var table = await doc.getElementById("translations");
                     if (table != null) {
-                           let tr = table.rows;
+                        let tr = table.rows;
+                        let currstring = "";
                            const tbodyRowCount = table.tBodies[0].rows.length;
                            // 04-07-2021 PSS added counter to message for existing translations
                            let rejected = table.querySelectorAll("tr.preview.status-rejected");
@@ -2359,6 +2389,13 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                            let old = table.querySelectorAll("tr.preview.status-old");
                            if (typeof current != "null" && current.length != 0) {
                                currcount = " Current:" + current.length;
+                               //console.debug("table:",table)
+                               currstring = table.querySelector("tr.preview.status-current");
+                               currstring = currstring.querySelector(".translation-text")
+                               if (currstring.innerText == null) {
+                                   currstring = "";
+                               }
+                               else {currstring = currstring.innerText }
                            }
                            else {
                               currcount = "";
@@ -2388,10 +2425,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                                old = "";
                            }
                            if (tbodyRowCount > 2 && single == "False") {
-                              updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount);
+                              updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring);
                            }
                            else if (tbodyRowCount > 2 && single == "True") {
-                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount);
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring);
                                //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                                //window.open(url, "_blank", windowFeatures);
                            }
