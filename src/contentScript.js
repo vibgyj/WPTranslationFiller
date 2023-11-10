@@ -10,7 +10,7 @@ else {
     var jsstoreCon = new JsStore.Connection();
     var db;
     db = myOpenDB(db);
-    console.debug("new db open:", db);   
+   // console.debug("new db open:", db);   
 }
 
 const setToonDiff = async function (obj) {
@@ -482,6 +482,30 @@ document.addEventListener("keydown", async function (event) {
         );
     }
 
+    if (event.altKey && event.shiftKey && (event.key === "A" || event.key === "a")) {
+        event.preventDefault();
+
+        console.debug("Translate started")
+        let rowId = document.querySelector("#editor");
+       // let myEditor = document.querySelector("source-string__singular");
+         console.debug("Translate started",rowId)
+        //let rowId = myEditor.getAttribute("row");
+        // rowId = event.target.id.split("-")[1];
+        //let myrowId = event.target.id.split("-")[2];
+        //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+        // So that needs to be added to the base rowId to find it
+        if (typeof myrowId != "undefined" && myrowId != "translation") {
+            newrowId = rowId.concat("-", myrowId);
+            rowId = newrowId;
+        }
+        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"], function (data) {
+            //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+            var formal = checkFormal(false);
+            var DeeplFree = data.DeeplFree;
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+        });
+    }
+
     if (event.altKey && (event.key === "r" || event.key === "R")) {
         // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
         event.preventDefault();
@@ -769,10 +793,9 @@ async function startBulkSave(event) {
 function tmTransClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait"],
         function (data) {
-            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
-
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                     if (data.transsel != "undefined") {
                         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
@@ -799,6 +822,7 @@ function tmTransClicked(event) {
             else {
                 messageBox("error", "For " + data.transsel + " no apikey is set!");
             }
+            
         }
     );
 }
@@ -808,9 +832,9 @@ function tmTransClicked(event) {
 function localTransClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
         function (data) {
-            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
 
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                     if (data.transsel != "undefined") {
@@ -886,10 +910,10 @@ function impFileClicked(event) {
 function translatePageClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower","DeeplFree"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree"],
         function (data) {
-            if (typeof data.apikey != "undefined" && data.apikey !="" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl !="" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft !="" && data.transsel == "microsoft") {
-
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI")
+            {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang !="") {
                     if (data.transsel != "undefined") {
                         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
@@ -897,7 +921,7 @@ function translatePageClicked(event) {
                         //var locale = checkLocale();
                         convertToLow = data.convertToLower;
                         var DeeplFree = data.DeeplFree;
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, translationComplete);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -944,13 +968,30 @@ function checkPageClicked(event) {
     var formal = checkFormal(false);
     toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.local.get(
-        ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck","spellCheckIgnore"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt","reviewPrompt", "Auto_review_OpenAI"],
         function (data) {
-            checkPage(data.postTranslationReplace, formal);
-            close_toast();
-            if (data.Auto_spellcheck == true) {
-                startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
-            }
+            var promise = new Promise(function (resolve, reject) {
+                checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt);
+                close_toast();
+                //console.debug("checkpage done")
+                if (data.Auto_spellcheck == true) {
+                    startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+                }
+                
+                resolve("Done");
+            });
+
+            promise.then(function (val) {
+                if (data.transsel == "OpenAI") {
+                    if (data.Auto_review_OpenAI == true){
+                        if (data.apikeyOpenAI != "") {
+                            //console.debug("review started:", val)
+                            
+                            startreviewOpenAI(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt,data.reviewPrompt);
+                        }
+                    }
+                }
+            });
         }
     );
 }
@@ -1080,7 +1121,7 @@ function addTranslateButtons() {
 
             let MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
             MissinglocalButton.className = "translocal-entry-missing-button";
-            MissinglocalButton.innerText = "Missing verbs";
+            MissinglocalButton.innerText = "Missing glossary entry";
             MissinglocalButton.style.visibility = "hidden";
             MissinglocalButton.style.animation = "blinking 1s infinite";
             panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
@@ -1310,7 +1351,7 @@ async function checkbuttonClick(event) {
 
                 MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
                 MissinglocalButton.className = "translocal-entry-missing-button";
-                MissinglocalButton.innerText = "Missing verbs";
+                MissinglocalButton.innerText = "Missing glossary entry";
                 MissinglocalButton.style.visibility = "hidden";
                 MissinglocalButton.style.animation = "blinking 1s infinite";
                 panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
@@ -1363,11 +1404,13 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI","OpenAIPrompt", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower","DeeplFree"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-            var formal = checkFormal(false);
-            var DeeplFree = data.DeeplFree;
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
+        var formal = checkFormal(false);
+        var DeeplFree = data.DeeplFree;
+        //console.debug("translator:", data.transsel, data.convertToLower)
+
+        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete);
         });
 }
 
@@ -1485,9 +1528,8 @@ function validateEntry(language, textareaElem, newurl, showHistory,rowId,locale)
 }
 
 function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundCount, rowId, lineNo) {
-
     if (typeof rowId != "undefined" && SavelocalButton !=null) {
-        switch (current.innerText) {
+        switch (current) {
             case "transFill":
                  SavelocalButton.innerText = "Save";
                  checkElem.title = "save the string";
@@ -1545,18 +1587,29 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var panelTransTitle = '';
     var panelTransDiv;
     var missingVerbsButton;
-
     if (typeof rowId != "undefined") {
         current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-        if (current == null) {
-           // console.debug("current is null", current)
-            current = 'Empty';
-        }
-        if (current.innerText == 'current') {
-            SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+        // 05-07-2023 PSS corrected this to prevent error when innerText is not found
+        if (current != null) {
+            current = current.innerText;
+            if (typeof current == 'string') {
+                if (current == 'untranslated') {
+                    // console.debug("current is null", current)
+                    current = 'Empty';
+                }
+                if (current == 'current') {
+                    SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
+                }
+                else {
+                    SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+                }
+            }
+            else {
+                console.debug("Bubble not found!");
+            }
         }
         else {
-             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+            console.debug("current is not found!");
         }
         // We need to have the new bar to be able to set the color
         panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
@@ -1575,7 +1628,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
            // return;
         //}
         if (result.wordCount == 0) {
-            current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+            current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerText;
         }
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
@@ -1601,7 +1654,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     checkElem.style.backgroundColor = "green";
                     checkElem.title = "Save the string";
                     if (typeof headerElem.style != "undefined") {
-                        panelTransDiv.style.backgroundColor = "green";
+                        if (panelTransDiv != null) {
+                            panelTransDiv.style.backgroundColor = "green";
+                        }
                         //headerElem.style.backgroundColor = "green";
                         // 20-02-2023 FIx for issue #286
                         let markdiv = document.querySelector("#editor-" + rowId + " .marker");
@@ -1661,7 +1716,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     checkElem.innerHTML = result.percent;
                     separator1 = document.createElement("div");
                     separator1.setAttribute("class", "checkElem_save");
-
                     checkElem.appendChild(separator1);
                     res = addCheckButton(rowId, checkElem, "1561")
                     SavelocalButton = res.SavelocalButton
@@ -1705,7 +1759,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         checkElem.appendChild(separator1);
                         res = addCheckButton(rowId, checkElem, "1612")
                         SavelocalButton = res.SavelocalButton
-                        if (current.innerText != "untranslated" && current.innerText != 'current') {
+                        if (current != "untranslated" && current != 'current') {
                             SavelocalButton.innerText = "Rej";
                             //SavelocalButton.disabled = true;
                         }
@@ -1715,28 +1769,30 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     }
                 }
                 newline = "\n";
-                missingverbs = "Missing verbs \n";
+                missingverbs = "Missing glossary entry\n";
                 // We need to update the rowbutton
                  await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "1677");
             }
         }
         else {
-            checkElem.innerHTML = "100";
-            separator1 = document.createElement("div");
-            separator1.setAttribute("class", "checkElem_save");
-            checkElem.appendChild(separator1);
-            res = addCheckButton(rowId, checkElem, "1539")
-            SavelocalButton = res.SavelocalButton
-            SavelocalButton.innerText = "Curr";
-            checkElem.style.backgroundColor = "green";
-            checkElem.title = "Current translation";
-            if (typeof headerElem.style != "undefined") {
-                panelTransDiv.style.backgroundColor = "green";
-                //headerElem.style.backgroundColor = "green";
-                // 20-02-2023 FIx for issue #286
-                let markdiv = document.querySelector("#editor-" + rowId + " .marker");
-                if (markdiv != null) {
-                    markdiv.remove();
+            if (current != "untranslated") {
+                checkElem.innerHTML = "100";
+                separator1 = document.createElement("div");
+                separator1.setAttribute("class", "checkElem_save");
+                checkElem.appendChild(separator1);
+                res = addCheckButton(rowId, checkElem, "1539")
+                SavelocalButton = res.SavelocalButton
+                SavelocalButton.innerText = "Curr";
+                checkElem.style.backgroundColor = "green";
+                checkElem.title = "Current translation";
+                if (typeof headerElem.style != "undefined") {
+                    panelTransDiv.style.backgroundColor = "green";
+                    //headerElem.style.backgroundColor = "green";
+                    // 20-02-2023 FIx for issue #286
+                    let markdiv = document.querySelector("#editor-" + rowId + " .marker");
+                    if (markdiv != null) {
+                        markdiv.remove();
+                    }
                 }
             }
         }
@@ -1771,7 +1827,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             headertitle = headerElem.title;
             if (typeof headerElem.style != "undefined") {
                 if (result.percent == 100) {
-                    if (typeof panelTransDiv != 'undefined') {
+                    if (panelTransDiv != null) {
                         panelTransDiv.style.backgroundColor = "green";
                         // headerElem.style.backgroundColor = "green";
                     }
@@ -1868,7 +1924,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
                SavelocalButton = document.createElement("button");
                SavelocalButton.id = "tf-save-button";
                SavelocalButton.className = "tf-save-button";
-               SavelocalButton.innerText = ("Tmp");
+               SavelocalButton.innerText = ("Empt");
                SavelocalButton.onclick = savetranslateEntryClicked;
                currentcel.appendChild(SavelocalButton);
             }

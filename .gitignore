@@ -1,3 +1,4 @@
 # Visual Studio Code
 .vs
 .vs/*
+/src/wptf-openAITrans (2).js

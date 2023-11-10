@@ -1,33 +1,37 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "WordPress Translation Filler",
-  "version": "2.0.1",
+  "version": "2.0.8",
   "description": "Firefox addon to automatically fill translations from Google Cloud Translation API and indicate the accuracy of translation according to locale glossary.",
-  "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "warning-marker.png", "/_metadata", "wptf-options.html", "wptf-inject.js", "wptf-buildstats" ],
+  "resources": [ "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "warning-marker.png", "/_metadata", "wptf-options.html", "wptf-inject.js", "wptf-buildstats" ],
   "background": {
     "scripts": [
       "jsstore.js",
       "jsstore.worker.js"
     ]
   },
+  "web_accessible_resources": [
+    "img/*",
+    "error-alert.flac",
+    "wptf-options.html"
+  ],
   "options_ui": {
     "page": "wptf-options.html",
-    "browser_style": true
+    "browser_style": true,
+    "open_in_tab": true
   },
   "permissions": [
     "storage",
     "activeTab",
     "tabs",
+    "https://api-free.deepl.com/*",
     "https://api.deepl.com/*",
     "https://translation.googleapis.com/*",
     "https://translate.wordpress.org/*",
+    "https://api.languagetool.org/*",
     "https://api.languagetoolplus.com/*",
-    "https://api.cognitive.microsofttranslator.com/*"
-  ],
-  "host_permissions": [
-    "*://translate.wordpress.org/*",
-    "*://api.languagetool.com/v2/*",
-    "*://api.languagetoolplus.com/v2/*"
+    "https://api.cognitive.microsofttranslator.com/*",
+    "https://api.openai.com/*"
   ],
   "content_scripts": [
     {
@@ -45,6 +49,7 @@
         "jsstore.js",
         "jsstore.worker.js",
         "wptf-commonTranslate.js",
+        "wptf-openAITrans.js",
         "wptf-deeplTrans.js",
         "wptf-googleTrans.js",
         "wptf-microsoftTrans.js",
@@ -52,7 +57,6 @@
         "wptf-database.js",
         "wptf-inject.js",
         "wptf-importfile.js",
-        "wptf-buildstats.js",
         "contentScript.js"
       ],
       "css": [

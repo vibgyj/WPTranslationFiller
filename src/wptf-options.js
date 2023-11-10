@@ -26,9 +26,10 @@ let apikeyTextbox = document.getElementById("google_api_key");
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
+let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let transselectBox = document.getElementById("transselect");
 let destLangTextbox = document.getElementById("destination_lang");
-let uploadedFile = document.getElementById("text_glossary_file");
+let uploadedFile = document.getElementById("glossary_file_uploaded");
 let glossaryFile = document.getElementById("glossary_file");
 let LtToolKeyTextbox = document.getElementById("languagetool_key");
 let LtToolUserTextbox = document.getElementById("languagetool_user");
@@ -36,6 +37,8 @@ let LtToolLangTextbox = document.getElementById("languagetool_language");
 let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let verbsTextbox = document.getElementById("text_verbs");
+let promptTextbox = document.getElementById("text_openai_prompt");
+let reviewTextbox = document.getElementById("text_openai_review");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let spellcheckTextbox = document.getElementById("text_ignore_verbs");
 let showHistCheckbox = document.getElementById("show-history");
@@ -43,8 +46,9 @@ let showDiffCheckbox = document.getElementById("comp-translations");
 let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
+let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck"], function (data) {
+chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -65,6 +69,7 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
     }
     apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
+    apikeyOpenAITextbox.value = data.apikeyOpenAI;
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -75,6 +80,19 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
     uploadedFile.innerText = `${data.glossaryFile}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
+
+    if (typeof data.OpenAIPrompt == 'undefined') {
+        promptTextbox.value = 'Enter prompt'
+    }
+    else {
+        promptTextbox.value = data.OpenAIPrompt;
+    }
+    if (typeof data.reviewPrompt == 'undefined') {
+        reviewTextbox.value = 'Enter prompt'
+    }
+    else {
+        reviewTextbox.value = data.reviewPrompt;
+    }
     if (typeof data.spellCheckIgnore == 'undefined') {
         spellcheckTextbox.value = 'WordPress'
     }
@@ -92,22 +110,12 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
             //document.getElementById("show-history").checked = false;
         }
     }
-    
     if (data.showTransDiff != "null") {
         if (data.showTransDiff == true) {
             showDiffCheckbox.checked = true;
-            let value = true;
-            chrome.storage.local.set({ toonDiff: value }).then(() => {
-                //console.log("Value toonDiff is set to true");
-            });
         }
         else {
             showDiffCheckbox.checked = false;
-            let value = false;
-            chrome.storage.local.set({ toonDiff: value }).then(() => {
-                //console.log("Value toonDiff is set to false");
-            });
-            //document.getElementById("comp-translations").checked = false;
         }
     }
     if (data.glotDictGlos != "null") {
@@ -168,6 +176,14 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","transsel", "
             showLTCheckbox.checked = false;
         }
     }
+    if (data.Auto_review_OpenAI != "null") {
+        if (data.Auto_review_OpenAI == true) {
+            showReviewCheckbox.checked = true;
+        }
+        else {
+            showReviewCheckbox.checked = false;
+        }
+    }
    
 });
 
@@ -191,6 +207,7 @@ button.addEventListener("click", function () {
         showDeepl = "false";
     }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
+    let apikeyOpenAI = apikeyOpenAITextbox.value;
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
     }
@@ -202,6 +219,8 @@ button.addEventListener("click", function () {
     }
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
+    let promptText = promptTextbox.value;
+    let reviewText = reviewTextbox.value;
     let preTranslation = preverbsTextbox.value;
     let spellIgnoreverbs = spellcheckTextbox.value;
     let TMwaitVal = TMwaitValue.value;
@@ -241,7 +260,6 @@ button.addEventListener("click", function () {
     }
     if (document.querySelector("#LangToolFree:checked") !== null) {
         let LtFreeSet = document.querySelector("#LangToolFree:checked");
-        console.debug("free:",LtFreeSet)
         LtFreeChecked = LtFreeSet.checked;
     }
     else {
@@ -249,24 +267,32 @@ button.addEventListener("click", function () {
     }
 
     if (document.querySelector("#Auto-LT-spellcheck:checked") !== null) {
-
         let Auto_spellcheck_Set = document.querySelector("#Auto-LT-spellcheck:checked");
-        console.debug("spell:", Auto_spellcheck_Set)
         LtAutoSpell = Auto_spellcheck_Set.checked;
     }
     else {
         LtAutoSpell = "false";
     }
-    console.debug("spell:",LtAutoSpell)
+
+    if (document.querySelector("#Auto-review-OpenAI:checked") !== null) {
+        let Auto_review_Set = document.querySelector("#Auto-review-OpenAI:checked");
+        OpenAIreview = Auto_review_Set.checked;
+    }
+    else {
+        OpenAIreview = "false";
+    }
     chrome.storage.local.set({
         apikey: apikey,
         apikeyDeepl: apikeyDeepl,
-        DeeplFree : showDeepl,
+        apikeyOpenAI: apikeyOpenAI,
         apikeyMicrosoft: apikeyMicrosoft,
+        DeeplFree: showDeepl,
         transsel: transsel,
         destlang: destlang,
         postTranslationReplace: postTranslation,
         preTranslationReplace: preTranslation,
+        OpenAIPrompt: promptText,
+        reviewPrompt: reviewText,
         spellCheckIgnore: spellIgnoreverbs,
         showHistory: showHist,
         showTransDiff: showDifference,
@@ -278,7 +304,9 @@ button.addEventListener("click", function () {
         LtUser: LtToolUserTextbox.value,
         LtLang: LtToolLangTextbox.value,
         LtFree: LtFreeChecked,
-        Auto_spellcheck: LtAutoSpell
+        Auto_spellcheck: LtAutoSpell,
+        Auto_review_OpenAI: OpenAIreview
+
     });
     //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
  

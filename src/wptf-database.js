@@ -60,16 +60,25 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     var result = "";
     var translatedText;
     convertToLower = false;
-
+    //console.debug("myLi:",myLi)
     translatedText = myLi;
     //z("myLI:", myLi, translatedText)
     if (translatedText != 'No suggestions') {
-        translatedText = postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
-    }
+        translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
 
-    let textareaElem = record.querySelector("textarea.foreign-text");
+    }
+    //console.debug("editor in database:",record,translatedText)
+
+    let textareaElem = await record.querySelector("textarea.foreign-text");
+    //console.debug("textareaElem:",textareaElem)
+    //textareaElem = record.querySelector("textarea.foreign-text");
     textareaElem.innerText = translatedText;
+    // PSS 29-03-2021 Added populating the value of the property to retranslate            
     textareaElem.value = translatedText;
+    //PSS 25-03-2021 Fixed problem with description box issue #13
+    textareaElem.style.height = "auto";
+    textareaElem.style.height = textareaElem.scrollHeight + "px";
+    
     if (typeof current != "undefined") {
         current.innerText = "transFill";
         current.value = "transFill";
@@ -99,6 +108,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          let spanmissing = preview.querySelector(" span.missing");
          if (spanmissing != null) {
              preview.innerText = translatedText;
+             preview.value = translatedText;
              if (translatedText != 'No suggestions') {
                  current.innerText = "transFill";
                  current.value = "transFill";
@@ -111,22 +121,9 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              preview.appendChild(element1);
 
             // we need to set the checkbox as marked
-            rowchecked = preview.querySelector("td input");
-            if (rowchecked != null) {
-                if (!rowchecked.checked) {
-                    if (transtype == 'single') {
-                       //console.debug("single:", transtype)
-                       rowchecked.checked = true;
-                    }
-                    else {
-                        //console.debug("plural:", transtype)
-                        //console.debug("TM not found plural!");
-                        if (preview != null) {
-                            preview.style.display = "none";
-                        }
-                    }
-                }
-             }
+             // we need to set the checkbox as marked
+            
+           
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record
              var previewClass = document.querySelector(`#preview-${row}`);
@@ -137,6 +134,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          else {
              // if it is as single with local then we need also update the preview
              preview.innerText = translatedText;
+             preview.value = translatedText;
              current.innerText = "transFill";
              current.value = "transFill";
              var element1 = document.createElement("div");
@@ -147,11 +145,22 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              
              // we need to set the checkbox as marked
              preview = document.querySelector(`#preview-${row}`);
-             rowchecked = preview.querySelector("td input");
+             if (is_pte) {
+                 rowchecked = preview.querySelector("th input");
+             }
+             else {
+                 rowchecked = preview.querySelector("td input");
+             }
              if (rowchecked != null) {
-                if (!rowchecked.checked) {
-                   rowchecked.checked = true;
-                }
+                 if (!rowchecked.checked) {
+                     //if (transtype == 'single') {
+                     if (res == "No suggestions") {
+                         rowchecked.checked = false;
+                     }
+                     else {
+                         rowchecked.checked = true;
+                     }
+                 }
              }
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record 
@@ -164,8 +173,8 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     if (localButton != null) {
         localButton.style.visibility = "visible";
     } else {
-        // console.debug("TM not found single!");
-        // console.debug("preview:", preview);
+         console.debug("TM not found single!");
+         console.debug("preview:", preview);
         if (preview != null) {
             preview.style.display = "none";
             rowchecked = preview.querySelector("td input");

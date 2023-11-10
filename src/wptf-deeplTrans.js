@@ -41,10 +41,10 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     }
     else {
         if (!formal) {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
         }
         else {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
         }
     }
     //console.debug("deepl link:",link)
@@ -52,11 +52,9 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
         .then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
-            //console.debug("Response:", data.message);
             // check for error response
             if (!response.ok) {
                 // get error message from body or default to response status
-                //console.debug("data:", data, response.status)
                 if (typeof data != "undefined") {
                     error = [data, error, response.status];
                 }
@@ -69,13 +67,10 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
             }
             else {
                 //We do have a result so process it
-                //console.debug('result:', data.translations[0].text);
                 translatedText = data.translations[0].text;
-               // console.debug("deepl original: ", original, "'", "translatedText: ", translatedText, "'")
-
                 translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower);
-                //console.debug("deepl original: ", original, "'", "translatedText: ", translatedText, "'")
-                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                return Promise.resolve("OK");
                }
         })
         .catch(error => {

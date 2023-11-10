@@ -47,6 +47,9 @@
         #microsoft_api_key {
             width: 350px;
         }
+        #OpenAI_api_key {
+            width: 350px;
+        }
 
         #text_glossary_file {
             display: block;
@@ -62,6 +65,14 @@
             min-height: 100px;
         }
 
+        #text_openai_prompt {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+        #text_openai_review {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
         #text_pre_verbs {
             width: calc(100% - 6px);
             min-height: 100px;
@@ -203,7 +214,7 @@
             </tr>
             <tr>
                 <td>
-                    <label>License is for DeepL Free</label>
+                    <label for="DeeplFree">License is for DeepL Free</label>
                 </td>
                 <td>
                     <label>
@@ -214,7 +225,17 @@
             </tr>
             <tr>
                 <td>
-                    <label for="translator">Select a translator:</label>
+                    <label for="OpenAI_api_key">OpenAI API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="OpenAI_api_key" type="text" value="-api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="transselect">Select a translator:</label>
                 </td>
                 <td>
                     <div class="form-select">
@@ -222,6 +243,7 @@
                             <option value="deepl">Deepl</option>
                             <option value="google">Google</option>
                             <option value="microsoft">Microsoft</option>
+                            <option value="OpenAI">OpenAI</option>
                         </select>
                     </div>
                 </td>
@@ -249,11 +271,11 @@
             </tr>
             <tr>
                 <td>
-                    <label for="glossary_file">File uploaded at date</label>
+                    <label>File uploaded at date</label>
                 </td>
                 <td colspan="1">
                     <div>
-                        <span style="width:320px" id="text_glossary_file"></span>
+                        <span style="width:320px" id="glossary_file_uploaded"></span>
                     </div>
                 </td>
             </tr>
@@ -269,7 +291,7 @@
             </tr>
             <tr>
                 <td>
-                    <label>Set this for languagetool free</label>
+                    <label for="LangToolFree">Set this for languagetool free</label>
                 </td>
                 <td>
                     <label>
@@ -311,7 +333,18 @@
                 </td>
             </tr>
         </table>
-
+        <div class="form-input">
+            <label for="text_openai_prompt">OpenAI prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated">?</span>
+            <textarea id="text_openai_prompt">
+            </textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_openai_review">OpenAI review prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
+            <textarea id="text_openai_review">
+            </textarea>
+        </div>
         <div class="form-input">
             <label for="text_pre_verbs">Pre Translation Replace</label>
             <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
@@ -363,6 +396,10 @@ You,Je
         <label class="labeled-checkbox">
             <input type="checkbox" id="Auto-LT-spellcheck">
             <span>Auto spellcheck after pagecheck</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="Auto-review-OpenAI">
+            <span>Auto review with OpenAi after pagecheck</span>
         </label>
 
         <table id="footer">
