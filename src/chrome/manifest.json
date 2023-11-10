@@ -17,7 +17,16 @@
     ]
   },
   "permissions": [
-    "storage"
+    "storage",
+    "declarativeContent",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "*://translate.wordpress.org/*",
+    "*://api.languagetool.com/v2/*",
+    "*://api.languagetoolplus.com/v2/*"
   ],
   "options_page": "wptf-options.html",
   "content_scripts": [
@@ -26,6 +35,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-spellcheck.js",
         "wptf-buildstats",
         "wptf-functions.js",
         "wptf-purify.min.js",

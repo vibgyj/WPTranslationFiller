@@ -8,7 +8,9 @@
   "web_accessible_resources": [
     {
       "resources": [ "/img/*", "wptf-cute-alert.css", "error-alert.flac", "clipboard-icon.png", "warning-marker.png", "/_metadata", "wptf-options.html", "wptf-inject.js", "wptf-buildstats" ],
-      "matches": [ "https://translate.wordpress.org/*" ]
+      "matches": [
+        "https://translate.wordpress.org/*"
+      ]
     }
   ],
   "background.service_worker": {
@@ -34,7 +36,9 @@
     "declarativeNetRequestFeedback"
   ],
   "host_permissions": [
-    "*://translate.wordpress.org/*"
+    "*://translate.wordpress.org/*",
+    "*://api.languagetool.com/v2/*",
+    "*://api.languagetoolplus.com/v2/*"
   ],
   "options_page": "wptf-options.html",
   "content_scripts": [
@@ -43,6 +47,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-spellcheck.js",
         "wptf-buildstats.js",
         "wptf-functions.js",
         "wptf-purify.min.js",

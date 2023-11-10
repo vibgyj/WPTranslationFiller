@@ -53,7 +53,9 @@ function setPreTranslationReplace(preTranslationReplace) {
     }
 }
 
+function setIgnoreSpellCheck() {
 
+}
 function setPostTranslationReplace(postTranslationReplace, formal) {
     // PSS 21-07-2022 Currently when using formal, the translation is still default #225
     replaceVerb = [];
@@ -125,9 +127,9 @@ function preProcessOriginal(original, preverbs, translator) {
 }
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower) {
-    //console.debug("before posrepl: '"+ translatedText +"'")
+   // console.debug("before posrepl: '"+ translatedText +"'")
     translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
-   // console.debug("after postrepl:'",translatedText,"'")
+
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     //console.debug('after replace spaces:', translatedText);
@@ -136,8 +138,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
-            index++;
+                translatedText = translatedText.replaceAll(`[${index}]`, match[0]);
+                index++;
         }
 
     }
@@ -145,8 +147,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         const matches = original.matchAll(placeHolderRegex);
         let index = 0;
         for (const match of matches) {
-            translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
-            index++;
+                translatedText = translatedText.replace(`<x>${index}</x>`, match[0]);
+                index++;
         }
         //console.debug('after replace x:', translatedText);
         // Deepl does remove crlf so we need to replace them after sending them to the API
@@ -173,26 +175,50 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     if (pos != -1) {
         translatedText = translatedText.replace("> .", ">");
     }
-    // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
-    if (convertToLower == true) {
-        translatedText = convert_lower(translatedText);
-    }
 
-    // replverb contains the verbs to replace
+    // replaceVerb contains the verbs to replace
     for (let i = 0; i < replaceVerb.length; i++) {
         // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
         if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                // PSS solution for issue #291
+                //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
+                replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
         }
         else {
+            // PSS solution for issue #291
+            replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
             translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
         }
+    }
+    // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
+    if (convertToLower == true) {
+        translatedText = convert_lower(translatedText);
+        // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
+        for (let i = 0; i < replaceVerb.length; i++) {
+            // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
+            if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
+                if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                    // PSS solution for issue #291
+                    //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
+                    replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                }
+            }
+            else {
+                // PSS solution for issue #291
+                replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+            }
+        }
+
     }
     // check if the returned translation does have the same start/ending as the original
     translatedText = checkStartEnd(original, translatedText);
     //console.debug("after check startend: '" + translatedText + "'")
+
     return translatedText;
 }
 
@@ -237,66 +263,17 @@ function convert_lower(text) {
 }
 
 function applySentenceCase(str) {
-    var myPosition
-    // Convert each first word in a sentence to uppercase
-    // 03-01-2022 PSS modified the regex issue #169
-    // Below code is necessary to get the first char in the second sentense to uppercase if the line does not end with the regex
-    myPosition = str.indexOf("! ");
-    if (myPosition != -1) {
-        firstpart = str.slice(0, myPosition + 2);
-        let secondpart = str.slice(myPosition + 2,);
-        if (secondpart[0] != null) {
-            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
-        }
-        str = firstpart + secondpart;
+    //25-03-2023 PSS improved capitalizing first letter in sentence
+    var mySentences = str.match(/[^.!?\s][^.!?\n]*(?:[.!?](?!['"]?\s|$)[^.!?]*)*[.!?]?['"]?(?=\s|$)/g);
+    for (let i = 0; i < mySentences.length; i++) {
+       // console.log("zin:", mySentences[i]);
+        mySentences[i] = mySentences[i][0].toUpperCase() + mySentences[i].substring(1,);
     }
-    //console.debug("string:" ,str)
-    myPosition = str.indexOf(". ");
-    // PSS The code below needs improvement as the amount of sentences can vary
-    if (myPosition != -1) {
-        firstpart = str.slice(0, myPosition + 2);
-        let secondpart = str.slice(myPosition + 2,);
-        //sometimes a blank is at the last position, so there is no second sentence!
-        if (secondpart[0] != null) {
-            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1);
-            //console.debug("secondpart: '" + secondpart +"'")
-            mySecondPosition = secondpart.indexOf(". ");
-            if (mySecondPosition != -1) {
-                let thirdpart = secondpart.slice(0, mySecondPosition + 2);
-                let fourthpart = thirdpart.slice(mySecondPosition + 2,);
-                if (typeof fourthpart[0] != 'undefined') {
-                    secondpart = thirdpart + fourthpart[0].toUpperCase() + fourthpart.substr(1)
-                }
-            }
-        }
-        str = firstpart + secondpart;
-    }
-    myPosition = str.indexOf("? ");
-    if (myPosition != -1) {
-        firstpart = str.slice(0, myPosition + 2);
-        let secondpart = str.slice(myPosition + 2,);
-        if (secondpart.length >0 ) {
-            secondpart = secondpart[0].toUpperCase() + secondpart.substr(1)
-            str = firstpart + secondpart;
-        }
-        else {
-            str = firstpart;
-        }
-    }
-    myPosition = str.indexOf('" ');
+    mySentences = mySentences.join(' ');
+    str = mySentences;   
     //sometimes a blank is present before the "." which is not OK
     str = str.replaceAll(' .', '.')
-    return str.replace(/.+?[\.\?\!/\. {2}"!&"](\s|$)/g, function (txt) {
-        myPosition = str.indexOf('" ');
-        // if the string ends with '" ' then we do not need to set it to uppercase
-        if (myPosition != -1) {
-            return txt.charAt(0).toLowerCase() + txt.substr(1);
-        }
-        else {
-            return txt.charAt(0).toUpperCase() + txt.substr(1);
-        }
-
-    });
+    return str
 }
 
 function CheckUrl(translated,searchword) {
@@ -561,7 +538,8 @@ function checkFormalPage(dataFormal) {
                         else {
                             preview = document.querySelector("#preview-" + myrow + " td.translation");
                         }
-                        markElements(preview, replaceVerb, orgText);
+                        // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                        markElements(preview, replaceVerb, orgText, spellcheckIgnore);
                     }
                 }
                 else {
@@ -585,7 +563,8 @@ function checkFormalPage(dataFormal) {
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
                         // Highlight all keywords found in the page, so loop through the replacement array
-                        markElements(previewElem, replaceVerb, orgText);
+                        // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                        markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                     }
                     // plural line 2
                     previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
@@ -614,7 +593,8 @@ function checkFormalPage(dataFormal) {
                             if (textareaElem1 != null) {
                                 textareaElem1.innerText = translatedText;
                                 textareaElem1.value = translatedText;
-                                markElements(previewElem, replaceVerb, orgText);
+                                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                             }
                         }
                     }
@@ -650,6 +630,8 @@ async function checkPage(postTranslationReplace,formal) {
     var replaced = false;
     var newrowId;
     var myrow;
+    var spellcheckIgnore = [];
+    var repl_verb; //contains the list of found and replaced words
     var checkButton = await document.querySelector(".wptfNavBarCont a.check_translation-button");
     checkButton.innerText = "Checking";
     //console.debug("Button classname:", translateButton.className);
@@ -673,14 +655,12 @@ async function checkPage(postTranslationReplace,formal) {
         //setPreTranslationReplace(preTranslationReplace);
         let countreplaced = 0;
         var translatedText = "";
-        var repl_verb = "";
         var countrows = 0;
         var result;
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
             countrows++;
-            replaced = false;
+            replaced = false;    
             let original = e.querySelector("span.original-raw").innerText;
-
             let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
             let row = rowfound.split("-")[1];
             let newrow = rowfound.split("-")[2];
@@ -716,13 +696,6 @@ async function checkPage(postTranslationReplace,formal) {
                     else {
                         transtype = "single";
                     }
-                    // Fetch the translations
-                    // let element = e.querySelector(".source-details__comment");
-                    //  let textareaElem = e.querySelector("textarea.foreign-text");
-                    // if (transtype == "single") {
-                    //     translatedText = textareaElem.innerText;
-                    // }
-
                     if (transtype == "single") {
                         // Fetch the translations
                         let element = e.querySelector(".source-details__comment");
@@ -786,10 +759,10 @@ async function checkPage(postTranslationReplace,formal) {
                             if (preview != null) {
                                 preview.appendChild(myspan1);
                                 myspan1.appendChild(document.createTextNode(previewNewText));
-
                                 // PSS populate the preview before marking
                                 preview.innerText = DOMPurify.sanitize(previewNewText);
-                                markElements(preview, replaceVerb, orgText);
+                                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                markElements(preview, replaceVerb, orgText, spellcheckIgnore);
                             }
 
                         }
@@ -830,7 +803,8 @@ async function checkPage(postTranslationReplace,formal) {
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
                             // Highlight all keywords found in the page, so loop through the replacement array
-                            markElements(previewElem, replaceVerb, orgText);
+                            // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                            markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                         }
                         // plural line 2
                         previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
@@ -859,7 +833,8 @@ async function checkPage(postTranslationReplace,formal) {
                                 if (textareaElem1 != null) {
                                     textareaElem1.innerText = translatedText;
                                     textareaElem1.value = translatedText;
-                                    markElements(previewElem, replaceVerb, orgText);
+                                    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                    markElements(previewElem, replaceVerb, orgText, spellcheckIgnore);
                                 }
                             }
                         }
@@ -889,23 +864,58 @@ async function checkPage(postTranslationReplace,formal) {
     }
 }
 
-function markElements(preview,replaceVerb,orgText) {
-    // Highlight all keywords found in the page, so loop through the replacement array
+function needsMarking(markverb, spellcheckIgnore) {
+    console.debug("ignorelist1:", spellcheckIgnore)
+    var ignore = ["WooCommerce", "Yoast","strong","a href","href"];
+    
+    if ((ignore.find(element => element == markverb)) == undefined) {
+        return true
+    }
+    else {
+        return false
+    }
+}
+function markElements(preview, replaceVerb, orgText, spellcheckIgnore) {
+    // Highlight all keywords found in the page, so loop through the replacement array 
+    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+    if (typeof spellcheckIgnore != 'undefined' && spellcheckIgnore.length != 0) {
+        spellcheckIgnore = spellcheckIgnore.split('\n');
+    }
+    else {
+        spellcheckIgnore = [];
+    }
     if (previewNewText = 'undefined') {
         let previewNewText = "";
     }
     var arr = [];
     for (let i = 0; i < replaceVerb.length; i++) {
         if (typeof orgText != 'undefined') {
-           //console.debug("replverb:",replaceVerb[i][0],orgText)
-            if (orgText.includes(replaceVerb[i][0])) {
-                high = replaceVerb[i][1];
-                high = high.trim();
-                if (high != "") {
-                    // push the verb into the array
-                    arr.push(high);
+            // Check if we need to mark the verb
+            // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+            if (spellcheckIgnore.length == 0) {
+                //if (needsMarking(replaceVerb[i][1]), spellcheckIgnore) {
+                if (orgText.includes(replaceVerb[i][0])) {
+                    high = replaceVerb[i][1];
+                    high = high.trim();
+                    if (high != "") {
+                        // push the verb into the array
+                        arr.push(high);
+                    }
                 }
-            } 
+
+            }
+            else {
+                if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
+                    if (orgText.includes(replaceVerb[i][0])) {
+                        high = replaceVerb[i][1];
+                        high = high.trim();
+                        if (high != "") {
+                            // push the verb into the array
+                            arr.push(high);
+                        }
+                    }
+                }
+            }
         }
         else {
             console.debug("no org")
@@ -919,17 +929,24 @@ function markElements(preview,replaceVerb,orgText) {
 }
 function replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced,original,myrow) {
     var replaced = false;
+    
     for (let i = 0; i < replaceVerb.length; i++) {
+        //console.debug("replverbs", replaceVerb[i][0])
+        // PSS solution for issue #291
+        replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+       // console.debug("replverbs", replaceVerb[i][0])
         if (translatedText.includes(replaceVerb[i][0])) {
+           // console.debug("replacement:", '"', replaceVerb[i][0], '"', '"', replaceVerb[i][1],'"')
             var orgText = translatedText;
             // Enhencement issue #123
-            previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-            translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-            //console.debug("mark:", previewNewText, replaceVerb[i][1]);
-            repl_verb += myrow +": " + replaceVerb[i][0] + "->" + replaceVerb[i][1] + "<br>";
-            //console.debug("replaced:", replaceVerb[i][1], previewNewText, i)
-            countreplaced++;
-            replaced = true;
+            // fix for replacing verbs in url issue #290 check if the string does contain an URL
+            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                repl_verb += myrow + ": " + replaceVerb[i][0] + "->" + replaceVerb[i][1] + "<br>";
+                countreplaced++;
+                replaced = true;
+            }
         }
     }
     
@@ -1709,7 +1726,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                 break;
                             }
                             else if (result == "Error 400") {
-                                messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                                messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                                 //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                 break;
                             }
@@ -1733,7 +1750,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                   break;
                                 }
                                 else if (result == "Error 403") {
-                                     messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
+                                     messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
                                     //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                    break;
                                 }
@@ -1929,7 +1946,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         break;
                                     }
                                     else if (result == "Error 400") {
-                                        messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                                        messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                                         //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
@@ -1953,7 +1970,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, transsel, des
                                         break;
                                     }
                                     else if (result == "Error 403") {
-                                        messageBox("error", "Error in translation received status 403<br>Language: " + language + " not supported!");
+                                        messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
                                         //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
                                         break;
                                     }
@@ -2209,7 +2226,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
                         }
                         else if (result == "Error 400") {
-                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                         }
                         else if (result == "Error 456") {
                             messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
@@ -2228,7 +2245,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
                             //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
@@ -2286,6 +2303,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                         }
                     }
                     else if (transsel == "deepl") {
+                        console.debug("language:",destlang)
                         result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree);
                         if (result == "Error 403") {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
@@ -2294,7 +2312,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
                         }
                         else if (result == "Error 400") {
-                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                         }
                         else if (result == "Error 456") {
                             messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
@@ -2312,7 +2330,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, trans
                             //alert("Error in translation received status 401000, The request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + language + " not supported!");
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
                            // alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
@@ -2678,7 +2696,7 @@ async function waitForElm(selector, newWind) {
  * @param {string} cls Class to apply to the highlighted keyword
  */
 function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
-    const flags = caseSensitive ? "gi" : "g";
+    const flags = caseSensitive ?  "gi" : "g";
     // Sort longer matches first to avoid
     // highlighting keywords within keywords.
     if (typeof keywords != "undefined") {
@@ -2708,7 +2726,7 @@ function highlight(elem, keywords, caseSensitive = false, cls = "highlight") {
 }
 
 // This function processes the result of the fetch
-function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {
+async function processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current) {
     var result;
     if (transtype == "single") {
         textareaElem = record.querySelector("textarea.foreign-text");

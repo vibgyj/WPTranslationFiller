@@ -66,6 +66,10 @@
             width: calc(100% - 6px);
             min-height: 100px;
         }
+        #text_ignore_verbs {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
         #backbutton {
             display: flex;
             justify-content: center;
@@ -255,6 +259,48 @@
             </tr>
             <tr>
                 <td>
+                    <label for="languagetool_key">Languagetool Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input style="width:320px" id="languagetool_key" type="text" value="-api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Set this for languagetool free</label>
+                </td>
+                <td>
+                    <label>
+                        <input type="checkbox" id="LangToolFree">
+                        <span class="tooltip" data-tooltip="Set this for using languagetool free">?</span>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="languagetool_user">Languagetool user</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input style="width:320px" id="languagetool_user" type="text" value="-user name->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="languagetool_language">Languagetool language</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input style="width:120px" id="languagetool_language" type="text" value="-language-> nl-NL" />
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
                     <label for="tmWait">TM waiting time</label>
                 </td>
                 <td>
@@ -277,21 +323,26 @@ You,Je
             <label for="text_verbs">Post Translation Replace</label>
             <span class="tooltip" data-tooltip="With this table you can replace verbs after sending them to the translator API">?</span>
             <textarea id="text_verbs">wrong1,right1
-wrong2,right2
             </textarea>
         </div>
-        <label class="form-input">
-            <span for="export_verbs">Export post translation verbs </span>
-            <fieldset>
+        <div class="form-input">
+            <label for="text_ignore_verbs">Spellcheck ignore words</label>
+            <span class="tooltip" data-tooltip="With this table you can ignore verbs for spellchecking">?</span>
+            <textarea id="text_ignore_verbs">WooCommerce
+            </textarea>
+        </div>
+        <fieldset>
+            <label class="form-input">
+                <span for="export_verbs">Export post translation verbs </span>
                 <button type="button" id="exportverbs">Export verbs</button>
-            </fieldset>
-        </label>
-        <label id="dvImportSegments" class="fileupload ">
-            <span>Upload post translation replace CSV File</span>
-            <fieldset>
+            </label>
+        </fieldset>
+        <fieldset>
+            <label id="dvImportSegments" class="fileupload ">
+                <span>Upload post translation replace CSV File</span>
                 <input id="importPost" type="file" />
-            </fieldset>
-        </label>
+            </label>
+        </fieldset>
         <br />
         <label class="labeled-checkbox">
             <input type="checkbox" id="show-history">
@@ -309,6 +360,11 @@ wrong2,right2
             <input type="checkbox" id="show-convertToLower">
             <span>Convert words to lowercase except first word</span>
         </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="Auto-LT-spellcheck">
+            <span>Auto spellcheck after pagecheck</span>
+        </label>
+
         <table id="footer">
             <tr>
                 <td>

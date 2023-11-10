@@ -451,6 +451,37 @@ document.addEventListener("keydown", async function (event) {
            },
         )
     }
+    if (event.altKey && event.shiftKey && (event.key === "S" || event.key === "s")) {
+        event.preventDefault();
+        chrome.storage.local.get(
+            ["LtKey", "LtUser", "LtLang", "LtFree", "spellCheckIgnore"],
+            function (data) {
+                if (data.LtFree == true) {
+                    startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+                }
+                else {
+                    if (typeof data.LtKey != "undefined" && data.LtKey != "") {
+
+                        if (data.LtUser != "undefined" && data.LtUser != "") {
+                            if (data.LtLang != "undefined" && data.LtLang != "") {
+                                startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+                            }
+                            else {
+                                messageBox("error", "You need to set the language");
+                            }
+                        }
+                        else {
+                            messageBox("error", "You need to set the parameter for the user");
+                        }
+                    }
+                    else {
+                        messageBox("error", "No apikey is set for languagetool!");
+                    }
+                }
+            }
+        );
+    }
+
     if (event.altKey && (event.key === "r" || event.key === "R")) {
         // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
         event.preventDefault();
@@ -690,6 +721,10 @@ if (divPaging != null && divProjects == null) {
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
 
+async function startSpellCheck(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore) {
+    await spellcheck_page(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore)
+}
+
 function createElementWithId(type, id) {
     let element = document.createElement(type);
     element.id = id;
@@ -909,10 +944,13 @@ function checkPageClicked(event) {
     var formal = checkFormal(false);
     toastbox("info", "CheckPage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.local.get(
-        ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
+        ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck","spellCheckIgnore"],
         function (data) {
-            checkPage(data.postTranslationReplace,formal);
+            checkPage(data.postTranslationReplace, formal);
             close_toast();
+            if (data.Auto_spellcheck == true) {
+                startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
+            }
         }
     );
 }
@@ -1555,9 +1593,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     separator1 = document.createElement("div");
                     separator1.setAttribute("class", "checkElem_save");
                     checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1539")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Appr";
+                    res = addCheckButton(rowId, checkElem, "1593")
+                    if (res != null) {
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.innerText = "Appr";
+                    }
                     checkElem.style.backgroundColor = "green";
                     checkElem.title = "Save the string";
                     if (typeof headerElem.style != "undefined") {
