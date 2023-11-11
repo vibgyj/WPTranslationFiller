@@ -1493,6 +1493,7 @@ function checkactionClick(event) {
 async function checkbuttonClick(event) {
     var textareaElem;
     var translateButton;
+    var editor;
     if (event != undefined) {
             var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
             //event.preventDefault(); caused a problem within the single page enttry  
@@ -1507,6 +1508,52 @@ async function checkbuttonClick(event) {
             translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
+            editor = document.querySelector(`#editor-${rowId}`);
+            setTimeout(() => {
+                OpenAIres = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`);
+                if (OpenAIres != null) {         
+                       liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
+                       liSuggestion_raw = OpenAIres.querySelector('span.translation-suggestion__translation-raw');
+                       textFound = liSuggestion.innerText
+                       let my_original = document.querySelector("#editor-" + rowId + " .original");
+                       if (my_original != null) {
+                          original = my_original.innerText
+                          chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
+                            setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                            let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
+                            liSuggestion.innerText = correctedText
+                            // raw is the text copied into the editor
+                            liSuggestion_raw.innerText = correctedText
+                          });
+                       }
+                }
+                else {
+                    // try DeepL
+                    DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
+                    if (DeepLres != null) {
+                        liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
+                        liSuggestion_raw = DeepLres.querySelector('span.translation-suggestion__translation-raw');
+                        textFound = liSuggestion.innerText
+                        let my_original = document.querySelector("#editor-" + rowId + " .original");          
+                        if (my_original != null) {
+                            original = my_original.innerText
+                            chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
+                                setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                                let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
+                                liSuggestion.innerText = correctedText
+                                // raw is the text copied into the editor
+                                liSuggestion_raw.innerText = correctedText
+                            });
+                        }
+                    }
+                    else {
+                        //console.debug("We did not find a suggestion")
+                    }
+                
+               }
+            }, 1500);
+             
+           
             //localStorage.setItem('interXHR', 'false');
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
