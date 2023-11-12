@@ -1501,7 +1501,7 @@ async function checkbuttonClick(event) {
             // 30-06-2021 PSS added fetch status from local storage
             // Necessary to prevent showing old translation exist if started from link "Translation history"
             // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
-        if (action == "Details" || action == "✓Details") {    
+        if (action == "Details" || action == "✓Details") {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
@@ -1509,13 +1509,16 @@ async function checkbuttonClick(event) {
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
             editor = document.querySelector(`#editor-${rowId}`);
-            setTimeout(() => {
-                OpenAIres = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`);
-                if (OpenAIres != null) {         
+            waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip', 10000)
+                .then((element) => {
+                   // console.debug('Element found:', element);
+                    // We seem to have suggesttions, so now define them further
+                   OpenAIres = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`);
+                   if (OpenAIres != null) {         
                        liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
                        liSuggestion_raw = OpenAIres.querySelector('span.translation-suggestion__translation-raw');
                        textFound = liSuggestion.innerText
-                       let my_original = document.querySelector("#editor-" + rowId + " .original");
+                       let my_original = editor.querySelector(".original");
                        if (my_original != null) {
                           original = my_original.innerText
                           chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
@@ -1526,15 +1529,15 @@ async function checkbuttonClick(event) {
                             liSuggestion_raw.innerText = correctedText
                           });
                        }
-                }
-                else {
-                    // try DeepL
-                    DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
-                    if (DeepLres != null) {
+                   }
+                   else {
+                     // try DeepL
+                     DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
+                     if (DeepLres != null) {
                         liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
                         liSuggestion_raw = DeepLres.querySelector('span.translation-suggestion__translation-raw');
                         textFound = liSuggestion.innerText
-                        let my_original = document.querySelector("#editor-" + rowId + " .original");          
+                        let my_original = editor.querySelector(".original");          
                         if (my_original != null) {
                             original = my_original.innerText
                             chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
@@ -1545,15 +1548,17 @@ async function checkbuttonClick(event) {
                                 liSuggestion_raw.innerText = correctedText
                             });
                         }
-                    }
-                    else {
+                     }
+                      else {
                         //console.debug("We did not find a suggestion")
-                    }
-                
-               }
-            }, 1500);
+                     }
+                   }
+                })
+                .catch((error) => {
+                    console.debug("element not found")
+                    //console.error(error.message);
+                });
              
-           
             //localStorage.setItem('interXHR', 'false');
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
@@ -2631,6 +2636,25 @@ async function fetchOldRec(url, rowId) {
             }).catch(error => console.debug(error));
         }
     }
+}
+
+// this function waits until a defined element in a row is present
+function waitForElementInRow(rowSelector, elementSelector, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const intervalId = setInterval(() => {
+            const row = document.querySelector(rowSelector);
+            const element = row ? row.querySelector(elementSelector) : null;
+            if (element) {
+                clearInterval(intervalId);
+                resolve(element);
+            }
+            if (timeout <= 0) {
+                clearInterval(intervalId);
+                reject(new Error(`Timeout waiting for element with selector ${elementSelector} in row ${rowSelector}`));
+            }
+            timeout -= 100;
+        }, 100);
+    });
 }
 
 var stringToHTML = function (str) {
