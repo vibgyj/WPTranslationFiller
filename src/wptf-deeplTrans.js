@@ -3,19 +3,18 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-
-async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
+async function deepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore);
+    //console.debug("original:",original,row,record)
+    let result = await getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry);
     return errorstate;
 }
 
-
-async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore) {
+async function getTransDeepl(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
     var translatedText = "";
     var ul = "";
-    var current = "";
+    //var current = "";
     var prevstate = "";
     var pluralpresent = "";
     var responseObj = "";
@@ -30,50 +29,84 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     var link;
     var deepLresult;
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    current = document.querySelector(`#editor-${row} span.panel-header__bubble`);
-    prevstate = current.innerText;
-    //console.debug("Original:", originalPreProcessed)
+    let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
+   // console.debug("current in deepl:", deepLcurrent)
+    prevstate = deepLcurrent.innerText;
+    //console.debug("Original preprocessed:", originalPreProcessed)
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
+    //console.debug("glossary:",deeplGlossary)
     if (language == "RO") {
-        link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=0&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
+        link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
     }
     else {
         if (!formal) {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines"
+            if (deeplGlossary == null) {
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0"
+            }
+            else {
+            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0"
+            }
         }
         else {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=1&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines"
+             if (deeplGlossary == null){
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines&outline_detection=0"
+             }
+             else {
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&&split_sentences=nonewlines&outline_detection=0"
+             }
         }
     }
+
     //console.debug("deepl link:",link)
-    const response = fetch(link)
+    const response = await fetch(link)
         .then(async response => {
-            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const isJson = await response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
+            //console.debug("response:", data);
             // check for error response
             if (!response.ok) {
                 // get error message from body or default to response status
                 if (typeof data != "undefined") {
                     error = [data, error, response.status];
+                    errorstate="NOK"
                 }
                 else {
                     let message = 'Noresponse';
                     data = "noData";
                     error = [data, message, response.status];
+                    errorstate="NOK"
                 }
                 return Promise.reject(error);
             }
             else {
                 //We do have a result so process it
-                translatedText = data.translations[0].text;
-                translatedText = await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
-                deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, current);
-                return Promise.resolve("OK");
+                if (typeof data.translations != 'undefined') {
+                   // console.debug("deepl result complete:",data.translations)
+                    translatedText = data.translations[0].text;
+                    //console.debug("deepl result", translatedText)
+
+                    translatedText =  await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
+                   // console.debug("deepl na postprocess:", translatedText, deepLcurrent,convertToLower)
+                  //  console.debug("deepl preprocessed:",originalPreProcessed,record) 
+                    deepLresul = await processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);
+                    return Promise.resolve("OK");
+                }
+                else {
+                    errorstate = '<br>We did not get a translation!<br>Message received:<br>' + error;
+                    message="Error in recieving data"
+                    error = [data, message, response.status];
+                    return Promise.reject(error);
+                }
                }
         })
         .catch(error => {
+            if (error[2] == "400") {
+                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
+                console.debug("glossary value is not supported")
+                errorstate = "Error 400";
+            }
             if (error[2] == "403") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 errorstate = "Error 403";
@@ -83,17 +116,24 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                 errorstate = "Error 404";
             }
             else if (error[2] == '456') {
-                //alert("Error 456 Quota exceeded. The character limit has been reached")
+                messageBox("warning", "Error 456 Quota exceeded.<br> The character limit has been reached");
                 errorstate = "Error 456";
+            }
+            else if (error[2] == '503') {
+                messageBox("warning", "Dienst niet beschikbaar");
+                errorstate = "Error 503";
             }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
             }
             else {
-                alert("Error message: " + error[1]);
+                //messageBox("warning", "There has been an error<br>"+ data.message);
+               // alert("Error message: " + error[1]);
                 console.debug("Error:",error)
                 errorstate = "Error " + error[1];
             }
+            return errorstate
         });
 }
+

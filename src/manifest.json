@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "2.1.7",
+  "version": "2.1.9",
   "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's' and indicate the accuracy of translation according to locale glossary.",
   "web_accessible_resources": [
     {
@@ -14,7 +14,8 @@
         "/_metadata",
         "wptf-options.html",
         "wptf-inject.js",
-        "wptf-buildstats"
+        "wptf-buildstats.js",
+        "wptf-glossary.csv"
       ],
       "matches": [
         "https://translate.wordpress.org/*"
@@ -59,6 +60,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-deeplGloss.js",
         "wptf-spellcheck.js",
         "wptf-buildstats.js",
         "wptf-functions.js",
@@ -84,6 +86,9 @@
       ],
       "json": [
         "wptf-block_rules.json"
+      ],
+      "csv": [
+        "wptf-glossary.csv"
       ]
     }
   ]

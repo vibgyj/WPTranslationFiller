@@ -83,7 +83,7 @@ async function getTransMicrosoft(record, language, apikeyMicrosoft, original, or
             else {
                 //We do have a result so process it
                 translatedText = data[0].translations[0].text;
-                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore);
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore,locale);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
             }

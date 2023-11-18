@@ -48,7 +48,6 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
     var data;
     var message;
     var link;
-
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
@@ -85,13 +84,13 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
                 translatedText = data.data.translations[0].translatedText;
                 //console.debug("translated text:", translatedText);
                 // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
-                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower, spellCheckIgnore);
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower, spellCheckIgnore,locale);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
             }
         })
         .catch(error => {
-            //console.debug("error:",error)
+            console.debug("error:",error)
             if (error[0].status == '401') {
                 //alert("Error in translation received status 401, Credentials are not valid!");
                 errorstate = "Error 401";

@@ -53,7 +53,8 @@ async function openDB(db) {
 //}
 
 // Part of the solution issue #204
-async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype) {
+async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale) {
+    //console.debug("getTM:",spellIgnore)
     var timeout = 0;
     var timer = 0;
     var preview;
@@ -63,9 +64,8 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     //console.debug("myLi:",myLi)
     translatedText = myLi;
     //z("myLI:", myLi, translatedText)
-    if (translatedText != 'No suggestions') {
-        translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "deepl", false);
-
+    if (translatedText != 'No suggestions') {                    
+        translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, spellIgnore, locale);
     }
     //console.debug("editor in database:",record,translatedText)
 

@@ -1,5 +1,22 @@
 // This file contains functions used within various files
 
+function findFirstBlankAfter(text, startPosition) {
+    // this function finds the first word after the semi colon
+    for (let i = startPosition; i < text.length; i++) {
+        if (text[i] === ' ' || text[i] === '.' || text[i] === '"') {
+            switch (text[i]) {
+                case ".":
+                    console.debug("found period")
+                    i = i - 1
+                case '"':
+                    i = i - 1
+            }
+            return i; // Found a blank, ".", or '"' character, return its position
+        }
+    }
+    return -1; // Blank not found after startPosition
+}
+
 function unEscape(htmlStr) {
     // function is a fix for issue #300 remove those chars from innerHTML result
     htmlStr = htmlStr.replace(/&lt;/g, "<");
@@ -283,8 +300,9 @@ function validatePage(language, showHistory, locale) {
         else {
             nameDiff = false;
         }
-        var result = validate(language, original, translation, locale);
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId);
+            var result = validate(language, original, translation, locale);
+            let record = e.previousSibling.previousSibling.previousSibling
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record);
         }, timeout);
         timeout += 20;
        
