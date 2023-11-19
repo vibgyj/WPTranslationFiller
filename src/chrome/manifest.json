@@ -88,6 +88,10 @@
       ],
       "json": [
         "wptf-block_rules.json"
+      ],
+      "csv": [
+        "wptf-glossary.csv"
+
       ]
     }
   ]

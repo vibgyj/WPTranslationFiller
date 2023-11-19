@@ -75,6 +75,9 @@
       "css": [
         "wptf-cute-alert.css",
         "wptf-style.css"
+      ],
+      "csv": [
+        "wptf-glossary.csv"
       ]
     }
   ],
