@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "WordPress Translation Filler",
-  "version": "2.1.9",
+  "version": "2.2.0",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's' and indicate the accuracy of translation according to locale glossary.",
   "resources": [
     "/img/*",
@@ -75,6 +75,9 @@
       "css": [
         "wptf-cute-alert.css",
         "wptf-style.css"
+      ],
+      "csv": [
+        "wptf-glossary.csv"
       ]
     }
   ],

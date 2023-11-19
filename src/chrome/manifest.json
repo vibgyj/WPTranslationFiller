@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "2.1.9",
+  "version": "2.2.0",
   "description": "Automatically fill translations fom Google, DeepL, Microsoft, and OpenAI translation API's' and indicate the accuracy of translation according to locale glossary.",
 
 
@@ -88,6 +88,10 @@
       ],
       "json": [
         "wptf-block_rules.json"
+      ],
+      "csv": [
+        "wptf-glossary.csv"
+
       ]
     }
   ]
