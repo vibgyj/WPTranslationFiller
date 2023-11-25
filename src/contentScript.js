@@ -12,6 +12,17 @@ else {
    // console.debug("new db open:", db);   
 }
 
+var translator; // Declare the global variable
+
+// Use chrome.local.get to retrieve the value
+chrome.storage.local.get('transsel', async function (result) {
+    console.debug("result:",result)
+    translator = result.transsel; // Assign the value to the global variable
+    console.debug("translator:",translator); // Check the value
+});
+
+
+console.debug("translator:",translator)
 const setToonDiff = async function (obj) {
     return new Promise((resolve, reject) => {
         try {
@@ -23,6 +34,7 @@ const setToonDiff = async function (obj) {
         }
     });
 };
+
 const getToonDiff = async function (key) {
     return new Promise((resolve, reject) => {
         try {
@@ -1494,6 +1506,7 @@ async function checkbuttonClick(event) {
     var textareaElem;
     var translateButton;
     var editor;
+    var OpenAIres;
     if (event != undefined) {
             var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
             //event.preventDefault(); caused a problem within the single page enttry  
@@ -1509,35 +1522,20 @@ async function checkbuttonClick(event) {
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
             editor = document.querySelector(`#editor-${rowId}`);
-            waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip', 10000)
-                .then((element) => {
-                   // console.debug('Element found:', element);
+            console.debug("translator:", translator)
+            //res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion with-tooltip deepl', 5000)
+            if (translator == 'OpenAI') { 
+               res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 5000)
+                .then(async (element) => {
                     // We seem to have suggesttions, so now define them further
-                   OpenAIres = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`);
-                   if (OpenAIres != null) {         
-                       liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                       liSuggestion_raw = OpenAIres.querySelector('span.translation-suggestion__translation-raw');
-                       textFound = liSuggestion.innerText
-                       let my_original = editor.querySelector(".original");
-                       if (my_original != null) {
-                          original = my_original.innerText
-                          chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
-                            setPostTranslationReplace(data.postTranslationReplace, data.formal);
-                            let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
-                            liSuggestion.innerText = correctedText
-                            // raw is the text copied into the editor
-                            liSuggestion_raw.innerText = correctedText
-                          });
-                       }
-                   }
-                   else {
-                     // try DeepL
-                     DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
-                     if (DeepLres != null) {
-                        liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
-                        liSuggestion_raw = DeepLres.querySelector('span.translation-suggestion__translation-raw');
+                    OpenAIres = editor.getElementsByClassName("translation-suggestion with-tooltip openai");
+                    //let OpenAIres = editor.querySelector(`translation-suggestion.with-tooltip.openai`);
+                    if (OpenAIres.length > 0) {
+                        liSuggestion = OpenAIres[0].querySelector(`span.translation-suggestion__translation`);
+                        liSuggestion_raw = OpenAIres[0].querySelector('span.translation-suggestion__translation-raw');
                         textFound = liSuggestion.innerText
-                        let my_original = editor.querySelector(".original");          
+                        console.debug("text found:", textFound)
+                        let my_original = editor.querySelector(".original");
                         if (my_original != null) {
                             original = my_original.innerText
                             chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
@@ -1548,16 +1546,49 @@ async function checkbuttonClick(event) {
                                 liSuggestion_raw.innerText = correctedText
                             });
                         }
-                     }
-                      else {
-                        //console.debug("We did not find a suggestion")
-                     }
-                   }
+                    }
                 })
                 .catch((error) => {
-                    console.debug("element not found")
+                    console.debug("element not found:", error)
                     //console.error(error.message);
                 });
+            }
+            else {
+                // we do not have OpenAI so try DeepL
+                res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 5000)
+                    .then(async (element) => {
+                     DeepLres = editor.getElementsByClassName("translation-suggestion with-tooltip deepl");
+                     if (DeepLres.length > 0) {
+                        liSuggestion = DeepLres[0].querySelector(`span.translation-suggestion__translation`);
+                        liSuggestion_raw = DeepLres[0].querySelector('span.translation-suggestion__translation-raw');
+                        textFound = liSuggestion.innerText
+                        console.debug("textFound:",textFound)
+                        let my_original = editor.querySelector(".original");
+                        if (my_original != null) {
+                           original = my_original.innerText
+                           chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
+                              setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                              let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
+                              liSuggestion.innerText = correctedText
+                            // raw is the text copied into the editor
+                               liSuggestion_raw.innerText = correctedText
+                               console.debug("Corrected text:",correctedText)
+                           });
+                        }
+                        else {
+                            console.debug("We did not find a text")
+                        }
+                     }
+                     else {
+                        console.debug("We did not find a result")
+                      }
+               
+                    })
+                    .catch((error) => {
+                        console.debug("element not found:", error)
+                        //console.error(error.message);
+                    });
+            }
              
             //localStorage.setItem('interXHR', 'false');
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
@@ -2640,6 +2671,7 @@ async function fetchOldRec(url, rowId) {
 
 // this function waits until a defined element in a row is present
 function waitForElementInRow(rowSelector, elementSelector, timeout = 5000) {
+    console.debug("timeout:",timeout,rowSelector,elementSelector)
     return new Promise((resolve, reject) => {
         const intervalId = setInterval(() => {
             const row = document.querySelector(rowSelector);
@@ -2648,12 +2680,15 @@ function waitForElementInRow(rowSelector, elementSelector, timeout = 5000) {
                 clearInterval(intervalId);
                 resolve(element);
             }
+            else {
+                console.debug("timeout:",timeout)
+            }
             if (timeout <= 0) {
                 clearInterval(intervalId);
                 reject(new Error(`Timeout waiting for element with selector ${elementSelector} in row ${rowSelector}`));
             }
             timeout -= 100;
-        }, 100);
+        }, 200);
     });
 }
 
