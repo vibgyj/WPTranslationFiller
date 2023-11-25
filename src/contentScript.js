@@ -1522,7 +1522,7 @@ async function checkbuttonClick(event) {
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
             editor = document.querySelector(`#editor-${rowId}`);
-            console.debug("translator:", translator)
+            //console.debug("translator:", translator)
             //res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion with-tooltip deepl', 5000)
             if (translator == 'OpenAI') { 
                res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 5000)
@@ -1534,7 +1534,7 @@ async function checkbuttonClick(event) {
                         liSuggestion = OpenAIres[0].querySelector(`span.translation-suggestion__translation`);
                         liSuggestion_raw = OpenAIres[0].querySelector('span.translation-suggestion__translation-raw');
                         textFound = liSuggestion.innerText
-                        console.debug("text found:", textFound)
+                        //console.debug("text found:", textFound)
                         let my_original = editor.querySelector(".original");
                         if (my_original != null) {
                             original = my_original.innerText
@@ -1562,7 +1562,7 @@ async function checkbuttonClick(event) {
                         liSuggestion = DeepLres[0].querySelector(`span.translation-suggestion__translation`);
                         liSuggestion_raw = DeepLres[0].querySelector('span.translation-suggestion__translation-raw');
                         textFound = liSuggestion.innerText
-                        console.debug("textFound:",textFound)
+                        //console.debug("textFound:",textFound)
                         let my_original = editor.querySelector(".original");
                         if (my_original != null) {
                            original = my_original.innerText
@@ -1572,7 +1572,7 @@ async function checkbuttonClick(event) {
                               liSuggestion.innerText = correctedText
                             // raw is the text copied into the editor
                                liSuggestion_raw.innerText = correctedText
-                               console.debug("Corrected text:",correctedText)
+                               //console.debug("Corrected text:",correctedText)
                            });
                         }
                         else {
@@ -2671,7 +2671,7 @@ async function fetchOldRec(url, rowId) {
 
 // this function waits until a defined element in a row is present
 function waitForElementInRow(rowSelector, elementSelector, timeout = 5000) {
-    console.debug("timeout:",timeout,rowSelector,elementSelector)
+    //console.debug("timeout:",timeout,rowSelector,elementSelector)
     return new Promise((resolve, reject) => {
         const intervalId = setInterval(() => {
             const row = document.querySelector(rowSelector);
@@ -2681,7 +2681,7 @@ function waitForElementInRow(rowSelector, elementSelector, timeout = 5000) {
                 resolve(element);
             }
             else {
-                console.debug("timeout:",timeout)
+               // console.debug("timeout:",timeout)
             }
             if (timeout <= 0) {
                 clearInterval(intervalId);
