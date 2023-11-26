@@ -10,6 +10,8 @@
 .panelTransMenu {
     height: 40px;
     text-align: right;
+    border-bottom: 1px solid;
+    border-color: #72777c;
 }
 
 .indeterminate-progress-bar {

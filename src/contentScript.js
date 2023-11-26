@@ -16,13 +16,10 @@ var translator; // Declare the global variable
 
 // Use chrome.local.get to retrieve the value
 chrome.storage.local.get('transsel', async function (result) {
-    console.debug("result:",result)
     translator = result.transsel; // Assign the value to the global variable
-    console.debug("translator:",translator); // Check the value
 });
 
 
-console.debug("translator:",translator)
 const setToonDiff = async function (obj) {
     return new Promise((resolve, reject) => {
         try {
@@ -1507,87 +1504,166 @@ async function checkbuttonClick(event) {
     var translateButton;
     var editor;
     var OpenAIres;
+    var newres;
+    var lires = '0';
     if (event != undefined) {
-            var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-            //event.preventDefault(); caused a problem within the single page enttry  
-            let action = event.target.textContent;
-            // 30-06-2021 PSS added fetch status from local storage
-            // Necessary to prevent showing old translation exist if started from link "Translation history"
-            // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
+        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+        //event.preventDefault(); caused a problem within the single page enttry  
+        let action = event.target.textContent;
+        // 30-06-2021 PSS added fetch status from local storage
+        // Necessary to prevent showing old translation exist if started from link "Translation history"
+        // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
         if (action == "Details" || action == "✓Details") {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
+            let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)
+            //console.debug("panelTransDiv:", panelTransDiv)
+            if (panelTransDiv == null) {
+                // If the transdiv is not present we need to add it
+                var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
+                if (newTransDiv != null) {
+                    newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
+                    // We need to repopulate the panelTransDiv as it now exists
+                    panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+                    translateButton = document.querySelector(`#editor-${rowId}-translation-entry-my-button`);
+
+                    translateButton = createElementWithId("my-button", `translate-${rowId}--translation-entry-my-button`);
+                    translateButton.className = "translation-entry-my-button";
+                    translateButton.onclick = translateEntryClicked;
+                    translateButton.innerText = "Translate";
+                    panelTransDiv.insertBefore(translateButton, panelTransDiv.childNodes[0]);
+
+                    addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
+                    addTranslateButton.className = "addtranslation-entry-my-button";
+                    addTranslateButton.onclick = addtranslateEntryClicked;
+                    addTranslateButton.innerText = "Add Translation";
+                    panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
+
+                    TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
+                    TranslocalButton.className = "translocal-entry-local-button";
+                    TranslocalButton.innerText = "Local";
+                    TranslocalButton.style.visibility = "hidden";
+                    panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
+
+                    MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
+                    MissinglocalButton.className = "translocal-entry-missing-button";
+                    MissinglocalButton.innerText = "Missing glossary entry";
+                    MissinglocalButton.style.visibility = "hidden";
+                    MissinglocalButton.style.animation = "blinking 1s infinite";
+                    panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
+                }
+            }
             translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
+            result = await validateEntry('nl', textareaElem, "", "", rowId, "nl");
             editor = document.querySelector(`#editor-${rowId}`);
-            //console.debug("translator:", translator)
-            //res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion with-tooltip deepl', 5000)
-            if (translator == 'OpenAI') { 
-               res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 5000)
+            newres = editor.querySelector(`#editor-${rowId} .suggestions__translation-memory.initialized .suggestions-list`);
+            res = await waitForElementInRow(`#editor-${rowId}`, '.suggestions__translation-memory.initialized .suggestions-list', 400)
                 .then(async (element) => {
-                    // We seem to have suggesttions, so now define them further
-                    OpenAIres = editor.getElementsByClassName("translation-suggestion with-tooltip openai");
-                    //let OpenAIres = editor.querySelector(`translation-suggestion.with-tooltip.openai`);
-                    if (OpenAIres.length > 0) {
-                        liSuggestion = OpenAIres[0].querySelector(`span.translation-suggestion__translation`);
-                        liSuggestion_raw = OpenAIres[0].querySelector('span.translation-suggestion__translation-raw');
-                        textFound = liSuggestion.innerText
-                        //console.debug("text found:", textFound)
-                        let my_original = editor.querySelector(".original");
-                        if (my_original != null) {
-                            original = my_original.innerText
-                            chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
-                                setPostTranslationReplace(data.postTranslationReplace, data.formal);
-                                let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
-                                liSuggestion.innerText = correctedText
-                                // raw is the text copied into the editor
-                                liSuggestion_raw.innerText = correctedText
-                            });
+                    //console.debug("we found suggestion list:", element)
+                    newres = editor.querySelector(`#editor-${rowId} .suggestions__translation-memory.initialized .suggestions-list`);
+                    lires = newres.getElementsByTagName("li");
+                    if (lires[0] != null) {
+                        liscore = lires[0].querySelector(`span.translation-suggestion__score`);
+                        if (liscore != null) {
+                            liscore = liscore.innerText;
+                            liscore = Number(liscore.substring(0, liscore.length - 1))
+                            if (liscore == 100) {
+                                liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                                textFound = liSuggestion.innerHTML;
+                                textFoundSplit = textFound.split("<span")[0]
+                                if (textFoundSplit != null) {
+                                    textFound = textFoundSplit;
+                                }
+                                else {
+                                    textFound = liSuggestion.innerText;
+                                }
+                            }
+                            else {
+                                console.debug("We did not find a li with score 100:",liscore)
+                            }
                         }
                     }
+                    else {
+                        liscore = '0';
+                    }
                 })
-                .catch((error) => {
-                    console.debug("element not found:", error)
-                    //console.error(error.message);
+                .catch ((error) => {
+                   //console.debug("element not found:", error)
+                   liscore = '0';
+                   //console.error(error.message);
                 });
+
+            //console.debug("lires:", newres, Number(liscore));
+            if (liscore != 100) {
+                if (translator == 'OpenAI') {
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 5000)
+                        .then(async (element) => {
+                            // We seem to have suggesttions, so now define them further
+                            OpenAIres = editor.getElementsByClassName("translation-suggestion with-tooltip openai");
+                            if (OpenAIres.length > 0) {
+                                liSuggestion = OpenAIres[0].querySelector(`span.translation-suggestion__translation`);
+                                liSuggestion_raw = OpenAIres[0].querySelector('span.translation-suggestion__translation-raw');
+                                textFound = liSuggestion.innerText
+                               // console.debug("text found:", textFound)
+                                let my_original = editor.querySelector(".original");
+                                if (my_original != null) {
+                                    original = my_original.innerText
+                                    chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
+                                        setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                                        let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
+                                        liSuggestion.innerText = correctedText
+                                        // raw is the text copied into the editor
+                                        liSuggestion_raw.innerText = correctedText
+                                    });
+                                }
+                            }
+                        })
+                        .catch((error) => {
+                            //console.debug("element not found:", error)
+                            //console.error(error.message);
+                        });
+                }
+                else {
+                    // we do not have OpenAI so try DeepL
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 5000)
+                        .then(async (element) => {
+                            DeepLres = editor.getElementsByClassName("translation-suggestion with-tooltip deepl");
+                            if (DeepLres.length > 0) {
+                                liSuggestion = DeepLres[0].querySelector(`span.translation-suggestion__translation`);
+                                liSuggestion_raw = DeepLres[0].querySelector('span.translation-suggestion__translation-raw');
+                                textFound = liSuggestion.innerText
+                                let my_original = editor.querySelector(".original");
+                                if (my_original != null) {
+                                    original = my_original.innerText
+                                    chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
+                                        setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                                        let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
+                                        liSuggestion.innerText = correctedText
+                                        // raw is the text copied into the editor
+                                        liSuggestion_raw.innerText = correctedText
+                                        //console.debug("Corrected text:",correctedText)
+                                    });
+                                }
+                                else {
+                                    console.debug("We did not find a text")
+                                }
+                            }
+                            else {
+                                console.debug("We did not find a result")
+                            }
+
+                        })
+                        .catch((error) => {
+                           // console.debug("element not found:", error)
+                            //console.error(error.message);
+                        });
+                }
             }
             else {
-                // we do not have OpenAI so try DeepL
-                res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 5000)
-                    .then(async (element) => {
-                     DeepLres = editor.getElementsByClassName("translation-suggestion with-tooltip deepl");
-                     if (DeepLres.length > 0) {
-                        liSuggestion = DeepLres[0].querySelector(`span.translation-suggestion__translation`);
-                        liSuggestion_raw = DeepLres[0].querySelector('span.translation-suggestion__translation-raw');
-                        textFound = liSuggestion.innerText
-                        //console.debug("textFound:",textFound)
-                        let my_original = editor.querySelector(".original");
-                        if (my_original != null) {
-                           original = my_original.innerText
-                           chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
-                              setPostTranslationReplace(data.postTranslationReplace, data.formal);
-                              let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
-                              liSuggestion.innerText = correctedText
-                            // raw is the text copied into the editor
-                               liSuggestion_raw.innerText = correctedText
-                               //console.debug("Corrected text:",correctedText)
-                           });
-                        }
-                        else {
-                            console.debug("We did not find a text")
-                        }
-                     }
-                     else {
-                        console.debug("We did not find a result")
-                      }
-               
-                    })
-                    .catch((error) => {
-                        console.debug("element not found:", error)
-                        //console.error(error.message);
-                    });
+                console.debug("we did find a 100 % score")
             }
              
             //localStorage.setItem('interXHR', 'false');
@@ -1598,7 +1674,10 @@ async function checkbuttonClick(event) {
                 var tds = myrec.getElementsByTagName("td")[0];
                 tds.setAttribute("colspan", 5);
             }
-            myrec.scrollIntoView(true);
+            if (myrec != null) {
+                // we are not in listmode
+                myrec.scrollIntoView(true);
+            }
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
             chrome.storage.local.set({ "noOldTrans": "True" }, function () {
             });
@@ -1624,41 +1703,6 @@ async function checkbuttonClick(event) {
                         }
                     }
                 });
-            }
-            let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)
-            if (panelTransDiv == null) {
-                // If the transdiv is not present we need to add it
-                var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
-                newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
-
-                // We need to repopulate the panelTransDiv as it now exists
-                panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
-                translateButton = document.querySelector(`#editor-${rowId}-translation-entry-my-button`);
-               
-                translateButton = createElementWithId("my-button", `translate-${rowId}--translation-entry-my-button`);
-                translateButton.className = "translation-entry-my-button";
-                translateButton.onclick = translateEntryClicked;
-                translateButton.innerText = "Translate";
-                panelTransDiv.insertBefore(translateButton, panelTransDiv.childNodes[0]);
-
-                addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
-                addTranslateButton.className = "addtranslation-entry-my-button";
-                addTranslateButton.onclick = addtranslateEntryClicked;
-                addTranslateButton.innerText = "Add Translation";
-                panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
-
-                TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
-                TranslocalButton.className = "translocal-entry-local-button";
-                TranslocalButton.innerText = "Local";
-                TranslocalButton.style.visibility = "hidden";
-                panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
-
-                MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
-                MissinglocalButton.className = "translocal-entry-missing-button";
-                MissinglocalButton.innerText = "Missing glossary entry";
-                MissinglocalButton.style.visibility = "hidden";
-                MissinglocalButton.style.animation = "blinking 1s infinite";
-                panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
             }
                
             if (typeof textareaElem != "null") {
@@ -1834,6 +1878,10 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     var translation;
     var result=[];
     translation = textareaElem.value;
+    //console.debug("value textareaElem",translation)
+    if (translation == "") {
+        translation ="Empty"
+    }
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
@@ -2429,8 +2477,11 @@ function validate(language, original, translation, locale) {
          percent = 0;
     }
     // 12-02-2023 PSS Modified the code below as it was not correct
-    if (wordCount == 0 && foundCount == 0) {
+    if (wordCount == 0 && foundCount == 0 && translation != 'Empty') {
         percent = 100;
+    }
+    else if ((wordCount == 0 && foundCount == 0 && translation == 'Empty')) {
+        percent = 0;
     }
     else if (wordCount == foundCount ) {
             percent = 100;
