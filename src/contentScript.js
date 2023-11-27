@@ -1558,6 +1558,35 @@ async function checkbuttonClick(event) {
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
             result = await validateEntry('nl', textareaElem, "", "", rowId, "nl");
+
+            // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
+            chrome.storage.local.set({ "noOldTrans": "True" }, function () {
+            });
+            // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
+            let f = document.getElementsByClassName("breadcrumb");
+            let url = f[0].firstChild.baseURI;
+            let newurl = url.split("?")[0];
+            if (typeof newurl != "undefined") {
+                // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
+                // Fetch only the current string to compaire with the waiting string
+                //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
+                url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
+                chrome.storage.local.get(["showTransDiff"], async function (data) {
+                    if (data.showTransDiff != "null") {
+                        if (data.showTransDiff == true) {
+                            let res = await getToonDiff('toonDiff');
+                            //chrome.storage.local.get(["toonDiff"]).then((result) => {
+                            //console.log("Value toonDiff currently is " + res);
+                            if (res == true) {
+                                fetchOldRec(url, rowId);
+                            }
+                            // });
+                        }
+                    }
+                });
+            }
+
+
             editor = document.querySelector(`#editor-${rowId}`);
             newres = editor.querySelector(`#editor-${rowId} .suggestions__translation-memory.initialized .suggestions-list`);
             res = await waitForElementInRow(`#editor-${rowId}`, '.suggestions__translation-memory.initialized .suggestions-list', 400)
@@ -1678,32 +1707,7 @@ async function checkbuttonClick(event) {
                 // we are not in listmode
                 myrec.scrollIntoView(true);
             }
-            // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
-            chrome.storage.local.set({ "noOldTrans": "True" }, function () {
-            });
-            // 13-06-2021 PSS added showing a new window if an existing translation is present, issue #81
-            let f = document.getElementsByClassName("breadcrumb");
-            let url = f[0].firstChild.baseURI;
-            let newurl = url.split("?")[0];
-            if (typeof newurl != "undefined") {
-                // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
-                // Fetch only the current string to compaire with the waiting string
-                //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
-                url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
-                chrome.storage.local.get(["showTransDiff"], async function (data) {
-                    if (data.showTransDiff != "null") {
-                        if (data.showTransDiff == true) {
-                            let res = await getToonDiff('toonDiff');
-                            //chrome.storage.local.get(["toonDiff"]).then((result) => {
-                                //console.log("Value toonDiff currently is " + res);
-                                if (res == true) {
-                                    fetchOldRec(url, rowId);
-                                }
-                            // });
-                        }
-                    }
-                });
-            }
+            
                
             if (typeof textareaElem != "null") {
                 // we need to use await otherwise there is not result.newText
