@@ -1181,10 +1181,10 @@ function checkPageClicked(event) {
    
     
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower", "showHistory"],
         function (data) { 
             const promise1 = new Promise(async function (resolve, reject) {
-                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore);
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore, data.showHistory);
                 resolve(data);     
             });
             const promise2 = new Promise(async function (resolve, reject) {
@@ -1283,9 +1283,9 @@ function loadGlossary() {
                 addTranslateButtons();
                 //console.debug("glossary:", glossary.length)
                 if (glossary.length > 27) {
-                    chrome.storage.local.get(["showHistory"], function (data,event) {
+                    chrome.storage.local.get(["showHistory",'destlang'], function (data,event) {
                         if (data.showHistory != "null") {
-                            locale = checkLocale();
+                            let locale = checkLocale();
                             validatePage(data.destlang, data.showHistory, locale);
                         }
                     });
@@ -1768,7 +1768,7 @@ function translateEntryClicked(event) {
         });
 }
 
-async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record) {
+async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,myHistory,my_checkpage,currstring,repl_array,prev_trans) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var currcount;
     var current;
@@ -1776,6 +1776,11 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var current;
     var SavelocalButton;
     var imgsrc;
+    var debug = false;
+    if (debug == true) {
+        console.debug("updatestyle:",repl_array,prev_trans)
+    }
+    //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
@@ -1856,8 +1861,9 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    let currstring = "";
-    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, current.innerText, record);
+    //let currstring = "";
+    //console.debug("updateStyle2:", showHistory, myHistory, my_checkpage)
+    await updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, current.innerText, record,myHistory,my_checkpage,repl_array,prev_trans);
     
         let row = rowId.split("-")[0];
     
@@ -1875,7 +1881,6 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
 }
-
 async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record) {
    // console.debug("validateEntry:",record)
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
@@ -1891,7 +1896,8 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     let originalText = original.innerText;
     result = validate(language, originalText, translation, locale, record);
     //console.debug("result validate:",result,translation)
-    updateStyle(textareaElem, result, newurl, showHistory, "True", "", rowId,record);
+     //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans
+   // updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,"",[],"");
     return result;
 }
 
@@ -1945,7 +1951,7 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     }
 }
                                           
-async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring,current,record) {												   	  
+async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring,current,record,myHistory,my_checkpage,repl_array,prev_trans) {												   	  
     //var current;
     var SavelocalButton;
     var separator1;
@@ -1957,6 +1963,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var missingVerbsButton;
     var missingverbs = "";
     var newline = "\n";
+    var debug = false;
+    if (debug == true) {
+        console.debug("updateElementStyle:",myHistory,my_checkpage,oldstring,currstring)
+    }
     if (typeof rowId != "undefined") {
         
         //let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
@@ -2228,9 +2238,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if (showName == true) {
             showNameLabel(originalElem)											 
         }
+        
         if (oldstring == "True") {
+            
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans);
         }
     }
     else {
@@ -2260,28 +2272,49 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current) {
+function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current,myHistory,my_check,repl_array,prev_trans) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
+    //console.debug("showOldstringLabel:",myHistory,my_check,currstring,current)
     if (originalElem != undefined) {
         // 19-09-2021 PSS fixed issue #141 duplicate label creation
-        var labexist = originalElem.getElementsByClassName("trans_exists_div");
-        if (labexist.length > 0) {
-            labexist[0].parentNode.removeChild(labexist[0]);
+        
+            var labexist = originalElem.getElementsByClassName("trans_exists_div");
+            if (labexist.length > 0) {
+                labexist[0].parentNode.removeChild(labexist[0]);
+            }
+            let element1 = document.createElement("div");
+            element1.setAttribute("class", "trans_exists_div");
+            originalElem.appendChild(element1);
+          // 
+            if (my_check != true) {
+            element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
+            currcount = currcount.replace("Current:", "");
+            if ((+currcount) > 0 && current != 'current') {
+                let element2 = document.createElement("div")
+                element2.setAttribute("class", "div.trans_original_div");
+                element1.after(element2)
+                let element3 = document.createElement("span");
+                element3.setAttribute("class", "current-string");
+                element3.appendChild(document.createTextNode(currstring));
+                element2.appendChild(element3)
+            }
         }
-        let element1 = document.createElement("div");
-        element1.setAttribute("class", "trans_exists_div");
-        originalElem.appendChild(element1);
-        element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
-        currcount = currcount.replace("Current:", "");
-        if ((+currcount) > 0 && current != 'current') {
-            let element2 = document.createElement("div")
-            element2.setAttribute("class", "div.trans_original_div");
-            element1.after(element2)
-            let element3 = document.createElement("span");
-            element3.setAttribute("class", "current-string");
-            element3.appendChild(document.createTextNode(currstring));
-            element2.appendChild(element3)
+            else {
+             
+                element1.appendChild(document.createTextNode("Current string is updated with verbs"));
+                // this needs to be shown always if coming from checkpage
+          //  if ((+currcount) > 0 || my_check== true) {
+                let element2 = document.createElement("div")
+                element2.setAttribute("class", "div.trans_original_div");
+                element1.after(element2)
+                let element3 = document.createElement("span");
+                element3.setAttribute("class", "current-string");
+                element3.appendChild(document.createTextNode(prev_trans));
+                element2.appendChild(element3)
+                markElements_previous(element3, repl_array, element3.innerText, [], repl_array, currstring);
+          //  }
+           // console.debug("we come from checkpage!!")
         }
     }
     else {
@@ -2827,10 +2860,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                                old = "";
                            }
                         if (tbodyRowCount > 2 && single == "False") {
-                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent);
+                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],"");
                            }
-                           else if (tbodyRowCount > 2 && single == "True") {
-                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent);
+                        else if (tbodyRowCount > 2 && single == "True") {
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",false,false,[],"");
                                //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                                //window.open(url, "_blank", windowFeatures);
                            }
