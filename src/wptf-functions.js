@@ -304,7 +304,7 @@ function validatePage(language, showHistory, locale) {
             var result = validate(language, original, translation, locale);
             let record = e.previousSibling.previousSibling.previousSibling
        //    textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,'','','');
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,'',[],'');
         }, timeout);
         timeout += 20;
        

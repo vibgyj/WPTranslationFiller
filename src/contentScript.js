@@ -1882,7 +1882,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
 }
 async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record) {
-   // console.debug("validateEntry:",record)
+    //console.debug("validateEntry:",record)
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     var translation;
     var result=[];
@@ -1897,7 +1897,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     result = validate(language, originalText, translation, locale, record);
     //console.debug("result validate:",result,translation)
      //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans
-   // updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,"",[],"");
+    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,"",[],"");
     return result;
 }
 

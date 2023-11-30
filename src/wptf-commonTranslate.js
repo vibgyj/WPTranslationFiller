@@ -2497,7 +2497,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     preview.classList.replace("no-translations", "has-translations");
                     preview.classList.replace("untranslated", "status-waiting");
                     preview.classList.add("wptf-translated");
-                    validateEntry(destlang, textareaElem, "", "", row);
+                    validateEntry(destlang, textareaElem, "", "", row,locale,record);
                 }
             }
         }
