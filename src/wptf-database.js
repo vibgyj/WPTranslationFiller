@@ -125,11 +125,13 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
             
            
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
-             // we need to change the state of the record
-             var previewClass = document.querySelector(`#preview-${row}`);
-             previewClass.classList.replace("no-translations", "has-translations");
-             previewClass.classList.replace("untranslated", "status-waiting");
-             previewClass.classList.add("wptf-translated");
+             // we need to change the state of the record but only if we found a translation!!
+             if (translatedText != 'No suggestions') {
+                 var previewClass = document.querySelector(`#preview-${row}`);
+                 previewClass.classList.replace("no-translations", "has-translations");
+                 previewClass.classList.replace("untranslated", "status-waiting");
+                 previewClass.classList.add("wptf-translated");
+             }
          }
          else {
              // if it is as single with local then we need also update the preview

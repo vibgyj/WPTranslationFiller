@@ -1476,7 +1476,7 @@ function checkactionClick(event) {
                         chrome.storage.local.get(["showTransDiff"], async function (data) {
                             if (data.showTransDiff != "null") {
                                 chrome.storage.local.get(["toonDiff"]).then((result) => {
-                                    console.log("Value toonDiff currently is " + result.toonDiff);
+                                   // console.log("Value toonDiff currently is " + result.toonDiff);
                                     if (result.toonDiff == true) {
                                         fetchOldRec(url, rowId);
                                     }
@@ -1776,17 +1776,25 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var current;
     var SavelocalButton;
     var imgsrc;
+    var currText='untranslated'
     var debug = false;
-    if (debug == true) {
-        console.debug("updatestyle:",repl_array,prev_trans)
-    }
+    var currText = 'untranslated'
+    
     //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof rowId == "undefined") {
-        let rowId = textareaElem.parentElement.parentElement.parentElement
-           .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+        let myRow = textareaElem.parentElement.parentElement.parentElement
+            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+        current = document.querySelector("#editor-" + myRow + " div.editor-panel__left div.panel-header span.panel-header__bubble");
+        rowId = myrow
+    }
+    if (current == null) {
+        currText = 'untranslated'
+    }
+    else {
+        currText = current.innerText
     }
     let originalElem = document.querySelector("#preview-" + rowId + " .original");
     if (originalElem != null) {
@@ -1797,6 +1805,9 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         if (markerpresent != null){
             markerpresent.remove();
             }
+    }
+    if (debug == true) {
+        console.debug("updatestyle:", repl_array, prev_trans,current,rowId)
     }
     // 17-02-2023 PSS do not add the marker twice if a retranslation is done
     if (markerpresent == null) {
@@ -1863,7 +1874,9 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     //let currstring = "";
     //console.debug("updateStyle2:", showHistory, myHistory, my_checkpage)
-    await updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, current.innerText, record,myHistory,my_checkpage,repl_array,prev_trans);
+    if (currText != 'untranslated') {
+        await updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans);
+    }
     
         let row = rowId.split("-")[0];
     
@@ -2010,13 +2023,18 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
            // return;
         //}
         if (result.wordCount == 0) {
+           // console.debug("rowId in updateElementStyle:",rowId)
             let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-            current = h.querySelector("span.panel-header__bubble");
+
+            
            // current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-            if (current != null) {
+            if (h != null) {
+                current = h.querySelector("span.panel-header__bubble");
                 current = current.innerText
             }
-
+            else {
+                current = 'untranslated'
+            }
         }
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
@@ -2029,137 +2047,146 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 // 22-07-2021 PSS fix for wrong button text "Apply" #108 
                 // moved the below code, and remove the duplicat of this code
                 //console.debug("percentage:",result.percent)
-                if (result.percent == 100) {
-                    checkElem.innerHTML = "100";
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1593")
-                    if (res != null) {
-                        SavelocalButton = res.SavelocalButton
-                        SavelocalButton.innerText = "Appr";
-                    }
-                    checkElem.style.backgroundColor = "green";
-                    checkElem.title = "Save the string";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        if (panelTransDiv != null) {
-                            panelTransDiv.style.backgroundColor = "green";
-                        }
-                        //headerElem.style.backgroundColor = "green";
-                        // 20-02-2023 FIx for issue #286
-                        let markdiv = document.querySelector("#editor-" + rowId + " .marker");
-                        if (markdiv != null) {
-                            markdiv.remove();
-                        }
-                    }
-                }
-                else if (result.percent > 66) {
-                    newtitle = checkElem.title;
-                    checkElem.innerHTML = '<span style="color:black">66</span>';
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1547")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Save";
-                    checkElem.style.backgroundColor = "yellow";
-                    checkElem.title = "Save the string";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "yellow";
-                    }
-                }
-                else if (result.percent > 33) {
-                    newtitle = checkElem.title;
-                    checkElem.innerHTML = "33";
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1561")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Save";
-                    checkElem.title = "Save the string";
-                    checkElem.style.backgroundColor = "orange";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "orange";
-                    }
-                }
-                else if (result.percent == 10) {
-                    checkElem.innerHTML = "Mod";
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1574")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.disabled = false;
-                    SavelocalButton.innerText = "Save";
-                    SavelocalButton.onclick = savetranslateEntryClicked;
-                    checkElem.style.backgroundColor = "purple";
-                    checkElem.title = "Save the string";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "purple";
-                    }
-                }
-                else if (result.percent < 33 && result.percent > 0) {
-                    newtitle = checkElem.title;
-                    checkElem.innerHTML = result.percent;
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1561")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Save";
-                    checkElem.title = "Check the string";
-                    checkElem.style.backgroundColor = "darkorange";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "darkorange";
-                    }
-                }
-                else if (result.percent == 0) {
-                    // We need to set the title here also, otherwise it will occassionally not be shown
-                    newtitle = checkElem.title;
-                    if ((result.wordCount - result.foundCount) == 0) {
-                        checkElem.innerText = "0";
-                        checkElem.style.backgroundColor = "green";
-                        let separator1 = document.createElement("div");
+                if (checkElem != null) {
+                    if (result.percent == 100) {
+                        checkElem.innerHTML = "100";
+                        separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
                         res = addCheckButton(rowId, checkElem, "1593")
-                        SavelocalButton = res.SavelocalButton
-                        if (result.wordCount > 0) {
-                            checkElem.title = "Do not save the string";
-                            SavelocalButton.innerText = "Miss!";
+                        if (res != null) {
+                            SavelocalButton = res.SavelocalButton
+                            SavelocalButton.innerText = "Appr";
                         }
-                        else {
-                            checkElem.title = "Save the string";
-                            SavelocalButton.innerText = "NoGlos";
-                        }
+                        checkElem.style.backgroundColor = "green";
+                        checkElem.title = "Save the string";
                         if (typeof headerElem != "undefined" && headerElem != null) {
-                            panelTransDiv.style.backgroundColor = "";
-                            //headerElem.style.backgroundColor = "";
+                            if (panelTransDiv != null) {
+                                panelTransDiv.style.backgroundColor = "green";
+                            }
+                            //headerElem.style.backgroundColor = "green";
+                            // 20-02-2023 FIx for issue #286
+                            let markdiv = document.querySelector("#editor-" + rowId + " .marker");
+                            if (markdiv != null) {
+                                markdiv.remove();
+                            }
                         }
                     }
-                    else {
-                        checkElem.innerText = result.wordCount - result.foundCount;
-                        checkElem.title = "Check the string";
-                        checkElem.style.backgroundColor = "red";
-                        let separator1 = document.createElement("div");
+                    else if (result.percent > 66) {
+                        newtitle = checkElem.title;
+                        checkElem.innerHTML = '<span style="color:black">66</span>';
+                        separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "1612")
+                        res = addCheckButton(rowId, checkElem, "1547")
                         SavelocalButton = res.SavelocalButton
-                        if (current != "untranslated" && current != 'current') {
-                            SavelocalButton.innerText = "Rej";
-                            //SavelocalButton.disabled = true;
-                        }
+                        SavelocalButton.innerText = "Save";
+                        checkElem.style.backgroundColor = "yellow";
+                        checkElem.title = "Save the string";
                         if (typeof headerElem != "undefined" && headerElem != null) {
-                            panelTransDiv.style.backgroundColor = "red";
+                            panelTransDiv.style.backgroundColor = "yellow";
                         }
                     }
+                    else if (result.percent > 33) {
+                        newtitle = checkElem.title;
+                        checkElem.innerHTML = "33";
+                        separator1 = document.createElement("div");
+                        separator1.setAttribute("class", "checkElem_save");
+                        checkElem.appendChild(separator1);
+                        res = addCheckButton(rowId, checkElem, "1561")
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.innerText = "Save";
+                        checkElem.title = "Save the string";
+                        checkElem.style.backgroundColor = "orange";
+                        if (typeof headerElem != "undefined" && headerElem != null) {
+                            panelTransDiv.style.backgroundColor = "orange";
+                        }
+                    }
+                    else if (result.percent == 10) {
+                        checkElem.innerHTML = "Mod";
+                        separator1 = document.createElement("div");
+                        separator1.setAttribute("class", "checkElem_save");
+                        checkElem.appendChild(separator1);
+                        res = addCheckButton(rowId, checkElem, "1574")
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.disabled = false;
+                        SavelocalButton.innerText = "Save";
+                        SavelocalButton.onclick = savetranslateEntryClicked;
+                        checkElem.style.backgroundColor = "purple";
+                        checkElem.title = "Save the string";
+                        if (typeof headerElem != "undefined" && headerElem != null) {
+                            panelTransDiv.style.backgroundColor = "purple";
+                        }
+                    }
+                    else if (result.percent < 33 && result.percent > 0) {
+                        newtitle = checkElem.title;
+                        checkElem.innerHTML = result.percent;
+                        separator1 = document.createElement("div");
+                        separator1.setAttribute("class", "checkElem_save");
+                        checkElem.appendChild(separator1);
+                        res = addCheckButton(rowId, checkElem, "1561")
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.innerText = "Save";
+                        checkElem.title = "Check the string";
+                        checkElem.style.backgroundColor = "darkorange";
+                        if (typeof headerElem != "undefined" && headerElem != null) {
+                            panelTransDiv.style.backgroundColor = "darkorange";
+                        }
+                    }
+                    else if (result.percent == 0) {
+                        // We need to set the title here also, otherwise it will occassionally not be shown
+                        newtitle = checkElem.title;
+                        if ((result.wordCount - result.foundCount) == 0) {
+                            checkElem.innerText = "0";
+                            checkElem.style.backgroundColor = "green";
+                            let separator1 = document.createElement("div");
+                            separator1.setAttribute("class", "checkElem_save");
+                            checkElem.appendChild(separator1);
+                            res = addCheckButton(rowId, checkElem, "1593")
+                            SavelocalButton = res.SavelocalButton
+                            if (result.wordCount > 0) {
+                                checkElem.title = "Do not save the string";
+                                SavelocalButton.innerText = "Miss!";
+                            }
+                            else {
+                                checkElem.title = "Save the string";
+                                SavelocalButton.innerText = "NoGlos";
+                            }
+                            if (typeof headerElem != "undefined" && headerElem != null) {
+                                panelTransDiv.style.backgroundColor = "";
+                                //headerElem.style.backgroundColor = "";
+                            }
+                        }
+                        else {
+                            // the string does contain glossary words that are not used!
+                            checkElem.innerText = result.wordCount - result.foundCount;
+                            checkElem.title = "Check the string";
+                            checkElem.style.backgroundColor = "red";
+                            let separator1 = document.createElement("div");
+                            separator1.setAttribute("class", "checkElem_save");
+                            checkElem.appendChild(separator1);
+                            res = addCheckButton(rowId, checkElem, "1612")
+                            SavelocalButton = res.SavelocalButton
+                            if (current != "untranslated" && current != 'current') {
+                                SavelocalButton.innerText = "Rej";
+                                //SavelocalButton.disabled = true;
+                            }
+                            else {
+                                SavelocalButton.innerText = "Rej";
+                            }
+                            if (typeof headerElem != "undefined" && headerElem != null) {
+                                panelTransDiv.style.backgroundColor = "red";
+                            }
+                        }
+                    }
+                    // newline = "\n";
+                    missingverbs = "Missing glossary entry\n";
+                    // We need to update the rowbutton
+                   // await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "2005");
                 }
-                // newline = "\n";
-                missingverbs = "Missing glossary entry\n";
-                // We need to update the rowbutton
-                await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "2005");
+                else {
+                    console.debug("checkelem is null!!!")
+                }
             }
         }
         else {
@@ -2214,16 +2241,21 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             }
         }
         else {
-            newtitle = checkElem.title.concat(result.toolTip);
-            headertitle = headerElem.title;
-            if (typeof headerElem.style != "undefined") {
-                if (result.percent == 100) {
-                    if (panelTransDiv != null) {
-                        panelTransDiv.style.backgroundColor = "green";
-                        // headerElem.style.backgroundColor = "green";
+            if (checkElem != null) {
+                newtitle = checkElem.title.concat(result.toolTip);
+                headertitle = headerElem.title;
+                if (typeof headerElem.style != "undefined") {
+                    if (result.percent == 100) {
+                        if (panelTransDiv != null) {
+                            panelTransDiv.style.backgroundColor = "green";
+                            // headerElem.style.backgroundColor = "green";
+                        }
                     }
                 }
             }
+            else {
+                newtitle = "noCeckElem"
+                }
             if (document.getElementById("translate-" + rowId + "-translocal-entry-missing-button") != null) {
                 document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
             }

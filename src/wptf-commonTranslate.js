@@ -2494,10 +2494,12 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     if (rowchecked != null) {
                         rowchecked.checked = true;
                     }
-                    preview.classList.replace("no-translations", "has-translations");
-                    preview.classList.replace("untranslated", "status-waiting");
-                    preview.classList.add("wptf-translated");
-                    validateEntry(destlang, textareaElem, "", "", row,locale,record);
+                    if (result != "No suggestions") {
+                        preview.classList.replace("no-translations", "has-translations");
+                        preview.classList.replace("untranslated", "status-waiting");
+                        preview.classList.add("wptf-translated");
+                        validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                    }
                 }
             }
         }
