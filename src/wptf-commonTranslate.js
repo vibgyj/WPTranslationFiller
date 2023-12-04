@@ -1447,7 +1447,7 @@ async function markElements_previous(preview, replaceVerb, orgText, spellcheckIg
     // Highlight all keywords found in the page, so loop through the replacement array
     //console.debug("replaceverbs array:",repl_array)
     var arr = [];
-    var debug = true;
+    var debug = false;
     
     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
     if (typeof spellcheckIgnore != 'undefined' && spellcheckIgnore.length != 0) {
@@ -1475,7 +1475,7 @@ async function markElements_previous(preview, replaceVerb, orgText, spellcheckIg
                 // Check if we need to mark the verb
                 // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
                 if (spellcheckIgnore.length == 0) {
-                    console.debug("we are in no spellcheckIgnore", repl_array[i][0])
+                    //console.debug("we are in no spellcheckIgnore", repl_array[i][0])
                     if (nwText.includes(repl_array[i][0])) {
                         //console.debug("newText includes:", repl_array[i][0], "two:" + repl_array[i][1])
                         high = repl_array[i][0];
@@ -1515,7 +1515,7 @@ async function markElements_previous(preview, replaceVerb, orgText, spellcheckIg
                 }
 
                 // PSS we found everything to mark, so mark it issue #157
-                console.debug("array:",arr)
+                //console.debug("array:",arr)
                 if (arr.length > 0) {
                     //console.debug("arr:",arr)
                     highlight(preview, arr);

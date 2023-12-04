@@ -1715,26 +1715,29 @@ async function checkbuttonClick(event) {
                 if (result.newText != "") {
                     let editorElem = document.querySelector("#editor-" + rowId + " .original");
                     //19-02-2023 PSS we do not add the marker twice, but update it if present
-                    let markerpresent = editorElem.querySelector("span.mark-explanation");
-                    if (markerpresent == null) {
-                        let markdiv = document.createElement("div");
-                        markdiv.setAttribute("class", "marker");
-                        let markspan1 = document.createElement("span");
-                        let markspan2 = document.createElement("span");
-                        markspan1.setAttribute("class", "mark-devider");
-                        markspan2.setAttribute("class", "mark-explanation");
-                        markdiv.appendChild(markspan1);
-                        markdiv.appendChild(markspan2);
-                        editorElem.appendChild(markdiv);
-                        markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-                        markspan2.innerHTML = result.newText;
-                    }
-                    else {
-                        if (markerpresent != null) {
-                            markerpresent.innerHTML = result.newText;
+                    if (editorElem != null) {
+                        let markerpresent = editorElem.querySelector("span.mark-explanation");
+                        if (markerpresent == null) {
+                            let markdiv = document.createElement("div");
+                            markdiv.setAttribute("class", "marker");
+                            let markspan1 = document.createElement("span");
+                            let markspan2 = document.createElement("span");
+                            markspan1.setAttribute("class", "mark-devider");
+                            markspan2.setAttribute("class", "mark-explanation");
+                            markdiv.appendChild(markspan1);
+                            markdiv.appendChild(markspan2);
+                            editorElem.appendChild(markdiv);
+                            markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+                            markspan2.innerHTML = result.newText;
                         }
-                        else { console.debug("markerpresent not found") }
+                        else {
+                            if (markerpresent != null) {
+                                markerpresent.innerHTML = result.newText;
+                            }
+                            else { console.debug("markerpresent not found") }
+                        }
                     }
+                    else { console.debug("markerpresent not found")}
                 }
             }
         }
@@ -1815,16 +1818,18 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         if (result.newText != "" && typeof result.newText != "undefined") {
             if (showName != true) {
                 let markerimage = imgsrc + "/../img/warning-marker.png";
-                if (current.innerText != "current") {
-                    originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
-                    let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
-                    let markimage = document.createElement("img");
-                    markimage.src = markerimage;
-                    markdiv.appendChild(markimage)
-                    let markspan = document.createElement("span");
-                    markspan.setAttribute("class", "mark-tooltiptext");
-                    markdiv.appendChild(markspan);
-                    markspan.innerHTML = result.newText;
+                if (current != null){
+                    if (current.innerText != "current") {
+                        originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
+                        let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+                        let markimage = document.createElement("img");
+                        markimage.src = markerimage;
+                        markdiv.appendChild(markimage)
+                        let markspan = document.createElement("span");
+                        markspan.setAttribute("class", "mark-tooltiptext");
+                        markdiv.appendChild(markspan);
+                        markspan.innerHTML = result.newText;
+                    }
                 }
             }
         }
@@ -2168,7 +2173,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             res = addCheckButton(rowId, checkElem, "1612")
                             SavelocalButton = res.SavelocalButton
                             if (current != "untranslated" && current != 'current') {
-                                SavelocalButton.innerText = "Rej";
+                                SavelocalButton.innerText = "Miss!";
                                 //SavelocalButton.disabled = true;
                             }
                             else {
@@ -2234,7 +2239,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             else {
                 entrymissing = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button")
                 if (entrymissing != null && typeof entrymissing != 'undefined') {
-                    entrymissing.style.visibility = "hidden";
+                    if ((result.toolTip == 0)){
+                        entrymissing.style.visibility = "hidden";
+                    }
                 }
                 newtitle = checkElem.title.concat(result.toolTip);
                 headertitle = headerElem.title;
@@ -2345,6 +2352,24 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 element3.appendChild(document.createTextNode(prev_trans));
                 element2.appendChild(element3)
                 markElements_previous(element3, repl_array, element3.innerText, [], repl_array, currstring);
+                let element4 = document.createElement("div")             
+                var diffType = "diffWords";
+                var changes = JsDiff[diffType](prev_trans, currstring);
+                fragment = document.createDocumentFragment();
+                changes.forEach((part) => {
+                    // green for additions, red for deletions
+                    // dark grey for common parts
+                    const color = part.added ? "green" :
+                        part.removed ? "red" : "dark-grey";
+                    span = document.createElement("span");
+                    span.style.color = color;
+                    span.appendChild(document
+                        .createTextNode(part.value));
+                    fragment.appendChild(span);
+                });
+                element4.appendChild(fragment);
+                element3.appendChild(element4)
+
           //  }
            // console.debug("we come from checkpage!!")
         }
