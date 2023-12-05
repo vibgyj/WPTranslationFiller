@@ -80,7 +80,7 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 }
 
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
-const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
 const specialChar = new RegExp(/ # | #|->/ig);
@@ -249,6 +249,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
 
         const linkmatches = original.match(linkRegex);
+        console.debug("linkmatches1:",linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -277,6 +278,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
+        console.debug("linkmatches2:", linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -350,7 +352,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 // PSS solution for issue #291
                 //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
             replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
-           // console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
+            //console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
+
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                // console.debug("replaceverb:", replaceVerb[i][1])
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
@@ -643,18 +646,20 @@ function applySentenceCase(str) {
 
 function CheckUrl(translated, searchword) {
     // check if the text contains an URL
-    // not only check http strings but also links starting with <a
-    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>/ig);
+    // not only check http strings but also links starting with <a and starting with <span
+    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>|<span[^>]*>/ig);
         if (mymatches != null) {
             for (const match of mymatches) {
                 foundmysearch = match.includes(searchword);
                 if (foundmysearch) {
                     foundmysearch = true
+                   // console.debug("found an url!:",translated)
                     break;
                 }
             }
         }
         else {
+            //console.debug("did not find an url:",translated)
             foundmysearch = false;
         }
     return foundmysearch;
