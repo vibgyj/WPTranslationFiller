@@ -235,7 +235,7 @@ function validatePage(language, showHistory, locale) {
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
     var timeout = 0;
-    
+    //console.debug("validatePage:",language,showHistory, locale)
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
     let url = f[0].firstChild.baseURI;
@@ -269,7 +269,8 @@ function validatePage(language, showHistory, locale) {
             .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
         textareaElem.addEventListener("input", function (e, locale) {
             //console.debug("target:", e.target);
-            validateEntry(language, e.target, newurl, showHistory, rowId, locale);
+                      //language, textareaElem, newurl, showHistory, rowId, locale, record
+        validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
         });
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;
@@ -302,7 +303,8 @@ function validatePage(language, showHistory, locale) {
         }
             var result = validate(language, original, translation, locale);
             let record = e.previousSibling.previousSibling.previousSibling
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record);
+       //    textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,'',[],'');
         }, timeout);
         timeout += 20;
        

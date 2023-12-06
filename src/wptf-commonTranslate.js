@@ -80,7 +80,7 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 }
 
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
-const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
 const specialChar = new RegExp(/ # | #|->/ig);
@@ -249,6 +249,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
 
         const linkmatches = original.match(linkRegex);
+        console.debug("linkmatches1:",linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -277,6 +278,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
+        console.debug("linkmatches2:", linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -350,7 +352,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 // PSS solution for issue #291
                 //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
             replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
-           // console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
+            //console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
+
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                // console.debug("replaceverb:", replaceVerb[i][1])
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
@@ -643,18 +646,20 @@ function applySentenceCase(str) {
 
 function CheckUrl(translated, searchword) {
     // check if the text contains an URL
-    // not only check http strings but also links starting with <a
-    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>/ig);
+    // not only check http strings but also links starting with <a and starting with <span
+    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>|<span[^>]*>/ig);
         if (mymatches != null) {
             for (const match of mymatches) {
                 foundmysearch = match.includes(searchword);
                 if (foundmysearch) {
                     foundmysearch = true
+                   // console.debug("found an url!:",translated)
                     break;
                 }
             }
         }
         else {
+            //console.debug("did not find an url:",translated)
             foundmysearch = false;
         }
     return foundmysearch;
@@ -942,7 +947,7 @@ function checkFormalPage(dataFormal) {
     }
 }
 
-async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt, spellcheckIgnore) {
+async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt, spellcheckIgnore,showHistory) {
     var timeout = 10;
     var countrows = 0;
     var tableRecords = 0;
@@ -959,6 +964,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     var preview;
     var previewElem1;
     var previewElem2;
+    var prev_trans;
     //var spellcheckIgnore = [];
     var repl_verb = []; //contains the list of found and replaced words
     const template = `
@@ -1050,6 +1056,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         let element = e.querySelector(".source-details__comment");
                         let textareaElem = e.querySelector("textarea.foreign-text");
                         translatedText = textareaElem.innerText;
+                        prev_trans = textareaElem.innerText;
                         if (translatedText != "No suggestions") {
                             previewNewText = textareaElem.innerText;
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
@@ -1091,7 +1098,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", true, false, false, row);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
+                               
                             }
 
                             // Need to replace the existing html before replacing the verbs! issue #124
@@ -1100,7 +1108,6 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
                             previewNewText = result.previewNewText;
                             translatedText = result.translatedText;
-
                             // countreplaced += result.countreplaced;
                             replaced = result.replaced;
                             orgText = result.orgText;
@@ -1152,7 +1159,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     // PSS populate the preview before marking
                                     preview.innerText = DOMPurify.sanitize(previewNewText);
                                     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                    await markElements(preview, repl_verb, orgText, spellcheckIgnore, repl_array, translatedText);
+                                    await markElements(preview, repl_verb, orgText, spellcheckIgnore, repl_array, prev_trans);
                                 }
                             }
                             let plural_line = "";
@@ -1196,6 +1203,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 repl.push(rec.split(","))
                                 //rec = ' , '
                                 // repl.push(rec.split(","))
+
                                 await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
                                 // 09-09-2022 PSS fix for issue #244
                                 if (currec != null) {
@@ -1208,7 +1216,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", true, false, false, row);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
+                                //updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,repl_array,prev_trans);
                             }
               
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);      
@@ -1271,7 +1280,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", true, false, false, row);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
+                               // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
                             }
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
                             replaced = result.replaced;
@@ -1302,7 +1312,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         let percent = 10;
                         let toolTip = "";
                         result = { wordCount, percent, toolTip };
-                        updateStyle(textareaElem, result, "", true, false, false, row);
+                        updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,translatedText,repl_array,prev_trans);
                     }
 
                 }
@@ -1348,7 +1358,8 @@ function needsMarking(markverb, spellcheckIgnore) {
     }
 }
 
-async function markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl_array,translatedText) {
+
+async function markElements(preview, replaceVerb, orgText, spellcheckIgnore, repl_array, translatedText) {
     // Highlight all keywords found in the page, so loop through the replacement array
     //console.debug("replaceverbs array:",repl_array)
     var arr = [];
@@ -1360,7 +1371,7 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl
         spellcheckIgnore = [];
     }
     if (typeof repl_array != 'undefined') {
-      //  console.debug("we are in markelements:",repl_array)
+        //  console.debug("we are in markelements:",repl_array)
     }
     // 27-07-2023 PSS we need to escape the double quotes otherwise replacing crashes
     nwText = orgText.toString().replace(/"/g, '\\"')
@@ -1371,10 +1382,10 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl
         console.debug("nwText:", nwText);
         console.debug("preview:", preview);
     }
-    
+
     if (typeof repl_array != "undefined") {
-       if (typeof nwText != 'undefined') {
-           for (let i = 0; i < repl_array.length; i++) {
+        if (typeof nwText != 'undefined') {
+            for (let i = 0; i < repl_array.length; i++) {
                 // Check if we need to mark the verb
                 // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
                 if (spellcheckIgnore.length == 0) {
@@ -1385,7 +1396,7 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl
                         if (typeof high != 'undefined') {
                             if (high != " ") {
                                 // 09-08-2023 PSS removed the backslash from the regex, otherwise it is not marked
-                                high = high.replace(/[&\#,+()$~%'":*<>{}]/g, '')                        
+                                high = high.replace(/[&\#,+()$~%'":*<>{}]/g, '')
                                 high = high.trim();
                                 //console.debug("high:",high)
                             }
@@ -1393,16 +1404,16 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl
                             // but do not push single brackets !
                             if (high != '[' && high != ']') {
                                 arr.push(high);
-                               // console.debug("array:", arr)
+                                // console.debug("array:", arr)
                             }
                         }
                     }
                 }
                 else {
                     if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
-                       // console.debug("We are with spellcheckignore")
+                        // console.debug("We are with spellcheckignore")
                         if (nwText.includes(repl_array[i][0])) {
-                           // console.debug("highlight:", replaceVerb[i][1])
+                            // console.debug("highlight:", replaceVerb[i][1])
                             high = repl_array[i][1];
                             high = high.replace(/[&\#,+()$~%'":*<>{}]/g, '')
                             high = high.trim();
@@ -1415,21 +1426,113 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore,repl
                             }
                         }
                     }
-               }
-            
-               // PSS we found everything to mark, so mark it issue #157
-               if (arr.length > 0) {
-                   //console.debug("arr:",arr)
-                   highlight(preview, arr);
-               }
-           }
-            
-       }
+                }
+
+                // PSS we found everything to mark, so mark it issue #157
+                if (arr.length > 0) {
+                    //console.debug("arr:",arr)
+                    highlight(preview, arr);
+                }
+            }
+
+        }
         else {
-           console.debug("newTextin inmark:", newText)
-           console.debug("translatedText inmark:", translatedText)
-            
-            
+            console.debug("newTextin inmark:", newText)
+            console.debug("translatedText inmark:", translatedText)
+
+
+        }
+    }
+    else {
+        console.debug("no org")
+    }
+}
+
+async function markElements_previous(preview, replaceVerb, orgText, spellcheckIgnore, repl_array, translatedText) {
+    // Highlight all keywords found in the page, so loop through the replacement array
+    //console.debug("replaceverbs array:",repl_array)
+    var arr = [];
+    var debug = false;
+    
+    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+    if (typeof spellcheckIgnore != 'undefined' && spellcheckIgnore.length != 0) {
+        spellcheckIgnore = spellcheckIgnore.split('\n');
+    }
+    else {
+        spellcheckIgnore = [];
+    }
+    if (typeof repl_array != 'undefined') {
+        //  console.debug("we are in markelements:",repl_array)
+    }
+    // 27-07-2023 PSS we need to escape the double quotes otherwise replacing crashes
+    nwText = orgText.toString().replace(/"/g, '\\"')
+    if (debug == true) {
+        console.debug("old text:", translatedText)
+        console.debug("new text:", orgText)
+        console.debug("nwText:", nwText);
+        console.debug("preview:", preview);
+        console.debug("repl_array:", repl_array);
+    }
+
+    if (typeof repl_array != "undefined") {
+        if (typeof nwText != 'undefined') {
+            for (let i = 0; i < repl_array.length; i++) {
+                // Check if we need to mark the verb
+                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                if (spellcheckIgnore.length == 0) {
+                    //console.debug("we are in no spellcheckIgnore", repl_array[i][0])
+                    if (nwText.includes(repl_array[i][0])) {
+                        //console.debug("newText includes:", repl_array[i][0], "two:" + repl_array[i][1])
+                        high = repl_array[i][0];
+                        if (typeof high != 'undefined') {
+                            if (high != " ") {
+                                // 09-08-2023 PSS removed the backslash from the regex, otherwise it is not marked
+                                high = high.replace(/[&\#,+()$~%'":*<>{}]/g, '')
+                                high = high.trim();
+                                //console.debug("high:",high)
+                            }
+                            // push the verb into the array
+                            // but do not push single brackets !
+                            if (high != '[' && high != ']') {
+                                arr.push(high);
+                                // console.debug("array:", arr)
+                            }
+                        }
+                    }
+                }
+                else {
+                    if (typeof spellcheckIgnore != 'undefined' && typeof (spellcheckIgnore.find(element => element == replaceVerb[i][0])) == 'undefined') {
+                        // console.debug("We are with spellcheckignore")
+                        if (nwText.includes(repl_array[i][0])) {
+                            // console.debug("highlight:", replaceVerb[i][1])
+                            high = repl_array[i][0];
+                            high = high.replace(/[&\#,+()$~%'":*<>{}]/g, '')
+                            high = high.trim();
+                            if (high != "") {
+                                // push the verb into the array
+                                // but do not push single brackets !
+                                if (high != '[' && high != ']') {
+                                    arr.push(high);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // PSS we found everything to mark, so mark it issue #157
+                //console.debug("array:",arr)
+                if (arr.length > 0) {
+                    //console.debug("arr:",arr)
+                    highlight(preview, arr);
+                }
+            }
+
+        }
+        else {
+            console.debug("newTextin inmark:", newText)
+            console.debug("translatedText inmark:", translatedText)
+
+
         }
     }
     else {
@@ -2396,10 +2499,12 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     if (rowchecked != null) {
                         rowchecked.checked = true;
                     }
-                    preview.classList.replace("no-translations", "has-translations");
-                    preview.classList.replace("untranslated", "status-waiting");
-                    preview.classList.add("wptf-translated");
-                    validateEntry(destlang, textareaElem, "", "", row);
+                    if (result != "No suggestions") {
+                        preview.classList.replace("no-translations", "has-translations");
+                        preview.classList.replace("untranslated", "status-waiting");
+                        preview.classList.add("wptf-translated");
+                        validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                    }
                 }
             }
         }

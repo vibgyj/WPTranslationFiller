@@ -12,6 +12,14 @@ else {
    // console.debug("new db open:", db);   
 }
 
+var translator; // Declare the global variable
+
+// Use chrome.local.get to retrieve the value
+chrome.storage.local.get('transsel', async function (result) {
+    translator = result.transsel; // Assign the value to the global variable
+});
+
+
 const setToonDiff = async function (obj) {
     return new Promise((resolve, reject) => {
         try {
@@ -23,6 +31,7 @@ const setToonDiff = async function (obj) {
         }
     });
 };
+
 const getToonDiff = async function (key) {
     return new Promise((resolve, reject) => {
         try {
@@ -1172,10 +1181,10 @@ function checkPageClicked(event) {
    
     
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower", "showHistory"],
         function (data) { 
             const promise1 = new Promise(async function (resolve, reject) {
-                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore);
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore, data.showHistory);
                 resolve(data);     
             });
             const promise2 = new Promise(async function (resolve, reject) {
@@ -1274,9 +1283,9 @@ function loadGlossary() {
                 addTranslateButtons();
                 //console.debug("glossary:", glossary.length)
                 if (glossary.length > 27) {
-                    chrome.storage.local.get(["showHistory"], function (data,event) {
+                    chrome.storage.local.get(["showHistory",'destlang'], function (data,event) {
                         if (data.showHistory != "null") {
-                            locale = checkLocale();
+                            let locale = checkLocale();
                             validatePage(data.destlang, data.showHistory, locale);
                         }
                     });
@@ -1467,7 +1476,7 @@ function checkactionClick(event) {
                         chrome.storage.local.get(["showTransDiff"], async function (data) {
                             if (data.showTransDiff != "null") {
                                 chrome.storage.local.get(["toonDiff"]).then((result) => {
-                                    console.log("Value toonDiff currently is " + result.toonDiff);
+                                   // console.log("Value toonDiff currently is " + result.toonDiff);
                                     if (result.toonDiff == true) {
                                         fetchOldRec(url, rowId);
                                     }
@@ -1494,80 +1503,62 @@ async function checkbuttonClick(event) {
     var textareaElem;
     var translateButton;
     var editor;
+    var OpenAIres;
+    var newres;
+    var lires = '0';
     if (event != undefined) {
-            var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-            //event.preventDefault(); caused a problem within the single page enttry  
-            let action = event.target.textContent;
-            // 30-06-2021 PSS added fetch status from local storage
-            // Necessary to prevent showing old translation exist if started from link "Translation history"
-            // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
+        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+        //event.preventDefault(); caused a problem within the single page enttry  
+        let action = event.target.textContent;
+        // 30-06-2021 PSS added fetch status from local storage
+        // Necessary to prevent showing old translation exist if started from link "Translation history"
+        // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is active
         if (action == "Details" || action == "✓Details") {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
+            let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)
+            //console.debug("panelTransDiv:", panelTransDiv)
+            if (panelTransDiv == null) {
+                // If the transdiv is not present we need to add it
+                var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
+                if (newTransDiv != null) {
+                    newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
+                    // We need to repopulate the panelTransDiv as it now exists
+                    panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+                    translateButton = document.querySelector(`#editor-${rowId}-translation-entry-my-button`);
+
+                    translateButton = createElementWithId("my-button", `translate-${rowId}--translation-entry-my-button`);
+                    translateButton.className = "translation-entry-my-button";
+                    translateButton.onclick = translateEntryClicked;
+                    translateButton.innerText = "Translate";
+                    panelTransDiv.insertBefore(translateButton, panelTransDiv.childNodes[0]);
+
+                    addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
+                    addTranslateButton.className = "addtranslation-entry-my-button";
+                    addTranslateButton.onclick = addtranslateEntryClicked;
+                    addTranslateButton.innerText = "Add Translation";
+                    panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
+
+                    TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
+                    TranslocalButton.className = "translocal-entry-local-button";
+                    TranslocalButton.innerText = "Local";
+                    TranslocalButton.style.visibility = "hidden";
+                    panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
+
+                    MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
+                    MissinglocalButton.className = "translocal-entry-missing-button";
+                    MissinglocalButton.innerText = "Missing glossary entry";
+                    MissinglocalButton.style.visibility = "hidden";
+                    MissinglocalButton.style.animation = "blinking 1s infinite";
+                    panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
+                }
+            }
             translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
-            editor = document.querySelector(`#editor-${rowId}`);
-            waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip', 10000)
-                .then((element) => {
-                   // console.debug('Element found:', element);
-                    // We seem to have suggesttions, so now define them further
-                   OpenAIres = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`);
-                   if (OpenAIres != null) {         
-                       liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                       liSuggestion_raw = OpenAIres.querySelector('span.translation-suggestion__translation-raw');
-                       textFound = liSuggestion.innerText
-                       let my_original = editor.querySelector(".original");
-                       if (my_original != null) {
-                          original = my_original.innerText
-                          chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
-                            setPostTranslationReplace(data.postTranslationReplace, data.formal);
-                            let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
-                            liSuggestion.innerText = correctedText
-                            // raw is the text copied into the editor
-                            liSuggestion_raw.innerText = correctedText
-                          });
-                       }
-                   }
-                   else {
-                     // try DeepL
-                     DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
-                     if (DeepLres != null) {
-                        liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
-                        liSuggestion_raw = DeepLres.querySelector('span.translation-suggestion__translation-raw');
-                        textFound = liSuggestion.innerText
-                        let my_original = editor.querySelector(".original");          
-                        if (my_original != null) {
-                            original = my_original.innerText
-                            chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
-                                setPostTranslationReplace(data.postTranslationReplace, data.formal);
-                                let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
-                                liSuggestion.innerText = correctedText
-                                // raw is the text copied into the editor
-                                liSuggestion_raw.innerText = correctedText
-                            });
-                        }
-                     }
-                      else {
-                        //console.debug("We did not find a suggestion")
-                     }
-                   }
-                })
-                .catch((error) => {
-                    console.debug("element not found")
-                    //console.error(error.message);
-                });
-             
-            //localStorage.setItem('interXHR', 'false');
-            // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
-            // if the translator is a PTE then we do not need to do this, as there is already an extra column
-            let myrec = document.querySelector(`#editor-${detailRow}`);
-            if (!is_pte) {
-                var tds = myrec.getElementsByTagName("td")[0];
-                tds.setAttribute("colspan", 5);
-            }
-            myrec.scrollIntoView(true);
+            result = await validateEntry('nl', textareaElem, "", "", rowId, "nl");
+
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
             chrome.storage.local.set({ "noOldTrans": "True" }, function () {
             });
@@ -1585,50 +1576,138 @@ async function checkbuttonClick(event) {
                         if (data.showTransDiff == true) {
                             let res = await getToonDiff('toonDiff');
                             //chrome.storage.local.get(["toonDiff"]).then((result) => {
-                                //console.log("Value toonDiff currently is " + res);
-                                if (res == true) {
-                                    fetchOldRec(url, rowId);
-                                }
+                            //console.log("Value toonDiff currently is " + res);
+                            if (res == true) {
+                                fetchOldRec(url, rowId);
+                            }
                             // });
                         }
                     }
                 });
             }
-            let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)
-            if (panelTransDiv == null) {
-                // If the transdiv is not present we need to add it
-                var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
-                newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
 
-                // We need to repopulate the panelTransDiv as it now exists
-                panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
-                translateButton = document.querySelector(`#editor-${rowId}-translation-entry-my-button`);
-               
-                translateButton = createElementWithId("my-button", `translate-${rowId}--translation-entry-my-button`);
-                translateButton.className = "translation-entry-my-button";
-                translateButton.onclick = translateEntryClicked;
-                translateButton.innerText = "Translate";
-                panelTransDiv.insertBefore(translateButton, panelTransDiv.childNodes[0]);
 
-                addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
-                addTranslateButton.className = "addtranslation-entry-my-button";
-                addTranslateButton.onclick = addtranslateEntryClicked;
-                addTranslateButton.innerText = "Add Translation";
-                panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
+            editor = document.querySelector(`#editor-${rowId}`);
+            newres = editor.querySelector(`#editor-${rowId} .suggestions__translation-memory.initialized .suggestions-list`);
+            res = await waitForElementInRow(`#editor-${rowId}`, '.suggestions__translation-memory.initialized .suggestions-list', 400)
+                .then(async (element) => {
+                    //console.debug("we found suggestion list:", element)
+                    newres = editor.querySelector(`#editor-${rowId} .suggestions__translation-memory.initialized .suggestions-list`);
+                    lires = newres.getElementsByTagName("li");
+                    if (lires[0] != null) {
+                        liscore = lires[0].querySelector(`span.translation-suggestion__score`);
+                        if (liscore != null) {
+                            liscore = liscore.innerText;
+                            liscore = Number(liscore.substring(0, liscore.length - 1))
+                            if (liscore == 100) {
+                                liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                                textFound = liSuggestion.innerHTML;
+                                textFoundSplit = textFound.split("<span")[0]
+                                if (textFoundSplit != null) {
+                                    textFound = textFoundSplit;
+                                }
+                                else {
+                                    textFound = liSuggestion.innerText;
+                                }
+                            }
+                            else {
+                                console.debug("We did not find a li with score 100:",liscore)
+                            }
+                        }
+                    }
+                    else {
+                        liscore = '0';
+                    }
+                })
+                .catch ((error) => {
+                   //console.debug("element not found:", error)
+                   liscore = '0';
+                   //console.error(error.message);
+                });
 
-                TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
-                TranslocalButton.className = "translocal-entry-local-button";
-                TranslocalButton.innerText = "Local";
-                TranslocalButton.style.visibility = "hidden";
-                panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
+            //console.debug("lires:", newres, Number(liscore));
+            if (liscore != 100) {
+                if (translator == 'OpenAI') {
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 5000)
+                        .then(async (element) => {
+                            // We seem to have suggesttions, so now define them further
+                            OpenAIres = editor.getElementsByClassName("translation-suggestion with-tooltip openai");
+                            if (OpenAIres.length > 0) {
+                                liSuggestion = OpenAIres[0].querySelector(`span.translation-suggestion__translation`);
+                                liSuggestion_raw = OpenAIres[0].querySelector('span.translation-suggestion__translation-raw');
+                                textFound = liSuggestion.innerText
+                               // console.debug("text found:", textFound)
+                                let my_original = editor.querySelector(".original");
+                                if (my_original != null) {
+                                    original = my_original.innerText
+                                    chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
+                                        setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                                        let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
+                                        liSuggestion.innerText = correctedText
+                                        // raw is the text copied into the editor
+                                        liSuggestion_raw.innerText = correctedText
+                                    });
+                                }
+                            }
+                        })
+                        .catch((error) => {
+                            //console.debug("element not found:", error)
+                            //console.error(error.message);
+                        });
+                }
+                else {
+                    // we do not have OpenAI so try DeepL
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 5000)
+                        .then(async (element) => {
+                            DeepLres = editor.getElementsByClassName("translation-suggestion with-tooltip deepl");
+                            if (DeepLres.length > 0) {
+                                liSuggestion = DeepLres[0].querySelector(`span.translation-suggestion__translation`);
+                                liSuggestion_raw = DeepLres[0].querySelector('span.translation-suggestion__translation-raw');
+                                textFound = liSuggestion.innerText
+                                let my_original = editor.querySelector(".original");
+                                if (my_original != null) {
+                                    original = my_original.innerText
+                                    chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
+                                        setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                                        let correctedText = liSuggestion.innerText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale)
+                                        liSuggestion.innerText = correctedText
+                                        // raw is the text copied into the editor
+                                        liSuggestion_raw.innerText = correctedText
+                                        //console.debug("Corrected text:",correctedText)
+                                    });
+                                }
+                                else {
+                                    console.debug("We did not find a text")
+                                }
+                            }
+                            else {
+                                console.debug("We did not find a result")
+                            }
 
-                MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
-                MissinglocalButton.className = "translocal-entry-missing-button";
-                MissinglocalButton.innerText = "Missing glossary entry";
-                MissinglocalButton.style.visibility = "hidden";
-                MissinglocalButton.style.animation = "blinking 1s infinite";
-                panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
+                        })
+                        .catch((error) => {
+                           // console.debug("element not found:", error)
+                            //console.error(error.message);
+                        });
+                }
             }
+            else {
+                console.debug("we did find a 100 % score")
+            }
+             
+            //localStorage.setItem('interXHR', 'false');
+            // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
+            // if the translator is a PTE then we do not need to do this, as there is already an extra column
+            let myrec = document.querySelector(`#editor-${detailRow}`);
+            if (!is_pte) {
+                var tds = myrec.getElementsByTagName("td")[0];
+                tds.setAttribute("colspan", 5);
+            }
+            if (myrec != null) {
+                // we are not in listmode
+                myrec.scrollIntoView(true);
+            }
+            
                
             if (typeof textareaElem != "null") {
                 // we need to use await otherwise there is not result.newText
@@ -1636,26 +1715,29 @@ async function checkbuttonClick(event) {
                 if (result.newText != "") {
                     let editorElem = document.querySelector("#editor-" + rowId + " .original");
                     //19-02-2023 PSS we do not add the marker twice, but update it if present
-                    let markerpresent = editorElem.querySelector("span.mark-explanation");
-                    if (markerpresent == null) {
-                        let markdiv = document.createElement("div");
-                        markdiv.setAttribute("class", "marker");
-                        let markspan1 = document.createElement("span");
-                        let markspan2 = document.createElement("span");
-                        markspan1.setAttribute("class", "mark-devider");
-                        markspan2.setAttribute("class", "mark-explanation");
-                        markdiv.appendChild(markspan1);
-                        markdiv.appendChild(markspan2);
-                        editorElem.appendChild(markdiv);
-                        markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-                        markspan2.innerHTML = result.newText;
-                    }
-                    else {
-                        if (markerpresent != null) {
-                            markerpresent.innerHTML = result.newText;
+                    if (editorElem != null) {
+                        let markerpresent = editorElem.querySelector("span.mark-explanation");
+                        if (markerpresent == null) {
+                            let markdiv = document.createElement("div");
+                            markdiv.setAttribute("class", "marker");
+                            let markspan1 = document.createElement("span");
+                            let markspan2 = document.createElement("span");
+                            markspan1.setAttribute("class", "mark-devider");
+                            markspan2.setAttribute("class", "mark-explanation");
+                            markdiv.appendChild(markspan1);
+                            markdiv.appendChild(markspan2);
+                            editorElem.appendChild(markdiv);
+                            markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+                            markspan2.innerHTML = result.newText;
                         }
-                        else { console.debug("markerpresent not found") }
+                        else {
+                            if (markerpresent != null) {
+                                markerpresent.innerHTML = result.newText;
+                            }
+                            else { console.debug("markerpresent not found") }
+                        }
                     }
+                    else { console.debug("markerpresent not found")}
                 }
             }
         }
@@ -1689,7 +1771,7 @@ function translateEntryClicked(event) {
         });
 }
 
-async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record) {
+async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,myHistory,my_checkpage,currstring,repl_array,prev_trans) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var currcount;
     var current;
@@ -1697,12 +1779,25 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var current;
     var SavelocalButton;
     var imgsrc;
+    var currText='untranslated'
+    var debug = false;
+    var currText = 'untranslated'
+    
+    //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof rowId == "undefined") {
-        let rowId = textareaElem.parentElement.parentElement.parentElement
-           .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+        let myRow = textareaElem.parentElement.parentElement.parentElement
+            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+        current = document.querySelector("#editor-" + myRow + " div.editor-panel__left div.panel-header span.panel-header__bubble");
+        rowId = myrow
+    }
+    if (current == null) {
+        currText = 'untranslated'
+    }
+    else {
+        currText = current.innerText
     }
     let originalElem = document.querySelector("#preview-" + rowId + " .original");
     if (originalElem != null) {
@@ -1714,22 +1809,27 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             markerpresent.remove();
             }
     }
+    if (debug == true) {
+        console.debug("updatestyle:", repl_array, prev_trans,current,rowId)
+    }
     // 17-02-2023 PSS do not add the marker twice if a retranslation is done
     if (markerpresent == null) {
         // if an original text contains a glossary verb that is not in the tranlation highlight it
         if (result.newText != "" && typeof result.newText != "undefined") {
             if (showName != true) {
                 let markerimage = imgsrc + "/../img/warning-marker.png";
-                if (current.innerText != "current") {
-                    originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
-                    let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
-                    let markimage = document.createElement("img");
-                    markimage.src = markerimage;
-                    markdiv.appendChild(markimage)
-                    let markspan = document.createElement("span");
-                    markspan.setAttribute("class", "mark-tooltiptext");
-                    markdiv.appendChild(markspan);
-                    markspan.innerHTML = result.newText;
+                if (current != null){
+                    if (current.innerText != "current") {
+                        originalElem.insertAdjacentHTML("afterbegin", '<div class="mark-tooltip">');
+                        let markdiv = document.querySelector("#preview-" + rowId + " .mark-tooltip");
+                        let markimage = document.createElement("img");
+                        markimage.src = markerimage;
+                        markdiv.appendChild(markimage)
+                        let markspan = document.createElement("span");
+                        markspan.setAttribute("class", "mark-tooltiptext");
+                        markdiv.appendChild(markspan);
+                        markspan.innerHTML = result.newText;
+                    }
                 }
             }
         }
@@ -1777,8 +1877,11 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-    let currstring = "";
-    updateElementStyle(checkElem, headerElem, result, "False", originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, current.innerText, record);
+    //let currstring = "";
+    //console.debug("updateStyle2:", showHistory, myHistory, my_checkpage)
+    if (currText != 'untranslated') {
+        await updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans);
+    }
     
         let row = rowId.split("-")[0];
     
@@ -1796,19 +1899,23 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
 }
-
 async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record) {
-   // console.debug("validateEntry:",record)
+    //console.debug("validateEntry:",record)
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     var translation;
     var result=[];
     translation = textareaElem.value;
+    //console.debug("value textareaElem",translation)
+    if (translation == "") {
+        translation ="Empty"
+    }
     let original = textareaElem.parentElement.parentElement.parentElement
         .querySelector("span.original-raw");
     let originalText = original.innerText;
     result = validate(language, originalText, translation, locale, record);
     //console.debug("result validate:",result,translation)
-    updateStyle(textareaElem, result, newurl, showHistory, "True", "", rowId,record);
+     //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans
+    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,"",[],"");
     return result;
 }
 
@@ -1862,7 +1969,7 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     }
 }
                                           
-async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring,current,record) {												   	  
+async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring,current,record,myHistory,my_checkpage,repl_array,prev_trans) {												   	  
     //var current;
     var SavelocalButton;
     var separator1;
@@ -1874,6 +1981,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var missingVerbsButton;
     var missingverbs = "";
     var newline = "\n";
+    var debug = false;
+    if (debug == true) {
+        console.debug("updateElementStyle:",myHistory,my_checkpage,oldstring,currstring)
+    }
     if (typeof rowId != "undefined") {
         
         //let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
@@ -1917,13 +2028,18 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
            // return;
         //}
         if (result.wordCount == 0) {
+           // console.debug("rowId in updateElementStyle:",rowId)
             let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-            current = h.querySelector("span.panel-header__bubble");
+
+            
            // current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-            if (current != null) {
+            if (h != null) {
+                current = h.querySelector("span.panel-header__bubble");
                 current = current.innerText
             }
-
+            else {
+                current = 'untranslated'
+            }
         }
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
@@ -1936,137 +2052,146 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 // 22-07-2021 PSS fix for wrong button text "Apply" #108 
                 // moved the below code, and remove the duplicat of this code
                 //console.debug("percentage:",result.percent)
-                if (result.percent == 100) {
-                    checkElem.innerHTML = "100";
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1593")
-                    if (res != null) {
-                        SavelocalButton = res.SavelocalButton
-                        SavelocalButton.innerText = "Appr";
-                    }
-                    checkElem.style.backgroundColor = "green";
-                    checkElem.title = "Save the string";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        if (panelTransDiv != null) {
-                            panelTransDiv.style.backgroundColor = "green";
-                        }
-                        //headerElem.style.backgroundColor = "green";
-                        // 20-02-2023 FIx for issue #286
-                        let markdiv = document.querySelector("#editor-" + rowId + " .marker");
-                        if (markdiv != null) {
-                            markdiv.remove();
-                        }
-                    }
-                }
-                else if (result.percent > 66) {
-                    newtitle = checkElem.title;
-                    checkElem.innerHTML = '<span style="color:black">66</span>';
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1547")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Save";
-                    checkElem.style.backgroundColor = "yellow";
-                    checkElem.title = "Save the string";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "yellow";
-                    }
-                }
-                else if (result.percent > 33) {
-                    newtitle = checkElem.title;
-                    checkElem.innerHTML = "33";
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1561")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Save";
-                    checkElem.title = "Save the string";
-                    checkElem.style.backgroundColor = "orange";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "orange";
-                    }
-                }
-                else if (result.percent == 10) {
-                    checkElem.innerHTML = "Mod";
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1574")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.disabled = false;
-                    SavelocalButton.innerText = "Save";
-                    SavelocalButton.onclick = savetranslateEntryClicked;
-                    checkElem.style.backgroundColor = "purple";
-                    checkElem.title = "Save the string";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "purple";
-                    }
-                }
-                else if (result.percent < 33 && result.percent > 0) {
-                    newtitle = checkElem.title;
-                    checkElem.innerHTML = result.percent;
-                    separator1 = document.createElement("div");
-                    separator1.setAttribute("class", "checkElem_save");
-                    checkElem.appendChild(separator1);
-                    res = addCheckButton(rowId, checkElem, "1561")
-                    SavelocalButton = res.SavelocalButton
-                    SavelocalButton.innerText = "Save";
-                    checkElem.title = "Check the string";
-                    checkElem.style.backgroundColor = "darkorange";
-                    if (typeof headerElem != "undefined" && headerElem != null) {
-                        panelTransDiv.style.backgroundColor = "darkorange";
-                    }
-                }
-                else if (result.percent == 0) {
-                    // We need to set the title here also, otherwise it will occassionally not be shown
-                    newtitle = checkElem.title;
-                    if ((result.wordCount - result.foundCount) == 0) {
-                        checkElem.innerText = "0";
-                        checkElem.style.backgroundColor = "green";
-                        let separator1 = document.createElement("div");
+                if (checkElem != null) {
+                    if (result.percent == 100) {
+                        checkElem.innerHTML = "100";
+                        separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
                         res = addCheckButton(rowId, checkElem, "1593")
-                        SavelocalButton = res.SavelocalButton
-                        if (result.wordCount > 0) {
-                            checkElem.title = "Do not save the string";
-                            SavelocalButton.innerText = "Miss!";
+                        if (res != null) {
+                            SavelocalButton = res.SavelocalButton
+                            SavelocalButton.innerText = "Appr";
                         }
-                        else {
-                            checkElem.title = "Save the string";
-                            SavelocalButton.innerText = "NoGlos";
-                        }
+                        checkElem.style.backgroundColor = "green";
+                        checkElem.title = "Save the string";
                         if (typeof headerElem != "undefined" && headerElem != null) {
-                            panelTransDiv.style.backgroundColor = "";
-                            //headerElem.style.backgroundColor = "";
+                            if (panelTransDiv != null) {
+                                panelTransDiv.style.backgroundColor = "green";
+                            }
+                            //headerElem.style.backgroundColor = "green";
+                            // 20-02-2023 FIx for issue #286
+                            let markdiv = document.querySelector("#editor-" + rowId + " .marker");
+                            if (markdiv != null) {
+                                markdiv.remove();
+                            }
                         }
                     }
-                    else {
-                        checkElem.innerText = result.wordCount - result.foundCount;
-                        checkElem.title = "Check the string";
-                        checkElem.style.backgroundColor = "red";
-                        let separator1 = document.createElement("div");
+                    else if (result.percent > 66) {
+                        newtitle = checkElem.title;
+                        checkElem.innerHTML = '<span style="color:black">66</span>';
+                        separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "1612")
+                        res = addCheckButton(rowId, checkElem, "1547")
                         SavelocalButton = res.SavelocalButton
-                        if (current != "untranslated" && current != 'current') {
-                            SavelocalButton.innerText = "Rej";
-                            //SavelocalButton.disabled = true;
-                        }
+                        SavelocalButton.innerText = "Save";
+                        checkElem.style.backgroundColor = "yellow";
+                        checkElem.title = "Save the string";
                         if (typeof headerElem != "undefined" && headerElem != null) {
-                            panelTransDiv.style.backgroundColor = "red";
+                            panelTransDiv.style.backgroundColor = "yellow";
                         }
                     }
+                    else if (result.percent > 33) {
+                        newtitle = checkElem.title;
+                        checkElem.innerHTML = "33";
+                        separator1 = document.createElement("div");
+                        separator1.setAttribute("class", "checkElem_save");
+                        checkElem.appendChild(separator1);
+                        res = addCheckButton(rowId, checkElem, "1561")
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.innerText = "Save";
+                        checkElem.title = "Save the string";
+                        checkElem.style.backgroundColor = "orange";
+                        if (typeof headerElem != "undefined" && headerElem != null) {
+                            panelTransDiv.style.backgroundColor = "orange";
+                        }
+                    }
+                    else if (result.percent == 10) {
+                        checkElem.innerHTML = "Mod";
+                        separator1 = document.createElement("div");
+                        separator1.setAttribute("class", "checkElem_save");
+                        checkElem.appendChild(separator1);
+                        res = addCheckButton(rowId, checkElem, "1574")
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.disabled = false;
+                        SavelocalButton.innerText = "Save";
+                        SavelocalButton.onclick = savetranslateEntryClicked;
+                        checkElem.style.backgroundColor = "purple";
+                        checkElem.title = "Save the string";
+                        if (typeof headerElem != "undefined" && headerElem != null) {
+                            panelTransDiv.style.backgroundColor = "purple";
+                        }
+                    }
+                    else if (result.percent < 33 && result.percent > 0) {
+                        newtitle = checkElem.title;
+                        checkElem.innerHTML = result.percent;
+                        separator1 = document.createElement("div");
+                        separator1.setAttribute("class", "checkElem_save");
+                        checkElem.appendChild(separator1);
+                        res = addCheckButton(rowId, checkElem, "1561")
+                        SavelocalButton = res.SavelocalButton
+                        SavelocalButton.innerText = "Save";
+                        checkElem.title = "Check the string";
+                        checkElem.style.backgroundColor = "darkorange";
+                        if (typeof headerElem != "undefined" && headerElem != null) {
+                            panelTransDiv.style.backgroundColor = "darkorange";
+                        }
+                    }
+                    else if (result.percent == 0) {
+                        // We need to set the title here also, otherwise it will occassionally not be shown
+                        newtitle = checkElem.title;
+                        if ((result.wordCount - result.foundCount) == 0) {
+                            checkElem.innerText = "0";
+                            checkElem.style.backgroundColor = "green";
+                            let separator1 = document.createElement("div");
+                            separator1.setAttribute("class", "checkElem_save");
+                            checkElem.appendChild(separator1);
+                            res = addCheckButton(rowId, checkElem, "1593")
+                            SavelocalButton = res.SavelocalButton
+                            if (result.wordCount > 0) {
+                                checkElem.title = "Do not save the string";
+                                SavelocalButton.innerText = "Miss!";
+                            }
+                            else {
+                                checkElem.title = "Save the string";
+                                SavelocalButton.innerText = "NoGlos";
+                            }
+                            if (typeof headerElem != "undefined" && headerElem != null) {
+                                panelTransDiv.style.backgroundColor = "";
+                                //headerElem.style.backgroundColor = "";
+                            }
+                        }
+                        else {
+                            // the string does contain glossary words that are not used!
+                            checkElem.innerText = result.wordCount - result.foundCount;
+                            checkElem.title = "Check the string";
+                            checkElem.style.backgroundColor = "red";
+                            let separator1 = document.createElement("div");
+                            separator1.setAttribute("class", "checkElem_save");
+                            checkElem.appendChild(separator1);
+                            res = addCheckButton(rowId, checkElem, "1612")
+                            SavelocalButton = res.SavelocalButton
+                            if (current != "untranslated" && current != 'current') {
+                                SavelocalButton.innerText = "Miss!";
+                                //SavelocalButton.disabled = true;
+                            }
+                            else {
+                                SavelocalButton.innerText = "Rej";
+                            }
+                            if (typeof headerElem != "undefined" && headerElem != null) {
+                                panelTransDiv.style.backgroundColor = "red";
+                            }
+                        }
+                    }
+                    // newline = "\n";
+                    missingverbs = "Missing glossary entry\n";
+                    // We need to update the rowbutton
+                   // await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "2005");
                 }
-                // newline = "\n";
-                missingverbs = "Missing glossary entry\n";
-                // We need to update the rowbutton
-                await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "2005");
+                else {
+                    console.debug("checkelem is null!!!")
+                }
             }
         }
         else {
@@ -2114,23 +2239,30 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             else {
                 entrymissing = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button")
                 if (entrymissing != null && typeof entrymissing != 'undefined') {
-                    entrymissing.style.visibility = "hidden";
+                    if ((result.toolTip == 0)){
+                        entrymissing.style.visibility = "hidden";
+                    }
                 }
                 newtitle = checkElem.title.concat(result.toolTip);
                 headertitle = headerElem.title;
             }
         }
         else {
-            newtitle = checkElem.title.concat(result.toolTip);
-            headertitle = headerElem.title;
-            if (typeof headerElem.style != "undefined") {
-                if (result.percent == 100) {
-                    if (panelTransDiv != null) {
-                        panelTransDiv.style.backgroundColor = "green";
-                        // headerElem.style.backgroundColor = "green";
+            if (checkElem != null) {
+                newtitle = checkElem.title.concat(result.toolTip);
+                headertitle = headerElem.title;
+                if (typeof headerElem.style != "undefined") {
+                    if (result.percent == 100) {
+                        if (panelTransDiv != null) {
+                            panelTransDiv.style.backgroundColor = "green";
+                            // headerElem.style.backgroundColor = "green";
+                        }
                     }
                 }
             }
+            else {
+                newtitle = "noCeckElem"
+                }
             if (document.getElementById("translate-" + rowId + "-translocal-entry-missing-button") != null) {
                 document.getElementById("translate-" + rowId + "-translocal-entry-missing-button").style.visibility = "hidden";
             }
@@ -2145,9 +2277,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if (showName == true) {
             showNameLabel(originalElem)											 
         }
+        
         if (oldstring == "True") {
+            
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans);
         }
     }
     else {
@@ -2177,28 +2311,67 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current) {
+function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current,myHistory,my_check,repl_array,prev_trans) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
+    //console.debug("showOldstringLabel:",myHistory,my_check,currstring,current)
     if (originalElem != undefined) {
         // 19-09-2021 PSS fixed issue #141 duplicate label creation
-        var labexist = originalElem.getElementsByClassName("trans_exists_div");
-        if (labexist.length > 0) {
-            labexist[0].parentNode.removeChild(labexist[0]);
+        
+            var labexist = originalElem.getElementsByClassName("trans_exists_div");
+            if (labexist.length > 0) {
+                labexist[0].parentNode.removeChild(labexist[0]);
+            }
+            let element1 = document.createElement("div");
+            element1.setAttribute("class", "trans_exists_div");
+            originalElem.appendChild(element1);
+          // 
+            if (my_check != true) {
+            element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
+            currcount = currcount.replace("Current:", "");
+            if ((+currcount) > 0 && current != 'current') {
+                let element2 = document.createElement("div")
+                element2.setAttribute("class", "div.trans_original_div");
+                element1.after(element2)
+                let element3 = document.createElement("span");
+                element3.setAttribute("class", "current-string");
+                element3.appendChild(document.createTextNode(currstring));
+                element2.appendChild(element3)
+            }
         }
-        let element1 = document.createElement("div");
-        element1.setAttribute("class", "trans_exists_div");
-        originalElem.appendChild(element1);
-        element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
-        currcount = currcount.replace("Current:", "");
-        if ((+currcount) > 0 && current != 'current') {
-            let element2 = document.createElement("div")
-            element2.setAttribute("class", "div.trans_original_div");
-            element1.after(element2)
-            let element3 = document.createElement("span");
-            element3.setAttribute("class", "current-string");
-            element3.appendChild(document.createTextNode(currstring));
-            element2.appendChild(element3)
+            else {
+             
+                element1.appendChild(document.createTextNode("Current string is updated with verbs"));
+                // this needs to be shown always if coming from checkpage
+          //  if ((+currcount) > 0 || my_check== true) {
+                let element2 = document.createElement("div")
+                element2.setAttribute("class", "div.trans_original_div");
+                element1.after(element2)
+                let element3 = document.createElement("span");
+                element3.setAttribute("class", "current-string");
+                element3.appendChild(document.createTextNode(prev_trans));
+                element2.appendChild(element3)
+                markElements_previous(element3, repl_array, element3.innerText, [], repl_array, currstring);
+                let element4 = document.createElement("div")             
+                var diffType = "diffWords";
+                var changes = JsDiff[diffType](prev_trans, currstring);
+                fragment = document.createDocumentFragment();
+                changes.forEach((part) => {
+                    // green for additions, red for deletions
+                    // dark grey for common parts
+                    const color = part.added ? "green" :
+                        part.removed ? "red" : "dark-grey";
+                    span = document.createElement("span");
+                    span.style.color = color;
+                    span.appendChild(document
+                        .createTextNode(part.value));
+                    fragment.appendChild(span);
+                });
+                element4.appendChild(fragment);
+                element3.appendChild(element4)
+
+          //  }
+           // console.debug("we come from checkpage!!")
         }
     }
     else {
@@ -2398,8 +2571,11 @@ function validate(language, original, translation, locale) {
          percent = 0;
     }
     // 12-02-2023 PSS Modified the code below as it was not correct
-    if (wordCount == 0 && foundCount == 0) {
+    if (wordCount == 0 && foundCount == 0 && translation != 'Empty') {
         percent = 100;
+    }
+    else if ((wordCount == 0 && foundCount == 0 && translation == 'Empty')) {
+        percent = 0;
     }
     else if (wordCount == foundCount ) {
             percent = 100;
@@ -2640,6 +2816,7 @@ async function fetchOldRec(url, rowId) {
 
 // this function waits until a defined element in a row is present
 function waitForElementInRow(rowSelector, elementSelector, timeout = 5000) {
+    //console.debug("timeout:",timeout,rowSelector,elementSelector)
     return new Promise((resolve, reject) => {
         const intervalId = setInterval(() => {
             const row = document.querySelector(rowSelector);
@@ -2648,12 +2825,15 @@ function waitForElementInRow(rowSelector, elementSelector, timeout = 5000) {
                 clearInterval(intervalId);
                 resolve(element);
             }
+            else {
+               // console.debug("timeout:",timeout)
+            }
             if (timeout <= 0) {
                 clearInterval(intervalId);
                 reject(new Error(`Timeout waiting for element with selector ${elementSelector} in row ${rowSelector}`));
             }
             timeout -= 100;
-        }, 100);
+        }, 200);
     });
 }
 
@@ -2737,10 +2917,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                                old = "";
                            }
                         if (tbodyRowCount > 2 && single == "False") {
-                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent);
+                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],"");
                            }
-                           else if (tbodyRowCount > 2 && single == "True") {
-                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent);
+                        else if (tbodyRowCount > 2 && single == "True") {
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",false,false,[],"");
                                //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                                //window.open(url, "_blank", windowFeatures);
                            }
