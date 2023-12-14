@@ -1,5 +1,6 @@
-var glossary;
+//var glossary;
 loadGlossary();
+addTranslateButtons();
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
     console.log(`Your browser doesn't support IndexedDB`);
@@ -1280,13 +1281,13 @@ function loadGlossary() {
                     // to sory by descending order
                     return b.key.length - a.key.length;
                 });
-                addTranslateButtons();
-                //console.debug("glossary:", glossary.length)
+                
+
                 if (glossary.length > 27) {
                     chrome.storage.local.get(["showHistory",'destlang'], function (data,event) {
                         if (data.showHistory != "null") {
                             let locale = checkLocale();
-                            validatePage(data.destlang, data.showHistory, locale);
+                            validatePage(data.destlang, data.showHistory, locale,"");
                         }
                     });
                 }
@@ -1294,7 +1295,7 @@ function loadGlossary() {
                     messageBox("error", "Your glossary is not loaded because no file is loaded!!");
                     return;
                 }
-                checkbuttonClick();
+               // checkbuttonClick();
             }
             else {
                 messageBox("error", "Your glossary is not loaded because no file is loaded!!");
