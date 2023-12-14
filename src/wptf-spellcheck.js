@@ -116,10 +116,11 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                            // console.debug("line to check:",translatedText,previewNewText)
                             if (translatedText != "") {
                                 let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                               // console.debug("before LT:",translatedText)
                                 spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
-                                errorstate = spell_result;
+                                //errorstate = spell_result;
                             }
-                                //console.debug("na spell single:", spell_result)
+                         //   console.debug("na spell single:", spell_result,errorstate)
                             
                             // console.debug("single replaced val:",replaced)
 
@@ -144,7 +145,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                                 if (translatedText != "") {
                                     spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
                                 }
-                                }
+                            }
                         }
                     }
                     if (replaced) {
@@ -166,7 +167,12 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                 checkButton.className += " translated";
                 checkButton.innerText = "Checked";
                 checkButton.className += " ready";
-                //messageBox("info", "Check spelling done ")
+                if (errorstate != "OK") {
+                    messageBox("error", "Check spelling done<br> " + errorstate + "<br> on one of the records")
+                }
+                else {
+                    messageBox("info", "Check spelling done<br> " + "OK" + "<br>")
+                }
                 setTimeout(() => {
                     close_toast();
                     toastbox("info", "Spellcheck ready", "2000", "Spellcheck");
@@ -208,7 +214,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
     let text = prepare_spellcheck(translation);
     //let text=translation
     //text = encodeURI(text);
-    
+    //console.debug("after prepare:",text)
     if (LtFree == true) {
         myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
     } else {
@@ -223,7 +229,6 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
            // console.debug("response:", isJson, response)
-
             //data = isJson && await response.json();
             //console.debug("Response:", data);
             // check for error response
@@ -235,7 +240,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                     error = [data, "", response.status];
                 }
                 else {
-                    let message = 'NoData';
+                    let message = 'Nodata received!';
                     data = "noData";
                     error = [data, message, response.status];
                 }
@@ -268,7 +273,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                         }
                         else {
                             errorstate = "OK"
-                            console.debug("no replacements contents!")
+                           // console.debug("no replacements contents!")
                             replaced = false;
                         }   
                     }
@@ -297,11 +302,12 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
             checkButton.innerText = "Checked";
             checkButton.className += " ready";
             if (errorstate != "OK") {
-                messageBox("error", "Error during spell check: " + error[2]+"<br>"+translation.substr(0,30))
+               // messageBox("error", "Error during spell check: " + error[2]+"<br>"+translation.substr(0,30))
             }
             if (error[2] == "400") {
                 //   alert("Error 400 NoData.")
-                errorstate = '<br>We did not get data<br>';
+                errorstate = "Error 400";
+               // errorstate = '<br>We did not get data<br>';
                 console.debug("We have an error:", errorstate);
 
             }
@@ -339,6 +345,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                 //alert("Error message: " + error[1])
                 console.debug("Error:", error)
                 errorstate = "Error " + error[1];
+
             }
         }).then(error => {return error})
     return replaced
@@ -349,7 +356,7 @@ function prepare_spellcheck(translation) {
     // We need to convert the text to Utf8 otherwise the API does not accept it!!
     let prepared = translation.replace(/[&\/\\#,+()$~%'":*<>{}]/g, ' ')
     //let prepared = JSON.stringify(translation)
-    prepared = encodeURIComponent(prepared);
+     prepared = encodeURIComponent(prepared);
     //console.debug("jason:",prepared)
     
     return prepared
