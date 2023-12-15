@@ -1858,17 +1858,18 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         if (SavelocalButton == null) {
             if (!is_pte) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
-                if (checkBx == null) {
-                    checkBx = document.querySelector("#preview-" + rowId);
+                // if there is no checkbox, we do not need to add the input to it and alter the columns
+                if (checkBx != null) { 
+                  // console.debug("checkbox:", checkBx, checkBx.length)
+                   mycheckbox = document.createElement('input');
+                   mycheckbox.setAttribute("type", "checkbox");
+                   mycheckbox.setAttribute("name", "selected-row[]");
+                   checkBx.appendChild(mycheckbox);
+                   let myrec = document.querySelector(`#editor-${rowId}`);
+                   // We need to expand the amount of columns otherwise the editor is to small
+                   var tds = myrec.getElementsByTagName("td")[0];
+                   tds.setAttribute("colspan", 5);
                 }
-                var checkbox = document.createElement('input');
-                checkbox.setAttribute("type", "checkbox");
-                checkbox.setAttribute("name", "selected-row[]");
-                checkBx.appendChild(checkbox);
-                let myrec = document.querySelector(`#editor-${rowId}`);
-                // We need to expand the amount of columns otherwise the editor is to small
-                var tds = myrec.getElementsByTagName("td")[0];
-                tds.setAttribute("colspan", 5);
             }
             // check for the status of the record
             var separator1 = document.createElement("div");
