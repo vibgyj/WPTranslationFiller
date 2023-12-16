@@ -1712,7 +1712,7 @@ async function checkbuttonClick(event) {
                 }
             }
             else {
-                console.debug("we did find a 100 % score")
+                //console.debug("we did find a 100 % score")
             }
              
            
@@ -1742,10 +1742,10 @@ async function checkbuttonClick(event) {
                             if (markerpresent != null) {
                                 markerpresent.innerHTML = result.newText;
                             }
-                            else { console.debug("markerpresent not found") }
+                            //else { console.debug("markerpresent not found") }
                         }
                     }
-                    else { console.debug("markerpresent not found")}
+                   // else { console.debug("markerpresent not found")}
                 }
             }
         }
@@ -1941,8 +1941,8 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     let originalText = original.innerText;
     result = validate(language, originalText, translation, locale, record);
     //console.debug("result validate:",result,translation)
-     //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans
-    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,"",[],"");
+     //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
+    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,"",[],"","untranslated");
     return result;
 }
 
@@ -2088,7 +2088,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         res = addCheckButton(rowId, checkElem, "1593")
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
-                            SavelocalButton.innerText = "Appr";
+                            if (SavelocalButton != null) {
+                                SavelocalButton.innerText = "Appr";
+                            }
                         }
                         checkElem.style.backgroundColor = "green";
                         checkElem.title = "Save the string";
@@ -2308,7 +2310,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if (oldstring == "True") {
             
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans,old_status,rowId);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans,old_status,rowId,"UpdateElementStyle");
         }
     }
     else {
@@ -2338,23 +2340,35 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current,myHistory,my_check,repl_array,prev_trans,old_status,rowId) {
+function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current,myHistory,my_check,repl_array,prev_trans,old_status,rowId,called_from) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
     var old_current
-    console.debug("showOldstringLabel:",originalElem)
+    //console.debug("showOldstringLabel:", originalElem)
+   // console.debug("called from:", called_from)
     if (old_status != null) {
-        if (old_status[0].classList.contains("status-current")) {
-            old_current = "current"
+        if (old_status.length != 0) {
+            if (old_status[0].classList.contains("status-current")) {
+                old_current = "current"
+            }
+        }
+        else if (old_status.length == 0) {
+            if (old_status.classList.contains("status-waiting")) {
+                old_current = "waiting"
+            }
+            else if (old_status.classList.contains("status-fuzzy")) {
+                old_current = "fuzzy"
+            }
         }
     }
     else {
         old_current = 'untranslated'
     }
-    var debug = true;
+    var debug = false;
     if (debug == true) {
+        console.debug("called from:", called_from)
         console.debug("current:", old_current)
-        console.debug("old:",old_status)
+        console.debug("old:", old_status)
     }
     if (originalElem != undefined) {
         // 19-09-2021 PSS fixed issue #141 duplicate label creation
@@ -2368,13 +2382,12 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
           //  originalElem.appendChild(element1);
           // 
         let preview = document.querySelector(`#preview-${rowId}`)
-        console.debug("rowId:",rowId,preview)
         if (my_check != true) {
                originalElem.appendChild(element1);
                element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
                 currcount = currcount.replace("Current:", "");
                 var diffexist = preview.querySelector("trans_original_div");
-                console.debug("trans_original:",diffexist)
+                //console.debug("trans_original:",diffexist)
                 if (diffexist != null) {
                     diffexist.remove();
                 }
@@ -2389,11 +2402,6 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 element1.appendChild(element2)
                 if (old_current != "current") {
                     console.debug("we do not have a current!:", old_current)
-                }
-                else {
-                    console.debug("we have a current!")
-                    //element2.style.backgroundColor = '#b5e1b9'
-                   // element2.style.color = 'black'
                 }
             }
         }

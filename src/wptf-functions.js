@@ -263,15 +263,16 @@ function validatePage(language, showHistory, locale,prev_trans) {
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         setTimeout(() => {
         let original = e.querySelector("span.original-raw").innerText;
-        //console.debug("original:", original);
         let textareaElem = e.querySelector("textarea.foreign-text");
         let rowId = textareaElem.parentElement.parentElement.parentElement
             .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
         textareaElem.addEventListener("input", function (e, locale) {
-            //console.debug("target:", e.target);
                       //language, textareaElem, newurl, showHistory, rowId, locale, record
         validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
         });
+        // we need to fetch the status of the record to pass on
+        old_status = document.querySelector("#preview-" + rowId);
+       
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;
         let showName = false;
@@ -303,8 +304,8 @@ function validatePage(language, showHistory, locale,prev_trans) {
         }
             var result = validate(language, original, translation, locale);
             let record = e.previousSibling.previousSibling.previousSibling
-       //    textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],translation);
+      //  textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],translation,old_status);
         }, timeout);
         timeout += 20;
        
