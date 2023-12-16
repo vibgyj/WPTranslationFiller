@@ -1779,7 +1779,7 @@ function translateEntryClicked(event) {
         });
 }
 
-async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,myHistory,my_checkpage,currstring,repl_array,prev_trans) {
+async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,myHistory,my_checkpage,currstring,repl_array,prev_trans,old_status) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var currcount;
     var current;
@@ -1889,13 +1889,28 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
+    let row = rowId.split("-")[0];
+
+    // 12-06-2021 PSS do not fetch old if within the translation
+    // 01-07-2021 fixed a problem causing an undefined error
+    // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
+    if (showHistory == true) {
+        let single = "True";
+        if (newurl.substring(1, 9) != "undefined") {
+            single = "False";
+        }
+        // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
+        if (current.innerText != 'untranslated') {
+            fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status);
+        }
+    }
     //let currstring = "";
     //console.debug("updateStyle2:", showHistory, myHistory, my_checkpage)
     if (currText != 'untranslated') {
-        await updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans);
+        await updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans,old_status);
     }
     
-        let row = rowId.split("-")[0];
+    row = rowId.split("-")[0];
     
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
@@ -1981,7 +1996,7 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     }
 }
                                           
-async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring,current,record,myHistory,my_checkpage,repl_array,prev_trans) {												   	  
+async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff,currcount,currstring,current,record,myHistory,my_checkpage,repl_array,prev_trans,old_status) {												   	  
     //var current;
     var SavelocalButton;
     var separator1;
@@ -2293,7 +2308,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if (oldstring == "True") {
             
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans,old_status,rowId);
         }
     }
     else {
@@ -2323,10 +2338,25 @@ function showNameLabel(originalElem) {
     }
 }
 
-function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current,myHistory,my_check,repl_array,prev_trans) {
+function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current,myHistory,my_check,repl_array,prev_trans,old_status,rowId) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-    //console.debug("showOldstringLabel:",myHistory,my_check,currstring,current)
+    var old_current
+    console.debug("showOldstringLabel:",originalElem)
+    if (old_status != null) {
+        if (old_status[0].classList.contains("status-current")) {
+
+            old_current = "current"
+        }
+    }
+    else {
+        old_current = 'untranslated'
+    }
+    var debug = true;
+    if (debug == true) {
+        console.debug("current:", old_current)
+        console.debug("old:",old_status[0])
+    }
     if (originalElem != undefined) {
         // 19-09-2021 PSS fixed issue #141 duplicate label creation
         
@@ -2336,19 +2366,36 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
             }
             let element1 = document.createElement("div");
             element1.setAttribute("class", "trans_exists_div");
-            originalElem.appendChild(element1);
+          //  originalElem.appendChild(element1);
           // 
-            if (my_check != true) {
-            element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
-            currcount = currcount.replace("Current:", "");
+        let preview = document.querySelector(`#preview-${rowId}`)
+        console.debug("rowId:",rowId,preview)
+        if (my_check != true) {
+               originalElem.appendChild(element1);
+               element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
+                currcount = currcount.replace("Current:", "");
+                var diffexist = preview.querySelector("trans_original_div");
+                console.debug("trans_original:",diffexist)
+                if (diffexist != null) {
+                    diffexist.remove();
+                }
             if ((+currcount) > 0 && current != 'current') {
                 let element2 = document.createElement("div")
                 element2.setAttribute("class", "div.trans_original_div");
-                element1.after(element2)
+               // element1.after(element2)
                 let element3 = document.createElement("span");
                 element3.setAttribute("class", "current-string");
                 element3.appendChild(document.createTextNode(currstring));
                 element2.appendChild(element3)
+                element1.appendChild(element2)
+                if (old_current != "current") {
+                    console.debug("we do not have a current!:", old_current)
+                }
+                else {
+                    console.debug("we have a current!")
+                    //element2.style.backgroundColor = '#b5e1b9'
+                   // element2.style.color = 'black'
+                }
             }
         }
             else {
@@ -2380,7 +2427,13 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     fragment.appendChild(span);
                 });
                 element4.appendChild(fragment);
-                element3.appendChild(element4)
+              //  element3.appendChild(element4)
+                if (old_current != "current") {        
+                    console.debug("we do not have a current!:",old_current)
+                }
+                else {
+                    console.debug("we have a current!")
+                }
 
           //  }
            // console.debug("we come from checkpage!!")
@@ -2929,10 +2982,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                                old = "";
                            }
                         if (tbodyRowCount > 2 && single == "False") {
-                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],"");
+                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],"",current);
                            }
                         else if (tbodyRowCount > 2 && single == "True") {
-                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",false,false,[],"");
+                               updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",false,false,[],"",current);
                                //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                                //window.open(url, "_blank", windowFeatures);
                            }

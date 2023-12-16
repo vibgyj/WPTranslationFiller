@@ -817,7 +817,7 @@
     background-color: #036fa2;
     border-radius: 5px;
     display: block;
-    width: 75% !important;
+    width: 100% !important;
 }
 
 .trans_name_div {
@@ -858,6 +858,21 @@
     background-color: #036fa2;
     border-radius: 5px;
     width: 12% !important;
+}
+
+.trans_original_div {
+    color: #ffffff;
+    backgroundColor = '#b5e1b9';
+}
+
+.current-string {
+    display:block;
+    font-weight: 600;
+    font-size: 12px;
+    padding-top: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-bottom: 8px;
 }
 
 del {
