@@ -2345,7 +2345,6 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
     console.debug("showOldstringLabel:",originalElem)
     if (old_status != null) {
         if (old_status[0].classList.contains("status-current")) {
-
             old_current = "current"
         }
     }
@@ -2355,7 +2354,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
     var debug = true;
     if (debug == true) {
         console.debug("current:", old_current)
-        console.debug("old:",old_status[0])
+        console.debug("old:",old_status)
     }
     if (originalElem != undefined) {
         // 19-09-2021 PSS fixed issue #141 duplicate label creation
