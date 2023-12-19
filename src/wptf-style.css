@@ -810,7 +810,7 @@
     font-size: 0.9em;
     font-weight: 600;
     color: #ffffff;
-    font-size: 11px;
+    font-size: 12px;
     margin-top: 10px;
     padding: 1px 5px;
     margin-left: .2em;
@@ -862,13 +862,20 @@
 
 .trans_original_div {
     color: #ffffff;
-    backgroundColor = '#b5e1b9';
+    background-color: #b5e1b9;
+    font-size: 12px !important;
+}
+
+span.show_diff_in_original {
+    font-size: 12px;
+    color: #ffffff;
+    background-color: #000000 !important;
 }
 
 .current-string {
     display:block;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 13px;
     padding-top: 8px;
     padding-left: 8px;
     padding-right: 8px;

@@ -230,11 +230,13 @@ function deselectCheckBox(event) {
 }
 
 
-function validatePage(language, showHistory, locale,prev_trans) {
+function validatePage(language, showHistory, locale) {
     // This function checks the quality of the current translations
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
     var timeout = 0;
+    var translation;
+    var prev_trans;
     //console.debug("validatePage:",language,showHistory, locale)
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
@@ -268,7 +270,7 @@ function validatePage(language, showHistory, locale,prev_trans) {
             .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
         textareaElem.addEventListener("input", function (e, locale) {
                       //language, textareaElem, newurl, showHistory, rowId, locale, record
-        validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
+       // validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
         });
         // we need to fetch the status of the record to pass on
         old_status = document.querySelector("#preview-" + rowId);
@@ -295,17 +297,21 @@ function validatePage(language, showHistory, locale,prev_trans) {
         else {
             showName = false;
         }
-        let translation = textareaElem.innerText;
+            translation = textareaElem.innerText;
+            ///console.debug("trans:",translation)
         if (original != translation && showName == true) {
             nameDiff = true;
         }
         else {
             nameDiff = false;
         }
-            var result = validate(language, original, translation, locale);
-            let record = e.previousSibling.previousSibling.previousSibling
-      //  textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],translation,old_status);
+        var result = validate(language, original, translation, locale);
+        let record = e.previousSibling.previousSibling.previousSibling
+                 
+        // this is the start of validation, so no prev_trans is present      
+        prev_trans = translation
+         //  textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],prev_trans,old_status);
         }, timeout);
         timeout += 20;
        
