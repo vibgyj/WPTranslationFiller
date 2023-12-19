@@ -2502,7 +2502,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     // green for additions, red for deletions
                     // dark grey for common parts
                     const color = part.added ? "green" :
-                        part.removed ? "red" : "dark-grey";
+                        part.removed ? "yellow" : "white";
                     span = document.createElement("span");
                     span.style.color = color;
                     span.appendChild(document
