@@ -2012,7 +2012,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var missingVerbsButton;
     var missingverbs = "";
     var newline = "\n";
-    var myprev_trans
+    var button_name = "Empty";
     var debug = false;
     if (debug == true) {
         console.debug("updateElementStyle curr:", currstring)
@@ -2046,6 +2046,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         // We need to have the new bar to be able to set the color
         panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+        console.debug("paneldtransdiv:",panelTransDiv)
         // PSS the below code needs to be improved see code in commonTranslate
        // if (typeof result.wordCount == "undefined") {
          //   if (SavelocalButton != null) {
@@ -2063,8 +2064,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if (result.wordCount == 0) {
            // console.debug("rowId in updateElementStyle:",rowId)
             let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
-
-            
+        
            // current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
             if (h != null) {
                 current = h.querySelector("span.panel-header__bubble");
@@ -2074,6 +2074,21 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 current = 'untranslated'
             }
         }
+        console.debug("value of current:",current)
+        if (current == 'current') {
+            button_name = 'Save'
+        }
+        else if (current == 'waiting') {
+            button_name = 'Appr'
+        }
+        else if (current == 'fuzzy') {
+            button_name = 'Rej'
+        }
+        else if (current =='transFill') {
+            button_name = 'Save'
+        }
+        else {button_name == 'Undef!!'}
+
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
             if (current != null) {
@@ -2095,7 +2110,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
                             if (SavelocalButton != null) {
-                                SavelocalButton.innerText = "Appr";
+                                SavelocalButton.innerText = button_name;
                             }
                         }
                         checkElem.style.backgroundColor = "green";
@@ -2120,7 +2135,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         checkElem.appendChild(separator1);
                         res = addCheckButton(rowId, checkElem, "1547")
                         SavelocalButton = res.SavelocalButton
-                        SavelocalButton.innerText = "Save";
+                        SavelocalButton.innerText = button_name;
                         checkElem.style.backgroundColor = "yellow";
                         checkElem.title = "Save the string";
                         if (typeof headerElem != "undefined" && headerElem != null) {
@@ -2135,7 +2150,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         checkElem.appendChild(separator1);
                         res = addCheckButton(rowId, checkElem, "1561")
                         SavelocalButton = res.SavelocalButton
-                        SavelocalButton.innerText = "Save";
+                        SavelocalButton.innerText = button_name;
                         checkElem.title = "Save the string";
                         checkElem.style.backgroundColor = "orange";
                         if (typeof headerElem != "undefined" && headerElem != null) {
@@ -2150,7 +2165,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         res = addCheckButton(rowId, checkElem, "1574")
                         SavelocalButton = res.SavelocalButton
                         SavelocalButton.disabled = false;
-                        SavelocalButton.innerText = "Save";
+                        SavelocalButton.innerText = button_name;
                         SavelocalButton.onclick = savetranslateEntryClicked;
                         checkElem.style.backgroundColor = "purple";
                         checkElem.title = "Save the string";
@@ -2166,7 +2181,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         checkElem.appendChild(separator1);
                         res = addCheckButton(rowId, checkElem, "1561")
                         SavelocalButton = res.SavelocalButton
-                        SavelocalButton.innerText = "Save";
+                        SavelocalButton.innerText = button_name;
                         checkElem.title = "Check the string";
                         checkElem.style.backgroundColor = "darkorange";
                         if (typeof headerElem != "undefined" && headerElem != null) {
@@ -2436,9 +2451,12 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                             // dark grey for common parts
                             const color = part.added ? "lightseagreen" :
                                 part.removed ? "yellow" : "white";
+                            const background_color = part.added ? "black" :
+                                part.removed ? "white" : "blue";
                             span = document.createElement("span");
                             span.className = 'show_dif_in_original'
                             span.style.color = color;
+                            span.style.backgroundColor = background_color;
                             span.style.font.size = '12px';
                             span.style.backgroundColor = '#000000';
                             span.appendChild(document
@@ -2460,20 +2478,22 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                         diff.forEach((part) => {
                             // green for additions, red for deletions
                             // dark grey for common parts
-                            const color = part.added ? "lightseagreen" :
-                                part.removed ? "yellow" : "white";
+                            const color = part.added ? "#33FF36" :
+                                part.removed ? "red" : "white";
+                            const background_color = part.added ? "black" :
+                                part.removed ? "white" : "black";
                             span = document.createElement("span");
                             span.className = 'show_dif_in_original'
                             span.style.color = color;
+                            span.style.backgroundColor = background_color;
                             span.style.font.size = '12px';
-                            span.style.backgroundColor = '#000000';
+                           // span.style.backgroundColor = '#000000';
                             span.appendChild(document
                                 .createTextNode(part.value));
                             fragment.appendChild(span);
                             span.part.value.fontWeight = '900'
                         });
                         element1.appendChild(fragment);
-                        //metaElem.style.fontWeight = "900";
                     }
                 }
                 if (old_current != "current") {
@@ -2481,8 +2501,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 }
             }
         }
-            else {
-             
+            else {   
                 element1.appendChild(document.createTextNode("Current string is updated with verbs"));
                 // this needs to be shown always if coming from checkpage
           //  if ((+currcount) > 0 || my_check== true) {
@@ -2501,10 +2520,13 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 changes.forEach((part) => {
                     // green for additions, red for deletions
                     // dark grey for common parts
-                    const color = part.added ? "green" :
-                        part.removed ? "yellow" : "white";
+                    const color = part.added ? "#33FF36" :
+                        part.removed ? "red" : "white";
+                    const background_color = part.added ? "black" :
+                        part.removed ? "white" : "black";
                     span = document.createElement("span");
                     span.style.color = color;
+                    span.style.backgroundColor = background_color;
                     span.appendChild(document
                         .createTextNode(part.value));
                     fragment.appendChild(span);
@@ -2577,6 +2599,7 @@ function savetranslateEntryClicked(event) {
     // Determine status of record
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     var current = h.querySelector("span.panel-header__bubble");
+    var current_rec = document.querySelector(`#preview-${rowId}`);
     // we take care that we can save the record by opening the editor save the record and close the editor again
     if (current.innerText != "Empty" && current.innerText != "untranslated") {
         if (current.innerText == "transFill") {
@@ -2644,7 +2667,8 @@ function savetranslateEntryClicked(event) {
             glotpress_reject.click();
             glotpress_close.click();
             prevrow = document.querySelector(`#preview-${rowId}.preview.status-fuzzy`);
-            prevrow.style.backgroundColor = "#eb9090";
+            prevrow.className = "preview status-rejected priority-normal no-warnings has-translations"
+           // prevrow.style.backgroundColor = "#eb9090";
         }
         if (current.innerText == "changes requested") {
             let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
