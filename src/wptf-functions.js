@@ -310,8 +310,8 @@ function validatePage(language, showHistory, locale) {
                  
         // this is the start of validation, so no prev_trans is present      
         prev_trans = translation
-         //  textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],prev_trans,old_status);
+   //  textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,true,false,translation,[],prev_trans,old_status);
         }, timeout);
         timeout += 20;
        

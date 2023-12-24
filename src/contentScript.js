@@ -60,7 +60,7 @@ async function sampleUse() {
     };
     await setToonDiff(sampleObject1);
 
-    console.log(await getToonDiff('toonDiff'));
+   // console.log(await getToonDiff('toonDiff'));
 
 }
 
@@ -1590,14 +1590,15 @@ async function checkbuttonClick(event) {
             if (typeof newurl != "undefined") {
                 // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
                 // Fetch only the current string to compaire with the waiting string
-                //url = newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc";
-                url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
+                url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=desc";
+               // url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
                 chrome.storage.local.get(["showTransDiff"], async function (data) {
                     if (data.showTransDiff != "null") {
+                        //console.debug("showdiff:",data.showTransDiff)
                         if (data.showTransDiff == true) {
                             let res = await getToonDiff('toonDiff');
                             //chrome.storage.local.get(["toonDiff"]).then((result) => {
-                            //console.log("Value toonDiff currently is " + res);
+                           // console.debug("Value toonDiff currently is " + res);
                             if (res == true) {
                                 fetchOldRec(url, rowId);
                             }
@@ -1632,7 +1633,7 @@ async function checkbuttonClick(event) {
                                 }
                             }
                             else {
-                                console.debug("We did not find a li with score 100:",liscore)
+                                //console.debug("We did not find a li with score 100:",liscore)
                             }
                         }
                     }
@@ -1782,7 +1783,7 @@ function translateEntryClicked(event) {
 
 async function updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    var currcount;
+    var currcount=1;
     var current;
     var checkElem;
     var current;
@@ -1896,22 +1897,24 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     // 12-06-2021 PSS do not fetch old if within the translation
     // 01-07-2021 fixed a problem causing an undefined error
     // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
-   // if (showHistory == true) {
-    //    let single = "True";
-    //    if (newurl.substring(1, 9) != "undefined") {
-    //        single = "False";
-    //    }
+    if (showHistory == true) {
+        let single = "True";
+        if (newurl.substring(1, 9) != "undefined") {
+            single = "False";
+        }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
-     //   if (current.innerText != 'untranslated') {
-     //       fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status);
-     //   }
-   // }
+        //console.debug("before fetchold",currText)
+        if (currText != 'untranslated') {
+            fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status,currcount);
+        }
+    }
     //let currstring = "";
     //console.debug("updateStyle2 curr:", currstring)
     //console.debug("updateStyle2 prev:", prev_trans)
-   // console.debug("currText:",currText)
+    //console.debug("currcount:",currcount)
     if (currText != 'untranslated') {
-        updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans,old_status);
+        // This is the proper one!!!
+       updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans,old_status,currcount);
     }
     
     row = rowId.split("-")[0];
@@ -1926,7 +1929,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
         if (current.innerText != 'untranslated') {  
-           fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans);
+           fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans,currcount);
         }
     }
 }
@@ -2017,6 +2020,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     if (debug == true) {
         console.debug("updateElementStyle curr:", currstring)
         console.debug("updateElementStyle prev:", prev_trans.length)
+        console.debug("updateElementStyle currcount:", currcount)
     }
     if (typeof rowId != "undefined") {
         
@@ -2046,7 +2050,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         // We need to have the new bar to be able to set the color
         panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
-        console.debug("paneldtransdiv:",panelTransDiv)
+        //console.debug("paneldtransdiv:",panelTransDiv)
         // PSS the below code needs to be improved see code in commonTranslate
        // if (typeof result.wordCount == "undefined") {
          //   if (SavelocalButton != null) {
@@ -2074,7 +2078,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 current = 'untranslated'
             }
         }
-        console.debug("value of current:",current)
+        //console.debug("value of current:",current)
         if (current == 'current') {
             button_name = 'Save'
         }
@@ -2423,6 +2427,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 if (diffexist != null) {
                     diffexist.remove();
                 }
+            //console.debug("status before:",current,'currcount:',currcount)
             if ((+currcount) > 0 && current != 'current') {
                 let element2 = document.createElement("div")
                 element2.setAttribute("class", "div.trans_original_div");
@@ -2432,33 +2437,41 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 element3.appendChild(document.createTextNode(currstring));
                 element2.appendChild(element3)
                 element1.appendChild(element2)
-                //const pattern = new RegExp(currstring, "gi");
+                //console.debug("we are now in:",current,prev_trans)
                 if (typeof prev_trans == 'object') {
                     currtrans = prev_trans.getElementsByClassName('translation-text')
                     currtrans_text = currtrans[0].innerText
-
-                    // const result = pattern.test(prev_trans)
                     const result = currtrans_text === prev_trans
                     if (result) {
-                        console.debug('The strings are similar.');
+                       // console.debug('The strings are similar.');
                     } else {
-                        console.debug('The strings are not similar.');
+                       // console.debug('The strings are not similar.');
                         diffType = "diffWords"
-                        const diff = JsDiff[diffType](currtrans_text, prev_trans);
+                       // console.debug("current text:", currtrans_text,typeof currtrans_text)
+                       // console.debug("previous text:", prev_trans,typeof prev_trans)
+                        if (typeof prev_trans == 'object') {
+                            //console.debug(" we have an object instead of string")
+                            prev_trans = prev_trans.getElementsByClassName('translation foreign-text')
+                            prev_trans = prev_trans[0].innerText
+                           // console.debug("prev_trans text:", prev_trans)
+                        }
+                        else {
+                           // console.debug("we do not have an object!:",prev_trans)
+                        }
+                        const diff = JsDiff[diffType](currstring, prev_trans);
                         fragment = document.createDocumentFragment();
                         diff.forEach((part) => {
                             // green for additions, red for deletions
                             // dark grey for common parts
-                            const color = part.added ? "lightseagreen" :
-                                part.removed ? "yellow" : "white";
-                            const background_color = part.added ? "black" :
-                                part.removed ? "white" : "blue";
+                            const color = part.added ? "#33FF36" :
+                                part.removed ? "red" : "white";
+                            const background_color = part.added ? "white" :
+                                part.removed ? "white" : "grey";
                             span = document.createElement("span");
                             span.className = 'show_dif_in_original'
                             span.style.color = color;
                             span.style.backgroundColor = background_color;
                             span.style.font.size = '12px';
-                            span.style.backgroundColor = '#000000';
                             span.appendChild(document
                                 .createTextNode(part.value));
                             fragment.appendChild(span);
@@ -2472,6 +2485,18 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                        // console.debug('The strings are similar.');
                     } else {
                        // console.debug('The strings are not similar.');
+                       // console.debug("current text string:", currstring, typeof currtrans_text)
+                       // console.debug("previous text string:", prev_trans, typeof prev_trans)
+                        if (typeof prev_trans == 'object') {
+                            //console.debug(" we have an object instead of string")
+                            prev_trans = prev_trans.getElementsByClassName('translation foreign-text')
+                            prev_trans = prev_trans[0].innerText
+                           // console.debug("prev_trans text:", prev_trans)
+                        }
+                        else {
+                          //  console.debug("we do not have an object!:", prev_trans)
+                        }
+
                         diffType = "diffWords"
                         const diff = JsDiff[diffType](currstring,prev_trans);
                         fragment = document.createDocumentFragment();
@@ -2480,14 +2505,13 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                             // dark grey for common parts
                             const color = part.added ? "#33FF36" :
                                 part.removed ? "red" : "white";
-                            const background_color = part.added ? "black" :
-                                part.removed ? "white" : "black";
+                            const background_color = part.added ? "grey" :
+                                part.removed ? "white" : "grey";
                             span = document.createElement("span");
                             span.className = 'show_dif_in_original'
                             span.style.color = color;
                             span.style.backgroundColor = background_color;
                             span.style.font.size = '12px';
-                           // span.style.backgroundColor = '#000000';
                             span.appendChild(document
                                 .createTextNode(part.value));
                             fragment.appendChild(span);
@@ -2497,7 +2521,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     }
                 }
                 if (old_current != "current") {
-                    console.debug("we do not have a current!:", old_current)
+                    //console.debug("we do not have a current!:", old_current)
                 }
             }
         }
@@ -2522,8 +2546,8 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     // dark grey for common parts
                     const color = part.added ? "#33FF36" :
                         part.removed ? "red" : "white";
-                    const background_color = part.added ? "black" :
-                        part.removed ? "white" : "black";
+                    const background_color = part.added ? "grey" :
+                        part.removed ? "white" : "grey";
                     span = document.createElement("span");
                     span.style.color = color;
                     span.style.backgroundColor = background_color;
@@ -2532,20 +2556,16 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     fragment.appendChild(span);
                 });
                 element4.appendChild(fragment);
-              //  element3.appendChild(element4)
                 if (old_current != "current") {        
-                    console.debug("we do not have a current!:",old_current)
+                    //console.debug("we do not have a current!:",old_current)
                 }
                 else {
-                    console.debug("we have a current!")
+                    //console.debug("we have a current!")
                 }
-
-          //  }
-           // console.debug("we come from checkpage!!")
         }
     }
     else {
-        console.debug("updateElementStyle empty!:", originalElem);
+        //console.debug("updateElementStyle empty!:", originalElem);
     }
     return currstring;
 }
@@ -2828,26 +2848,32 @@ function taMatch(gWord, tWord) {
 async function fetchOldRec(url, rowId) {
     // 23-06-2021 PSS added original translation to show in Meta
     var tbodyRowCount = 0;
+    var fetchOld_status ="";
+    var diff;
     var diffType = "diffWords"; // this is to determine the differenct between lines
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     if (e != null) {
-        let original = e.querySelector("#editor-" + rowId + " .foreign-text").textContent;
-        let status = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerHTML;
-        switch (status) {
+        let curr_trans = e.querySelector("#editor-" + rowId + " .foreign-text").textContent;
+        let OldRec_status = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerHTML;
+        switch (OldRec_status) {
             case "current":
                 newurl = url.replace("mystat", "waiting");
+                fetchOld_status = "current"
                 break;
             case "waiting":
-                newurl = url.replace("mystat", "current");
+                newurl = url.replace("mystat", "fuzzy");
+                fetchOld_status ="fuzzy"
                 break;
             case "rejected":
                 newurl = url.replace("mystat", "current");
                 break;
             case "fuzzy":
-                newurl = url.replace("mystat", "current");
+                newurl = url.replace("mystat", "waiting");
+                fetchOld_status = "waiting"
                 break;
             case "old":
                 newurl = url.replace("mystat", "current");
+                fetchOld_status = "current"
                 break;
             case "untranslated":
                 newurl = url.replace("mystat", "untranslated");
@@ -2858,8 +2884,9 @@ async function fetchOldRec(url, rowId) {
                 break;
         }
         // fix for issue #99
-        if (status != "untranslated" && typeof newurl != "undefined") {
-            //console.debug("fetchOldrec original:", newurl, rowId, original);
+        //console.debug("fetchOldrec original:", OldRec_status,newurl, rowId, curr_trans);
+        if (OldRec_status != "untranslated" && typeof newurl != "undefined") {
+           // console.debug("fetchOldrec original:", newurl, rowId, curr_trans);
             var diffType = "diffWords";
             fetch(newurl, {
                 headers: new Headers({
@@ -2871,6 +2898,7 @@ async function fetchOldRec(url, rowId) {
                 var doc = parser.parseFromString(data, "text/html");
                 //console.log("html:", doc);
                 var table = doc.getElementById("translations");
+                //console.debug("table:",table)
                 // if there is no table with results, then we do need to set the value to 0
                 if (typeof table != 'undefined') {
                     let tr = table.rows;
@@ -2914,17 +2942,29 @@ async function fetchOldRec(url, rowId) {
 
                     var element1 = createElementWithId("div", "translator_div1");
                     element1.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
-                    element1.appendChild(document.createTextNode("Previous existing translation"));
+                    element1.appendChild(document.createTextNode("Existing translation ->" + fetchOld_status));
 
                     var element2 = createElementWithId("div", "translator_div2");
                     element2.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
-                    element2.appendChild(document.createTextNode(orig[0].innerText));
+                    if (OldRec_status = 'current') {
+                        element2.appendChild(document.createTextNode(orig[0].innerText));
+                    }
+                    else {
+                        element2.appendChild(document.createTextNode(trans[0].innerText));
+                    }
 
                     var element3 = createElementWithId("div", "translator_div3");
                     element3.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
                     // If within editor you have no translation
+                    //console.debug("we have no current:", OldRec_status)
                     if (trans[0] != "undefined") {
-                        element3.appendChild(document.createTextNode(trans[0].innerText));
+                        if (OldRec_status == "current") {
+                            element3.appendChild(document.createTextNode(trans[0].innerText));
+                        }
+                        else {
+                            console.debug("we have no current:", OldRec_status)
+                            element3.appendChild(document.createTextNode(orig[0].innerText));
+                        }
                     }
 
                     // 23-06-2021 PSS added the current translation below the old to be able to mark the differences issue #92                
@@ -2935,6 +2975,8 @@ async function fetchOldRec(url, rowId) {
                     var element5 = createElementWithId("div", "translator_div5");
                     element5.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
                     //element5.appendChild(document.createTextNode(""));
+
+
 
                     let metaElem = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
                     if (metaElem != null) {
@@ -2951,32 +2993,65 @@ async function fetchOldRec(url, rowId) {
 
                         // Strings are retrieved and compared
                         var oldStr = trans[0].innerText;
-                        var newStr = original;
-                        var changes = JsDiff[diffType](oldStr, newStr);
-                        if (oldStr.length != newStr.length) {
-                            textdif = "  ->Length not equal!";
-                        } else {
-                            textdif = "";
+                        var newStr = curr_trans;
+                        if (OldRec_status == 'current') {
+                            var changes = JsDiff[diffType](oldStr, newStr);
+                            if (oldStr.length != newStr.length) {
+                                textdif = "  ->Length not equal!";
+                            } else {
+                                textdif = "";
+                            }
+                        }
+                        else {
+                            var changes = JsDiff[diffType](newStr,oldStr);
+                            if (oldStr.length != newStr.length) {
+                                textdif = "  ->Length not equal!";
+                            } else {
+                                textdif = "";
+                            }
+
                         }
                         if (oldStr == newStr) {
-                            element4.appendChild(document.createTextNode("New translation is the same"));
+                            element4.appendChild(document.createTextNode("Translation is the same"));
                         } else {
-                            element4.appendChild(document.createTextNode("New translation difference!"));
+                            element4.appendChild(document.createTextNode("Translation has difference!"));
                         }
 
                         //04-10-2021 PSS changed the class to resolve issue #157
-                        const diff = JsDiff[diffType](oldStr, newStr);
+                        if (OldRec_status == "current") {
+                            diff = JsDiff[diffType](oldStr, newStr);
+                        }
+                        else {
+                            diff = JsDiff[diffType](newStr , oldStr);
+                        }
                         fragment = document.createDocumentFragment();
                         diff.forEach((part) => {
                             // green for additions, red for deletions
                             // dark grey for common parts
-                            const color = part.added ? "green" :
-                                part.removed ? "red" : "dark-grey";
-                            span = document.createElement("span");
-                            span.style.color = color;
-                            span.appendChild(document
-                                .createTextNode(part.value));
-                            fragment.appendChild(span);
+                            if (status == "current") {
+                                const color = part.added ? "green" :
+                                    part.removed ? "red" : "dark-grey";
+                                const background_color = part.added ? "white" :
+                                    part.removed ? "white" : "dark-grey";
+                                span = document.createElement("span");
+                                span.style.color = color;
+                                span.style.backgroundColor = background_color;
+                                span.appendChild(document
+                                    .createTextNode(part.value));
+                                fragment.appendChild(span);
+                            }
+                            else if (status = "waiting"){
+                                const color = part.added ? "green" :
+                                    part.removed ? "red" : "dark-grey";
+                                const background_color = part.added ? "white" :
+                                    part.removed ? "white" : "dark-grey";
+                                span = document.createElement("span");
+                                span.style.color = color;
+                                span.style.backgroundColor = background_color;
+                                span.appendChild(document
+                                    .createTextNode(part.value));
+                                fragment.appendChild(span);
+                            }
                         });
                         element5.appendChild(fragment);
                         metaElem.style.fontWeight = "900";
@@ -3017,8 +3092,9 @@ var stringToHTML = function (str) {
 };
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current,prev_trans) {
+async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current,prev_trans,currcount) {
     var mycurrent = current;
+    //console.debug("fetchold:",url,current,currcount)
         // 30-06-2021 PSS added fetch status from local storage
         //chrome.storage.sync
           //  .get(
@@ -3042,6 +3118,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     var doc = parser.parseFromString(data, "text/html");
                     //console.log("html:", doc);
                     var table = await doc.getElementById("translations");
+                    //console.debug("table:",table)
                     if (table != null) {
                         let tr = table.rows;
                         let currstring = "";
@@ -3090,10 +3167,10 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                                old = "";
                            }
                         if (tbodyRowCount > 2 && single == "False") {
-                               updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],prev_trans,current);
+                              updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],prev_trans,current);
                            }
                         else if (tbodyRowCount > 2 && single == "True") {
-                              // updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",false,false,[],prev_trans,current);
+                            //   updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",true,false,[],prev_trans,current);
                                //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                                //window.open(url, "_blank", windowFeatures);
                            }
