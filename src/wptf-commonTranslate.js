@@ -278,7 +278,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
-        console.debug("linkmatches2:", linkmatches)
+        //console.debug("linkmatches2:", linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {

@@ -230,7 +230,7 @@ function deselectCheckBox(event) {
 }
 
 
-function validatePage(language, showHistory, locale) {
+function validatePage(language, showHistory, locale,showDiff) {
     // This function checks the quality of the current translations
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
@@ -311,7 +311,7 @@ function validatePage(language, showHistory, locale) {
         // this is the start of validation, so no prev_trans is present      
         prev_trans = translation
    //  textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,true,false,translation,[],prev_trans,old_status);
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],prev_trans,old_status,showDiff);
         }, timeout);
         timeout += 20;
        
