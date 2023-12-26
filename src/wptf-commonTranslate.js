@@ -932,7 +932,7 @@ function checkFormalPage(dataFormal) {
                     let percent = 10;
                     let toolTip = "";
                     result = { wordCount, percent, toolTip };
-                    updateStyle(textareaElem, result, "", true, false, false, row);
+                    updateStyle(textareaElem, result, "", true, false, false, row,'',false,false,'',[],'','',false);
                 }
             }
         }
@@ -1098,7 +1098,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
+                                old_status = document.querySelector("#preview-" + row);
+                  // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
+
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
                                
                             }
 
@@ -1216,8 +1219,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
-                                //updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,repl_array,prev_trans);
+                                old_status = document.querySelector("#preview-" + row);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+
                             }
               
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);      
@@ -1280,7 +1284,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
+                                old_status = document.querySelector("#preview-" + row);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
                                // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
                             }
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
@@ -1312,9 +1317,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         let percent = 10;
                         let toolTip = "";
                         result = { wordCount, percent, toolTip };
-                        updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,translatedText,repl_array,prev_trans);
+                        old_status = document.querySelector("#preview-" + newrowId);
+                        //console.debug("checkpage:",old_status)
+                        updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,translatedText,repl_array,prev_trans,old_status,false);
                     }
-
                 }
                 // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
                 //timeout += 100;

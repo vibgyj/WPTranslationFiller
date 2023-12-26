@@ -1905,6 +1905,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     //console.debug("currcount:",currcount)
     if (currText != 'untranslated') {
         // This is the proper one!!!
+       // console.debug("UpdateStyle:",old_status)
        updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans,old_status,currcount,showDiff);
     }
     
@@ -2322,13 +2323,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         if (showName == true) {
             showNameLabel(originalElem)											 
         }
-        
-        if (oldstring == "True") {
-            
+        if (oldstring == "True") {  
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
            // console.debug("currstring:", currstring)
-            //console.debug("prevstring:", prev_trans)
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans,old_status,rowId,"UpdateElementStyle",showDiff);
+           // console.debug("old_status updateElementstyle:", old_status)
+           showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans,old_status,rowId,"UpdateElementStyle",showDiff);
         }
     }
     else {
@@ -2364,10 +2363,10 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
     var old_current
     //console.debug("showOldstringLabel:", originalElem)
    // console.debug("called from:", called_from)
-    //console.debug("old_status:",old_status, typeof old_status)
+   // console.debug("old_status showOldString:",old_status, typeof old_status)
     if (old_status != null && typeof old_status != 'undefined') {
         if (old_status.length != 0) {
-            if (old_status[0].classList.contains("status-current")) {
+            if (old_status.classList.contains("status-current")) {
                 old_current = "current"
             }
         }
@@ -2431,6 +2430,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 //console.debug("we are now in:",current,prev_trans)
                 if (typeof prev_trans == 'object') {
                     currtrans = prev_trans.getElementsByClassName('translation-text')
+                    console.debug("currtrans:",currtrans,"2434")
                     currtrans_text = currtrans[0].innerText
                     const result = currtrans_text === prev_trans
                     if (result) {
@@ -3163,7 +3163,9 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                                old = "";
                            }
                         if (tbodyRowCount > 2 && single == "False") {
-                              updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],prev_trans,current,showDiff);
+                            // we need to fetch the previous state first
+                            old_status = document.querySelector("#preview-" + rowId);
+                            updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],prev_trans,old_status,currcount,showDiff);
                            }
                         else if (tbodyRowCount > 2 && single == "True") {
                             //   updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",true,false,[],prev_trans,current);
