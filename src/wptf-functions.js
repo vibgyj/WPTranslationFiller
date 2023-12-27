@@ -6,7 +6,7 @@ function findFirstBlankAfter(text, startPosition) {
         if (text[i] === ' ' || text[i] === '.' || text[i] === '"') {
             switch (text[i]) {
                 case ".":
-                    console.debug("found period")
+                    //console.debug("found period")
                     i = i - 1
                 case '"':
                     i = i - 1

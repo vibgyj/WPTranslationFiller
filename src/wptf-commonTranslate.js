@@ -249,7 +249,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
 
         const linkmatches = original.match(linkRegex);
-        console.debug("linkmatches1:",linkmatches)
+        //console.debug("linkmatches1:",linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -261,7 +261,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (charmatches != null) {
             index = 1;
             for (const charmatch of charmatches) {
-                console.debug("char:", charmatch)
+                //console.debug("char:", charmatch)
                 translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
                 index++;
             }
@@ -1322,6 +1322,16 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,translatedText,repl_array,prev_trans,old_status,false);
                     }
                 }
+                if (toTranslate == false) {
+                    showName = true;
+                }
+                else {
+                    showName = false;
+                }
+                if (showName == true) {
+                    let originalElem = document.querySelector("#preview-" + row + " .original");
+                    showNameLabel(originalElem)
+                }
                 // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
                 //timeout += 100;
             }
@@ -2067,6 +2077,16 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 //    rowchecked.checked = true;
                //     }
                // }
+                if (toTranslate == false) {
+                    showName = true;
+                }
+                else {
+                    showName = false;
+                }
+                if (showName == true) {
+                    let originalElem = document.querySelector("#preview-" + row + " .original");
+                    showNameLabel(originalElem)
+                }
                 validateEntry(destlang, textareaElem, "", "", row);
             }
         }
@@ -2593,7 +2613,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var pretrans;
     var timeout = 0;
     var mytimeout = 1000;
-    var vartime = 600;
+    var vartime = 500;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -2603,7 +2623,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
     if (transsel == 'OpenAI') {
         if (OpenAISelect != 'gpt-4') {
-            vartime = 750;
+            vartime = 800;
         }
         else {
             vartime = openAIWait;
@@ -2662,11 +2682,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     // 14-08-2021 PSS we need to put the status back of the label after translating
 
                     let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+                    //console.debug("transname:",transname)
                     if (transname != null) {
                         transname.className = "trans_name_div";
                         transname.innerText = "URL, name of theme or plugin or author!";
                         // In case of a plugin/theme name we need to set the button to blue
                         let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                        console.debug("currbut:",curbut)
                         curbut.style.backgroundColor = "#0085ba";
                         curbut.innerText = "Save";
                         curbut.title = "Save the string";
@@ -3177,7 +3199,23 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             current.value = "transFill";
 
                         }
+                        if (toTranslate == false) {
+                            showName = true;
+                        }
+                        else {
+                            showName = false;
+                        }
+                        if (showName == true) {
+                            let originalElem = document.querySelector("#preview-" + row + " .original");
+                            showNameLabel(originalElem)
+                        }
                         preview = document.querySelector(`#preview-${row}`);
+                        // we need to set the button to "save"
+                        let curbut = preview.querySelector(`.tf-save-button`);
+                        //console.debug("currbut:", curbut)
+                        curbut.style.backgroundColor = "#0085ba";
+                        curbut.innerText = "Save";
+                        curbut.title = "Save the string";
                         rowchecked = preview.querySelector("td input");
                         if (rowchecked == null) {
                             rowchecked = preview.querySelector("th input");
