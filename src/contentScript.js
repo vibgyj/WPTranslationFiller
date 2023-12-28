@@ -573,7 +573,7 @@ document.addEventListener("keydown", async function (event) {
         event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
-        if (is_pte) {
+        //if (is_pte) {
             const queryString = window.location.search;
             const urlParams = new URLSearchParams(queryString);
             const wrongverb = urlParams.get("wrongverb");
@@ -639,10 +639,10 @@ document.addEventListener("keydown", async function (event) {
                     setTimeout(() => { window.close(); }, 1000);
                 }
             }
-        }
-        else {
-            messageBox("error", "You do not have permissions to start this function!");
-        }
+        //}
+       // else {
+      //      messageBox("error", "You do not have permissions to start this function!");
+      //  }
     }
 });
 
@@ -1783,7 +1783,6 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var currText='untranslated'
     var debug = false;
     var currText = 'untranslated'
-    
     //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
@@ -1905,8 +1904,10 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     //console.debug("currcount:",currcount)
     if (currText != 'untranslated') {
         // This is the proper one!!!
-       // console.debug("UpdateStyle:",old_status)
-       updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "false", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans,old_status,currcount,showDiff);
+       // console.debug("UpdateStyle:",showDiff)
+      // (checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff) {
+
+       updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans,old_status,showDiff);
     }
     
     row = rowId.split("-")[0];
@@ -2360,7 +2361,9 @@ function showNameLabel(originalElem) {
 function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current,myHistory,my_check,repl_array,prev_trans,old_status,rowId,called_from,showDiff) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-    var old_current
+    var old_current;
+    var wait_trans;
+    var waittrans_text;
     //console.debug("showOldstringLabel:", originalElem)
    // console.debug("called from:", called_from)
    // console.debug("old_status showOldString:",old_status, typeof old_status)
@@ -2390,7 +2393,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
     if (debug == true) {
         console.debug("called from:", called_from)
         console.debug("current:", old_current)
-        console.debug("old:", old_status)
+        console.debug("old:", old_status) // is opject string containing the actual status
         console.debug("currstring:", currstring)
         console.debug("prev_trans:", prev_trans)
        
@@ -2429,28 +2432,23 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 element1.appendChild(element2)
                 //console.debug("we are now in:",current,prev_trans)
                 if (typeof prev_trans == 'object') {
-                    currtrans = prev_trans.getElementsByClassName('translation-text')
-                    console.debug("currtrans:",currtrans,"2434")
-                    currtrans_text = currtrans[0].innerText
-                    const result = currtrans_text === prev_trans
+                    //console.debug("classlist:", prev_trans.classList)
+                    if (prev_trans.classList.contains("status-waiting")) {
+                        //console.debug("We do have a waiting!")
+                    }
+                    wait_trans = prev_trans.getElementsByClassName('translation-text')
+                    //console.debug("currtrans:", currtrans, "2434")
+                    waittrans_text = wait_trans[0].innerText
+                    const result = waittrans_text === currstring
                     if (result) {
-                       // console.debug('The strings are similar.');
+                        //console.debug('The strings are similar.');
                     } else {
                        // console.debug('The strings are not similar.');
                         diffType = "diffWords"
-                       // console.debug("current text:", currtrans_text,typeof currtrans_text)
-                       // console.debug("previous text:", prev_trans,typeof prev_trans)
-                        if (typeof prev_trans == 'object') {
-                            //console.debug(" we have an object instead of string")
-                            prev_trans = prev_trans.getElementsByClassName('translation foreign-text')
-                            prev_trans = prev_trans[0].innerText
-                           // console.debug("prev_trans text:", prev_trans)
-                        }
-                        else {
-                           // console.debug("we do not have an object!:",prev_trans)
-                        }
                         if (showDiff == true) {
-                            const diff = JsDiff[diffType](currstring, prev_trans);
+                           // console.debug("trans_text:", waittrans_text)
+                           // console.debug("currstring:", currstring)
+                            const diff = JsDiff[diffType](currstring, waittrans_text);
                             fragment = document.createDocumentFragment();
                             diff.forEach((part) => {
                                 // green for additions, red for deletions
@@ -3090,7 +3088,7 @@ var stringToHTML = function (str) {
 // 11-06-2021 PSS added function to mark that existing translation is present
 async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current,prev_trans,currcount,showDiff) {
     var mycurrent = current;
-    //console.debug("fetchold:",url,current,currcount)
+    //console.debug("fetchold:",showDiff)
         // 30-06-2021 PSS added fetch status from local storage
         //chrome.storage.sync
           //  .get(
@@ -3165,7 +3163,9 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         if (tbodyRowCount > 2 && single == "False") {
                             // we need to fetch the previous state first
                             old_status = document.querySelector("#preview-" + rowId);
-                            updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],prev_trans,old_status,currcount,showDiff);
+                           //(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff) {
+
+                            updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],prev_trans,old_status,showDiff);
                            }
                         else if (tbodyRowCount > 2 && single == "True") {
                             //   updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",true,false,[],prev_trans,current);
