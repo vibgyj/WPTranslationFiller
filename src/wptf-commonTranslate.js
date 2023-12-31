@@ -1884,7 +1884,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 if (currec != null) {
                     var current = currec.querySelector("span.panel-header__bubble");
                 }
-                validateEntry(destlang, textareaElem, "", "", row);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record);
+               // validateEntry(destlang, textareaElem, "", "", row);
                 
                 // PSS 10-05-2021 added populating the preview field issue #68
                 // Fetch the first field Singular
@@ -2046,7 +2047,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             current.innerText = "transFill";
                             current.value = "transFill";
                         }
-                        validateEntry(destlang, textareaElem1, "", "", row);
+                        validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                       // validateEntry(destlang, textareaElem1, "", "", row);
                     }
                 }
             }
@@ -2077,6 +2079,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 //    rowchecked.checked = true;
                //     }
                // }
+                nameDiff = false;
                 if (toTranslate == false) {
                     showName = true;
                 }
@@ -2087,7 +2090,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     let originalElem = document.querySelector("#preview-" + row + " .original");
                     showNameLabel(originalElem)
                 }
-                validateEntry(destlang, textareaElem, "", "", row);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record);
+               // validateEntry(destlang, textareaElem, "", "", row);
             }
         }
 
@@ -3200,6 +3204,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
 
                         }
                         if (toTranslate == false) {
+                            nameDiff = false;
                             showName = true;
                         }
                         else {
@@ -3227,6 +3232,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                         }
+                       
                         await mark_as_translated(row)              
                        // await validateEntry(destlang, textareaElem, "", "", row);
                     }

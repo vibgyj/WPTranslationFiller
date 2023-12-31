@@ -183,7 +183,7 @@
 </head>
 <body>
     <div class="container" id="container">
-        <h1>WP Translation Filler - Options v2.2.1</h1>
+        <h1>WP Translation Filler - Options v2.2.2</h1>
         <div class="backbutton">
             <input id="backbutton" type="button" value="Close options page" />
         </div>
@@ -268,7 +268,7 @@
                             <option value="gpt-4 Turbo">gpt-4-1106-preview</option>
                         </select>
                         <label for="OpenAI_temp">Temperature:</label>
-                        <input type = "number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
+                        <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
                     </div>
                 </td>
             </tr>
@@ -350,9 +350,9 @@
                     <label for="tmWait">TM waiting time</label>
                 </td>
                 <td>
-                    <div  class="form-input">
+                    <div class="form-input">
                         <input id="tmWait" type="text" value="500" />
-                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>       
+                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
                         <label style="margin: 10px" for="OpenAIWait">OpenAI waiting time</label>
                         <input id="OpenAIWait" type="text" value="7500" />
                         <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
@@ -427,6 +427,10 @@ You,Je
         <label class="labeled-checkbox">
             <input type="checkbox" id="Auto-review-OpenAI">
             <span>Auto review with OpenAi after pagecheck</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="Force-formal">
+            <span>Force to use formal tone</span>
         </label>
 
         <table id="footer">

@@ -1116,16 +1116,21 @@ function impFileClicked(event) {
 
 function translatePageClicked(event) {
     event.preventDefault();
+    var formal;
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined')
             {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang !="") {
                     if (data.transsel != "undefined") {
                         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-                        var formal = checkFormal(false);
-                        //var locale = checkLocale();
+                        if (data.ForceFormal != true) {
+                            formal = checkFormal(false);
+                        }
+                        else {
+                            formal = true;
+                        }
                         convertToLow = data.convertToLower;
                         var DeeplFree = data.DeeplFree;
                         var openAIWait = Number(data.OpenAIWait);
@@ -1170,9 +1175,13 @@ function checkLocale() {
 }
 
 function checkFormal(formal) {
-    const locString = window.location.href;
-    return (! locString.includes("default"));
+  
+   const locString = window.location.href;
+   formal = (!locString.includes("default"));
+        
+   return formal
 }
+
 
 function checkPageClicked(event) {
     event.preventDefault();
@@ -1753,6 +1762,7 @@ function translationComplete(original, translated) {
 
 function translateEntryClicked(event) {
     event.preventDefault();
+    var formal;
     let rowId = event.target.id.split("-")[1];
     let myrowId = event.target.id.split("-")[2];
     //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
@@ -1761,9 +1771,14 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-        var formal = checkFormal(false);
+        if (data.ForceFormal != true) {
+            formal = checkFormal(false);
+        }
+        else {
+            formal = true;
+        }
         var DeeplFree = data.DeeplFree;
         var OpenAItemp = parseFloat(data.OpenAItemp);
         var deeplGlossary = localStorage.getItem('deeplGlossary');
@@ -1942,7 +1957,8 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     result = validate(language, originalText, translation, locale, record);
     //console.debug("result validate:",result,translation)
   //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
-    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,translation,[],translation,"untranslated","");
+    old_status = document.querySelector("#preview-" + rowId);
+    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,translation,[],translation,record,old_status,showDiff);
     return result;
 }
 

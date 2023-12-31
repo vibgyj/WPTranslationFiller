@@ -43,18 +43,18 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
     else {
         if (!formal) {
             if (deeplGlossary == null) {
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0"
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=prefer_less&split_sentences=nonewlines&outline_detection=0"
             }
             else {
-            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=less&split_sentences=nonewlines&outline_detection=0"
+            link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=prefer_less&split_sentences=nonewlines&outline_detection=0"
             }
         }
         else {
              if (deeplGlossary == null){
-                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&split_sentences=nonewlines&outline_detection=0"
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=prefer_more&split_sentences=nonewlines&outline_detection=0"
              }
              else {
-                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=more&&split_sentences=nonewlines&outline_detection=0"
+                 link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=prefer_more&&split_sentences=nonewlines&outline_detection=0"
              }
         }
     }
@@ -86,7 +86,6 @@ async function getTransDeepl(original, language, record, apikeyDeepl, originalPr
                    // console.debug("deepl result complete:",data.translations)
                     translatedText = data.translations[0].text;
                     //console.debug("deepl result", translatedText)
-
                     translatedText =  await postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
                    // console.debug("deepl na postprocess:", translatedText, deepLcurrent,convertToLower)
                   //  console.debug("deepl preprocessed:",originalPreProcessed,record) 
