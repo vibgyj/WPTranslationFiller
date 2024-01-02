@@ -1517,6 +1517,25 @@ async function checkbuttonClick(event) {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
+
+            //localStorage.setItem('interXHR', 'false');
+            // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
+            // if the translator is a PTE then we do not need to do this, as there is already an extra column
+            let myrec = document.querySelector(`#editor-${detailRow}`);
+            if (!is_pte) {
+                if (myrec != null) {
+                    var tds = myrec.getElementsByTagName("td")[0];
+                    if (tds == null) {
+                        var tds = myrec.getElementsByTagName("tr")[0];
+                    }
+                    tds.setAttribute("colspan", 5);
+                }
+            }
+            if (myrec != null) {
+                // we are not in listmode
+                myrec.scrollIntoView(true);
+            }
+
             let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)
             //console.debug("panelTransDiv:", panelTransDiv)
             if (panelTransDiv == null) {
@@ -1695,19 +1714,7 @@ async function checkbuttonClick(event) {
                 console.debug("we did find a 100 % score")
             }
              
-            //localStorage.setItem('interXHR', 'false');
-            // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
-            // if the translator is a PTE then we do not need to do this, as there is already an extra column
-            let myrec = document.querySelector(`#editor-${detailRow}`);
-            if (!is_pte) {
-                var tds = myrec.getElementsByTagName("td")[0];
-                tds.setAttribute("colspan", 5);
-            }
-            if (myrec != null) {
-                // we are not in listmode
-                myrec.scrollIntoView(true);
-            }
-            
+           
                
             if (typeof textareaElem != "null") {
                 // we need to use await otherwise there is not result.newText
@@ -1850,6 +1857,9 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         if (SavelocalButton == null) {
             if (!is_pte) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
+                if (checkBx == null) {
+                    checkBx = document.querySelector("#preview-" + rowId);
+                }
                 var checkbox = document.createElement('input');
                 checkbox.setAttribute("type", "checkbox");
                 checkbox.setAttribute("name", "selected-row[]");
