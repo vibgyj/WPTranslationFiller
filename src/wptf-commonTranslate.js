@@ -249,7 +249,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
 
         const linkmatches = original.match(linkRegex);
-        console.debug("linkmatches1:",linkmatches)
+        //console.debug("linkmatches1:",linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -261,7 +261,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (charmatches != null) {
             index = 1;
             for (const charmatch of charmatches) {
-                console.debug("char:", charmatch)
+                //console.debug("char:", charmatch)
                 translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
                 index++;
             }
@@ -278,7 +278,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
-        console.debug("linkmatches2:", linkmatches)
+        //console.debug("linkmatches2:", linkmatches)
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -932,7 +932,7 @@ function checkFormalPage(dataFormal) {
                     let percent = 10;
                     let toolTip = "";
                     result = { wordCount, percent, toolTip };
-                    updateStyle(textareaElem, result, "", true, false, false, row);
+                    updateStyle(textareaElem, result, "", true, false, false, row,'',false,false,'',[],'','',false);
                 }
             }
         }
@@ -1098,7 +1098,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
+                                old_status = document.querySelector("#preview-" + row);
+                  // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
+
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
                                
                             }
 
@@ -1216,8 +1219,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
-                                //updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,repl_array,prev_trans);
+                                old_status = document.querySelector("#preview-" + row);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+
                             }
               
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);      
@@ -1280,7 +1284,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let percent = 10;
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans);
+                                old_status = document.querySelector("#preview-" + row);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
                                // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
                             }
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
@@ -1312,9 +1317,20 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         let percent = 10;
                         let toolTip = "";
                         result = { wordCount, percent, toolTip };
-                        updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,translatedText,repl_array,prev_trans);
+                        old_status = document.querySelector("#preview-" + newrowId);
+                        //console.debug("checkpage:",old_status)
+                        updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,translatedText,repl_array,prev_trans,old_status,false);
                     }
-
+                }
+                if (toTranslate == false) {
+                    showName = true;
+                }
+                else {
+                    showName = false;
+                }
+                if (showName == true) {
+                    let originalElem = document.querySelector("#preview-" + row + " .original");
+                    showNameLabel(originalElem)
                 }
                 // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
                 //timeout += 100;
@@ -1868,7 +1884,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 if (currec != null) {
                     var current = currec.querySelector("span.panel-header__bubble");
                 }
-                validateEntry(destlang, textareaElem, "", "", row);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record);
+               // validateEntry(destlang, textareaElem, "", "", row);
                 
                 // PSS 10-05-2021 added populating the preview field issue #68
                 // Fetch the first field Singular
@@ -2030,7 +2047,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             current.innerText = "transFill";
                             current.value = "transFill";
                         }
-                        validateEntry(destlang, textareaElem1, "", "", row);
+                        validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                       // validateEntry(destlang, textareaElem1, "", "", row);
                     }
                 }
             }
@@ -2061,7 +2079,19 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 //    rowchecked.checked = true;
                //     }
                // }
-                validateEntry(destlang, textareaElem, "", "", row);
+                nameDiff = false;
+                if (toTranslate == false) {
+                    showName = true;
+                }
+                else {
+                    showName = false;
+                }
+                if (showName == true) {
+                    let originalElem = document.querySelector("#preview-" + row + " .original");
+                    showNameLabel(originalElem)
+                }
+                validateEntry(destlang, textareaElem, "", "", row, locale, record);
+               // validateEntry(destlang, textareaElem, "", "", row);
             }
         }
 
@@ -2587,7 +2617,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var pretrans;
     var timeout = 0;
     var mytimeout = 1000;
-    var vartime = 600;
+    var vartime = 500;
     const stop = false;
     var editor = false;
     var counter = 0;
@@ -2597,7 +2627,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
     if (transsel == 'OpenAI') {
         if (OpenAISelect != 'gpt-4') {
-            vartime = 750;
+            vartime = 800;
         }
         else {
             vartime = openAIWait;
@@ -2656,11 +2686,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     // 14-08-2021 PSS we need to put the status back of the label after translating
 
                     let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+                    //console.debug("transname:",transname)
                     if (transname != null) {
                         transname.className = "trans_name_div";
                         transname.innerText = "URL, name of theme or plugin or author!";
                         // In case of a plugin/theme name we need to set the button to blue
                         let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                        console.debug("currbut:",curbut)
                         curbut.style.backgroundColor = "#0085ba";
                         curbut.innerText = "Save";
                         curbut.title = "Save the string";
@@ -3171,7 +3203,24 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             current.value = "transFill";
 
                         }
+                        if (toTranslate == false) {
+                            nameDiff = false;
+                            showName = true;
+                        }
+                        else {
+                            showName = false;
+                        }
+                        if (showName == true) {
+                            let originalElem = document.querySelector("#preview-" + row + " .original");
+                            showNameLabel(originalElem)
+                        }
                         preview = document.querySelector(`#preview-${row}`);
+                        // we need to set the button to "save"
+                        let curbut = preview.querySelector(`.tf-save-button`);
+                        //console.debug("currbut:", curbut)
+                        curbut.style.backgroundColor = "#0085ba";
+                        curbut.innerText = "Save";
+                        curbut.title = "Save the string";
                         rowchecked = preview.querySelector("td input");
                         if (rowchecked == null) {
                             rowchecked = preview.querySelector("th input");
@@ -3183,6 +3232,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                         }
+                       
                         await mark_as_translated(row)              
                        // await validateEntry(destlang, textareaElem, "", "", row);
                     }

@@ -210,7 +210,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 else {
                     let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                 }
-                console.debug("translateButton:",translateButton)
+                //console.debug("translateButton:",translateButton)
                 translateButton.className += " translated";
                 translateButton.innerText = "Translated";
                 if (error[2] == "400") {

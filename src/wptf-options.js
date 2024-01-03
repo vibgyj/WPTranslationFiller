@@ -50,8 +50,9 @@ let showGlotCheckbox = document.getElementById("show-glotDictGlos");
 let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
+let showForceFormal = document.getElementById("Force-formal");
 
-chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace","preTranslationReplace","spellCheckIgnore","showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree","TMwait","interXHR","LtKey","LtUser","LtLang","LtFree","Auto_spellcheck", "Auto_review_OpenAI"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal"], function (data) {
     console.debug("getvalue:",data.OpenAItemp)
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
@@ -213,6 +214,14 @@ chrome.storage.local.get(["apikey","apikeyDeepl","apikeyMicrosoft","apikeyOpenAI
             showReviewCheckbox.checked = false;
         }
     }
+    if (data.ForceFormal != "null") {
+        if (data.ForceFormal == true) {
+            showForceFormal.checked = true;
+        }
+        else {
+            showForceFormal.checked = false;
+        }
+    }
    
 });
 
@@ -318,12 +327,20 @@ button.addEventListener("click", function () {
         LtAutoSpell = "false";
     }
 
+
     if (document.querySelector("#Auto-review-OpenAI:checked") !== null) {
         let Auto_review_Set = document.querySelector("#Auto-review-OpenAI:checked");
         OpenAIreview = Auto_review_Set.checked;
     }
     else {
         OpenAIreview = "false";
+    }
+    if (document.querySelector("#Force-formal:checked") !== null) {
+        let Force_formal_Set = document.querySelector("#Force-formal:checked");
+        Force_formal = Force_formal_Set.checked;
+    }
+    else {
+        Force_formal = "false";
     }
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
@@ -353,7 +370,8 @@ button.addEventListener("click", function () {
             LtLang: LtToolLangTextbox.value,
             LtFree: LtFreeChecked,
             Auto_spellcheck: LtAutoSpell,
-            Auto_review_OpenAI: OpenAIreview
+            Auto_review_OpenAI: OpenAIreview,
+            ForceFormal: Force_formal
 
         });
 
