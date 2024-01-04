@@ -15,7 +15,7 @@ else {
 }
 
 var translator; // Declare the global variable
-
+var RecCount = 0;
 // Use chrome.local.get to retrieve the value
 chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
@@ -755,6 +755,14 @@ if (is_pte) {
     bulksaveButton.innerText = "Bulksave";
 }
 
+//07-05-2021 PSS added a bulk save for existing translations into the local database
+var bulktolocalButton = document.createElement("a");
+bulktolocalButton.href = "#";
+bulktolocalButton.id = "BulkSave";
+bulktolocalButton.className = "save_tolocal-button";
+bulktolocalButton.onclick = savetolocalClicked;
+bulktolocalButton.innerText = "Bulk local";
+
 // add stats button if handleStats function is defined
 if (typeof handleStats === "function") {
     var statsButton = document.createElement("a");
@@ -782,8 +790,10 @@ if (divPaging != null && divProjects == null) {
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
     }
+   
     divNavBar.appendChild(importButton);
     divNavBar.appendChild(exportButton);
+    divNavBar.appendChild(bulktolocalButton);
     divNavBar.appendChild(impLocButton);
     divNavBar.appendChild(checkButton);
     divNavBar.appendChild(tmtransButton);
@@ -995,6 +1005,10 @@ async function startBulkSave(event) {
     //       console.log("Value toonDiff is set to false");
     //});
     await bulkSave("false");
+}
+
+async function savetolocalClicked(event) {
+    await bulkSaveToLocal();
 }
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
