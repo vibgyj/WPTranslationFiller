@@ -602,6 +602,11 @@
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
+    /*z-index :0 !important;*/
+}
+
+.paging .UpperCase-button:hover {
+    z-index:0;
 }
 
 .paging .LoadGloss-button-red {
@@ -1408,6 +1413,39 @@ table.translations tr.preview.status-fuzzy {
     background: lightpink;
 }
 
+
+.button-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Tooltip text */
+    .button-tooltip .tooltiptext {
+        visibility: hidden;
+        width: 200px;
+        background-color: #0085ba;
+        color: #fff;
+        text-align: center;
+        padding: 5px 0;
+        border-radius: 6px;
+        /* Position the tooltip text */
+        position: absolute;
+        z-index: 999 !important;
+        bottom: 175%;
+        left: 50%;
+        margin-left: -60px;
+        /* Fade in tooltip */
+        opacity: 0;
+        transition: opacity 0.3s ease 0s;
+    }
+
+/* Show the tooltip text when you mouse over the tooltip container */
+    .button-tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
 /* Tooltip container */
 .tooltip {
     position: relative;
@@ -1424,22 +1462,22 @@ table.translations tr.preview.status-fuzzy {
 
 /* Tooltip text */
 .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 120px;
-      background-color: #0085ba;
-      color: #fff;
-      text-align: center;
-      padding: 5px 0;
-      border-radius: 6px;
-      /* Position the tooltip text */
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      margin-left: -60px;
-      /* Fade in tooltip */
-      opacity: 0;
-      transition: opacity 0.3s;
+    visibility: hidden;
+    width: 120px;
+    background-color: #0085ba;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
 }
 /* Tooltip arrow */
 .tooltip .tooltiptext::after {

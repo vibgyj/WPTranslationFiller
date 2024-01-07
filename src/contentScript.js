@@ -694,13 +694,26 @@ var divPaging = document.querySelector("div.paging");
 var divProjects = document.querySelector("div.projects");
 
 //12-05-2022 PSS added a new button for local translate
+var localtransContainer = document.createElement("div")
+localtransContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This function populates the table with translations from the local database"
+
 var localtransButton = document.createElement("a");
 localtransButton.href = "#";
 localtransButton.className = "local-trans-button";
 localtransButton.onclick = localTransClicked;
 localtransButton.innerText = "Local";
+localtransContainer.appendChild(localtransButton)
+localtransContainer.appendChild(classToolTip)
 
 //12-05-2022 PSS added a new button for local translate
+var TmContainer = document.createElement("div")
+TmContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button starts fetching existing translations from translation memory"
 let TM = localStorage.getItem(['switchTM']);
 var tmtransButton = document.createElement("a");
 tmtransButton.href = "#";
@@ -713,29 +726,59 @@ else {
 }
 tmtransButton.onclick = tmTransClicked;
 tmtransButton.innerText = "TM";
+TmContainer.appendChild(tmtransButton)
+TmContainer.appendChild(classToolTip)
 
 //23-03-2021 PSS added a new button on first page
+var checkContainer = document.createElement("div")
+checkContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This function checks the page for missing verbs and if set starts spellchecking"
+
 var checkButton = document.createElement("a");
 checkButton.href = "#";
 checkButton.className = "check_translation-button";
 checkButton.onclick = checkPageClicked;
 checkButton.innerText = "CheckPage";
+checkContainer.appendChild(checkButton)
+checkContainer.appendChild(classToolTip)
 
 //23-03-2021 PSS added a new button on first page
+var implocContainer = document.createElement("div")
+implocContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button starts the import of a local file containing translations"
 var impLocButton = document.createElement("a");
 impLocButton.href = "#";
 impLocButton.className = "impLoc-button";
 impLocButton.onclick = impFileClicked;
 impLocButton.innerText = "Imp localfile";
+implocContainer.appendChild(impLocButton)
+implocContainer.appendChild(classToolTip)
 
 //07-05-2021 PSS added a export button on first page
+var exportContainer = document.createElement("div")
+exportContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button starts the export of the local database"
+
 var exportButton = document.createElement("a");
 exportButton.href = "#";
 exportButton.className = "export_translation-button";
 exportButton.onclick = exportPageClicked;
 exportButton.innerText = "Export";
+exportContainer.appendChild(exportButton)
+exportContainer.appendChild(classToolTip)
 
 //07-05-2021 PSS added a import button on first page
+var importContainer = document.createElement("div")
+importContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button starts the import of a local file into the local database"
 var importButton = document.createElement("a");
 importButton.href = "#";
 importButton.id = "ImportDb";
@@ -744,6 +787,9 @@ importButton.id = "ImportDb";
 importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
 importButton.innerText = "Import";
+importContainer.appendChild(importButton)
+importContainer.appendChild(classToolTip)
+
 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 if (is_pte) {
     //07-05-2021 PSS added a bulksave button on first page
@@ -756,13 +802,20 @@ if (is_pte) {
 }
 
 //07-05-2021 PSS added a bulk save for existing translations into the local database
+var bulktolocContainer = document.createElement("div")
+bulktolocContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className='tooltiptext'
+classToolTip.innerText = "This is the function to populate the local database with selected items"
+
 var bulktolocalButton = document.createElement("a");
 bulktolocalButton.href = "#";
 bulktolocalButton.id = "BulkSave";
 bulktolocalButton.className = "save_tolocal-button";
 bulktolocalButton.onclick = savetolocalClicked;
 bulktolocalButton.innerText = "Bulk local";
-
+bulktolocContainer.appendChild(bulktolocalButton)
+bulktolocContainer.appendChild(classToolTip)
 // add stats button if handleStats function is defined
 if (typeof handleStats === "function") {
     var statsButton = document.createElement("a");
@@ -791,13 +844,20 @@ if (divPaging != null && divProjects == null) {
         divNavBar.appendChild(statsButton);
     }
    
-    divNavBar.appendChild(importButton);
-    divNavBar.appendChild(exportButton);
-    divNavBar.appendChild(bulktolocalButton);
-    divNavBar.appendChild(impLocButton);
-    divNavBar.appendChild(checkButton);
-    divNavBar.appendChild(tmtransButton);
-    divNavBar.appendChild(localtransButton);
+   // divNavBar.appendChild(importButton);
+    divNavBar.appendChild(importContainer);
+    divNavBar.appendChild(exportContainer);
+   // divNavBar.appendChild(exportButton);
+    divNavBar.appendChild(bulktolocContainer);
+  //  divNavBar.appendChild(bulktolocalButton);
+    divNavBar.appendChild(implocContainer);
+   // divNavBar.appendChild(impLocButton);
+   // divNavBar.appendChild(checkButton);
+    divNavBar.appendChild(checkContainer);
+   // divNavBar.appendChild(tmtransButton);
+    divNavBar.appendChild(TmContainer);
+    divNavBar.appendChild(localtransContainer);
+    //divNavBar.appendChild(localtransButton);
     divNavBar.appendChild(translateButton);
 }
 
