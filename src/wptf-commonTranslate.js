@@ -1101,7 +1101,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 old_status = document.querySelector("#preview-" + row);
                                 // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
 
-                                // updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
 
                             }
 
