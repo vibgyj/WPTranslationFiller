@@ -102,7 +102,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     var message = [{ 'role': 'system', 'content': myprompt }, { 'role': 'user', 'content': originalPreProcessed }];
     if (OpenAISelect != 'undefined') {
         let mymodel = OpenAISelect.toLowerCase();
-        //let mymodel = 'gpt-4';
+        //console.debug("mymodel:",mymodel)
+        //let mymodel = 'gpt-4-1106-preview';
         var data1 = {
             messages: message,
             model: mymodel,
