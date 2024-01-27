@@ -4367,3 +4367,99 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     }
     return translatedText;
 }
+
+async function bulkSaveToLocal() {
+    //event.preventDefault();
+    var counter = 0;
+    var checkboxCounter = 0;
+    var row;
+    var myWindow;
+    var nextpreview;
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    currWindow = window.self;
+
+    document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
+    if (is_pte) {
+            checkset = preview.querySelector("th input");
+    }
+    else {
+            checkset = preview.querySelector("td input");
+    }
+    if (checkset != null) {
+       if (checkset.checked == true) {
+          checkboxCounter++;
+       }
+    }
+    });
+    if (checkboxCounter == 0) {
+        cuteAlert({
+            type: "question",
+            title: "Bulk save to local",
+            message: "There are no records selected, <br>are you sure you want to select all records?",
+            confirmText: "Confirm",
+            cancelText: "Cancel",
+            myWindow: currWindow
+        }).then(async (e) => {
+            if (e == ("confirm")) {
+                setmyCheckBox(event);
+                counter = saveToLocal();
+                cuteAlert({
+                    type: "info",
+                    title: "Bulk save to local",
+                    message: "All records are selected and processed: " +RecCount,
+                    confirmText: "Confirm",
+                    cancelText: "Cancel",
+                    myWindow: currWindow
+                })
+            }
+            else {
+                 messageBox("info", "Bulk save cancelled");
+            }
+        })
+    } else {
+        counter = saveToLocal();
+        cuteAlert({
+            type: "info",
+            title: "Bulk save to local",
+            message: "Records are processed: " + RecCount,
+            confirmText: "Confirm",
+            cancelText: "Cancel",
+            myWindow: currWindow
+        })
+     }
+}
+
+async function saveToLocal() {
+    var counter = 0;
+    var row;
+    RecCount = 0;
+    document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
+        if (is_pte) {
+            checkset = preview.querySelector("th input");
+            //console.debug("checkset:",checkset)
+        }
+        else {
+            checkset = preview.querySelector("td input");
+        }
+        if (typeof checkset != 'undefined') {
+            if (checkset != null){ 
+                if (checkset.checked) {
+                   // console.debug("checkbox set:", checkset.checked)
+                    let rowfound = preview.id;
+                    row = rowfound.split("-")[1];
+                    let newrow = rowfound.split("-")[2];
+                    if (typeof newrow != "undefined") {
+                        newrowId = row.concat("-", newrow);
+                        row = newrowId;
+                    }
+                    counter++;
+                    // do not show message = false
+                    addTransline(row,false)
+                }
+            }
+        }
+        
+    });
+    RecCount= counter
+    return counter;
+}

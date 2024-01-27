@@ -369,7 +369,7 @@ async function convPromise(trans){
     return res;
 }
 
-async function addTransline(rowId){
+async function addTransline(rowId,showMessage){
     // 07-05-2021 PSS added language read from config to store in database
     var res = "";
     var row = "";
@@ -379,6 +379,7 @@ async function addTransline(rowId){
     var orig = e.querySelector("span.original-raw").innerText;
     let textareaElem = e.querySelector("textarea.foreign-text");
     var addTrans = textareaElem.value;
+    //console.debug("translation:", textareaElem.value)
     if (addTrans === "") {
         messageBox("error", "No translation to store!");
     } else {
@@ -408,8 +409,10 @@ async function addTransline(rowId){
                 addTrans = DOMPurify.sanitize(textareaElem1.value);
                 res = addTransDb(plural, addTrans, language);
                 }
-            }
+        }
+        if (showMessage == true) {
             messageBox("info", "addTransline record added/updated to database");
+        }
         }
     });
     return;
@@ -522,7 +525,7 @@ function addtranslateEntryClicked(event) {
             newrowId = rowId.concat("-", myrowId);
             rowId = newrowId;
         }
-        addTransline(rowId);
+        addTransline(rowId,true);
     }
 }
 async function resetDB() {
