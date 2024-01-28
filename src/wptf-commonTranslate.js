@@ -1099,10 +1099,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
                                 old_status = document.querySelector("#preview-" + row);
-                  // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
+                                // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
 
                                 updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
-                               
+
                             }
 
                             // Need to replace the existing html before replacing the verbs! issue #124
@@ -1126,7 +1126,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     var prevstate = current.innerText;
                                     current.innerText = "transFill";
                                 }
-                                repl_verb += result.repl_verb;
+                                repl_verb = result.repl_verb;
                                 repl_array = result.repl_array
                                 recWordCount += result.countreplaced;
                                 textareaElem.innerText = translatedText;
@@ -1165,11 +1165,12 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     await markElements(preview, repl_verb, orgText, spellcheckIgnore, repl_array, prev_trans);
                                 }
                             }
-                            let plural_line = "";
+
                         }
                         else {
                             replaced = false;
                         }
+                        let plural_line = "";
                     }
                     else {
                         // plural line 1
@@ -1197,7 +1198,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 // if current translation we need to split the rownumber
                                 let newrowId = row.split("-")[0];
                                 textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
-                                let editor_text= result.previeNewText.replace("S")
+                                let editor_text = result.previeNewText.replace("S")
                                 textareaElem1.innerText = result.previewNewText;
                                 textareaElem1.value = result.previewNewText;
                                 // PSS this needs to be improved
@@ -1223,8 +1224,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
 
                             }
-              
-                            result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);      
+
+                            result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
                             replaced = result.replaced;
                             orgText = result.orgText;
                             if (replaced) {
@@ -1245,7 +1246,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
                             }
                         }
-                       // here is plural 2
+                        // here is plural 2
                         previewNewText = previewElem2.innerText;
                         translatedText = previewElem2.innerText;
                         if (translatedText != "No suggestions") {
@@ -1285,8 +1286,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 let toolTip = "";
                                 result = { wordCount, percent, toolTip };
                                 old_status = document.querySelector("#preview-" + row);
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans,old_status,false);
-                               // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
+                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+                                // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
                             }
                             result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
                             replaced = result.replaced;
@@ -1294,7 +1295,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
 
                             if (replaced) {
                                 recWordCount += result.countreplaced;
-                                repl_verb += result.repl_verb
+                                repl_verb = result.repl_verb
                                 previewElem2.innerHTML = result.previewNewText
                                 previewElem2.innerText = result.previewNewText
                                 previewElem2.value = result.previewNewText
@@ -1319,7 +1320,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         result = { wordCount, percent, toolTip };
                         old_status = document.querySelector("#preview-" + newrowId);
                         //console.debug("checkpage:",old_status)
-                        updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,translatedText,repl_array,prev_trans,old_status,false);
+                        updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
                     }
                 }
                 if (toTranslate == false) {
@@ -1334,8 +1335,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                 }
                 // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
                 //timeout += 100;
-            }
-            if (countrows == tableRecords) {
+
+                //console.debug("rows done:", countrows, original)
+                if (countrows == tableRecords) {
                     messageBox("info", "Replace verbs done " + recWordCount + " replaced words/text<br>" + repl_verb);
                     // Translation replacement completed
                     let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
@@ -1345,7 +1347,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     checkButton.className += " ready";
                     progressbar = document.querySelector(".indeterminate-progress-bar");
                     progressbar.style.display = "none";
-             }
+                }
+            }
+            else { messageBox("error", "You do not have translations to check!");}
         }
     }
     else {

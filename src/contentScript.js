@@ -2256,8 +2256,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.onclick = savetranslateEntryClicked;
                         checkElem.style.backgroundColor = "purple";
                         checkElem.title = "Save the string";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
-                            panelTransDiv.style.backgroundColor = "purple";
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
+                                panelTransDiv.style.backgroundColor = "purple";
                         }
                     }
                     else if (result.percent < 33 && result.percent > 0) {

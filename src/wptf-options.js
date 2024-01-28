@@ -267,7 +267,7 @@ button.addEventListener("click", function () {
         OpenAIsel = OpenAIselectBox.value;
     }
 
-    console.debug("Openvalue:",OpenAItemp)
+    console.debug("Openvalue:",OpenAIsel)
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
