@@ -237,6 +237,13 @@ function validatePage(language, showHistory, locale,showDiff) {
     var timeout = 0;
     var translation;
     var prev_trans;
+    var rowcount = 0;
+    // html code for counter in checkbox
+    const line_counter = `
+    <div class="line-counter">
+        <span class="line-counter"></span>
+    </div>
+    `;
     //console.debug("validatePage:",language,showHistory, locale)
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
@@ -264,17 +271,22 @@ function validatePage(language, showHistory, locale,showDiff) {
 
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         setTimeout(() => {
+            rowcount++
         let original = e.querySelector("span.original-raw").innerText;
         let textareaElem = e.querySelector("textarea.foreign-text");
         let rowId = textareaElem.parentElement.parentElement.parentElement
-            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+                .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+           
         textareaElem.addEventListener("input", function (e, locale) {
                       //language, textareaElem, newurl, showHistory, rowId, locale, record
        // validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
         });
         // we need to fetch the status of the record to pass on
         old_status = document.querySelector("#preview-" + rowId);
-       
+        let checkbox = old_status.getElementsByClassName("checkbox")
+        // add counter to checkbox
+        checkbox[0].lastChild.insertAdjacentHTML('afterend', line_counter);
+        checkbox[0].lastChild.textContent = rowcount
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;
         let showName = false;

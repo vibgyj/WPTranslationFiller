@@ -1960,13 +1960,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem,"1710")
+            let res = await addCheckButton(rowId, checkElem,"1963")
             SavelocalButton = res.SavelocalButton;
         }
     }
     else {
         if (SavelocalButton == null) {
-            let res = await addCheckButton(rowId, checkElem,"1716")
+            let res = await addCheckButton(rowId, checkElem,"1969")
             SavelocalButton = res.SavelocalButton
         }
     }
