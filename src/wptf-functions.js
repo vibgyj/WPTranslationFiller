@@ -284,9 +284,18 @@ function validatePage(language, showHistory, locale,showDiff) {
         // we need to fetch the status of the record to pass on
         old_status = document.querySelector("#preview-" + rowId);
         let checkbox = old_status.getElementsByClassName("checkbox")
-        // add counter to checkbox
-        checkbox[0].lastChild.insertAdjacentHTML('afterend', line_counter);
-        checkbox[0].lastChild.textContent = rowcount
+         
+        if (checkbox.length != 0) {
+            // add counter to checkbox
+            checkbox[0].firstChild.insertAdjacentHTML('beforebegin', line_counter);
+            checkbox[0].firstChild.nextSibling.textContent = rowcount
+            }
+        else {
+            // if not a PTE it must be put in a different checkbox
+            let mycheckbox = old_status.getElementsByClassName("myCheckBox")
+            mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
+            mycheckbox[0].textContent = rowcount
+        }
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;
         let showName = false;
