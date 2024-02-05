@@ -2317,7 +2317,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                                 SavelocalButton.innerText = "Rej";
                             }
                             if (typeof headerElem != "undefined" && headerElem != null) {
-                                panelTransDiv.style.backgroundColor = "red";
+                                if (panelTransDiv != null) {
+                                    panelTransDiv.style.backgroundColor = "red";
+                                }
                             }
                         }
                     }

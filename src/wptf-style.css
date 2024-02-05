@@ -954,8 +954,9 @@ table.translations tr.preview.has-glotdict th + .priority + .original::before {
 }
 
 tr.editor {
-    scroll-margin-top: 62px !important;
+    scroll-margin-top: 90px !important;
 }
+
 /*The below line is to prevent untranslated originals to show up when bulk saving*/
 tr.preview.status-hidden {
     display:none !important;
