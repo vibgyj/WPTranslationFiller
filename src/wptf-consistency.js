@@ -14,7 +14,7 @@ function scrapeconsistency(locale, org_verb, wrong_verb) {
     var link = document.createElement("link");
     link.type = "text/css";
     link.rel = "stylesheet";
-    link.href = chrome.runtime.getURL("cute-alert.css");
+    link.href = chrome.runtime.getURL("wptf-cute-alert.css");
     currWindow.document.getElementsByTagName("head")[0].appendChild(link);
     const style = currWindow.document.createElement("style");
     style.innerHTML = `
@@ -191,7 +191,7 @@ function startsearch(currWindow, curloc, locale, consistsWindow) {
     var replverb = currWindow.document.getElementById("myForm").elements.namedItem("replverb").value;
     var wrongverb = currWindow.document.getElementById("myForm").elements.namedItem("wrongverb").value;
     var i;
-    //console.debug("search:",searchverb,"  ",replverb,"  ",wrongverb);
+    console.debug("search:",searchverb,"  ",replverb,"  ",wrongverb);
     if (typeof locale != "undefined" && locale != "") {
         if (searchverb && replverb && wrongverb != null) {
             var search_url = "https://translate.wordpress.org/consistency/?search=" + searchverb + "&set=" + locale + "%2Fdefault&project=&search_case_sensitive=1";
@@ -213,15 +213,15 @@ function startsearch(currWindow, curloc, locale, consistsWindow) {
                 myWindow: currWindow,
             }).then((e) => {
                 if (e == "confirm") {
-                    cuteToast({
-                        type: "info",
-                        message: "Please wait while data is fetched\n",
-                        timer: 2000,
-                        playSound: null,
-                        title: "Fetching records",
-                        img: "/img",
-                        myWindow:currWindow,
-                    });
+                    //cuteToast({
+                    //    type: "info",
+                      //  message: "Please wait while data is fetched\n",
+                      //  timer: 2000,
+                     //   playSound: null,
+                      //  title: "Fetching records",
+                     //   img: "/img",
+                     //   myWindow:currWindow,
+                   // });
                     fetch(search_url, myInit)
                         .then(function (response) {
                             // When the page is loaded convert it to text
@@ -261,22 +261,25 @@ function startsearch(currWindow, curloc, locale, consistsWindow) {
                                         var myceltext3 = mycel2.childNodes[2];
                                         var myceltext4 = myceltext3.getElementsByTagName("a");
                                         var mylink = myceltext4.item(0).href;
-                                        //console.debug("Translated:",transtext);
-                                        if (transtext == wrongverb) {
-                                            let isFound = myorglink.search("dev");
-                                            if (isFound == -1) {
-                                                -i;
-                                                replCount++;
-                                                // Max25 windows will be opened
-                                                if (replCount < 25) {
-                                                    newWindow = window.open(mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb, mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb);
-                                                    replace_links += mylink + "\n";
+                                        console.debug("Translated:",transtext, rowCount);
+                                      //  if (rowCount <500) {
+                                            if (transtext == wrongverb) {
+                                                let isFound = myorglink.search("dev");
+                                                if (isFound == -1) {
+                                                    -i;
+                                                    replCount++;
+                                                    // Max25 windows will be opened
+                                                    if (replCount < 25) {
+                                                        newWindow = window.open(mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb, mylink + "&wrongverb=" + wrongverb + "&replverb=" + replverb);
+                                                        replace_links += mylink + "\n";
+                                                    }
                                                 }
                                             }
-                                        }
-                                        else {
-                                            -i;
-                                        }
+                                            else {
+                                                -i;
+                                            }
+                                     //   }
+
                                     }
                                 }
                                 //console.debug("Replcount:", replCount);
