@@ -3725,7 +3725,140 @@ async function saveLocal() {
     }
     return counter;
 }
-   
+
+// Function to walk through the HTML table
+function walkThroughTable(selector, interval) {
+    var timeout = 1000;
+    return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+            const element = document.querySelector(selector);
+            if (element) {
+                console.log('Element found:', element);
+                clearInterval(checkInterval);
+                resolve(element);
+            }
+            // Walk through the HTML table here
+            const tableRows = document.querySelectorAll('tr.preview.status-waiting');
+            tableRows.forEach(preview => {
+                // Do something with each row of the table
+                setTimeout(() => { 
+                    let editor = preview.nextElementSibling;
+                    if (editor != null) {
+                        console.log("editor:", editor);
+                        if (editor != null) {
+                            let rowfound = editor.id;
+                            let editorRow = rowfound.split("-")[1];
+                            // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                            // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                            if (rowfound.split("-")[2] != null) {
+                                editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                            }
+                            let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
+                            if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                                //console.debug("we have a waiting")
+                                // 06-07-2023 PSS changed to not open the editor anymore
+                                let bulk_save = preview.querySelector(".tf-save-button");
+                                bulk_save.click();
+                                waitForMyElement('.gp-js-message', 300)
+                            }
+                        }
+                    }
+                }, timeout);
+                timeout += 1000;
+            });
+        }, interval);
+        resolve("Ready")
+    });
+}
+
+function saveLocal_1() {
+// Usage example: Walk through the HTML table while waiting for an element with id "specificElement" every 500 milliseconds
+    walkThroughTable('.gp-js-message', 100)
+    .then(element => {
+        console.debug("Done!!")
+        // Do something with the found element
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+
+// Function to perform an action on each record in the HTML table
+function processTableRecords(selector, action, interval) {
+    return new Promise((resolve, reject) => {
+        const tableRows = document.querySelectorAll(selector);
+        let currentIndex = 0;
+
+        // Function to process the next record
+        function processNextRecord() {
+            if (currentIndex < tableRows.length) {
+                const currentRow = tableRows[currentIndex];
+                action(currentRow)
+                    .then(() => {
+                        // Move to the next record after the action is completed
+                        currentIndex++;
+                        setTimeout(processNextRecord, interval);
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
+            } else {
+                // All records processed
+                resolve();
+            }
+        }
+
+        // Start processing the first record
+        processNextRecord();
+    });
+}
+
+function saveLocal_2() {
+    // Usage example: Process each row in the HTML table with class "myTable", perform an action, and wait 1000 milliseconds between records
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    processTableRecords('tr.preview.status-waiting', async function (preview) {
+        // Perform your action on the current row here
+        if (is_pte) {
+            checkset = preview.querySelector("th input");
+        }
+        else {
+            checkset = preview.querySelector("td input");
+        }
+        if (checkset != null) {
+            if (checkset.checked) {
+                let editor = preview.nextElementSibling;
+                if (editor != null) { 
+                   let rowfound = editor.id;
+                   let editorRow = rowfound.split("-")[1];
+                   // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                   // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                   if (rowfound.split("-")[2] != null) {
+                            editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                   }
+                   let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
+                    if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                        //console.debug("we have a waiting")
+                        let bulk_save = preview.querySelector(".tf-save-button");
+                        bulk_save.click();
+                        await new Promise(resolve => setTimeout(() => {
+                            // we need to wait for saving the record
+                            waitForMyElement('.gp-js-message', 300)
+                            resolve("ready")
+                        }), 300)
+                    }
+                }
+            }
+        }
+    }, 1000)
+        .then(() => {
+            console.log('All records processed.');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+}
 async function bulkSave(noDiff) {
      //event.preventDefault();
      var counter = 0;
@@ -3801,7 +3934,9 @@ async function bulkSave(noDiff) {
          let value = noDiff;
          // console.debug("value:",value)
          await setToonDiff({ toonDiff: value });
-         counter = saveLocal();
+        // counter = saveLocal();
+         //counter = saveLocal_1();
+         counter = saveLocal_2();
       }
 }
 
@@ -3822,11 +3957,11 @@ function second(milliseconds) {
 function waitForMyElement(selector, timeout) {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
-
         // Function to check if the element is visible
         function checkElement() {
             const element = document.querySelector(selector);
             if (element) {
+                //console.debug("Found in:",element)
                 // Element found, resolve the promise
                 resolve(element);
             } else if (Date.now() - startTime >= timeout) {
