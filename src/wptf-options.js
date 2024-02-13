@@ -39,6 +39,7 @@ let LtToolLangTextbox = document.getElementById("languagetool_language");
 let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let OpenAIwaitValue = document.getElementById("OpenAIWait");
+let bulkWaitValue = document.getElementById("bulkWait");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
@@ -52,8 +53,8 @@ let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 let showForceFormal = document.getElementById("Force-formal");
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal"], function (data) {
-    console.debug("getvalue:",data.OpenAItemp)
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal"], function (data) {
+    //console.debug("getvalue:",data.bulkWait)
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -78,6 +79,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         OpenAIWaitVal = data.OpenAIWait;
         OpenAIWait.value = OpenAIWaitVal;
+
+    }
+    if (typeof data.bulkWait == 'undefined') {
+        bulkWait = 1000;
+    }
+    else {
+        bulkWait = data.bulkWait;
+        bulkWaitValue.value = bulkWait;
 
     }
     if (typeof data.OpenAItemp == 'undefined') {
@@ -267,7 +276,7 @@ button.addEventListener("click", function () {
         OpenAIsel = OpenAIselectBox.value;
     }
 
-    console.debug("Openvalue:",OpenAIsel)
+    //console.debug("Openvalue:",OpenAIsel)
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
@@ -276,6 +285,7 @@ button.addEventListener("click", function () {
     let spellIgnoreverbs = spellcheckTextbox.value;
     let TMwaitVal = TMwaitValue.value;
     let OpenAIVal = OpenAIwaitValue.value;
+    let bulkWaitVal = bulkWaitValue.value;
     let OpenAItempVal = OpenAItempBox.value;
     if (document.querySelector("#show-history:checked") !== null) {
         let Hist = document.querySelector("#show-history:checked");
@@ -364,6 +374,7 @@ button.addEventListener("click", function () {
             convertToLower: showConvertToLower,
             TMwait: TMwaitVal,
             OpenAIWait: OpenAIVal,
+            bulkWait: bulkWaitVal,
             interXHR: inter,
             LtKey: LtToolKeyTextbox.value,
             LtUser: LtToolUserTextbox.value,

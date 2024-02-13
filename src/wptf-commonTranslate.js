@@ -1751,15 +1751,26 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         if (isStartsWithUpperCase(original)) {
             if (!isStartsWithUpperCase(translatedText)) {
                 translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+                previewNewText = translatedText[0].toUpperCase() + translatedText.slice(1);
+                repl_verb += myrow + ": " + '->' + "set first char to uppercase" + "<br>"
+                countReplaced++;
+                replaced = true;
             }
         }
         else {
             if (isStartsWithUpperCase(translatedText)) {
                 translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+                previewNewText = translatedText[0].toLowerCase() + translatedText.slice(1);
+                repl_verb += myrow + ": " + '->' + "set first char to lowercase" + "<br>"
+                countReplaced++;
+                replaced = true;
             }
         }
     }
    // console.debug("After improvements:", translatedText, previewNewText + " countreplaced: " + countReplaced, repl_verb, replaced)
+    if (previewNewText == null) {
+        previewNewText = translatedText
+    }
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced ,repl_array}
 }
 async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
@@ -2580,8 +2591,10 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             if (typeof metares != 'undefined') {
                 setTimeout(() => {
                     // We need to close the last opened editor we cannot use the cancel button because then the translation is removed
-                   let hideEditor = document.querySelector(`#editor-${row}`)
-                   hideEditor.style = "display:None"
+                    let hideEditor = document.querySelector(`#editor-${row}`)
+                    if (hideEditor != null) {
+                        hideEditor.style = "display:None"
+                    }
                     resolve();
                 }, 800);
             }
@@ -3814,7 +3827,7 @@ function processTableRecords(selector, action, interval) {
     });
 }
 
-function saveLocal_2() {
+function saveLocal_2(bulk_timer) {
     // Usage example: Process each row in the HTML table with class "myTable", perform an action, and wait 1000 milliseconds between records
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     processTableRecords('tr.preview.status-waiting', async function (preview) {
@@ -3843,23 +3856,23 @@ function saveLocal_2() {
                         bulk_save.click();
                         await new Promise(resolve => setTimeout(() => {
                             // we need to wait for saving the record
-                            waitForMyElement('.gp-js-message', 300)
+                            waitForMyElement('.gp-js-message', 500)
                             resolve("ready")
                         }), 300)
                     }
                 }
             }
         }
-    }, 1000)
+    }, bulk_timer)
         .then(() => {
-            console.log('All records processed.');
+            //console.log('All records processed.');
         })
         .catch(error => {
             console.error('Error:', error);
         });
 
 }
-async function bulkSave(noDiff) {
+async function bulkSave(noDiff,bulk_timer) {
      //event.preventDefault();
      var counter = 0;
      var checkboxCounter = 0;
@@ -3869,7 +3882,6 @@ async function bulkSave(noDiff) {
      var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      currWindow = window.self;
     //localStorage.setItem('interXHR', 'true');
-   
      var parrotMockDefinitions = [{
          "active": true,
          "description": "XHR",
@@ -3909,7 +3921,7 @@ async function bulkSave(noDiff) {
              confirmText: "Confirm",
              cancelText: "Cancel",
              myWindow: currWindow
-         }).then(async (e) => {
+         }).then(async (e,bulk_timer) => {
              if (e == ("confirm")) {
                  //When performing bulk save the difference is shown in Meta #269
                  //value = false;
@@ -3919,7 +3931,7 @@ async function bulkSave(noDiff) {
                  setmyCheckBox(event);
                  let value = noDiff;
                  await setToonDiff({ toonDiff: value });
-                 counter = saveLocal();
+                 counter = saveLocal_2(bulk_timer);
                  //When performing bulk save the difference is shown in Meta #269
                  //value = true;
                  //chrome.storage.local.set({ toonDiff: value }).then((result) => {
@@ -3936,7 +3948,7 @@ async function bulkSave(noDiff) {
          await setToonDiff({ toonDiff: value });
         // counter = saveLocal();
          //counter = saveLocal_1();
-         counter = saveLocal_2();
+         counter = saveLocal_2(bulk_timer);
       }
 }
 

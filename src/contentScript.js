@@ -650,8 +650,14 @@ document.addEventListener("keydown", async function (event) {
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
     bulkbutton.addEventListener("click", (event) => {
-         event.preventDefault();
-         bulkSave(event);
+        event.preventDefault();
+        chrome.storage.local.get(["bulkWait"], function (data) {
+            let bulkWait = data.bulkWait
+            if (bulkWait != null && typeof bulkWait != 'undefined') {
+                bulk_timer = bulkWait
+                bulkSave("false", bulk_timer);
+            }
+        });
     });
 }
 
@@ -1065,7 +1071,14 @@ async function startBulkSave(event) {
     //chrome.storage.local.set({ toonDiff: value }).then((result) => {
     //       console.log("Value toonDiff is set to false");
     //});
-    await bulkSave("false");
+    chrome.storage.local.get(["bulkWait"], function (data) {
+        let bulkWait = data.bulkWait
+        if (bulkWait != null && typeof bulkWait != 'undefined') {
+            bulk_timer = bulkWait
+            bulkSave("false", bulk_timer);
+        }
+    });
+
 }
 
 async function savetolocalClicked(event) {
