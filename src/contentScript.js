@@ -159,6 +159,7 @@ document.addEventListener("keydown", async function (event) {
                     else {
                         wrong_verb = "Wrong verb";
                     }
+                    console.debug("checking:",data.destlang,org_verb,wrong_verb)
                     scrapeconsistency(data.destlang, org_verb, wrong_verb);
                 }
                 else {
@@ -1960,13 +1961,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem,"1710")
+            let res = await addCheckButton(rowId, checkElem,"1963")
             SavelocalButton = res.SavelocalButton;
         }
     }
     else {
         if (SavelocalButton == null) {
-            let res = await addCheckButton(rowId, checkElem,"1716")
+            let res = await addCheckButton(rowId, checkElem,"1969")
             SavelocalButton = res.SavelocalButton
         }
     }
@@ -2317,7 +2318,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                                 SavelocalButton.innerText = "Rej";
                             }
                             if (typeof headerElem != "undefined" && headerElem != null) {
-                                panelTransDiv.style.backgroundColor = "red";
+                                if (panelTransDiv != null) {
+                                    panelTransDiv.style.backgroundColor = "red";
+                                }
                             }
                         }
                     }

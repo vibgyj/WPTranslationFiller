@@ -3627,10 +3627,14 @@ async function saveLocal() {
     // 04-08-2022 PSS Bulksave does not save all records and "dismiss message" is not dismissed #228
     var counter = 0;
     var timeout = 0;
-    
+    var timout = 1000;
+    vartime = 1000;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     //console.debug("saveLocal started",is_pte)
-    document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
+    for (let preview of document.querySelectorAll("tr.preview.status-waiting")) {
+    //document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
+        setTimeout(async function (stop) {
+       
         if (is_pte) {
             checkset = preview.querySelector("th input");
             //console.debug("checkset:",checkset)
@@ -3650,59 +3654,54 @@ async function saveLocal() {
         if (checkset != null) {
             //nextpreview = preview.nextElementSibling.nextElementSibling;
             if (checkset.checked) {
-                counter++;
-                setTimeout((timeout) => {
+                counter++;         
                     //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
-                    let editor = preview.nextElementSibling;
+                let editor = preview.nextElementSibling;
+                //console.debug("editor:",editor)
                     // 06-07-2023 PSS changed to not open the editor anymore
                     //preview.querySelector("td.actions .edit").click();
-                    if (editor != null) {
+                if (editor != null) {
                         let rowfound = editor.id;
                         let editorRow = rowfound.split("-")[1];
                         // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
-                        let nothidden = document.querySelector(`#preview-${editorRow}`);
-                        // 30-11-2022 PSS corrected an errormessage when nothidden = null when saving a waiting suggestion
-                        if (nothidden != null) {
-                            nothidden.classList.add("wptf-saved");
-                        }
-                       
                         // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
-                        if (rowfound.split("-")[2] != null){
-                           editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                        if (rowfound.split("-")[2] != null) {
+                            editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
                         }
                         // if the record is a waiting we need to select the approve button issue #268
                         let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
-                        if (current.innerText == 'waiting') {
+                        if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                            //console.debug("we have a waiting")
                             // 06-07-2023 PSS changed to not open the editor anymore
                             let bulk_save = preview.querySelector(".tf-save-button");
-                            bulk_save.click();
-                           // editor.querySelector(".approve").click();
-                        } else {
-                            // 06-07-2023 PSS changed to not open the editor anymore
-                            let bulk_save = preview.querySelector(".tf-save-button");
-                            bulk_save.click();
+                            bulk_save.click();          
                             // else we need to select the save button
-                           // editor.querySelector(".translation-actions__save").click();
+                            // editor.querySelector(".translation-actions__save").click();
+                            // PSS confirm the message for dismissal
+                            waitForMyElement('.gp-js-message', 1000)
+                                .then(element => {
+                                   // console.log('Element found:', element);
+                                   // element.click();
+                                            // Do something with the element
+                                            let nothidden = document.querySelector(`#editor-${editorRow}`);
+                                            if (nothidden != null) {
+                                               // console.debug("found not hidden")
+                                                nothidden.classList.add("wptf-saved");
+                                                nothidden.classList.remove("untranslated")
+                                                //nothidden.classList.add("translated")
+                                                nothidden.classList.remove("no-translations")
+                                                nothidden.classList.add("has-translations")
+                                                nothidden.classList.add("status-waiting")
+                                                preview.classList.remove("wptf-translated")
+                                                current.innerText = "Waiting"
+
+                                            }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error.message);
+                                });
                         }
-                        // PSS confirm the message for dismissal
-                        foundlabel = waitForElm(".gp-js-message-dismiss").then(confirm => {   
-                            return new Promise((resolve, reject) => {
-                                if (typeof confirm != 'undefined') {
-                                    if (confirm != "No suggestions") {
-                                        confirm.click();
-                                        resolve(foundlabel);
-                                    } else {
-                                        console.debug("No label shown!")
-                                       // reject("No suggestions");
-                                    }
-                                } else {
-                                    reject("No suggestions");
-                                }
-                            });
-                        });
                     }
-                }, timeout, counter);
-                timeout += 1500;
             } else {
                 if (preview != null) {
                     if (!is_pte) {
@@ -3720,9 +3719,10 @@ async function saveLocal() {
         }
         else {
             console.debug("No checkbox available");
-        }
-    });
-
+            }
+        }, timeout, stop);
+        timeout += vartime;
+    }
     return counter;
 }
    
@@ -3815,6 +3815,31 @@ function second(milliseconds) {
             } while (currentDate - date < milliseconds);
         })(); 
         resolve("done waiting");
+    });
+}
+
+// Function to wait for an element to be shown on the page
+function waitForMyElement(selector, timeout) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+
+        // Function to check if the element is visible
+        function checkElement() {
+            const element = document.querySelector(selector);
+            if (element) {
+                // Element found, resolve the promise
+                resolve(element);
+            } else if (Date.now() - startTime >= timeout) {
+                // Timeout reached, reject the promise
+                reject(new Error(`Timeout (${timeout} ms) exceeded while waiting for element with selector "${selector}"`));
+            } else {
+                // Element not found, check again after a short delay
+                setTimeout(checkElement, 100); // Check again after 100 milliseconds
+            }
+        }
+
+        // Initial check
+        checkElement();
     });
 }
 
