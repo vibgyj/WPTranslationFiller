@@ -1072,9 +1072,15 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 }
                                 repl_verb = result.repl_verb;
                                 recWordCount += result.countReplaced;
-                                preview.innerHTML = result.previewNewText
                                 previewNewText = result.previewNewText
-                                textareaElem.innerText = result.previewNewText;
+                                if (preview != null) {
+                                    preview.innerHTML = result.previewNewText
+                                    textareaElem.innerText = result.previewNewText;
+                                }
+                                else {
+                                    console.debug("preview is null!:",row, newrowId, typeof preview)
+                                }
+
                                 // PSS this needs to be improved
                                 //let repl = []
                                 //let rec = '.,.'
