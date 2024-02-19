@@ -1844,7 +1844,7 @@ async function checkbuttonClick(event) {
 
 function translationComplete(original, translated) {
     if (original == translated) {
-        console.info("Identical");
+        //console.info("Identical");
     }
 }
 
