@@ -3717,10 +3717,11 @@ async function saveLocal() {
                     }
             } else {
                 if (preview != null) {
-                    if (!is_pte) {
-                        rowchecked = preview.querySelector("td input");
-                    } else {
-                        rowchecked = preview.querySelector("th input");
+                    if (is_pte) {
+                        checkset = preview.querySelector(".checkbox input");
+                    }
+                    else {
+                        checkset = preview.querySelector(".myCheckBox input");
                     }
                     if (rowchecked != null) {
                         if (rowchecked.checked) {
@@ -3799,23 +3800,35 @@ function saveLocal_1() {
 
 // Function to perform an action on each record in the HTML table
 function processTableRecords(selector, action, interval) {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     return new Promise((resolve, reject) => {
         const tableRows = document.querySelectorAll(selector);
         let currentIndex = 0;
-
         // Function to process the next record
         function processNextRecord() {
             if (currentIndex < tableRows.length) {
                 const currentRow = tableRows[currentIndex];
-                action(currentRow)
-                    .then(() => {
-                        // Move to the next record after the action is completed
-                        currentIndex++;
-                        setTimeout(processNextRecord, interval);
-                    })
-                    .catch(error => {
-                        reject(error);
+                    action(currentRow)
+                        .then(() => {
+                            // Move to the next record after the action is completed
+                            currentIndex++;
+                            if (is_pte) {
+                                checkset = preview.querySelector(".checkbox input");
+                            }
+                            else {
+                                checkset = preview.querySelector(".myCheckBox input");
+                            }
+                            if (checkset.checked) {
+                                setTimeout(processNextRecord, interval);
+                            }
+                            else {
+                                setTimeout(processNextRecord, 150);
+                            }
+                        })
+                        .catch(error => {
+                            reject(error);
                     });
+              
             } else {
                 // All records processed
                 resolve();
@@ -3830,42 +3843,69 @@ function processTableRecords(selector, action, interval) {
 function saveLocal_2(bulk_timer) {
     // Usage example: Process each row in the HTML table with class "myTable", perform an action, and wait 1000 milliseconds between records
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    var preview;
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>
+    `;
+    var myheader = document.querySelector('#wpadminbar');
+    var progressbar = document.querySelector(".indeterminate-progress-bar");
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+    }
+    else {
+        progressbar.style.display = 'block';
+    }
     processTableRecords('tr.preview.status-waiting', async function (preview) {
         // Perform your action on the current row here
         if (is_pte) {
-            checkset = preview.querySelector("th input");
+            checkset = preview.querySelector(".checkbox input");
         }
         else {
-            checkset = preview.querySelector("td input");
+            checkset = preview.querySelector(".myCheckBox input");
         }
+
         if (checkset != null) {
             if (checkset.checked) {
                 let editor = preview.nextElementSibling;
-                if (editor != null) { 
-                   let rowfound = editor.id;
-                   let editorRow = rowfound.split("-")[1];
-                   // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
-                   // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
-                   if (rowfound.split("-")[2] != null) {
-                            editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
-                   }
-                   let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
+                if (editor != null) {
+                    checkset.checked = false;
+                    let rowfound = editor.id;
+                    let editorRow = rowfound.split("-")[1];
+                    // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                    // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                    if (rowfound.split("-")[2] != null) {
+                        editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                    }
+                    let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
                     if (current.innerText == 'waiting' || current.innerText == 'transFill') {
-                        //console.debug("we have a waiting")
+                        preview.style.display = "none"
                         let bulk_save = preview.querySelector(".tf-save-button");
                         bulk_save.click();
                         await new Promise(resolve => setTimeout(() => {
                             // we need to wait for saving the record
                             waitForMyElement('.gp-js-message', 500)
+                            if (is_pte) {
+                                current.innerText = "current"
+                            }
+                            else {
+                                current.innerText = "waiting"
+                            }
                             resolve("ready")
-                        }), 300)
+                        }), 500)
                     }
                 }
             }
         }
     }, bulk_timer)
         .then(() => {
-            //console.log('All records processed.');
+            progressbar = document.querySelector(".indeterminate-progress-bar");
+            if (progressbar != null) {
+                progressbar.style.display = "none";
+                console.log('All records processed.');
+            }
+            else {console.debug("no progressbar!")}
         })
         .catch(error => {
             console.error('Error:', error);
@@ -3921,7 +3961,7 @@ async function bulkSave(noDiff,bulk_timer) {
              confirmText: "Confirm",
              cancelText: "Cancel",
              myWindow: currWindow
-         }).then(async (e,bulk_timer) => {
+         }).then(async (e) => {
              if (e == ("confirm")) {
                  //When performing bulk save the difference is shown in Meta #269
                  //value = false;
@@ -4556,10 +4596,10 @@ async function bulkSaveToLocal() {
 
     document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
     if (is_pte) {
-            checkset = preview.querySelector("th input");
+        checkset = preview.querySelector(".checkbox input");
     }
     else {
-            checkset = preview.querySelector("td input");
+        checkset = preview.querySelector(".myCheckBox input");
     }
     if (checkset != null) {
        if (checkset.checked == true) {
@@ -4611,11 +4651,10 @@ async function saveToLocal() {
     RecCount = 0;
     document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
         if (is_pte) {
-            checkset = preview.querySelector("th input");
-            //console.debug("checkset:",checkset)
+            checkset = preview.querySelector(".checkbox input");
         }
         else {
-            checkset = preview.querySelector("td input");
+            checkset = preview.querySelector(".myCheckBox input");
         }
         if (typeof checkset != 'undefined') {
             if (checkset != null){ 

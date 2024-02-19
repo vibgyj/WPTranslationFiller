@@ -23,7 +23,8 @@
     border-radius: 9999px;
     /* Size */
     height: 0.8rem;
-    position: relative;
+    top: 32px;
+    position: sticky;
     overflow: hidden;
 }
 
