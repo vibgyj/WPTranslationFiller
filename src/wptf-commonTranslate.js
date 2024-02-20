@@ -3873,38 +3873,41 @@ function saveLocal_2(bulk_timer) {
 
         if (checkset != null) {
             let editor = preview.nextElementSibling;
-            let rowfound = editor.id;
-            if (checkset.checked) {
+            if (editor != null) {
+                let rowfound = editor.id;
+                if (checkset.checked) {
 
-                let editor = preview.nextElementSibling;
-                if (editor != null) {
-                    checkset.checked = false;
-                    let editorRow = rowfound.split("-")[1];
-                    // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
-                    // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
-                    if (rowfound.split("-")[2] != null) {
-                        editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                    let editor = preview.nextElementSibling;
+                    if (editor != null) {
+                        checkset.checked = false;
+                        let editorRow = rowfound.split("-")[1];
+                        // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                        // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                        if (rowfound.split("-")[2] != null) {
+                            editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                        }
+
+                        let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
+                        if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                            preview = document.querySelector(`#preview-${editorRow}`)
+                            preview.style.display = "none"
+                            let bulk_save = preview.querySelector(".tf-save-button");
+                            bulk_save.click();
+                            await new Promise(resolve => setTimeout(() => {
+
+                                // we need to wait for saving the record
+                                waitForMyElement('.gp-js-message', 500)
+                                if (is_pte) {
+                                    current.innerText = "current"
+                                }
+                                else {
+                                    current.innerText = "waiting"
+                                }
+                                resolve("ready")
+                            }), 150)
+                        }
                     }
-
-                    let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
-                    if (current.innerText == 'waiting' || current.innerText == 'transFill') {
-                        preview = document.querySelector(`#preview-${editorRow}`)
-                        preview.style.display = "none"
-                        let bulk_save = preview.querySelector(".tf-save-button");
-                        bulk_save.click();
-                        await new Promise(resolve => setTimeout(() => {
-
-                            // we need to wait for saving the record
-                            waitForMyElement('.gp-js-message', 500)
-                            if (is_pte) {
-                                current.innerText = "current"
-                            }
-                            else {
-                                current.innerText = "waiting"
-                            }
-                            resolve("ready")
-                        }), 150)
-                    }
+                    else {console.debug("No editor record found!")}
                 }
             }
             else {
