@@ -1960,7 +1960,12 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             
                             // we need to set the checkbox as marked
                             preview = document.querySelector(`#preview-${row}`);
-                            rowchecked = preview.querySelector("td input");
+                            if (is_pte) {
+                                rowchecked = preview.querySelector(".checkbox input");
+                            }
+                            else {
+                                rowchecked = preview.querySelector(".myCheckBox input");
+                            }
                             if (rowchecked != null) {
                                 if (!rowchecked.checked) {
                                     rowchecked.checked = true;
@@ -1980,7 +1985,12 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         preview.appendChild(element1);
                         // we need to set the checkbox as marked
                         preview = document.querySelector(`#preview-${row}`);
-                        rowchecked = preview.querySelector("td input");
+                        if (is_pte) {
+                            rowchecked = preview.querySelector(".checkbox input");
+                        }
+                        else {
+                            rowchecked = preview.querySelector(".myCheckBox input");
+                        }
                         if (rowchecked != null) {
                             if (!rowchecked.checked) {
                                 rowchecked.checked = true;
@@ -2062,7 +2072,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             current.innerText = "transFill";
                             current.value = "transFill";
                         }
-                        validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                        validateEntry(destlang, textareaElem1, "", "", row, locale, record);
                        // validateEntry(destlang, textareaElem1, "", "", row);
                     }
                 }
@@ -2536,10 +2546,10 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     // we need to set the checkbox as marked
                     preview = document.querySelector(`#preview-${row}`);
                     if (is_pte) {
-                        rowchecked = preview.querySelector("th input");
+                        rowchecked = preview.querySelector(".checkbox input");
                     }
                     else {
-                        rowchecked = preview.querySelector("td input");
+                       rowchecked = preview.querySelector(".myCheckBox input");
                     }
                     if (rowchecked != null) {
                         rowchecked.checked = true;
@@ -2991,9 +3001,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     }
                                     // we need to set the checkbox as marked
                                     preview = document.querySelector(`#preview-${row}`);
-                                    rowchecked = preview.querySelector("th input");
-                                    if (rowchecked == null) {
-                                        rowchecked = preview.querySelector("th input");
+                                    if (is_pte) {
+                                        rowchecked = preview.querySelector(".checkbox input");
+                                    }
+                                    else {
+                                        rowchecked = preview.querySelector(".myCheckBox input");
                                     }
                                     if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
                                         if (rowchecked != null) {
@@ -3648,13 +3660,12 @@ async function saveLocal() {
     //document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
         setTimeout(async function (stop) {
        
-        if (is_pte) {
-            checkset = preview.querySelector("th input");
-            //console.debug("checkset:",checkset)
-        }
+        if(is_pte) {
+                checkset = preview.querySelector(".checkbox input");
+            }
         else {
-                checkset = preview.querySelector("td input");
-        }
+                checkset = preview.querySelector(".myCheckBox input");
+            }
         let rowfound = preview.id;
         row = rowfound.split("-")[1];
         let newrow = rowfound.split("-")[2];
@@ -3718,10 +3729,10 @@ async function saveLocal() {
             } else {
                 if (preview != null) {
                     if (is_pte) {
-                        checkset = preview.querySelector(".checkbox input");
+                       rowchecked = preview.querySelector(".checkbox input");
                     }
                     else {
-                        checkset = preview.querySelector(".myCheckBox input");
+                        rowchecked = preview.querySelector(".myCheckBox input");
                     }
                     if (rowchecked != null) {
                         if (rowchecked.checked) {
@@ -3812,18 +3823,7 @@ function processTableRecords(selector, action, interval) {
                         .then(() => {
                             // Move to the next record after the action is completed
                             currentIndex++;
-                            if (is_pte) {
-                                checkset = preview.querySelector(".checkbox input");
-                            }
-                            else {
-                                checkset = preview.querySelector(".myCheckBox input");
-                            }
-                            if (checkset.checked) {
-                                setTimeout(processNextRecord, interval);
-                            }
-                            else {
-                                setTimeout(processNextRecord, 150);
-                            }
+                            setTimeout(processNextRecord, interval);
                         })
                         .catch(error => {
                             reject(error);
@@ -3834,7 +3834,6 @@ function processTableRecords(selector, action, interval) {
                 resolve();
             }
         }
-
         // Start processing the first record
         processNextRecord();
     });
@@ -3867,23 +3866,28 @@ function saveLocal_2(bulk_timer) {
         }
 
         if (checkset != null) {
+            let editor = preview.nextElementSibling;
+            let rowfound = editor.id;
             if (checkset.checked) {
+
                 let editor = preview.nextElementSibling;
                 if (editor != null) {
                     checkset.checked = false;
-                    let rowfound = editor.id;
                     let editorRow = rowfound.split("-")[1];
                     // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
                     // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
                     if (rowfound.split("-")[2] != null) {
                         editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
                     }
+
                     let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
                     if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                        preview = document.querySelector(`#preview-${editorRow}`)
                         preview.style.display = "none"
                         let bulk_save = preview.querySelector(".tf-save-button");
                         bulk_save.click();
                         await new Promise(resolve => setTimeout(() => {
+
                             // we need to wait for saving the record
                             waitForMyElement('.gp-js-message', 500)
                             if (is_pte) {
@@ -3893,9 +3897,12 @@ function saveLocal_2(bulk_timer) {
                                 current.innerText = "waiting"
                             }
                             resolve("ready")
-                        }), 500)
+                        }), 150)
                     }
                 }
+            }
+            else {
+                    toastbox("info", "Skipping:" + rowfound, "800", "Skipping record"); 
             }
         }
     }, bulk_timer)
