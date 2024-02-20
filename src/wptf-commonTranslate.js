@@ -3908,7 +3908,8 @@ function saveLocal_2(bulk_timer) {
                 }
             }
             else {
-                    toastbox("info", "Skipping:" + rowfound, "800", "Skipping record"); 
+                let original = editor.querySelector("span.original-raw").innerText;
+                toastbox("info", "Skipping:" + original, "1000", "Skipping record"); 
             }
         }
     }, bulk_timer)
@@ -3916,7 +3917,7 @@ function saveLocal_2(bulk_timer) {
             progressbar = document.querySelector(".indeterminate-progress-bar");
             if (progressbar != null) {
                 progressbar.style.display = "none";
-                console.log('All records processed.');
+               // console.log('All records processed.');
             }
             else {console.debug("no progressbar!")}
         })
