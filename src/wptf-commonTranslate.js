@@ -271,9 +271,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
         index = 1;
-
+        console.debug("translated in OpenAI:",translatedText)
         for (const match of matches) {
-            translatedText = translatedText.replace(`{var ${index}}`, match);
+          //  translatedText = translatedText.replace(`{var ${index}}`, match);
            index++;
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
@@ -282,7 +282,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
-                translatedText = translatedText.replace(`{linkvar ${index}}`, match);
+             //   translatedText = translatedText.replace(`{linkvar ${index}}`, match);
                 index++;
             }
         }
@@ -3907,12 +3907,27 @@ function saveLocal_2(bulk_timer) {
                             }), 150)
                         }
                     }
-                    else {console.debug("No editor record found!")}
+                    else { console.debug("No editor record found!") }
+                }
+                else {
+                    if (editor != null) {
+                        let original = editor.querySelector("span.original-raw").innerText;
+                        if (original != null) {
+                            toastbox("info", "Skipping:" + original, "800", "Skipping record");
+                        }
+                        else {
+                            toastbox("info", "Skipping record", "800", "Skipping record");
+                            toastbox.close()
+                        }
+                    }
+                    else {
+                        console.debug("editor not found!")
+                    }
                 }
             }
-            else {
-                let original = editor.querySelector("span.original-raw").innerText;
-                toastbox("info", "Skipping:" + original, "1000", "Skipping record"); 
+            else { 
+                 toastbox("info", "Skipping record", "800", "Skipping record");
+                 toastbox.close()
             }
         }
     }, bulk_timer)
@@ -3927,6 +3942,7 @@ function saveLocal_2(bulk_timer) {
         .catch(error => {
             console.error('Error:', error);
         });
+
 
 }
 async function bulkSave(noDiff,bulk_timer) {

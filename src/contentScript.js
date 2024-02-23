@@ -1748,7 +1748,7 @@ async function checkbuttonClick(event) {
                                 liSuggestion = OpenAIres[0].querySelector(`span.translation-suggestion__translation`);
                                 liSuggestion_raw = OpenAIres[0].querySelector('span.translation-suggestion__translation-raw');
                                 textFound = liSuggestion.innerText
-                               // console.debug("text found:", textFound)
+                                //console.debug("text found:", textFound)
                                 let my_original = editor.querySelector(".original");
                                 if (my_original != null) {
                                     original = my_original.innerText
@@ -2874,7 +2874,7 @@ function validate(language, original, translation, locale,showDiff) {
             percent = 100;
     }      
     else if ((wordCount - foundCount) >0) {      
-        percent = (foundCount * 100) / wordCount;
+        percent = Math.round((foundCount * 100) / wordCount);
     }
     return { wordCount, foundCount, percent, toolTip, newText };
 }
