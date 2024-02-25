@@ -435,7 +435,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     // check if the returned translation does have the same start/ending as the original
     let previewNewText = translatedText
     result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
-    //console.debug("after checking:", result, result.previewNewText)
+    //console.debug("after checking:", result, result.translatedText)
     translatedText = result.translatedText;
     return translatedText;
 }
@@ -973,7 +973,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     </div>
     `;
     var myheader = document.querySelector('header');
-    setPostTranslationReplace(postTranslationReplace, formal);
+   // setPostTranslationReplace(postTranslationReplace, formal);
     progressbar = document.querySelector(".indeterminate-progress-bar");
     if (progressbar == null) {
         myheader.insertAdjacentHTML('beforebegin', template);
@@ -1792,7 +1792,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     //destlang = "nl"
     parrotActive = 'true';
     locale = checkLocale();
-
+    setPostTranslationReplace(postTranslationReplace, formal);  
+    setPreTranslationReplace(preTranslationReplace);
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
     translateButton.innerText = "Translate";
@@ -1872,6 +1873,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             if (pretrans != 'notFound') {
                 // Pretranslation found!
                 let translatedText = pretrans;
+                // if formal then we need to replace def translation
+                translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, "", locale);
                 let textareaElem = record.querySelector("textarea.foreign-text");
 
                 // 23-08-2022 PSS added fix for issue #236
@@ -1882,6 +1885,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 let replaced = false;
                 let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
                 let previewNewText = translatedText;
+               
                 // console.debug("nieuw:", "'"+ previewNewText+ "'");
                 result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
                 //replaced = result.replaced;
@@ -2401,7 +2405,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
-    
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
         translateButton.innerText = "Translate";
@@ -2501,7 +2504,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 if (result != "No suggestions") {
                     let myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale).then(resli => {
                         if (typeof resli != null) {                            
-                            myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype,convertToLower,spellCheckIgnore,locale);
+                            myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
+                            mark_as_translated(row)
                             let textareaElem = record.querySelector("textarea.foreign-text");
                             if (is_pte) {
                                 rowchecked = preview.querySelector("th input");
@@ -2561,9 +2565,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         rowchecked.checked = true;
                     }
                     if (result != "No suggestions") {
-                        preview.classList.replace("no-translations", "has-translations");
-                        preview.classList.replace("untranslated", "status-waiting");
-                        preview.classList.add("wptf-translated");
+                        mark_as_translated(row)
                         validateEntry(destlang, textareaElem, "", "", row, locale, record);
                     }
                 }
@@ -3894,7 +3896,6 @@ function saveLocal_2(bulk_timer) {
                             let bulk_save = preview.querySelector(".tf-save-button");
                             bulk_save.click();
                             await new Promise(resolve => setTimeout(() => {
-
                                 // we need to wait for saving the record
                                 waitForMyElement('.gp-js-message', 500)
                                 if (is_pte) {
@@ -3917,7 +3918,7 @@ function saveLocal_2(bulk_timer) {
                         }
                         else {
                             toastbox("info", "Skipping record", "800", "Skipping record");
-                            toastbox.close()
+                           // toastbox.close()
                         }
                     }
                     else {
@@ -3927,7 +3928,7 @@ function saveLocal_2(bulk_timer) {
             }
             else { 
                  toastbox("info", "Skipping record", "800", "Skipping record");
-                 toastbox.close()
+                // toastbox.close()
             }
         }
     }, bulk_timer)

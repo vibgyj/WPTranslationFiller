@@ -3335,8 +3335,10 @@ function gd_auto_hide_next_editor(editor) {
     }
    
     // With center it works best, but it can be put on the top, center, bottom
-    //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
-    myRow.scrollIntoView(true);
+    //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });  
+    myRow.scrollIntoView({ block: "start" });
+    // we do not want the view to close to the header, so move it a bit down
+    window.scrollBy(0, -30);
     // We need to add the checkboxes if the translator is not a PTE
     // We need to add the extra cell on front of the preview line
     if (!is_pte) {
