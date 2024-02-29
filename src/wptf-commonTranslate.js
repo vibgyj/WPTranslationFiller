@@ -271,7 +271,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
         index = 1;
-        console.debug("translated in OpenAI:",translatedText)
+        //console.debug("translated in OpenAI:",translatedText)
         for (const match of matches) {
           //  translatedText = translatedText.replace(`{var ${index}}`, match);
            index++;

@@ -1913,6 +1913,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             }
     }
     if (debug == true) {
+        console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
         console.debug("updatestyle prev:", prev_trans)
         console.debug("updatestyle curr:", currstring, rowId)
     }
@@ -1974,13 +1975,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem,"1963")
+            let res = await addCheckButton(rowId, checkElem,"1978")
             SavelocalButton = res.SavelocalButton;
         }
     }
     else {
         if (SavelocalButton == null) {
-            let res = await addCheckButton(rowId, checkElem,"1969")
+            let res = await addCheckButton(rowId, checkElem,"1984")
             SavelocalButton = res.SavelocalButton
         }
     }
@@ -2175,7 +2176,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 current = 'untranslated'
             }
         }
-        //console.debug("value of current:",current)
         if (current == 'current') {
             button_name = 'Save'
         }
@@ -2189,7 +2189,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             button_name = 'Save'
         }
         else {button_name == 'Undef!!'}
-
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
             if (current != null) {
@@ -2200,14 +2199,13 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 // we need to update the button color and content/tooltip
                 // 22-07-2021 PSS fix for wrong button text "Apply" #108 
                 // moved the below code, and remove the duplicat of this code
-                //console.debug("percentage:",result.percent)
                 if (checkElem != null) {
                     if (result.percent == 100) {
                         checkElem.innerHTML = "100";
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "1593")
+                        res = addCheckButton(rowId, checkElem, "2211")
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
                             if (SavelocalButton != null) {
@@ -2228,7 +2226,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             }
                         }
                     }
-                    else if (result.percent > 66) {
+                    else if (result.percent >= 66) {
                         newtitle = checkElem.title;
                         checkElem.innerHTML = '<span style="color:black">66</span>';
                         separator1 = document.createElement("div");
@@ -2243,7 +2241,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             panelTransDiv.style.backgroundColor = "yellow";
                         }
                     }
-                    else if (result.percent > 33) {
+                    else if (result.percent >= 33) {
                         newtitle = checkElem.title;
                         checkElem.innerHTML = "33";
                         separator1 = document.createElement("div");
@@ -2321,7 +2319,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             let separator1 = document.createElement("div");
                             separator1.setAttribute("class", "checkElem_save");
                             checkElem.appendChild(separator1);
-                            res = addCheckButton(rowId, checkElem, "1612")
+                            res = addCheckButton(rowId, checkElem, "2327")
                             SavelocalButton = res.SavelocalButton
                             if (current != "untranslated" && current != 'current') {
                                 SavelocalButton.innerText = "Miss!";
@@ -2369,7 +2367,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 }
             }
         }
-
         // 11-08-2021 PSS added aditional code to prevent duplicate missing verbs in individual translation
         if ((result.toolTip).length > 0) {
             headerElem.title = "";
