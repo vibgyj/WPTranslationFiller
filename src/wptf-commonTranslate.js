@@ -282,7 +282,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
-             //   translatedText = translatedText.replace(`{linkvar ${index}}`, match);
+                translatedText = translatedText.replace(`{linkvar ${index}}`, match);
                 index++;
             }
         }
@@ -3892,7 +3892,7 @@ function saveLocal_2(bulk_timer) {
                         let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
                         if (current.innerText == 'waiting' || current.innerText == 'transFill') {
                             preview = document.querySelector(`#preview-${editorRow}`)
-                            preview.style.display = "none"
+                           // console.debug("preview:", preview)
                             let bulk_save = preview.querySelector(".tf-save-button");
                             bulk_save.click();
                             await new Promise(resolve => setTimeout(() => {
@@ -3904,8 +3904,16 @@ function saveLocal_2(bulk_timer) {
                                 else {
                                     current.innerText = "waiting"
                                 }
+                                preview = document.querySelector(`#preview-${editorRow}`)
+                               // console.debug("preview:", preview)
+                                if (preview.classList.contains("status-waiting")) {
+                                    preview.style.display = "none"
+                                    preview.classList.replace("status-waiting","status-hidden");
+                                    preview.classList.replace("has-translations","no-translations");
+                                    preview.classList.remove("wptf-translated");
+                                }
                                 resolve("ready")
-                            }), 150)
+                            }), 250)
                         }
                     }
                     else { console.debug("No editor record found!") }
