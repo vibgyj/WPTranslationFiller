@@ -3822,16 +3822,20 @@ function processTableRecords(selector, action, interval) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     return new Promise((resolve, reject) => {
         const tableRows = document.querySelectorAll(selector);
+        //console.debug("tableRows:",tableRows)
         let currentIndex = 0;
         // Function to process the next record
         function processNextRecord() {
             if (currentIndex < tableRows.length) {
+               // console.debug("currindex:", currentIndex)
+               // console.debug("currRow:", tableRows[currentIndex])
                 const currentRow = tableRows[currentIndex];
                     action(currentRow)
                         .then(() => {
                             // Move to the next record after the action is completed
-                            currentIndex++;
+                            //currentIndex++;
                             setTimeout(processNextRecord, interval);
+                            currentIndex++;
                         })
                         .catch(error => {
                             reject(error);
@@ -3851,6 +3855,11 @@ function saveLocal_2(bulk_timer) {
     // Usage example: Process each row in the HTML table with class "myTable", perform an action, and wait 1000 milliseconds between records
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var preview;
+    var time_out = 1;
+    var checkset;
+    var checkcount = 0;
+    var editor;
+    var dismiss;
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
@@ -3864,81 +3873,120 @@ function saveLocal_2(bulk_timer) {
     else {
         progressbar.style.display = 'block';
     }
-    processTableRecords('tr.preview.status-waiting', async function (preview) {
+    processTableRecords('tr.preview.status-waiting.priority-normal', async function (preview) {
         // Perform your action on the current row here
-        if (is_pte) {
-            checkset = preview.querySelector(".checkbox input");
+        //console.debug("preview:",preview)
+        checkset = preview.querySelector('input[type="checkbox"]')
+        //console.debug("myCheckBox:",checkset)
+        if (checkset == null) {
+            checkcount++
+            console.debug("unchecked count:", checkcount)
         }
-        else {
-            checkset = preview.querySelector(".myCheckBox input");
-        }
-
-        if (checkset != null) {
-            let editor = preview.nextElementSibling;
-            if (editor != null) {
-                let rowfound = editor.id;
-                if (checkset.checked) {
-
+        editor = preview.nextElementSibling;
+        //console.debug("editor:", editor)
+        if (checkset != null && editor != null) {
+            let rowfound = editor.id;
+            if (checkset.checked) {
                     let editor = preview.nextElementSibling;
                     if (editor != null) {
-                        checkset.checked = false;
                         let editorRow = rowfound.split("-")[1];
                         // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
                         // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
                         if (rowfound.split("-")[2] != null) {
                             editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
                         }
-
                         let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
                         if (current.innerText == 'waiting' || current.innerText == 'transFill') {
-                            preview = document.querySelector(`#preview-${editorRow}`)
-                           // console.debug("preview:", preview)
-                            let bulk_save = preview.querySelector(".tf-save-button");
-                            bulk_save.click();
-                            await new Promise(resolve => setTimeout(() => {
-                                // we need to wait for saving the record
-                                waitForMyElement('.gp-js-message', 500)
-                                if (is_pte) {
-                                    current.innerText = "current"
-                                }
-                                else {
-                                    current.innerText = "waiting"
-                                }
-                                preview = document.querySelector(`#preview-${editorRow}`)
-                               // console.debug("preview:", preview)
-                                if (preview.classList.contains("status-waiting")) {
-                                    preview.style.display = "none"
-                                    preview.classList.replace("status-waiting","status-hidden");
-                                    preview.classList.replace("has-translations","no-translations");
-                                    preview.classList.remove("wptf-translated");
-                                }
-                                resolve("ready")
-                            }), 250)
+                            let preview = document.querySelector(`#preview-${editorRow}`);
+                            let editor = preview.nextElementSibling;
+                            let glotpress_suggest = editor.querySelector(".translation-actions__save");
+                           // let glotpress_open = document.querySelector(`#preview-${editorRow} td.actions .edit`);
+                           // let glotpress_close = document.querySelector(`#editor-${editorRow} div.editor-panel__left .panel-header-actions__cancel`);
+                            // glotpress_open.click()
+                            preview.querySelector("td.actions .edit").click();
+                            editor.style.display = "none";
+                            glotpress_suggest.classList.remove("disabled")
+                            glotpress_suggest.click();
+                            new Promise(resolve => setTimeout(async () => {
+                                // let mybulk_save = preview.querySelector(".tf-save-button");
+                                // glotpress_save.click()
+                                await glotpress_suggest.click();
+                                // mybulk_save.click();
+                                new Promise(resolve => setTimeout(async () => {
+                                    // we need to wait for saving the record        
+                                   // waitForMyElement(`#gp-js-message`, 500)
+                                    await waitForMyElement(`.gp-js-message-dismiss`, 800).then((dismiss) => {
+                                        console.debug("dismiss message:", dismiss)
+                                        if (dismiss != "Time-out reached") {
+                                            // dismiss = document.querySelector(`.gp-js-message-dismiss`)
+                                            if (dismiss != null) {
+                                                dismiss.click()
+                                            }
+                                        }
+                                        else {
+                                            // Sometimes the previewline is not hidden but save, so we need to hide it
+                                            preview = document.querySelector(`#preview-${editorRow}`);
+                                            if (preview != null) {
+                                                if (preview.style.display != " none") {
+                                                    preview.style.display = "none"
+                                                    preview.classList.replace("status-waiting", "status-hidden");
+                                                }
+                                            }
+                                        }
+                                    });     
+                                    if (is_pte) {
+                                        current.innerText = "current"
+                                    }
+                                    else {
+                                        current.innerText = "waiting"
+                                    }
+                                    resolve("ready")
+                                }), 100).then(() => {
+                                    // Sometimes the previewline is not hidden but save, so we need to hide it
+                                    preview = document.querySelector(`#preview-${editorRow}`);
+                                    if (preview != null) {
+                                        if (preview.style.display != " none") {
+                                            preview.style.display = "none"
+                                            preview.classList.replace("status-waiting", "status-hidden");
+                                        }
+                                    }
+                                    //glotpress_close.click()
+                                    //checkset.checked = false;
+                                    resolve("ready")
+                                });
+                            }), bulk_timer);
+                        }
+                        else {
+                            //console.debug("checkbox present but not set or not in waiting mode")
+                            let original = editor.querySelector("span.original-raw").innerText;
+                            if (original != null) {
+                                toastbox("info", "Skipping:" + original, "800", "Skipping record");
+                            }
+                            else {
+                                toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                                // toastbox.close()
+                            }
                         }
                     }
                     else { console.debug("No editor record found!") }
                 }
                 else {
-                    if (editor != null) {
-                        let original = editor.querySelector("span.original-raw").innerText;
-                        if (original != null) {
-                            toastbox("info", "Skipping:" + original, "800", "Skipping record");
-                        }
-                        else {
-                            toastbox("info", "Skipping record", "800", "Skipping record");
-                           // toastbox.close()
-                        }
+                    console.debug("checkbox present but not set")
+                    let original = editor.querySelector("span.original-raw").innerText;
+                    if (original != null) {
+                        toastbox("info", "Skipping:" + original, "800", "Skipping record");
                     }
                     else {
-                        console.debug("editor not found!")
+                        toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                        // toastbox.close()
                     }
                 }
-            }
-            else { 
-                 toastbox("info", "Skipping record", "800", "Skipping record");
-                // toastbox.close()
-            }
         }
+        else {
+            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+            //console.debug("No checkset found!")
+        }
+        
     }, bulk_timer)
         .then(() => {
             progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -4060,10 +4108,11 @@ function waitForMyElement(selector, timeout) {
                 resolve(element);
             } else if (Date.now() - startTime >= timeout) {
                 // Timeout reached, reject the promise
-                reject(new Error(`Timeout (${timeout} ms) exceeded while waiting for element with selector "${selector}"`));
+                resolve("Time-out reached")
+                //reject(new Error(`Timeout (${timeout} ms) exceeded while waiting for element with selector "${selector}"`));
             } else {
                 // Element not found, check again after a short delay
-                setTimeout(checkElement, 100); // Check again after 100 milliseconds
+                setTimeout(checkElement, 150); // Check again after 150 milliseconds
             }
         }
 
@@ -4102,7 +4151,7 @@ function _waitForElement(selector, delay =5, tries = 50) {
 
 function elementReady(selector) {
     var el;
-    var timeout = 20;
+    var timeout = 100;
     var findsel;
     return new Promise((resolve, reject) => {
         //console.debug("within elementReady",selector)
@@ -4125,6 +4174,7 @@ function elementReady(selector) {
                 if (findsel.length != "0") {
                     Array.from(document.querySelectorAll(selector)).forEach((element) => {
                         resolve(selector);
+                        //console.debug("resolved:",selector)
                         //Once we have resolved we don't need the observer anymore.
                         observer.disconnect();
                     });

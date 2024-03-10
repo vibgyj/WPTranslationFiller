@@ -2214,7 +2214,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         }
                         checkElem.style.backgroundColor = "green";
                         checkElem.title = "Save the string";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             if (panelTransDiv != null) {
                                 panelTransDiv.style.backgroundColor = "green";
                             }
@@ -2237,7 +2237,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.style.backgroundColor = "yellow";
                         checkElem.title = "Save the string";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "yellow";
                         }
                     }
@@ -2252,7 +2252,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.title = "Save the string";
                         checkElem.style.backgroundColor = "orange";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "orange";
                         }
                     }
@@ -2261,7 +2261,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "1574")
+                        res = addCheckButton(rowId, checkElem, "2264")
                         SavelocalButton = res.SavelocalButton
                         SavelocalButton.disabled = false;
                         SavelocalButton.innerText = button_name;
@@ -2283,7 +2283,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.title = "Check the string";
                         checkElem.style.backgroundColor = "darkorange";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "darkorange";
                         }
                     }
@@ -2707,12 +2707,20 @@ function addCheckButton(rowId, checkElem, lineNo) {
 
 
 function savetranslateEntryClicked(event) {
-    var myWindow;
-    let timeout = 0;
-    //event.preventDefault();
+    //console.debug("event:",event)
+    var myWindow;    
+   // event.preventDefault();
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
-    
+    //chrome.storage.local.get(["bulkWait"], function (data) {
+     //   let bulkWait = data.bulkWait
+     //   if (bulkWait != null && typeof bulkWait != 'undefined') {
+     //       bulk_timer = bulkWait
+     //   }
+      //  else {
+      //      bulk_timer = 1500;
+      //  }
+    var bulk_timer = 50
     // Determine status of record
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     var current = h.querySelector("span.panel-header__bubble");
@@ -2738,16 +2746,19 @@ function savetranslateEntryClicked(event) {
                     }
                     // PSS confirm the message for dismissal
                     foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                        if (confirm != '.gp-js-message-dismiss') {
-                            if (typeof confirm === 'function') {
-                                confirm.click();
-                                // close_toast();
-                            }
+                        let dismiss = document.querySelector('.gp-js-message-dismiss')
+                        if (dismiss != null) {
+                       // if (confirm == '.gp-js-message-dismiss') {
+                          //  if (typeof confirm === 'function') {
+                           // confirm.click();
+                            dismiss.click()
+                               // close_toast();
+                           // }
                         }
                     });
                 }
-            }, timeout);
-            timeout += 1500;
+            }, bulk_timer);
+           // timeout += bulk_timer;
         }
         if (current.innerText == "waiting") {
             let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
@@ -2764,14 +2775,12 @@ function savetranslateEntryClicked(event) {
                 // 25-08-2022 PSS changes made to fix issue #238
                 let preview = document.querySelector(`#preview-${rowId}`);
                 let editor = preview.nextElementSibling;
-                let glotpress_suggest = editor.querySelector(".translation-actions__save");
-                
-                //glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-                //setTimeout(() => { 
+                let glotpress_suggest = editor.querySelector(".translation-actions__save");  
                 glotpress_suggest.click();
             }
             status.innerText = "current";
             current.innerText = "current";
+            // we need to close the editor as we do not need it
             glotpress_close.click();
             prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
             prevrow.style.backgroundColor = "#b5e1b9";
@@ -2805,7 +2814,8 @@ function savetranslateEntryClicked(event) {
             SavelocalButton.disabled = true;
             SavelocalButton.display = "none";
         }
-    }
+        }
+  //  });
 }
 
 function validate(language, original, translation, locale,showDiff) {
