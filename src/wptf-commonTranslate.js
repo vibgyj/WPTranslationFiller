@@ -3916,7 +3916,7 @@ function saveLocal_2(bulk_timer) {
                                     // we need to wait for saving the record        
                                    // waitForMyElement(`#gp-js-message`, 500)
                                     await waitForMyElement(`.gp-js-message-dismiss`, 800).then((dismiss) => {
-                                        console.debug("dismiss message:", dismiss)
+                                       // console.debug("dismiss message:", dismiss)
                                         if (dismiss != "Time-out reached") {
                                             // dismiss = document.querySelector(`.gp-js-message-dismiss`)
                                             if (dismiss != null) {
@@ -4344,7 +4344,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         prevcurrentClass.classList.replace("untranslated", "status-waiting");
         prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
         prevcurrentClass.classList.add("wptf-translated");
-        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record);
+        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record,true );
        
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + myRowId + " .original");
@@ -4418,7 +4418,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
                         previewElem.innerText = translatedText;
                     }
                 }
-                result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record);
+                result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record,true);
             }
             else {
                 //console.debug("myRowId:",myRowId,record)
