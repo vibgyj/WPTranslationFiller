@@ -288,20 +288,21 @@ function validatePage(language, showHistory, locale,showDiff) {
         let old_status = document.querySelector("#preview-" + rowId);
        /// checkbox = old_status.querySelector('input[type="checkbox"]')
         checkbox = old_status.getElementsByClassName("checkbox")
-        my_line_counter = checkbox[0].querySelector("div.line-counter")       
-        // add counter to checkbox, but do not add it twice      
-        if (my_line_counter == null) {
-           checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
-           checkbox[0].firstChild.textContent = rowcount
-        }
+        if (checkbox[0] != null) {
+             my_line_counter = checkbox[0].querySelector("div.line-counter")       
+            // add counter to checkbox, but do not add it twice      
+            if (my_line_counter == null) {
+              checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
+              checkbox[0].firstChild.textContent = rowcount
+             }
  
-         //   }
-       // else {
+        }
+        else {
             // if not a PTE it must be put in a different checkbox
-         //   let mycheckbox = old_status.getElementsByClassName("myCheckBox")
-         //   mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
-          //  mycheckbox[0].textContent = rowcount
-       // }
+           let mycheckbox = old_status.getElementsByClassName("myCheckBox")
+            mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
+            mycheckbox[0].textContent = rowcount
+        }
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;
         let showName = false;

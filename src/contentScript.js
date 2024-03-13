@@ -878,6 +878,21 @@ UpperCaseButton.href = "#";
 UpperCaseButton.onclick = UpperCaseClicked;
 UpperCaseButton.innerText = "Casing";
 
+var SwitchGlossButton = document.createElement("a");
+SwitchGlossButton.href = "#";
+SwitchGlossButton.onclick = SwitchGlossClicked;
+chrome.storage.local.get("DefGlossary").then((res) => {
+    if (res.DefGlossary == true) {
+        SwitchGlossButton.innerText = "DefGlos";
+        SwitchGlossButton.style.background = "green"
+        SwitchGlossButton.style.color = "white"
+    }
+    else {
+        SwitchGlossButton.innerText = "SecGlos";
+        SwitchGlossButton.style.background = "orange"
+    }
+});
+
 var SwitchTMButton = document.createElement("a");
 SwitchTMButton.href = "#";
 SwitchTMButton.className = "Switch-TM-button";
@@ -905,9 +920,10 @@ if (GpSpecials == null) {
 }
 if (GpSpecials != null && divProjects == null) {
     divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(SwitchGlossButton, divPaging.childNodes[0]);
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     chrome.storage.local.get(["apikeyDeepl"], function (data) {
-        let apikey=data.apikeyDeepl
+        //let apikey=data.apikeyDeepl
         if (data.apikeyDeepl != null && data.apikeyDeepl !="" && typeof data.apikeyDeepl != 'undefined') {
             divPaging.insertBefore(LoadGloss, divPaging.childNodes[0]);
             divPaging.insertBefore(DispGloss, divPaging.childNodes[0]);
@@ -1020,9 +1036,25 @@ function UpperCaseClicked() {
     });
 }
 
+function SwitchGlossClicked() {
+    event.preventDefault();
+    chrome.storage.local.get("DefGlossary").then((res) => { 
+        if (res.DefGlossary == true) {
+        toastbox("info", "Switching Glossary to second", "1200", "Glossary switch");
+        chrome.storage.local.set({ DefGlossary: false});
+    }
+    else {
+        toastbox("info", "Switching Glossary to default", "1200", "Glossary switch");
+        chrome.storage.local.set({ DefGlossary: true });
+    }
+    location.reload();
+    }); 
+
+}
+
 function SwitchTMClicked() {
     event.preventDefault();
-    let int = localStorage.getItem(['switchTM']);
+    int = localStorage.getItem(['switchTM']);
     if (int == "false") {
         toastbox("info", "Switching TM to foreign", "1200", "TM switch");
         localStorage.setItem('switchTM', 'true');

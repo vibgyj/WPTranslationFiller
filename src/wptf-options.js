@@ -594,6 +594,7 @@ file.addEventListener("change", function () {
                     for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
+                            value[val] = value[val].replaceAll("&#39;", "'").trim();
                         }
                     }
                 }
@@ -605,6 +606,7 @@ file.addEventListener("change", function () {
                 for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
+                            value[val] = value[val].replaceAll("&#39;", "'").trim();
                         }
                     }
                 
@@ -735,6 +737,7 @@ second_file.addEventListener("change", function () {
                     for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
+                            value[val] = value[val].replaceAll("&#39;", "'").trim();
                         }
                     }
                 }
@@ -746,6 +749,7 @@ second_file.addEventListener("change", function () {
                 for (let val in value) {
                     if (value != "") {
                         value[val] = value[val].replaceAll("\"", "").trim();
+                        value[val] = value[val].replaceAll("&#39;", "'").trim();
                     }
                 }
 
@@ -835,11 +839,9 @@ second_file.addEventListener("change", function () {
                 }
             }
         }
-        console.log(glossary1A);
     };
     reader.readAsText(second_file);
     let updatedfilename = document.getElementById("glossary_file_second");
-    console.debug(' second file:',updatedfilename,second_file)
     const thisdate = new Date();
     let myYear = thisdate.getFullYear();
     let mymonth = thisdate.getMonth();
