@@ -271,9 +271,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
         index = 1;
-
+        //console.debug("translated in OpenAI:",translatedText)
         for (const match of matches) {
-            translatedText = translatedText.replace(`{var ${index}}`, match);
+          //  translatedText = translatedText.replace(`{var ${index}}`, match);
            index++;
         }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
@@ -435,7 +435,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     // check if the returned translation does have the same start/ending as the original
     let previewNewText = translatedText
     result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
-    //console.debug("after checking:", result, result.previewNewText)
+    //console.debug("after checking:", result, result.translatedText)
     translatedText = result.translatedText;
     return translatedText;
 }
@@ -973,7 +973,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     </div>
     `;
     var myheader = document.querySelector('header');
-    setPostTranslationReplace(postTranslationReplace, formal);
+   // setPostTranslationReplace(postTranslationReplace, formal);
     progressbar = document.querySelector(".indeterminate-progress-bar");
     if (progressbar == null) {
         myheader.insertAdjacentHTML('beforebegin', template);
@@ -1072,9 +1072,15 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 }
                                 repl_verb = result.repl_verb;
                                 recWordCount += result.countReplaced;
-                                preview.innerHTML = result.previewNewText
                                 previewNewText = result.previewNewText
-                                textareaElem.innerText = result.previewNewText;
+                                if (preview != null) {
+                                    preview.innerHTML = result.previewNewText
+                                    textareaElem.innerText = result.previewNewText;
+                                }
+                                else {
+                                    console.debug("preview is null!:",row, newrowId, typeof preview)
+                                }
+
                                 // PSS this needs to be improved
                                 //let repl = []
                                 //let rec = '.,.'
@@ -1751,15 +1757,26 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         if (isStartsWithUpperCase(original)) {
             if (!isStartsWithUpperCase(translatedText)) {
                 translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+                previewNewText = translatedText[0].toUpperCase() + translatedText.slice(1);
+                repl_verb += myrow + ": " + '->' + "set first char to uppercase" + "<br>"
+                countReplaced++;
+                replaced = true;
             }
         }
         else {
             if (isStartsWithUpperCase(translatedText)) {
                 translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+                previewNewText = translatedText[0].toLowerCase() + translatedText.slice(1);
+                repl_verb += myrow + ": " + '->' + "set first char to lowercase" + "<br>"
+                countReplaced++;
+                replaced = true;
             }
         }
     }
    // console.debug("After improvements:", translatedText, previewNewText + " countreplaced: " + countReplaced, repl_verb, replaced)
+    if (previewNewText == null) {
+        previewNewText = translatedText
+    }
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced ,repl_array}
 }
 async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
@@ -1775,7 +1792,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     //destlang = "nl"
     parrotActive = 'true';
     locale = checkLocale();
-
+    setPostTranslationReplace(postTranslationReplace, formal);  
+    setPreTranslationReplace(preTranslationReplace);
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
     translateButton.innerText = "Translate";
@@ -1855,6 +1873,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             if (pretrans != 'notFound') {
                 // Pretranslation found!
                 let translatedText = pretrans;
+                // if formal then we need to replace def translation
+                translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, "", locale);
                 let textareaElem = record.querySelector("textarea.foreign-text");
 
                 // 23-08-2022 PSS added fix for issue #236
@@ -1865,6 +1885,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 let replaced = false;
                 let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
                 let previewNewText = translatedText;
+               
                 // console.debug("nieuw:", "'"+ previewNewText+ "'");
                 result = await check_start_end(translatedText, previewNewText, countreplaced, repl_verb, original, replaced, countrows);
                 //replaced = result.replaced;
@@ -1949,7 +1970,12 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             
                             // we need to set the checkbox as marked
                             preview = document.querySelector(`#preview-${row}`);
-                            rowchecked = preview.querySelector("td input");
+                            if (is_pte) {
+                                rowchecked = preview.querySelector(".checkbox input");
+                            }
+                            else {
+                                rowchecked = preview.querySelector(".myCheckBox input");
+                            }
                             if (rowchecked != null) {
                                 if (!rowchecked.checked) {
                                     rowchecked.checked = true;
@@ -1969,7 +1995,12 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         preview.appendChild(element1);
                         // we need to set the checkbox as marked
                         preview = document.querySelector(`#preview-${row}`);
-                        rowchecked = preview.querySelector("td input");
+                        if (is_pte) {
+                            rowchecked = preview.querySelector(".checkbox input");
+                        }
+                        else {
+                            rowchecked = preview.querySelector(".myCheckBox input");
+                        }
                         if (rowchecked != null) {
                             if (!rowchecked.checked) {
                                 rowchecked.checked = true;
@@ -2051,7 +2082,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             current.innerText = "transFill";
                             current.value = "transFill";
                         }
-                        validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                        validateEntry(destlang, textareaElem1, "", "", row, locale, record);
                        // validateEntry(destlang, textareaElem1, "", "", row);
                     }
                 }
@@ -2374,7 +2405,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
-    
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
         translateButton.innerText = "Translate";
@@ -2474,7 +2504,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 if (result != "No suggestions") {
                     let myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale).then(resli => {
                         if (typeof resli != null) {                            
-                            myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype,convertToLower,spellCheckIgnore,locale);
+                            myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
+                            mark_as_translated(row)
                             let textareaElem = record.querySelector("textarea.foreign-text");
                             if (is_pte) {
                                 rowchecked = preview.querySelector("th input");
@@ -2525,18 +2556,16 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     // we need to set the checkbox as marked
                     preview = document.querySelector(`#preview-${row}`);
                     if (is_pte) {
-                        rowchecked = preview.querySelector("th input");
+                        rowchecked = preview.querySelector(".checkbox input");
                     }
                     else {
-                        rowchecked = preview.querySelector("td input");
+                       rowchecked = preview.querySelector(".myCheckBox input");
                     }
                     if (rowchecked != null) {
                         rowchecked.checked = true;
                     }
                     if (result != "No suggestions") {
-                        preview.classList.replace("no-translations", "has-translations");
-                        preview.classList.replace("untranslated", "status-waiting");
-                        preview.classList.add("wptf-translated");
+                        mark_as_translated(row)
                         validateEntry(destlang, textareaElem, "", "", row, locale, record);
                     }
                 }
@@ -2580,8 +2609,10 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             if (typeof metares != 'undefined') {
                 setTimeout(() => {
                     // We need to close the last opened editor we cannot use the cancel button because then the translation is removed
-                   let hideEditor = document.querySelector(`#editor-${row}`)
-                   hideEditor.style = "display:None"
+                    let hideEditor = document.querySelector(`#editor-${row}`)
+                    if (hideEditor != null) {
+                        hideEditor.style = "display:None"
+                    }
                     resolve();
                 }, 800);
             }
@@ -2978,9 +3009,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     }
                                     // we need to set the checkbox as marked
                                     preview = document.querySelector(`#preview-${row}`);
-                                    rowchecked = preview.querySelector("th input");
-                                    if (rowchecked == null) {
-                                        rowchecked = preview.querySelector("th input");
+                                    if (is_pte) {
+                                        rowchecked = preview.querySelector(".checkbox input");
+                                    }
+                                    else {
+                                        rowchecked = preview.querySelector(".myCheckBox input");
                                     }
                                     if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
                                         if (rowchecked != null) {
@@ -3635,13 +3668,12 @@ async function saveLocal() {
     //document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
         setTimeout(async function (stop) {
        
-        if (is_pte) {
-            checkset = preview.querySelector("th input");
-            //console.debug("checkset:",checkset)
-        }
+        if(is_pte) {
+                checkset = preview.querySelector(".checkbox input");
+            }
         else {
-                checkset = preview.querySelector("td input");
-        }
+                checkset = preview.querySelector(".myCheckBox input");
+            }
         let rowfound = preview.id;
         row = rowfound.split("-")[1];
         let newrow = rowfound.split("-")[2];
@@ -3704,10 +3736,11 @@ async function saveLocal() {
                     }
             } else {
                 if (preview != null) {
-                    if (!is_pte) {
-                        rowchecked = preview.querySelector("td input");
-                    } else {
-                        rowchecked = preview.querySelector("th input");
+                    if (is_pte) {
+                       rowchecked = preview.querySelector(".checkbox input");
+                    }
+                    else {
+                        rowchecked = preview.querySelector(".myCheckBox input");
                     }
                     if (rowchecked != null) {
                         if (rowchecked.checked) {
@@ -3725,8 +3758,251 @@ async function saveLocal() {
     }
     return counter;
 }
-   
-async function bulkSave(noDiff) {
+
+// Function to walk through the HTML table
+function walkThroughTable(selector, interval) {
+    var timeout = 1000;
+    return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+            const element = document.querySelector(selector);
+            if (element) {
+                console.log('Element found:', element);
+                clearInterval(checkInterval);
+                resolve(element);
+            }
+            // Walk through the HTML table here
+            const tableRows = document.querySelectorAll('tr.preview.status-waiting');
+            tableRows.forEach(preview => {
+                // Do something with each row of the table
+                setTimeout(() => { 
+                    let editor = preview.nextElementSibling;
+                    if (editor != null) {
+                        console.log("editor:", editor);
+                        if (editor != null) {
+                            let rowfound = editor.id;
+                            let editorRow = rowfound.split("-")[1];
+                            // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                            // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                            if (rowfound.split("-")[2] != null) {
+                                editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                            }
+                            let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
+                            if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                                //console.debug("we have a waiting")
+                                // 06-07-2023 PSS changed to not open the editor anymore
+                                let bulk_save = preview.querySelector(".tf-save-button");
+                                bulk_save.click();
+                                waitForMyElement('.gp-js-message', 300)
+                            }
+                        }
+                    }
+                }, timeout);
+                timeout += 1000;
+            });
+        }, interval);
+        resolve("Ready")
+    });
+}
+
+function saveLocal_1() {
+// Usage example: Walk through the HTML table while waiting for an element with id "specificElement" every 500 milliseconds
+    walkThroughTable('.gp-js-message', 100)
+    .then(element => {
+        console.debug("Done!!")
+        // Do something with the found element
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+
+// Function to perform an action on each record in the HTML table
+function processTableRecords(selector, action, interval) {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    return new Promise((resolve, reject) => {
+        const tableRows = document.querySelectorAll(selector);
+        //console.debug("tableRows:",tableRows)
+        let currentIndex = 0;
+        // Function to process the next record
+        function processNextRecord() {
+            if (currentIndex < tableRows.length) {
+               // console.debug("currindex:", currentIndex)
+               // console.debug("currRow:", tableRows[currentIndex])
+                const currentRow = tableRows[currentIndex];
+                    action(currentRow)
+                        .then(() => {
+                            // Move to the next record after the action is completed
+                            //currentIndex++;
+                            setTimeout(processNextRecord, interval);
+                            currentIndex++;
+                        })
+                        .catch(error => {
+                            reject(error);
+                    });
+              
+            } else {
+                // All records processed
+                resolve();
+            }
+        }
+        // Start processing the first record
+        processNextRecord();
+    });
+}
+
+function saveLocal_2(bulk_timer) {
+    // Usage example: Process each row in the HTML table with class "myTable", perform an action, and wait 1000 milliseconds between records
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    var preview;
+    var time_out = 1;
+    var checkset;
+    var checkcount = 0;
+    var editor;
+    var dismiss;
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>
+    `;
+    var myheader = document.querySelector('#wpadminbar');
+    var progressbar = document.querySelector(".indeterminate-progress-bar");
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+    }
+    else {
+        progressbar.style.display = 'block';
+    }
+    processTableRecords('tr.preview.status-waiting.priority-normal', async function (preview) {
+        // Perform your action on the current row here
+        //console.debug("preview:",preview)
+        checkset = preview.querySelector('input[type="checkbox"]')
+        //console.debug("myCheckBox:",checkset)
+        if (checkset == null) {
+            checkcount++
+            console.debug("unchecked count:", checkcount)
+        }
+        editor = preview.nextElementSibling;
+        //console.debug("editor:", editor)
+        if (checkset != null && editor != null) {
+            let rowfound = editor.id;
+            if (checkset.checked) {
+                    let editor = preview.nextElementSibling;
+                    if (editor != null) {
+                        let editorRow = rowfound.split("-")[1];
+                        // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                        // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                        if (rowfound.split("-")[2] != null) {
+                            editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                        }
+                        let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
+                        if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                            let preview = document.querySelector(`#preview-${editorRow}`);
+                            let editor = preview.nextElementSibling;
+                            let glotpress_suggest = editor.querySelector(".translation-actions__save");
+                           // let glotpress_open = document.querySelector(`#preview-${editorRow} td.actions .edit`);
+                           // let glotpress_close = document.querySelector(`#editor-${editorRow} div.editor-panel__left .panel-header-actions__cancel`);
+                            // glotpress_open.click()
+                            preview.querySelector("td.actions .edit").click();
+                            editor.style.display = "none";
+                            glotpress_suggest.classList.remove("disabled")
+                            glotpress_suggest.click();
+                            new Promise(resolve => setTimeout(async () => {
+                                // let mybulk_save = preview.querySelector(".tf-save-button");
+                                // glotpress_save.click()
+                                await glotpress_suggest.click();
+                                // mybulk_save.click();
+                                new Promise(resolve => setTimeout(async () => {
+                                    // we need to wait for saving the record        
+                                   // waitForMyElement(`#gp-js-message`, 500)
+                                    await waitForMyElement(`.gp-js-message-dismiss`, 800).then((dismiss) => {
+                                        console.debug("dismiss message:", dismiss)
+                                        if (dismiss != "Time-out reached") {
+                                            // dismiss = document.querySelector(`.gp-js-message-dismiss`)
+                                            if (dismiss != null) {
+                                                dismiss.click()
+                                            }
+                                        }
+                                        else {
+                                            // Sometimes the previewline is not hidden but save, so we need to hide it
+                                            preview = document.querySelector(`#preview-${editorRow}`);
+                                            if (preview != null) {
+                                                if (preview.style.display != " none") {
+                                                    preview.style.display = "none"
+                                                    preview.classList.replace("status-waiting", "status-hidden");
+                                                }
+                                            }
+                                        }
+                                    });     
+                                    if (is_pte) {
+                                        current.innerText = "current"
+                                    }
+                                    else {
+                                        current.innerText = "waiting"
+                                    }
+                                    resolve("ready")
+                                }), 100).then(() => {
+                                    // Sometimes the previewline is not hidden but save, so we need to hide it
+                                    preview = document.querySelector(`#preview-${editorRow}`);
+                                    if (preview != null) {
+                                        if (preview.style.display != " none") {
+                                            preview.style.display = "none"
+                                            preview.classList.replace("status-waiting", "status-hidden");
+                                        }
+                                    }
+                                    //glotpress_close.click()
+                                    //checkset.checked = false;
+                                    resolve("ready")
+                                });
+                            }), bulk_timer);
+                        }
+                        else {
+                            //console.debug("checkbox present but not set or not in waiting mode")
+                            let original = editor.querySelector("span.original-raw").innerText;
+                            if (original != null) {
+                                toastbox("info", "Skipping:" + original, "800", "Skipping record");
+                            }
+                            else {
+                                toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                                // toastbox.close()
+                            }
+                        }
+                    }
+                    else { console.debug("No editor record found!") }
+                }
+                else {
+                    console.debug("checkbox present but not set")
+                    let original = editor.querySelector("span.original-raw").innerText;
+                    if (original != null) {
+                        toastbox("info", "Skipping:" + original, "800", "Skipping record");
+                    }
+                    else {
+                        toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                        // toastbox.close()
+                    }
+                }
+        }
+        else {
+            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+            //console.debug("No checkset found!")
+        }
+        
+    }, bulk_timer)
+        .then(() => {
+            progressbar = document.querySelector(".indeterminate-progress-bar");
+            if (progressbar != null) {
+                progressbar.style.display = "none";
+               // console.log('All records processed.');
+            }
+            else {console.debug("no progressbar!")}
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+
+}
+async function bulkSave(noDiff,bulk_timer) {
      //event.preventDefault();
      var counter = 0;
      var checkboxCounter = 0;
@@ -3736,7 +4012,6 @@ async function bulkSave(noDiff) {
      var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      currWindow = window.self;
     //localStorage.setItem('interXHR', 'true');
-   
      var parrotMockDefinitions = [{
          "active": true,
          "description": "XHR",
@@ -3786,7 +4061,7 @@ async function bulkSave(noDiff) {
                  setmyCheckBox(event);
                  let value = noDiff;
                  await setToonDiff({ toonDiff: value });
-                 counter = saveLocal();
+                 counter = saveLocal_2(bulk_timer);
                  //When performing bulk save the difference is shown in Meta #269
                  //value = true;
                  //chrome.storage.local.set({ toonDiff: value }).then((result) => {
@@ -3801,7 +4076,9 @@ async function bulkSave(noDiff) {
          let value = noDiff;
          // console.debug("value:",value)
          await setToonDiff({ toonDiff: value });
-         counter = saveLocal();
+        // counter = saveLocal();
+         //counter = saveLocal_1();
+         counter = saveLocal_2(bulk_timer);
       }
 }
 
@@ -3822,19 +4099,20 @@ function second(milliseconds) {
 function waitForMyElement(selector, timeout) {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
-
         // Function to check if the element is visible
         function checkElement() {
             const element = document.querySelector(selector);
             if (element) {
+                //console.debug("Found in:",element)
                 // Element found, resolve the promise
                 resolve(element);
             } else if (Date.now() - startTime >= timeout) {
                 // Timeout reached, reject the promise
-                reject(new Error(`Timeout (${timeout} ms) exceeded while waiting for element with selector "${selector}"`));
+                resolve("Time-out reached")
+                //reject(new Error(`Timeout (${timeout} ms) exceeded while waiting for element with selector "${selector}"`));
             } else {
                 // Element not found, check again after a short delay
-                setTimeout(checkElement, 100); // Check again after 100 milliseconds
+                setTimeout(checkElement, 150); // Check again after 150 milliseconds
             }
         }
 
@@ -3873,7 +4151,7 @@ function _waitForElement(selector, delay =5, tries = 50) {
 
 function elementReady(selector) {
     var el;
-    var timeout = 20;
+    var timeout = 100;
     var findsel;
     return new Promise((resolve, reject) => {
         //console.debug("within elementReady",selector)
@@ -3896,6 +4174,7 @@ function elementReady(selector) {
                 if (findsel.length != "0") {
                     Array.from(document.querySelectorAll(selector)).forEach((element) => {
                         resolve(selector);
+                        //console.debug("resolved:",selector)
                         //Once we have resolved we don't need the observer anymore.
                         observer.disconnect();
                     });
@@ -4409,10 +4688,10 @@ async function bulkSaveToLocal() {
 
     document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
     if (is_pte) {
-            checkset = preview.querySelector("th input");
+        checkset = preview.querySelector(".checkbox input");
     }
     else {
-            checkset = preview.querySelector("td input");
+        checkset = preview.querySelector(".myCheckBox input");
     }
     if (checkset != null) {
        if (checkset.checked == true) {
@@ -4464,11 +4743,10 @@ async function saveToLocal() {
     RecCount = 0;
     document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
         if (is_pte) {
-            checkset = preview.querySelector("th input");
-            //console.debug("checkset:",checkset)
+            checkset = preview.querySelector(".checkbox input");
         }
         else {
-            checkset = preview.querySelector("td input");
+            checkset = preview.querySelector(".myCheckBox input");
         }
         if (typeof checkset != 'undefined') {
             if (checkset != null){ 

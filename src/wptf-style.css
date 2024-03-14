@@ -23,7 +23,8 @@
     border-radius: 9999px;
     /* Size */
     height: 0.8rem;
-    position: relative;
+    top: 32px;
+    position: sticky;
     overflow: hidden;
 }
 
@@ -1619,11 +1620,11 @@ table.translations th.thCheckBox {
      top: var(--wp-admin--admin-bar--height,0) !important;
 }
 
-/*After Glotpress has improved remove this header change
+/*/After Glotpress has improved remove this header change*/
 .site-header {
     padding-top:32px !important;
 }
-     */
+     
 /*After Glotpress has improved remove this header change 
 .wp-block-group.global-header {
     position: relative !important;

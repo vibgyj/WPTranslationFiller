@@ -62,6 +62,9 @@
         #OpenAIWait {
             width: 50px;
         }
+        #bulkWait {
+            width: 50px;
+        }
         #OpenAI_temp {
             width: 40px;
         }
@@ -183,7 +186,7 @@
 </head>
 <body>
     <div class="container" id="container">
-        <h1>WP Translation Filler - Options v2.2.9</h1>
+        <h1>WP Translation Filler - Options v2.3.7</h1>
         <div class="backbutton">
             <input id="backbutton" type="button" value="Close options page" />
         </div>
@@ -356,6 +359,17 @@
                         <label style="margin: 10px" for="OpenAIWait">OpenAI waiting time</label>
                         <input id="OpenAIWait" type="text" value="7500" />
                         <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="blkWait">Bulk save waiting time</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="bulkWait" type="text" value="1000" />
+                        <span class="tooltip" data-tooltip="Change this when bulk save skips records">?</span>
                     </div>
                 </td>
             </tr>

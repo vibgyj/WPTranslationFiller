@@ -650,8 +650,14 @@ document.addEventListener("keydown", async function (event) {
 let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
     bulkbutton.addEventListener("click", (event) => {
-         event.preventDefault();
-         bulkSave(event);
+        event.preventDefault();
+        chrome.storage.local.get(["bulkWait"], function (data) {
+            let bulkWait = data.bulkWait
+            if (bulkWait != null && typeof bulkWait != 'undefined') {
+                bulk_timer = bulkWait
+                bulkSave("false", bulk_timer);
+            }
+        });
     });
 }
 
@@ -1065,7 +1071,14 @@ async function startBulkSave(event) {
     //chrome.storage.local.set({ toonDiff: value }).then((result) => {
     //       console.log("Value toonDiff is set to false");
     //});
-    await bulkSave("false");
+    chrome.storage.local.get(["bulkWait"], function (data) {
+        let bulkWait = data.bulkWait
+        if (bulkWait != null && typeof bulkWait != 'undefined') {
+            bulk_timer = bulkWait
+            bulkSave("false", bulk_timer);
+        }
+    });
+
 }
 
 async function savetolocalClicked(event) {
@@ -1735,7 +1748,7 @@ async function checkbuttonClick(event) {
                                 liSuggestion = OpenAIres[0].querySelector(`span.translation-suggestion__translation`);
                                 liSuggestion_raw = OpenAIres[0].querySelector('span.translation-suggestion__translation-raw');
                                 textFound = liSuggestion.innerText
-                               // console.debug("text found:", textFound)
+                                //console.debug("text found:", textFound)
                                 let my_original = editor.querySelector(".original");
                                 if (my_original != null) {
                                     original = my_original.innerText
@@ -1831,7 +1844,7 @@ async function checkbuttonClick(event) {
 
 function translationComplete(original, translated) {
     if (original == translated) {
-        console.info("Identical");
+        //console.info("Identical");
     }
 }
 
@@ -1900,6 +1913,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             }
     }
     if (debug == true) {
+        console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
         console.debug("updatestyle prev:", prev_trans)
         console.debug("updatestyle curr:", currstring, rowId)
     }
@@ -1961,13 +1975,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem,"1963")
+            let res = await addCheckButton(rowId, checkElem,"1978")
             SavelocalButton = res.SavelocalButton;
         }
     }
     else {
         if (SavelocalButton == null) {
-            let res = await addCheckButton(rowId, checkElem,"1969")
+            let res = await addCheckButton(rowId, checkElem,"1984")
             SavelocalButton = res.SavelocalButton
         }
     }
@@ -2162,7 +2176,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 current = 'untranslated'
             }
         }
-        //console.debug("value of current:",current)
         if (current == 'current') {
             button_name = 'Save'
         }
@@ -2176,7 +2189,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             button_name = 'Save'
         }
         else {button_name == 'Undef!!'}
-
         // We do not need to style the record if it concerns the name label
         if (showName != true) {
             if (current != null) {
@@ -2187,14 +2199,13 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 // we need to update the button color and content/tooltip
                 // 22-07-2021 PSS fix for wrong button text "Apply" #108 
                 // moved the below code, and remove the duplicat of this code
-                //console.debug("percentage:",result.percent)
                 if (checkElem != null) {
                     if (result.percent == 100) {
                         checkElem.innerHTML = "100";
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "1593")
+                        res = addCheckButton(rowId, checkElem, "2211")
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
                             if (SavelocalButton != null) {
@@ -2203,7 +2214,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         }
                         checkElem.style.backgroundColor = "green";
                         checkElem.title = "Save the string";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             if (panelTransDiv != null) {
                                 panelTransDiv.style.backgroundColor = "green";
                             }
@@ -2215,7 +2226,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             }
                         }
                     }
-                    else if (result.percent > 66) {
+                    else if (result.percent >= 66) {
                         newtitle = checkElem.title;
                         checkElem.innerHTML = '<span style="color:black">66</span>';
                         separator1 = document.createElement("div");
@@ -2226,11 +2237,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.style.backgroundColor = "yellow";
                         checkElem.title = "Save the string";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "yellow";
                         }
                     }
-                    else if (result.percent > 33) {
+                    else if (result.percent >= 33) {
                         newtitle = checkElem.title;
                         checkElem.innerHTML = "33";
                         separator1 = document.createElement("div");
@@ -2241,7 +2252,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.title = "Save the string";
                         checkElem.style.backgroundColor = "orange";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "orange";
                         }
                     }
@@ -2250,7 +2261,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "1574")
+                        res = addCheckButton(rowId, checkElem, "2264")
                         SavelocalButton = res.SavelocalButton
                         SavelocalButton.disabled = false;
                         SavelocalButton.innerText = button_name;
@@ -2272,7 +2283,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.title = "Check the string";
                         checkElem.style.backgroundColor = "darkorange";
-                        if (typeof headerElem != "undefined" && headerElem != null) {
+                        if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "darkorange";
                         }
                     }
@@ -2308,7 +2319,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             let separator1 = document.createElement("div");
                             separator1.setAttribute("class", "checkElem_save");
                             checkElem.appendChild(separator1);
-                            res = addCheckButton(rowId, checkElem, "1612")
+                            res = addCheckButton(rowId, checkElem, "2327")
                             SavelocalButton = res.SavelocalButton
                             if (current != "untranslated" && current != 'current') {
                                 SavelocalButton.innerText = "Miss!";
@@ -2356,7 +2367,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 }
             }
         }
-
         // 11-08-2021 PSS added aditional code to prevent duplicate missing verbs in individual translation
         if ((result.toolTip).length > 0) {
             headerElem.title = "";
@@ -2697,12 +2707,20 @@ function addCheckButton(rowId, checkElem, lineNo) {
 
 
 function savetranslateEntryClicked(event) {
-    var myWindow;
-    let timeout = 0;
-    //event.preventDefault();
+    //console.debug("event:",event)
+    var myWindow;    
+   // event.preventDefault();
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
-    
+    //chrome.storage.local.get(["bulkWait"], function (data) {
+     //   let bulkWait = data.bulkWait
+     //   if (bulkWait != null && typeof bulkWait != 'undefined') {
+     //       bulk_timer = bulkWait
+     //   }
+      //  else {
+      //      bulk_timer = 1500;
+      //  }
+    var bulk_timer = 50
     // Determine status of record
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     var current = h.querySelector("span.panel-header__bubble");
@@ -2728,16 +2746,19 @@ function savetranslateEntryClicked(event) {
                     }
                     // PSS confirm the message for dismissal
                     foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                        if (confirm != '.gp-js-message-dismiss') {
-                            if (typeof confirm === 'function') {
-                                confirm.click();
-                                // close_toast();
-                            }
+                        let dismiss = document.querySelector('.gp-js-message-dismiss')
+                        if (dismiss != null) {
+                       // if (confirm == '.gp-js-message-dismiss') {
+                          //  if (typeof confirm === 'function') {
+                           // confirm.click();
+                            dismiss.click()
+                               // close_toast();
+                           // }
                         }
                     });
                 }
-            }, timeout);
-            timeout += 1500;
+            }, bulk_timer);
+           // timeout += bulk_timer;
         }
         if (current.innerText == "waiting") {
             let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
@@ -2754,14 +2775,12 @@ function savetranslateEntryClicked(event) {
                 // 25-08-2022 PSS changes made to fix issue #238
                 let preview = document.querySelector(`#preview-${rowId}`);
                 let editor = preview.nextElementSibling;
-                let glotpress_suggest = editor.querySelector(".translation-actions__save");
-                
-                //glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
-                //setTimeout(() => { 
+                let glotpress_suggest = editor.querySelector(".translation-actions__save");  
                 glotpress_suggest.click();
             }
             status.innerText = "current";
             current.innerText = "current";
+            // we need to close the editor as we do not need it
             glotpress_close.click();
             prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
             prevrow.style.backgroundColor = "#b5e1b9";
@@ -2795,7 +2814,8 @@ function savetranslateEntryClicked(event) {
             SavelocalButton.disabled = true;
             SavelocalButton.display = "none";
         }
-    }
+        }
+  //  });
 }
 
 function validate(language, original, translation, locale,showDiff) {
@@ -2861,7 +2881,7 @@ function validate(language, original, translation, locale,showDiff) {
             percent = 100;
     }      
     else if ((wordCount - foundCount) >0) {      
-        percent = (foundCount * 100) / wordCount;
+        percent = Math.round((foundCount * 100) / wordCount);
     }
     return { wordCount, foundCount, percent, toolTip, newText };
 }
@@ -3322,8 +3342,10 @@ function gd_auto_hide_next_editor(editor) {
     }
    
     // With center it works best, but it can be put on the top, center, bottom
-    //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });
-    myRow.scrollIntoView(true);
+    //elmnt.scrollIntoView({ behavior: "smooth", block: "start", inline: "end" });  
+    myRow.scrollIntoView({ block: "start" });
+    // we do not want the view to close to the header, so move it a bit down
+    window.scrollBy(0, -30);
     // We need to add the checkboxes if the translator is not a PTE
     // We need to add the extra cell on front of the preview line
     if (!is_pte) {
