@@ -292,8 +292,9 @@ function validatePage(language, showHistory, locale,showDiff) {
              my_line_counter = checkbox[0].querySelector("div.line-counter")       
             // add counter to checkbox, but do not add it twice      
             if (my_line_counter == null) {
-              checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
-              checkbox[0].firstChild.textContent = rowcount
+                checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
+               let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
+               this_line_counter.innerText  = rowcount
              }
  
         }

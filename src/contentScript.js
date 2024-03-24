@@ -2484,7 +2484,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 if ((result.toolTip).length > 0) {
                    // console.debug('missing verbs:', result.toolTip)
                     missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
-                    if (typeof missingVerbsButton != "undefined") {
+                    if (missingVerbsButton != null) {
                         missingVerbsButton.style.visibility = "visible"
                         missingVerbsButton.title= headertitle;
                     }

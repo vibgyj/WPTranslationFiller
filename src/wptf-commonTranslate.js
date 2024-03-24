@@ -3853,6 +3853,7 @@ function processTableRecords(selector, action, interval) {
 
 function saveLocal_2(bulk_timer) {
     // Usage example: Process each row in the HTML table with class "myTable", perform an action, and wait 1000 milliseconds between records
+   // console.debug("bulk save started")
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var preview;
     var time_out = 1;
@@ -3873,120 +3874,113 @@ function saveLocal_2(bulk_timer) {
     else {
         progressbar.style.display = 'block';
     }
-    processTableRecords('tr.preview.status-waiting.priority-normal', async function (preview) {
-        // Perform your action on the current row here
-        //console.debug("preview:",preview)
-        checkset = preview.querySelector('input[type="checkbox"]')
-        //console.debug("myCheckBox:",checkset)
-        if (checkset == null) {
-            checkcount++
-            console.debug("unchecked count:", checkcount)
-        }
-        editor = preview.nextElementSibling;
-        //console.debug("editor:", editor)
-        if (checkset != null && editor != null) {
-            let rowfound = editor.id;
-            if (checkset.checked) {
-                    let editor = preview.nextElementSibling;
-                    if (editor != null) {
-                        let editorRow = rowfound.split("-")[1];
-                        // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
-                        // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
-                        if (rowfound.split("-")[2] != null) {
-                            editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
-                        }
-                        let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
-                        if (current.innerText == 'waiting' || current.innerText == 'transFill') {
-                            let preview = document.querySelector(`#preview-${editorRow}`);
-                            let editor = preview.nextElementSibling;
-                            let glotpress_suggest = editor.querySelector(".translation-actions__save");
-                           // let glotpress_open = document.querySelector(`#preview-${editorRow} td.actions .edit`);
-                           // let glotpress_close = document.querySelector(`#editor-${editorRow} div.editor-panel__left .panel-header-actions__cancel`);
-                            // glotpress_open.click()
-                            preview.querySelector("td.actions .edit").click();
-                            editor.style.display = "none";
-                            glotpress_suggest.classList.remove("disabled")
-                            glotpress_suggest.click();
+    
+    processTableRecords('tr.preview.status-waiting', async function (preview) {
+        //console.debug("preview:",preview,preview.classList)
+        if (preview.classList.contains("priority-normal") || preview.classList.contains("priority-low") || preview.classList.contains("priority-high")) {
+            // Perform your action on the current row here
+            //console.debug("preview:",preview)
+            checkset = preview.querySelector('input[type="checkbox"]')
+            //console.debug("myCheckBox:",checkset)       
+            // editor = preview.nextElementSibling;
+            //console.debug("checkset:", checkset)
+            if (checkset != null && checkset.checked == true) {
+                //let rowfound = editor.id;
+                // if (checkset.checked == true) {
+                editor = preview.nextElementSibling;
+                if (editor != null) {
+                    let rowfound = editor.id;
+                    let editorRow = rowfound.split("-")[1];
+                    // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                    // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                    if (rowfound.split("-")[2] != null) {
+                        editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
+                    }
+                    //let current = document.querySelector(`#editor-${editorRow} span.panel-header__bubble`);
+                    let current = editor.querySelector('span.panel-header__bubble');
+                    // if (current.innerText == 'waiting' || current.innerText == 'transFill') {
+                    if (current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true) {
+                        let preview = document.querySelector(`#preview-${editorRow}`);
+                        let editor = preview.nextElementSibling;
+                        let glotpress_suggest = editor.querySelector(".translation-actions__save");
+                        // let glotpress_open = document.querySelector(`#preview-${editorRow} td.actions .edit`);
+                        // let glotpress_close = document.querySelector(`#editor-${editorRow} div.editor-panel__left .panel-header-actions__cancel`);
+                        // glotpress_open.click()
+                        preview.querySelector("td.actions .edit").click();
+                        editor.style.display = "none";
+                        glotpress_suggest.classList.remove("disabled")
+                        glotpress_suggest.click();
+                        new Promise(resolve => setTimeout(async () => {
+                            // let mybulk_save = preview.querySelector(".tf-save-button");
+                            // glotpress_save.click()
+                            await glotpress_suggest.click();
+                            // mybulk_save.click();
                             new Promise(resolve => setTimeout(async () => {
-                                // let mybulk_save = preview.querySelector(".tf-save-button");
-                                // glotpress_save.click()
-                                await glotpress_suggest.click();
-                                // mybulk_save.click();
-                                new Promise(resolve => setTimeout(async () => {
-                                    // we need to wait for saving the record        
-                                   // waitForMyElement(`#gp-js-message`, 500)
-                                    await waitForMyElement(`.gp-js-message-dismiss`, 800).then((dismiss) => {
-                                       // console.debug("dismiss message:", dismiss)
-                                        if (dismiss != "Time-out reached") {
-                                            // dismiss = document.querySelector(`.gp-js-message-dismiss`)
-                                            if (dismiss != null) {
-                                                dismiss.click()
-                                            }
+                                // we need to wait for saving the record        
+                                // waitForMyElement(`#gp-js-message`, 500)
+                                await waitForMyElement(`.gp-js-message-dismiss`, 800).then((dismiss) => {
+                                    // console.debug("dismiss message:", dismiss)
+                                    if (dismiss != "Time-out reached") {
+                                        // dismiss = document.querySelector(`.gp-js-message-dismiss`)
+                                        if (dismiss != null) {
+                                            dismiss.click()
                                         }
-                                        else {
-                                            // Sometimes the previewline is not hidden but save, so we need to hide it
-                                            preview = document.querySelector(`#preview-${editorRow}`);
-                                            if (preview != null) {
-                                                if (preview.style.display != " none") {
-                                                    preview.style.display = "none"
-                                                    preview.classList.replace("status-waiting", "status-hidden");
-                                                }
-                                            }
-                                        }
-                                    });     
-                                    if (is_pte) {
-                                        current.innerText = "current"
                                     }
                                     else {
-                                        current.innerText = "waiting"
-                                    }
-                                    resolve("ready")
-                                }), 100).then(() => {
-                                    // Sometimes the previewline is not hidden but save, so we need to hide it
-                                    preview = document.querySelector(`#preview-${editorRow}`);
-                                    if (preview != null) {
-                                        if (preview.style.display != " none") {
-                                            preview.style.display = "none"
-                                            preview.classList.replace("status-waiting", "status-hidden");
+                                        // Sometimes the previewline is not hidden but save, so we need to hide it
+                                        preview = document.querySelector(`#preview-${editorRow}`);
+                                        if (preview != null) {
+                                            if (preview.style.display != " none") {
+                                                preview.style.display = "none"
+                                                preview.classList.replace("status-waiting", "status-hidden");
+                                            }
                                         }
                                     }
-                                    //glotpress_close.click()
-                                    //checkset.checked = false;
-                                    resolve("ready")
                                 });
-                            }), bulk_timer);
-                        }
-                        else {
-                            //console.debug("checkbox present but not set or not in waiting mode")
-                            let original = editor.querySelector("span.original-raw").innerText;
-                            if (original != null) {
-                                toastbox("info", "Skipping:" + original, "800", "Skipping record");
-                            }
-                            else {
-                                toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
-                                // toastbox.close()
-                            }
-                        }
-                    }
-                    else { console.debug("No editor record found!") }
-                }
-                else {
-                    console.debug("checkbox present but not set")
-                    let original = editor.querySelector("span.original-raw").innerText;
-                    if (original != null) {
-                        toastbox("info", "Skipping:" + original, "800", "Skipping record");
+                                if (is_pte) {
+                                    current.innerText = "current"
+                                }
+                                else {
+                                    current.innerText = "waiting"
+                                }
+                                resolve("ready")
+                            }), 100).then(() => {
+                                // Sometimes the previewline is not hidden but save, so we need to hide it
+                                preview = document.querySelector(`#preview-${editorRow}`);
+                                if (preview != null) {
+                                    if (preview.style.display != " none") {
+                                        preview.style.display = "none"
+                                        preview.classList.replace("status-waiting", "status-hidden");
+                                    }
+                                }
+                                //glotpress_close.click()
+                                //checkset.checked = false;
+                                resolve("ready")
+                            });
+                        }), bulk_timer);
                     }
                     else {
-                        toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
-                        // toastbox.close()
+                        //console.debug("checkbox present but not set or not in waiting mode")
+                        let original = editor.querySelector("span.original-raw").innerText;
+                        if (original != null) {
+                            toastbox("info", "Skipping:" + original, "800", "Skipping record");
+                        }
+                        else {
+                            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                            // toastbox.close()
+                        }
                     }
                 }
+            }
+            else {
+                console.debug("unchecked count:", checkcount)
+                toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                //console.debug("No checkset found!")
+            }
         }
         else {
-            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
-            //console.debug("No checkset found!")
+            console.log("ClassList of preview:",preview.classList)
         }
-        
     }, bulk_timer)
         .then(() => {
             progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -3999,8 +3993,6 @@ function saveLocal_2(bulk_timer) {
         .catch(error => {
             console.error('Error:', error);
         });
-
-
 }
 async function bulkSave(noDiff,bulk_timer) {
      //event.preventDefault();
