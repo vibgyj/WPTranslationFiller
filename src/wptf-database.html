@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta description="WP Translation Filler - Database">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" content-type="image/svg+xml">
+    <title>WP Translation Filler - Database</title>
+    <script src="wptf-database-maintenance.js"  crossorigin="anonymous"></script>
+    <style>
+        .form-input {
+            margin: 5px 0;
+        }
+
+        .labeled-checkbox {
+            display: block;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            font-size: 12pt;
+        }
+
+        #footer tr,
+        #database tr {
+            padding-top: 12px !important;
+            padding-bottom: 12px !important;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+            text-align: left;
+            background-color: #04AA6D;
+            color: white;
+            width: 600px;
+        }
+
+        #footer td,
+        #options td {
+            padding-left: 5px;
+            padding-right: 5px;
+            width: 174px;
+        }
+
+        #original_text {
+            width: 820px;
+        }
+
+        #translation_text {
+            width: 820px;
+        }
+
+        #microsoft_api_key {
+            width: 350px;
+        }
+
+        #OpenAI_api_key {
+            width: 350px;
+        }
+
+        #glossary_file {
+            display: block;
+            font-style: italic;
+            width: 250px;
+        }
+
+
+        #text_openai_prompt {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+
+        #text_openai_review {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+
+        #text_pre_verbs {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+
+        #text_ignore_verbs {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+
+        #backbutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            padding: 5px 0;
+            background-color: #04AA6D;
+        }
+
+        #save {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            padding: 5px 0;
+        }
+
+        #search {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            padding: 5px 0;
+        }
+
+        #clear {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            padding: 5px 0;
+        }
+
+        #delete {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            padding: 5px 0;
+        }
+
+        .searchbutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .savebutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .clearbutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .deletebutton {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Tooltip container */
+        .tooltip {
+            position: relative;
+            background-color: #0085ba;
+            color: white;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: .8rem;
+            cursor: help;
+        }
+
+            .tooltip::before {
+                opacity: 0;
+                visibility: hidden;
+                position: absolute;
+                left: 50%;
+                top: -20px;
+                transition: all .25s ease;
+            }
+
+            .tooltip::after {
+                opacity: 0;
+                visibility: hidden;
+                position: absolute;
+                left: 50%;
+                top: -20px;
+                transition: all .25s ease;
+            }
+
+            .tooltip::before {
+                content: '';
+                border-width: 8px 5px 0 5px;
+                border-style: solid;
+                border-color: rgba(0,0,0,.3) transparent transparent transparent;
+                margin-left: -5px;
+            }
+
+            .tooltip::after {
+                content: attr(data-tooltip);
+                transform: translate(-50%, -100%);
+                font-size: .75rem;
+                letter-spacing: 1px;
+                color: #eaeaea;
+                background-color: #0085ba;
+                /*background-color: rgba(0,0,0,.3); */
+                padding: .5rem;
+                border-radius: 5px;
+                min-width: 315px;
+            }
+            /* Show the tooltip text when you mouse over the tooltip container */
+            .tooltip:hover::before {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .tooltip:hover::after {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        fieldset {
+            border: 1px solid #000;
+        }
+
+        .wptf-info {
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            clear: both;
+            width: 170px;
+        }
+
+        a:hover, a:visited, a:link, a:active {
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="textInput" placeholder="Type your message">
+    <button onclick="sendMessageToParent()">Send Message</button>
+
+    <div class="container" id="container">
+
+        <div class="backbutton">
+            <input id="backbutton" type="button" value="Close database page" />
+        </div>
+        <table id="database">
+            <tr>
+                <td>
+                    <label for="original_text">Enter original</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="original_text" type="text" value="original->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="translation_text">Translation</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="translation_text" type="text" value="translation->" />
+                    </div>
+                </td>
+            </tr>
+
+
+
+
+        </table>
+
+
+        <table id="footer">
+            <tr>
+                <td>
+                    <div class="searchbutton">
+                        <input id="search" type="button" value="Search" />
+                    </div>
+                </td>
+                <td>
+                    <div class="clearbutton">
+                        <input id="clear" type="button" value="Clear" />
+                    </div>
+                </td>
+                <td>
+                    <div class="savebutton">
+                        <input id="save" type="button" value="Save" />
+                    </div>
+                </td>
+                <td>
+                    <div class="deletebutton">
+                        <input id="delete" type="button" value="Delete" />
+                    </div>
+                </td>
+                <td>
+                    <div class="wptf-info">
+                        <a rel="noopener" href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

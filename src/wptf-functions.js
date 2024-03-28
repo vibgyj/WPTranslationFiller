@@ -302,7 +302,9 @@ function validatePage(language, showHistory, locale,showDiff) {
             // if not a PTE it must be put in a different checkbox
            let mycheckbox = old_status.getElementsByClassName("myCheckBox")
             mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
-            mycheckbox[0].textContent = rowcount
+            let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
+            this_line_counter.innerText = rowcount
+           // mycheckbox[0].textContent = rowcount
         }
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;

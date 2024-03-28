@@ -42,6 +42,80 @@ async function openDB(db) {
     };
 }
 
+function createAndOpenModal() {
+    // Create the modal elements
+    const modal = document.createElement('div');
+    modal.id = 'modal';
+    modal.classList.add('modal');
+    const modalContent = document.createElement('div');
+    modalContent.classList.add('modal-content');
+    const closeButton = document.createElement('span');
+    closeButton.classList.add('close');
+    closeButton.textContent = "x";
+    const inputField = document.createElement('input');
+    inputField.type = 'text';
+    inputField.id = 'inputData';
+    const modalTd = document.createElement('td');
+    modalTd.classList.add('modal-td');
+    const retrieveButton = document.createElement('button');
+    retrieveButton.id = 'retrieveDataBtn';
+    retrieveButton.textContent = 'Search original';
+
+    const clearButton = document.createElement('button');
+    clearButton.id = 'clearDataBtn';
+    clearButton.textContent = 'Clear';
+
+    const outputDiv = document.createElement('div');
+    outputDiv.id = 'output';
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(inputField);
+    modalContent.appendChild(modalTd);
+    modalContent.appendChild(retrieveButton);
+    modalContent.appendChild(clearButton);
+    modalContent.appendChild(outputDiv);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    // Event listener to close modal
+    closeButton.addEventListener('click', function () {
+        modal.style.display = 'none';
+    });
+    // Event listener to retrieve data
+    clearButton.addEventListener('click', async function (event) {
+        console.debug("event:", event)
+        // Retrieve data from indexedDB based on input
+        
+        // Display data in the modal
+        inputField.value = "";
+        outputDiv.textContent = "";
+    });
+    retrieveButton.addEventListener('click', async function (event) {
+        console.debug("event:",event)
+        // Retrieve data from indexedDB based on input
+        const input = inputField.value;
+        // Call a function to retrieve data from indexedDB
+        const dataFromIndexedDB = await retrieveDataFromIndexedDB(input);
+        console.debug("returned:", dataFromIndexedDB)
+        // Display data in the modal
+        if (dataFromIndexedDB == "notFound") {
+            outputDiv.textContent = "Original not found!"
+        }
+        else {
+            outputDiv.textContent = dataFromIndexedDB;
+        }
+    });
+    // Display the modal
+    modal.style.display = 'block';
+}
+
+// Function to retrieve data from indexedDB
+async function retrieveDataFromIndexedDB(input) {
+    // Perform operations to retrieve data from indexedDB based on the input
+    // Replace this with your indexedDB retrieval logic
+     let result = await findTransline(input, 'nl')
+        console.debug("trans:", result)
+        return result; 
+}
+
 //async function initDb() {
  ///   var isDbCreated = await jsstoreCon.initDb(getDbSchema());
   //  if (isDbCreated) {
@@ -344,12 +418,14 @@ async function countTransline(orig,cntry){
 
 async function findTransline(orig,cntry){
     var trans = "notFound";
+    //console.debug("searching:",orig,cntry)
     const results = await jsstoreCon.select({
         from: "Translation",
             where: {
             sourceCountry: [orig,cntry]
         }
     }).then((value) => {
+       // console.debug("value of search:",value)
         if (value !=""){
             trans = convPromise(value);
         }
@@ -362,7 +438,7 @@ async function findTransline(orig,cntry){
 
 async function convPromise(trans){
     res = trans[0]["translation"];
-    //console.debug("convPromise:",res)
+    console.debug("convPromise:",res)
     if (typeof res== "undefined"){
        res="notFound";
     }

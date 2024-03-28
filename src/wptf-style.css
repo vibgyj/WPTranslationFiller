@@ -950,8 +950,64 @@ table.translations td.priority {
 }*/
 
 /** The change below is for issue# 137 modification in GlotDict*/
+/**table.translations tr.preview.has-glotdict { */
+/** table.translations tr.preview.has-glotdict th + .priority + .original::before { */
+/** margin-left: calc(-0.5em - 45px) !important;*/
+ /**   vertical-align: middle !important; */
+ /**  width: 10% !important; */
+/** }*/
+
+/**table.translations tr.preview.has-glotdict .original {
+        margin-left: calc(-0.5em - 4px) !important;
+    } */
+
+
+/**table.translations tr.preview.has-glotdict .original::before {
+    content: "";
+    display: inline-block;
+    width: 10px !important;
+    height: 100%;
+    background: blue;
+    position: absolute;
+    margin-left: calc(-0.5em - 4px);
+    margin-top: -.5em;
+}
+
+table.translations tr.preview.has-glotdict th, table.translations tr.preview.has-glotdict .original {
+    margin-left: calc(-.5em - 4px) !important;
+}
+
+
 table.translations tr.preview.has-glotdict th + .priority + .original::before {
-     margin-left: calc(-0.5em - 45px) !important;
+    margin-left: calc(-.5em - 4px) !important;
+}
+
+table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
+    margin-left: calc(-.5em - 50px) !important;
+} */
+
+
+table.translations tr.preview.has-glotdict th, tr.preview.has-glotdict td.myCheckBox {
+    /**margin-left: calc(-.5em - 50px) !important; */
+    position: relative !important;
+    background: lightblue !important; 
+    color: white !important;
+} 
+/** The change below is for issue# 137 modification in GlotDict*/
+/**table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
+    margin-left: calc(-.5em - 40px) !important;
+    color: red !important;
+    position: center !important;
+} */
+
+/** table.translations tr.preview.has-glotdict th + .priority + .original::before {
+    margin-left: calc(-.5em - 40px) !important;
+    color: red !important;
+}  */
+
+
+site-title {
+    margin-left: -60px !important;
 }
 
 tr.editor {
@@ -966,10 +1022,7 @@ tr.preview.status-hidden {
 tr.preview.wptf-saved {
     display: none !important;
 }
-/** The change below is for issue# 137 modification in GlotDict*/
-table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
-    margin-left: calc(-.5em - 48px) !important;
-}
+
 
 #tf-save-button {
     font-size: 12px !important;
@@ -1603,6 +1656,10 @@ table.translations th.thCheckBox {
     font-weight: 700 !important;
     padding: 0px !important;
     margin: 0px !important;
+}
+
+span.text-line-counter{
+    text-align:center;
 }
 
 .line-counter {

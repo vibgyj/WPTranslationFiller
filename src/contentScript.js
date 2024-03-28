@@ -1,4 +1,6 @@
 //var glossary;
+var db;
+var jsstoreCon;
 
 loadGlossary();
 addTranslateButtons();
@@ -8,10 +10,9 @@ if (!window.indexedDB) {
 }
 else {
     // PSS added jsStore to be able to store and retrieve default translations
-    var jsstoreCon = new JsStore.Connection();
-    var db;
+    jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
-   // console.debug("new db open:", db);   
+    console.debug("new db open:", db);
 }
 
 var translator; // Declare the global variable
@@ -63,9 +64,7 @@ async function sampleUse() {
         'toonDiff': false
     };
     await setToonDiff(sampleObject1);
-
    // console.log(await getToonDiff('toonDiff'));
-
 }
 
 //When performing bulk save the difference is shown in Meta #269
@@ -107,7 +106,6 @@ var parrotActive;
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('wptf-inject.js');
 (document.head || document.documentElement).prepend(script);
-
 ;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
 chrome.storage.local.get( ["glotDictGlos"],
     function (data) {
@@ -688,11 +686,34 @@ var link = document.createTextNode("WPTF options");
 a.appendChild(link);
 optionlink.className = 'menu-item wptf_settings_menu'
 
+var databaselink = document.createElement("li");
+var b = document.createElement('a');
+b.href = "#"
+//b.target = "_self";
+var link = document.createTextNode("WPTF database");
+b.id = "openModalLink"
+b.appendChild(link);
+databaselink.className = 'menu-item wptf_database_menu'
+
+//here we add the links into the divMenu
 var divMenu = document.querySelector("#menu-headline-nav");
 if (divMenu != null) {
     optionlink.appendChild(a)
     divMenu.appendChild(optionlink);
+    databaselink.appendChild(b)
+    divMenu.appendChild(databaselink);
 }
+
+// Example: Listen for clicks on a link to trigger opening the modal
+document.addEventListener('click', function (event) {
+    // Check if the clicked element is the link that should open the modal
+    if (event.target.id =='openModalLink') {
+        // Prevent the default action of the link
+        event.preventDefault();
+        // Create and open the modal
+        createAndOpenModal();
+    }
+});
 
 //Add translate button - start
 var translateButton = document.createElement("a");
