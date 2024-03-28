@@ -49,14 +49,22 @@ function createAndOpenModal() {
     modal.classList.add('modal');
     const modalContent = document.createElement('div');
     modalContent.classList.add('modal-content');
+    const modalHeader = document.createElement("H4");
+    modalHeader.innerText = "Maintenance of local database"
+    modalHeader.classList.add('modal-header');
     const closeButton = document.createElement('span');
     closeButton.classList.add('close');
     closeButton.textContent = "x";
     const inputField = document.createElement('input');
     inputField.type = 'text';
     inputField.id = 'inputData';
+    const modalTranslation = document.createElement('div');
+    modalTranslation.classList.add('modal-translation');
     const modalTd = document.createElement('td');
     modalTd.classList.add('modal-td');
+    const inputFieldTrans = document.createElement('input');
+    inputField.type = 'text';
+    inputField.id = 'inputTrans';
     const retrieveButton = document.createElement('button');
     retrieveButton.id = 'retrieveDataBtn';
     retrieveButton.textContent = 'Search original';
@@ -65,12 +73,20 @@ function createAndOpenModal() {
     clearButton.id = 'clearDataBtn';
     clearButton.textContent = 'Clear';
 
+    const saveButton = document.createElement('button');
+    saveButton.id = 'saveDataBtn';
+    saveButton.textContent = 'Save';
     const outputDiv = document.createElement('div');
     outputDiv.id = 'output';
     modalContent.appendChild(closeButton);
+    modalContent.appendChild(modalHeader);
     modalContent.appendChild(inputField);
     modalContent.appendChild(modalTd);
+    modalContent.appendChild(modalTranslation)
+    modalContent.appendChild(inputFieldTrans);
+    modalContent.appendChild(modalTd);
     modalContent.appendChild(retrieveButton);
+    modalContent.appendChild(saveButton);
     modalContent.appendChild(clearButton);
     modalContent.appendChild(outputDiv);
     modal.appendChild(modalContent);
@@ -79,15 +95,14 @@ function createAndOpenModal() {
     closeButton.addEventListener('click', function () {
         modal.style.display = 'none';
     });
-    // Event listener to retrieve data
-    clearButton.addEventListener('click', async function (event) {
-        console.debug("event:", event)
-        // Retrieve data from indexedDB based on input
-        
-        // Display data in the modal
+    // Event listener to clear data
+    clearButton.addEventListener('click', async function (event) {         
+        // clear fields in modal
         inputField.value = "";
+        inputFieldTrans.value = "";
         outputDiv.textContent = "";
     });
+
     retrieveButton.addEventListener('click', async function (event) {
         console.debug("event:",event)
         // Retrieve data from indexedDB based on input
@@ -103,6 +118,26 @@ function createAndOpenModal() {
             outputDiv.textContent = dataFromIndexedDB;
         }
     });
+
+    saveButton.addEventListener('click', async function (event) {
+        console.debug("event:", event)
+        // Save data to indexedDB based on input
+        const input1 = inputField.value;
+        if (input1 == "") {
+            outputDiv.textContent = "Please enter a value for original!"
+        }
+        else if (inputFieldTrans.value == "") {
+
+            outputDiv.textContent = "Please enter a value for translation!"
+        }
+        if (input1 != "" && inputFieldTrans.value != "") {
+            cntry='nl'
+            let res = await addTransDb(input1, inputFieldTrans.value, cntry)
+            console.debug("result of save:", res)
+            outputDiv.textContent = res
+        }
+        
+    });
     // Display the modal
     modal.style.display = 'block';
 }
@@ -111,9 +146,11 @@ function createAndOpenModal() {
 async function retrieveDataFromIndexedDB(input) {
     // Perform operations to retrieve data from indexedDB based on the input
     // Replace this with your indexedDB retrieval logic
-     let result = await findTransline(input, 'nl')
+    let result = await findTransline(input, 'nl')
         console.debug("trans:", result)
-        return result; 
+    return result;
+   
+       
 }
 
 //async function initDb() {

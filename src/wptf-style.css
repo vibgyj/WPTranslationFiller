@@ -72,18 +72,19 @@
 
 /* Modal Content */
 .modal-content {
-      position: relative;
-      background-color: lightskyblue;
-      margin: auto;
-      padding-left: 180px;
-      padding-top: 10px;
-      border: 1px solid #888;
-      width: 40%;
-      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
-      -webkit-animation-name: animatetop;
-      -webkit-animation-duration: 0.4s;
-      animation-name: animatetop;
-      animation-duration: 0.4s
+    position: relative;
+    background-color: lightskyblue;
+    margin: auto;
+    padding-left: 180px;
+    padding-top: 10px;
+    padding-bottom: 50px;
+    border: 1px solid #888;
+    width: 40%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
 }
 
 /* Add Animation */
@@ -127,9 +128,9 @@
 }
 
 .modal-header {
-      padding: 2px 16px;
-      background-color: #5cb85c;
-      color: white;
+    padding: 2px 16px;
+    background-color: lightskyblue;
+    color: white;
 }
 
 .modal-body {
