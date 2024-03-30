@@ -133,8 +133,15 @@
     color: white;
 }
 
+#inputOriginal {
+    width:300px;
+}
+#inputTranslation {
+    width: 300px;
+}
+
 .modal-body {
-      padding: 2px 16px;
+    padding: 2px 16px;
 }
 
 .modal-footer {
@@ -1007,8 +1014,8 @@ table.translations tr.preview.has-glotdict th, tr.preview.has-glotdict td.myChec
 }  */
 
 
-site-title {
-    margin-left: -60px !important;
+.site-header .site-branding {
+    max-width: 1400px !important;
 }
 
 tr.editor {

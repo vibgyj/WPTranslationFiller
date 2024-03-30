@@ -43,6 +43,7 @@ async function openDB(db) {
 }
 
 function createAndOpenModal() {
+    console.debug("locale:",locale)
     // Create the modal elements
     const modal = document.createElement('div');
     modal.id = 'modal';
@@ -55,16 +56,24 @@ function createAndOpenModal() {
     const closeButton = document.createElement('span');
     closeButton.classList.add('close');
     closeButton.textContent = "x";
+    modalContent.appendChild(closeButton);
+
+    const OriginalDiv = document.createElement('div');
+    OriginalDiv.classList.add('modal-original');
     const inputField = document.createElement('input');
     inputField.type = 'text';
-    inputField.id = 'inputData';
-    const modalTranslation = document.createElement('div');
-    modalTranslation.classList.add('modal-translation');
+    inputField.id = 'modal-inputOriginal';
+    OriginalDiv.appendChild(inputField);
     const modalTd = document.createElement('td');
     modalTd.classList.add('modal-td');
+   
+    const TranslationDiv = document.createElement('div');
+    TranslationDiv.classList.add('modal-translation');
     const inputFieldTrans = document.createElement('input');
-    inputField.type = 'text';
-    inputField.id = 'inputTrans';
+    inputFieldTrans.type = 'text';
+    inputFieldTrans.id = 'model-inputTranslation';
+    TranslationDiv.appendChild(inputFieldTrans)
+
     const retrieveButton = document.createElement('button');
     retrieveButton.id = 'retrieveDataBtn';
     retrieveButton.textContent = 'Search original';
@@ -73,6 +82,10 @@ function createAndOpenModal() {
     clearButton.id = 'clearDataBtn';
     clearButton.textContent = 'Clear';
 
+    const deleteButton = document.createElement('button');
+    deleteButton.id = 'deleteDataBtn';
+    deleteButton.textContent = 'Delete';
+
     const saveButton = document.createElement('button');
     saveButton.id = 'saveDataBtn';
     saveButton.textContent = 'Save';
@@ -80,17 +93,17 @@ function createAndOpenModal() {
     outputDiv.id = 'output';
     modalContent.appendChild(closeButton);
     modalContent.appendChild(modalHeader);
-    modalContent.appendChild(inputField);
-    modalContent.appendChild(modalTd);
-    modalContent.appendChild(modalTranslation)
-    modalContent.appendChild(inputFieldTrans);
+    modalContent.appendChild(OriginalDiv)
+    modalContent.appendChild(TranslationDiv)
     modalContent.appendChild(modalTd);
     modalContent.appendChild(retrieveButton);
     modalContent.appendChild(saveButton);
+    modalContent.appendChild(deleteButton);
     modalContent.appendChild(clearButton);
     modalContent.appendChild(outputDiv);
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
+    inputField.focus()
     // Event listener to close modal
     closeButton.addEventListener('click', function () {
         modal.style.display = 'none';
@@ -104,7 +117,7 @@ function createAndOpenModal() {
     });
 
     retrieveButton.addEventListener('click', async function (event) {
-        console.debug("event:",event)
+        //console.debug("event:",event)
         // Retrieve data from indexedDB based on input
         const input = inputField.value;
         // Call a function to retrieve data from indexedDB
@@ -120,7 +133,7 @@ function createAndOpenModal() {
     });
 
     saveButton.addEventListener('click', async function (event) {
-        console.debug("event:", event)
+       // console.debug("event:", event)
         // Save data to indexedDB based on input
         const input1 = inputField.value;
         if (input1 == "") {
@@ -131,12 +144,33 @@ function createAndOpenModal() {
             outputDiv.textContent = "Please enter a value for translation!"
         }
         if (input1 != "" && inputFieldTrans.value != "") {
-            cntry='nl'
-            let res = await addTransDb(input1, inputFieldTrans.value, cntry)
-            console.debug("result of save:", res)
+            let res = await addTransDb(input1, inputFieldTrans.value, locale)
             outputDiv.textContent = res
         }
         
+    });
+
+    deleteButton.addEventListener('click', async function (event) {
+        //console.debug("event:", event)
+        // Save data to indexedDB based on input
+        const input1 = inputField.value;
+        if (input1 == "") {
+            outputDiv.textContent = "Please enter a value for original!"
+        }
+
+        if (input1 != "") {
+            let result = await findTransline(input1, locale)
+            if (result == 'notFound') {
+                outputDiv.textContent = "Record not found!"
+            }
+            else {
+                
+                let result = await deleteTransDb(input1,locale)
+                console.debug("result of delete:", result)
+                outputDiv.textContent = result
+            }
+        }
+
     });
     // Display the modal
     modal.style.display = 'block';
@@ -146,8 +180,7 @@ function createAndOpenModal() {
 async function retrieveDataFromIndexedDB(input) {
     // Perform operations to retrieve data from indexedDB based on the input
     // Replace this with your indexedDB retrieval logic
-    let result = await findTransline(input, 'nl')
-        console.debug("trans:", result)
+    let result = await findTransline(input, locale)
     return result;
    
        
@@ -389,6 +422,30 @@ async function checkIndex(event) {
             result = false;
         }  
     };
+}
+
+async function deleteTransDb(orig, cntry){
+    var transl = { orig, cntry };
+    try {
+        var noOfDataDeleted = await jsstoreCon.remove({
+            from: 'Translation',
+            where: {
+                source: orig
+            }
+        }).then((res,noOfDataDeleted) => {
+            console.debug("res:",res)
+            if (res == 1) {
+                reslt = "Deleted";
+            } else if (res != 1) {
+                // messageBox("error", "Record not added!!");
+                reslt = "Record not deleted";
+            }
+            console.debug("return value:",reslt)
+        })
+        return reslt;
+    } catch (ex) {
+        messageBox("error", "Error: " + ex.message);
+    }
 }
 
 async function addTransDb(orig, trans, cntry) {
