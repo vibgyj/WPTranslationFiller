@@ -1,6 +1,7 @@
 //var glossary;
 var db;
 var jsstoreCon;
+var myGlotDictStat;
 
 loadGlossary();
 addTranslateButtons();
@@ -12,7 +13,7 @@ else {
     // PSS added jsStore to be able to store and retrieve default translations
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
-    console.debug("new db open:", db);
+    //console.debug("new db open:", db);
 }
 
 var translator; // Declare the global variable
@@ -97,6 +98,7 @@ var convertToLow = true;
 var detailRow = 0;
 var errorstate = "OK";
 var locale;
+var showGlosLine;
 
 gd_wait_table_alter();
 addCheckBox();
@@ -106,30 +108,7 @@ var parrotActive;
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('wptf-inject.js');
 (document.head || document.documentElement).prepend(script);
-;// 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
-chrome.storage.local.get( ["glotDictGlos"],
-    function (data) {
-        var showGlosLine = data.glotDictGlos;
-        if (showGlosLine == "false") {
-            const style = document.createElement("style");
-            style.innerHTML = `
-                tr.preview.has-glotdict .original::before {
-                display: none !important;
-            }
-            `;
-            document.head.appendChild(style);
-        }
-        else {
-            const style = document.createElement("style");
-            style.innerHTML = `
-            tr.preview.has-glotdict .original::before {
-            width: 5px !important;
-            }
-            `;
-            document.head.appendChild(style);
-        }
 
-});
 
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement("input");
@@ -3539,3 +3518,68 @@ function gd_wait_table_alter() {
         });
     }
 }
+
+// Function to remove a div element with a specified class name
+function removeDiv(className) {
+    // Select the div element with the specified class name
+    var divToRemove = document.querySelector("." + className);
+    // Check if the div element exists
+    if (divToRemove) {
+        // Remove the div element
+        divToRemove.parentNode.removeChild(divToRemove);
+        var legend = document.getElementById('legend');
+        var divElements = legend.getElementsByTagName("div");
+        // Loop through the list of div elements
+        for (var i = 0; i < divElements.length; i++) {
+            // Check if the text content of the div matches the value you're looking for
+            if (divElements[i].textContent === "Contains a Glossary term") {
+                // Set the text content of the div to an empty string
+                divElements[i].textContent = "";
+                break; // Exit the loop once the value is found and set
+            }
+        }
+    } else {
+        // Element not found
+        console.log("Element not found.");
+    }
+    }
+
+// Function to be called whenever a new node is added to the DOM
+chrome.storage.local.get(["glotDictGlos"],
+    async function (data) {
+        // we need to wait before checking the status of GlotDict
+        setTimeout(async function()  {
+                showGlosLine = data.glotDictGlos;
+                console.debug("showGlosLine:", showGlosLine)
+                if (showGlosLine == "false") {
+                    function handleNewNode(mutationsList, observer) {
+                        mutationsList.forEach(mutation => {
+                            if (mutation.type === 'childList') {
+                                // Iterate over the added nodes
+                                for (var i = 0; i < mutation.addedNodes.length; i++) {
+                                    var node = mutation.addedNodes[i];
+                                    // Check if the added node is an element
+                                    if (node.nodeType === Node.ELEMENT_NODE) {
+                                        //console.debug("node:",node,node.classList[1])
+                                        // Check if the added node has the class "div-to-remove"
+                                        if (node.classList.contains('has-glotdict')) {
+                                            // Remove the div element
+                                            // console.debug("we start removing:")
+                                            removeDiv("box.has-glotdict");
+                                            observer.disconnect()
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    // Create a MutationObserver instance
+                    var observer = new MutationObserver(handleNewNode);
+                    // Start observing the DOM for changes
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }
+                else {
+                    console.debug("GlotDict show glossary word false!",)
+                }
+        }, 0)
+    });
