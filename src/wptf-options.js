@@ -1,7 +1,15 @@
+// Load the version from maniscript
+var version = chrome.runtime.getManifest().version;
 var scriptElm = document.createElement("script");
 scriptElm.src = chrome.runtime.getURL("wptf-cute-alert.js");
 document.body.appendChild(scriptElm);
-
+const template = `
+    <h1>WP Translation Filler - Options v${version}
+    </h1>
+    `;
+// Show version in header of options screen
+optionHeader = document.getElementById('container')
+optionHeader.insertAdjacentHTML("afterbegin", template);
 //var meta = document.createElement("meta");
 //meta.setAttribute("name", "viewport");
 //meta.setAttribute("content", "width=device-width, initial-scale=1.0");
@@ -33,6 +41,8 @@ let OpenAItempBox = document.getElementById("OpenAI_temp");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("glossary_file_uploaded");
 let glossaryFile = document.getElementById("glossary_file");
+let uploadedSecondFile = document.getElementById("glossary_file_second_uploaded");
+let glossarySecondFile = document.getElementById("glossary_file_second");
 let LtToolKeyTextbox = document.getElementById("languagetool_key");
 let LtToolUserTextbox = document.getElementById("languagetool_user");
 let LtToolLangTextbox = document.getElementById("languagetool_language");
@@ -52,8 +62,10 @@ let showConvertCheckbox = document.getElementById("show-convertToLower");
 let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 let showForceFormal = document.getElementById("Force-formal");
+let showDefGlossary = document.getElementById("use-default-glossary");
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal"], function (data) {
+
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary"], function (data) {
     //console.debug("getvalue:",data.bulkWait)
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
@@ -117,6 +129,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `${data.glossaryFile}`;
+    uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
     verbsTextbox.value = data.postTranslationReplace;
     preverbsTextbox.value = data.preTranslationReplace;
 
@@ -229,6 +242,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         }
         else {
             showForceFormal.checked = false;
+        }
+    }
+    if (data.DefGlossary != "null") {
+        if (data.DefGlossary == true) {
+            showDefGlossary.checked = true;
+        }
+        else {
+            showDefGlossary.checked = false;
         }
     }
    
@@ -352,6 +373,13 @@ button.addEventListener("click", function () {
     else {
         Force_formal = "false";
     }
+    if (document.querySelector("#use-default-glossary:checked") !== null) {
+        let Def_Glossary_Set = document.querySelector("#use-default-glossary:checked");
+        Def_Glossary = Def_Glossary_Set.checked;
+    }
+    else {
+        Def_Glossary = "false";
+    }
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -382,7 +410,8 @@ button.addEventListener("click", function () {
             LtFree: LtFreeChecked,
             Auto_spellcheck: LtAutoSpell,
             Auto_review_OpenAI: OpenAIreview,
-            ForceFormal: Force_formal
+            ForceFormal: Force_formal,
+            DefGlossary:Def_Glossary
 
         });
 
@@ -429,6 +458,49 @@ button.addEventListener("click", function () {
             chrome.storage.local.set({ glossaryY: glossaryY });
             chrome.storage.local.set({ glossaryZ: glossaryZ });
         }
+
+        if (glossarySecondFile.value !== "") {
+            // 06-05-2022 PSS fix for issue #208
+            const thisdate = new Date();
+            let myYear = thisdate.getFullYear();
+            let mymonth = thisdate.getMonth();
+            let myday = thisdate.getDate();
+            let thisDay = myday + "-" + (mymonth + 1) + "-" + myYear;
+
+            mySecondfile = glossarySecondFile.value.replace("C:\\fakepath\\", "");
+            console.debug("myfile:",mySecondfile)
+            mySecondfile = mySecondfile + "   " + thisDay;
+            chrome.storage.local.set({ glossaryFileSecond: mySecondfile });
+
+            chrome.storage.local.set({ glossary1: glossary1 });
+            chrome.storage.local.set({ glossary1A: glossary1A });
+            chrome.storage.local.set({ glossary1B: glossary1B });
+            chrome.storage.local.set({ glossary1C: glossary1C });
+            chrome.storage.local.set({ glossary1D: glossary1D });
+            chrome.storage.local.set({ glossary1E: glossary1E });
+            chrome.storage.local.set({ glossary1F: glossary1F });
+            chrome.storage.local.set({ glossary1G: glossary1G });
+            chrome.storage.local.set({ glossary1H: glossary1H });
+            chrome.storage.local.set({ glossary1I: glossary1I });
+            chrome.storage.local.set({ glossary1J: glossary1J });
+            chrome.storage.local.set({ glossary1K: glossary1K });
+            chrome.storage.local.set({ glossary1L: glossary1L });
+            chrome.storage.local.set({ glossary1M: glossary1M });
+            chrome.storage.local.set({ glossary1N: glossary1N });
+            chrome.storage.local.set({ glossary1O: glossary1O });
+            chrome.storage.local.set({ glossary1P: glossary1P });
+            chrome.storage.local.set({ glossary1Q: glossary1Q });
+            chrome.storage.local.set({ glossary1R: glossary1R });
+            chrome.storage.local.set({ glossary1S: glossary1S });
+            chrome.storage.local.set({ glossary1T: glossary1T });
+            chrome.storage.local.set({ glossary1U: glossary1U });
+            chrome.storage.local.set({ glossary1V: glossary1V });
+            chrome.storage.local.set({ glossary1W: glossary1W });
+            chrome.storage.local.set({ glossary1X: glossary1X });
+            chrome.storage.local.set({ glossary1Y: glossary1Y });
+            chrome.storage.local.set({ glossary1Z: glossary1Z });
+        }
+        
         messageBox("info", "Settings successfully saved.<br>Please make sure that you enter<br>values in Destination Language<br> and select a Glossary File<br>and enter values in <br>Post Translation Replace");
     }
     else {
@@ -466,6 +538,35 @@ let glossaryX = [];
 let glossaryY = [];
 let glossaryZ = [];
 
+let second_file = document.getElementById("glossary_file_second");
+let glossary1 = [];
+let glossary1A = [];
+let glossary1B = [];
+let glossary1C = [];
+let glossary1D = [];
+let glossary1E = [];
+let glossary1F = [];
+let glossary1G = [];
+let glossary1H = [];
+let glossary1I = [];
+let glossary1J = [];
+let glossary1K = [];
+let glossary1L = [];
+let glossary1M = [];
+let glossary1N = [];
+let glossary1O = [];
+let glossary1P = [];
+let glossary1Q = [];
+let glossary1R = [];
+let glossary1S = [];
+let glossary1T = [];
+let glossary1U = [];
+let glossary1V = [];
+let glossary1W = [];
+let glossary1X = [];
+let glossary1Y = [];
+let glossary1Z = [];
+
 file.addEventListener("change", function () {
     var entry = "";
     var value = "";
@@ -493,6 +594,7 @@ file.addEventListener("change", function () {
                     for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
+                            value[val] = value[val].replaceAll("&#39;", "'").trim();
                         }
                     }
                 }
@@ -504,6 +606,7 @@ file.addEventListener("change", function () {
                 for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
+                            value[val] = value[val].replaceAll("&#39;", "'").trim();
                         }
                     }
                 
@@ -593,10 +696,10 @@ file.addEventListener("change", function () {
                 }
             }
         }
-        //console.log(glossaryA);
+        //console.log(glossary);
     };
     reader.readAsText(file);
-    let updatedfilename = document.getElementById("text_glossary_file");
+    let updatedfilename = document.getElementById("glossary_file");
     const thisdate = new Date();
     let myYear = thisdate.getFullYear();
     let mymonth = thisdate.getMonth();
@@ -606,6 +709,150 @@ file.addEventListener("change", function () {
     updatedfilename.innerText = file.name + myfiledate;
     messageBox("info", "Glossary import ready, make sure you save the options and restart the addon afterwards!")
 });
+
+second_file.addEventListener("change", function () {
+    var entry = "";
+    var value = "";
+    var second_file = this.files[0];
+
+    if (this.files.length == 0) {
+        return
+    }
+    //locale = "nl";
+
+    var reader = new FileReader();
+    reader.onload = function () {
+        var lines = this.result.split("\n");
+        // don"t read first(header) and last(empty) lines
+        for (var line = 1; line < lines.length - 1; line++) {
+            entry = lines[line].split(",");
+            if (entry[1] && entry[1].length > 0) {
+                let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
+                //console.debug(" entry 1:", entry[1]);
+                const found = entry[1].indexOf("-/");
+                //console.debug(" entry 1:", entry[1],found);
+                if (found == -1) {
+                    value = entry[1].split("/");
+                    //console.debug(" -/ not found", value);
+                    for (let val in value) {
+                        if (value != "") {
+                            value[val] = value[val].replaceAll("\"", "").trim();
+                            value[val] = value[val].replaceAll("&#39;", "'").trim();
+                        }
+                    }
+                }
+                else {
+                    value = entry[1];
+                    // console.debug("/ found:", value);
+                }
+                //console.debug("wefound:", value);
+                for (let val in value) {
+                    if (value != "") {
+                        value[val] = value[val].replaceAll("\"", "").trim();
+                        value[val] = value[val].replaceAll("&#39;", "'").trim();
+                    }
+                }
+
+                startChar = key.substring(0, 1);
+                switch (startChar) {
+                    case "a":
+                        pushToGlossary(glossary1A, key, value);
+                        break;
+                    case "b":
+                        pushToGlossary(glossary1B, key, value);
+                        break;
+                    case "c":
+                        pushToGlossary(glossary1C, key, value);
+                        break;
+                    case "d":
+                        pushToGlossary(glossary1D, key, value);
+                        break;
+                    case "e":
+                        pushToGlossary(glossary1E, key, value);
+                        break;
+                    case "f":
+                        pushToGlossary(glossary1F, key, value);
+                        break;
+                    case "g":
+                        pushToGlossary(glossary1G, key, value);
+                        break;
+                    case "h":
+                        pushToGlossary(glossary1H, key, value);
+                        break;
+                    case "i":
+                        pushToGlossary(glossary1I, key, value);
+                        break;
+                    case "j":
+                        pushToGlossary(glossary1J, key, value);
+                        break;
+                    case "k":
+                        pushToGlossary(glossary1K, key, value);
+                        break;
+                    case "l":
+                        pushToGlossary(glossary1L, key, value);
+                        break;
+                    case "m":
+                        pushToGlossary(glossary1M, key, value);
+                        break;
+                    case "n":
+                        pushToGlossary(glossary1N, key, value);
+                        break;
+                    case "o":
+                        pushToGlossary(glossary1O, key, value);
+                        break;
+                    case "p":
+                        pushToGlossary(glossary1P, key, value);
+                        break;
+                    case "q":
+                        pushToGlossary(glossary1Q, key, value);
+                        break;
+                    case "r":
+                        pushToGlossary(glossary1R, key, value);
+                        break;
+                    case "s":
+                        pushToGlossary(glossary1S, key, value);
+                        break;
+                    case "t":
+                        pushToGlossary(glossary1T, key, value);
+                        break;
+                    case "u":
+                        pushToGlossary(glossary1U, key, value);
+                        break;
+                    case "v":
+                        pushToGlossary(glossary1V, key, value);
+                        break;
+                    case "w":
+                        pushToGlossary(glossary1W, key, value);
+                        break;
+                    case "x":
+                        pushToGlossary(glossary1X, key, value);
+                        break;
+                    case "y":
+                        pushToGlossary(glossaryY, key, value);
+                        break;
+                    case "z":
+                        pushToGlossary(glossary1Z, key, value);
+                        break;
+                    default:
+                        pushToGlossary(glossary1, key, value);
+                        break;
+                }
+            }
+        }
+    };
+    reader.readAsText(second_file);
+    let updatedfilename = document.getElementById("glossary_file_second");
+    const thisdate = new Date();
+    let myYear = thisdate.getFullYear();
+    let mymonth = thisdate.getMonth();
+    let myday = thisdate.getDate();
+    let thisDay = myday + "-" + (mymonth + 1) + "-" + myYear;
+    let myfiledate = "   " + thisDay;
+    updatedfilename.innerText = second_file.name + myfiledate;
+    messageBox("info", "Glossary import ready, make sure you save the options and restart the addon afterwards!")
+});
+
+
 
 function checkLocale() {
     // function currently not used but maybe in future
@@ -621,6 +868,7 @@ function pushToGlossary(glossary, key, value) {
     }
     glossary.push({ key: key, value: value });
 }
+
 function export_verbs_csv() {
     //console.debug("Export started:");
     // 13-03-2021 PSS added locale to export filename

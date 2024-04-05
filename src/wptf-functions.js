@@ -238,13 +238,15 @@ function validatePage(language, showHistory, locale,showDiff) {
     var translation;
     var prev_trans;
     var rowcount = 0;
+    var checkbox;
+    var my_line_counter;
     // html code for counter in checkbox
     const line_counter = `
     <div class="line-counter">
-        <span class="line-counter"></span>
+        <span class="text-line-counter"></span>
     </div>
     `;
-    //console.debug("validatePage:",language,showHistory, locale)
+   
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
     let url = f[0].firstChild.baseURI;
@@ -282,17 +284,23 @@ function validatePage(language, showHistory, locale,showDiff) {
        // validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
         });
         // we need to fetch the status of the record to pass on
-        old_status = document.querySelector("#preview-" + rowId);
-        let checkbox = old_status.getElementsByClassName("checkbox")
-         
-        if (checkbox.length != 0) {
-            // add counter to checkbox
-            checkbox[0].firstChild.insertAdjacentHTML('beforebegin', line_counter);
-            checkbox[0].firstChild.nextSibling.textContent = rowcount
-            }
+            
+        let old_status = document.querySelector("#preview-" + rowId);
+       /// checkbox = old_status.querySelector('input[type="checkbox"]')
+        checkbox = old_status.getElementsByClassName("checkbox")
+        if (checkbox[0] != null) {
+             my_line_counter = checkbox[0].querySelector("div.line-counter")       
+            // add counter to checkbox, but do not add it twice      
+            if (my_line_counter == null) {
+                checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
+               let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
+               this_line_counter.innerText  = rowcount
+             }
+ 
+        }
         else {
             // if not a PTE it must be put in a different checkbox
-            let mycheckbox = old_status.getElementsByClassName("myCheckBox")
+           let mycheckbox = old_status.getElementsByClassName("myCheckBox")
             mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
             mycheckbox[0].textContent = rowcount
         }
@@ -325,16 +333,15 @@ function validatePage(language, showHistory, locale,showDiff) {
         }
         else {
             nameDiff = false;
-        }
-        var result = validate(language, original, translation, locale);
-        let record = e.previousSibling.previousSibling.previousSibling
-                 
+            }
+
+        var result = validate(language, original, translation, locale, false);
+        let record = e.previousSibling.previousSibling.previousSibling               
         // this is the start of validation, so no prev_trans is present      
         prev_trans = translation
         updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],prev_trans,old_status,showDiff);
         }, timeout);
-        timeout += 20;
-       
+        timeout += 20;   
     }
     // 30-06-2021 PSS set fetch status from local storage
     chrome.storage.local.set({ "noOldTrans": "False" }, function () {

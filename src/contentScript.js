@@ -15,12 +15,16 @@ else {
 }
 
 var translator; // Declare the global variable
+var DefGlossary = true;
 var RecCount = 0;
 // Use chrome.local.get to retrieve the value
 chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
 });
 
+chrome.storage.local.get('DefGlossary', async function (result) {
+    DefGlossary = result.DefGlossary; // Assign the value to the global variable
+});
 
 const setToonDiff = async function (obj) {
     return new Promise((resolve, reject) => {
@@ -874,6 +878,21 @@ UpperCaseButton.href = "#";
 UpperCaseButton.onclick = UpperCaseClicked;
 UpperCaseButton.innerText = "Casing";
 
+var SwitchGlossButton = document.createElement("a");
+SwitchGlossButton.href = "#";
+SwitchGlossButton.onclick = SwitchGlossClicked;
+chrome.storage.local.get("DefGlossary").then((res) => {
+    if (res.DefGlossary == true) {
+        SwitchGlossButton.innerText = "DefGlos";
+        SwitchGlossButton.style.background = "green"
+        SwitchGlossButton.style.color = "white"
+    }
+    else {
+        SwitchGlossButton.innerText = "SecGlos";
+        SwitchGlossButton.style.background = "orange"
+    }
+});
+
 var SwitchTMButton = document.createElement("a");
 SwitchTMButton.href = "#";
 SwitchTMButton.className = "Switch-TM-button";
@@ -901,9 +920,10 @@ if (GpSpecials == null) {
 }
 if (GpSpecials != null && divProjects == null) {
     divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(SwitchGlossButton, divPaging.childNodes[0]);
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     chrome.storage.local.get(["apikeyDeepl"], function (data) {
-        let apikey=data.apikeyDeepl
+        //let apikey=data.apikeyDeepl
         if (data.apikeyDeepl != null && data.apikeyDeepl !="" && typeof data.apikeyDeepl != 'undefined') {
             divPaging.insertBefore(LoadGloss, divPaging.childNodes[0]);
             divPaging.insertBefore(DispGloss, divPaging.childNodes[0]);
@@ -1016,9 +1036,25 @@ function UpperCaseClicked() {
     });
 }
 
+function SwitchGlossClicked() {
+    event.preventDefault();
+    chrome.storage.local.get("DefGlossary").then((res) => { 
+        if (res.DefGlossary == true) {
+        toastbox("info", "Switching Glossary to second", "1200", "Glossary switch");
+        chrome.storage.local.set({ DefGlossary: false});
+    }
+    else {
+        toastbox("info", "Switching Glossary to default", "1200", "Glossary switch");
+        chrome.storage.local.set({ DefGlossary: true });
+    }
+    location.reload();
+    }); 
+
+}
+
 function SwitchTMClicked() {
     event.preventDefault();
-    let int = localStorage.getItem(['switchTM']);
+    int = localStorage.getItem(['switchTM']);
     if (int == "false") {
         toastbox("info", "Switching TM to foreign", "1200", "TM switch");
         localStorage.setItem('switchTM', 'true');
@@ -1381,22 +1417,89 @@ function loadGlossary(start) {
                 });
                 
 
+               // if (glossary.length > 27) {
+                   // chrome.storage.local.get(["showHistory", 'destlang', 'showTransDiff', 'DefGlossary'], function (data,event) {
+                       // if (data.showHistory != "null") {
+                          //  let locale = checkLocale();
+                           // validatePage(data.destlang, data.showHistory, locale, data.showTransDiff, data.DefGlossary);
+                          //  }
+                   // });
+             //   }
+              //  else {
+              //      messageBox("error", "Your glossary is not loaded because no file is loaded!!");
+               //     return;
+              //  }
+               // checkbuttonClick();
+                
+
+            }
+            else {
+                messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
+                return;
+            }
+        }
+    );
+
+    glossary1 = [];
+    chrome.storage.local.get(["glossary1", "glossary1A", "glossary1B", "glossary1C"
+        , "glossary1D", "glossary1E", "glossary1F", "glossary1G", "glossary1H", "glossary1I"
+        , "glossary1J", "glossary1K", "glossary1L", "glossary1M", "glossary1N", "glossary1O"
+        , "glossary1P", "glossary1Q", "glossary1R", "glossary1S", "glossary1T", "glossary1U"
+        , "glossary1V", "glossary1W", "glossary1X", "glossary1Y", "glossary1Z", "destlang"],
+        function (data) {
+            //console.debug('data:', data)
+            if (typeof data.glossary1 != "undefined") {
+                loadSet1(glossary1, data.glossary1);
+                loadSet1(glossary1, data.glossary1A);
+                loadSet1(glossary1, data.glossary1B);
+                loadSet1(glossary1, data.glossary1C);
+                loadSet1(glossary1, data.glossary1D);
+                loadSet1(glossary1, data.glossary1E);
+                loadSet1(glossary1, data.glossary1F);
+                loadSet1(glossary1, data.glossary1G);
+                loadSet1(glossary1, data.glossary1H);
+                loadSet1(glossary1, data.glossary1I);
+                loadSet1(glossary1, data.glossary1J);
+                loadSet1(glossary1, data.glossary1K);
+                loadSet1(glossary1, data.glossary1L);
+                loadSet1(glossary1, data.glossary1M);
+                loadSet1(glossary1, data.glossary1N);
+                loadSet1(glossary1, data.glossary1O);
+                loadSet1(glossary1, data.glossary1P);
+                loadSet1(glossary1, data.glossary1Q);
+                loadSet1(glossary1, data.glossary1R);
+                loadSet1(glossary1, data.glossary1S);
+                loadSet1(glossary1, data.glossary1T);
+                loadSet1(glossary1, data.glossary1U);
+                loadSet1(glossary1, data.glossary1V);
+                loadSet1(glossary1, data.glossary1W);
+                loadSet1(glossary1, data.glossary1X);
+                loadSet1(glossary1, data.glossary1Y);
+                loadSet1(glossary1, data.glossary1Z);
+
+                glossary1.sort(function (a, b) {
+                    // to sort by descending order
+                    return b.key.length - a.key.length;
+                });
+
+
                 if (glossary.length > 27) {
-                    chrome.storage.local.get(["showHistory", 'destlang', 'showTransDiff'], function (data,event) {
+                    chrome.storage.local.get(["showHistory", 'destlang', 'showTransDiff', 'DefGlossary'], function (data, event) {
                         if (data.showHistory != "null") {
+                            //console.debug("content DefGlossary:",data.DefGlossary)
                             let locale = checkLocale();
                             validatePage(data.destlang, data.showHistory, locale, data.showTransDiff);
-                            }
+                        }
                     });
                 }
                 else {
-                    messageBox("error", "Your glossary is not loaded because no file is loaded!!");
+                    messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
                     return;
                 }
-               // checkbuttonClick();
+
             }
             else {
-                messageBox("error", "Your glossary is not loaded because no file is loaded!!");
+                messageBox("error", "Your second glossary is not loaded because no file is loaded!!");
                 return;
             }
         }
@@ -1408,6 +1511,9 @@ function loadSet(x, set) {
     glossary = glossary.concat(set);
 }
 
+function loadSet1(x, set) {
+    glossary1 = glossary1.concat(set);
+}
 function addTranslateButtons() {
     //16 - 06 - 2021 PSS fixed this function addTranslateButtons to prevent double buttons issue #74
     for (let e of document.querySelectorAll("tr.editor")) {
@@ -1605,6 +1711,7 @@ async function checkbuttonClick(event) {
     var OpenAIres;
     var newres;
     var lires = '0';
+    //var DefGlossary=true;
     if (event != undefined) {
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         //event.preventDefault(); caused a problem within the single page enttry  
@@ -1616,7 +1723,6 @@ async function checkbuttonClick(event) {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
-
             //localStorage.setItem('interXHR', 'false');
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
@@ -1675,7 +1781,7 @@ async function checkbuttonClick(event) {
             translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // We need the current textareaElem for evaluation of the translated text
             textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
-            result = await validateEntry('nl', textareaElem, "", "", rowId, "nl",false);
+            result = await validateEntry('nl', textareaElem, "", "", rowId, "nl","",false);
 
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
             chrome.storage.local.set({ "noOldTrans": "True" }, function () {
@@ -1809,7 +1915,7 @@ async function checkbuttonClick(event) {
                
             if (typeof textareaElem != "null") {
                 // we need to use await otherwise there is not result.newText
-                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl");
+                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl","", false);
                 if (result.newText != "") {
                     let editorElem = document.querySelector("#editor-" + rowId + " .original");
                     //19-02-2023 PSS we do not add the marker twice, but update it if present
@@ -1839,6 +1945,7 @@ async function checkbuttonClick(event) {
                 }
             }
         }
+        
     }
 }
 
@@ -2030,8 +2137,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
     }
 }
-async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record,showDiff) {
-    //console.debug("validateEntry:",record)
+async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     var translation;
     var result=[];
@@ -2378,7 +2484,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 if ((result.toolTip).length > 0) {
                    // console.debug('missing verbs:', result.toolTip)
                     missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
-                    if (typeof missingVerbsButton != "undefined") {
+                    if (missingVerbsButton != null) {
                         missingVerbsButton.style.visibility = "visible"
                         missingVerbsButton.title= headertitle;
                     }
@@ -2827,10 +2933,15 @@ function validate(language, original, translation, locale,showDiff) {
     var isFound = false;
     var newText = "";
     //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
-        
+    if (DefGlossary == true ) {
+        myglossary = glossary
+    }
+    else {
+        myglossary = glossary1
+    }
     if (translation.length > 0) {
        for (let oWord of originalWords) {
-           for (let gItem of glossary) {
+           for (let gItem of myglossary) {
                let gItemKey = gItem["key"];
                let gItemValue = gItem["value"];
                // Fix for not comparing properly due to special chars issue #279

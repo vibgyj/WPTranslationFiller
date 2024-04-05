@@ -10,6 +10,7 @@
         .form-input {
             margin: 5px 0;
         }
+
         .labeled-checkbox {
             display: block;
         }
@@ -19,23 +20,26 @@
             margin: auto;
             font-size: 12pt;
         }
+
         #footer tr,
         #options tr {
             padding-top: 12px !important;
             padding-bottom: 12px !important;
-            padding-left:5px !important;
-            padding-right:5px !important;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
             text-align: left;
             background-color: #04AA6D;
             color: white;
-            width:600px;
+            width: 600px;
         }
+
         #footer td,
         #options td {
-            padding-left: 5px ;
+            padding-left: 5px;
             padding-right: 5px;
-            width:220px;
+            width: 220px;
         }
+
         #google_api_key {
             width: 350px;
         }
@@ -47,24 +51,35 @@
         #microsoft_api_key {
             width: 350px;
         }
+
         #OpenAI_api_key {
             width: 350px;
         }
 
-        #text_glossary_file {
+        #glossary_file {
             display: block;
             font-style: italic;
             width: 250px;
         }
+
+        #text_glossary_file_second {
+            display: block;
+            font-style: italic;
+            width: 250px;
+        }
+
         #tmWait {
             width: 50px;
         }
+
         #OpenAIWait {
             width: 50px;
         }
+
         #bulkWait {
             width: 50px;
         }
+
         #OpenAI_temp {
             width: 40px;
         }
@@ -78,18 +93,22 @@
             width: calc(100% - 6px);
             min-height: 100px;
         }
+
         #text_openai_review {
             width: calc(100% - 6px);
             min-height: 100px;
         }
+
         #text_pre_verbs {
             width: calc(100% - 6px);
             min-height: 100px;
         }
+
         #text_ignore_verbs {
             width: calc(100% - 6px);
             min-height: 100px;
         }
+
         #backbutton {
             display: flex;
             justify-content: center;
@@ -98,6 +117,7 @@
             padding: 5px 0;
             background-color: #04AA6D;
         }
+
         #save {
             display: flex;
             justify-content: center;
@@ -105,6 +125,7 @@
             width: 150px;
             padding: 5px 0;
         }
+
         .savebutton {
             display: flex;
             justify-content: center;
@@ -114,7 +135,7 @@
         .tooltip {
             position: relative;
             background-color: #0085ba;
-            color:white;
+            color: white;
             width: 21px;
             height: 21px;
             border-radius: 50%;
@@ -125,59 +146,66 @@
             cursor: help;
         }
 
-        .tooltip::before {
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            left: 50%;
-            top: -20px;
-            transition: all .25s ease;
-        }
-        .tooltip::after {
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            left: 50%;
-            top: -20px;
-            transition: all .25s ease;
-        }
-        .tooltip::before {
-            content: '';
-            border-width: 8px 5px 0 5px;
-            border-style: solid;
-            border-color: rgba(0,0,0,.3) transparent transparent transparent;
-            margin-left: -5px;
-        }
-        .tooltip::after {
-            content: attr(data-tooltip);
-            transform: translate(-50%, -100%);
-            font-size: .75rem;
-            letter-spacing: 1px;
-            color: #eaeaea;
-            background-color: #0085ba;
-            /*background-color: rgba(0,0,0,.3); */
-            padding: .5rem;
-            border-radius: 5px;
-            min-width: 315px;
-        }
-        /* Show the tooltip text when you mouse over the tooltip container */
-        .tooltip:hover::before {
-            opacity: 1;
-            visibility: visible;
-        }
-        .tooltip:hover::after {
-            opacity: 1;
-            visibility: visible;
-        }
+            .tooltip::before {
+                opacity: 0;
+                visibility: hidden;
+                position: absolute;
+                left: 50%;
+                top: -20px;
+                transition: all .25s ease;
+            }
+
+            .tooltip::after {
+                opacity: 0;
+                visibility: hidden;
+                position: absolute;
+                left: 50%;
+                top: -20px;
+                transition: all .25s ease;
+            }
+
+            .tooltip::before {
+                content: '';
+                border-width: 8px 5px 0 5px;
+                border-style: solid;
+                border-color: rgba(0,0,0,.3) transparent transparent transparent;
+                margin-left: -5px;
+            }
+
+            .tooltip::after {
+                content: attr(data-tooltip);
+                transform: translate(-50%, -100%);
+                font-size: .75rem;
+                letter-spacing: 1px;
+                color: #eaeaea;
+                background-color: #0085ba;
+                /*background-color: rgba(0,0,0,.3); */
+                padding: .5rem;
+                border-radius: 5px;
+                min-width: 315px;
+            }
+            /* Show the tooltip text when you mouse over the tooltip container */
+            .tooltip:hover::before {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .tooltip:hover::after {
+                opacity: 1;
+                visibility: visible;
+            }
+
         fieldset {
             border: 1px solid #000;
         }
+
         .wptf-info {
             display: block;
             margin: 0 auto;
             text-align: center;
             clear: both;
         }
+
         a:hover, a:visited, a:link, a:active {
             text-decoration: none;
             color: white;
@@ -186,7 +214,7 @@
 </head>
 <body>
     <div class="container" id="container">
-        <h1>WP Translation Filler - Options v2.3.7</h1>
+       
         <div class="backbutton">
             <input id="backbutton" type="button" value="Close options page" />
         </div>
@@ -288,7 +316,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="glossary_file">Glossary File (csv)</label>
+                    <label for="glossary_file">Glossary File default(csv)</label>
                 </td>
                 <td>
                     <div class="form-input">
@@ -303,6 +331,26 @@
                 <td colspan="1">
                     <div>
                         <span style="width:320px" id="glossary_file_uploaded"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="glossary_file_second">Glossary File second (csv)</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="glossary_file_second" type="file" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>File uploaded at date</label>
+                </td>
+                <td colspan="1">
+                    <div>
+                        <span style="width:320px" id="glossary_file_second_uploaded"></span>
                     </div>
                 </td>
             </tr>
@@ -364,7 +412,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="blkWait">Bulk save waiting time</label>
+                    <label for="bulkWait">Bulk save waiting time</label>
                 </td>
                 <td>
                     <div class="form-input">
@@ -419,22 +467,6 @@ You,Je
         </fieldset>
         <br />
         <label class="labeled-checkbox">
-            <input type="checkbox" id="show-history">
-            <span>Show history</span>
-        </label>
-        <label class="labeled-checkbox">
-            <input type="checkbox" id="comp-translations">
-            <span>Compare translations</span>
-        </label>
-        <label class="labeled-checkbox">
-            <input type="checkbox" id="show-glotDictGlos">
-            <span>Show GlotDict</span>
-        </label>
-        <label class="labeled-checkbox">
-            <input type="checkbox" id="show-convertToLower">
-            <span>Convert words to lowercase except first word</span>
-        </label>
-        <label class="labeled-checkbox">
             <input type="checkbox" id="Auto-LT-spellcheck">
             <span>Auto spellcheck after pagecheck</span>
         </label>
@@ -443,10 +475,29 @@ You,Je
             <span>Auto review with OpenAi after pagecheck</span>
         </label>
         <label class="labeled-checkbox">
+            <input type="checkbox" id="comp-translations">
+            <span>Compare translations</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="show-convertToLower">
+            <span>Convert words to lowercase except first word</span>
+        </label>
+        <label class="labeled-checkbox">
             <input type="checkbox" id="Force-formal">
             <span>Force to use formal tone</span>
         </label>
-
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="show-glotDictGlos">
+            <span>Show GlotDict</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="show-history">
+            <span>Show history</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="use-default-glossary">
+            <span>Use default glossary</span>
+        </label>
         <table id="footer">
             <tr>
                 <td>
