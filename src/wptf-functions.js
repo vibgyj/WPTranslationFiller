@@ -309,7 +309,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 // we need to fetch the status of the record to pass on
 
                 let old_status = document.querySelector("#preview-" + rowId);
-                /// checkbox = old_status.querySelector('input[type="checkbox"]')
+                /// checkbox = old_status.querySelector('input[type="checkbox"]'
                 checkbox = old_status.getElementsByClassName("checkbox")
                 glossary_word = old_status.getElementsByClassName("glossary-word")
 
@@ -317,7 +317,8 @@ async function validatePage(language, showHistory, locale,showDiff) {
                     my_line_counter = checkbox[0].querySelector("div.line-counter")
                     // mark lines with glossary word into checkbox
                     if (glossary_word.length != 0) {
-                        checkbox[0].style.background = "lightblue"
+                        checkbox[0].style.background = "LightSteelBlue"
+                        checkbox[0].title = "Has glossary word"
                     }
                     // add counter to checkbox, but do not add it twice      
                     if (my_line_counter == null) {
@@ -333,6 +334,10 @@ async function validatePage(language, showHistory, locale,showDiff) {
                     mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
                     let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
                     this_line_counter.innerText = rowcount
+                    if (glossary_word.length != 0) {
+                        mycheckbox[0].style.background = "LightSteelBlue"
+                        mycheckbox[0].title ="Has glossary word"
+                    }
                     // mycheckbox[0].textContent = rowcount
                 }
                 let element = e.querySelector(".source-details__comment");

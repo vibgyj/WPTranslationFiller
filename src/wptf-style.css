@@ -962,13 +962,14 @@ table.translations td.priority {
     background: lightblue !important;
     color: white !important;
     margin-left: -.8em !important;
-} 
-table.translations tr.preview.has-glotdict td.myCheckBox {
+} */
+
+/*table.translations tr.preview.has-glotdict td.myCheckBox {
     position: relative !important;
     background: lightblue !important; 
     color: white !important;
-} 
-    */
+} */
+   
 /** The change below is for issue# 137 modification in GlotDict*/
 /**table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
     margin-left: calc(-.5em - 40px) !important;

@@ -532,7 +532,7 @@ async function findTransline(orig,cntry){
 
 async function convPromise(trans){
     res = trans[0]["translation"];
-    console.debug("convPromise:",res)
+    //console.debug("convPromise:",res)
     if (typeof res== "undefined"){
        res="notFound";
     }
