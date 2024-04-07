@@ -216,7 +216,7 @@
     <div class="container" id="container">
        
         <div class="backbutton">
-            <input id="backbutton" type="button" value="Close options page" />
+            <input id="backbutton" type="button" value="Close options page"  />
         </div>
         <table id="options">
             <tr>
@@ -225,7 +225,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="google_api_key" type="text" value="-api key->" />
+                        <input id="google_api_key" type="text" value="Google-api key->" placeholder="Google API key" />
                     </div>
                 </td>
             </tr>
@@ -235,7 +235,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="microsoft_api_key" type="text" value="-api key->" />
+                        <input id="microsoft_api_key" type="text" value="Microsoft-api key->" placeholder="Microsoft API key" />
                     </div>
                 </td>
             </tr>
@@ -245,7 +245,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="deepl_api_key" type="text" value="-api key->" />
+                        <input id="deepl_api_key" type="text" value="DeepL-api key->" placeholder="DeepL API key"/>
                     </div>
                 </td>
             </tr>
@@ -266,7 +266,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="OpenAI_api_key" type="text" value="-api key->" />
+                        <input id="OpenAI_api_key" type="text" value="OpenAI-api key->" />
                     </div>
                 </td>
             </tr>
@@ -301,7 +301,26 @@
                         <label for="OpenAI_temp">Temperature:</label>
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
                     </div>
-                </td>
+                 </td>
+                </tr>
+                <tr>
+                <td>
+                    
+                    <label for="ToneSelect">Select a tone for OpenAI:</label>
+                  </td>
+                    <td>
+                    <div>
+                        <select title="Select a tone for OpenAI" name="ToneSel" id="ToneSelect">
+                            <option value="formal">Formal</option>
+                            <option value="informal">Informal</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="official">Official</option>
+                            <option value="professional">Professional</option>
+                            <option value="polite">Polite</option>
+                            <option value="strict">Strict</option>
+                        </select>
+                    </div>
+            </td>
             </tr>
             <tr>
                 <td>
@@ -391,7 +410,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <input style="width:120px" id="languagetool_language" type="text" value="-language-> nl-NL" />
+                        <input style="width:120px" id="languagetool_language" type="text" value="-language-> nl-NL" placeholder="Enter language in format xx-XX" />
                     </div>
                 </td>
             </tr>

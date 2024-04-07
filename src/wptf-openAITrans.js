@@ -3,13 +3,13 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore) {
+async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone) {
     var timeout = 100;
     // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
     //errorstate = "NOK"
     setTimeout(async function (timeout) {
-        var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore);
+        var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
     //console.debug("OpenAI errorstate:",errorstate,result)
     }, timeout);
     timeout += 1;
@@ -59,7 +59,7 @@ const fetchPlus = (url, options = {}, retries) =>
         .catch(error => console.debug(error.message))
 
 
-function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore) {
+function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -79,6 +79,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     var lang = window.navigator.language;
     var show_debug = false;
     var link = "";
+    var myprompt;
     //console.debug("orginal:",original)
     //console.debug("taal:",lang)
     //console.debug("origpre:", originalPreProcessed)
@@ -86,15 +87,10 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
     language = language.toUpperCase();
-   
-  //  if (counter == 1 || typeof counter == 'undefined') {
-       myprompt = OpenAIPrompt +'\n';
-  //  }
-  //  else {
-   //     myprompt = "Translate into " + lang + " with my previously given instructions: " + "\n";
-       //myprompt = "Vertaal naar Nederlands volgens eerder opgegeven instructies: ";
-   // }
-    
+    let tempPrompt = OpenAIPrompt + '\n';
+   // myprompt = myprompt.replace("informal", OpenAITone);
+    // We need to replace the tone within the prompt
+    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
     //var prompt = encodeURIComponent(prompt);
     //console.debug("counter:", counter, myprompt)
     originalPreProcessed = '"' + originalPreProcessed + '"';
@@ -104,6 +100,21 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         let mymodel = OpenAISelect.toLowerCase();
         //console.debug("mymodel:",mymodel)
         //let mymodel = 'gpt-4-1106-preview';
+       
+        message = [{ role: 'user', content: myprompt },
+            { role: 'user', content: originalPreProcessed }];
+
+        var dataNew = {
+            messages: message,
+            model: mymodel,
+            max_tokens: 1000,
+            n: 1,
+            temperature: OpenAItemp,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            top_p: 0.5
+        };
+
         var data1 = {
             messages: message,
             model: mymodel,
@@ -142,16 +153,17 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         // link = "https://api.openai.com/v1/chat/completions";
         link = "https://api.openai.com/v1/chat/completions";
         // link = "https://api.openai.com/v1/edits";
-        if (show_debug == true) {
+        if (show_debug) {
             console.debug("link", link);
             console.debug("prompt:", myprompt);
             console.debug("model:", mymodel);
             console.debug("header:", data1);
             console.debug("browser lang:", lang)
             console.debug("temp:", OpenAItemp)
+            console.debug("tone:",OpenAITone)
         }
         const response = fetch(link, {
-            body: JSON.stringify(data1),
+            body: JSON.stringify(dataNew),
             method: "POST",
             headers: {
                 "content-type": "application/json",
@@ -190,7 +202,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         }
                         //text = text.trim('\n');
                         //console.debug("text:",text)
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore,locale);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        console.debug("translation raw:",original,translatedText)
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)
                     }
