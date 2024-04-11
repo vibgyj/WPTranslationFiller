@@ -2,9 +2,10 @@
 var db;
 var jsstoreCon;
 var myGlotDictStat;
-
 loadGlossary();
 addTranslateButtons();
+
+
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
     console.log(`Your browser doesn't support IndexedDB`);
@@ -383,16 +384,19 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
        // console.debug("F8")
-        let int = localStorage.getItem(['interXHR']);
-        if (int == "false") {
+        let parrot = localStorage.getItem(['interXHR']);
+        console.debug("parrot:",parrot)
+        if (parrot === "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
-            localStorage.setItem('interXHR', 'true');
+            localStorage.setItem('interXHR', true);
+            console.debug("after:", localStorage.getItem(['interXHR']))
         }
         else {
             toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
-            localStorage.setItem('interXHR', 'false');
+            localStorage.setItem('interXHR', false);
+            console.debug("after:", localStorage.getItem(['interXHR']))
         }
-        location.reload();
+       // location.reload();
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
@@ -1715,6 +1719,53 @@ async function checkbuttonClick(event) {
     var lires = '0';
     //var DefGlossary=true;
     if (event != undefined) {
+        parrotAct = await localStorage.getItem('interXHR');
+        if (parrotAct === 'false') {
+            parrotActive = false;
+        }
+        else {
+            parrotActive = true;
+        }
+
+        // if true we need to sett faking the request to true
+        if (parrotActive) {
+            var parrotMockDefinitions = [{
+                "active": true,
+                "description": "XHR",
+                "method": "GET",
+                "pattern": "-get-tm-suggestions",
+                "status": "200",
+                "type": "JSON",
+                "response": '{"success":true, "data":"<p class=\"no-suggestions\">No sugg.<\/p>"}',
+                "delay": "0"
+            }];
+            window.postMessage({
+                sender: 'commontranslate',
+                parrotActive: true,
+                parrotMockDefinitions
+            }, location.origin);
+        }
+        else {
+            var parrotMockDefinitions = [{
+                "active": false,
+                "description": "XHR",
+                "method": "GET",
+                "pattern": "-get-tm-openai-suggestions",
+                "status": "200",
+                "type": "JSON",
+                "response": {"success":true, "data":"<p class=\"no-suggestions\">No suggest.<\/p>"},
+                "delay": "0"
+            }];
+            window.postMessage({
+                sender: 'commontranslate',
+                parrotActive: false,
+                parrotMockDefinitions
+            }, location.origin);
+        }
+
+
+
+
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         //event.preventDefault(); caused a problem within the single page enttry  
         let action = event.target.textContent;
