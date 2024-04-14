@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "WordPress Translation Filler",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's.",
   "resources": [
     "/img/*",
@@ -53,6 +53,7 @@
         "https://cdnjs.cloudflare.com/*"
       ],
       "js": [
+        "wptf-inject.js",
         "wptf-deeplGloss.js",
         "wptf-spellcheck.js",
         "wptf-buildstats.js",
@@ -69,8 +70,8 @@
         "wptf-microsoftTrans.js",
         "jsdiff.js",
         "wptf-database.js",
-        "wptf-inject.js",
         "wptf-importfile.js",
+        "wptf-database-maintenance.js",
         "contentScript.js"
       ],
       "css": [

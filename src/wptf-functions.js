@@ -253,6 +253,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
     var checkbox;
     var my_line_counter;
     var myGlotDictStat;
+    var newurl;
     
     // html code for counter in checkbox
     const line_counter = `
@@ -263,8 +264,20 @@ async function validatePage(language, showHistory, locale,showDiff) {
    
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
-    let url = f[0].firstChild.baseURI;
-    let newurl = url.split("?")[0];
+    if (f[0] != null) {
+        if (typeof firstChild != 'undefined') {
+            let url = f[0].firstChild.baseURI;
+            newurl = url.split("?")[0];
+        }
+        else {
+            let url = ""
+            newurl = ""
+        }
+    }
+    else {
+        let url = ""
+        newurl=""
+    }
     var divProjects = document.querySelector("div.projects");
     // We need to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project

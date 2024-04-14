@@ -1,243 +1,74 @@
-((data) => {
-    const hostedLocally = ['localhost', '127.0.0.1'].indexOf(location.host.split(':')[0].toLowerCase()) !== -1;
-    const { window } = data;
-    const originalXMLHttpRequest = window.XMLHttpRequest;
-    const originalOpen = originalXMLHttpRequest.prototype.open;
-    let parrotActive;
-    let parrotMockDefinitions = [];
+// Injected script
+// Function to intercept XMLHttpRequests
+function interceptXHR(xhr) {
+    // Intercept the open method to store the URL
+    // Flag to track whether requests should be intercepted
+    //var interceptRequests = JSON.parse(localStorage.getItem('interXHR')) || true; // Retrieve value from localStorage
+    var interceptRequests = localStorage.getItem('interXHR') // Retrieve value from localStorage
+    var originalOpen = xhr.open;
+    xhr.open = function (method, url) {
+        // Store the URL for later use
+        xhr._interceptedURL = url;
+        // Call the original open method
+        return originalOpen.apply(xhr, arguments);
+    };
 
-    originalXMLHttpRequest.prototype.open = function () {
-        this.setMethod(arguments[0]);
-        try {
-            return originalOpen.apply(this, arguments);
-        } catch (e) {
+    // Intercept the send method to handle the response
+    var originalSend = xhr.send;
+    xhr.send = function () {
+        if (interceptRequests == 'true' && xhr._interceptedURL && xhr._interceptedURL.includes('get-tm-openai') || xhr._interceptedURL.includes('get-tm-deepl') || xhr._interceptedURL.includes('get-other')) {
+            // Instead of sending the request, provide a mocked response immediately
+            var mockedResponse = {
+                success: true,
+                data: "<p class=\"no-suggestions\">TM usage blocked.</p>"
+            };
+            // Set responseText property to simulate the response
+            Object.defineProperty(xhr, 'responseText', { value: JSON.stringify(mockedResponse), writable: true });
+
+            // Trigger the onload event to simulate the response
+            if (typeof xhr.onload === 'function') {
+                xhr.onload();
+            }
+
+            // Prevent the original request from being sent by overriding the send method
+            xhr.send = function () {
+                // Do nothing
+            };
+            //console.debug("interceptRequests value:", interceptRequests);
+            //console.debug("xhr in intercept:", xhr);
+            return; // Exit early without calling the original send method
         }
+        // Call the original send method for non-intercepted requests
+        return originalSend.apply(xhr, arguments);
     };
-
-    originalXMLHttpRequest.prototype.setMethod = function (method) {
-        this.method = method;
-    };
-
-    window.addEventListener('message', (evt) => {
-        if (evt.data.sender === 'commontranslate') {
-            parrotActive = !!evt.data.parrotActive;
-            parrotMockDefinitions = [...evt.data.parrotMockDefinitions];
-            console.debug("mock:", parrotMockDefinitions,parrotActive)
-            if (!!parrotActive && !hostedLocally) {
-                window.XMLHttpRequest = instrumentedXMLHttpRequest;
-                console.debug("fake called:", window.XMLHttpRequest)
-            } else {
-                console.debug("original called!", originalXMLHttpRequest)
-                window.XMLHttpRequest = originalXMLHttpRequest;
-            }
-        }
-    });
-
-    const instrumentedXMLHttpRequest = function () {
-        const original = new originalXMLHttpRequest();
-        var instrumented = this;
-        var myresponseText = original.responseText;
-        var myresponse = original.response;
-        var mystatusText = original.statusText;
-        var myStatus = original.status;
-        var myreadyState = original.readyState;
-        var myoriginal = original;
-        //console.debug("instrumented:",myStatus,original.response)
-        original.onreadystatechange = function (myresponseText,mystatusText) {
-            function removePrefix(responseInfo) {
-                const newResponseInfo = { ...responseInfo };
-                if (responseInfo?.response?.substr(0, 5) === ")]}',") {
-                    newResponseInfo.hasJsonPrefix = true;
-                    newResponseInfo.response = responseInfo.response.substr(5);
-                }
-                return newResponseInfo;
-            }
-
-            function parse(responseInfo) {
-                newResponseInfo = { ...responseInfo };
-                try {
-                    newResponseInfo.response = JSON.parse(responseInfo.response);
-                    newResponseInfo.type = 'JSON';
-                } catch (e) {
-                    newResponseInfo.type = 'TEXT';
-                }
-                return newResponseInfo;
-            }
-
-            function transform(responseInfo, transformer) {
-                newResponseInfo = { ...responseInfo };
-                newResponseInfo.response = transformer(responseInfo.response);
-                return newResponseInfo;
-            }
-
-            function stringify(responseInfo) {
-                newResponseInfo = { ...responseInfo };
-                if (responseInfo.type === 'JSON') {
-                    newResponseInfo.response = JSON.stringify(responseInfo.response);
-                }
-                return newResponseInfo;
-            }
-
-            function addPrefix(responseInfo) {
-                newResponseInfo = { ...responseInfo };
-                if (responseInfo.hasJsonPrefix) {
-                    newResponseInfo.response = ")]}'," + responseInfo.response;
-                }
-                return newResponseInfo;
-            }
-
-            function getParrotMockDefinitions(xhr) {
-                if (xhr.responseURL && parrotMockDefinitions.length) {
-                    return parrotMockDefinitions.filter((parrotMockDefinition) => {
-                        const regExp = new RegExp(parrotMockDefinition.pattern);
-                        return parrotMockDefinition.active && parrotMockDefinition.method.toLowerCase() === xhr.method.toLowerCase() && regExp.test(xhr.responseURL);
-                    });
-                }
-
-                return undefined;
-            }
-            //console.debug("readystate:",this.readyState,instrumented.readyState,original.readyState,myreadyState,myresponseText)
-            if (instrumented.readyState === 4) {
-               // console.debug("instrumented:", myStatus)
-                // Gets an array of mocks to be used for this URL
-                const parrotMockDefinitions = parrotActive && getParrotMockDefinitions(this);
-                if (parrotMockDefinitions?.length) {
-                    //window.postMessage({
-                    //  sender: 'Parrot',
-                    //  mocks: parrotMockDefinitions?.length,
-                    //  resource: this.responseURL
-                    // }, location.origin);
-
-                    // Now iterate over all available mock definitions to build the final mock data composition
-                    const compositeMockData = {
-                        status: original.status,
-                        response: original.response,
-                        responseText: original.responseText,
-                        delay: undefined,
-                    };
-                    parrotMockDefinitions.forEach((parrotMockDefinition) => {
-                        if (parrotMockDefinition.type === 'TRANSFORM') {
-                            const transformer = new Function('return ' + parrotMockDefinition.response)();
-                            const transformedResponse = addPrefix(stringify(transform(parse(removePrefix({
-                                response: compositeMockData.response,
-                                type: '',
-                                hasJsonPrefix: false
-                            })), transformer))).response;
-                            compositeMockData.response = transformedResponse;
-                            compositeMockData.responseText = transformedResponse;
-                        } else {
-                            compositeMockData.response = parrotMockDefinition.response;
-                            compositeMockData.responseText = parrotMockDefinition.response;
-                        }
-
-                        compositeMockData.status = parrotMockDefinition.status;
-                        compositeMockData.delay = parrotMockDefinition.delay;
-                    });
-
-                   console.debug(compositeMockData.response);
-
-                    instrumented.statusText = original.statusText;
-                    instrumented.status = compositeMockData.status * 1;
-                    instrumented.response = compositeMockData.response;
-                    instrumented.responseText = compositeMockData.response;
-
-                    setTimeout(() => {
-                        if (instrumented.onreadystatechange) {
-                            //console.debug("in return 1:", instrumented.onreadystatechange)
-                            return instrumented.onreadystatechange();
-                        }
-
-                    }, (compositeMockData.delay || 0) * 1);
-                } else {
-                    //console.debug("mock leeg", myresponseText); 
-                    instrumented.statusText = myresponseText;
-                    instrumented.response = myresponse;
-                    //instrumented.statusText = original.responseText;
-                    if (myStatus == "") {
-                        instrumented.status = original.status * 1;
-                    }
-                    else {
-                        instrumented.status = myStatus * 1;
-                    }
-                    // instrumented.response = original.response;
-
-                    if (instrumented.responseType === '' || instrumented.responseType === 'text') {
-                        instrumented.responseText = original.responseText;
-                    }
-                     //console.debug("before return", original.onreadystatechange,myoriginal.onreadystatechange)
-                    if (instrumented.onreadystatechange) {
-                        //console.debug("in return2", instrumented.onreadystatechange)
-                        return instrumented.onreadystatechange();
-                    }
-                }
-            }
-            else {
-
-                //console.debug("no readyState!!")
-            }
-
-        };
-
-        ['readyState', 'responseXML', 'responseURL', 'upload'].forEach((item) => {
-            Object.defineProperty(instrumented, item, {
-                get: function () {
-                    try {
-                        //console.debug("original item1:", original[item])
-                        return original[item];
-                    } catch (e) {
-                    }
-                }
-            });
-        });
-
-        ['responseType', 'method', 'ontimeout', 'timeout', 'withCredentials', 'onload', 'onerror', 'onprogress'].forEach((item) => {
-            Object.defineProperty(instrumented, item, {
-                get: function () {
-                    try {
-                       // console.debug("original item2:", original[item])
-                        return original[item];
-                    } catch (e) {
-                    }
-                },
-                set: function (val) {
-                    try {
-                       // console.debug("original item3:", original[item])
-                        original[item] = val;
-                    } catch (e) {
-                    }
-                }
-            });
-        });
-
-        ['addEventListener', 'open', 'send', 'abort', 'getAllResponseHeaders', 'getResponseHeader', 'overrideMimeType', 'setRequestHeader', 'setMethod'].forEach((item) => {
-            Object.defineProperty(instrumented, item, {
-
-                value: function () {
-                   // console.debug("before return:",original[item],arguments)
-                    try {
-                        return original[item].apply(original, arguments);
-                    } catch (e) {
-                    }
-                }
-            });
-        });
-    };
-
-    if (!hostedLocally) {
-        window.XMLHttpRequest = instrumentedXMLHttpRequest;
-    }
-   
-})({ window });
-
-function checkLocale() {
-    const localeString = window.location.href;
-    locale = localeString.split("/");
-    if (localeString.includes("wp-plugins")) {
-        locale = locale[7]
-    }
-    else {
-        locale = locale[6]
-    }
-    return locale;
 }
 
+// Function to toggle interception based on the flag value
+function toggleInterception(shouldIntercept) {
+    interceptRequests = shouldIntercept;
+    //console.log("Intercept requests:", interceptRequests);
+}
+
+// Add a listener to handle messages from the content script
+window.addEventListener('message', function (event) {
+    // Check if the event is from a trusted source
+    if (event.source === window && event.data.action === 'updateInterceptRequests') {
+        // Update interception based on the message data
+        toggleInterception(event.data.interceptRequests);
+    }
+});
+
+// Intercept XMLHttpRequests globally
+(function () {
+    // Store the original XMLHttpRequest object
+    var OriginalXHR = window.XMLHttpRequest;
+    // Override the XMLHttpRequest constructor to intercept requests
+    window.XMLHttpRequest = function () {
+        // Create a new instance of the original XMLHttpRequest
+        var xhr = new OriginalXHR();
+        // Intercept this instance of XMLHttpRequest
+        interceptXHR(xhr);
+        // Return the modified XHR object
+        return xhr;
+    };
+})();

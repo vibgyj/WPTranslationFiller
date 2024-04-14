@@ -2671,37 +2671,25 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     }
     locale = checkLocale();
     // We need to fetch the setting for mocking
-    parrotAct = await localStorage.getItem('interXHR');
-    if (parrotAct ==='false') {
-        parrotActive = false;
+    shouldIntercept = await localStorage.getItem('interXHR');
+    if (shouldIntercept ==='false') {
+        shouldIntercept = false;
     }
     else {
-        parrotActive = true;
+        shouldIntercept = true;
     }
-    var parrotMockDefinitions = [{
-        "active": true,
-        "description": "XHR",
-        "method": "GET",
-        "pattern": "-get-tm-suggestions",
-        "status": "200",
-        "type": "JSON",
-        "response": '{success:true, data:"<p class=\"no-suggestions\">No suggest<\/p>"}',
-        "delay": "0"
-    }];
-  
+    
     // if true we need to sett faking the request to true
-    if (parrotAct) {
+    if (shouldIntercept) {
         window.postMessage({
-            sender: 'commontranslate',
-            parrotActive: true,
-            parrotMockDefinitions
+            action: 'toggleInterception',
+            shouldIntercept: shouldIntercept
         }, location.origin);
     }
     else {
         window.postMessage({
-            sender: 'commontranslate',
-            parrotActive: false,
-            parrotMockDefinitions
+            action: 'toggleInterception',
+            shouldIntercept: shouldIntercept
         }, location.origin);
     }
 
@@ -3384,24 +3372,32 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     var result;
     locale = checkLocale();
     currWindow = window.self;
-    //localStorage.setItem('interXHR', 'true');
-    var parrotMockDefinitions = [{
-        "active": false,
-        "description": "XHR",
-        "method": "GET",
-        "pattern": "-get-tm-suggestions",
-        "status": "200",
-        "type": "JSON",
-        "response": '{"success":true,"data":"No sugg"}',
-        "delay": "0"
-    }];
-    window.postMessage({
-        sender: 'commontranslate',
-        parrotActive: true,
-       parrotMockDefinitions
-    }, location.origin);
+    localStorage.setItem('interXHR', 'true');
 
-   
+    //var parrotMockDefinitions = [{
+    //    "active": true,
+   //     "description": "XHR",
+    //    "method": "GET",
+    //    "pattern": "-get-",
+    //    "status": "200",
+    //    "type": "JSON",
+    //    "response": {"success": true, "data": "<p class=\"no-suggestions\">No sugg.</p>"},
+    //    "delay": "0"
+   // }];
+   // window.postMessage({
+   //     sender: 'commontranslate',
+    //    parrotActive: true,
+    //   parrotMockDefinitions
+  //  }, location.origin);
+
+    // Page script or any other script where you want to send the message
+    var shouldIntercept = 'false'; // Set this to true or false based on your condition
+    //var message = {
+    //    action: 'toggleInterception',
+    //    shouldIntercept: shouldIntercept
+   // };
+    // Send message to the content script
+   // window.postMessage(message, '*');
 
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
     if (translateButton == null) {
@@ -4061,21 +4057,11 @@ async function bulkSave(noDiff,bulk_timer) {
      var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      currWindow = window.self;
     //localStorage.setItem('interXHR', 'true');
-     var parrotMockDefinitions = [{
-         "active": true,
-         "description": "XHR",
-         "method": "GET",
-         "pattern": "-get-tm-suggestions",
-         "status": "200",
-         "type": "JSON",
-         "response": '{"success":true,"data":"No suggestions"}',
-         "delay": "0"
-     }];
-     window.postMessage({
-         sender: 'commontranslate',
-         parrotActive: true,
-         parrotMockDefinitions
-     }, location.origin);
+    interCept = true;
+    localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
+    // Example of setting interceptRequests from the content script
+    // Set this based on your condition
+    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 
      // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
      if (is_pte) {
