@@ -28,6 +28,10 @@ var translator; // Declare the global variable
 var DefGlossary = true;
 var RecCount = 0;
 // Use chrome.local.get to retrieve the value
+
+chrome.storage.local.get('showHistory', async function (result) {
+    translator = result.transsel; // Assign the value to the global variable
+}); 
 chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
 });
@@ -163,7 +167,7 @@ document.addEventListener("keydown", async function (event) {
         await handleStats();
     }
     if (event.altKey && event.shiftKey && (event.key === "*")) {
-        //event.preventDefault();
+        event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
         // if (is_pte) {
@@ -652,11 +656,18 @@ let bulkbutton = document.getElementById("tf-bulk-button");
 if (bulkbutton != null){
     bulkbutton.addEventListener("click", (event) => {
         event.preventDefault();
+        console.debug("I clicked bulksave")
         chrome.storage.local.get(["bulkWait"], function (data) {
             let bulkWait = data.bulkWait
             if (bulkWait != null && typeof bulkWait != 'undefined') {
-                var interCept = true;
-                localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
+                //var interCept = true;
+                let myInterCept = localStorage.getItem('interXHR'); // Set this to true or false based on your condition
+                if (myInterCept == true) {
+                    let interCept = true
+                }
+                else {
+                    let interCept = false
+                }
                 // Example of setting interceptRequests from the content script
                 // Set this based on your condition
                 console.debug("after klik bulksave:",interCept)
@@ -1182,11 +1193,20 @@ async function startBulkSave(event) {
     //chrome.storage.local.set({ toonDiff: value }).then((result) => {
     //       console.log("Value toonDiff is set to false");
     //});
-    chrome.storage.local.get(["bulkWait"], function (data) {
+    chrome.storage.local.get(["bulkWait"], async function (data) {
         let bulkWait = data.bulkWait
+        var myInterCept;
+        var interCept;
         if (bulkWait != null && typeof bulkWait != 'undefined') {
-            var interCept = true;
-            localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
+            myInterCept = await localStorage.getItem('interXHR')
+            console.debug("startbulksave:",myInterCept)
+            if (myInterCept === 'true') {
+                interCept = true
+            }
+            else {
+                interCept = false
+            }
+            //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
             // Example of setting interceptRequests from the content script
             // Set this based on your condition
             sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
@@ -1806,7 +1826,9 @@ async function checkbuttonClick(event) {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
-            
+
+           // interCept = true;
+          //  sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept, transProcess: 'details' });
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
             let myrec = document.querySelector(`#editor-${detailRow}`);
@@ -2189,8 +2211,12 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
         //console.debug("before fetchold",currText)
+        // increaste the value to wait to request the old records, this is to prevent 429 errors
         if (currText != 'untranslated') {
-            fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status,currcount,showDiff);
+            let waiting = 0
+            setTimeout(async function() {
+               await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status,currcount,showDiff);
+            }, waiting);
         }
     }
     //let currstring = "";
@@ -2216,8 +2242,11 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             single = "False";
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
-        if (current.innerText != 'untranslated') {  
-           fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans,currcount,showDiff);
+        if (current.innerText != 'untranslated') {
+            let waiting = 0
+            setTimeout(async function () {
+                  fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans,currcount,showDiff);
+            }, waiting);
         }
     }
 }
@@ -3192,7 +3221,8 @@ async function fetchOldRec(url, rowId,showDiff) {
             var diffType = "diffWords";
             fetch(newurl, {
                 headers: new Headers({
-                    "User-agent": "Mozilla/4.0 Custom User Agent"
+                    "User-agent": "Mozilla/4.0 Custom User Agent",
+                    'Cache-Control': 'no-cache'
                 })
             }).then(response => response.text())
             .then(data => {
@@ -3407,7 +3437,8 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
        
         const data = fetch(url, {
             headers: new Headers({
-                "User-agent": "Mozilla/4.0 Custom User Agent"
+                "User-agent": "Mozilla/4.0 Custom User Agent",
+                'Cache-Control': 'no-cache'
             })
         })
             .then(response => response.text())
@@ -3662,7 +3693,7 @@ chrome.storage.local.get(["glotDictGlos"],
                     observer.observe(document.body, { childList: true, subtree: true });
                 }
                 else {
-                    console.debug("GlotDict show glossary word false!",)
+                    console.debug("GlotDict show glossary word false!", showGlosLine)
                 }
         }, 0)
     });

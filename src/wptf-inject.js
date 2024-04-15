@@ -12,30 +12,26 @@ function interceptXHR(xhr) {
         // Call the original open method
         return originalOpen.apply(xhr, arguments);
     };
-
     // Intercept the send method to handle the response
     var originalSend = xhr.send;
     xhr.send = function () {
-        if (interceptRequests == 'true' && xhr._interceptedURL && xhr._interceptedURL.includes('get-tm-openai') || xhr._interceptedURL.includes('get-tm-deepl') || xhr._interceptedURL.includes('get-other')) {
+        let mydata = "<p class=\"translation-suggestion__translation\">API call blocked.</p></br>"
+        if ((interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-openai')) || (interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-deepl'))) {
             // Instead of sending the request, provide a mocked response immediately
             var mockedResponse = {
                 success: true,
-                data: "<p class=\"no-suggestions\">TM usage blocked.</p>"
+                data: mydata
             };
             // Set responseText property to simulate the response
             Object.defineProperty(xhr, 'responseText', { value: JSON.stringify(mockedResponse), writable: true });
-
             // Trigger the onload event to simulate the response
             if (typeof xhr.onload === 'function') {
                 xhr.onload();
             }
-
             // Prevent the original request from being sent by overriding the send method
             xhr.send = function () {
-                // Do nothing
+                //console.debug("we are intercepting")
             };
-            //console.debug("interceptRequests value:", interceptRequests);
-            //console.debug("xhr in intercept:", xhr);
             return; // Exit early without calling the original send method
         }
         // Call the original send method for non-intercepted requests
@@ -44,9 +40,9 @@ function interceptXHR(xhr) {
 }
 
 // Function to toggle interception based on the flag value
-function toggleInterception(shouldIntercept) {
+function toggleInterception(shouldIntercept,transProcess) {
     interceptRequests = shouldIntercept;
-    //console.log("Intercept requests:", interceptRequests);
+    translationProcess = transProcess;
 }
 
 // Add a listener to handle messages from the content script
@@ -54,7 +50,7 @@ window.addEventListener('message', function (event) {
     // Check if the event is from a trusted source
     if (event.source === window && event.data.action === 'updateInterceptRequests') {
         // Update interception based on the message data
-        toggleInterception(event.data.interceptRequests);
+        toggleInterception(event.data.interceptRequests,event.data.transProcess);
     }
 });
 

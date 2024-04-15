@@ -148,7 +148,7 @@ function preProcessOriginal(original, preverbs, translator) {
         if (charmatches != null) {
             index = 1;
             for (const charmatch of charmatches) {
-                console.debug("charmatch:", charmatch)
+              //  console.debug("charmatch:", charmatch)
                 original = original.replace(charmatch, `{special_var${index}}`);
                 index++;
             }
@@ -787,7 +787,7 @@ function checkFormalPage(dataFormal) {
                 // Check if it is a plural
                 // If in the original field "Singular is present we have a plural translation                
                 var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
-                console.debug("plural:",pluralpresent)
+               // console.debug("plural:",pluralpresent)
                 if (pluralpresent != null) {
                     transtype = "plural";
                 }
@@ -872,7 +872,7 @@ function checkFormalPage(dataFormal) {
                     let previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
                     previewNewText = previewElem.innerText;
                     translatedText = previewElem.innerText;
-                    console.debug("plural1 found:",previewElem,translatedText);
+                   // console.debug("plural1 found:",previewElem,translatedText);
                     result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced,original,countrows);
                     previewNewText = result.previewNewText;
                     translatedText = result.translatedText;
@@ -894,11 +894,11 @@ function checkFormalPage(dataFormal) {
                     }
                     // plural line 2
                     previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
-                    console.debug("plural2:", previewNewText, translatedText);
+                   // console.debug("plural2:", previewNewText, translatedText);
                     if (previewElem != null) {
                         previewNewText = previewElem.innerText;
                         translatedText = previewElem.innerText;
-                        console.debug("plural2:", previewNewText, translatedText);
+                      //  console.debug("plural2:", previewNewText, translatedText);
                         result = replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced,original,countrows);
                         previewNewText = result.previewNewText;
                         translatedText = result.translatedText;
@@ -2293,7 +2293,7 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                                 textFound = liSuggestion.innerText
                             }
                             else {
-                                console.debug("DeepLres == null!")
+                              //  console.debug("DeepLres == null!")
                                 textFound = "No suggestions";
                                 //resolve(textFound);
                             }
@@ -2312,7 +2312,7 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                                 textFound = liSuggestion.innerText
                             }
                             else {
-                                console.debug("OpenAIres == null!")
+                               // console.debug("OpenAIres == null!")
                                 textFound = "No suggestions";
                             }
                         }
@@ -2323,7 +2323,7 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                                 textFound = liSuggestion.innerText
                             }
                             else {
-                                console.debug("DeepLres == null!")
+                               // console.debug("DeepLres == null!")
                                 textFound = "No suggestions";
                                 //resolve(textFound);
                             }
@@ -2752,7 +2752,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         transname.innerText = "URL, name of theme or plugin or author!";
                         // In case of a plugin/theme name we need to set the button to blue
                         let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
-                        console.debug("currbut:",curbut)
+                       // console.debug("currbut:",curbut)
                         curbut.style.backgroundColor = "#0085ba";
                         curbut.innerText = "Save";
                         curbut.title = "Save the string";
@@ -3819,7 +3819,7 @@ function walkThroughTable(selector, interval) {
         const checkInterval = setInterval(() => {
             const element = document.querySelector(selector);
             if (element) {
-                console.log('Element found:', element);
+               // console.log('Element found:', element);
                 clearInterval(checkInterval);
                 resolve(element);
             }
@@ -3830,7 +3830,7 @@ function walkThroughTable(selector, interval) {
                 setTimeout(() => { 
                     let editor = preview.nextElementSibling;
                     if (editor != null) {
-                        console.log("editor:", editor);
+                      //  console.log("editor:", editor);
                         if (editor != null) {
                             let rowfound = editor.id;
                             let editorRow = rowfound.split("-")[1];
@@ -4026,7 +4026,7 @@ function saveLocal_2(bulk_timer) {
                 }
             }
             else {
-                console.debug("unchecked count:", checkcount)
+               // console.debug("unchecked count:", checkcount)
                 toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
                 //console.debug("No checkset found!")
             }
@@ -4054,14 +4054,19 @@ async function bulkSave(noDiff,bulk_timer) {
      var row;
      var myWindow;
      var nextpreview;
+     var myinterCept = false;
+
      var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
      currWindow = window.self;
-    //localStorage.setItem('interXHR', 'true');
-    interCept = true;
-    localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
-    // Example of setting interceptRequests from the content script
-    // Set this based on your condition
-    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+     //localStorage.setItem('interXHR', 'true');
+     myInterCept = await localStorage.getItem('interXHR')
+     if (myInterCept == true) {
+        interCept = true;
+     }
+     else {
+        interCept = false
+    }
+    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept, transProcess: 'bulksave' });
 
      // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
      if (is_pte) {
@@ -4114,7 +4119,11 @@ async function bulkSave(noDiff,bulk_timer) {
         // counter = saveLocal();
          //counter = saveLocal_1();
          counter = saveLocal_2(bulk_timer);
-      }
+    }
+   // if (myInterCept != 'true') {
+   //     await localStorage.setItem('interXHR', false)
+    //    await sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: myInterCept, transProcess: 'bulksave' });
+    //}
 }
 
 function second(milliseconds) {
@@ -4653,7 +4662,6 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                             translatedText = translatedText.replaceAt(translatedText, transval, repl);
                             // console.debug("processPlaceholderSpaces blank in front removed in trans", translatedText);
                         }
-
                     }
                     if (!(orgval.endsWith(" "))) {
                         //console.debug("processPlaceholderSpaces apparently in org no blank behind!!!");

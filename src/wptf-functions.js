@@ -298,15 +298,25 @@ async function validatePage(language, showHistory, locale,showDiff) {
         }
     }
     await set_glotdict_style().then(function (myGlotDictStat) {
+       // console.debug("glotdict:", myGlotDictStat)
         // Use the retrieved data here or export it as needed
         // increase the timeout if buttons from GlotDict are not shown
-        var timeout = 0;
-        if (myGlotDictStat) {
-            timeout = 1200;
+        // this set when the checkbox show GlotDict is set
+        var increaseWith = 60
+        var timeout = 140;
+      //  if (myGlotDictStat) {
+        //    timeout = 0;
+            //increaseWith = 135
+        //}
+       // else {
+       //    timeout = 135
+       // }
+        
+        if (showHistory == 'false') {
+            timeout = 0
+            increaseWith =0
         }
-        else {
-           timeout = 0
-        }
+        //console.debug("timeout:",showHistory,timeout,increaseWith)
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
             setTimeout(() => {
                 rowcount++
@@ -390,8 +400,9 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 prev_trans = translation
                 updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
             }, timeout);
-            timeout += 20;
+            timeout += increaseWith;
         }
+        
         // 30-06-2021 PSS set fetch status from local storage
         chrome.storage.local.set({ "noOldTrans": "False" }, function () {
             // Notify that we saved.
