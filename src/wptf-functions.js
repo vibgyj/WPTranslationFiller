@@ -160,6 +160,7 @@ function addCheckBox() {
             BulkButton = document.createElement("button");
             BulkButton.id = "tf-bulk-button";
             BulkButton.className = "tf-bulk-button";
+            BulkButton.onclick = startBulkSave;
             BulkButton.innerText = "Start";
 
             if (tablehead != null) {

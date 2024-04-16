@@ -27,10 +27,25 @@ else {
 var translator; // Declare the global variable
 var DefGlossary = true;
 var RecCount = 0;
+var showHistory;
 // Use chrome.local.get to retrieve the value
+var myInterCept = localStorage.getItem('interXHR')
+console.debug("after refresh:", myInterCept)
+if (myInterCept === 'true') {
+    interCept = true;
+}
+else if (myInterCept === 'false') {
+    interCept = false;
+}
+else {
+    interCept = false;
+    localStorage.setItem('interXHR', false);
+}
+console.debug("after refresh2:",interCept)
+sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 
 chrome.storage.local.get('showHistory', async function (result) {
-    translator = result.transsel; // Assign the value to the global variable
+    showHistory = result.showHistory; // Assign the value to the global variable
 }); 
 chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
@@ -116,7 +131,6 @@ gd_wait_table_alter();
 addCheckBox();
 
 var parrotActive;
-//localStorage.setItem('interXHR', 'false');
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('wptf-inject.js');
 (document.head || document.documentElement).prepend(script);
@@ -186,11 +200,10 @@ document.addEventListener("keydown", async function (event) {
                 // Set this based on your condition
                 sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
                 bulk_timer = bulkWait
-                console.debug("bulk_timer")
+                //console.debug("bulk_timer")
                 bulkSave("false", bulk_timer);
             }
         });
-        // }
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
         // This switches convert to lowercase on
@@ -664,34 +677,37 @@ document.addEventListener("keydown", async function (event) {
     }
 });
 
-let bulkbutton = document.getElementById("tf-bulk-button");
-if (bulkbutton != null){
-    bulkbutton.addEventListener("click", (event) => {
-        event.preventDefault();
-        console.debug("I clicked bulksave")
-        chrome.storage.local.get(["bulkWait"], async function (data) {
-            let bulkWait = data.bulkWait
-            var myInterCept;
-            var interCept;
-            if (bulkWait != null && typeof bulkWait != 'undefined') {    
-                myInterCept = await localStorage.getItem('interXHR')
-                console.debug("startbulksave via eventlistener:", myInterCept)
-                if (myInterCept === 'true') {
-                    interCept = true
-                }
-                else {
-                    interCept = false
-                }
+
+//the below code can be removed if starting from non PTE is 100% working
+//the  belowremoved
+//let bulkbutton = document.getElementById("tf-bulk-button");
+//if (bulkbutton != null){
+ //   bulkbutton.addEventListener("click", (event) => {
+ //       event.preventDefault();
+ //       console.debug("I clicked bulksave")
+ //       chrome.storage.local.get(["bulkWait"], async function (data) {
+ //           let bulkWait = data.bulkWait
+ //           var myInterCept;
+ //           var interCept;
+ //           if (bulkWait != null && typeof bulkWait != 'undefined') {    
+  //              myInterCept = await localStorage.getItem('interXHR')
+  //              console.debug("startbulksave via eventlistener:", myInterCept)
+  //              if (myInterCept === 'true') {
+  //                  interCept = true
+  //              }
+  //              else {
+   //                 interCept = false
+  //              }
                 //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
                 // Set this based on your condition
-                sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-                bulk_timer = bulkWait
-                console.debug("bulk_timer")
-                bulkSave("false", bulk_timer);
-            }
-        });
-    });
-}
+  //              sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+   //             bulk_timer = bulkWait
+   //             console.debug("bulk_timer")
+   //             bulkSave("false", bulk_timer);
+   //         }
+   //     });
+  //  });
+// }
 
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
@@ -797,24 +813,32 @@ TmDisableContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = "This button disables fetching existing translations from translation memory"
-let TMDisable = localStorage.getItem(['interXHR']);
+
+var myInterCept =  localStorage.getItem('interXHR')
+if (myInterCept === 'true') {
+    interCept = true
+}
+else {
+    interCept = false
+}
+console.debug("after reload:",interCept)
 var tmDisableButton = document.createElement("a");
 tmDisableButton.href = "#";
-if (TMDisable == "false") {
+if (myInterCept == 'false') {
     tmDisableButton.className = "tm-disable-button";
     tmDisableButton.style.background = "green"
     tmDisableButton.style.color = "white"
+    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 }
 else {
     tmDisableButton.style.background = "red"
     tmDisableButton.style.color = "white"
+    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 }
 tmDisableButton.onclick = tmDisableClicked;
 tmDisableButton.innerText = "TM Disable";
 TmDisableContainer.appendChild(tmDisableButton)
 TmDisableContainer.appendChild(classToolTip)
-
-
 
 //23-03-2021 PSS added a new button on first page
 var checkContainer = document.createElement("div")

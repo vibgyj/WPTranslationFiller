@@ -16,7 +16,7 @@ function interceptXHR(xhr) {
     var originalSend = xhr.send;
     xhr.send = function () {
         let mydata = "<p class=\"translation-suggestion__translation\">API call blocked.</p></br>"
-        if ((interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-openai')) || (interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-deepl'))) {
+        if ((interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-openai')) || (interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-deepl') || (interceptRequests == 'true' && xhr._interceptedURL.includes('get-translation-helpers')))) {
             // Instead of sending the request, provide a mocked response immediately
             var mockedResponse = {
                 success: true,
