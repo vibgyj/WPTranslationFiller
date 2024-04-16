@@ -169,15 +169,27 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "*")) {
         event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-        // issue #133 block non PTE/GTE users from using this function
-        // if (is_pte) {
-        // toastbox("info", "Bulksave started", 2000);
-        let interCept = true;
-        localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
-        // Example of setting interceptRequests from the content script
-        // Set this based on your condition
-        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-        bulkSave(event);
+        chrome.storage.local.get(["bulkWait"], async function (data) {
+            let bulkWait = data.bulkWait
+            var myInterCept;
+            var interCept;
+            if (bulkWait != null && typeof bulkWait != 'undefined') {
+                myInterCept = await localStorage.getItem('interXHR')
+                console.debug("startbulksave via eventlistener:", myInterCept)
+                if (myInterCept === 'true') {
+                    interCept = true
+                }
+                else {
+                    interCept = false
+                }
+                //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
+                // Set this based on your condition
+                sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+                bulk_timer = bulkWait
+                console.debug("bulk_timer")
+                bulkSave("false", bulk_timer);
+            }
+        });
         // }
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
@@ -657,22 +669,24 @@ if (bulkbutton != null){
     bulkbutton.addEventListener("click", (event) => {
         event.preventDefault();
         console.debug("I clicked bulksave")
-        chrome.storage.local.get(["bulkWait"], function (data) {
+        chrome.storage.local.get(["bulkWait"], async function (data) {
             let bulkWait = data.bulkWait
-            if (bulkWait != null && typeof bulkWait != 'undefined') {
-                //var interCept = true;
-                let myInterCept = localStorage.getItem('interXHR'); // Set this to true or false based on your condition
-                if (myInterCept == true) {
-                    let interCept = true
+            var myInterCept;
+            var interCept;
+            if (bulkWait != null && typeof bulkWait != 'undefined') {    
+                myInterCept = await localStorage.getItem('interXHR')
+                console.debug("startbulksave via eventlistener:", myInterCept)
+                if (myInterCept === 'true') {
+                    interCept = true
                 }
                 else {
-                    let interCept = false
+                    interCept = false
                 }
-                // Example of setting interceptRequests from the content script
+                //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
                 // Set this based on your condition
-                console.debug("after klik bulksave:",interCept)
                 sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
                 bulk_timer = bulkWait
+                console.debug("bulk_timer")
                 bulkSave("false", bulk_timer);
             }
         });
