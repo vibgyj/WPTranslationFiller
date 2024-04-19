@@ -4318,7 +4318,9 @@ async function processTransl(original, translatedText, language, record, rowId, 
     var result;
     var myRowId = rowId;
     var previousCurrent = current
-    let debug=false
+    let debug = false
+    var preview;
+    var td_preview;
     if (debug == true) {
         console.debug("translatedText:", translatedText)
         console.debug("record:", record)
@@ -4338,7 +4340,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         textareaElem.style.height = textareaElem.scrollHeight + "px";
       
         if (current.innerText != "waiting" && current.innerText != "fuzzy") {
-            preview = record.previousElementSibling
+            preview = await record.previousElementSibling
         }
         else {
             preview = await document.querySelector("#preview-" + myRowId)
@@ -4346,8 +4348,13 @@ async function processTransl(original, translatedText, language, record, rowId, 
         current.innerText = "transFill";
         current.value = "transFill";
        // console.debug("in process:",preview)
-        td_preview = preview.querySelector("td.translation");
-       // console.debug("preview:", preview, myRowId)
+        if (preview != null) {
+            td_preview = preview.querySelector("td.translation");
+        }
+        else {
+             console.debug("problem with preview:", preview, myRowId)
+        }
+       
         // if we are in a single editor without preview, then no need to set the preview text
         if (td_preview != null) {
             td_preview.innerText = translatedText;
