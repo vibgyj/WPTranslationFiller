@@ -2,6 +2,7 @@
 var db;
 var jsstoreCon;
 var myGlotDictStat;
+var interCept = false;
 
 // Function to send a message to the injected script
 function sendMessageToInjectedScript(message) {
@@ -29,18 +30,21 @@ var DefGlossary = true;
 var RecCount = 0;
 var showHistory;
 // Use chrome.local.get to retrieve the value
-var myInterCept = localStorage.getItem('interXHR')
-console.debug("after refresh:", myInterCept)
-if (myInterCept === 'true') {
-    interCept = true;
-}
-else if (myInterCept === 'false') {
-    interCept = false;
+if (typeof (Storage) !== "undefined") {
+    interCept = localStorage.getItem("interXHR");
 }
 else {
     interCept = false;
-    localStorage.setItem('interXHR', false);
+    console.debug("Cannot read localstorage, set intercept to false");
 }
+
+// Check if the value exists and is either "true" or "false"
+if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+    // If the value is not present or not a valid boolean value, set it to false
+    interCept = false;
+    localStorage.setItem("interXHR", interCept);
+}
+
 console.debug("after refresh2:",interCept)
 sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 
@@ -424,9 +428,17 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
-       // console.debug("F8")
-        let interCept = localStorage.getItem(['interXHR']);
-        console.debug("interXHR:",interCept)
+        console.debug("F8")
+        // Use chrome.local.get to retrieve the value
+        interCept = localStorage.getItem("interXHR");
+
+        // Check if the value exists and is either "true" or "false"
+        if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+            // If the value is not present or not a valid boolean value, set it to false
+            interCept = false;
+            localStorage.setItem("interXHR", interCept);
+        }
+        console.debug("interXHR after F8:",interCept)
         if (interCept === "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', true);
@@ -814,26 +826,37 @@ var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = "This button disables fetching existing translations from translation memory"
 
-var myInterCept =  localStorage.getItem('interXHR')
-if (myInterCept === 'true') {
-    interCept = true
+// Use chrome.local.get to retrieve the value
+interCept = localStorage.getItem("interXHR");
+
+// Check if the value exists and is either "true" or "false"
+if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+    // If the value is not present or not a valid boolean value, set it to false
+    interCept = false;
+    localStorage.setItem("interXHR", interCept);
 }
-else {
-    interCept = false
-}
+
+
 console.debug("after reload:",interCept)
 var tmDisableButton = document.createElement("a");
 tmDisableButton.href = "#";
-if (myInterCept == 'false') {
+if (interCept === 'false') {
     tmDisableButton.className = "tm-disable-button";
     tmDisableButton.style.background = "green"
     tmDisableButton.style.color = "white"
     sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 }
 else {
-    tmDisableButton.style.background = "red"
-    tmDisableButton.style.color = "white"
-    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+    if (typeof interCept != 'undefined') {
+        tmDisableButton.style.background = "red"
+        tmDisableButton.style.color = "white"
+        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+    }
+    else {
+        interCept = false;
+        localStorage.setItem("interXHR", interCept);
+        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+    }
 }
 tmDisableButton.onclick = tmDisableClicked;
 tmDisableButton.innerText = "TM Disable";
@@ -1236,9 +1259,17 @@ async function startBulkSave(event) {
         var myInterCept;
         var interCept;
         if (bulkWait != null && typeof bulkWait != 'undefined') {
-            myInterCept = await localStorage.getItem('interXHR')
-            console.debug("startbulksave:",myInterCept)
-            if (myInterCept === 'true') {
+            // Use chrome.local.get to retrieve the value
+            interCept = localStorage.getItem("interXHR");
+
+            // Check if the value exists and is either "true" or "false"
+            if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+                // If the value is not present or not a valid boolean value, set it to false
+                interCept = false;
+                localStorage.setItem("interXHR", interCept);
+            }
+
+            if (interCept === 'true') {
                 interCept = true
             }
             else {

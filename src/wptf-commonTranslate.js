@@ -2671,27 +2671,24 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     }
     locale = checkLocale();
     // We need to fetch the setting for mocking
-    shouldIntercept = await localStorage.getItem('interXHR');
-    if (shouldIntercept ==='false') {
-        shouldIntercept = false;
+
+    if (typeof (Storage) !== "undefined") {
+        interCept = localStorage.getItem("interXHR");
     }
     else {
-        shouldIntercept = true;
+        interCept = false;
+        console.debug("Cannot read localstorage, set intercept to false");
     }
-    
-    // if true we need to sett faking the request to true
-    if (shouldIntercept) {
-        window.postMessage({
-            action: 'toggleInterception',
-            shouldIntercept: shouldIntercept
-        }, location.origin);
+
+    // Check if the value exists and is either "true" or "false"
+    if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+        // If the value is not present or not a valid boolean value, set it to false
+        interCept = false;
+        localStorage.setItem("interXHR", interCept);
     }
-    else {
-        window.postMessage({
-            action: 'toggleInterception',
-            shouldIntercept: shouldIntercept
-        }, location.origin);
-    }
+
+    console.debug("int translatepage:", interCept)
+    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 
 
     // 19-06-2021 PSS added animated button for translation at translatePage
@@ -3372,32 +3369,23 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     var result;
     locale = checkLocale();
     currWindow = window.self;
-    localStorage.setItem('interXHR', 'true');
+    if (typeof (Storage) !== "undefined") {
+        interCept = localStorage.getItem("interXHR");
+    }
+    else {
+        interCept = false;
+        console.debug("Cannot read localstorage, set intercept to false");
+    }
 
-    //var parrotMockDefinitions = [{
-    //    "active": true,
-   //     "description": "XHR",
-    //    "method": "GET",
-    //    "pattern": "-get-",
-    //    "status": "200",
-    //    "type": "JSON",
-    //    "response": {"success": true, "data": "<p class=\"no-suggestions\">No sugg.</p>"},
-    //    "delay": "0"
-   // }];
-   // window.postMessage({
-   //     sender: 'commontranslate',
-    //    parrotActive: true,
-    //   parrotMockDefinitions
-  //  }, location.origin);
+    // Check if the value exists and is either "true" or "false"
+    if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+        // If the value is not present or not a valid boolean value, set it to false
+        interCept = false;
+        localStorage.setItem("interXHR", interCept);
+    }
 
-    // Page script or any other script where you want to send the message
-    var shouldIntercept = 'false'; // Set this to true or false based on your condition
-    //var message = {
-    //    action: 'toggleInterception',
-    //    shouldIntercept: shouldIntercept
-   // };
-    // Send message to the content script
-   // window.postMessage(message, '*');
+    console.debug("in translateentry:", interCept)
+    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
     if (translateButton == null) {
@@ -4057,16 +4045,16 @@ async function bulkSave(noDiff,bulk_timer) {
      var myinterCept = false;
 
      var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-     currWindow = window.self;
-     //localStorage.setItem('interXHR', 'true');
-     myInterCept = await localStorage.getItem('interXHR')
-     if (myInterCept == true) {
-        interCept = true;
-     }
-     else {
-        interCept = false
-    }
-    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept, transProcess: 'bulksave' });
+    currWindow = window.self;
+    //interCept = localStorage.getItem('interXHR')
+    // Check if the value exists and is either "true" or "false"
+    //if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+        // If the value is not present or not a valid boolean value, set it to false
+      //  interCept = "false"
+      //  localStorage.setItem("interXHR", interCept);
+    //}
+
+   // sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept, transProcess: 'bulksave' });
 
      // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
      if (is_pte) {
@@ -4120,10 +4108,6 @@ async function bulkSave(noDiff,bulk_timer) {
          //counter = saveLocal_1();
          counter = saveLocal_2(bulk_timer);
     }
-   // if (myInterCept != 'true') {
-   //     await localStorage.setItem('interXHR', false)
-    //    await sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: myInterCept, transProcess: 'bulksave' });
-    //}
 }
 
 function second(milliseconds) {
