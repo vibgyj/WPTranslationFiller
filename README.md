@@ -10,7 +10,7 @@ This extension helps with Wordpress Translation and has the following features:
 5. Replace strings pre/post translation and convert words to lowercase.
 6. Integrate with the [GlotDict](https://github.com/Mte90/GlotDict) Google Chrome/Firefox extension.
 
-For full documentation visit the [Wiki](https://github.com/vibgyj/WPTranslationFiller/wiki)
+For full documentation visit the [Wiki](https://github.com/vibgyj/WPTranslationFiller/wiki).
 If any bugs/problems are found, [please add an issue](https://github.com/vibgyj/WPTranslationFiller/issues/new).
 
 # Installation
