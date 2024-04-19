@@ -1,6 +1,6 @@
 # WordPress Translation Filler (Extended) - Google Chrome/Firefox Extension
 
-Automatically fill translations from API's and indicate the accuracy of translation according to locale glossary.
+Automatically fill WordPress translations from API's and indicate the accuracy of translation according to locale glossary.
 
 This extension helps with Wordpress Translation and has the following features:
 1. Fetch translations from API's like DeepL, OpenAI, Google and Microsoft.
