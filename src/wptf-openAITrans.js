@@ -167,6 +167,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             method: "POST",
             headers: {
                 "content-type": "application/json",
+                "Cache-Control": "no-cache",
                 Authorization: "Bearer " + apikeyOpenAI,
             },
         })

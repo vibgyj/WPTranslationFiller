@@ -2,6 +2,14 @@
 var db;
 var jsstoreCon;
 var myGlotDictStat;
+var interCept = false;
+
+// Function to send a message to the injected script
+function sendMessageToInjectedScript(message) {
+    console.debug("message:",message)
+    window.postMessage(message, '*');
+}
+
 loadGlossary();
 addTranslateButtons();
 
@@ -20,7 +28,29 @@ else {
 var translator; // Declare the global variable
 var DefGlossary = true;
 var RecCount = 0;
+var showHistory;
 // Use chrome.local.get to retrieve the value
+if (typeof (Storage) !== "undefined") {
+    interCept = localStorage.getItem("interXHR");
+}
+else {
+    interCept = false;
+    console.debug("Cannot read localstorage, set intercept to false");
+}
+
+// Check if the value exists and is either "true" or "false"
+if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+    // If the value is not present or not a valid boolean value, set it to false
+    interCept = false;
+    localStorage.setItem("interXHR", interCept);
+}
+
+console.debug("after refresh2:",interCept)
+sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+
+chrome.storage.local.get('showHistory', async function (result) {
+    showHistory = result.showHistory; // Assign the value to the global variable
+}); 
 chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
 });
@@ -105,7 +135,6 @@ gd_wait_table_alter();
 addCheckBox();
 
 var parrotActive;
-//localStorage.setItem('interXHR', 'false');
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('wptf-inject.js');
 (document.head || document.documentElement).prepend(script);
@@ -156,13 +185,29 @@ document.addEventListener("keydown", async function (event) {
         await handleStats();
     }
     if (event.altKey && event.shiftKey && (event.key === "*")) {
-        //event.preventDefault();
+        event.preventDefault();
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-        // issue #133 block non PTE/GTE users from using this function
-        // if (is_pte) {
-        // toastbox("info", "Bulksave started", 2000);
-        bulkSave(event);
-        // }
+        chrome.storage.local.get(["bulkWait"], async function (data) {
+            let bulkWait = data.bulkWait
+            var myInterCept;
+            var interCept;
+            if (bulkWait != null && typeof bulkWait != 'undefined') {
+                myInterCept = await localStorage.getItem('interXHR')
+                console.debug("startbulksave via eventlistener:", myInterCept)
+                if (myInterCept === 'true') {
+                    interCept = true
+                }
+                else {
+                    interCept = false
+                }
+                //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
+                // Set this based on your condition
+                sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+                bulk_timer = bulkWait
+                //console.debug("bulk_timer")
+                bulkSave("false", bulk_timer);
+            }
+        });
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
         // This switches convert to lowercase on
@@ -383,20 +428,32 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
-       // console.debug("F8")
-        let parrot = localStorage.getItem(['interXHR']);
-        console.debug("parrot:",parrot)
-        if (parrot === "false") {
+        console.debug("F8")
+        // Use chrome.local.get to retrieve the value
+        interCept = localStorage.getItem("interXHR");
+
+        // Check if the value exists and is either "true" or "false"
+        if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+            // If the value is not present or not a valid boolean value, set it to false
+            interCept = false;
+            localStorage.setItem("interXHR", interCept);
+        }
+        console.debug("interXHR after F8:",interCept)
+        if (interCept === "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', true);
+            interCept = true
+            sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
             console.debug("after:", localStorage.getItem(['interXHR']))
         }
         else {
             toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', false);
+            interCept = false
+            sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
             console.debug("after:", localStorage.getItem(['interXHR']))
         }
-       // location.reload();
+        location.reload();
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
@@ -632,19 +689,37 @@ document.addEventListener("keydown", async function (event) {
     }
 });
 
-let bulkbutton = document.getElementById("tf-bulk-button");
-if (bulkbutton != null){
-    bulkbutton.addEventListener("click", (event) => {
-        event.preventDefault();
-        chrome.storage.local.get(["bulkWait"], function (data) {
-            let bulkWait = data.bulkWait
-            if (bulkWait != null && typeof bulkWait != 'undefined') {
-                bulk_timer = bulkWait
-                bulkSave("false", bulk_timer);
-            }
-        });
-    });
-}
+
+//the below code can be removed if starting from non PTE is 100% working
+//the  belowremoved
+//let bulkbutton = document.getElementById("tf-bulk-button");
+//if (bulkbutton != null){
+ //   bulkbutton.addEventListener("click", (event) => {
+ //       event.preventDefault();
+ //       console.debug("I clicked bulksave")
+ //       chrome.storage.local.get(["bulkWait"], async function (data) {
+ //           let bulkWait = data.bulkWait
+ //           var myInterCept;
+ //           var interCept;
+ //           if (bulkWait != null && typeof bulkWait != 'undefined') {    
+  //              myInterCept = await localStorage.getItem('interXHR')
+  //              console.debug("startbulksave via eventlistener:", myInterCept)
+  //              if (myInterCept === 'true') {
+  //                  interCept = true
+  //              }
+  //              else {
+   //                 interCept = false
+  //              }
+                //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
+                // Set this based on your condition
+  //              sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+   //             bulk_timer = bulkWait
+   //             console.debug("bulk_timer")
+   //             bulkSave("false", bulk_timer);
+   //         }
+   //     });
+  //  });
+// }
 
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
@@ -743,6 +818,50 @@ tmtransButton.onclick = tmTransClicked;
 tmtransButton.innerText = "TM";
 TmContainer.appendChild(tmtransButton)
 TmContainer.appendChild(classToolTip)
+
+//12-05-2022 PSS added a new button for local translate
+var TmDisableContainer = document.createElement("div")
+TmDisableContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button disables fetching existing translations from translation memory"
+
+// Use chrome.local.get to retrieve the value
+interCept = localStorage.getItem("interXHR");
+
+// Check if the value exists and is either "true" or "false"
+if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+    // If the value is not present or not a valid boolean value, set it to false
+    interCept = false;
+    localStorage.setItem("interXHR", interCept);
+}
+
+
+console.debug("after reload:",interCept)
+var tmDisableButton = document.createElement("a");
+tmDisableButton.href = "#";
+if (interCept === 'false') {
+    tmDisableButton.className = "tm-disable-button";
+    tmDisableButton.style.background = "green"
+    tmDisableButton.style.color = "white"
+    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+}
+else {
+    if (typeof interCept != 'undefined') {
+        tmDisableButton.style.background = "red"
+        tmDisableButton.style.color = "white"
+        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+    }
+    else {
+        interCept = false;
+        localStorage.setItem("interXHR", interCept);
+        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+    }
+}
+tmDisableButton.onclick = tmDisableClicked;
+tmDisableButton.innerText = "TM Disable";
+TmDisableContainer.appendChild(tmDisableButton)
+TmDisableContainer.appendChild(classToolTip)
 
 //23-03-2021 PSS added a new button on first page
 var checkContainer = document.createElement("div")
@@ -925,6 +1044,8 @@ if (GpSpecials == null) {
 if (GpSpecials != null && divProjects == null) {
     divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
     divPaging.insertBefore(SwitchGlossButton, divPaging.childNodes[0]);
+    divPaging.insertBefore(tmDisableButton, divPaging.childNodes[0]);
+    
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     chrome.storage.local.get(["apikeyDeepl"], function (data) {
         //let apikey=data.apikeyDeepl
@@ -1070,6 +1191,28 @@ function SwitchTMClicked() {
     location.reload();
 
 }
+
+function tmDisableClicked() {
+    event.preventDefault();
+    // console.debug("F8")
+    let interCept = localStorage.getItem(['interXHR']);
+    console.debug("interXHR:", interCept)
+    if (interCept === "false") {
+        toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
+        localStorage.setItem('interXHR', true);
+        interCept = true
+        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+        console.debug("after:", localStorage.getItem(['interXHR']))
+    }
+    else {
+        toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
+        localStorage.setItem('interXHR', false);
+        interCept = false
+        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+        console.debug("after:", localStorage.getItem(['interXHR']))
+    }
+    location.reload();
+}
 async function startSpellCheck(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore) {
     await spellcheck_page(LtKey, LtUser, LtLang,LtFree,spellcheckIgnore)
 }
@@ -1111,9 +1254,31 @@ async function startBulkSave(event) {
     //chrome.storage.local.set({ toonDiff: value }).then((result) => {
     //       console.log("Value toonDiff is set to false");
     //});
-    chrome.storage.local.get(["bulkWait"], function (data) {
+    chrome.storage.local.get(["bulkWait"], async function (data) {
         let bulkWait = data.bulkWait
+        var myInterCept;
+        var interCept;
         if (bulkWait != null && typeof bulkWait != 'undefined') {
+            // Use chrome.local.get to retrieve the value
+            interCept = localStorage.getItem("interXHR");
+
+            // Check if the value exists and is either "true" or "false"
+            if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+                // If the value is not present or not a valid boolean value, set it to false
+                interCept = false;
+                localStorage.setItem("interXHR", interCept);
+            }
+
+            if (interCept === 'true') {
+                interCept = true
+            }
+            else {
+                interCept = false
+            }
+            //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
+            // Example of setting interceptRequests from the content script
+            // Set this based on your condition
+            sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
             bulk_timer = bulkWait
             bulkSave("false", bulk_timer);
         }
@@ -1719,53 +1884,7 @@ async function checkbuttonClick(event) {
     var lires = '0';
     //var DefGlossary=true;
     if (event != undefined) {
-        parrotAct = await localStorage.getItem('interXHR');
-        if (parrotAct === 'false') {
-            parrotActive = false;
-        }
-        else {
-            parrotActive = true;
-        }
-
-        // if true we need to sett faking the request to true
-        if (parrotActive) {
-            var parrotMockDefinitions = [{
-                "active": true,
-                "description": "XHR",
-                "method": "GET",
-                "pattern": "-get-tm-suggestions",
-                "status": "200",
-                "type": "JSON",
-                "response": '{"success":true, "data":"<p class=\"no-suggestions\">No sugg.<\/p>"}',
-                "delay": "0"
-            }];
-            window.postMessage({
-                sender: 'commontranslate',
-                parrotActive: true,
-                parrotMockDefinitions
-            }, location.origin);
-        }
-        else {
-            var parrotMockDefinitions = [{
-                "active": false,
-                "description": "XHR",
-                "method": "GET",
-                "pattern": "-get-tm-openai-suggestions",
-                "status": "200",
-                "type": "JSON",
-                "response": {"success":true, "data":"<p class=\"no-suggestions\">No suggest.<\/p>"},
-                "delay": "0"
-            }];
-            window.postMessage({
-                sender: 'commontranslate',
-                parrotActive: false,
-                parrotMockDefinitions
-            }, location.origin);
-        }
-
-
-
-
+       // console.debug("Details klik:",event, event.target)
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         //event.preventDefault(); caused a problem within the single page enttry  
         let action = event.target.textContent;
@@ -1776,7 +1895,9 @@ async function checkbuttonClick(event) {
             let rowId = event.target.parentElement.parentElement.getAttribute("row");
             glob_row = rowId;
             detailRow = rowId;
-            //localStorage.setItem('interXHR', 'false');
+
+           // interCept = true;
+          //  sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept, transProcess: 'details' });
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
             let myrec = document.querySelector(`#editor-${detailRow}`);
@@ -2159,8 +2280,12 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
         //console.debug("before fetchold",currText)
+        // increaste the value to wait to request the old records, this is to prevent 429 errors
         if (currText != 'untranslated') {
-            fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status,currcount,showDiff);
+            let waiting = 0
+            setTimeout(async function() {
+               await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status,currcount,showDiff);
+            }, waiting);
         }
     }
     //let currstring = "";
@@ -2186,8 +2311,11 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             single = "False";
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
-        if (current.innerText != 'untranslated') {  
-           fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans,currcount,showDiff);
+        if (current.innerText != 'untranslated') {
+            let waiting = 0
+            setTimeout(async function () {
+                  fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans,currcount,showDiff);
+            }, waiting);
         }
     }
 }
@@ -3162,7 +3290,8 @@ async function fetchOldRec(url, rowId,showDiff) {
             var diffType = "diffWords";
             fetch(newurl, {
                 headers: new Headers({
-                    "User-agent": "Mozilla/4.0 Custom User Agent"
+                    "User-agent": "Mozilla/4.0 Custom User Agent",
+                    'Cache-Control': 'no-cache'
                 })
             }).then(response => response.text())
             .then(data => {
@@ -3377,7 +3506,8 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
        
         const data = fetch(url, {
             headers: new Headers({
-                "User-agent": "Mozilla/4.0 Custom User Agent"
+                "User-agent": "Mozilla/4.0 Custom User Agent",
+                'Cache-Control': 'no-cache'
             })
         })
             .then(response => response.text())
@@ -3604,7 +3734,6 @@ chrome.storage.local.get(["glotDictGlos"],
         // we need to wait before checking the status of GlotDict
         setTimeout(async function()  {
                 showGlosLine = data.glotDictGlos;
-                console.debug("showGlosLine:", showGlosLine)
                 if (showGlosLine == "false") {
                     function handleNewNode(mutationsList, observer) {
                         mutationsList.forEach(mutation => {
@@ -3633,7 +3762,7 @@ chrome.storage.local.get(["glotDictGlos"],
                     observer.observe(document.body, { childList: true, subtree: true });
                 }
                 else {
-                    console.debug("GlotDict show glossary word false!",)
+                    console.debug("GlotDict show glossary word false!", showGlosLine)
                 }
         }, 0)
     });

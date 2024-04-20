@@ -160,6 +160,7 @@ function addCheckBox() {
             BulkButton = document.createElement("button");
             BulkButton.id = "tf-bulk-button";
             BulkButton.className = "tf-bulk-button";
+            BulkButton.onclick = startBulkSave;
             BulkButton.innerText = "Start";
 
             if (tablehead != null) {
@@ -253,6 +254,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
     var checkbox;
     var my_line_counter;
     var myGlotDictStat;
+    var newurl;
     
     // html code for counter in checkbox
     const line_counter = `
@@ -263,8 +265,20 @@ async function validatePage(language, showHistory, locale,showDiff) {
    
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
-    let url = f[0].firstChild.baseURI;
-    let newurl = url.split("?")[0];
+    if (f[0] != null) {
+        if (typeof firstChild != 'undefined') {
+            let url = f[0].firstChild.baseURI;
+            newurl = url.split("?")[0];
+        }
+        else {
+            let url = ""
+            newurl = ""
+        }
+    }
+    else {
+        let url = ""
+        newurl=""
+    }
     var divProjects = document.querySelector("div.projects");
     // We need to set the priority column only to visible if we are in the project 
     // PSS divProjects can be present but trhead is empty if it is not a project
@@ -285,15 +299,25 @@ async function validatePage(language, showHistory, locale,showDiff) {
         }
     }
     await set_glotdict_style().then(function (myGlotDictStat) {
+       // console.debug("glotdict:", myGlotDictStat)
         // Use the retrieved data here or export it as needed
         // increase the timeout if buttons from GlotDict are not shown
-        var timeout = 0;
-        if (myGlotDictStat) {
-            timeout = 1200;
+        // this set when the checkbox show GlotDict is set
+        var increaseWith = 60
+        var timeout = 140;
+      //  if (myGlotDictStat) {
+        //    timeout = 0;
+            //increaseWith = 135
+        //}
+       // else {
+       //    timeout = 135
+       // }
+        
+        if (showHistory == 'false') {
+            timeout = 0
+            increaseWith =0
         }
-        else {
-           timeout = 0
-        }
+        //console.debug("timeout:",showHistory,timeout,increaseWith)
         for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
             setTimeout(() => {
                 rowcount++
@@ -377,8 +401,9 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 prev_trans = translation
                 updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
             }, timeout);
-            timeout += 20;
+            timeout += increaseWith;
         }
+        
         // 30-06-2021 PSS set fetch status from local storage
         chrome.storage.local.set({ "noOldTrans": "False" }, function () {
             // Notify that we saved.
