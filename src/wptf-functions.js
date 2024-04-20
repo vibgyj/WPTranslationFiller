@@ -1,5 +1,18 @@
 // This file contains functions used within various files
+function getGlotDictStat() {
+        var scripts = document.getElementsByTagName('script');
+        //console.debug("scripts:", scripts)
+        for (var i = 0; i < scripts.length; i++) {
+            var src = scripts[i].getAttribute('src');
+            if (src && src.includes('glotdict.js')) {
+                //console.debug("we found glotdict")
+                return true;
+            }
+        }
+        return false;
+}
 
+ 
 function findFirstBlankAfter(text, startPosition) {
     // this function finds the first word after the semi colon
     for (let i = startPosition; i < text.length; i++) {
@@ -230,16 +243,17 @@ function deselectCheckBox(event) {
 }
 
 
-function validatePage(language, showHistory, locale,showDiff) {
+async function validatePage(language, showHistory, locale,showDiff) {
     // This function checks the quality of the current translations
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
-    var timeout = 0;
     var translation;
     var prev_trans;
     var rowcount = 0;
     var checkbox;
     var my_line_counter;
+    var myGlotDictStat;
+    
     // html code for counter in checkbox
     const line_counter = `
     <div class="line-counter">
@@ -270,85 +284,189 @@ function validatePage(language, showHistory, locale,showDiff) {
             }
         }
     }
+    await set_glotdict_style().then(function (myGlotDictStat) {
+        // Use the retrieved data here or export it as needed
+        // increase the timeout if buttons from GlotDict are not shown
+        var timeout = 0;
+        if (myGlotDictStat) {
+            timeout = 1200;
+        }
+        else {
+           timeout = 0
+        }
+        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+            setTimeout(() => {
+                rowcount++
+                let original = e.querySelector("span.original-raw").innerText;
+                let textareaElem = e.querySelector("textarea.foreign-text");
+                let rowId = textareaElem.parentElement.parentElement.parentElement
+                    .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
 
-    for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        setTimeout(() => {
-            rowcount++
-        let original = e.querySelector("span.original-raw").innerText;
-        let textareaElem = e.querySelector("textarea.foreign-text");
-        let rowId = textareaElem.parentElement.parentElement.parentElement
-                .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
-           
-        textareaElem.addEventListener("input", function (e, locale) {
-                      //language, textareaElem, newurl, showHistory, rowId, locale, record
-       // validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
+                textareaElem.addEventListener("input", function (e, locale) {
+                    //language, textareaElem, newurl, showHistory, rowId, locale, record
+                    // validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
+                });
+                // we need to fetch the status of the record to pass on
+
+                let old_status = document.querySelector("#preview-" + rowId);
+                /// checkbox = old_status.querySelector('input[type="checkbox"]'
+                checkbox = old_status.getElementsByClassName("checkbox")
+                glossary_word = old_status.getElementsByClassName("glossary-word")
+
+                if (checkbox[0] != null) {
+                    my_line_counter = checkbox[0].querySelector("div.line-counter")
+                    // mark lines with glossary word into checkbox
+                    if (glossary_word.length != 0) {
+                        checkbox[0].style.background = "LightSteelBlue"
+                        checkbox[0].title = "Has glossary word"
+                    }
+                    // add counter to checkbox, but do not add it twice      
+                    if (my_line_counter == null) {
+                        checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
+                        let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
+                        this_line_counter.innerText = rowcount
+                    }
+
+                }
+                else {
+                    // if not a PTE it must be put in a different checkbox
+                    let mycheckbox = old_status.getElementsByClassName("myCheckBox")
+                    mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
+                    let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
+                    this_line_counter.innerText = rowcount
+                    if (glossary_word.length != 0) {
+                        mycheckbox[0].style.background = "LightSteelBlue"
+                        mycheckbox[0].title ="Has glossary word"
+                    }
+                    // mycheckbox[0].textContent = rowcount
+                }
+                let element = e.querySelector(".source-details__comment");
+                let toTranslate = false;
+                let showName = false;
+                if (element != null) {
+                    // Fetch the comment with name
+                    let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
+                    if (comment != null) {
+                        toTranslate = checkComments(comment.trim());
+                    }
+                    else {
+                        toTranslate = true;
+                    }
+                }
+                else {
+                    toTranslate = true;
+                }
+                if (toTranslate == false) {
+                    showName = true;
+                }
+                else {
+                    showName = false;
+                }
+                translation = textareaElem.innerText;
+                ///console.debug("trans:",translation)
+                if (original != translation && showName == true) {
+                    nameDiff = true;
+                }
+                else {
+                    nameDiff = false;
+                }
+
+                var result = validate(language, original, translation, locale, false);
+                let record = e.previousSibling.previousSibling.previousSibling
+                // this is the start of validation, so no prev_trans is present      
+                prev_trans = translation
+                updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+            }, timeout);
+            timeout += 20;
+        }
+        // 30-06-2021 PSS set fetch status from local storage
+        chrome.storage.local.set({ "noOldTrans": "False" }, function () {
+            // Notify that we saved.
+            // alert("Settings saved");
         });
-        // we need to fetch the status of the record to pass on
-            
-        let old_status = document.querySelector("#preview-" + rowId);
-       /// checkbox = old_status.querySelector('input[type="checkbox"]')
-        checkbox = old_status.getElementsByClassName("checkbox")
-        if (checkbox[0] != null) {
-             my_line_counter = checkbox[0].querySelector("div.line-counter")       
-            // add counter to checkbox, but do not add it twice      
-            if (my_line_counter == null) {
-                checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
-               let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
-               this_line_counter.innerText  = rowcount
-             }
- 
-        }
-        else {
-            // if not a PTE it must be put in a different checkbox
-           let mycheckbox = old_status.getElementsByClassName("myCheckBox")
-            mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
-            mycheckbox[0].textContent = rowcount
-        }
-        let element = e.querySelector(".source-details__comment");
-        let toTranslate = false;
-        let showName = false;
-        if (element != null) {
-            // Fetch the comment with name
-            let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
-            if (comment != null) {
-                toTranslate = checkComments(comment.trim());
-            }
-            else {
-                toTranslate = true;
-            }
-        }
-        else {
-            toTranslate = true;
-        }
-        if (toTranslate == false) {
-            showName = true;
-        }
-        else {
-            showName = false;
-        }
-            translation = textareaElem.innerText;
-            ///console.debug("trans:",translation)
-        if (original != translation && showName == true) {
-            nameDiff = true;
-        }
-        else {
-            nameDiff = false;
-            }
 
-        var result = validate(language, original, translation, locale, false);
-        let record = e.previousSibling.previousSibling.previousSibling               
-        // this is the start of validation, so no prev_trans is present      
-        prev_trans = translation
-        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId,record,false,false,translation,[],prev_trans,old_status,showDiff);
-        }, timeout);
-        timeout += 20;   
-    }
-    // 30-06-2021 PSS set fetch status from local storage
-    chrome.storage.local.set({ "noOldTrans": "False" }, function () {
-        // Notify that we saved.
-        // alert("Settings saved");
+        
     });
-    
+}
+
+async function set_glotdict_style() {
+    return new Promise(function (resolve) {
+        let myTimeout = 120;
+        setTimeout(() => {
+            chrome.storage.local.get(["glotDictGlos"],
+                function (data) {
+                    let myGlotDictStat = getGlotDictStat()
+                    //console.debug("is GlotDict active:", myGlotDictStat)
+                    if (myGlotDictStat) {
+                        var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+                        //if (showGlosLine==true) {
+                        // 09-09-2021 PSS added fix for issue #137 if GlotDict active showing the bar on the left side of the prio column
+                        showGlosLine = data.glotDictGlos;
+                        //console.debug("showGlosLine", showGlosLine)
+                        // Do not show the GlotDict
+                        if (showGlosLine == 'false') {
+                            //console.debug("showGlosLine:", showGlosLine)
+                          //  console.debug("pte:", is_pte)
+                            if (is_pte) {
+                                //console.debug("We are PTE")
+                                const style = document.createElement("style");
+                                style.innerHTML = `
+                              table.translations tr.preview.has-glotdict .original::before {
+                              display: none !important;
+                            }
+                            `;
+                                document.head.appendChild(style);
+                            }
+                            else {
+                                const style = document.createElement("style");
+                                style.innerHTML = `
+                             table.translations tr.preview.has-glotdict .original::before {
+                              display: none !important;
+                        }
+                        `;
+                                document.head.appendChild(style);
+                            }
+                        }
+                        else {
+                            // show GlotDoct is active
+                            //console.debug("are we PTE:", is_pte)
+                            if (is_pte) {
+                                //console.debug("we are showing the GlotDict")
+                                const style = document.createElement("style");
+                                style.innerHTML = `
+                               table.translations tr.preview.has-glotdict .original::before {
+                               width: 3px !important;
+                               position: inline !important;
+                               margin-left: -14px !important;
+                               top: calc(-0.5em + 17px) !important;
+                               height:100% !important;
+                              /**display: none !important;*/
+                            }
+                            `;
+                                document.head.appendChild(style);
+                            }
+                            else {
+                                const style = document.createElement("style");
+                                style.innerHTML = `
+                              tr.preview.has-glotdict .original::before {
+                              width: 3px !important;
+                              height 100% !important;
+                              position: inline !important;
+                              top: calc(-0.5em + 17px) !important;
+                              margin-left: -14px !important;
+                    }
+                      `;
+                                document.head.appendChild(style);
+                            }
+                        }
+                        resolve(myGlotDictStat)
+                    }
+                    else {
+                        resolve(myGlotDictStat)
+                    }
+                });
+        }, myTimeout);
+    });
 }
 
 function toastbox(type, message, time, titel, currWindow) {

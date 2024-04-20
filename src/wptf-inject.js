@@ -240,3 +240,4 @@ function checkLocale() {
     }
     return locale;
 }
+

@@ -72,18 +72,19 @@
 
 /* Modal Content */
 .modal-content {
-      position: relative;
-      background-color: lightskyblue;
-      margin: auto;
-      padding-left: 180px;
-      padding-top: 10px;
-      border: 1px solid #888;
-      width: 40%;
-      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
-      -webkit-animation-name: animatetop;
-      -webkit-animation-duration: 0.4s;
-      animation-name: animatetop;
-      animation-duration: 0.4s
+    position: relative;
+    background-color: lightskyblue;
+    margin: auto;
+    padding-left: 180px;
+    padding-top: 10px;
+    padding-bottom: 50px;
+    border: 1px solid #888;
+    width: 40%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 0.4s;
+    animation-name: animatetop;
+    animation-duration: 0.4s
 }
 
 /* Add Animation */
@@ -127,13 +128,20 @@
 }
 
 .modal-header {
-      padding: 2px 16px;
-      background-color: #5cb85c;
-      color: white;
+    padding: 2px 16px;
+    background-color: lightskyblue;
+    color: white;
+}
+
+#inputOriginal {
+    width:300px;
+}
+#inputTranslation {
+    width: 300px;
 }
 
 .modal-body {
-      padding: 2px 16px;
+    padding: 2px 16px;
 }
 
 .modal-footer {
@@ -947,11 +955,31 @@ table.translations td.priority {
 /* This setting is necessary to move the row down due to the header that is no longer fixed */
 /*table.translations tr.preview {
     scroll-margin-top: 32px;
-}*/
+}*/    
 
+/*table.translations tr.preview.has-glotdict th.checkbox {
+    position: relative !important;
+    background: lightblue !important;
+    color: white !important;
+    margin-left: -.8em !important;
+} */
+
+/*table.translations tr.preview.has-glotdict td.myCheckBox {
+    position: relative !important;
+    background: lightblue !important; 
+    color: white !important;
+} */
+   
 /** The change below is for issue# 137 modification in GlotDict*/
-table.translations tr.preview.has-glotdict th + .priority + .original::before {
-     margin-left: calc(-0.5em - 45px) !important;
+/**table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
+    margin-left: calc(-.5em - 40px) !important;
+    color: red !important;
+    position: center !important;
+} */
+
+
+.site-header .site-branding {
+    max-width: 1400px !important;
 }
 
 tr.editor {
@@ -966,10 +994,7 @@ tr.preview.status-hidden {
 tr.preview.wptf-saved {
     display: none !important;
 }
-/** The change below is for issue# 137 modification in GlotDict*/
-table.translations tr.preview.has-glotdict.has-warnings th + .priority + .original::before {
-    margin-left: calc(-.5em - 48px) !important;
-}
+
 
 #tf-save-button {
     font-size: 12px !important;
@@ -1603,6 +1628,10 @@ table.translations th.thCheckBox {
     font-weight: 700 !important;
     padding: 0px !important;
     margin: 0px !important;
+}
+
+span.text-line-counter{
+    text-align:center;
 }
 
 .line-counter {

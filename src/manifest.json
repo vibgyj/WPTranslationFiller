@@ -1,8 +1,11 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "2.4.1",
+  "version": "2.5.2",
   "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's.",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' ; object-src 'self'"
+  },
   "web_accessible_resources": [
     {
       "resources": [
@@ -13,8 +16,10 @@
         "warning-marker.png",
         "/_metadata",
         "wptf-options.html",
+        "wptf-database.js",
         "wptf-inject.js",
         "wptf-buildstats.js",
+        "wptf-cute-alert.js",
         "wptf-glossary.csv"
       ],
       "matches": [
@@ -22,12 +27,14 @@
       ]
     }
   ],
+
   "background.service_worker": {
     "scripts": [
       "jsstore.js",
       "jsstore.worker.js"
     ]
   },
+
   "declarative_net_request": {
     "rule_resources": [
       {
@@ -43,6 +50,7 @@
     "declarativeNetRequestWithHostAccess",
     "declarativeNetRequestFeedback"
   ],
+
   "host_permissions": [
     "*://translate.wordpress.org/*",
     "*://api-free.deepl.com/*",
@@ -51,6 +59,7 @@
     "*://api.languagetoolplus.com/v2/*",
     "*://analytics.languagetoolplus.com/*",
     "*://api.cognitive.microsofttranslator.com/*",
+    "*://127.0.0.1/*",
     "*://api.openai.com/*"
   ],
   "options_page": "wptf-options.html",
@@ -78,6 +87,7 @@
         "wptf-database.js",
         "wptf-inject.js",
         "wptf-importfile.js",
+        "wptf-database-maintenance.js",
         "contentScript.js"
       ],
       "css": [

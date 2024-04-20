@@ -647,7 +647,8 @@ function applySentenceCase(str) {
 function CheckUrl(translated, searchword) {
     // check if the text contains an URL
     // not only check http strings but also links starting with <a and starting with <span
-    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>|<span[^>]*>/ig);
+    // also check for class= to prevent replaments in class name
+    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>|class=\"[^\"]*\"|<span[^>]*>/ig);
         if (mymatches != null) {
             for (const match of mymatches) {
                 foundmysearch = match.includes(searchword);
