@@ -43,7 +43,7 @@ async function openDB(db) {
 }
 
 function createAndOpenModal() {
-    console.debug("locale:",locale)
+    //console.debug("locale:",locale)
     // Create the modal elements
     const modal = document.createElement('div');
     modal.id = 'modal';
@@ -63,6 +63,7 @@ function createAndOpenModal() {
     const inputField = document.createElement('input');
     inputField.type = 'text';
     inputField.id = 'modal-inputOriginal';
+    inputField.placeholder = "Enter original text"
     OriginalDiv.appendChild(inputField);
     const modalTd = document.createElement('td');
     modalTd.classList.add('modal-td');
@@ -71,7 +72,8 @@ function createAndOpenModal() {
     TranslationDiv.classList.add('modal-translation');
     const inputFieldTrans = document.createElement('input');
     inputFieldTrans.type = 'text';
-    inputFieldTrans.id = 'model-inputTranslation';
+    inputFieldTrans.id = 'modal-inputTranslation';
+    inputFieldTrans.placeholder = "Enter translation text when translating"
     TranslationDiv.appendChild(inputFieldTrans)
 
     const retrieveButton = document.createElement('button');

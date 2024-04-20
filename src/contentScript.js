@@ -2,9 +2,10 @@
 var db;
 var jsstoreCon;
 var myGlotDictStat;
-
 loadGlossary();
 addTranslateButtons();
+
+
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
     console.log(`Your browser doesn't support IndexedDB`);
@@ -383,16 +384,19 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
        // console.debug("F8")
-        let int = localStorage.getItem(['interXHR']);
-        if (int == "false") {
+        let parrot = localStorage.getItem(['interXHR']);
+        console.debug("parrot:",parrot)
+        if (parrot === "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
-            localStorage.setItem('interXHR', 'true');
+            localStorage.setItem('interXHR', true);
+            console.debug("after:", localStorage.getItem(['interXHR']))
         }
         else {
             toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
-            localStorage.setItem('interXHR', 'false');
+            localStorage.setItem('interXHR', false);
+            console.debug("after:", localStorage.getItem(['interXHR']))
         }
-        location.reload();
+       // location.reload();
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
@@ -1242,7 +1246,7 @@ function translatePageClicked(event) {
     event.preventDefault();
     var formal;
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined')
             {
@@ -1260,8 +1264,10 @@ function translatePageClicked(event) {
                         var openAIWait = Number(data.OpenAIWait);
                         var OpenAItemp = parseFloat(data.OpenAItemp);
                         var deeplGlossary = localStorage.getItem('deeplGlossary');
+                        var OpenAITone = data.OpenAITone;
                         //console.debug("glossary_id:", deeplGlossary)
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore,deeplGlossary);
+                        console.debug("tone:",data.OpenAITone)
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore,deeplGlossary,OpenAITone);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -1713,6 +1719,53 @@ async function checkbuttonClick(event) {
     var lires = '0';
     //var DefGlossary=true;
     if (event != undefined) {
+        parrotAct = await localStorage.getItem('interXHR');
+        if (parrotAct === 'false') {
+            parrotActive = false;
+        }
+        else {
+            parrotActive = true;
+        }
+
+        // if true we need to sett faking the request to true
+        if (parrotActive) {
+            var parrotMockDefinitions = [{
+                "active": true,
+                "description": "XHR",
+                "method": "GET",
+                "pattern": "-get-tm-suggestions",
+                "status": "200",
+                "type": "JSON",
+                "response": '{"success":true, "data":"<p class=\"no-suggestions\">No sugg.<\/p>"}',
+                "delay": "0"
+            }];
+            window.postMessage({
+                sender: 'commontranslate',
+                parrotActive: true,
+                parrotMockDefinitions
+            }, location.origin);
+        }
+        else {
+            var parrotMockDefinitions = [{
+                "active": false,
+                "description": "XHR",
+                "method": "GET",
+                "pattern": "-get-tm-openai-suggestions",
+                "status": "200",
+                "type": "JSON",
+                "response": {"success":true, "data":"<p class=\"no-suggestions\">No suggest.<\/p>"},
+                "delay": "0"
+            }];
+            window.postMessage({
+                sender: 'commontranslate',
+                parrotActive: false,
+                parrotMockDefinitions
+            }, location.origin);
+        }
+
+
+
+
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         //event.preventDefault(); caused a problem within the single page enttry  
         let action = event.target.textContent;
@@ -1966,7 +2019,7 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         if (data.ForceFormal != true) {
             formal = checkFormal(false);
@@ -1977,8 +2030,9 @@ function translateEntryClicked(event) {
         var DeeplFree = data.DeeplFree;
         var OpenAItemp = parseFloat(data.OpenAItemp);
         var deeplGlossary = localStorage.getItem('deeplGlossary');
+        var OpenAITone = data.OpenAITone
         //console.debug("glossary_id:", deeplGlossary)
-        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary);
+        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary,OpenAITone);
         });
 }
 

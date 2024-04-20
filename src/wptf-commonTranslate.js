@@ -2639,7 +2639,7 @@ async function mark_as_translated(row){
     prevcurrentClass.style.backgroundColor = "#ffe399";
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone) {
     //console.time("translation")
     var translate;
     var transtype = "";
@@ -2659,7 +2659,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var counter = 0;
     var myrecCount = 0;
     var previewClass;
-    
+
     //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
     if (transsel == 'OpenAI') {
         if (OpenAISelect != 'gpt-4') {
@@ -2670,6 +2670,42 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         }
     }
     locale = checkLocale();
+    // We need to fetch the setting for mocking
+    parrotAct = await localStorage.getItem('interXHR');
+    if (parrotAct ==='false') {
+        parrotActive = false;
+    }
+    else {
+        parrotActive = true;
+    }
+    var parrotMockDefinitions = [{
+        "active": true,
+        "description": "XHR",
+        "method": "GET",
+        "pattern": "-get-tm-suggestions",
+        "status": "200",
+        "type": "JSON",
+        "response": '{success:true, data:"<p class=\"no-suggestions\">No suggest<\/p>"}',
+        "delay": "0"
+    }];
+  
+    // if true we need to sett faking the request to true
+    if (parrotAct) {
+        window.postMessage({
+            sender: 'commontranslate',
+            parrotActive: true,
+            parrotMockDefinitions
+        }, location.origin);
+    }
+    else {
+        window.postMessage({
+            sender: 'commontranslate',
+            parrotActive: false,
+            parrotMockDefinitions
+        }, location.origin);
+    }
+
+
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
     translateButton.innerText = "Translate";
@@ -2837,7 +2873,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                             else if (transsel == "OpenAI") {
-                                let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore);
+                                let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
                                 if (errorstate == "Error 401") {
                                     messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                                     // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -3109,7 +3145,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                             }
                                         }
                                         else if (transsel == "OpenAI") {
-                                            result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore);
+                                            result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
 
                                             if (result == "Error 401") {
                                                 messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
@@ -3343,10 +3379,30 @@ function check_span_missing(row,plural_line) {
     }
 }
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary,OpenAITone) {
     var translateButton;
     var result;
     locale = checkLocale();
+    currWindow = window.self;
+    //localStorage.setItem('interXHR', 'true');
+    var parrotMockDefinitions = [{
+        "active": false,
+        "description": "XHR",
+        "method": "GET",
+        "pattern": "-get-tm-suggestions",
+        "status": "200",
+        "type": "JSON",
+        "response": '{"success":true,"data":"No sugg"}',
+        "delay": "0"
+    }];
+    window.postMessage({
+        sender: 'commontranslate',
+        parrotActive: true,
+       parrotMockDefinitions
+    }, location.origin);
+
+   
+
     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`); 
     if (translateButton == null) {
         // original is already translated
@@ -3466,7 +3522,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "OpenAI") {
                         let editor = true;
-                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore);
+                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -3587,7 +3643,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "OpenAI") {
                         let editor = true;
-                        result = await AITranslate(plural, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore);
+                        result = await AITranslate(plural, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
                         if (result == "Error 401") {
                             messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");

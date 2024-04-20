@@ -114,10 +114,11 @@
 
 /* The Close Button */
 .close {
-      color: white;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0px 10px 0px 0px;
 }
 
 .close:hover,
@@ -133,10 +134,10 @@
     color: white;
 }
 
-#inputOriginal {
+#modal-inputOriginal {
     width:300px;
 }
-#inputTranslation {
+#modal-inputTranslation {
     width: 300px;
 }
 
@@ -150,8 +151,24 @@
       color: white;
 }
 
+#retrieveDataBtn {
+    margin:5px 5px 0px 0px;
+}
+
+#saveDataBtn {
+    margin: 5px 5px 0px 0px;
+}
+
+#deleteDataBtn {
+    margin: 5px 0px 0px 0px;
+}
+
+#clearDataBtn {
+    margin: 5px 05px 0px 05px;
+}
+
 .gp-table-actions {
-      gap: 0.5rem !important;
+    gap: 0.5rem !important;
 }
 .wptfNavBar {
       margin-bottom: 0.8rem;

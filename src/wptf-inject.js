@@ -22,12 +22,12 @@
         if (evt.data.sender === 'commontranslate') {
             parrotActive = !!evt.data.parrotActive;
             parrotMockDefinitions = [...evt.data.parrotMockDefinitions];
-            //console.debug("mock:", parrotMockDefinitions,parrotActive)
-            if (parrotActive && !hostedLocally) {
+            console.debug("mock:", parrotMockDefinitions,parrotActive)
+            if (!!parrotActive && !hostedLocally) {
                 window.XMLHttpRequest = instrumentedXMLHttpRequest;
-                //console.debug("fake called:", window.XMLHttpRequest)
+                console.debug("fake called:", window.XMLHttpRequest)
             } else {
-               // console.debug("original called!", originalXMLHttpRequest)
+                console.debug("original called!", originalXMLHttpRequest)
                 window.XMLHttpRequest = originalXMLHttpRequest;
             }
         }
@@ -134,7 +134,7 @@
                         compositeMockData.delay = parrotMockDefinition.delay;
                     });
 
-                  // console.debug(compositeMockData.response);
+                   console.debug(compositeMockData.response);
 
                     instrumented.statusText = original.statusText;
                     instrumented.status = compositeMockData.status * 1;
@@ -213,7 +213,7 @@
             Object.defineProperty(instrumented, item, {
 
                 value: function () {
-                   //x  console.debug("before return:",original[item],arguments)
+                   // console.debug("before return:",original[item],arguments)
                     try {
                         return original[item].apply(original, arguments);
                     } catch (e) {

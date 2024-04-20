@@ -38,6 +38,7 @@ let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
+let OpenAIToneBox = document.getElementById("ToneSelect");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("glossary_file_uploaded");
 let glossaryFile = document.getElementById("glossary_file");
@@ -65,7 +66,7 @@ let showForceFormal = document.getElementById("Force-formal");
 let showDefGlossary = document.getElementById("use-default-glossary");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary"], function (data) {
     //console.debug("getvalue:",data.bulkWait)
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
@@ -107,6 +108,13 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         OpenAItempBox.value = data.OpenAItemp;
         OpenAItemp = data.OpenAItemp
+    }
+    if (typeof data.OpenAITone == 'undefined') {
+        OpenTone = 'informal';
+    }
+    else {
+        OpenAIToneBox.value = data.OpenAITone;
+        OpenAITone = data.OpenAITone
     }
     apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
@@ -287,6 +295,16 @@ button.addEventListener("click", function () {
         transsel = transselectBox.value;
     }
 
+    if (typeof OpenAIToneBox.value == "undefined") {
+        OpenAITone = "informal";
+    }
+    else if (OpenAIToneBox.value == "") {
+        OpenAITone = "informal";
+    }
+    else {
+        OpenAITone = OpenAIToneBox.value;
+    }
+
     if (typeof OpenAIselectBox.value == "undefined") {
         OpenAIsel = "GPT-3.5-turbo";
     }
@@ -389,6 +407,7 @@ button.addEventListener("click", function () {
             DeeplFree: showDeepl,
             transsel: transsel,
             OpenAISelect: OpenAIsel,
+            OpenAITone:OpenAITone,
             OpenAItemp: OpenAItempVal,
             destlang: destlang,
             postTranslationReplace: postTranslation,
