@@ -243,6 +243,129 @@ function deselectCheckBox(event) {
     }
 }
 
+async function validateOld(showDiff) {
+    var counter = 0;
+    var vartime = 20000;
+    var timeout = 0;
+    var row;
+    var rowfound;
+    var newrow
+    var startTime;
+    var records = {};
+   // console.debug("we are checking for old strings");
+   
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>
+    `;
+    var myheader = document.querySelector('header');
+    // setPostTranslationReplace(postTranslationReplace, formal);
+    records = await document.querySelectorAll("tr.preview")
+    // we do not want to show the progress bar outside of the project table list
+    //console.debug("lengte:",records.length,typeof records.length)
+    if ((records.length) > 1) {
+        progressbar = document.querySelector(".indeterminate-progress-bar");
+        if (progressbar == null) {
+            myheader.insertAdjacentHTML('beforebegin', template);
+            // progressbar = document.querySelector(".indeterminate-progress-bar");
+            // progressbar.style.display = 'block';
+        }
+        else {
+            console.debug("we start the bar")
+            progressbar.style.display = 'block';
+        }
+
+
+        // 12 - 06 - 2021 PSS added project to url so the proper project is used for finding old translations
+        let f = document.getElementsByClassName("breadcrumb");
+
+        if (f[0] != null) {
+            if (typeof f[0].firstChild != 'undefined') {
+                let url = f[0].firstChild.baseURI;
+                newurl = url.split("?")[0];
+            }
+            else {
+                let url = ""
+                newurl = ""
+            }
+        }
+        else {
+            let url = ""
+            newurl = ""
+        }
+        // console.debug("newurl:", newurl)
+        let single = "False";
+
+        const processRecordWithDelay = async (record, delay,processed) => {
+            try {
+                const startTime = Date.now(); // Record the start time
+                // Simulate processing the record
+                // console.log('Processing record:', record);
+                let myrow = record.getAttribute("row");
+                // console.debug("row:", myrow)
+                // let newrow = myrow.split("-")[1];
+                // if (newrow != null) {
+                //     newrowId = myrow.concat("-", newrow);
+                //     row = newrowId;
+                //  }
+                //  else {
+                row = myrow
+                rowId = row
+                //   }
+                let originalElem = record.querySelector(".original");
+                //console.debug("originalElem:", originalElem)
+                counter++;
+                //console.debug("record:", record)
+                current = document.querySelector("#editor-" + row + " div.editor-panel__left div.panel-header span.panel-header__bubble");
+                let textareaElem = record.querySelector(".translation.foreign-text");
+                // console.debug("current:", current.innerText)
+                let showName = false;
+                //let showDiff = true;
+                let prev_trans = textareaElem.innerText;
+                //console.debug("translation:", prev_trans)
+                let currcount = 0;
+                let result = {};
+                checkElem = record.querySelector(".priority");
+                if (current.innerText != 'untranslated') {
+                    await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
+                }
+                const endTime = Date.now(); // Record the end time
+                const timeDifference = endTime - startTime; // Calculate the time difference
+                //console.log('Time taken for processing this record:', timeDifference, 'milliseconds');
+                return record; // Return the processed record (if needed)
+            } catch (error) {
+                console.error('Error processing record:', error.message);
+                throw error;
+            }
+        };
+
+        const delayBetweenProcessing = 50; // Delay between processing each record in milliseconds
+
+        const processRecordsSequentially = async () => {
+            try {
+                for (let i = 0; i < records.length; i++) {
+                    await processRecordWithDelay(records[i], delayBetweenProcessing);
+                    if (i < records.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delayBetweenProcessing)) 
+                    }
+                    else {
+                        if ((records.length) > 1) {
+                                messageBox("info", "Check old is ready")
+                            }
+                    // checking old records done
+                    progressbar = document.querySelector(".indeterminate-progress-bar");
+                    progressbar.style.display = "none";            
+                        }
+                }
+            } catch (error) {
+                console.error('Error processing records:', error.message);
+            }
+        };
+
+        processRecordsSequentially();
+    }
+}
 
 async function validatePage(language, showHistory, locale,showDiff) {
     // This function checks the quality of the current translations
@@ -255,6 +378,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
     var my_line_counter;
     var myGlotDictStat;
     var newurl;
+    var old_status;
     
     // html code for counter in checkbox
     const line_counter = `
@@ -265,8 +389,9 @@ async function validatePage(language, showHistory, locale,showDiff) {
    
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
+   
     if (f[0] != null) {
-        if (typeof firstChild != 'undefined') {
+        if (typeof f[0].firstChild != 'undefined') {
             let url = f[0].firstChild.baseURI;
             newurl = url.split("?")[0];
         }
@@ -299,27 +424,19 @@ async function validatePage(language, showHistory, locale,showDiff) {
         }
     }
     await set_glotdict_style().then(function (myGlotDictStat) {
-       // console.debug("glotdict:", myGlotDictStat)
-        // Use the retrieved data here or export it as needed
-        // increase the timeout if buttons from GlotDict are not shown
-        // this set when the checkbox show GlotDict is set
-        var increaseWith = 60
-        var timeout = 140;
-      //  if (myGlotDictStat) {
-        //    timeout = 0;
-            //increaseWith = 135
-        //}
-       // else {
-       //    timeout = 135
-       // }
-        
-        if (showHistory == 'false') {
-            timeout = 0
-            increaseWith =0
-        }
-        //console.debug("timeout:",showHistory,timeout,increaseWith)
-        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-            setTimeout(() => {
+    //console.debug("glotdict:", myGlotDictStat)
+    // Use the retrieved data here or export it as needed
+    // increase the timeout if buttons from GlotDict are not shown
+    // this set when the checkbox show GlotDict is set
+    var increaseWith = 0
+    var timeout = 0;
+      if (myGlotDictStat) {
+        timeout = 250;
+        increaseWith = 150
+       }
+     
+    for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+            setTimeout(async function() {
                 rowcount++
                 let original = e.querySelector("span.original-raw").innerText;
                 let textareaElem = e.querySelector("textarea.foreign-text");
@@ -332,9 +449,11 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 });
                 // we need to fetch the status of the record to pass on
 
-                let old_status = document.querySelector("#preview-" + rowId);
+                old_status = document.querySelector("#preview-" + rowId);
                 /// checkbox = old_status.querySelector('input[type="checkbox"]'
-                checkbox = old_status.getElementsByClassName("checkbox")
+                if (old_status != null) {
+                    checkbox = old_status.getElementsByClassName("checkbox")
+                }
                 glossary_word = old_status.getElementsByClassName("glossary-word")
 
                 if (checkbox[0] != null) {
@@ -399,7 +518,15 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 let record = e.previousSibling.previousSibling.previousSibling
                 // this is the start of validation, so no prev_trans is present      
                 prev_trans = translation
-                updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+                if (showHistory === 'false') {
+                    waiting = 0;
+                }
+                else {
+                    waiting = 100;
+                }
+               // setTimeout(async function () {
+                   await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+                //}, waiting);
             }, timeout);
             timeout += increaseWith;
         }

@@ -1,10 +1,17 @@
 /* make ui smaller as it is unreadable with the new larg mask*/
-.gp-content {
+/*.gp-content {
     max-width:1300px !important;
-}
+} */
 /* If Wordpress team decides to change the title position, this can be removed*/
-.site-title {
-    margin-left:-60px !important;
+@media screen and (min-width: 1200 AND (max-width:1500)) {
+    .site-title {
+        margin-left: 0px !important;
+    }
+}
+@media screen and (min-width: 1500 AND (max-width:2000)) {
+    .site-title {
+        margin-left: -60px !important;
+    }
 }
 
 .panelTransMenu {

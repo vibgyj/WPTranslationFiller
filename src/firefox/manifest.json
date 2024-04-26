@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "WordPress Translation Filler",
-  "version": "2.7.5",
+  "name": "WordPress Translation Filler Extended",
+  "version": "2.7.6",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's.",
   "resources": [
     "/img/*",
@@ -85,7 +85,7 @@
   ],
   "browser_specific_settings": {
     "gecko": {
-      "id": "{1f70acc7-00c6-4bdf-96a1-c97a19a6884a}",
+      "id": "{543c6b62-63aa-48b6-a5a0-10e65ce879df}",
       "strict_min_version": "57.0"
     }
   }

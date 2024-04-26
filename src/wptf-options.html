@@ -83,6 +83,9 @@
         #OpenAI_temp {
             width: 40px;
         }
+        #screenWidth {
+            width: 350px;
+        }
 
         #text_verbs {
             width: calc(100% - 6px);
@@ -245,7 +248,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="deepl_api_key" type="text" value="DeepL-api key->" placeholder="DeepL API key"/>
+                        <input id="deepl_api_key" type="text" value="DeepL-api key->" placeholder="DeepL API key" />
                     </div>
                 </td>
             </tr>
@@ -302,14 +305,14 @@
                         <label for="OpenAI_temp">Temperature:</label>
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
                     </div>
-                 </td>
-                </tr>
-                <tr>
+                </td>
+            </tr>
+            <tr>
                 <td>
-                    
+
                     <label for="ToneSelect">Select a tone for OpenAI:</label>
-                  </td>
-                    <td>
+                </td>
+                <td>
                     <div>
                         <select title="Select a tone for OpenAI" name="ToneSel" id="ToneSelect">
                             <option value="formal">Formal</option>
@@ -321,7 +324,7 @@
                             <option value="strict">Strict</option>
                         </select>
                     </div>
-            </td>
+                </td>
             </tr>
             <tr>
                 <td>
@@ -438,6 +441,18 @@
                     <div class="form-input">
                         <input id="bulkWait" type="text" value="1000" />
                         <span class="tooltip" data-tooltip="Change this when bulk save skips records">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="screenWidth">Screen witdth in %</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input type="range" id="screenWidth" type="text" value="90" min="0" max="100" />
+                        <span id="rangeValue">90</span>
+                        <span class="tooltip" data-tooltip="Change this value to alter the width of the table">?</span>
                     </div>
                 </td>
             </tr>

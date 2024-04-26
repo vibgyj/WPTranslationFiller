@@ -1,4 +1,69 @@
 // Injected script
+
+function adjustLayoutScreen() {
+    // Retrieve value from chrome local storage
+    
+    chrome.storage.local.get(['WPTFscreenWidth'], function (result) {
+        // Access the stored value
+        var myScreenWidth;
+        myScreenWidth = result.WPTFscreenWidth;
+        var screenWidth = window.innerWidth;
+        //console.debug("screenWidth:",screenWidth)
+        var gpContentElement = document.querySelector('.gp-content');
+        //console.debug("found setting:",myScreenWidth)
+        // Perform actions based on the stored value
+        if (myScreenWidth === null) {
+            // set the deafault value
+            if (screenWidth == 1455) {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+            else {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+                
+        } else if (typeof myScreenWidth == 'undefined') {
+            if (screenWidth == 1455) {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+            else {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+       
+        }
+        else {
+            // Generate the new max-width style based on the stored value
+            // Apply the new max-width style with !important
+            myScreenWidth = myScreenWidth + "%"
+            if (gpContentElement != null) {
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+            }
+        }
+    });
+}
+
+
+
+
 // Function to intercept XMLHttpRequests
 function interceptXHR(xhr) {
     // Intercept the open method to store the URL

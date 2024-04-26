@@ -3,10 +3,9 @@ var db;
 var jsstoreCon;
 var myGlotDictStat;
 var interCept = false;
-
+adjustLayoutScreen();
 // Function to send a message to the injected script
 function sendMessageToInjectedScript(message) {
-    console.debug("message:",message)
     window.postMessage(message, '*');
 }
 
@@ -22,7 +21,6 @@ else {
     // PSS added jsStore to be able to store and retrieve default translations
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
-    //console.debug("new db open:", db);
 }
 
 var translator; // Declare the global variable
@@ -45,7 +43,6 @@ if (interCept === null || (interCept !== "true" && interCept !== "false")) {
     localStorage.setItem("interXHR", interCept);
 }
 
-console.debug("after refresh2:",interCept)
 sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 
 chrome.storage.local.get('showHistory', async function (result) {
@@ -836,8 +833,6 @@ if (interCept === null || (interCept !== "true" && interCept !== "false")) {
     localStorage.setItem("interXHR", interCept);
 }
 
-
-console.debug("after reload:",interCept)
 var tmDisableButton = document.createElement("a");
 tmDisableButton.href = "#";
 if (interCept === 'false') {
@@ -1431,7 +1426,7 @@ function translatePageClicked(event) {
                         var deeplGlossary = localStorage.getItem('deeplGlossary');
                         var OpenAITone = data.OpenAITone;
                         //console.debug("glossary_id:", deeplGlossary)
-                        console.debug("tone:",data.OpenAITone)
+                       // console.debug("tone:",data.OpenAITone)
                         translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore,deeplGlossary,OpenAITone);
                     }
                     else {
@@ -1660,6 +1655,10 @@ function loadGlossary(start) {
                             //console.debug("content DefGlossary:",data.DefGlossary)
                             let locale = checkLocale();
                             validatePage(data.destlang, data.showHistory, locale, data.showTransDiff);
+                           // console.debug("showhistory:",data.showHistory)
+                            if (data.showHistory == true) {
+                                validateOld(data.showTransDiff);
+                            }
                         }
                     });
                 }
@@ -1667,7 +1666,6 @@ function loadGlossary(start) {
                     messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
                     return;
                 }
-
             }
             else {
                 messageBox("error", "Your second glossary is not loaded because no file is loaded!!");
@@ -2198,6 +2196,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
         console.debug("updatestyle prev:", prev_trans)
         console.debug("updatestyle curr:", currstring, rowId)
+        console.debug("ShowHistory:",showHistory)
     }
     // 17-02-2023 PSS do not add the marker twice if a retranslation is done
     if (markerpresent == null) {
@@ -2269,29 +2268,6 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     let row = rowId.split("-")[0];
-
-    // 12-06-2021 PSS do not fetch old if within the translation
-    // 01-07-2021 fixed a problem causing an undefined error
-    // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
-    if (showHistory == true) {
-        let single = "True";
-        if (newurl.substring(1, 9) != "undefined") {
-            single = "False";
-        }
-        // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
-        //console.debug("before fetchold",currText)
-        // increaste the value to wait to request the old records, this is to prevent 429 errors
-        if (currText != 'untranslated') {
-            let waiting = 0
-            setTimeout(async function() {
-               await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText,old_status,currcount,showDiff);
-            }, waiting);
-        }
-    }
-    //let currstring = "";
-    //console.debug("updateStyle2 curr:", currstring)
-    //console.debug("updateStyle2 prev:", prev_trans)
-    //console.debug("currcount:",currcount)
     if (currText != 'untranslated') {
         // This is the proper one!!!
        // console.debug("UpdateStyle:",showDiff)
@@ -2312,13 +2288,14 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
         if (current.innerText != 'untranslated') {
-            let waiting = 0
+            let waiting = 5000
             setTimeout(async function () {
-                  fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans,currcount,showDiff);
+              // await  fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId,showName,current.innerText,prev_trans,currcount,showDiff);
             }, waiting);
         }
     }
 }
+
 async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     var translation;
@@ -2656,7 +2633,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             }
         }
         // 11-08-2021 PSS added aditional code to prevent duplicate missing verbs in individual translation
-        if ((result.toolTip).length > 0) {
+        if ((typeof result != 'undefined') && (result.toolTip).length > 0) {
             headerElem.title = "";
             headertitle = '';
             // 09-08-2021 PSS fix for issue #115 missing verbs are not shown within the translation
@@ -2787,6 +2764,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
         console.debug("old:", old_status) // is opject string containing the actual status
         console.debug("currstring:", currstring)
         console.debug("prev_trans:", prev_trans)
+        console.debug("showDiff:",showDiff)
        
     }
    
@@ -2813,14 +2791,6 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 }
             //console.debug("status before:",current,'currcount:',currcount)
             if ((+currcount) > 0 && current != 'current') {
-                let element2 = document.createElement("div")
-                element2.setAttribute("class", "div.trans_original_div");
-               // element1.after(element2)
-                let element3 = document.createElement("span");
-                element3.setAttribute("class", "current-string");
-                element3.appendChild(document.createTextNode(currstring));
-                element2.appendChild(element3)
-                element1.appendChild(element2)
                 //console.debug("we are now in:",current,prev_trans)
                 if (typeof prev_trans == 'object') {
                     //console.debug("classlist:", prev_trans.classList)
@@ -2832,11 +2802,20 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     waittrans_text = wait_trans[0].innerText
                     const result = waittrans_text === currstring
                     if (result) {
-                        //console.debug('The strings are similar.');
+                        console.debug('The strings are similar.');
                     } else {
                        // console.debug('The strings are not similar.');
                         diffType = "diffWords"
                         if (showDiff == true) {
+                            let element2 = document.createElement("div")
+                            element2.setAttribute("class", "div.trans_original_div");
+                            // element1.after(element2)
+                            let element3 = document.createElement("span");
+                            element3.setAttribute("class", "current-string");
+                            element3.appendChild(document.createTextNode(currstring));
+                            element2.appendChild(element3)
+                            element1.appendChild(element2)
+                            //element1.appendChild(element3)
                            // console.debug("trans_text:", waittrans_text)
                            // console.debug("currstring:", currstring)
                             const diff = JsDiff[diffType](currstring, waittrans_text);
@@ -2858,13 +2837,13 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                                 fragment.appendChild(span);
                                 span.part.value.fontWeight = '900'
                             });
-                            element1.appendChild(fragment);
+                           element1.appendChild(fragment);
                         }
                     }
                 }
                 else if (typeof prev_trans == 'string') {
                     if (result) {
-                       // console.debug('The strings are similar.');
+                        console.debug('The strings are similar.');
                     } else {
                        // console.debug('The strings are not similar.');
                        // console.debug("current text string:", currstring, typeof currtrans_text)
@@ -2899,7 +2878,10 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                                 fragment.appendChild(span);
                                 span.part.value.fontWeight = '900'
                             });
-                            element1.appendChild(fragment);
+                            let element2 = document.createElement("div")
+                            element2.setAttribute("class", "div.trans_original_div");
+                            element2.appendChild(fragment);
+                            element1.appendChild(element2)
                         }
                     }
                 }
@@ -2920,7 +2902,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 element3.appendChild(document.createTextNode(prev_trans));
                 element2.appendChild(element3)
                 markElements_previous(element3, repl_array, element3.innerText, [], repl_array, currstring);
-            let element4 = document.createElement("div")
+               let element4 = document.createElement("div")
             if (showDiff == true) {
                 var diffType = "diffWords";
                 var changes = JsDiff[diffType](prev_trans, currstring);
@@ -2939,7 +2921,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                         .createTextNode(part.value));
                     fragment.appendChild(span);
                     });
-                    element4.appendChild(fragment);
+                  //  element4.appendChild(fragment);
                 }
                 if (old_current != "current") {        
                     //console.debug("we do not have a current!:",old_current)
@@ -3493,97 +3475,124 @@ var stringToHTML = function (str) {
 };
 
 // 11-06-2021 PSS added function to mark that existing translation is present
-async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current,prev_trans,currcount,showDiff) {
+async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current, prev_trans, currcount, showDiff) {
     var mycurrent = current;
     //console.debug("fetchold:",showDiff)
-        // 30-06-2021 PSS added fetch status from local storage
-        //chrome.storage.sync
-          //  .get(
-          //      ["noOldTrans"],
-           //     function (data) {
-           //         single = data.noOldTrans;
-            //    });
-       
-        const data = fetch(url, {
-            headers: new Headers({
-                "User-agent": "Mozilla/4.0 Custom User Agent",
-                'Cache-Control': 'no-cache'
-            })
-        })
-            .then(response => response.text())
-            .then(async data => {
-                //05-11-2021 PSS added fix for issue #159 causing an error message after restarting the add-on
-                currURL = window.location.href;
-                // &historypage is added by GlotDict or WPGPT, so no extra parameter is necessary for now
-                if (currURL.includes("&historypage") == false) {
-                    var parser = new DOMParser();
-                    var doc = parser.parseFromString(data, "text/html");
-                    //console.log("html:", doc);
-                    var table = await doc.getElementById("translations");
-                    //console.debug("table:",table)
-                    if (table != null) {
-                        let tr = table.rows;
-                        let currstring = "";
-                           const tbodyRowCount = table.tBodies[0].rows.length;
-                           // 04-07-2021 PSS added counter to message for existing translations
-                           let rejected = table.querySelectorAll("tr.preview.status-rejected");
-                           let waiting = table.querySelectorAll("tr.preview.status-waiting");
-                           let fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
-                           let current = table.querySelectorAll("tr.preview.status-current");
-                           let old = table.querySelectorAll("tr.preview.status-old");
-                           if (typeof current != "null" && current.length != 0) {
-                               currcount = " Current:" + current.length;
-                               //console.debug("table:",table)
-                               currstring = table.querySelector("tr.preview.status-current");
-                               currstring = currstring.querySelector(".translation-text")
-                               if (currstring.innerText == null) {
-                                   currstring = "";
-                               }
-                               else {currstring = currstring.innerText }
-                           }
-                           else {
-                              currcount = "";
-                           }
-                           if (waiting.length != 0) {
-                               wait = " Waiting:" + waiting.length;
-                           }
-                           else {
-                               wait = "";
-                           }
-                           if (rejected.length != 0) {
-                               rejec = " Rejected:" + rejected.length;
-                           }
-                           else {
-                                rejec = "";
-                           }
-                           if (fuzzy.length != 0) {
-                               fuz = " Fuzzy:" + fuzzy.length;
-                           }
-                           else {
-                              fuz = "";
-                           }
-                           if (old.length != 0) {
-                              old = " Old:" + old.length;
-                           }
-                           else {
-                               old = "";
-                           }
-                        if (tbodyRowCount > 2 && single == "False") {
-                            // we need to fetch the previous state first
-                            old_status = document.querySelector("#preview-" + rowId);
-                           //(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff) {
+    // 30-06-2021 PSS added fetch status from local storage
+    //chrome.storage.sync
+    //  .get(
+    //      ["noOldTrans"],
+    //     function (data) {
+    //         single = data.noOldTrans;
+    //    });
+    const headers = new Headers({
+        'Content-Type': 'application/json',
+        'User-agent': 'Mozilla/4.0 Custom User Agent',
+        'Cache-Control': 'no-cache'
+    });
 
-                            updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount,currstring,mycurrent,"",false,false,[],prev_trans,old_status,showDiff);
-                           }
-                        else if (tbodyRowCount > 2 && single == "True") {
-                            //   updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",true,false,[],prev_trans,current);
-                               //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
-                               //window.open(url, "_blank", windowFeatures);
-                           }
+    fetch(url,{
+        headers: headers, // Pass the headers object
+    })
+        .then(response => {
+            if (!response.ok) {
+                //console.debug("status:", response.status)
+                if (response && response.status === 429) {
+                    console.debug('Too many requests error 429 record not processed:', rowId, originalElem.innerText);
+                }
+                else if (response && response.status === 501) {
+                    console.debug('No response error 501 record not processed:', rowId)
+                }
+                else {
+                    console.debug("error:", response)
+                }
+
+            }
+            return response.text();
+        }).then(async data => {
+            //05-11-2021 PSS added fix for issue #159 causing an error message after restarting the add-on
+            currURL = window.location.href;
+            // &historypage is added by GlotDict or WPGPT, so no extra parameter is necessary for now
+            if (currURL.includes("&historypage") == false) {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(data, "text/html");
+                //console.log("html:", doc);
+                var table = await doc.getElementById("translations");
+                //console.debug("table:",table)
+                if (table != null) {
+                    let tr = table.rows;
+                    let currstring = "";
+                    const tbodyRowCount = table.tBodies[0].rows.length;
+                    // 04-07-2021 PSS added counter to message for existing translations
+                    let rejected = table.querySelectorAll("tr.preview.status-rejected");
+                    let waiting = table.querySelectorAll("tr.preview.status-waiting");
+                    let fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
+                    let current = table.querySelectorAll("tr.preview.status-current");
+                    let old = table.querySelectorAll("tr.preview.status-old");
+                    if (typeof current != "null" && current.length != 0) {
+                        currcount = " Current:" + current.length;
+                        //console.debug("table:",table)
+                        currstring = table.querySelector("tr.preview.status-current");
+                        currstring = currstring.querySelector(".translation-text")
+                        if (currstring.innerText == null) {
+                            currstring = "";
+                        }
+                        else { currstring = currstring.innerText }
+                    }
+                    else {
+                        currcount = "";
+                    }
+                    if (waiting.length != 0) {
+                        wait = " Waiting:" + waiting.length;
+                    }
+                    else {
+                        wait = "";
+                    }
+                    if (rejected.length != 0) {
+                        rejec = " Rejected:" + rejected.length;
+                    }
+                    else {
+                        rejec = "";
+                    }
+                    if (fuzzy.length != 0) {
+                        fuz = " Fuzzy:" + fuzzy.length;
+                    }
+                    else {
+                        fuz = "";
+                    }
+                    if (old.length != 0) {
+                        old = " Old:" + old.length;
+                    }
+                    else {
+                        old = "";
+                    }
+                    //console.debug("result of records found:",wait, rejec, fuz, old, rowId)
+                    if (tbodyRowCount > 2 && single == "False") {
+                        // we need to fetch the previous state first
+                        old_status = document.querySelector("#preview-" + rowId);
+                        myHistory = true;
+                        my_checkpage = false;
+                        repl_array = [];
+                       // showDiff = 'true';
+                        //(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff) {
+                        showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff);
+
+                       // updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount, currstring, mycurrent, "", false, false, [], prev_trans, old_status, showDiff);
+                    }
+                    else if (tbodyRowCount > 2 && single == "True") {
+                        //   updateElementStyle(checkElem, "", result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",true,false,[],prev_trans,current);
+                        //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
+                        //window.open(url, "_blank", windowFeatures);
                     }
                 }
-            }).catch(error => console.debug(error));
-   
+            }
+        }).catch(error => {
+            if (error.response && error.response.status === 429) {
+                console.error('Too many requests. Please try again later.');
+            } else {
+                console.error('Error fetching or processing data:', error.message);
+            }
+         })
 }
 
 
