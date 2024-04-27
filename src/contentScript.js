@@ -1657,7 +1657,12 @@ function loadGlossary(start) {
                             validatePage(data.destlang, data.showHistory, locale, data.showTransDiff);
                            // console.debug("showhistory:",data.showHistory)
                             if (data.showHistory == true) {
-                                validateOld(data.showTransDiff);
+                                // Get the current URL
+                                const currentURL = window.location.href;
+                                // Check if the URL contains "untranslated"
+                                if (!currentURL.includes("untranslated")) {
+                                    validateOld(data.showTransDiff);
+                                }
                             }
                         }
                     });
