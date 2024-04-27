@@ -2677,7 +2677,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     }
     else {
         interCept = false;
-        console.debug("Cannot read localstorage, set intercept to false");
+        //console.debug("Cannot read localstorage, set intercept to false");
     }
 
     // Check if the value exists and is either "true" or "false"
@@ -2687,10 +2687,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         localStorage.setItem("interXHR", interCept);
     }
 
-    console.debug("int translatepage:", interCept)
     sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-
-
+8
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
     translateButton.innerText = "Translate";

@@ -10,12 +10,6 @@ const template = `
 // Show version in header of options screen
 optionHeader = document.getElementById('container')
 optionHeader.insertAdjacentHTML("afterbegin", template);
-//var meta = document.createElement("meta");
-//meta.setAttribute("name", "viewport");
-//meta.setAttribute("content", "width=device-width, initial-scale=1.0");
-//meta.setAttribute("Content-Type", "image/svg+xml");
-//document.getElementsByTagName("head")[0].appendChild(meta);
-//myWindow.focus();
 var link = document.createElement("link");
 var parrotActive = 'false';
 var inter;
@@ -25,6 +19,12 @@ link.href = chrome.runtime.getURL("wptf-cute-alert.css");
 
 document.getElementsByTagName("head")[0].appendChild(link);
 
+const rangeInput = document.getElementById(('screenWidth'));
+const rangeValue = document.getElementById(('rangeValue'));
+
+rangeInput.addEventListener('input', function () {
+    rangeValue.textContent = this.value;
+})
 
 document.getElementById("exportverbs").addEventListener("click", export_verbs_csv);
 // This array is used to replace wrong words in translation and is necessary for the export
@@ -51,6 +51,7 @@ let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let OpenAIwaitValue = document.getElementById("OpenAIWait");
 let bulkWaitValue = document.getElementById("bulkWait");
+let myScreenWidthValue = document.getElementById("screenWidth");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
@@ -66,8 +67,7 @@ let showForceFormal = document.getElementById("Force-formal");
 let showDefGlossary = document.getElementById("use-default-glossary");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary"], function (data) {
-    //console.debug("getvalue:",data.bulkWait)
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -101,6 +101,16 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         bulkWait = data.bulkWait;
         bulkWaitValue.value = bulkWait;
 
+    }
+    if (typeof data.WPTFscreenWidth == 'undefined') {
+        myScreenWidth = '90';
+        myScreenWidthValue.value = myScreenWidth;
+        rangeValue.textContent = myScreenWidth
+    }
+    else {
+        myScreenWidth = data.WPTFscreenWidth;
+        myScreenWidthValue.value = myScreenWidth;
+        rangeValue.textContent = myScreenWidth
     }
     if (typeof data.OpenAItemp == 'undefined') {
         OpenAItemp = 1;
@@ -160,14 +170,11 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         spellcheckTextbox.value = data.spellCheckIgnore;
     }
     if (data.showHistory != "null") {
-        //console.debug(data.showHistory);
         if (data.showHistory == true) {
             showHistCheckbox.checked = true;
-            //document.getElementById("show-history").checked = true;
         }
         else {
             showHistCheckbox.checked = false;
-            //document.getElementById("show-history").checked = false;
         }
     }
     if (data.showTransDiff != "null") {
@@ -265,8 +272,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
 
 let backbutton = document.getElementById("backbutton");
 backbutton.addEventListener("click", function () {
-   // console.debug("back clicked!!")
-    window.history.back()
+window.history.back()
 });
 
 let button = document.getElementById("save");
@@ -315,7 +321,6 @@ button.addEventListener("click", function () {
         OpenAIsel = OpenAIselectBox.value;
     }
 
-    //console.debug("Openvalue:",OpenAIsel)
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
@@ -326,6 +331,7 @@ button.addEventListener("click", function () {
     let OpenAIVal = OpenAIwaitValue.value;
     let bulkWaitVal = bulkWaitValue.value;
     let OpenAItempVal = OpenAItempBox.value;
+    let theScreenWidthValue = myScreenWidthValue.value
     if (document.querySelector("#show-history:checked") !== null) {
         let Hist = document.querySelector("#show-history:checked");
         showHist = Hist.checked;
@@ -430,14 +436,12 @@ button.addEventListener("click", function () {
             Auto_spellcheck: LtAutoSpell,
             Auto_review_OpenAI: OpenAIreview,
             ForceFormal: Force_formal,
-            DefGlossary:Def_Glossary
+            DefGlossary: Def_Glossary,
+            WPTFscreenWidth: theScreenWidthValue
 
         });
 
-        //console.debug("Options saved: ", apikey, apikeyDeepl,apikeyMicrosoft,transsel,destlang, postTranslation,preTranslation, showHist, showDifference);
-
         if (glossaryFile.value !== "") {
-            //console.debug("Options: ", glossaryFile);
             // 06-05-2022 PSS fix for issue #208
             const thisdate = new Date();
             let myYear = thisdate.getFullYear();
@@ -487,10 +491,8 @@ button.addEventListener("click", function () {
             let thisDay = myday + "-" + (mymonth + 1) + "-" + myYear;
 
             mySecondfile = glossarySecondFile.value.replace("C:\\fakepath\\", "");
-            console.debug("myfile:",mySecondfile)
             mySecondfile = mySecondfile + "   " + thisDay;
             chrome.storage.local.set({ glossaryFileSecond: mySecondfile });
-
             chrome.storage.local.set({ glossary1: glossary1 });
             chrome.storage.local.set({ glossary1A: glossary1A });
             chrome.storage.local.set({ glossary1B: glossary1B });
@@ -604,12 +606,9 @@ file.addEventListener("change", function () {
             entry = lines[line].split(",");
             if (entry[1] && entry[1].length > 0) {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                //console.debug(" entry 1:", entry[1]);
                 const found = entry[1].indexOf("-/");
-                //console.debug(" entry 1:", entry[1],found);
                 if (found == -1) {
                     value = entry[1].split("/");
-                    //console.debug(" -/ not found", value);
                     for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
@@ -619,9 +618,7 @@ file.addEventListener("change", function () {
                 }
                 else {
                     value = entry[1];
-                   // console.debug("/ found:", value);
                 }
-                //console.debug("wefound:", value);
                 for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
@@ -715,7 +712,6 @@ file.addEventListener("change", function () {
                 }
             }
         }
-        //console.log(glossary);
     };
     reader.readAsText(file);
     let updatedfilename = document.getElementById("glossary_file");
@@ -747,12 +743,9 @@ second_file.addEventListener("change", function () {
             entry = lines[line].split(",");
             if (entry[1] && entry[1].length > 0) {
                 let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                //console.debug(" entry 1:", entry[1]);
                 const found = entry[1].indexOf("-/");
-                //console.debug(" entry 1:", entry[1],found);
                 if (found == -1) {
                     value = entry[1].split("/");
-                    //console.debug(" -/ not found", value);
                     for (let val in value) {
                         if (value != "") {
                             value[val] = value[val].replaceAll("\"", "").trim();
@@ -762,9 +755,7 @@ second_file.addEventListener("change", function () {
                 }
                 else {
                     value = entry[1];
-                    // console.debug("/ found:", value);
                 }
-                //console.debug("wefound:", value);
                 for (let val in value) {
                     if (value != "") {
                         value[val] = value[val].replaceAll("\"", "").trim();
@@ -889,7 +880,6 @@ function pushToGlossary(glossary, key, value) {
 }
 
 function export_verbs_csv() {
-    //console.debug("Export started:");
     // 13-03-2021 PSS added locale to export filename
     var destlang = destLangTextbox.value;
     let export_file = "export_verbs_" + destlang + ".csv";
@@ -948,12 +938,10 @@ if (input.files && input.files[0]) {
         // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
         reader.readAsText(input.files[0]);
         reader.onload = function (e) {
-        //console.log(e);
         obj_csv.size = e.total;
         obj_csv.dataFile = e.target.result;
-       //console.log(obj_csv.dataFile)
-       document.getElementById("text_verbs").value = "";
-       parseData(obj_csv.dataFile);
+        document.getElementById("text_verbs").value = "";
+        parseData(obj_csv.dataFile);
     };
    }
 });
@@ -968,9 +956,7 @@ function parseData(data) {
             verbsTextbox.value += res.split(",") + "\n";
         }
         ++counter;
-        //console.debug("counter:",counter);
     });
-    //console.table(csvData);
     messageBox("info", "Import ready");
 }
 
