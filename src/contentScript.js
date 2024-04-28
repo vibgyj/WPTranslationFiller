@@ -922,12 +922,20 @@ importContainer.appendChild(classToolTip)
 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 if (is_pte) {
     //07-05-2021 PSS added a bulksave button on first page
+    var bulksaveContainer = document.createElement("div")
+    bulksaveContainer.className = 'button-tooltip'
+    var classToolTip = document.createElement("span")
+    classToolTip.className = 'tooltiptext'
+    classToolTip.innerText = "This is the function to save all suggestions selected in bulk"
+
     var bulksaveButton = document.createElement("a");
     bulksaveButton.href = "#";
     bulksaveButton.id = "BulkSave";
     bulksaveButton.className = "bulksave-button";
     bulksaveButton.onclick = startBulkSave;
     bulksaveButton.innerText = "Bulksave";
+    bulksaveContainer.appendChild(bulksaveButton)
+    bulksaveContainer.appendChild(classToolTip)
 }
 
 //07-05-2021 PSS added a bulk save for existing translations into the local database
@@ -967,7 +975,7 @@ if (divPaging != null && divProjects == null) {
     divGpActions.parentNode.insertBefore(wptfNavBar, divGpActions);
     const divNavBar = document.querySelector("div.wptfNavBarCont")
     if (is_pte) {
-        divNavBar.appendChild(bulksaveButton);
+        divNavBar.appendChild(bulksaveContainer);
     }
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
@@ -1659,8 +1667,8 @@ function loadGlossary(start) {
                             if (data.showHistory == true) {
                                 // Get the current URL
                                 const currentURL = window.location.href;
-                                // Check if the URL contains "untranslated"
-                                if (!currentURL.includes("untranslated")) {
+                                // Check if the URL contains "untranslated, and also check if we come from other location with untranslated
+                                if (!currentURL.includes("untranslated") && !check_untranslated()) {
                                     validateOld(data.showTransDiff);
                                 }
                             }
@@ -2387,7 +2395,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var debug = false;
     if (debug == true) {
         console.debug("updateElementStyle curr:", currstring)
-        console.debug("updateElementStyle prev:", prev_trans.length)
+        console.debug("updateElementStyle prev:", prev_trans)
         console.debug("updateElementStyle currcount:", currcount)
     }
     if (typeof rowId != "undefined") {
@@ -2794,9 +2802,9 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 if (diffexist != null) {
                     diffexist.remove();
                 }
-            //console.debug("status before:",current,'currcount:',currcount)
+            console.debug("status before:",current,'currcount:',currcount)
             if ((+currcount) > 0 && current != 'current') {
-                //console.debug("we are now in:",current,prev_trans)
+                console.debug("we are now in:",current,prev_trans)
                 if (typeof prev_trans == 'object') {
                     //console.debug("classlist:", prev_trans.classList)
                     if (prev_trans.classList.contains("status-waiting")) {
@@ -2823,12 +2831,13 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                             //element1.appendChild(element3)
                            // console.debug("trans_text:", waittrans_text)
                            // console.debug("currstring:", currstring)
-                            const diff = JsDiff[diffType](currstring, waittrans_text);
+                           // const diff = JsDiff[diffType](currstring, waittrans_text);
+                            const diff = JsDiff[diffType](waittrans_text, currstring);
                             fragment = document.createDocumentFragment();
                             diff.forEach((part) => {
                                 // green for additions, red for deletions
                                 // dark grey for common parts
-                                const color = part.added ? "#33FF36" :
+                                const color = part.added ? "#006400" :
                                     part.removed ? "red" : "white";
                                 const background_color = part.added ? "white" :
                                     part.removed ? "white" : "grey";
@@ -2851,8 +2860,6 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                         console.debug('The strings are similar.');
                     } else {
                        // console.debug('The strings are not similar.');
-                       // console.debug("current text string:", currstring, typeof currtrans_text)
-                       // console.debug("previous text string:", prev_trans, typeof prev_trans)
                         if (typeof prev_trans == 'object') {
                             //console.debug(" we have an object instead of string")
                             prev_trans = prev_trans.getElementsByClassName('translation foreign-text')
@@ -2862,14 +2869,20 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                         else {
                           //  console.debug("we do not have an object!:", prev_trans)
                         }
+                        if (typeof current == 'object') {
+
+                        }
                         if (showDiff == true) {
                             diffType = "diffWords"
+                            console.debug("we are comparing current with previous",)
+                            
+                            //const diff = JsDiff[diffType](prev_trans, currstring);
                             const diff = JsDiff[diffType](currstring, prev_trans);
                             fragment = document.createDocumentFragment();
                             diff.forEach((part) => {
                                 // green for additions, red for deletions
                                 // dark grey for common parts
-                                const color = part.added ? "#33FF36" :
+                                const color = part.added ? "#006400" :
                                     part.removed ? "red" : "white";
                                 const background_color = part.added ? "grey" :
                                     part.removed ? "white" : "grey";
@@ -2910,12 +2923,14 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                let element4 = document.createElement("div")
             if (showDiff == true) {
                 var diffType = "diffWords";
-                var changes = JsDiff[diffType](prev_trans, currstring);
+                console.debug("We are somewhere else")
+                var changes = JsDiff[diffType](currstring, prev_trans);
+                //var changes = JsDiff[diffType](prev_trans, currstring);
                 fragment = document.createDocumentFragment();
                 changes.forEach((part) => {
                     // green for additions, red for deletions
                     // dark grey for common parts
-                    const color = part.added ? "#33FF36" :
+                    const color = part.added ? "#006400" :
                         part.removed ? "red" : "white";
                     const background_color = part.added ? "grey" :
                         part.removed ? "white" : "grey";
@@ -3548,6 +3563,9 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         currcount = "";
                     }
                     if (waiting.length != 0) {
+                       // console.debug("Waiting:", waiting)
+                        waiting_rec = waiting[0]
+                        prev_trans = waiting_rec.querySelector("td.translation.foreign-text")
                         wait = " Waiting:" + waiting.length;
                     }
                     else {
@@ -3565,7 +3583,11 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     else {
                         fuz = "";
                     }
-                    if (old.length != 0) {
+                    if (old.length != 0 && waiting.length == 0) {
+                        //console.debug("old:", old[0])
+                        prev_trans = old[0]
+                        prev_trans = prev_trans.querySelector("td.translation.foreign-text")
+                        //console.debug("old:", prev_trans)
                         old = " Old:" + old.length;
                     }
                     else {
