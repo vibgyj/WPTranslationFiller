@@ -1463,8 +1463,8 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore, rep
 
         }
         else {
-            console.debug("newTextin inmark:", newText)
-            console.debug("translatedText inmark:", translatedText)
+         //   console.debug("newTextin inmark:", newText)
+         //   console.debug("translatedText inmark:", translatedText)
 
 
         }
@@ -1555,10 +1555,8 @@ async function markElements_previous(preview, replaceVerb, orgText, spellcheckIg
 
         }
         else {
-            console.debug("newTextin inmark:", newText)
-            console.debug("translatedText inmark:", translatedText)
-
-
+         //   console.debug("newTextin inmark:", newText)
+        //    console.debug("translatedText inmark:", translatedText)
         }
     }
     else {
@@ -3394,7 +3392,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     }
     else {
         interCept = false;
-        console.debug("Cannot read localstorage, set intercept to false");
+        //console.debug("Cannot read localstorage, set intercept to false");
     }
     // Check if the value exists and is either "true" or "false"
     if (interCept === null || (interCept !== "true" && interCept !== "false")) {

@@ -33,7 +33,7 @@ if (typeof (Storage) !== "undefined") {
 }
 else {
     interCept = false;
-    console.debug("Cannot read localstorage, set intercept to false");
+    //console.debug("Cannot read localstorage, set intercept to false");
 }
 
 // Check if the value exists and is either "true" or "false"
@@ -167,7 +167,7 @@ document.addEventListener("keydown", async function (event) {
                     else {
                         wrong_verb = "Wrong verb";
                     }
-                    console.debug("checking:",data.destlang,org_verb,wrong_verb)
+                    //console.debug("checking:",data.destlang,org_verb,wrong_verb)
                     scrapeconsistency(data.destlang, org_verb, wrong_verb);
                 }
                 else {
@@ -190,7 +190,7 @@ document.addEventListener("keydown", async function (event) {
             var interCept;
             if (bulkWait != null && typeof bulkWait != 'undefined') {
                 myInterCept = await localStorage.getItem('interXHR')
-                console.debug("startbulksave via eventlistener:", myInterCept)
+                //console.debug("startbulksave via eventlistener:", myInterCept)
                 if (myInterCept === 'true') {
                     interCept = true
                 }
@@ -425,7 +425,7 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
-        console.debug("F8")
+      //  console.debug("F8")
         // Use chrome.local.get to retrieve the value
         interCept = localStorage.getItem("interXHR");
 
@@ -435,20 +435,20 @@ document.addEventListener("keydown", async function (event) {
             interCept = false;
             localStorage.setItem("interXHR", interCept);
         }
-        console.debug("interXHR after F8:",interCept)
+     //   console.debug("interXHR after F8:",interCept)
         if (interCept === "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', true);
             interCept = true
             sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-            console.debug("after:", localStorage.getItem(['interXHR']))
+         //   console.debug("after:", localStorage.getItem(['interXHR']))
         }
         else {
             toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', false);
             interCept = false
             sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-            console.debug("after:", localStorage.getItem(['interXHR']))
+           // console.debug("after:", localStorage.getItem(['interXHR']))
         }
         location.reload();
     };
@@ -1199,20 +1199,20 @@ function tmDisableClicked() {
     event.preventDefault();
     // console.debug("F8")
     let interCept = localStorage.getItem(['interXHR']);
-    console.debug("interXHR:", interCept)
+    //console.debug("interXHR:", interCept)
     if (interCept === "false") {
         toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
         localStorage.setItem('interXHR', true);
         interCept = true
         sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-        console.debug("after:", localStorage.getItem(['interXHR']))
+      //  console.debug("after:", localStorage.getItem(['interXHR']))
     }
     else {
         toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
         localStorage.setItem('interXHR', false);
         interCept = false
         sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-        console.debug("after:", localStorage.getItem(['interXHR']))
+     //  console.debug("after:", localStorage.getItem(['interXHR']))
     }
     location.reload();
 }
@@ -2707,7 +2707,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         if (oldstring == "True") {  
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-           // console.debug("currstring:", currstring)
+           // console.debug("currstring:", current)
            // console.debug("old_status updateElementstyle:", old_status)
            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old,currstring,current,myHistory,my_checkpage,repl_array,prev_trans,old_status,rowId,"UpdateElementStyle",showDiff);
         }
@@ -2745,6 +2745,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
     var old_current;
     var wait_trans;
     var waittrans_text;
+    var diff;
     //console.debug("showOldstringLabel:", originalElem)
    // console.debug("called from:", called_from)
    // console.debug("old_status showOldString:",old_status, typeof old_status)
@@ -2775,6 +2776,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
         console.debug("called from:", called_from)
         console.debug("current:", old_current)
         console.debug("old:", old_status) // is opject string containing the actual status
+        console.debug("current:", current);
         console.debug("currstring:", currstring)
         console.debug("prev_trans:", prev_trans)
         console.debug("showDiff:",showDiff)
@@ -2802,13 +2804,13 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 if (diffexist != null) {
                     diffexist.remove();
                 }
-            console.debug("status before:",current,'currcount:',currcount)
+          //  console.debug("status before:",current,'currcount:',currcount)
             if ((+currcount) > 0 && current != 'current') {
-                console.debug("we are now in:",current,prev_trans)
+               // console.debug("we are now in:",current,prev_trans)
                 if (typeof prev_trans == 'object') {
                     //console.debug("classlist:", prev_trans.classList)
                     if (prev_trans.classList.contains("status-waiting")) {
-                        //console.debug("We do have a waiting!")
+                       // console.debug("We do have a waiting!")
                     }
                     wait_trans = prev_trans.getElementsByClassName('translation-text')
                     //console.debug("currtrans:", currtrans, "2434")
@@ -2830,9 +2832,15 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                             element1.appendChild(element2)
                             //element1.appendChild(element3)
                            // console.debug("trans_text:", waittrans_text)
-                           // console.debug("currstring:", currstring)
-                           // const diff = JsDiff[diffType](currstring, waittrans_text);
-                            const diff = JsDiff[diffType](waittrans_text, currstring);
+                           // console.debug("current before JsDiff:", current)
+                            if (current == 'waiting' && typeof current != 'undefined') {
+                                diff = JsDiff[diffType](currstring, waittrans_text);
+                            }
+                            else {
+                                diff = JsDiff[diffType](waittrans_text, currstring);
+                              
+                                
+                            }
                             fragment = document.createDocumentFragment();
                             diff.forEach((part) => {
                                 // green for additions, red for deletions
@@ -2874,10 +2882,9 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                         }
                         if (showDiff == true) {
                             diffType = "diffWords"
-                            console.debug("we are comparing current with previous",)
-                            
+                            //console.debug("we are comparing current with previous",)           
                             //const diff = JsDiff[diffType](prev_trans, currstring);
-                            const diff = JsDiff[diffType](currstring, prev_trans);
+                            diff = JsDiff[diffType](currstring, prev_trans);
                             fragment = document.createDocumentFragment();
                             diff.forEach((part) => {
                                 // green for additions, red for deletions
@@ -2923,11 +2930,11 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                let element4 = document.createElement("div")
             if (showDiff == true) {
                 var diffType = "diffWords";
-                console.debug("We are somewhere else")
-                var changes = JsDiff[diffType](currstring, prev_trans);
+                //console.debug("We are somewhere else")
+                diff = JsDiff[diffType](currstring, prev_trans);
                 //var changes = JsDiff[diffType](prev_trans, currstring);
                 fragment = document.createDocumentFragment();
-                changes.forEach((part) => {
+                diff.forEach((part) => {
                     // green for additions, red for deletions
                     // dark grey for common parts
                     const color = part.added ? "#006400" :
@@ -3365,7 +3372,7 @@ async function fetchOldRec(url, rowId,showDiff) {
                             element3.appendChild(document.createTextNode(trans[0].innerText));
                         }
                         else {
-                            console.debug("we have no current:", OldRec_status)
+                            //console.debug("we have no current:", OldRec_status)
                             element3.appendChild(document.createTextNode(orig[0].innerText));
                         }
                     }
@@ -3497,7 +3504,7 @@ var stringToHTML = function (str) {
 // 11-06-2021 PSS added function to mark that existing translation is present
 async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current, prev_trans, currcount, showDiff) {
     var mycurrent = current;
-    //console.debug("fetchold:",showDiff)
+   // console.debug("fetchold:",mycurrent)
     // 30-06-2021 PSS added fetch status from local storage
     //chrome.storage.sync
     //  .get(
@@ -3602,7 +3609,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         repl_array = [];
                        // showDiff = 'true';
                         //(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff) {
-                        showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff);
+                        showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, mycurrent, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff);
 
                        // updateElementStyle(checkElem, "", result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount, currstring, mycurrent, "", false, false, [], prev_trans, old_status, showDiff);
                     }
