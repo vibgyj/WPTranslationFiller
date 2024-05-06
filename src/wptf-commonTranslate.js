@@ -2593,6 +2593,10 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     if (result != "No suggestions") {
                         mark_as_translated(row)
                         validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                        preview.classList.replace("no-translations", "has-translations");
+                        preview.classList.replace("untranslated", "status-waiting");
+                        preview.classList.replace("status-fuzzy", "status-waiting");
+                        preview.classList.add("wptf-translated");
                     }
                 }
             }
@@ -2659,6 +2663,7 @@ async function mark_as_translated(row){
     //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
     prevcurrentClass.classList.replace("no-translations", "has-translations");
     prevcurrentClass.classList.replace("untranslated", "status-waiting");
+    prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
     prevcurrentClass.classList.add("wptf-translated");
     // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
     prevcurrentClass.style.backgroundColor = "#ffe399";

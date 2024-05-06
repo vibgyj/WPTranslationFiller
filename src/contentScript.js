@@ -3310,8 +3310,8 @@ async function fetchOldRec(url, rowId,showDiff) {
                 var table = doc.getElementById("translations");
                 //console.debug("table:",table)
                 // if there is no table with results, then we do need to set the value to 0
-                if (typeof table != 'undefined') {
-                    let tr = table.rows;
+                if (typeof table != 'undefined' && table != null) {
+                    //let tr = table.rows;
                     tbodyRowCount = table.tBodies[0].rows.length;
                 }
                 else {
