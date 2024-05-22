@@ -854,7 +854,7 @@ else {
     }
 }
 tmDisableButton.onclick = tmDisableClicked;
-tmDisableButton.innerText = "TM Disable";
+tmDisableButton.innerText = "Disable machine";
 TmDisableContainer.appendChild(tmDisableButton)
 TmDisableContainer.appendChild(classToolTip)
 
@@ -1696,6 +1696,7 @@ function loadSet(x, set) {
 function loadSet1(x, set) {
     glossary1 = glossary1.concat(set);
 }
+
 function addTranslateButtons() {
     //16 - 06 - 2021 PSS fixed this function addTranslateButtons to prevent double buttons issue #74
     for (let e of document.querySelectorAll("tr.editor")) {
@@ -1729,6 +1730,15 @@ function addTranslateButtons() {
             addTranslateButton.innerText = "Add Translation";
             addTranslateButton.style.cursor = "pointer";
             panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
+
+            // Add checktranslate button
+            let checkTranslateButton = createElementWithId("my-button", `translate-${rowId}-checktranslation-entry-my-button`);
+            checkTranslateButton.href = "#";
+            checkTranslateButton.className = "checktranslation-entry-my-button";
+            checkTranslateButton.onclick = checktranslateEntryClicked;
+            checkTranslateButton.innerText = "Check Translation";
+            checkTranslateButton.style.cursor = "pointer";
+            panelTransDiv.insertBefore(checkTranslateButton, panelTransDiv.childNodes[0]);
 
             let TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
             TranslocalButton.className = "translocal-entry-local-button";
@@ -1949,6 +1959,15 @@ async function checkbuttonClick(event) {
                     addTranslateButton.innerText = "Add Translation";
                     panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
 
+                    // Add checktranslate button
+                    let checkTranslateButton = createElementWithId("my-button", `translate-${rowId}-checktranslation-entry-my-button`);
+                    checkTranslateButton.href = "#";
+                    checkTranslateButton.className = "checktranslation-entry-my-button";
+                    checkTranslateButton.onclick = checktranslateEntryClicked;
+                    checkTranslateButton.innerText = "Check Translation";
+                    checkTranslateButton.style.cursor = "pointer";
+                    panelTransDiv.insertBefore(checkTranslateButton, panelTransDiv.childNodes[0]);
+
                     TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
                     TranslocalButton.className = "translocal-entry-local-button";
                     TranslocalButton.innerText = "Local";
@@ -2138,6 +2157,34 @@ function translationComplete(original, translated) {
     if (original == translated) {
         //console.info("Identical");
     }
+}
+
+function checktranslateEntryClicked(event) {
+    event.preventDefault();
+    var formal;
+    let rowId = event.target.id.split("-")[1];
+    let myrowId = event.target.id.split("-")[2];
+    //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
+    // So that needs to be added to the base rowId to find it
+    if (typeof myrowId != "undefined" && myrowId != "translation") {
+        newrowId = rowId.concat("-", myrowId);
+        rowId = newrowId;
+    }
+    chrome.storage.local.get(["postTranslationReplace",  "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal"], function (data) {
+        //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+        if (data.ForceFormal != true) {
+            formal = checkFormal(false);
+        }
+        else {
+            formal = true;
+        }
+        var DeeplFree = data.DeeplFree;
+        var OpenAItemp = parseFloat(data.OpenAItemp);
+        var deeplGlossary = localStorage.getItem('deeplGlossary');
+        var OpenAITone = data.OpenAITone
+        //console.debug("glossary_id:", deeplGlossary)
+        checkEntry(rowId, data.postTranslationReplace, formal, data.convertToLower,translationComplete, data.spellCheckIgnore);
+    });
 }
 
 function translateEntryClicked(event) {

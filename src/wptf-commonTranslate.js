@@ -350,12 +350,12 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
         if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
                 // PSS solution for issue #291
-                //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
+            //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
             replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
             //console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
 
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-               // console.debug("replaceverb:", replaceVerb[i][1])
+                //console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
         }
@@ -3386,6 +3386,37 @@ function check_span_missing(row,plural_line) {
         myspan2.appendChild(document.createTextNode("empty"));
     }
 }
+
+async function checkEntry(rowId, postTranslationReplace, formal, convertToLower, completedCallback, spellCheckIgnore) {
+    var translatedText;
+    var formal = checkFormal(false);
+    var editor;
+    var plural;
+    setPostTranslationReplace(postTranslationReplace, formal);
+    editor = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
+    let original = editor.querySelector("span.original-raw").innerText;
+    let text = editor.querySelector("textarea.foreign-text").value;
+    // posprocess the translation
+    translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
+    textareaElem = editor.querySelector("textarea.foreign-text");
+    textareaElem.innerText = translatedText;       
+    textareaElem.value = translatedText;
+    textareaElem.style.height = "auto";
+    textareaElem.style.height = textareaElem.scrollHeight + "px";
+    // We need to get the original of the plural
+    plural = await editor.querySelector(`#editor-${rowId} .source-string__plural span.original-raw`);
+    if (plural != null) {
+        original = plural.innerText;
+        if (original != null) {
+            let newrowId = rowId.split("-")[0];
+            textareaElem1 = editor.querySelector("textarea#translation_" + newrowId + "_1");
+            let pluralText = textareaElem1.value;
+            translatedText = postProcessTranslation(original, pluralText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
+            textareaElem1.value = translatedText
+        }
+    }
+}
+
 
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary,OpenAITone) {
     var translateButton;
