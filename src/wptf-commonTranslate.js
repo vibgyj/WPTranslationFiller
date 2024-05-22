@@ -3936,6 +3936,7 @@ function saveLocal_2(bulk_timer) {
     
     processTableRecords('tr.preview.status-waiting', async function (preview) {
         //console.debug("preview:",preview,preview.classList)
+        //console.debug("preview classlist:",preview.classList)
         if (preview.classList.contains("priority-normal") || preview.classList.contains("priority-low") || preview.classList.contains("priority-high")) {
             // Perform your action on the current row here
             //console.debug("preview:",preview)
@@ -3965,64 +3966,75 @@ function saveLocal_2(bulk_timer) {
                         // let glotpress_open = document.querySelector(`#preview-${editorRow} td.actions .edit`);
                         // let glotpress_close = document.querySelector(`#editor-${editorRow} div.editor-panel__left .panel-header-actions__cancel`);
                         // glotpress_open.click()
-                        preview.querySelector("td.actions .edit").click();
+                       // preview.querySelector("td.actions .edit").click();
                         editor.style.display = "none";
                         glotpress_suggest.classList.remove("disabled")
                         //glotpress_suggest.click();
                         new Promise(resolve => setTimeout(async () => {
-                            await glotpress_suggest.click();
-                            new Promise(resolve => setTimeout(async () => {
-                                // we need to wait for saving the record        
-                                // waitForMyElement(`#gp-js-message`, 500)
-                                await waitForMyElement(`.gp-js-message-dismiss`, 800).then((dismiss) => {
-                                    // console.debug("dismiss message:", dismiss)
-                                    if (dismiss != "Time-out reached") {
-                                        // dismiss = document.querySelector(`.gp-js-message-dismiss`)
-                                        if (dismiss != null) {
-                                            dismiss.click()
+                            preview.querySelector("td.actions .edit").click();
+                            try {
+                                await glotpress_suggest.click();                     
+                                new Promise(resolve => setTimeout(async () => {
+                                    // we need to wait for saving the record        
+                                    // waitForMyElement(`#gp-js-message`, 500)
+                                    await waitForMyElement(`.gp-js-message-dismiss`, 1000).then((dismiss) => {
+                                        // console.debug("dismiss message:", dismiss)
+                                        if (dismiss != "Time-out reached") {
+                                            // dismiss = document.querySelector(`.gp-js-message-dismiss`)
+                                            if (dismiss != null) {
+                                                dismiss.click()
+                                            }
                                         }
+                                        else {
+                                            // Sometimes the previewline is not hidden but saved, so we need to hide it
+                                            preview = document.querySelector(`#preview-${editorRow}`);
+                                            if (preview != null) {
+                                                if (preview.style.display != " none") {
+                                                    if (preview.classList.contains("wptf-translated")) {
+                                                        // preview.style.display = "none"
+                                                         preview.classList.replace("status-waiting", "status-hidden");
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                    if (is_pte) {
+                                        current.innerText = "current"
                                     }
                                     else {
-                                        // Sometimes the previewline is not hidden but save, so we need to hide it
-                                        preview = document.querySelector(`#preview-${editorRow}`);
-                                        if (preview != null) {
-                                            if (preview.style.display != " none") {
-                                                preview.style.display = "none"
-                                                preview.classList.replace("status-waiting", "status-hidden");
+                                        current.innerText = "waiting"
+                                    }
+                                    resolve("ready")
+                                }), 500).then(() => {
+                                    // Sometimes the previewline is not hidden but saved, so we need to hide it
+                                    preview = document.querySelector(`#preview-${editorRow}`);
+                                    if (preview != null) {
+                                        if (preview.style.display != " none") {
+                                            if (preview.classList.contains("wptf-translated")) {
+                                                 // preview.style.display = "none"
+                                                  preview.classList.replace("status-waiting", "status-hidden");
                                             }
                                         }
                                     }
+                                    //glotpress_close.click()
+                                    //checkset.checked = false;
+                                    resolve("ready")
                                 });
-                                if (is_pte) {
-                                    current.innerText = "current"
-                                }
-                                else {
-                                    current.innerText = "waiting"
-                                }
-                                resolve("ready")
-                            }), 100).then(() => {
-                                // Sometimes the previewline is not hidden but save, so we need to hide it
-                                preview = document.querySelector(`#preview-${editorRow}`);
-                                if (preview != null) {
-                                    if (preview.style.display != " none") {
-                                        preview.style.display = "none"
-                                        preview.classList.replace("status-waiting", "status-hidden");
-                                    }
-                                }
-                                //glotpress_close.click()
-                                //checkset.checked = false;
-                                resolve("ready")
-                            });
+                            } catch (error) {
+                                console.log(`Error: ${error.message}`);
+                            }
+                            //await glotpress_suggest.click();
+                           
                         }), bulk_timer);
                     }
                     else {
                         //console.debug("checkbox present but not set or not in waiting mode")
                         let original = editor.querySelector("span.original-raw").innerText;
                         if (original != null) {
-                            toastbox("info", "Skipping:" + original, "800", "Skipping record");
+                            toastbox("info", "Skipping:" + original, "800", "Skipping record:");
                         }
                         else {
-                            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record:");
                             // toastbox.close()
                         }
                     }

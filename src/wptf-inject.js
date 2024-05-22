@@ -62,8 +62,6 @@ function adjustLayoutScreen() {
 }
 
 
-
-
 // Function to intercept XMLHttpRequests
 function interceptXHR(xhr) {
     // Intercept the open method to store the URL
@@ -100,7 +98,16 @@ function interceptXHR(xhr) {
             return; // Exit early without calling the original send method
         }
         // Call the original send method for non-intercepted requests
-        return originalSend.apply(xhr, arguments);
+        try {
+            return originalSend.apply(xhr, arguments);
+
+         } catch (error) {
+        console.log(`Error: ${error.message}`);
+         }
+        //return originalSend.apply(xhr, arguments);
+        originalSend.onerror = function () {
+            console.error('Request failed due to a network error.');
+        };
     };
 }
 
