@@ -190,6 +190,12 @@ function startsWithCapital(word) {
     return /[A-Z]/.test(word.charAt(0))
 }
 
+function replaceWord(text, oldWord, newWord) {
+    // Create a regular expression with word boundaries and global flag
+    let regex = new RegExp(`\\b${oldWord}\\b`, 'g');
+    return text.replace(regex, newWord);
+}
+
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore,locale) {
     var pos;
     var index = 0;
@@ -222,7 +228,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     else if (translator == "deepl") {
-        
         const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
             index = 0;
@@ -325,12 +330,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
     }
-    
     //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
     translatedText = check_hyphen(translatedText, spellCheckIgnore);
-   
-   // console.debug("after:",translatedText)
+    //console.debug("aftercheck_hyphen:",translatedText)
     // check if there is a blank after the tag 
     pos=translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -356,7 +359,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                 //console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
-                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]);
+               // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
         }
         else {
@@ -367,7 +371,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
     }
-    
+    //console.debug("after replace verb:",translatedText)
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
@@ -437,6 +441,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
     //console.debug("after checking:", result, result.translatedText)
     translatedText = result.translatedText;
+   // console.debug("end of post:",translatedText)
     return translatedText;
 }
 
@@ -2218,7 +2223,7 @@ async function fetchsuggestions(row) {
 
 // Part of the solution issue #204
         
-async function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal,spellIgnore,locale) {
+function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal,spellIgnore,locale) {
     var res;
     //var myres;
     var ulfound;
@@ -2359,13 +2364,14 @@ async function fetchli(result, editor, row, TMwait, postTranslationReplace, preT
                     textFound = unEscape(textFound)
                    // console.debug("before postprocess:"," '"+original+"' ",textFound,spellIgnore)
                     // We need to convert to lower if that is setconveert
+                   // console.debug("convert in fetchli:",convertToLower)
                     if (convertToLower == true) {
                         textFound = convert_lower(textFound, spellIgnore)
                     }
                     else {
                         textFound = check_hyphen(textFound, spellIgnore);
                     }
-                   // textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
+                    //textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
                     if (textFound == "") {
                        // console.debug("liSuggestion present but no result from postProcessTranslation!")
                         textFound = "No suggestions";
@@ -2424,6 +2430,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var editor;
     var preview;
     var res;
+    var counter = 0;
+    var row;
     locale = checkLocale();
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
@@ -2439,23 +2447,15 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             translateButton.classList.remove("tm-trans-button", "started", "translated");
             translateButton.classList.remove("tm-trans-button", "restarted", "translated");
             translateButton.className = "tm-trans-button restarted";
-        }
-        // Let us find the records to populate
-    for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        transtype = "single";
-        // 16-08-2021 PSS fixed retranslation issue #118
-        let rowfound = record.parentElement.parentElement.parentElement.parentElement.id;
-      
-        row = rowfound.split("-")[1];
-        let newrow = rowfound.split("-")[2];
-        if (typeof newrow != "undefined") {
-            newrowId = row.concat("-", newrow);
-            row = newrowId;
-        }
-        else {
-            rowfound = record.querySelector(`div.translation-wrapper textarea`).id;
-            row = rowfound.split("_")[1];
-        }
+    }
+    // for some reason if "preview" is used for selection we get one record to much with fuzzies, so select editor instead
+    myrecCount = document.querySelectorAll("tr.editor")
+    //myrecCount = document.getElementsByClassName("editor")
+    //console.debug("record count:",myrecCount.length)
+    for (let record of myrecCount) {
+        counter++;
+        transtype = "single";  
+        row = record.getAttribute("row");
         // we need to store current preview and editor for later usage
         preview = document.querySelector(`#preview-${row}`);
         editor = document.querySelector(`#editor-${row}`);
@@ -2465,7 +2465,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             var current = currec.querySelector("span.panel-header__bubble");
             var prevstate = current.innerText;
         }
-        let original = record.querySelector("span.original-raw").innerText;
+        let original = editor.querySelector("span.original-raw").innerText;
+        //console.debug("original:", editor, original)
         // 14-08-2021 PSS we need to put the status back of the label after translating
         let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
         if (transname != null) {
@@ -2502,13 +2503,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 comment = comment.replace(/(\r\n|\n|\r)/gm, "");
                 toTranslate = checkComments(comment.trim());
             }
-            // we need to remember which editor to close
-           // let glotpress_close = document.querySelector(`#editor-${row} div.editor-panel__left .panel-header-actions__cancel`);
             if (toTranslate) {
-                preview.querySelector("td.actions .edit").click();
-                let editor = preview.nextElementSibling;
-                editor.style.display = "none";
-                //editoropen = await openEditor(preview);
+                editoropen = await openEditor(preview);
                 result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
                     return new Promise((resolve, reject) => {
                         myTM = fetchsuggestions(row);
@@ -2528,11 +2524,11 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 });
 
                 if (result != "No suggestions") {
-                    let myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale).then(resli => {
-                        if (typeof resli != null) {                            
-                            myres = getTM(resli, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
-                            mark_as_translated(row)
-                            let textareaElem = record.querySelector("textarea.foreign-text");
+                     myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale).then(resli => {
+                         if (typeof resli != null) {
+                            // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
+                            myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale,current);     
+                            let textareaElem = editor.querySelector("textarea.foreign-text");
                             if (is_pte) {
                                 rowchecked = preview.querySelector("th input");
                             }
@@ -2549,8 +2545,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                                     }
                                 }
                             }
-                        }
-                        else {
+                         }
+                         else {
                             console.debug("notfound");
                         }
 
@@ -2566,6 +2562,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 let translatedText = original;
                 let textareaElem = record.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
+                textareaElem.innerHTML = translatedText;
+                textareaElem.value = translatedText;
                 let preview = document.querySelector("#preview-" + row + " td.translation");
                 if (preview != null) {
                     preview.innerText = translatedText;
@@ -2580,7 +2578,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     status.innerText = "transFill";
                     status.value = "transFill";
                     // we need to set the checkbox as marked
-                    preview = document.querySelector(`#preview-${row}`);
+                  //  preview = document.querySelector(`#preview-${row}`);
                     if (is_pte) {
                         rowchecked = preview.querySelector(".checkbox input");
                     }
@@ -2591,12 +2589,9 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         rowchecked.checked = true;
                     }
                     if (result != "No suggestions") {
-                        mark_as_translated(row)
+                       
                         validateEntry(destlang, textareaElem, "", "", row, locale, record);
-                        preview.classList.replace("no-translations", "has-translations");
-                        preview.classList.replace("untranslated", "status-waiting");
-                        preview.classList.replace("status-fuzzy", "status-waiting");
-                        preview.classList.add("wptf-translated");
+                        mark_as_translated(row)
                     }
                 }
             }
@@ -2609,46 +2604,14 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
- 
-    // PSS the last record in the list is not updated properly, so it is better to hide it so it cannot be saved
-   // preview.querySelector(`#preview-${row}`);
-    //preview.classList.replace("status-waiting", "status-hidden");
-    //preview.classList.replace("status-waiting", "status-hidden");
-    // We only need to close the last record otherwise we will get errors due to GlotPress behavior
-     result = await waitForElm(".meta translation-memory __web-inspector-hide-shortcut__").then(metares => {
-         return new Promise((resolve, reject) => {
-            // we need to set the preview back in row state
-            let lastPreview = document.querySelector(`#preview-${row}`);
-            lastPreview.style = ""
-            preview = document.querySelector(`#preview-${row}`);
-            if (is_pte) {
-                rowchecked = preview.querySelector("th input");
-            }
-            else {
-                rowchecked = preview.querySelector("td input");
-            }
-            if (rowchecked == null) {
-                if (metares == "No suggestions") {
-                    rowchecked.checked = false;
-                }
-                else {
-                   // console.debug("textarea:")
-                    rowchecked.checked = true;
-                }
-            }
-            if (typeof metares != 'undefined') {
-                setTimeout(() => {
-                    // We need to close the last opened editor we cannot use the cancel button because then the translation is removed
-                    let hideEditor = document.querySelector(`#editor-${row}`)
-                    if (hideEditor != null) {
-                        hideEditor.style = "display:None"
-                    }
-                    resolve();
-                }, 800);
-            }
-            
-        });
-    });
+    let Buttons = editor.querySelector(".panel-header-actions")
+    let closeButton = Buttons.querySelectorAll("button")
+    // PSS we need to hide the last editor
+    editor.style.display = "none";
+    // PSS setting the value to "" solves the problem of closing the last preview
+    preview.style.display = "";
+        
+   // }
 }
 
 async function mark_as_translated(row){
@@ -4042,7 +4005,7 @@ function saveLocal_2(bulk_timer) {
                                     if (preview != null) {
                                         if (preview.style.display != " none") {
                                             if (preview.classList.contains("wptf-translated")) {
-                                                 // preview.style.display = "none"
+                                                  preview.style.display = "none"
                                                   preview.classList.replace("status-waiting", "status-hidden");
                                             }
                                         }
@@ -4388,8 +4351,10 @@ async function processTransl(original, translatedText, language, record, rowId, 
         console.debug("current:", current)
     }
     if (transtype == "single") {
-        textareaElem = record.querySelector("textarea.foreign-text");
+        //console.debug("processTransl:",record)
+        textareaElem = await record.querySelector("textarea.foreign-text");
         textareaElem.innerText = translatedText;
+        textareaElem.innerHTML = translatedText;
         textareaElem1 = textareaElem
         // PSS 29-03-2021 Added populating the value of the property to retranslate            
         textareaElem.value = translatedText;
@@ -4603,7 +4568,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
     // if we do not have a preview, then it is not necessary to mark the quality
     if (preview != null && preview !='undefined') {
        // await validateEntry(language, textareaElem1, "", "", myRowId, locale, record)
-       preview.scrollIntoView({ block: "end" });
+       //preview.scrollIntoView({ block: "end" });
     }
     // The line below is necessary to update the save button on the left in the panel
     previousCurrent.innerText = "transFill";
@@ -4772,50 +4737,58 @@ async function bulkSaveToLocal() {
     //event.preventDefault();
     var counter = 0;
     var checkboxCounter = 0;
+    var checkset
     var row;
     var myWindow;
     var nextpreview;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    //console.debug("Am I PTE?",is_pte)
     currWindow = window.self;
-
-    document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
-    if (is_pte) {
-        checkset = preview.querySelector(".checkbox input");
-    }
-    else {
-        checkset = preview.querySelector(".myCheckBox input");
-    }
-    if (checkset != null) {
-       if (checkset.checked == true) {
-          checkboxCounter++;
-       }
-    }
+    var recordsFound = false
+    document.querySelectorAll("tr.preview").forEach((preview) => {
+        if (is_pte) {
+            checkset = preview.querySelector(".checkbox input");
+        }
+        else {
+            checkset = preview.querySelector(".myCheckBox input");
+        }
+        if (checkset != null) {
+            //Only waiting and current are allowed to store
+            if (preview.classList.contains("status-current") || preview.classList.contains("status-waiting"))
+                recordsFound = true
+                if (checkset.checked == true) {
+                    checkboxCounter++;
+                }
+        }
     });
     if (checkboxCounter == 0) {
-        cuteAlert({
-            type: "question",
-            title: "Bulk save to local",
-            message: "There are no records selected, <br>are you sure you want to select all records?",
-            confirmText: "Confirm",
-            cancelText: "Cancel",
-            myWindow: currWindow
-        }).then(async (e) => {
-            if (e == ("confirm")) {
-                setmyCheckBox(event);
-                counter = saveToLocal();
-                cuteAlert({
-                    type: "info",
-                    title: "Bulk save to local",
-                    message: "All records are selected and processed: " +RecCount,
-                    confirmText: "Confirm",
-                    cancelText: "Cancel",
-                    myWindow: currWindow
-                })
-            }
-            else {
-                 messageBox("info", "Bulk save cancelled");
-            }
-        })
+        if (recordsFound == true) {
+            cuteAlert({
+                type: "question",
+                title: "Bulk save to local",
+                message: "There are no records selected, <br>are you sure you want to select all records?",
+                confirmText: "Confirm",
+                cancelText: "Cancel",
+                myWindow: currWindow
+            }).then(async (e) => {
+                if (e == ("confirm")) {
+                    setmyCheckBox(event);
+                    counter = saveToLocal();
+                    cuteAlert({
+                        type: "info",
+                        title: "Bulk save to local",
+                        message: "All records are selected and processed: " + RecCount,
+                        confirmText: "Confirm",
+                        cancelText: "Cancel",
+                        myWindow: currWindow
+                    })
+                }
+                else {
+                    messageBox("info", "Bulk save cancelled");
+                }
+                
+         })
+    }
     } else {
         counter = saveToLocal();
         cuteAlert({
@@ -4826,14 +4799,14 @@ async function bulkSaveToLocal() {
             cancelText: "Cancel",
             myWindow: currWindow
         })
-     }
+    }
 }
 
 async function saveToLocal() {
     var counter = 0;
     var row;
     RecCount = 0;
-    document.querySelectorAll("tr.preview.status-current").forEach((preview) => {
+    document.querySelectorAll("tr.preview").forEach((preview) => {
         if (is_pte) {
             checkset = preview.querySelector(".checkbox input");
         }
@@ -4843,21 +4816,22 @@ async function saveToLocal() {
         if (typeof checkset != 'undefined') {
             if (checkset != null){ 
                 if (checkset.checked) {
-                   // console.debug("checkbox set:", checkset.checked)
-                    let rowfound = preview.id;
-                    row = rowfound.split("-")[1];
-                    let newrow = rowfound.split("-")[2];
-                    if (typeof newrow != "undefined") {
-                        newrowId = row.concat("-", newrow);
-                        row = newrowId;
+                    //console.debug("checkbox set:", checkset.checked)
+                    if (preview.classList.contains("status-current") || preview.classList.contains("status-waiting")) {
+                       let rowfound = preview.id;
+                       row = rowfound.split("-")[1];
+                       let newrow = rowfound.split("-")[2];
+                       if (typeof newrow != "undefined") {
+                          newrowId = row.concat("-", newrow);
+                          row = newrowId;
+                       }
+                       counter++;
+                       // do not show message = false
+                       addTransline(row, false)
                     }
-                    counter++;
-                    // do not show message = false
-                    addTransline(row,false)
                 }
             }
         }
-        
     });
     RecCount= counter
     return counter;

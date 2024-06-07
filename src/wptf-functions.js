@@ -333,14 +333,17 @@ async function validateOld(showDiff) {
                 // console.debug("current:", current.innerText)
                 let showName = false;
                 //let showDiff = true;
-                let prev_trans = textareaElem.innerText;
-                //console.debug("translation:", prev_trans)
-                let currcount = 0;
-                let result = {};
-                checkElem = record.querySelector(".priority");
-                if (current.innerText != 'untranslated') {
-                    await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
+                if (textareaElem != null) {
+                    let prev_trans = textareaElem.innerText;
+                    //console.debug("translation:", prev_trans)
+                    let currcount = 0;
+                    let result = {};
+                    checkElem = record.querySelector(".priority");
+                    if (current.innerText != 'untranslated') {
+                        await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
+                    }
                 }
+                else {console.debug("we could not fetch the text of the record, probably de to 429 error")}
                 const endTime = Date.now(); // Record the end time
                 const timeDifference = endTime - startTime; // Calculate the time difference
                 //console.log('Time taken for processing this record:', timeDifference, 'milliseconds');
