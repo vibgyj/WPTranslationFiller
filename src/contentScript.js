@@ -4,6 +4,7 @@ var jsstoreCon;
 var myGlotDictStat;
 var interCept = false;
 var strictValidation = true
+var StartObserver = true;
 
 adjustLayoutScreen();
 // Function to send a message to the injected script
@@ -1945,8 +1946,11 @@ async function checkbuttonClick(event) {
             //console.debug("detail row textarea:", myrec)
             if (myrec != null) {
                 mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
-               // console.debug("detail row textarea:", mytextarea)        
-                start_editor_mutation_server(mytextarea,action)
+               // console.debug("detail row textarea:", mytextarea)  
+                console.debug("start mutationsserver:",StartObserver)
+                if (StartObserver) {
+                    start_editor_mutation_server(mytextarea, action)
+                }
             }
            // let myrec = document.querySelector(`#editor-${detailRow}`);
             if (!is_pte) {
@@ -3382,20 +3386,23 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                     if (result[1] == 1) {
                         // we need to find the exact match if parameter is set   
                         if (strictValidation) {
-                            if (containsExactWord(translation, glossaryverb)) {
+                            if (containsExactWord(translation.toLowerCase(), glossaryverb)) {
                                 // if (translation.includes(glossaryverb)) {
-                               //console.debug("we found exact original word:", glossaryverb, containsExactWord(translation, glossaryverb))
+                                //console.debug("we found exact original word:", glossaryverb, containsExactWord(translation, glossaryverb))
                                 count++
                                 myresult = true
                             }
                         }
                         else {
-                             if (translation.includes(glossaryverb)) {
-                               //console.debug("we found string containing glossary word:", glossaryverb, containsExactWord(translation, glossaryverb))
+                            if (translation.toLowerCase().includes(glossaryverb)) {
+                                //console.debug("we found string containing glossary word:", glossaryverb, containsExactWord(translation, glossaryverb))
                                 count++
                                 myresult = true
                             }
-                        }
+                            else {
+                                //console.debug("we did not find the word:", glossaryverb) 
+                            }
+                        }      
                     }
                     else {
                         //console.debug("The word exists more then once!",oWord)
@@ -3406,11 +3413,7 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                        // console.debug(`The word '${glossaryverb}' was found in translation  at positions: ${positions}`);
                        // console.debug("count of verbs when more then one in translation:", positions.length)
                         let result1 =  containsVerbMultipleTimes(original, oWord)
-                       // console.debug("before 2:",translation,glossaryverb)
                         let result2 = containsVerbMultipleTimes(translation, glossaryverb)
-                      //  console.debug("we found in result1:", result[1])
-                       // console.debug("we found in result2:", result[2])
-                        //count = count + positions.length
                         if (result1[1] == result2[1]) {
                             myresult = true
                            // console.debug("result2 count:",result2.count)
@@ -3423,18 +3426,16 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                 }
                 else {
                     // if the glossary contains an array we need to walk through the array
-                    //console.debug("is array:", gItemValue.length, gItemValue)
                     for (var i = 0; i < gItemValue.length; i++) {
                         glossaryverb = gItemValue[i].toLowerCase();
                         //console.debug("glossaryverb in array:", glossaryverb)
                         let result =  containsVerbMultipleTimes(original, gWord)
                         if (result[1] >1) {
-                            //console.debug("we have more then one")
+                            console.debug("we have more then one")
                             count+=result[1]
                         }
                         else {
                             let result =  translation.includes(glossaryverb)
-                           // console.debug("result in single glossary verb:",result)
                             if (result) {
                             //if (tWord.includes(glossaryverb)) {
                                 // if (containsExactWord(tWord, glossaryverb)) {
@@ -3451,9 +3452,6 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                         }
                     }
                 }
-                //console.debug("return value:", translation.includes(glossaryverb))
-                //myresult = translation.includes(glossaryverb)
-               // console.debug("before return myresult:",myresult,count)
                 return { myresult, count };
         }
     }
@@ -3474,7 +3472,6 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                     myresult = true
                 }
             }
-
             return [myresult,count];
         }
         else {
@@ -3482,15 +3479,12 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                 glossaryverb = gItemValue.toLowerCase();
                 if (strictValidation) {
                     if (containsExactWord(translation, glossaryverb)) {
-                        // if (translation.includes(glossaryverb)) {
-                        //console.debug("we found exact original word:", glossaryverb, containsExactWord(translation, glossaryverb))
                         count =1
                         myresult = true
                     }
                 }
                 else {
                     if (translation.includes(glossaryverb)) {
-                       // console.debug("we found string containing glossary word:", glossaryverb, containsExactWord(translation, glossaryverb))
                         count =1
                         myresult = true
                     }
@@ -3502,8 +3496,6 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                     glossaryverb = gItemValue[i].toLowerCase();
                     if (strictValidation) {
                         if (containsExactWord(translation, glossaryverb)) {
-                            // if (translation.includes(glossaryverb)) {
-                            //console.debug("we found exact original word:", glossaryverb, containsExactWord(translation, glossaryverb))
                             count =1
                             myresult = true
                             break
@@ -3511,7 +3503,6 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                     }
                     else {
                         if (translation.includes(glossaryverb)) {
-                           //console.debug("we found string containing glossary word:", glossaryverb, containsExactWord(translation, glossaryverb))
                             count =1
                             myresult = true
                             break
@@ -3519,8 +3510,6 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
                     }
                 } 
             }
-            //myresult = translation.includes(glossaryverb)
-            //count = "2"
             return { myresult, count };
         }
     }

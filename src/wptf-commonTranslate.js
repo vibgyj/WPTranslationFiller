@@ -3914,6 +3914,7 @@ function saveLocal_2(bulk_timer) {
     var checkcount = 0;
     var editor;
     var dismiss;
+    StartObserver =false
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
@@ -4048,6 +4049,7 @@ function saveLocal_2(bulk_timer) {
             progressbar = document.querySelector(".indeterminate-progress-bar");
             if (progressbar != null) {
                 progressbar.style.display = "none";
+                StartObserver = true;
                // console.log('All records processed.');
             }
             else {console.debug("no progressbar!")}
