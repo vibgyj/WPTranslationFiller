@@ -190,7 +190,23 @@ function startsWithCapital(word) {
     return /[A-Z]/.test(word.charAt(0))
 }
 
-function replaceWord(text, oldWord, newWord) {
+/**
+ * Replace a specific word (which may include brackets or curly braces) in a string with a given replacement.
+ * @param {string} str - The input string containing the word to be replaced.
+ * @param {string} target - The target word to be replaced, which may include brackets or curly braces.
+ * @param {string} replacement - The word to replace the target word with.
+ * @returns {string} - The modified string with the target word replaced.
+ */
+function replaceWord(str, target, replacement) {
+    // Create a dynamic regular expression to match the target word
+    const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escape special characters in the target word
+    const regex = new RegExp(escapedTarget, 'g'); // Create a global regular expression
+
+    // Replace the target word with the replacement word
+    return str.replace(regex, replacement);
+}
+
+function old_replaceWord(text, oldWord, newWord) {
     // Create a regular expression with word boundaries and global flag
     let regex = new RegExp(`\\b${oldWord}\\b`, 'g');
     return text.replace(regex, newWord);
@@ -358,7 +374,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             //console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
 
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                //console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
+               // console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
                 translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]);
                // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
@@ -2604,14 +2620,12 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
-    let Buttons = editor.querySelector(".panel-header-actions")
-    let closeButton = Buttons.querySelectorAll("button")
+    //let Buttons = editor.querySelector(".panel-header-actions")
+   // let closeButton = Buttons.querySelectorAll("button")
     // PSS we need to hide the last editor
-    editor.style.display = "none";
+    editor.style.display = "";
     // PSS setting the value to "" solves the problem of closing the last preview
     preview.style.display = "";
-        
-   // }
 }
 
 async function mark_as_translated(row){
