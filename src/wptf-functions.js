@@ -395,7 +395,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
     var old_status;
     var formal = checkFormal(false);
     if (formal == true) {
-        console.debug("we have formal")
+        //console.debug("we have formal")
         DefGlossary == true
     }
     else {
@@ -495,7 +495,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 }
                 else {
                     // if not a PTE it must be put in a different checkbox
-                    console.debug("we are not a PTE")
+                    //console.debug("we are not a PTE")
                     if (old_status != null) {
                         let mycheckbox = old_status.getElementsByClassName("myCheckBox")
                         mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);

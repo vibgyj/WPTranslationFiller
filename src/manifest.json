@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.0.1",
+  "version": "3.0.3",
   "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"

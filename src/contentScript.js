@@ -1947,7 +1947,7 @@ async function checkbuttonClick(event) {
             if (myrec != null) {
                 mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
                // console.debug("detail row textarea:", mytextarea)  
-                console.debug("start mutationsserver:",StartObserver)
+                //console.debug("start mutationsserver:",StartObserver)
                 if (StartObserver) {
                     start_editor_mutation_server(mytextarea, action)
                 }
