@@ -12,6 +12,17 @@ function getGlotDictStat() {
         return false;
 }
 
+function check_untranslated() {
+    var preview_list;
+    // select all untranslated, if they are not present we can go on
+    preview_list = document.querySelectorAll("tr.preview.no-translations");
+    if (preview_list.length > 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
  
 function findFirstBlankAfter(text, startPosition) {
     // this function finds the first word after the semi colon
