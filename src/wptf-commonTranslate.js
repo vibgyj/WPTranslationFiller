@@ -3951,13 +3951,12 @@ function saveLocal_2(bulk_timer) {
         //console.debug("preview:",preview,preview.classList)
         // we only need to read the translated lines by wptf
         if (preview.classList.contains("wptf-translated")) {
-            line_read++
             // Perform your action on the current row here 
             checkset = preview.querySelector('input[type="checkbox"]')
             //console.debug("checkset:", checkset)
             if (checkset != null && checkset.checked == true) {
-                //let rowfound = editor.id;
-                // if (checkset.checked == true) {
+                // 13-06-2024 PSS we only count the read lines when the checkbox is ticket
+                line_read++
                 editor = preview.nextElementSibling;
                 if (editor != null) {
                     let rowfound = editor.id;
