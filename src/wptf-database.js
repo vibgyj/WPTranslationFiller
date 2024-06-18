@@ -499,6 +499,16 @@ async function updateTransDb(orig, trans, cntry) {
     }
 }
 
+
+async function countTable(cntry) {
+    const results = jsstoreCon.count({
+        from: "Translation",
+        where: {
+            country: cntry
+        }
+    })
+    return results;
+}
 async function countTransline(orig,cntry){
     const results = await jsstoreCon.count({
         from: "Translation",

@@ -5,6 +5,7 @@ var myGlotDictStat;
 var interCept = false;
 var strictValidation = true
 var StartObserver = true;
+var LocRecCout
 
 adjustLayoutScreen();
 // Function to send a message to the injected script
@@ -24,7 +25,10 @@ else {
     // PSS added jsStore to be able to store and retrieve default translations
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
+    
 }
+
+
 
 var translator; // Declare the global variable
 var DefGlossary = true;
@@ -1055,6 +1059,11 @@ DispGloss.className = "DispGloss-button";
 DispGloss.onclick = DispGlossClicked;
 DispGloss.innerText = "DispGloss";
 
+var DispCount = document.createElement("a");
+DispCount.href = "#";
+DispCount.className = "DispCount-button";
+
+
 // 12-05-2022 PSS here we add all buttons in the pagina together
 var GpSpecials = document.querySelector("span.previous.disabled");
 if (GpSpecials == null) {
@@ -1785,6 +1794,18 @@ function addTranslateButtons() {
         }
     }
 }
+let count_locale = checkLocale();
+countTable(count_locale).then(count => {
+    var divPaging = document.querySelector("div.paging");
+    if (divPaging != null) {
+        DispCount.innerText = count
+        if (count == 1) {
+            DispCount.style.background = 'yellow'
+        }
+        divPaging.insertBefore(DispCount, divPaging.childNodes[0]);
+        
+    }
+});
 
 // 08-05-2021 PSS added import of records into local database
 function importPageClicked(event) {

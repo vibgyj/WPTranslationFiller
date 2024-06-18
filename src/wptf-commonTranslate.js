@@ -3931,6 +3931,7 @@ function saveLocal_2(bulk_timer) {
     var counter = 0;
     var line_read = 0
     var editor;
+    var original;
     var dismiss;
     StartObserver =false
     const template = `
@@ -3970,6 +3971,7 @@ function saveLocal_2(bulk_timer) {
                     if (current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true) {
                         let preview = document.querySelector(`#preview-${editorRow}`);
                         let editor = preview.nextElementSibling;
+                        original = editor.querySelector("span.original-raw").innerText;
                         let glotpress_suggest = editor.querySelector(".translation-actions__save");
                         // PSS do not set style to none!!! it will then skip records
                         editor.style.display = "";
@@ -3993,6 +3995,7 @@ function saveLocal_2(bulk_timer) {
                                         }
                                         else {
                                             console.debug("Timeout in waiting for message")
+                                            original = editor.querySelector("span.original-raw").innerText;
                                             toastbox("info", "Skipping:" + original, "800", "Timeout in saving");
                                             // Sometimes the previewline is not hidden but saved, so we need to hide it
                                             preview = document.querySelector(`#preview-${editorRow}`);
@@ -4040,22 +4043,22 @@ function saveLocal_2(bulk_timer) {
                         //console.debug("checkbox present but not set or not in waiting mode")
                         let original = editor.querySelector("span.original-raw").innerText;
                         if (original != null) {
-                            toastbox("info", "Skipping:" + original, "800", "Skipping record:");
+                            toastbox("info", "Skipping:" + original, "900", "Skipping record:");
                         }
                         else {
-                            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record:");
+                            toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record:");
                             // toastbox.close()
                         }
                     }
                 }
                 else {
-                    toastbox("info", "Editor not open", "2000", "Record not saved:" + original);
+                    toastbox("info", "Editor not open", "900", "Record not saved:" + original);
                     console.debug("Editor not open!!")
                 }
             }
             else {
                // console.debug("unchecked count:", checkcount)
-                toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
                 //console.debug("No checkset found!")
             }
         }
