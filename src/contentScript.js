@@ -1794,18 +1794,10 @@ function addTranslateButtons() {
         }
     }
 }
-let count_locale = checkLocale();
-countTable(count_locale).then(count => {
-    var divPaging = document.querySelector("div.paging");
-    if (divPaging != null) {
-        DispCount.innerText = count
-        if (count == 1) {
-            DispCount.style.background = 'yellow'
-        }
-        divPaging.insertBefore(DispCount, divPaging.childNodes[0]);
-        
-    }
-});
+
+// Show the amount of records present within the local translation table
+Show_RecCount();
+
 
 // 08-05-2021 PSS added import of records into local database
 function importPageClicked(event) {
@@ -1856,7 +1848,7 @@ async function parseDataBase(data) {
     toastbox("info", "Import of: " + (counter-1) + " records is started wait for the result!!", "3000", "Import database");
     let importButton = document.querySelector("a.import_translation-button");
     importButton.innerText="Started"
-    if (counter > 0) {
+    if (counter >1) {
         var arrayLength = csvData.length;
         for (var i = 0; i < arrayLength; i++) {
             if (i > 1) {
@@ -1864,11 +1856,14 @@ async function parseDataBase(data) {
                 // Store it into the database
                 //Prevent adding empty line
                 if (csvData[i][0] != "") {
-                    if (i == 100 || i == 200 || i == 300 || i == 400 || i == 500 || i == 600 || i == 700 || i == 800 || i == 900 || i == 1000 || i == 1100 || i == 1200 || i == 1300 || i == 1400 || i == 1500) {
-                        toastbox("info", "Adding is running <br>Records added:"+i, "1500", "Import database");
+                    if (i == 250 || i == 500 || i == 750 || i == 1000 || i == 1250 || i == 1500 || i == 1750 || i == 2000 || i == 2250 || i == 2500 || i == 2750 || i == 3000 || i == 3250 || i == 3500 || i == 3750) {
+                        toastbox("info", "Adding is running <br>Records added:"+i, "300", "Import database");
                     }
                    // console.debug("before addDB record:"+i);
-                    res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
+                    let cntry = checkLocale()
+                    if (csvData[i][2] === cntry) {
+                        res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
+                    }
                 }
             }
         }
