@@ -580,6 +580,13 @@ async function addTransline(rowId,showMessage){
                 // 31-10-2021 PSS added sanitizing the values before storing
                 addTrans = DOMPurify.sanitize(textareaElem1.value);
                 res = addTransDb(plural, addTrans, language);
+                textareaElem2 = f.querySelector("textarea#translation_" + row + "_2");
+                if (textareaElem2 != null) {
+                    addTrans = DOMPurify.sanitize(textareaElem2.value);
+                    plural = plural+"_02"
+                    res = addTransDb(plural, addTrans, language);
+                }
+               
                 //textareaElem1.innerText = translatedText;
                 //textareaElem1.value = translatedText;
                 //console.debug('existing plural text:', translatedText);
