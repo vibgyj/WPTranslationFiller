@@ -1029,10 +1029,10 @@ if (divPaging != null && divProjects == null) {
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
     }
-    divNavBar.appendChild(implocDatabaseContainer);
     divNavBar.appendChild(importContainer);
     divNavBar.appendChild(exportContainer);
    // divNavBar.appendChild(exportButton);
+    divNavBar.appendChild(implocDatabaseContainer);
     divNavBar.appendChild(bulktolocContainer);
   //  divNavBar.appendChild(bulktolocalButton);
     divNavBar.appendChild(implocContainer);
@@ -1923,7 +1923,7 @@ async function parseDataBase(data) {
         ++counter;
     });
     // 24-08-2022 PSS fixes enhancement #237
-    toastbox("info", "Import of: " + (counter-1) + " records is started wait for the result!!", "3000", "Import database");
+    toastbox("info", "Import of: " + (counter-1) + " records is started wait for the result!!", "1500", "Import database");
     let importButton = document.querySelector("a.import_translation-button");
     importButton.innerText="Started"
     if (counter >1) {
@@ -1935,7 +1935,7 @@ async function parseDataBase(data) {
                 //Prevent adding empty line
                 if (csvData[i][0] != "") {
                     if (i == 250 || i == 500 || i == 750 || i == 1000 || i == 1250 || i == 1500 || i == 1750 || i == 2000 || i == 2250 || i == 2500 || i == 2750 || i == 3000 || i == 3250 || i == 3500 || i == 3750) {
-                        toastbox("info", "Adding is running <br>Records added:"+i, "300", "Import database");
+                        toastbox("info", "Adding is running <br>Records added:"+i, "500", "Import database");
                     }
                    // console.debug("before addDB record:"+i);
                     let cntry = checkLocale()

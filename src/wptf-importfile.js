@@ -16,7 +16,7 @@ async function new_import_po(destlang,myFile,allrows) {
         impLocButton.classList.remove("restarted", "imported");
         impLocButton.className = "impLoc-button restarted";
     }
-    toastbox("info", "Import started", "3000", "Importing");
+    toastbox("info", "Import started", "000", "Importing");
                 
     for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         transtype = "single";
