@@ -79,7 +79,6 @@ chrome.storage.local.get('strictValidate', async function (result) {
 
 chrome.storage.local.get('autoCopyClip', async function (result) {
     autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
-    console.debug("after get clip:",autoCopyClipBoard)
     // we get a sting so make it a boolean
     if (autoCopyClipBoard == true) {
         autoCopyClipBoard = true
@@ -929,12 +928,25 @@ classToolTip.className = 'tooltiptext'
 classToolTip.innerText = "This button converts po and inserts to local database"
 var impDatabaseButton = document.createElement("a");
 impDatabaseButton.href = "#";
-impDatabaseButton.className = "impLoc-button";
+impDatabaseButton.className = "convLoc-button";
 impDatabaseButton.onclick = impLocDataseClicked;
 impDatabaseButton.innerText = "Conv po DB";
 implocDatabaseContainer.appendChild(impDatabaseButton)
 implocDatabaseContainer.appendChild(classToolTip)
 
+//23-03-2021 PSS added a new button on first page
+var checkAllContainer = document.createElement("div")
+checkAllContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button selects all records"
+var checkAllButton = document.createElement("a");
+checkAllButton.href = "#";
+checkAllButton.className = "selectAll-button";
+checkAllButton.onclick = setmyCheckBox;
+checkAllButton.innerText = "Select all";
+checkAllContainer.appendChild(checkAllButton)
+checkAllContainer.appendChild(classToolTip)
 
 //07-05-2021 PSS added a export button on first page
 var exportContainer = document.createElement("div")
@@ -1028,6 +1040,10 @@ if (divPaging != null && divProjects == null) {
     }
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
+    }
+    if (!is_pte) {
+        console.debug("we are not pte")
+        divNavBar.appendChild(checkAllContainer);
     }
     divNavBar.appendChild(importContainer);
     divNavBar.appendChild(exportContainer);

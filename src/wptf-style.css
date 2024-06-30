@@ -252,15 +252,26 @@
       background: green;
     }
 
+
+.wptfNavBarCont .selectAll-button {
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
 .wptfNavBarCont .local-trans-button {
-      background: blue;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .local-trans-button::before {
@@ -448,14 +459,14 @@
 }
 
 .wptfNavBarCont .impLoc-button {
-      background: blue;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .impLoc-button.imported {
@@ -556,6 +567,17 @@
 }
 .wptfNavBarCont .export_translation-button:hover {
       background: darkgray !important;
+}
+
+.wptfNavBarCont .convLoc-button {
+    background: darkgreen;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .save_tolocal-button {

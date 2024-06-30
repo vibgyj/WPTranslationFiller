@@ -619,8 +619,9 @@ async function dbExport(destlang) {
     const trans = await jsstoreCon.select({
         from: "Translation"
     });
-
-    export_file = "export_database_" + destlang + ".csv";
+    let myDate = new Date();
+    myDate = `${myDate.getDate()}-${myDate.getMonth() + 1}-${myDate.getFullYear()}`;
+    export_file = "export_database_" + myDate + "_" + destlang + ".csv";
     i = 1;
     trans.forEach(function (trans) {
         arrayData[i] = {

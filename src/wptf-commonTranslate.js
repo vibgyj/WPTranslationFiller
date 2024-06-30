@@ -1076,12 +1076,17 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     else {
                         transtype = "single";
                     }
+                    mypreview = document.querySelector("#preview-" + newrowId);
+                    if (mypreview == null) {
+                        mypreview = document.querySelector("#preview-" + row);
+                    }
                     if (transtype == "single") {
                         // Fetch the translations
                         let element = e.querySelector(".source-details__comment");
                         let textareaElem = e.querySelector("textarea.foreign-text");
                         translatedText = textareaElem.innerText;
-                        prev_trans = textareaElem.innerText;
+                        prev_trans = textareaElem.innerText;        
+                        
                         if (translatedText != "No suggestions") {
                             previewNewText = textareaElem.innerText;
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
@@ -1095,6 +1100,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 if (preview == null) {
                                     preview = document.querySelector("#preview-" + row + " span.translation-text");
                                 }
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 repl_verb = result.repl_verb;
                                 recWordCount += result.countReplaced;
                                 previewNewText = result.previewNewText
@@ -1123,7 +1130,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     var current = currec.querySelector("span.panel-header__bubble");
                                     var prevstate = current.innerText;
                                     current.innerText = "transFill";
+                                    //####
                                 }
+                               
                                 // Only update the style if verbs are replaced!!
                                 let wordCount = recWordCount;
                                 let percent = 10;
@@ -1155,6 +1164,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     var prevstate = current.innerText;
                                     current.innerText = "transFill";
                                 }
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 repl_verb = result.repl_verb;
                                 repl_array = result.repl_array
                                 recWordCount += result.countreplaced;
@@ -1257,6 +1268,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             replaced = result.replaced;
                             orgText = result.orgText;
                             if (replaced) {
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 recWordCount += result.countreplaced;
                                 repl_verb += result.repl_verb
                                 previewElem1.innerHTML = result.previewNewText
@@ -1282,6 +1295,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             replaced = result.replaced;
                             repl_array = result.repl_array;
                             if (replaced) {
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 recWordCount += result.countReplaced;
                                 repl_verb = result.repl_verb;
                                 previewElem2.innerHTML = result.previewNewText
@@ -3970,7 +3985,7 @@ function processTableRecords(selector, action, interval) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     return new Promise((resolve, reject) => {
         const tableRows = document.querySelectorAll(selector);
-        //console.debug("tableRows:",tableRows)
+        console.debug("tableRows:",tableRows)
         let currentIndex = 0;
         // Function to process the next record
         function processNextRecord() {
@@ -4027,7 +4042,7 @@ function saveLocal_2(bulk_timer) {
         progressbar.style.display = 'block';
     }
     
-    processTableRecords('tr.preview.status-waiting', async function (preview) {
+    processTableRecords('.wptf-translated', async function (preview) {
         //console.debug("preview:",preview,preview.classList)
         // we only need to read the translated lines by wptf
         if (preview.classList.contains("wptf-translated")) {
@@ -4122,11 +4137,10 @@ function saveLocal_2(bulk_timer) {
                         //console.debug("checkbox present but not set or not in waiting mode")
                         let original = editor.querySelector("span.original-raw").innerText;
                         if (original != null) {
-                            toastbox("info", "Skipping:" + original, "900", "Skipping record:");
+                            toastbox("info", "Skipping:" + original, "700", "Skipping record:");
                         }
                         else {
-                            toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record:");
-                            // toastbox.close()
+                          //  toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record:");
                         }
                     }
                 }
@@ -4137,12 +4151,14 @@ function saveLocal_2(bulk_timer) {
             }
             else {
                // console.debug("unchecked count:", checkcount)
-                toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
+               // toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
                 //console.debug("No checkset found!")
             }
+            
+            //close_toast()
         }
         else {
-            console.log("ClassList of preview:",preview.classList)
+           // console.log("ClassList of preview:",preview.classList)
         }
     }, bulk_timer)
         .then(() => {
