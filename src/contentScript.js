@@ -833,16 +833,16 @@ TmContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = "This button starts fetching existing translations from translation memory"
-let TM = localStorage.getItem(['switchTM']);
+//let TM = localStorage.getItem(['switchTM']);
 var tmtransButton = document.createElement("a");
 tmtransButton.href = "#";
 
-if (TM == "false") {
+//if (TM == "false") {
     tmtransButton.className = "tm-trans-button";
-}
-else {
-    tmtransButton.className = "tm-trans-button foreighn"
-}
+//}
+//else {
+ //   tmtransButton.className = "tm-trans-button foreighn"
+//}
 tmtransButton.onclick = tmTransClicked;
 tmtransButton.innerText = "TM";
 TmContainer.appendChild(tmtransButton)
@@ -1088,6 +1088,14 @@ SwitchTMButton.href = "#";
 SwitchTMButton.className = "Switch-TM-button";
 SwitchTMButton.onclick = SwitchTMClicked;
 SwitchTMButton.innerText = "SwitchTM";
+let TM = localStorage.getItem(['switchTM']);
+if (TM == "true") {
+    SwitchTMButton.style.background = "white"
+}
+else {
+    SwitchTMButton.style.background = "green"
+    SwitchTMButton.style.color = "white"
+}
 
 // We need to check if we have a glossary ID
 
@@ -1107,6 +1115,10 @@ var DispCount = document.createElement("a");
 DispCount.href = "#";
 DispCount.className = "DispCount-button";
 
+var WikiLink = document.createElement("a");
+WikiLink.href = 'https://github.com/vibgyj/WPTranslationFiller/wiki'
+WikiLink.innerText ="WPTF Docs"
+WikiLink.className = 'menu-item-wptf_wiki'
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
 var GpSpecials = document.querySelector("span.previous.disabled");
@@ -1114,10 +1126,10 @@ if (GpSpecials == null) {
     var GpSpecials = document.querySelector("a.previous");
 }
 if (GpSpecials != null && divProjects == null) {
+    divPaging.insertBefore(WikiLink, divPaging.childNodes[0]);
     divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
     divPaging.insertBefore(SwitchGlossButton, divPaging.childNodes[0]);
     divPaging.insertBefore(tmDisableButton, divPaging.childNodes[0]);
-    
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     chrome.storage.local.get(["apikeyDeepl"], function (data) {
         //let apikey=data.apikeyDeepl
@@ -1134,7 +1146,7 @@ if (GpSpecials != null && divProjects == null) {
     else {
         UpperCaseButton.className = "UpperCase-button uppercase"
     }
-    //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
+    
     //divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
