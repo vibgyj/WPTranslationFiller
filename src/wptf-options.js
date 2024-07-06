@@ -51,6 +51,7 @@ let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let OpenAIwaitValue = document.getElementById("OpenAIWait");
 let bulkWaitValue = document.getElementById("bulkWait");
+let TMtresholdValue = document.getElementById("TMtreshold");
 let myScreenWidthValue = document.getElementById("screenWidth");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
@@ -69,7 +70,7 @@ let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -102,6 +103,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         bulkWait = data.bulkWait;
         bulkWaitValue.value = bulkWait;
+
+    }
+    if (typeof data.TMtreshold == 'undefined') {
+        TMtreshold.value = '100';
+    }
+    else {
+        TMtreshold = data.TMtreshold;
+        TMtresholdValue.value = TMtreshold;
 
     }
     if (typeof data.WPTFscreenWidth == 'undefined') {
@@ -349,6 +358,7 @@ button.addEventListener("click", function () {
     let OpenAIVal = OpenAIwaitValue.value;
     let bulkWaitVal = bulkWaitValue.value;
     let OpenAItempVal = OpenAItempBox.value;
+    let TMtresholdVal = document.getElementById("TMtreshold").value;
     let theScreenWidthValue = myScreenWidthValue.value
     if (document.querySelector("#show-history:checked") !== null) {
         let Hist = document.querySelector("#show-history:checked");
@@ -461,6 +471,7 @@ button.addEventListener("click", function () {
             TMwait: TMwaitVal,
             OpenAIWait: OpenAIVal,
             bulkWait: bulkWaitVal,
+            TMtreshold:TMtresholdVal,
             interXHR: inter,
             LtKey: LtToolKeyTextbox.value,
             LtUser: LtToolUserTextbox.value,

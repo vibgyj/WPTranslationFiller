@@ -1377,8 +1377,8 @@ async function savetolocalClicked(event) {
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
     event.preventDefault();
-    chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower", "spellCheckIgnore"],
+    chrome.storage.local.get( 
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower", "spellCheckIgnore","TMtreshold"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -1394,7 +1394,7 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
-                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower,data.spellCheckIgnore);
+                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower,data.spellCheckIgnore,data.TMtreshold);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2051,6 +2051,7 @@ async function checkbuttonClick(event) {
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         //event.preventDefault(); caused a problem within the single page enttry  
         let action = event.target.textContent;
+       // console.debug("action:",action)
         // 30-06-2021 PSS added fetch status from local storage
         // Necessary to prevent showing old translation exist if started from link "Translation history"
         // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is activ
@@ -2071,7 +2072,7 @@ async function checkbuttonClick(event) {
                // console.debug("detail row textarea:", mytextarea)  
                 //console.debug("start mutationsserver:",StartObserver)
                 if (StartObserver) {
-                    console.debug("in details:", autoCopyClipBoard)
+                    //console.debug("in details:", autoCopyClipBoard)
                     if (autoCopyClipBoard) {
                         copyToClipBoard(detailRow)
                     }

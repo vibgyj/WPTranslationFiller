@@ -1828,6 +1828,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     setPreTranslationReplace(preTranslationReplace);
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
+    let GlotPressBulkButton = document.getElementById("bulk-actions-toolbar-bottom")
     translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -2216,7 +2217,13 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
     parrotActive = 'false';
-    messageBox("info", "We have found:" + counter + " local records");
+    toastbox("info", "We have found: " + counter, "2500", "local records");
+    if (counter > 0) {
+        let button = GlotPressBulkButton.getElementsByClassName("button")
+        button[0].disabled = true;
+    }
+   
+    //messageBox("info", "We have found:" + counter + " local records");
 
     //console.timeEnd("translation");
 }
@@ -2243,7 +2250,7 @@ const throttleFunction = (preview) => {
 // Call the throttleFunction when needed
 function openEditor(preview) {
     throttleFunction(preview).then(result => {
-        console.debug("Editor open!")
+        //console.debug("Editor open!")
     }).catch(error => {
         console.debug(error);
     });
@@ -2279,7 +2286,7 @@ async function fetchsuggestions(row) {
 
 // Part of the solution issue #204
         
-function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal,spellIgnore,locale) {
+function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal,spellIgnore,locale,TMtreshold) {
     var res;
     //var myres;
     var ulfound;
@@ -2294,6 +2301,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
     var original;
     var DeepLres;
     var OpenAIres;
+    var treshold = TMtreshold;
     // We need to prepare the replacement list
     setPostTranslationReplace(postTranslationReplace, formal);
     return new Promise((resolve, reject) => {
@@ -2341,7 +2349,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                                 textFound = liSuggestion.innerText;
                             }
                         }
-                        else if (liscore > 90 && liscore < 100) {
+                        else if (liscore > treshold && liscore < 100) {
                             liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                             // We need to fetch Text otherwise characters get converted!!
                             // GlotPress can indicate differences between the original
@@ -2381,7 +2389,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                                 //resolve(textFound);
                             }
                         }
-                        else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore < 90) {
+                        else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore < treshold) {
                             //console.debug("There are no suggestions!")
                             textFound = "No suggestions";
                         }
@@ -2480,7 +2488,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
 
 
 // Part of the solution issue #204
-async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower,spellCheckIgnore) {
+async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower,spellCheckIgnore,TMtreshold) {
     var timeout = 0;
     var editoropen;
     var editor;
@@ -2581,7 +2589,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 });
 
                 if (result != "No suggestions") {
-                     myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale).then(resli => {
+                     myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale,TMtreshold).then(resli => {
                          if (typeof resli != null) {
                             // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
                             myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale,current);     
@@ -2667,6 +2675,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     editor.style.display = "";
     // PSS setting the value to "" solves the problem of closing the last preview
     preview.style.display = "";
+    toastbox("info", "We have found: " + counter, "2500", "TM records");
+
 }
 
 async function mark_as_translated(row){
