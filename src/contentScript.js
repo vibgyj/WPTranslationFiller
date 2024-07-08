@@ -3258,9 +3258,9 @@ function savetranslateEntryClicked(event) {
                     const editor = preview.nextElementSibling;
                     if (editor != null) {
                         editor.style.display = "none";
-                        console.debug("after we switch ??", autoCopyClipBoard)
+                       // console.debug("after we switch ??", autoCopyClipBoard)
                         editor.querySelector(".translation-actions__save").click();
-                        console.debug("after we switch ??", autoCopyClipBoard)
+                       // console.debug("after we switch ??", autoCopyClipBoard)
                     }
                     // PSS confirm the message for dismissal
                     foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
@@ -4244,7 +4244,7 @@ function stopObserving(observer) {
 }
 
 function startObserving(observer, textarea, config) {
-    console.debug("observer is started")
+    //console.debug("observer is started")
     observer.observe(textarea, config);
     //console.debug("observer started:", observer)
     return observer
@@ -4253,7 +4253,7 @@ function startObserving(observer, textarea, config) {
 
 
 function start_editor_mutation_server(textarea, action) {
-    console.debug("action =:",action)
+    //console.debug("action =:",action)
         //var observer
         //console.debug("texarea:", textarea, typeof textarea)
         //textarea.addEventListener('input', handleInputEvent);

@@ -83,7 +83,7 @@ const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
-const specialChar = new RegExp(/ # | #|->/ig);
+const specialChar = new RegExp(/ # | #|\#|&#->/ig);
 function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
     // prereplverb contains the verbs to replace before translation
@@ -144,6 +144,7 @@ function preProcessOriginal(original, preverbs, translator) {
             }
         }
         // DeepL does not like # and -> so we need to replace them before translating
+        
         const charmatches = original.matchAll(specialChar);
         if (charmatches != null) {
             index = 1;
@@ -2218,9 +2219,11 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     translateButton.innerText = "Translated";
     parrotActive = 'false';
     toastbox("info", "We have found: " + counter, "2500", "local records");
-    if (counter > 0) {
-        let button = GlotPressBulkButton.getElementsByClassName("button")
-        button[0].disabled = true;
+    if (GlotPressBulkButton != null) {
+        if (counter > 0) {
+            let button = GlotPressBulkButton.getElementsByClassName("button")
+            button[0].disabled = true;
+        }
     }
    
     //messageBox("info", "We have found:" + counter + " local records");
@@ -2349,7 +2352,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                                 textFound = liSuggestion.innerText;
                             }
                         }
-                        else if (liscore > treshold && liscore < 100) {
+                        else if (liscore >= treshold && liscore < 100) {
                             liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                             // We need to fetch Text otherwise characters get converted!!
                             // GlotPress can indicate differences between the original
@@ -2389,7 +2392,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                                 //resolve(textFound);
                             }
                         }
-                        else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore < treshold) {
+                        else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore <treshold) {
                             //console.debug("There are no suggestions!")
                             textFound = "No suggestions";
                         }
@@ -2496,11 +2499,11 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var res;
     var counter = 0;
     var row;
-    var counter = 0;
     locale = checkLocale();
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
+    let GlotPressBulkButton = document.getElementById("bulk-actions-toolbar-bottom")
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
         translateButton.innerText = "Translate";
@@ -2518,7 +2521,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     //myrecCount = document.getElementsByClassName("editor")
     //console.debug("record count:",myrecCount.length)
     for (let record of myrecCount) {
-        counter++;
         transtype = "single";  
         row = record.getAttribute("row");
         // we need to store current preview and editor for later usage
@@ -2607,6 +2609,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                                     }
                                     else {
                                         rowchecked.checked = true;
+                                        counter++;
                                     }
                                 }
                             }
@@ -2652,6 +2655,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     }
                     if (rowchecked != null) {
                         rowchecked.checked = true;
+                        counter++;
                     }
                     if (result != "No suggestions") {
                        
@@ -2676,6 +2680,12 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     // PSS setting the value to "" solves the problem of closing the last preview
     preview.style.display = "";
     toastbox("info", "We have found: " + counter, "2500", "TM records");
+    if (GlotPressBulkButton != null) {
+        if (counter > 0) {
+            let button = GlotPressBulkButton.getElementsByClassName("button")
+            button[0].disabled = true;
+        }
+    }
 
 }
 
@@ -3995,7 +4005,7 @@ function processTableRecords(selector, action, interval) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     return new Promise((resolve, reject) => {
         const tableRows = document.querySelectorAll(selector);
-        console.debug("tableRows:",tableRows)
+        //console.debug("tableRows:",tableRows)
         let currentIndex = 0;
         // Function to process the next record
         function processNextRecord() {

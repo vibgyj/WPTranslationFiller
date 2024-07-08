@@ -419,7 +419,7 @@ async function checkIndex(event) {
             console.debug("index does exist");
         } else {
             //console.debug('index does not exist!');
-            messageBox("error", 'Error the index does not exist in your DB!<br>Please make a backup of your database<br>Then follow the steps described in the Wiki to reset your database<br><a href="https://github.com/vibgyj/WPTranslationFiller/wiki/9.-Fix-broken-local-database">https://github.com/vibgyj/WPTranslationFiller/wiki/9.-Fix-broken-local-database</a>');
+            messageBox("error", 'Error the index does not exist in your DB!<br>Please make a backup of your database<br>Then follow the steps described in the Wiki to reset your database<br><a href="https://github.com/vibgyj/WPTranslationFiller/wiki/13.-Fix-broken-local-database">https://github.com/vibgyj/WPTranslationFiller/wiki/13.-Fix-broken-local-database</a>');
             result = false;
         }  
     };
