@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.1.0",
-  "description": "Automatically fill translations fom Google, DeepL, Microsoft, and OpenAI translation API's.",
+  "version": "3.1.1",
+  "description": "Automatically fill translations fom Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version of the original WP translation Filler",
 
   "web_accessible_resources": [
     {

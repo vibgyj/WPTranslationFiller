@@ -2,7 +2,7 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
     var gloss = await prepare_glossary(glossary, language)
     gloss = JSON.stringify(gloss)
     let formal = false
-    let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
+    let deeplServer = DeeplFree == true ? "https://cors-anywhere.herokuapp.com/https://api-free.deepl.com" : "https://cors-anywhere.herokuapp.com/https://api.deepl.com";
     const url = deeplServer + "/v2/glossaries"
     
     let response = await fetch(url, {
@@ -20,7 +20,7 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
         //console.debug("response:", response, response.text,isJson);
             //const isJson = response.headers.get('content-type')
         data = isJson && await response.json();
-        console.debug("data:",data)
+        //console.debug("data:",data)
            //check for error response
          if (response.ok) {
              let result = data.glossary_id
@@ -70,7 +70,7 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
             }
          else {
              messageBox("info","We did not get a result of the request")
-                     console.debug("result:",response)
+              console.debug("result:",response)
               return Promise.resolve("OK");
            }
         })
@@ -94,7 +94,9 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
         //    }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
+                //console.debug("Typerror:", error)
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
+                messageBox("error", "Error: We did not get an answer from Deepl<br>Check your internet connection");
             }
             else {
                 //alert("Error message: " + error[1]);
@@ -105,9 +107,13 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
 }
 
 async function show_glossary( apikeyDeepl, DeeplFree, language) {
-    console.debug("We are showing")
+   // console.debug("We are showing")
+    //let res = no_cors('https://api-free.deepl.com')
+   // console.debug("no_cors res:",res)
     let formal = false
-    let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
+    var currWindow = window.self;
+    
+   let deeplServer = DeeplFree == true ? "https://cors-anywhere.herokuapp.com/https://api-free.deepl.com" : "https://cors-anywhere.herokuapp.com/https://api.deepl.com";
    // link = deeplServer + "/v2/glossaries?auth_key=" + apikeyDeepl
    // var parrotMockDefinitions = [{
     //    "active": true,
@@ -131,7 +137,7 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
   //  var xhr = new XMLHttpRequest();
 
    
-    const req = new Request('https://api.deepl.com/v2/glossaries', {
+    const req = new Request('https://cors-anywhere.herokuapp.com/https://api.deepl.com/v2/glossaries', {
         headers: {
             method: 'GET',
             'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
@@ -154,7 +160,7 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
         //check for error response
         if (response.ok) {
             var glossaryId = data.glossaries
-            currWindow = window.self;
+           // var currWindow = window.self;
            // console.debug("all the glossaries:", glossaryId)
             if (typeof glossaryId != 'undefined' && glossaryId.length != 0) {
                 var gloss = ""
@@ -163,7 +169,7 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                     //console.debug("text:", gloss)
                 }
                 let lastId = glossaryId[glossaryId.length - 1]
-                console.debug("last:",lastId.glossary_id)
+                //console.debug("last:",lastId.glossary_id)
                cuteAlert({
                    type: "question",
                     title: "Glossary Id",
@@ -176,7 +182,7 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                         localStorage.setItem('deeplGlossary', lastId.glossary_id);
                         // We need to check if we have a glossary ID if button is red we need to alter it
                         let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-red`);
-                        console.debug("load:", loadGlossButton)
+                       // console.debug("load:", loadGlossButton)
                         if (loadGlossButton != null) {
                             loadGlossButton.classList.remove("LoadGloss-button-red");
                             loadGlossButton.classList.add("LoadGloss-button-green");
@@ -231,7 +237,7 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
                         })
                     }
                     else {
-                        console.debug("No glossaries found!!")
+                        //console.debug("No glossaries found!!")
                         localStorage.setItem('deeplGlossary', "");
                         let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-green`);
                         if (loadGlossButton != null) {
@@ -252,37 +258,56 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
             }
         }
         else {
-                messageBox("info", "We did not get a result of the request")
-                console.debug("result:", response)
+                //messageBox("info", "We did not get a result of the request")
+               // console.debug("result:", response)
+            cuteAlert({
+                type: "question",
+                title: "No response",
+                message: "We did not get a response from DeepL!"+"<br>"+ "This could be due to Cors error <br>Do you want deactivate Cors?" +"<br>"+ "if deactivate selected then use Previous to go back",
+                confirmText: "Confirm",
+                cancelText: "Cancel",
+                myWindow: currWindow
+            }).then(async (e) => {
+                if (e == ("confirm")) {
+                    messageBox("info", "Click on the button in the new window! <br>");
+                    await no_cors()
+                } else {
+                    messageBox("info", "Cors not deactivated");
+                }
+            })
                 return Promise.resolve("OK");
             }
       })
-      .catch(error => {
+        .catch(error => {
+            console.debug("error:",error,error[2])
             if (error[2] == "400") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 //          console.debug("glossary value is not supported")
                 errorstate = "Error 400";
             }
             if (error[2] == "403") {
-                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
+                alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 errorstate = "Error 403";
             }
             else if (error[2] == '404') {
                 //     alert("Error 404 The requested resource could not be found.")
                 errorstate = "Error 404";
             }
-               else if (error[2] == '456') {
+            else if (error[2] == '456') {
             //alert("Error 456 Quota exceeded. The character limit has been reached")
                    errorstate = "Error 456";
                 }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
+                //console.debug("Typerror:",error)
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
+                messageBox("error", "Error: We did not get an answer from Deepl<br>Check your internet connection");
             }
             else {
                 //alert("Error message: " + error[1]);
                 console.debug("Error:", error)
                 errorstate = "Error " + error[1];
+                messageBox("error", "Error: ",error);
             }
         });
 }
@@ -292,9 +317,9 @@ async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
     //console.debug(apikeyDeepl, DeeplFree, language, glossary_id)
 
     let formal = false
-    let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
+    let deeplServer = DeeplFree == true ? "https://cors-anywhere.herokuapp.com/https://api-free.deepl.com" : "https://cors-anywhere.herokuapp.com/https://api.deepl.com";
     const url = deeplServer + "/v2/glossaries/" + glossary_id
-    console.debug("url:", url)
+    //console.debug("url:", url)
     let response = await fetch(url, {
         method: "DELETE",
         headers: {
@@ -309,7 +334,7 @@ async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
         if (response.ok) {
             let glossaryId = data
             currWindow = window.self;
-            console.debug("glossarie deleted:", glossary_id)
+            //console.debug("glossarie deleted:", glossary_id)
             messageBox("info", "Glossary ID: <br>" + glossary_id + "<br>deleted ");
             return Promise.resolve("OK");
         }
@@ -318,7 +343,7 @@ async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
         }
     })
         .catch(error => {
-            console.debug("error:",error)
+           // console.debug("error:",error)
             if (error[2] == "400") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
                 //          console.debug("glossary value is not supported")
@@ -374,3 +399,8 @@ async function prepare_glossary(glossary, language) {
     let new_glossary = glossObj
     return new_glossary
 }
+
+function no_cors(deepl) {
+    var url = 'https://cors-anywhere.herokuapp.com';
+    window.location.href = 'https://cors-anywhere.herokuapp.com';
+};
