@@ -1,4 +1,20 @@
 // This file contains functions used within various files
+// This function shows the amount of records present in the local translation table
+function Show_RecCount() {
+    let count_locale = checkLocale();
+    countTable(count_locale).then(count => {
+        var divPaging = document.querySelector("div.paging");
+        if (divPaging != null) {
+            DispCount.innerText = count
+            if (count == 1) {
+                DispCount.style.background = 'yellow'
+            }
+            divPaging.insertBefore(DispCount, divPaging.childNodes[0]);
+
+        }
+    });
+}
+
 function getGlotDictStat() {
         var scripts = document.getElementsByTagName('script');
         //console.debug("scripts:", scripts)

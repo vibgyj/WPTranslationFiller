@@ -16,7 +16,7 @@ async function new_import_po(destlang,myFile,allrows) {
         impLocButton.classList.remove("restarted", "imported");
         impLocButton.className = "impLoc-button restarted";
     }
-    toastbox("info", "Import started", "3000", "Importing");
+    toastbox("info", "Import started", "000", "Importing");
                 
     for (let record of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         transtype = "single";
@@ -357,3 +357,101 @@ async function new_import_po(destlang,myFile,allrows) {
 
 }
 
+function removeQuotes(str) {
+    return str.replace(/^(['"])(.*)\1$/, '$2');
+}
+
+async function import_po_to_local(destlang, myFile, allrows) {
+    var counter = 0;
+    var type = "single";
+    var complete = false;
+    var original = ""
+    var translation =""
+    // PSS walk through rows found in import
+    for (const item of allrows) {
+        //console.debug("item:", item)
+        if (item.startsWith("msgid ")) {
+            counter++
+            original = item.replace("msgid ", "")
+            original = removeQuotes(original)
+            console.debug("original:", original)
+            complete = false;
+        }
+        else if (item.startsWith("msgstr ")) {
+            translation = item.replace("msgstr ", "")
+            translation = removeQuotes(translation)
+            console.debug("translation:", translation)
+            complete = true;
+            type = "single"
+            
+        }
+        if (!complete) {
+            if (item.startsWith("msgstr[0] ")) {
+                translation = item.replace("msgstr[0] ", "")
+                translation = removeQuotes(translation)
+                console.debug("translation plural single:", translation)
+                complete = true;
+                type = "single"
+            }
+        }
+        if (!complete) {
+        
+}
+        if (complete) {
+            if (original != "") {
+                res = addTransDb(original, translation, destlang);
+            }
+            complete=false
+        }
+
+        if (!complete) {
+
+            if (item.startsWith("msgid_plural ")) {
+                type = "plural"
+                plural_original = item.replace("msgid_plural ", "")
+                plural_original = removeQuotes(plural_original)
+                console.debug("original plural:", original)
+                type = "plural"
+                complete = false
+            }
+            else if (item.startsWith("msgstr[1] ")) {
+                translation = item.replace("msgstr[1] ", "")
+                translation = removeQuotes(translation)
+                console.debug("translation plural single:", translation)
+                complete = true;
+                type = "plural"
+                counter++
+            }
+        }
+          
+        console.debug("orig:",original,"trans:",translation)
+        if (complete) {
+            console.debug("we are saving plural")
+            if (plural_original != "") {
+                res = await addTransDb(plural_original, translation, destlang);
+            }
+           complete = false;
+           plural_orginal = ""
+           translation=""
+        }
+        console.debug("item:",item)
+        if (item.startsWith("msgstr[2] ")) {
+            translation = item.replace("msgstr[2] ", "")
+            translation = removeQuotes(translation)
+            console.debug("translation plural plural_02:", translation)
+            plural_original = plural_original + "_02"
+            counter++
+            res = await addTransDb(plural_original, translation, destlang);
+        }
+        if (item.startsWith("msgstr[3] ")) {
+            translation = item.replace("msgstr[3] ", "")
+            translation = removeQuotes(translation)
+            console.debug("translation plural plural_03:", translation)
+            plural_original = plural_original + "_03"
+            counter++
+            res = await addTransDb(plural_original, translation, destlang);
+        }
+    }
+    messageBox("info", "Records imported:" + counter)
+    return counter
+}

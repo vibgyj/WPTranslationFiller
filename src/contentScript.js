@@ -5,6 +5,8 @@ var myGlotDictStat;
 var interCept = false;
 var strictValidation = true
 var StartObserver = true;
+var LocRecCout
+var autoCopyClipBoard;
 
 adjustLayoutScreen();
 // Function to send a message to the injected script
@@ -24,7 +26,10 @@ else {
     // PSS added jsStore to be able to store and retrieve default translations
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
+    
 }
+
+
 
 var translator; // Declare the global variable
 var DefGlossary = true;
@@ -69,6 +74,18 @@ chrome.storage.local.get('strictValidate', async function (result) {
     }
     else {
         strictValidation = false
+    }
+});
+
+chrome.storage.local.get('autoCopyClip', async function (result) {
+    autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
+    console.debug("after get clip:",autoCopyClipBoard)
+    // we get a sting so make it a boolean
+    if (autoCopyClipBoard == true) {
+        autoCopyClipBoard = true
+    }
+    else {
+        autoCopyClipBoard = false
     }
 });
 
@@ -894,7 +911,7 @@ var implocContainer = document.createElement("div")
 implocContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
-classToolTip.innerText = "This button starts the import of a local file containing translations"
+classToolTip.innerText = "This button starts the import of a local po file containing translations into the current table"
 var impLocButton = document.createElement("a");
 impLocButton.href = "#";
 impLocButton.className = "impLoc-button";
@@ -902,6 +919,22 @@ impLocButton.onclick = impFileClicked;
 impLocButton.innerText = "Imp localfile";
 implocContainer.appendChild(impLocButton)
 implocContainer.appendChild(classToolTip)
+
+
+//23-03-2021 PSS added a new button on first page
+var implocDatabaseContainer = document.createElement("div")
+implocDatabaseContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button converts po and inserts to local database"
+var impDatabaseButton = document.createElement("a");
+impDatabaseButton.href = "#";
+impDatabaseButton.className = "impLoc-button";
+impDatabaseButton.onclick = impLocDataseClicked;
+impDatabaseButton.innerText = "Conv po DB";
+implocDatabaseContainer.appendChild(impDatabaseButton)
+implocDatabaseContainer.appendChild(classToolTip)
+
 
 //07-05-2021 PSS added a export button on first page
 var exportContainer = document.createElement("div")
@@ -996,11 +1029,10 @@ if (divPaging != null && divProjects == null) {
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
     }
-   
-   // divNavBar.appendChild(importButton);
     divNavBar.appendChild(importContainer);
     divNavBar.appendChild(exportContainer);
    // divNavBar.appendChild(exportButton);
+    divNavBar.appendChild(implocDatabaseContainer);
     divNavBar.appendChild(bulktolocContainer);
   //  divNavBar.appendChild(bulktolocalButton);
     divNavBar.appendChild(implocContainer);
@@ -1054,6 +1086,11 @@ DispGloss.href = "#";
 DispGloss.className = "DispGloss-button";
 DispGloss.onclick = DispGlossClicked;
 DispGloss.innerText = "DispGloss";
+
+var DispCount = document.createElement("a");
+DispCount.href = "#";
+DispCount.className = "DispCount-button";
+
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
 var GpSpecials = document.querySelector("span.previous.disabled");
@@ -1379,6 +1416,55 @@ function localTransClicked(event) {
     );
 }
 
+
+
+function impLocDataseClicked(event) {
+    chrome.storage.local.get(
+        ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
+        function (data) {
+            var allrows = [];
+            var myrows = [];
+            var myFile;
+            var pretrans;
+            var transtype;
+            toastbox("info", "Select file is started", "2000", "Select po file");
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = _this => {
+                let files = Array.from(input.files);
+                //   console.log(files);
+                if (files && files[0]) {
+                    myFile = files[0];
+                    var reader = new FileReader();
+                    reader.addEventListener('load', function (e) {
+                        //output.textContent = e.target.result;
+                        myrows = e.target.result.replace(/\r/g, "").split(/\n/);
+                        // allrows = e.target.result.split(/\r|\n/);
+                        // remove all unnessesary lines as those will take time to process
+                        var regel = '';
+                        for (var i = 0; i < myrows.length - 1; i++) {
+                            regel = myrows[i];
+                            console.debug("regel:",regel)
+                            if (regel.startsWith("msgid") || regel.startsWith("msgstr") || regel.startsWith("msgctxt") || regel.startsWith("msgid_plural") || regel.startsWith("msgstr[0]") || regel.startsWith("msgstr[1]") || regel.startsWith("msgstr[2]") || regel.startsWith("msgstr[3]")) {
+                                allrows.push(regel);
+                                console.debug(allrows)
+                            }
+                        }
+                        countimported = import_po_to_local(data.destlang, myFile, allrows);
+                       
+                    });
+                    reader.readAsText(myFile);
+                }
+                else {
+                    messageBox("info", "No file selected")
+                }
+                close_toast();
+            };
+            input.click();
+        }
+    );
+}
+
 function impFileClicked(event) {
     event.preventDefault();
     chrome.storage.local.get(
@@ -1412,12 +1498,13 @@ function impFileClicked(event) {
                             }
                         }
                         countimported = new_import_po(data.destlang, myFile, allrows);
+                        messageBox( info, "Records imported:" +countimported)
                         
                     });
                     reader.readAsText(myFile);
                 }
                 else {
-                    messageBox(info, "No file selected")
+                    messageBox("info", "No file selected")
                 }
                 close_toast();
             };
@@ -1786,6 +1873,10 @@ function addTranslateButtons() {
     }
 }
 
+// Show the amount of records present within the local translation table
+Show_RecCount();
+
+
 // 08-05-2021 PSS added import of records into local database
 function importPageClicked(event) {
     event.preventDefault();
@@ -1832,10 +1923,10 @@ async function parseDataBase(data) {
         ++counter;
     });
     // 24-08-2022 PSS fixes enhancement #237
-    toastbox("info", "Import of: " + (counter-1) + " records is started wait for the result!!", "3000", "Import database");
+    toastbox("info", "Import of: " + (counter-1) + " records is started wait for the result!!", "1500", "Import database");
     let importButton = document.querySelector("a.import_translation-button");
     importButton.innerText="Started"
-    if (counter > 0) {
+    if (counter >1) {
         var arrayLength = csvData.length;
         for (var i = 0; i < arrayLength; i++) {
             if (i > 1) {
@@ -1843,11 +1934,14 @@ async function parseDataBase(data) {
                 // Store it into the database
                 //Prevent adding empty line
                 if (csvData[i][0] != "") {
-                    if (i == 100 || i == 200 || i == 300 || i == 400 || i == 500 || i == 600 || i == 700 || i == 800 || i == 900 || i == 1000 || i == 1100 || i == 1200 || i == 1300 || i == 1400 || i == 1500) {
-                        toastbox("info", "Adding is running <br>Records added:"+i, "1500", "Import database");
+                    if (i == 250 || i == 500 || i == 750 || i == 1000 || i == 1250 || i == 1500 || i == 1750 || i == 2000 || i == 2250 || i == 2500 || i == 2750 || i == 3000 || i == 3250 || i == 3500 || i == 3750) {
+                        toastbox("info", "Adding is running <br>Records added:"+i, "500", "Import database");
                     }
                    // console.debug("before addDB record:"+i);
-                    res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
+                    let cntry = checkLocale()
+                    if (csvData[i][2] === cntry) {
+                        res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
+                    }
                 }
             }
         }
@@ -1949,7 +2043,13 @@ async function checkbuttonClick(event) {
                // console.debug("detail row textarea:", mytextarea)  
                 //console.debug("start mutationsserver:",StartObserver)
                 if (StartObserver) {
+                    console.debug("in details:", autoCopyClipBoard)
+                    if (autoCopyClipBoard) {
+                        copyToClipBoard(detailRow)
+                    }
                     start_editor_mutation_server(mytextarea, action)
+                    // PSS only within the editor we want to copy the original to clipboard is parameter is set
+                    
                 }
             }
            // let myrec = document.querySelector(`#editor-${detailRow}`);
@@ -3088,7 +3188,9 @@ function addCheckButton(rowId, checkElem, lineNo) {
 
 function savetranslateEntryClicked(event) {
     //console.debug("event:",event)
-    var myWindow;    
+    var myWindow;
+    var autoCopySwitchedOff = false;
+
    // event.preventDefault();
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
@@ -3115,6 +3217,11 @@ function savetranslateEntryClicked(event) {
             status.innerText = "waiting";
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
             setTimeout(() => {
+                if (autoCopyClipBoard) {
+                    console.debug("we switch ??", autoCopyClipBoard)
+                    autoCopySwitchedOff = true
+                    autoCopyClipBoard = false
+                }
                 //toastbox("info", "" , "600", "Saving suggestion", myWindow);
                 let preview = document.querySelector(`#preview-${rowId}`);
                 if (preview != null) {
@@ -3122,7 +3229,9 @@ function savetranslateEntryClicked(event) {
                     const editor = preview.nextElementSibling;
                     if (editor != null) {
                         editor.style.display = "none";
+                        console.debug("after we switch ??", autoCopyClipBoard)
                         editor.querySelector(".translation-actions__save").click();
+                        console.debug("after we switch ??", autoCopyClipBoard)
                     }
                     // PSS confirm the message for dismissal
                     foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
@@ -3137,6 +3246,11 @@ function savetranslateEntryClicked(event) {
                         }
                     });
                 }
+                if (autoCopySwitchedOff) {
+                    autoCopyClipBoard = true
+                    autoCopySwitchedOff =false
+                }
+                
             }, bulk_timer);
            // timeout += bulk_timer;
         }
@@ -3165,7 +3279,7 @@ function savetranslateEntryClicked(event) {
             prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
             prevrow.style.backgroundColor = "#b5e1b9";
         }
-        if (current.innerText == "fuzzy") {
+        else if (current.innerText == "fuzzy") {
             let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
             let glotpress_reject = document.querySelector(`#editor-${rowId} .editor-panel__right .status-actions .reject`);
             let glotpress_close = document.querySelector(`#editor-${rowId} div.editor-panel__left .panel-header-actions__cancel`);
@@ -3194,7 +3308,8 @@ function savetranslateEntryClicked(event) {
             SavelocalButton.disabled = true;
             SavelocalButton.display = "none";
         }
-        }
+
+    }
   //  });
 }
 

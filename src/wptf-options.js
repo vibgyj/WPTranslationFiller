@@ -66,9 +66,10 @@ let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 let showForceFormal = document.getElementById("Force-formal");
 let showDefGlossary = document.getElementById("use-default-glossary");
 let showStrictValidation = document.getElementById("use-strict-validation");
+let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -276,6 +277,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             showStrictValidation.checked = false;
         }
     }
+    if (data.autoCopyClip != "null") {
+        if (data.autoCopyClip == true) {
+            showAutoClipboard.checked = true;
+        }
+        else {
+            showAutoClipboard.checked = false;
+        }
+    }
    
 });
 
@@ -420,6 +429,14 @@ button.addEventListener("click", function () {
     else {
         strictValidat = "false";
     }
+    if (document.querySelector("#auto-copy-clipboard:checked") !== null) {
+        let autoCopyClip_Set = document.querySelector("#auto-copy-clipboard:checked");
+        autoCopyClipBoard = autoCopyClip_Set.checked;
+    }
+    else {
+        autoCopyClipBoard = "false";
+    }
+
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -454,7 +471,8 @@ button.addEventListener("click", function () {
             ForceFormal: Force_formal,
             DefGlossary: Def_Glossary,
             WPTFscreenWidth: theScreenWidthValue,
-            strictValidate: strictValidat
+            strictValidate: strictValidat,
+            autoCopyClip: autoCopyClipBoard
 
         });
 

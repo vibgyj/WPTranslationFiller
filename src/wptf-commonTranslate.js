@@ -2061,6 +2061,26 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
+                            // the code below is to populate the Russion and Ukrain plurals
+                            textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
+                            if (textareaElem2 != null) {
+                                plural = plural + "_02"
+                                let pretrans = await findTransline(plural, destlang);
+                                console.debug("res:",pretrans)
+                                translatedText = pretrans
+                                textareaElem2.innerText = translatedText;
+                                textareaElem2.value = translatedText;
+                            }
+
+                            textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
+                            console.debug("elem3:",textareaElem3)
+                            if (textareaElem3 != null) {
+                                plural = plural + "_03"
+                                let pretrans = await findTransline(plural, destlang);
+                                translatedText = pretrans
+                                textareaElem3.innerText = translatedText;
+                                textareaElem3.value = translatedText;
+                            }
                             // Populate the second line in preview Plural
                             if (prevstate != "current") {
                                 let preview = document.querySelector("#preview-" + rowId + " td.translation");
@@ -2081,6 +2101,17 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
                             textareaElem1.innerText = translatedText;
                             textareaElem1.value = translatedText;
+
+                            textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
+                            console.debug("elem2:", textareaElem2)
+                            if (textareaElem2 != null) {
+                                plural = plural + "_02"
+                                let pretrans = await findTransline(plural, destlang);
+                                console.debug("res:", pretrans)
+                                translatedText = pretrans
+                                textareaElem2.innerText = translatedText;
+                                textareaElem2.value = translatedText;
+                            }
                             let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
                             if (previewElem != null) {
                                 previewElem.innerText = translatedText;
@@ -3174,6 +3205,28 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
                                         textareaElem1.innerText = translatedText;
                                         textareaElem1.value = translatedText;
+                                        // the code below is to populate the Russion and Ukrain plurals
+                                        textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
+                                        if (textareaElem2 != null) {
+                                            plural = plural + "_02"
+                                            let pretrans = await findTransline(plural, destlang);
+                                            console.debug("res:", pretrans)
+                                            translatedText = pretrans
+                                            textareaElem2.innerText = translatedText;
+                                            textareaElem2.value = translatedText;
+                                        }
+
+                                        textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
+                                        console.debug("elem3:", textareaElem3)
+                                        if (textareaElem3 != null) {
+                                            plural = plural + "_03"
+                                            let pretrans = await findTransline(plural, destlang);
+                                            console.debug("res:", pretrans)
+                                            translatedText = pretrans
+                                            textareaElem3.innerText = translatedText;
+                                            textareaElem3.value = translatedText;
+                                        }
+
                                         // Populate the second line in preview Plural
                                         if (prevstate != "current") {
                                             let preview = document.querySelector("#preview-" + rowId + " td.translation");
@@ -3198,6 +3251,32 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         textareaElem1 = document.querySelector("textarea#translation_" + rowId + "_1");
                                         textareaElem1.innerText = translatedText;
                                         textareaElem1.value = translatedText;
+                                        // the code below is to populate the Russion and Ukrain plurals
+                                        textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
+                                        if (textareaElem2 != null) {
+                                            plural = plural + "_02"
+                                            let pretrans = await findTransline(plural, destlang);
+                                            if (pretrans != null) {
+                                                console.debug("res:", pretrans)
+                                                translatedText = pretrans
+                                                textareaElem2.innerText = translatedText;
+                                                textareaElem2.value = translatedText;
+                                            }
+                                        }
+
+                                        textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
+                                        console.debug("elem3:", textareaElem3)
+                                        if (textareaElem3 != null) {
+                                            plural = plural + "_03"
+                                            let pretrans = await findTransline(plural, destlang);
+                                            if (pretrans != null) {
+                                                console.debug("res:", pretrans)
+                                                translatedText = pretrans
+                                                textareaElem3.innerText = translatedText;
+                                                textareaElem3.value = translatedText;
+                                            }
+                                        }
+
                                         let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
                                         //console.debug("previewElem 3052:",previewElem)
                                         if (previewElem != null) {
@@ -3931,6 +4010,7 @@ function saveLocal_2(bulk_timer) {
     var counter = 0;
     var line_read = 0
     var editor;
+    var original;
     var dismiss;
     StartObserver =false
     const template = `
@@ -3951,13 +4031,12 @@ function saveLocal_2(bulk_timer) {
         //console.debug("preview:",preview,preview.classList)
         // we only need to read the translated lines by wptf
         if (preview.classList.contains("wptf-translated")) {
-            line_read++
             // Perform your action on the current row here 
             checkset = preview.querySelector('input[type="checkbox"]')
             //console.debug("checkset:", checkset)
             if (checkset != null && checkset.checked == true) {
-                //let rowfound = editor.id;
-                // if (checkset.checked == true) {
+                // 13-06-2024 PSS we only count the read lines when the checkbox is ticket
+                line_read++
                 editor = preview.nextElementSibling;
                 if (editor != null) {
                     let rowfound = editor.id;
@@ -3971,6 +4050,7 @@ function saveLocal_2(bulk_timer) {
                     if (current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true) {
                         let preview = document.querySelector(`#preview-${editorRow}`);
                         let editor = preview.nextElementSibling;
+                        original = editor.querySelector("span.original-raw").innerText;
                         let glotpress_suggest = editor.querySelector(".translation-actions__save");
                         // PSS do not set style to none!!! it will then skip records
                         editor.style.display = "";
@@ -3994,6 +4074,7 @@ function saveLocal_2(bulk_timer) {
                                         }
                                         else {
                                             console.debug("Timeout in waiting for message")
+                                            original = editor.querySelector("span.original-raw").innerText;
                                             toastbox("info", "Skipping:" + original, "800", "Timeout in saving");
                                             // Sometimes the previewline is not hidden but saved, so we need to hide it
                                             preview = document.querySelector(`#preview-${editorRow}`);
@@ -4041,22 +4122,22 @@ function saveLocal_2(bulk_timer) {
                         //console.debug("checkbox present but not set or not in waiting mode")
                         let original = editor.querySelector("span.original-raw").innerText;
                         if (original != null) {
-                            toastbox("info", "Skipping:" + original, "800", "Skipping record:");
+                            toastbox("info", "Skipping:" + original, "900", "Skipping record:");
                         }
                         else {
-                            toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record:");
+                            toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record:");
                             // toastbox.close()
                         }
                     }
                 }
                 else {
-                    toastbox("info", "Editor not open", "2000", "Record not saved:" + original);
+                    toastbox("info", "Editor not open", "900", "Record not saved:" + original);
                     console.debug("Editor not open!!")
                 }
             }
             else {
                // console.debug("unchecked count:", checkcount)
-                toastbox("info", "Record maybe already saved or not selected", "800", "Skipping record");
+                toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
                 //console.debug("No checkset found!")
             }
         }
@@ -4422,11 +4503,15 @@ async function processTransl(original, translatedText, language, record, rowId, 
         //console.debug("previouscurrentClass:", typeof prevcurrentClass)
         //console.debug("current:",typeof current)
         prevcurrentClass.classList.replace("no-translations", "has-translations");
-        prevcurrentClass.classList.replace("untranslated", "status-waiting");
-        prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
-        prevcurrentClass.classList.add("wptf-translated");
-        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record,true );
-       
+        if (translatedText != "No suggestions") {
+            prevcurrentClass.classList.replace("untranslated", "status-waiting");
+            prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
+            prevcurrentClass.classList.add("wptf-translated");
+        }
+        else {
+            prevcurrentClass.classList.replace("untranslated", "status-nosuggestions");
+        }
+        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record, true);
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + myRowId + " .original");
             //console.debug("We are in editor!:",editorElem)
@@ -4498,6 +4583,19 @@ async function processTransl(original, translatedText, language, record, rowId, 
                     if (previewElem != null) {
                         previewElem.innerText = translatedText;
                     }
+                    // the below code is for Russion plural handling
+                    textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                    if (textareaElem2 != null) {
+                        textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                        textareaElem2.innerText = translatedText;
+                        textareaElem2.value = translatedText;
+                    }
+                    textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                    if (textareaElem3 != null) {
+                        textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                        textareaElem3.innerText = translatedText;
+                        textareaElem3.value = translatedText;
+                    }
                 }
                 result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record,true);
             }
@@ -4513,6 +4611,20 @@ async function processTransl(original, translatedText, language, record, rowId, 
                     //console.debug("textareaElem1:",textareaElem1)
                     textareaElem1.innerText = translatedText;
                     textareaElem1.value = translatedText;
+                    // the below code is for Russion plural handling
+                    textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                    if (textareaElem2 != null) {
+                        textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                        textareaElem2.innerText = translatedText;
+                        textareaElem2.value = translatedText;
+                    }
+                    textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                    if (textareaElem3 != null) {
+                        textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                        textareaElem3.innerText = translatedText;
+                        textareaElem3.value = translatedText;
+                    }
+
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
                     if (previewElem != null) {
                         previewElem.innerText = translatedText;
@@ -4525,6 +4637,20 @@ async function processTransl(original, translatedText, language, record, rowId, 
                     // console.debug('newrow = not undefined!', row + "_1");
                     textareaElem1.innerText = translatedText;
                     textareaElem1.value = translatedText;
+                    // the below code is for Russion plural handling
+                    textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                    if (textareaElem2 != null) {
+                        textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                        textareaElem2.innerText = translatedText;
+                        textareaElem2.value = translatedText;
+                    }
+                    textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                    if (textareaElem3 != null) {
+                        textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                        textareaElem3.innerText = translatedText;
+                        textareaElem3.value = translatedText;
+                    }
+
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(2) .translation-text");
                     if (previewElem != null) {
                         previewElem.innerText = translatedText;
@@ -4570,10 +4696,12 @@ async function processTransl(original, translatedText, language, record, rowId, 
     let currentClass = record;
     //let currentClass = document.querySelector(`#editor-${myRowId}`);
     //console.debug("preview:",typeof preview,preview)
-    currentClass.classList.replace("no-translations", "has-translations");
-    currentClass.classList.replace("untranslated", "status-waiting");
-    currentClass.classList.replace("status-fuzzy", "status-waiting");
-    currentClass.classList.add("wptf-translated");
+    if (translatedText != "No suggestions") {
+        currentClass.classList.replace("no-translations", "has-translations");
+        currentClass.classList.replace("untranslated", "status-waiting");
+        currentClass.classList.replace("status-fuzzy", "status-waiting");
+        currentClass.classList.add("wptf-translated");
+    }
     preview = document.querySelector(`#preview-${rowId}`);
     //console.debug("my preview:",preview)
     //let prevcurrentClass = document.querySelector(`#preview-${myRowId}`);
@@ -4581,10 +4709,15 @@ async function processTransl(original, translatedText, language, record, rowId, 
     //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
     //console.debug("previouscurrentClass:", typeof prevcurrentClass)
     //console.debug("current:",typeof current)
-    prevcurrentClass.classList.replace("no-translations", "has-translations");
-    prevcurrentClass.classList.replace("untranslated", "status-waiting");
-    prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
-    prevcurrentClass.classList.add("wptf-translated");
+    if (translatedText != "No suggestions") {
+        prevcurrentClass.classList.replace("no-translations", "has-translations");
+        prevcurrentClass.classList.replace("untranslated", "status-waiting");
+        prevcurrentClass.classList.replace("status-fuzzy", "status-waiting");
+        prevcurrentClass.classList.add("wptf-translated");
+    }
+    else {
+        prevcurrentClass.classList.replace("untranslated", "status-nosuggestions");
+    }
     // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
     //prevcurrentClass.style.backgroundColor = "#ffe399";
    // preview = document.querySelector("#preview-" + myRowId)
