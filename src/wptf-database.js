@@ -199,28 +199,27 @@ async function retrieveDataFromIndexedDB(input) {
 //}
 
 // Part of the solution issue #204
-async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale) {
+async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale,current) {
     //console.debug("getTM:",spellIgnore)
     var timeout = 0;
     var timer = 0;
     var preview;
     var result = "";
     var translatedText;
-    convertToLower = false;
+    //convertToLower = false;
     //console.debug("myLi:",myLi)
     translatedText = myLi;
     //z("myLI:", myLi, translatedText)
     if (translatedText != 'No suggestions') {                    
         translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, spellIgnore, locale);
     }
-    //console.debug("editor in database:",record,translatedText)
-
-    let textareaElem = await record.querySelector("textarea.foreign-text");
-    //console.debug("textareaElem:",textareaElem)
-    //textareaElem = record.querySelector("textarea.foreign-text");
-    textareaElem.innerText = translatedText;
+    processTransl(original, translatedText, locale, record, row, "single", "0", locale, convertToLower, current);
+   // record.style.display = "display: table-row";
+  
+    let textareaElem = record.querySelector("textarea.foreign-text");
     // PSS 29-03-2021 Added populating the value of the property to retranslate            
-    textareaElem.value = translatedText;
+    //textareaElem.value = translatedText;
+   // textareaElem.innerText = translatedText;
     //PSS 25-03-2021 Fixed problem with description box issue #13
     textareaElem.style.height = "auto";
     textareaElem.style.height = textareaElem.scrollHeight + "px";

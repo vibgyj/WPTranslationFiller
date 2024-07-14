@@ -65,9 +65,10 @@ let showLTCheckbox = document.getElementById("Auto-LT-spellcheck");
 let showReviewCheckbox = document.getElementById("Auto-review-OpenAI");
 let showForceFormal = document.getElementById("Force-formal");
 let showDefGlossary = document.getElementById("use-default-glossary");
+let showStrictValidation = document.getElementById("use-strict-validation");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     if (data.DeeplFree != null) {
@@ -267,6 +268,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             showDefGlossary.checked = false;
         }
     }
+    if (data.strictValidate != "null") {
+        if (data.strictValidate == true) {
+            showStrictValidation.checked = true;
+        }
+        else {
+            showStrictValidation.checked = false;
+        }
+    }
    
 });
 
@@ -404,6 +413,13 @@ button.addEventListener("click", function () {
     else {
         Def_Glossary = "false";
     }
+    if (document.querySelector("#use-strict-validation:checked") !== null) {
+        let strictValidate_Set = document.querySelector("#use-strict-validation:checked");
+        strictValidat = strictValidate_Set.checked;
+    }
+    else {
+        strictValidat = "false";
+    }
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -437,7 +453,8 @@ button.addEventListener("click", function () {
             Auto_review_OpenAI: OpenAIreview,
             ForceFormal: Force_formal,
             DefGlossary: Def_Glossary,
-            WPTFscreenWidth: theScreenWidthValue
+            WPTFscreenWidth: theScreenWidthValue,
+            strictValidate: strictValidat
 
         });
 

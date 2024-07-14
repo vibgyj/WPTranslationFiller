@@ -217,9 +217,9 @@
 </head>
 <body>
     <div class="container" id="container">
-       
+
         <div class="backbutton">
-            <input id="backbutton" type="button" value="Close options page"  />
+            <input id="backbutton" type="button" value="Close options page" />
         </div>
         <table id="options">
             <tr>
@@ -301,6 +301,7 @@
                             <option value="gpt-4">gpt-4</option>
                             <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
                             <option value="gpt-4-turbo">gpt-4-turbo</option>
+                            <option value="gpt-4o">gpt-4o</option>
                         </select>
                         <label for="OpenAI_temp">Temperature:</label>
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
@@ -532,6 +533,10 @@ You,Je
         <label class="labeled-checkbox">
             <input type="checkbox" id="use-default-glossary">
             <span>Use default glossary</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="use-strict-validation">
+            <span>Use strict validation</span>
         </label>
         <table id="footer">
             <tr>

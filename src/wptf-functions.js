@@ -333,14 +333,17 @@ async function validateOld(showDiff) {
                 // console.debug("current:", current.innerText)
                 let showName = false;
                 //let showDiff = true;
-                let prev_trans = textareaElem.innerText;
-                //console.debug("translation:", prev_trans)
-                let currcount = 0;
-                let result = {};
-                checkElem = record.querySelector(".priority");
-                if (current.innerText != 'untranslated') {
-                    await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
+                if (textareaElem != null) {
+                    let prev_trans = textareaElem.innerText;
+                    //console.debug("translation:", prev_trans)
+                    let currcount = 0;
+                    let result = {};
+                    checkElem = record.querySelector(".priority");
+                    if (current.innerText != 'untranslated') {
+                        await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
+                    }
                 }
+                else {console.debug("we could not fetch the text of the record, probably de to 429 error")}
                 const endTime = Date.now(); // Record the end time
                 const timeDifference = endTime - startTime; // Calculate the time difference
                 //console.log('Time taken for processing this record:', timeDifference, 'milliseconds');
@@ -390,7 +393,15 @@ async function validatePage(language, showHistory, locale,showDiff) {
     var myGlotDictStat;
     var newurl;
     var old_status;
-    
+    var formal = checkFormal(false);
+    if (formal == true) {
+        //console.debug("we have formal")
+        DefGlossary == true
+    }
+    else {
+         DefGlossary == false
+        }
+
     // html code for counter in checkbox
     const line_counter = `
     <div class="line-counter">
@@ -464,9 +475,9 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 /// checkbox = old_status.querySelector('input[type="checkbox"]'
                 if (old_status != null) {
                     checkbox = old_status.getElementsByClassName("checkbox")
+                    glossary_word = old_status.getElementsByClassName("glossary-word")
                 }
-                glossary_word = old_status.getElementsByClassName("glossary-word")
-
+                
                 if (checkbox[0] != null) {
                     my_line_counter = checkbox[0].querySelector("div.line-counter")
                     // mark lines with glossary word into checkbox
@@ -484,13 +495,16 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 }
                 else {
                     // if not a PTE it must be put in a different checkbox
-                    let mycheckbox = old_status.getElementsByClassName("myCheckBox")
-                    mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
-                    let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
-                    this_line_counter.innerText = rowcount
-                    if (glossary_word.length != 0) {
-                        mycheckbox[0].style.background = "LightSteelBlue"
-                        mycheckbox[0].title ="Has glossary word"
+                    //console.debug("we are not a PTE")
+                    if (old_status != null) {
+                        let mycheckbox = old_status.getElementsByClassName("myCheckBox")
+                        mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
+                        let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
+                        this_line_counter.innerText = rowcount
+                        if (glossary_word.length != 0) {
+                            mycheckbox[0].style.background = "LightSteelBlue"
+                            mycheckbox[0].title = "Has glossary word"
+                        }
                     }
                     // mycheckbox[0].textContent = rowcount
                 }
@@ -553,6 +567,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
 }
 
 async function set_glotdict_style() {
+    // this function sets the color of the box for glossary words present within a single line
     return new Promise(function (resolve) {
         let myTimeout = 120;
         setTimeout(() => {
