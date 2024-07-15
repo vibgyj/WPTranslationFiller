@@ -62,6 +62,7 @@ chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
 });
 
+
 chrome.storage.local.get('DefGlossary', async function (result) {
     DefGlossary = result.DefGlossary; // Assign the value to the global variable
 });
@@ -162,6 +163,7 @@ var showGlosLine;
 
 gd_wait_table_alter();
 addCheckBox();
+
 
 var parrotActive;
 const script = document.createElement('script');
@@ -844,7 +846,11 @@ tmtransButton.href = "#";
  //   tmtransButton.className = "tm-trans-button foreighn"
 //}
 tmtransButton.onclick = tmTransClicked;
-tmtransButton.innerText = "TM";
+chrome.storage.local.get('TMtreshold', function (result) {
+    treshold = result.TMtreshold; // Assign the value to the global variable
+    tmtransButton.innerText = "TM " + treshold+"%";
+});
+//tmtransButton.innerText = "TM " +treshold;
 TmContainer.appendChild(tmtransButton)
 TmContainer.appendChild(classToolTip)
 
@@ -2279,7 +2285,8 @@ async function checkbuttonClick(event) {
                
             if (typeof textareaElem != "null") {
                 // we need to use await otherwise there is not result.newText
-                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl","", false);
+                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
+               // console.debug("result in editor:",result)
                 if (result.newText != "") {
                     let editorElem = document.querySelector("#editor-" + rowId + " .original");
                     //19-02-2023 PSS we do not add the marker twice, but update it if present
@@ -4253,7 +4260,7 @@ function startObserving(observer, textarea, config) {
 
 
 function start_editor_mutation_server(textarea, action) {
-    //console.debug("action =:",action)
+    console.debug("action =:",action)
         //var observer
         //console.debug("texarea:", textarea, typeof textarea)
         //textarea.addEventListener('input', handleInputEvent);
@@ -4274,17 +4281,22 @@ function start_editor_mutation_server(textarea, action) {
 
 }
 // Function to handle DOM mutations
-function handleMutation(mutationsList, observer) {
+async function handleMutation(mutationsList, observer) {
+    console.debug("We handle mutations")
+    var leftPanel;
+    var result;
     for (const mutation of mutationsList) {
-       // console.debug("mutation type:",mutation,mutation.type)
+        console.debug("mutation type:",mutation,mutation.type)
         if (mutation.type === 'childList') {
            // console.debug('Child list mutation detected:', mutation);
-        } else if (mutation.type === 'attributes') {
-           // console.debug('Attribute mutation detected:', mutation);
+        }
+        else if (mutation.type === 'attributes') {
+            console.debug('Attribute mutation detected:', mutation);
             var closestParent = mutation.target;
             var panelTransMenu;
-            var leftPanel = closestParent.parentElement.parentElement.parentElement.parentElement
-           // console.debug("mutation parent:", leftPanel)
+            var markerpresent;
+            leftPanel = closestParent.parentElement.parentElement.parentElement.parentElement
+            console.debug("mutation parent:", leftPanel)
             original = leftPanel.getElementsByClassName("original-raw")[0]
             //console.debug("original in mutation:", original)
             translation = mutation.target.value
@@ -4307,7 +4319,19 @@ function handleMutation(mutationsList, observer) {
                         missingVerbsButton[0].style.visibility = "visible"
                         missingVerbsButton[0].title = headertitle;
                         //console.debug("percentage:", result.percent)
+                        textareaElem = leftPanel.querySelector(`textarea.foreign-text`);
+                        console.debug("texelement:", textareaElem)
+                        valresult = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
+                        console.debug("result:", valresult)
+                        markerpresent = leftPanel.getElementsByClassName("marker");
                         if (result.percent == 100) {
+                           
+                            if (markerpresent != null) {
+                                console.debug("We found explanation:", markerpresent)
+                                if (typeof markerpresent[0] != 'undefined') {
+                                    markerpresent[0].remove()
+                                }
+                            }
                             panelTransMenu[0].style.backgroundColor = "green";
                         }
                         else if (result.percent >= 66) {
@@ -4320,18 +4344,33 @@ function handleMutation(mutationsList, observer) {
                             panelTransMenu[0].style.backgroundColor = "purple";
                         }
 
-                        else if (result.percent <33 && result.percent >0) {
+                        else if (result.percent < 33 && result.percent > 0) {
                             panelTransMenu[0].style.backgroundColor = "darkorange";
                         }
                         else if (result.percent == 0) {
                             panelTransMenu[0].style.backgroundColor = "red";
+                            markerpresent.innerHTML = result.newText
                         }
                     }
                 }
+                else {
+                    console.debug("Tooltip empty")
+                }
             }
             else {
-                //console.debug("percentage:",result.percent)
+                //console.debug("percentage:", result.percent, leftPanel)
+                textareaElem = leftPanel.querySelector(`textarea.foreign-text`);
+                console.debug("texelement:",textareaElem)
+                result = validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
                 if (result.percent == 100) {
+
+                    let markerpresent = leftPanel.getElementsByClassName("marker");
+                    if (markerpresent != null) {
+                        console.debug("We found explanation:", markerpresent)
+                        if (typeof markerpresent[0] != 'undefined') {
+                            markerpresent[0].remove()
+                        }
+                    }
                     panelTransMenu[0].style.backgroundColor = "green";
                 }
                 missingVerbsButton[0].style.visibility = "hidden"
