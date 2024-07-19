@@ -1,3 +1,7 @@
+mymarker {
+    background-color: lightgreen;
+}
+
 /* make ui smaller as it is unreadable with the new larg mask*/
 /*.gp-content {
     max-width:1300px !important;
@@ -181,22 +185,24 @@
     gap: 0.5rem !important;
 }
 .wptfNavBar {
-      margin-bottom: 0.8rem;
-      display: flex;
-      vertical-align: middle;
-      align-items: center;
-      min-height: 32px;
+    margin-bottom: 0.4rem;
+    display: flex;
+    vertical-align: middle;
+    margin-left: auto;
+    margin-top:0.5rem !important;
+    min-height: 32px;
+    font-size: 0.875em;
 }
 
 .wptfNavBarCont .translation-filler-button {
-      background: blue;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .translation-filler-button::before {
@@ -257,8 +263,8 @@
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
@@ -267,8 +273,8 @@
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
@@ -328,14 +334,14 @@
 }
 
 .wptfNavBarCont .check_translation-button {
-      background: blue;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 .wptfNavBarCont .check_translation-button.ready {
       background: green;
@@ -396,8 +402,8 @@
       background: blue;
       color: white !important;
       padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
+      margin-left: 2px;
+      margin-right: 2px;
       border: 2px solid !important;
       border-color: grey !important;
       border-radius: 5px !important;
@@ -462,8 +468,8 @@
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
@@ -524,14 +530,14 @@
 }
 
 .wptfNavBarCont .import_translation-button {
-      background: darkcyan;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: darkcyan;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .import_translation-button:hover {
@@ -548,14 +554,14 @@
 }
 
 .wptfNavBarCont .export_translation-button {
-      background: darkcyan;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: darkcyan;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 .wptfNavBarCont .export_translation-button::before {
       content: '\f326';
@@ -573,8 +579,8 @@
     background: darkgreen;
     color: white !important;
     padding: 5px 5px 5px 5px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
@@ -584,8 +590,8 @@
     background: darkgreen;
     color: white !important;
     padding: 5px 5px 5px 5px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
@@ -594,33 +600,33 @@
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
 }
 
 .wptfNavBarCont .tm-trans-button.foreighn {
-      background: grey;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: grey;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .stats-button {
-      background: blue;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .stats-button::before {
@@ -654,61 +660,66 @@
         margin: 5px !important;
     }
 
-.paging .UpperCase-button.uppercase {
-    background: green;
-    color: white !important;
-    margin-left: 5px;
-    margin-right: 5px;
-    border: 2px solid !important;
-    border-color: grey !important;
-    border-radius: 5px !important;
-    /*z-index :0 !important;*/
+.paging {
+    font-size: 0.875em !important;
 }
 
-.paging .UpperCase-button {
-    background: white;
-    color: black !important;
-    margin-left: 5px;
-    margin-right: 5px;
-    border: 2px solid !important;
-    border-color: grey !important;
-    border-radius: 5px !important;
-    /*z-index :0 !important;*/
-}
+    .paging .UpperCase-button.uppercase {
+        background: green;
+        color: white !important;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+        /*z-index :0 !important;*/
+    }
+
+    .paging .UpperCase-button {
+        background: white;
+        color: black !important;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+        /*z-index :0 !important;*/
+    }
 
 .paging .UpperCase-button:hover {
     z-index:0;
 }
 
-.paging .LoadGloss-button-red {
-    background: red;
-    color: white !important;
-    margin-left: 5px;
-    margin-right: 5px;
-    border: 2px solid !important;
-    border-color: grey !important;
-    border-radius: 5px !important;
-}
+    .paging .LoadGloss-button-red {
+        background: red;
+        color: white !important;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+    }
 
-.paging .LoadGloss-button-green {
-    background: green;
-    color: white !important;
-    margin-left: 5px;
-    margin-right: 5px;
-    border: 2px solid !important;
-    border-color: grey !important;
-    border-radius: 5px !important;
-}
+    .paging .LoadGloss-button-green {
+        background: green;
+        color: white !important;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+    }
 
-.paging .menu-item-wptf_wiki {
-    background: blue;
-    color: white !important;
-    margin-left: 5px;
-    margin-right: 5px;
-    border: 2px solid !important;
-    border-color: grey !important;
-    border-radius: 5px !important;
-}
+    .paging .menu-item-wptf_wiki {
+        background: blue;
+        color: white !important;
+        margin-left: 2px;
+        margin-right: 2px;
+        margin-right: 5px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+    }
 /* below function can to be removed if GlotPress has improved the behavior of the edit screen*/
 .panel-header__bubble {
     padding: 1px 1px !important;

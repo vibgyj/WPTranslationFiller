@@ -4550,6 +4550,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
         result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record, true);
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + myRowId + " .original");
+            //let editorElem = document.querySelector("#editor-" + rowId + " .original");
+           // mark_original(editorElem, result.newText)
             //console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
             let markerpresent = editorElem.querySelector("span.mark-explanation");
@@ -4565,14 +4567,14 @@ async function processTransl(original, translatedText, language, record, rowId, 
                 markdiv.appendChild(markspan2);
                 editorElem.appendChild(markdiv);
                 markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-                markspan2.innerHTML = result.newText;
+               // markspan2.innerHTML = result.newText;
             }
-           else {
-                if (markerpresent != null) {
-                    markerpresent.innerHTML = result.newText;
-                }
-                else { console.debug("markerpresent not found")}
-               }
+           //else {
+            //    if (markerpresent != null) {
+                   // markerpresent.innerHTML = result.newText;
+             //   }
+              //  else { console.debug("markerpresent not found")}
+             //  }
        
         }
     }
