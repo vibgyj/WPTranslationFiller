@@ -2499,6 +2499,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var res;
     var counter = 0;
     var row;
+    var textareaElem;
     locale = checkLocale();
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
@@ -2589,13 +2590,15 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         }
                     });
                 });
-
+                textareaElem = editor.querySelector("textarea.foreign-text");
+                //console.debug("textareaElem populate TM:",textareaElem)
                 if (result != "No suggestions") {
                      myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale,TMtreshold).then(resli => {
                          if (typeof resli != null) {
                             // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
                             myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale,current);     
-                            let textareaElem = editor.querySelector("textarea.foreign-text");
+                            
+                             //console.debug("after fetchli:",textareaElem)
                             if (is_pte) {
                                 rowchecked = preview.querySelector("th input");
                             }
@@ -2615,7 +2618,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                             }
                          }
                          else {
-                            console.debug("notfound");
+                             console.debug("notfound");
                         }
 
                     }).catch((error) => {
@@ -2624,6 +2627,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 }
                 else {
                     console.debug("No suggestions");
+                    textareaElem.innerText="No suggestions"
                 }
             }
             else {
@@ -2658,7 +2662,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         counter++;
                     }
                     if (result != "No suggestions") {
-                       
                         validateEntry(destlang, textareaElem, "", "", row, locale, record);
                         mark_as_translated(row)
                     }
