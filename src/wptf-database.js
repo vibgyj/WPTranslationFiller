@@ -301,11 +301,11 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              if (rowchecked != null) {
                  if (!rowchecked.checked) {
                      //if (transtype == 'single') {
-                     if (res == "No suggestions") {
+                     if (translatedText == "No suggestions") {
                          rowchecked.checked = false;
                      }
                      else {
-                         rowchecked.checked = true;
+                        rowchecked.checked = true;
                      }
                  }
              }

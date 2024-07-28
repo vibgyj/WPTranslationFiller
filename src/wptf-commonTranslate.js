@@ -2599,23 +2599,24 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                             myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale,current);     
                             
                              //console.debug("after fetchli:",textareaElem)
-                            if (is_pte) {
-                                rowchecked = preview.querySelector("th input");
-                            }
-                            else {
-                                rowchecked = preview.querySelector("td input");
-                            }
-                            if (rowchecked != null) {
-                                if (!rowchecked.checked) {
-                                    if (resli == "No suggestions") {
-                                        rowchecked.checked = false;
-                                    }
-                                    else {
-                                        rowchecked.checked = true;
+                           // if (is_pte) {
+                             //   rowchecked = preview.querySelector("th input");
+                          //  }
+                           // else {
+                           //     rowchecked = preview.querySelector("td input");
+                           //  }
+                            // console.debug("rowchecked:",rowchecked,resli,result)
+                            //if (rowchecked != null) {
+                              //  if (!rowchecked.checked) {
+                                   // if (resli == "No suggestions") {
+                                     //   rowchecked.checked = false;
+                                  // }
+                                   // else {
+                                    //    rowchecked.checked = true;
                                         counter++;
-                                    }
-                                }
-                            }
+                                    //}
+                               // }
+                            //}
                          }
                          else {
                              console.debug("notfound");
@@ -2627,7 +2628,25 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 }
                 else {
                     console.debug("No suggestions");
-                    textareaElem.innerText="No suggestions"
+                    textareaElem.innerText = "No suggestions"
+                    if (is_pte) {
+                        rowchecked = preview.querySelector("th input");
+                    }
+                    else {
+                        rowchecked = preview.querySelector("td input");
+                    }
+                    console.debug("rowchecked:", rowchecked, resli, result)
+                    if (rowchecked != null) {
+                        if (!rowchecked.checked) {
+                            if (resli == "No suggestions") {
+                                rowchecked.checked = false;
+                            }
+                            else {
+                               // rowchecked.checked = true;
+                                counter++;
+                            }
+                        }
+                    }
                 }
             }
             else {
@@ -2658,11 +2677,14 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                        rowchecked = preview.querySelector(".myCheckBox input");
                     }
                     if (rowchecked != null) {
-                        rowchecked.checked = true;
-                        counter++;
+                        if (result != "No suggestions") {
+                            //rowchecked.checked = true;
+                            counter++;
+                        }
+                        else {rowchecked.checked =false}
                     }
                     if (result != "No suggestions") {
-                        validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                        result = validateEntry(destlang, textareaElem, "", "", row, locale, record);
                         mark_as_translated(row)
                     }
                 }
@@ -3568,6 +3590,28 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
         transtype = "plural";
         plural_line = "1";
     }
+    detail_preview = document.querySelector(`#preview-${rowId}`);
+    detail_glossary = detail_preview.querySelector(`.glossary-word`)
+    if (detail_glossary != null) {
+        detail_glossary = true
+    }
+    else {
+        detail_glossary = false
+    }
+    // console.debug("detail row textarea:", myrec)
+   // if (myrec != null) {
+        // mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
+         mytextarea = document.querySelector(`#editor-${rowId} .textareas`)
+         console.debug("detail row textarea:", mytextarea)  
+        console.debug("start mutationsserver:",StartObserver)
+        //if (StartObserver) {
+           // if (detail_glossary) {
+                start_editor_mutation_server(mytextarea, "Details")
+           // }
+            // PSS only within the editor we want to copy the original to clipboard is parameter is set
+
+       // }
+   // }
 
     // 15-05-2021 PSS added fix for issue #73
     if (postTranslationReplace.length != 0) {
@@ -3684,8 +3728,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     textareaElem.value = translatedText;
                     current.innerText = "transFill";
                     current.value = "transFill";
-                    //let zoeken = "translate-" + rowId + ""-translocal-entry-local-button";
-                   // await validateEntry(destlang, textareaElem, "", "", rowId);
+                    // we need to validate the results from local as well, to remove the glossary markings if present
+                    result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false);
+                    let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+                    remove_all_gloss(myleftPanel)
+                   
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                     // Translation completed
                     translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
@@ -3705,6 +3752,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 textareaElem.value = translatedText;
                 current.innerText = "transFill";
                 current.value = "transFill";
+
                // await validateEntry(destlang, textareaElem, "", "", rowId);
                 // Translation completed
                 translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
@@ -4482,7 +4530,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
     var result;
     var myRowId = rowId;
     var previousCurrent = current
-    let debug = false
+    let debug = true
     var preview;
     var td_preview;
     if (debug == true) {
@@ -4550,28 +4598,33 @@ async function processTransl(original, translatedText, language, record, rowId, 
         else {
             prevcurrentClass.classList.replace("untranslated", "status-nosuggestions");
         }
-        result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record, true);
-        if (result.newText != "") {
-            let editorElem = document.querySelector("#editor-" + myRowId + " .original");
+        let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+        result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false);
+        //console.debug("translateEntry:",result)
+      //  if (result.toolTip.length != 0) {
+         // mark_glossary(leftPanel, result.toolTip, translatedText, rowId)
+      //  }
+       // if (result.newText != "") {
+        //    let editorElem = document.querySelector("#editor-" + myRowId + " .original");
             //let editorElem = document.querySelector("#editor-" + rowId + " .original");
            // mark_original(editorElem, result.newText)
             //console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
-            let markerpresent = editorElem.querySelector("span.mark-explanation");
-            if (markerpresent == null) {
-                let markdiv = document.createElement("div");
-                markdiv.setAttribute("class", "marker");
-                let markspan1 = document.createElement("span");
-                let markspan2 = document.createElement("span");
-                markspan1.setAttribute("class", "mark-devider");
-                markspan1.style.color = "blue";
-                markspan2.setAttribute("class", "mark-explanation");
-                markdiv.appendChild(markspan1);
-                markdiv.appendChild(markspan2);
-                editorElem.appendChild(markdiv);
-                markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+        //    let markerpresent = editorElem.querySelector("span.mark-explanation");
+       //     if (markerpresent == null) {
+         //       let markdiv = document.createElement("div");
+         //       markdiv.setAttribute("class", "marker");
+          //      let markspan1 = document.createElement("span");
+           //     let markspan2 = document.createElement("span");
+           //     markspan1.setAttribute("class", "mark-devider");
+            //    markspan1.style.color = "blue";
+            //    markspan2.setAttribute("class", "mark-explanation");
+            //    markdiv.appendChild(markspan1);
+             //   markdiv.appendChild(markspan2);
+            //   editorElem.appendChild(markdiv);
+            //    markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
                // markspan2.innerHTML = result.newText;
-            }
+           // }
            //else {
             //    if (markerpresent != null) {
                    // markerpresent.innerHTML = result.newText;
@@ -4579,7 +4632,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
               //  else { console.debug("markerpresent not found")}
              //  }
        
-        }
+       // }
     }
     else {
         // PSS 09-04-2021 added populating plural text

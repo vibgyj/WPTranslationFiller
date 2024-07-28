@@ -13,7 +13,7 @@ adjustLayoutScreen();
 // The below is necessary to get the focus into the editor if it is opened straight from the menu
 window.onload = function () {
     var textarea = document.getElementsByClassName("textareas active")
-    console.debug("text at start", textarea[0])
+    console.debug("text at start", textarea)
     // if there is no texarea, then we do not want to set focus to it
     if (typeof textarea[0] != 'undefined') {
         textarea = textarea[0].firstChild.nextElementSibling
@@ -2065,10 +2065,12 @@ function checkactionClick(event) {
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 async function checkbuttonClick(event) {
+    event.preventDefault;
     var textareaElem;
     var translateButton;
     var editor;
     var OpenAIres;
+    var result;
     var newres;
     var lires = '0';
     var rowId
@@ -2162,32 +2164,33 @@ async function checkbuttonClick(event) {
            // console.debug("detail glossary:",detail_glossary)
             if (detail_glossary) {
                 //console.debug("before :",rowId)
-                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
-
+                console.debug("editor result 1:",result)
                 if (typeof textareaElem != "null") {
-                    // console.debug("before:", textareaElem)
-                    // we need to use await otherwise there is not result.newText
-                    // result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
-                    // console.debug("result in editor:",result)
-                    if (result.newText != "") {
+                    result = await validateEntry('nl', textareaElem, "", textareaElem.innerText, rowId, "nl", "", false);
+                     console.debug("result in editor:",result,result.toolTip.length)
+                    if (typeof result != 'undefined' ) {
                         let editorElem = document.querySelector("#editor-" + rowId + " .original");
-
-                        mark_original(editorElem, result.newText)
+                       // console.debug("newText:", result.newText)
+                       // mark_original(editorElem, result.newText)
                         //19-02-2023 PSS we do not add the marker twice, but update it if present
-                        if (editorElem != null) {
-                            let markerpresent = editorElem.querySelector("span.mark-explanation");
-                            if (markerpresent == null) {
-                                let markdiv = document.createElement("div");
-                                markdiv.setAttribute("class", "marker");
-                                let markspan1 = document.createElement("span");
-                                let markspan2 = document.createElement("span");
-                                markspan1.setAttribute("class", "mark-devider");
-                                markspan2.setAttribute("class", "mark-explanation");
-                                markdiv.appendChild(markspan1);
-                                markdiv.appendChild(markspan2);
-                                editorElem.appendChild(markdiv);
-                                markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-                                // markspan2.innerHTML = result.newText;
+                        let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+                        if (result.toolTip.length != 0) {
+                            mark_glossary(leftPanel, result.toolTip, textareaElem.innerText, rowId)
+                            if (editorElem != null) {
+                                let markerpresent = editorElem.querySelector("span.mark-explanation");
+                                if (markerpresent == null) {
+                                    let markdiv = document.createElement("div");
+                                    markdiv.setAttribute("class", "marker");
+                                    let markspan1 = document.createElement("span");
+                                    let markspan2 = document.createElement("span");
+                                    markspan1.setAttribute("class", "mark-devider");
+                                    markspan2.setAttribute("class", "mark-explanation");
+                                    markdiv.appendChild(markspan1);
+                                    markdiv.appendChild(markspan2);
+                                    editorElem.appendChild(markdiv);
+                                    markspan1.innerHTML = "<br>----- Missing glossary verbs are marked -----<br>"
+                                    // markspan2.innerHTML = result.newText;
+                                }
                             }
                             //  else {
                             //     if (markerpresent != null) {
@@ -2198,6 +2201,9 @@ async function checkbuttonClick(event) {
                             //}
                         }
                         // else { console.debug("markerpresent not found")}
+                    }
+                    else {
+                       console.debug("In editor no text is present!")
                     }
                 }
             }
@@ -2264,20 +2270,6 @@ async function checkbuttonClick(event) {
                 }
             }
             translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-           //console.debug("row before:",rowId)
-            // We need the current textareaElem for evaluation of the translated text
-        //    await waitForMyElement(`.editor`, 100).then((res) => {
-        //        //console.debug("dismiss message:", res)
-         //       if (res != "Time-out reached") {
-         //           textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
-          //      }
-         //       else { console.debug("editor not found:", res) }
-         //   });
-           // textareaElem =  document.querySelector(`#editor-${rowId} textarea.foreign-text`);
-           // console.debug("textareaElem:",textareaElem)
-            //myMarkElem = textareaElem.value
-          // result = await validateEntry('nl', textareaElem, "", "", rowId, "nl","",false);
-           // console.debug("werkt niet :",result)
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
             chrome.storage.local.set({ "noOldTrans": "True" }, function () {
             });
@@ -2621,10 +2613,10 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     var result = [];
     var original_preview;
     var raw;
-    var myleftPanel;
     var originalText;
     var preview_raw;
-    var has_glossary;
+    var hasGlossary;
+    var span_glossary;
     var toolTip=[]
     if (textareaElem != null) {
         translation = textareaElem.value;
@@ -2636,33 +2628,37 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     if (translation == "") {
         translation = "Empty"
     }
-    //console.debug("row in validateEntry ", rowId)
+    console.debug("row in validateEntry ", rowId)
 
     preview_raw = document.querySelector(`#preview-${rowId}`)
     //console.debug("ValidateEntry waarde preview_raw:",preview_raw)
     if (preview_raw != null) {
-        has_glossary = preview_raw.querySelector('.glossary-word')
+        hasGlossary = preview_raw.querySelector('.glossary-word')
 
-        if (has_glossary != null) {
+        if (hasGlossary != null) {
            // console.debug("has glossary:", has_glossary)
-            has_glossary = true;
+            hasGlossary = true;
         }
         else {
-            has_glossary = false;
+            hasGlossary = false;
         }
     }
     else {
-        has_glossary = false;
+        hasGlossary = false;
     }
-    if (has_glossary) {
+    console.debug("has glossary:",hasGlossary)
+   let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+   console.debug("ValidateEntry myleftPanel 2649:",leftPanel)
+    //remove_all_gloss(leftPanel)
+    if (hasGlossary==true) {
         original_preview = preview_raw.querySelector(`#preview-${rowId} .original-text`)
         if (original_preview == null) {
             original_preview = document.querySelector(`#preview-${rowId} .original`)
         }
         //console.debug("preview in validateEntry:", original_preview)
         raw = document.querySelector(`#editor-${rowId}`)
-        myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
-       // console.debug("LeftPanel:", myleftPanel)
+        
+       
        // console.debug("raw original:", raw)
         if (raw != null) {
             originalRaw = raw.querySelector("span.original-raw");
@@ -2675,7 +2671,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
         //console.debug("textareaElem:", textareaElem)
         if (typeof textareaElem == 'object') {
             if (textareaElem.length == 0) {
-               // console.debug("we have no populated textareaElem")
+                console.debug("we have no populated textareaElem")
                 wordCount = 0;
                 foundCount = 0;
                 percent = 0;
@@ -2684,23 +2680,30 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             }
             else {
                 originalText = originalRaw.textContent;
-                if (has_glossary) {
-                    //console.debug("We have a glossary word")
+                console.debug("originalText:",originalText)
+                if (hasGlossary) {
+                    console.debug("We have a glossary word")
                     result = await validate(language, originalText, translation, locale, record);
                     console.debug("result validate:", result)
-                }
-                if (result.percent == 100) {
-                    console.debug("We have 100%")
-                    if (raw != null) {
-                       raw = originalNew.innerHTML
+                    console.debug("LeftPanel:", leftPanel)
+                    
+                    if (result.percent == 100) {
+                        console.debug("We have 100%")
+                        if (raw != null) {
+                            raw = originalNew.innerHTML
+                        }
+                    }
+                    else {
+                        console.debug("We are marking toolTip:", result.toolTip)
+                        if (result.toolTip.length > 0) {
+                            // This when no translation is present
+                            let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+                            result = await validate(language, originalText, translation, locale, record);
+                            mark_glossary(leftPanel, result.toolTip, translation, rowId)
+                        }
                     }
                 }
-                else {
-                    console.debug("We are marking")
-                   // console.debug("marking for rowID:",rowId)
-                    //mark_myoriginal(rowId, myleftPanel, result.newText)
-                }
-                //original.innerText= result.newText
+                
             }
             //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
             old_status = document.querySelector("#preview-" + rowId);
@@ -2727,7 +2730,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
         }
     }
     else {
-       // console.debug("We dont have a glossary in validateEntry")
+        console.debug("We dont have a glossary in validateEntry")
         wordCount = 0;
         foundCount = 0;
         if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length !=0) {
@@ -2746,6 +2749,92 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     }
     //console.debug("result before return:",result)
     return result;
+}
+
+function remove_all_gloss(myleftPanel) {
+    if (typeof myleftPanel != 'undefined') {
+        span_glossary = myleftPanel.querySelectorAll(".glossary-word")
+        for (let i = 0; i < span_glossary.length; i++) {
+            console.debug("remove span_glossary:", span_glossary[i].innerText)
+            span_glossary[i].classList.remove('highlight');
+        }
+    }
+    else {
+        console.debug("myleftPanel = undefined")
+    }
+}
+
+async function mark_glossary(myleftPanel, toolTip, translation, rowId) {
+    var foundarray=[]
+    var mytranslation = translation.toLowerCase()
+    var markleftPanel;
+    console.debug("toolTip in mark:", toolTip)
+    var toolTipArray = toolTip.split("\n")
+    console.debug("ToolTip array:", toolTipArray);
+    console.debug("myleftPanel:", myleftPanel)
+    console.debug("in mark row:",rowId)
+    if (typeof myleftPanel != 'undefined') {
+        markleftPanel = myleftPanel
+        console.debug("myleftPanel is not undefined:",myleftPanel)
+    }
+    else {
+        let markleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel`)
+        console.debug("no leftPanel in mark_glossary!!",markleftPanel)
+    }
+    console.debug("markleftpanel in markglossary:",markleftPanel,typeof markleftPanel)
+    if (markleftPanel != null) {
+        var spans = await markleftPanel.getElementsByClassName("glossary-word")
+        //console.debug("span length:", spans.length)
+        var spansArray = Array.from(spans)
+        console.debug("array:", spansArray)
+        // we need to remove all existing highlights before setting the new ones
+        await remove_all_gloss(markleftPanel)
+        for (let i = 0; i < (toolTipArray.length - 1); i++) {
+            console.debug("loop through toolTips:",)
+            let line_toolTip = toolTipArray[i]
+            console.debug("line_toolTip:", line_toolTip)
+            let words = line_toolTip.split('-')
+            // firstword =firstword.toLowerCase
+            //console.debug("firstwords:", words[0])
+            // we need to convert the textContext to lowercase otherwise find is not working
+            let wordToFind = words[0].toLowerCase()
+            wordToFind = wordToFind.trim()
+            console.debug("word to find:", wordToFind)
+            // we need to convert the textContext to lowercase otherwise find is not working
+            foundarray = await spansArray.find(span => span.textContent.trim().toLowerCase().includes(wordToFind))
+            console.debug("foundarray:",foundarray)
+            if (typeof foundarray != 'undefined') {
+                console.debug("array found:", foundarray.innerText)
+                if (foundarray.innerText != "") {
+                    let arraytext = (foundarray.innerText).toLowerCase()
+                    console.debug("arrayword found:", arraytext, wordToFind)
+                    if (arraytext == wordToFind)
+                        console.debug("we found the word!", wordToFind)
+                }
+
+                //  console.debug("array found:", foundarray,words[0])
+                // console.debug('glossary found:', span_glossary[i])
+                //  glossary_text = span_glossary[i].innerText
+                //  glossary_text = glossary_text.toLowerCase()
+                console.debug("translated glossaryword:", words[1])
+                glossary_translation = words[1]
+                // as we removed the existing highlight first, we only have to mark the current glossary words
+                // The toolTip list only contains missing glossary words!
+                console.debug("translation:",typeof translation)
+                if (glossary_translation != "") {
+                    if (!translation.includes(glossary_translation)) {
+                        console.debug("span:", foundarray)
+                        foundarray.classList.add('highlight')
+                        console.debug("we highlight!!:", words[1])
+                    }
+                    else {console.debug("we found:",words[1])}
+                }
+            }
+        }
+    }
+    else {
+        console.debug("No mark_leftPanel")
+    }
 }
 
 function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundCount, rowId, lineNo) {
@@ -2942,6 +3031,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.title = "Save the string";
                         checkElem.style.backgroundColor = "orange";
+                        myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
+                        remove_all_gloss(myleftPanel)
                         if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             panelTransDiv.style.backgroundColor = "orange";
                             missingVerbsButton.style.visibility = "visible";
@@ -3564,8 +3655,8 @@ function savetranslateEntryClicked(event) {
 }
 
 function validate(language, original, translation, locale, showDiff) {
-    //console.debug("in validate translation:", translation)
-    //console.debug("in validate original:", original)
+    console.debug("in validate translation:", translation)
+    console.debug("in validate original:", original)
     var originalWords = []
     var wordCount = 0;
     var foundCount = 0;
@@ -3600,19 +3691,25 @@ function validate(language, original, translation, locale, showDiff) {
                // we compare the original word against the key of the glossary
                //console.debug("oWord:", oWord.toLowerCase(),"  Itemkey:", gItemKey.toLowerCase())
               // if (oWord.toLowerCase().includes(gItemKey.toLowerCase() == true)){
+               
                if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
+                   
                   // console.debug("found:", gItemKey, gItemValue)
                    wordCount++;
                    isFound = false;
                    for (let gWord of gItemValue) {
-                       // here we match the translation against the glossary noun     
+                       // here we match the translation against the glossary noun  
+                       console.debug("gWord:",gWord)
                        ikresult = match(language, gWord.toLowerCase(), translation.toLowerCase(), gItemValue, original, oWord.toLowerCase())
                        //console.debug("compare:", oWord.toLowerCase(), "translation:",checkTrans1.toLowerCase(), "glossary word:",gItemValue[0],ikresult.myresult,ikresult.count)
                        if (ikresult.myresult == true) {
                            isFound = true;
-                          // console.debug("found in validate:", gItemValue)
+                           // console.debug("found in validate:", gItemValue)
                            break;
                        }
+                       //else {
+                        //   isFound = false;
+                       //}
                    }
                    if (isFound) {
                        //console.debug("result of match:",ikresult.count)
@@ -3625,9 +3722,9 @@ function validate(language, original, translation, locale, showDiff) {
                    else {
                        // here we mark the verb if a glossary verb is not present issue #282
                        let re = new RegExp(oWord, "g"); // search for all instances
-                       newText = original.replace(re, `<mark>${oWord}</mark>`);
+                       //newText = original.replace(re, `<mark>${oWord}</mark>`);
                        //17-02-2023 PSS fix for issue #283
-                       original = newText;
+                       //original = newText;
                        if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
                            let wordToFind = `${ gItemKey }`
                            const wordExists = toolTip.includes(wordToFind.toLowerCase());
@@ -4479,8 +4576,8 @@ function startObserving(observer, textarea, config) {
 
 
 function start_editor_mutation_server(textarea, action) {
-        //console.debug("action =:",action)
-       
+        console.debug("action =:",action)
+        console.debug("typeof textarea:",typeof textarea)
         // Set up the MutationObserver
         observer = new MutationObserver(handleMutation);
 
@@ -4490,7 +4587,7 @@ function start_editor_mutation_server(textarea, action) {
         // Start observing the textarea
         // if (typeof textarea !='undefined') {
     if (typeof observer != 'undefined' && typeof textarea != 'undefined' || typeof textarea == 'object') {
-        //console.debug("textarea in start:", textarea)
+        console.debug("textarea in start:", textarea)
         stopObserving(observer)
         //   }
         // test 
@@ -4508,7 +4605,8 @@ function start_editor_mutation_server(textarea, action) {
 async function handleMutation(mutationsList, observer) {
     //console.debug("We handle mutations")
     var leftPanel;
-    var result;
+    var MutResult;
+    var valResult;
     var original;
     var preview;
     var myRowId;
@@ -4520,7 +4618,7 @@ async function handleMutation(mutationsList, observer) {
             //console.debug('Child list mutation detected:', mutation);
         }
         else if (mutation.type === 'attributes') {
-          //  console.debug('Attribute mutation detected:', mutation.target);
+            console.debug('Attribute mutation detected:', mutation.target);
             var closestParent = mutation.target;
             var panelTransMenu;
             var markerpresent;
@@ -4529,11 +4627,11 @@ async function handleMutation(mutationsList, observer) {
             original = await leftPanel.getElementsByClassName("original-raw")[0]
             textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
             translation = mutation.target.value
-            //console.debug("original in mutation:", original.textContent)
-           // console.debug("translation in mutation:",translation)
+            console.debug("original in mutation:", original.textContent)
+            console.debug("translation in mutation:", textareaElem)
 
-            result = await validate(locale,original.textContent, translation, locale, false)
-           // console.debug("result in mutation:", result);
+            MutResult = await validate(locale,original.textContent, translation, locale, false)
+            console.debug("result in mutation:", MutResult);
             let missingVerbsButton = leftPanel.getElementsByClassName("translocal-entry-missing-button");
             panelTransMenu = leftPanel.getElementsByClassName("panelTransMenu")
             let headerElem = leftPanel.querySelector(`.panel-header`);
@@ -4551,25 +4649,31 @@ async function handleMutation(mutationsList, observer) {
             if (typeof editor == 'object') {
                 editor_original = editor.innerHTML
                 //console.debug("previewww:", editor_original)
-                if (result.wordCount != result.foundCount) {
-                    if (result.toolTip.length > 0) {
+                if (MutResult.wordCount != MutResult.foundCount) {
+                    if (MutResult.toolTip.length > 0) {
                         //console.debug("houston we have a difference:", result.toolTip)
                         let newline = "\n";
                         let missingverbs = "Missing glossary entry\n";
-                        let headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+                        let headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(MutResult.toolTip);
                         if (missingVerbsButton[0] != null) {
                             missingVerbsButton[0].style.visibility = "visible"
                             missingVerbsButton[0].title = headertitle;
-                            valresult = await validateEntry('nl', textareaElem, "", "", myRowId, "nl", "", false);
-                            console.debug("result:", valresult)
-                            markerpresent = leftPanel.getElementsByClassName("marker");
-                            if (result.percent == 100) {
+                            valResult = await validateEntry('nl', textareaElem, "", false, myRowId, "nl", "", false);
+                            console.debug("result:", valResult.percent, myRowId)
+                            leftPanel = await document.querySelector(`#editor-${myRowId} .editor-panel__left`)
+                            if (leftPanel != null) {
+                                markerpresent = leftPanel.getElementsByClassName("marker");
+                            }
+                            if (valResult.percent == 100) {
+                                // deze verwijderen en de algemene aanroep gebruiken!!!
+                                span_glossary = await leftPanel.querySelectorAll(".glossary-word")
+                                remove_all_gloss(leftPanel)
 
                                 //if (markerpresent != null) {
                                    // console.debug("We found explanation:", markerpresent)
                                 textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
                                 if (myeditor_original != null) {
-                                    myeditor_original.innerHTML = preview_original.innerHTML
+                                 //   myeditor_original.innerHTML = preview_original.innerHTML
                                 }
                                     //myOriginal = "aap"
                                    // myOriginal = preview_original.innerHTML
@@ -4580,66 +4684,85 @@ async function handleMutation(mutationsList, observer) {
                                // panelTransMenu[0].style.backgroundColor = "green";
                                 //mark_myoriginal(rowId, leftPanel)
                             }
-                            else if (result.percent >= 66) {
+                            else if (valResult.percent >= 66) {
                                 panelTransMenu[0].style.backgroundColor = "yellow";
-                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
-                                if (myeditor_original != null) {
-                                    myeditor_original.innerHTML = result.newText
+                                //textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                span_glossary = leftPanel.querySelector(".glossary-word")
+                                if (typeof span_glossary != 'undefined') {
+                                  //  span_glossary.classList.add('highlight');
                                 }
-                                //mark_myoriginal(rowId, leftPanel)
+                                //remove_all_gloss(leftPanel)
+                                mark_glossary(leftPanel, valResult.toolTip, translation, myRowId)
                             }
-                            else if (result.percent >= 33) {
+                            else if (valResult.percent >= 33) {
                                 panelTransMenu[0].style.backgroundColor = "orange";
-                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
-                                if (myeditor_original != null) {
-                                    myeditor_original.innerHTML = result.newText
+                               // textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                span_glossary = leftPanel.querySelector(".glossary-word")
+                                if (typeof span_glossary != 'undefined') {
+                                  //  span_glossary.classList.add('highlight');
                                 }
-                                //mark_myoriginal(rowId, leftPanel)
+                                remove_all_gloss(leftPanel)
+                               // mark_glossary(leftPanel, MutResult.toolTip, translation, myRowId)
                             }
-                            else if (result.percent == 10) {
+                            else if (valResult.percent == 10) {
                                 panelTransMenu[0].style.backgroundColor = "purple";
-                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
-                                if (myeditor_original != null) {
-                                    myeditor_original.innerHTML = result.newText
+                                //textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                span_glossary = leftPanel.querySelector(".glossary-word")
+                                if (typeof span_glossary != 'undefined') {
+                                   // span_glossary.classList.add('highlight');
                                 }
-                               // mark_myoriginal(rowId, leftPanel)
+                                remove_all_gloss(leftPanel)
+                              //  mark_glossary(leftPanel, MutResult.toolTip, translation, myRowId)
                             }
-                            else if (result.percent < 33 && result.percent > 0) {
+                            else if (valResult.percent < 33 && valResult.percent > 0) {
                                 panelTransMenu[0].style.backgroundColor = "darkorange";
-                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
-                                if (myeditor_original != null) {
-                                    myeditor_original.innerHTML = result.newText
-                                }
-                                //mark_myoriginal(rowId, leftPanel)
+                               // textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                span_glossary = leftPanel.querySelector(".glossary-word")
+                                console.debug("We are removing the highlights")
+                                remove_all_gloss(leftPanel)
+                               //mark_glossary(leftPanel, MutResult.toolTip, translation, myRowId)
                             }
-                            else if (result.percent == 0) {
+                            else if (valResult.percent == 0) {
                                 panelTransMenu[0].style.backgroundColor = "red";
-                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
-                                if (myeditor_original != null) {
-                                    myeditor_original.innerHTML = result.newText
+                                //textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                span_glossary = leftPanel.querySelector(".glossary-word")
+                                if (typeof span_glossary != 'undefined') {
+                                    remove_all_gloss(leftPanel)
+                                    mark_glossary(leftPanel, valResult.toolTip, translation, myRowId)
                                 }
-                               // mark_myoriginal(rowId, leftPanel)
-                                //markerpresent.innerHTML = result.newText
                             }
                         }
                     }
                     else {
                         console.debug("Tooltip empty")
+                       // span_glossary = leftPanel.querySelectorAll(".glossary-word")
+                        console.debug("span_glossary:", span_glossary)
+                        remove_all_gloss(leftPanel)
+                        let markerpresent = leftPanel.getElementsByClassName("marker");
+                        //if (markerpresent != null) {
+                        console.debug("We found explanation:", markerpresent)
+                        if (typeof markerpresent[0] != 'undefined') {
+                            // this is the texline below the original when a glossary word is missing
+                            markerpresent[0].remove()
+                        }
+                        missingVerbsButton[0].style.visibility = "hidden"
+                        missingVerbsButton[0].title = "";
+                        toolTip = []
+                        panelTransMenu[0].style.backgroundColor = "green";
                     }
                 }
                 else {
                     //console.debug("percentage:", result.percent, leftPanel)
                     textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
-                    result = await validateEntry('nl', textareaElem, "", "", myRowId, "nl", "", false);
+                    valResult = await validateEntry('nl', textareaElem, "", "", myRowId, "nl", "", false);
                     myOriginal = leftPanel.getElementsByClassName("original")
-                    if (result.percent == 100) {
+                    if (valResult.percent == 100) {
                         let markerpresent = leftPanel.getElementsByClassName("marker");
                         //if (markerpresent != null) {
                             //console.debug("We found explanation:", markerpresent)
                             if (typeof markerpresent[0] != 'undefined') {
                                 markerpresent[0].remove()
                             }
-                           // if (result.newText == "") {
                         textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
                        // console.debug("100%:", result)
                        // console.debug("myeditor_original:", myeditor_original)
@@ -4653,7 +4776,7 @@ async function handleMutation(mutationsList, observer) {
                         //}
                         panelTransMenu[0].style.backgroundColor = "green";
                     }
-                    else if (result.percent == 0) {
+                    else if (valResult.percent == 0) {
                         console.debug("We have 0%")
                     }
                     missingVerbsButton[0].style.visibility = "hidden"
