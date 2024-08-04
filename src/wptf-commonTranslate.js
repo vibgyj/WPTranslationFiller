@@ -3602,8 +3602,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
    // if (myrec != null) {
         // mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
          mytextarea = document.querySelector(`#editor-${rowId} .textareas`)
-         console.debug("detail row textarea:", mytextarea)  
-        console.debug("start mutationsserver:",StartObserver)
+         //console.debug("detail row textarea:", mytextarea)  
+        //console.debug("start mutationsserver:",StartObserver)
         //if (StartObserver) {
            // if (detail_glossary) {
                 start_editor_mutation_server(mytextarea, "Details")
@@ -3860,7 +3860,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 }
             }
             else {
-                console.debug("checkplural null");
+                //console.debug("checkplural null");
             }
             
             // Translation completed
@@ -4530,7 +4530,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
     var result;
     var myRowId = rowId;
     var previousCurrent = current
-    let debug = true
+    let debug = false
     var preview;
     var td_preview;
     if (debug == true) {
@@ -4602,7 +4602,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false);
         //console.debug("translateEntry:",result)
       //  if (result.toolTip.length != 0) {
-         // mark_glossary(leftPanel, result.toolTip, translatedText, rowId)
+         //trans mark_glossary(leftPanel, result.toolTip, translatedText, rowId)
       //  }
        // if (result.newText != "") {
         //    let editorElem = document.querySelector("#editor-" + myRowId + " .original");

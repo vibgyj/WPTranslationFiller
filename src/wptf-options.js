@@ -884,7 +884,7 @@ second_file.addEventListener("change", function () {
                         pushToGlossary(glossary1X, key, value);
                         break;
                     case "y":
-                        pushToGlossary(glossaryY, key, value);
+                        pushToGlossary(glossary1Y, key, value);
                         break;
                     case "z":
                         pushToGlossary(glossary1Z, key, value);

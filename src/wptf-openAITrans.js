@@ -99,7 +99,6 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     if (OpenAISelect != 'undefined') {
         let mymodel = OpenAISelect.toLowerCase();
         //console.debug("mymodel:",mymodel)
-        //let mymodel = 'gpt-4-1106-preview';
        
         message = [{ role: 'user', content: myprompt },
             { role: 'user', content: originalPreProcessed }];
@@ -206,7 +205,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation raw:",original,translatedText)
                         translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
-                        console.debug("translation after postprocess:", original, translatedText)
+                        //console.debug("translation after postprocess:", original, translatedText)
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)
                     }
