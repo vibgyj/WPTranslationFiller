@@ -2700,7 +2700,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
                         }
                     }
                     else {
-                        console.debug("We are marking toolTip:", result.toolTip)
+                        //console.debug("We are marking toolTip:", result.toolTip)
                         if (result.toolTip.length > 0) {
                             // This when no translation is present
                             let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
@@ -2776,7 +2776,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId) {
     var foundarray = []
     var mytranslation = translation
     var markleftPanel;
-    console.debug("toolTip type:", typeof toolTip,toolTip)
+    //console.debug("toolTip type:", typeof toolTip,toolTip)
     if ( toolTip != '') {
         var toolTipArray = toolTip.split("\n")
     }
@@ -3716,7 +3716,7 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                   //  console.debug("array text:",wordToFind)
                     
                     thisresult = findByKey(map, wordToFind)
-                    console.debug("thisresult:",thisresult,wordToFind)
+                    //console.debug("thisresult:",thisresult,wordToFind)
                     if (thisresult != null) {
                        // console.debug(`found in map: value = ${thisresult[0]}`)
                        // console.debug("we found in map", thisresult[1])
@@ -4828,7 +4828,7 @@ async function handleMutation(mutationsList, observer) {
                         }
                     }
                 }
-                console.debug("before marking 4826",MutResult.toolTip)
+                //console.debug("before marking 4826",MutResult.toolTip)
                 mark_glossary(leftPanel, MutResult.toolTip, translation, myRowId)
                 MutResult.percent = 0;
             }
