@@ -228,6 +228,12 @@ function setmyCheckBox(event) {
                         preview.querySelector("td input").checked = true;
                     }
                 }
+                else {
+                    prevtext = preview.querySelector("td.translation").innerText;
+                    if (prevtext.search("No suggestions") == -1 && prevtext.search("Double-click to add") == -1) {
+                        preview.querySelector("td input").checked = false;
+                    }
+                }
             }
             // }
         });
@@ -329,22 +335,12 @@ async function validateOld(showDiff) {
             try {
                 const startTime = Date.now(); // Record the start time
                 // Simulate processing the record
-                // console.log('Processing record:', record);
                 let myrow = record.getAttribute("row");
-                // console.debug("row:", myrow)
-                // let newrow = myrow.split("-")[1];
-                // if (newrow != null) {
-                //     newrowId = myrow.concat("-", newrow);
-                //     row = newrowId;
-                //  }
-                //  else {
                 row = myrow
                 rowId = row
                 //   }
                 let originalElem = record.querySelector(".original");
-                //console.debug("originalElem:", originalElem)
                 counter++;
-                //console.debug("record:", record)
                 current = document.querySelector("#editor-" + row + " div.editor-panel__left div.panel-header span.panel-header__bubble");
                 textareaElem = record.querySelector(".translation.foreign-text");
                 // console.debug("current:", current.innerText)
@@ -353,8 +349,15 @@ async function validateOld(showDiff) {
                 if (textareaElem != null) {
                     let prev_trans = textareaElem.innerText;
                     //console.debug("translation:", prev_trans)
+                    // we need to set default values, otherwise errors will popup
                     let currcount = 0;
-                    let result = {};
+                    let wordCount=0;
+                    let foundCount = 0;
+                    let percent =100
+                    let toolTip="";
+                    let newText=""
+                    let result = { wordCount, foundCount, percent, toolTip, newText }
+
                     checkElem = record.querySelector(".priority");
                     if (current.innerText != 'untranslated') {
                         await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
@@ -364,6 +367,7 @@ async function validateOld(showDiff) {
                 const endTime = Date.now(); // Record the end time
                 const timeDifference = endTime - startTime; // Calculate the time difference
                 //console.log('Time taken for processing this record:', timeDifference, 'milliseconds');
+                //console.debug("record!:",record)
                 return record; // Return the processed record (if needed)
             } catch (error) {
                 console.error('Error processing record:', error.message);
@@ -414,9 +418,11 @@ async function validatePage(language, showHistory, locale,showDiff) {
     if (formal == true) {
         //console.debug("we have formal")
         DefGlossary == true
+        var myglossary = glossary1
     }
     else {
          DefGlossary == false
+         var myglossary = glossary
         }
 
     // html code for counter in checkbox
@@ -473,6 +479,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
         timeout = 250;
         increaseWith = 150
        }
+       
      
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
             setTimeout(async function() {
@@ -547,8 +554,13 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 else {
                     showName = false;
                 }
+                if (textareaElem.innerText!=""){
                 translation = textareaElem.innerText;
-                ///console.debug("trans:",translation)
+               // console.debug("we do have a innerText")
+                }
+                else {
+                    translation = textareaElem.textContent
+                }
                 if (original != translation && showName == true) {
                     nameDiff = true;
                 }
@@ -567,8 +579,17 @@ async function validatePage(language, showHistory, locale,showDiff) {
               //      waiting = 100;
               //  }
                // setTimeout(async function () {
+                  //       updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status,showDiff) {
                    await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
                 //}, waiting);
+           if (rowcount == 1){
+              //console.debug(" we are starting observer")
+              mytextarea = e.getElementsByClassName('foreign-text autosize')
+              //console.debug("after start textarea:",mytextarea)
+             //if (StartObserver) {
+              start_editor_mutation_server(mytextarea, "Details") 
+              //}
+           }
             }, timeout);
             timeout += increaseWith;
         }

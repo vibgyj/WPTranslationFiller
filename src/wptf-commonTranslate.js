@@ -698,6 +698,7 @@ function isStartsWithUpperCase(str) {
 
 function checkComments(comment) {
     // PSS 09-03-2021 added check to see if we need to translate
+    //console.debug("comment:",comment)
     let toTranslate = false;
     switch (comment) {
         case "Plugin Name of the plugin/theme":
