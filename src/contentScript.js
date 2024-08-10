@@ -896,8 +896,8 @@ if (interCept === null || (interCept !== "true" && interCept !== "false")) {
 
 var tmDisableButton = document.createElement("a");
 tmDisableButton.href = "#";
+tmDisableButton.className = "tm-disable-button";
 if (interCept === 'false') {
-    tmDisableButton.className = "tm-disable-button";
     tmDisableButton.style.background = "green"
     tmDisableButton.style.color = "white"
     sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
@@ -915,6 +915,7 @@ else {
     }
 }
 tmDisableButton.onclick = tmDisableClicked;
+
 tmDisableButton.innerText = "Disable machine";
 TmDisableContainer.appendChild(tmDisableButton)
 TmDisableContainer.appendChild(classToolTip)
@@ -1100,6 +1101,8 @@ UpperCaseButton.innerText = "Casing";
 var SwitchGlossButton = document.createElement("a");
 SwitchGlossButton.href = "#";
 SwitchGlossButton.onclick = SwitchGlossClicked;
+SwitchGlossButton.className = "Switch-Gloss-button";
+
 chrome.storage.local.get("DefGlossary").then((res) => {
     if (res.DefGlossary == true) {
         SwitchGlossButton.innerText = "DefGlos";
@@ -1119,7 +1122,8 @@ SwitchTMButton.onclick = SwitchTMClicked;
 SwitchTMButton.innerText = "SwitchTM";
 let TM = localStorage.getItem(['switchTM']);
 if (TM == "true") {
-    SwitchTMButton.style.background = "white"
+    SwitchTMButton.style.background = "red"
+    SwitchTMButton.style.color = "white"
 }
 else {
     SwitchTMButton.style.background = "green"
@@ -1139,6 +1143,24 @@ DispGloss.href = "#";
 DispGloss.className = "DispGloss-button";
 DispGloss.onclick = DispGlossClicked;
 DispGloss.innerText = "DispGloss";
+
+var DispClipboard = document.createElement("a");
+DispClipboard.href = "#";
+DispClipboard.className = "DispClipboard-button";
+DispClipboard.onclick = DispClipboardClicked;
+DispClipboard.innerText = "ClipBoard";
+chrome.storage.local.get('autoCopyClip', async function (result) {
+    if (result.autoCopyClip == true){
+        DispClipboard.style.background = "red"
+        DispClipboard.style.color = "white"
+    }
+    else{
+        DispClipboard.style.background = "green"
+        DispClipboard.style.color = "white"
+    }
+});
+
+
 
 var DispCount = document.createElement("a");
 DispCount.href = "#";
@@ -1168,6 +1190,7 @@ if (GpSpecials != null && divProjects == null) {
             glossloaded = checkGlossary(LoadGloss)
         }
     });
+    divPaging.insertBefore(DispClipboard, divPaging.childNodes[0]);
     UpperCase = localStorage.getItem(['switchUpper'])
     if (UpperCase == 'false') {
         UpperCaseButton.className = "UpperCase-button";
@@ -1193,6 +1216,32 @@ function DispGlossClicked() {
         var DeeplFree = data.DeeplFree;
         show_glossary(data.apikeyDeepl, DeeplFree, data.destlang)
     });
+}
+
+function DispClipboardClicked() {
+    // function to show glossary
+    chrome.storage.local.get('autoCopyClip', async function (result) {
+    autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
+    console.debug("result autoclip:",autoCopyClipBoard)
+    // we get a sting so make it a boolean
+    if (autoCopyClipBoard == true) {
+        autoCopyClipBoard = false
+        chrome.storage.local.set({
+            autoCopyClip: autoCopyClipBoard
+        });
+        DispClipboard.style.background = "green"
+        DispClipboard.style.color = "white"
+        messageBox('info',"Auto copy to clipboard switched off")
+    }
+    else {
+        autoCopyClipBoard = true
+        chrome.storage.local.set({
+            autoCopyClip: autoCopyClipBoard
+        });
+        DispClipboard.style.background = "red"
+        messageBox('info',"Auto copy to clipboard switched on")
+    }
+});
 }
 
 function LoadGlossClicked() {
@@ -3639,6 +3688,8 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                         // console.debug("we found in map", thisresult[1])
                         //console.debug("thisresult:",thisresult[0])
                         let searchTerm = thisresult[0]
+                        // we need to remove all chars that do not belong to the single word
+                        translation = translation.replace(/[:;!?,.()<>"/]/g,' ')
                         lowertranslation = translation.toLowerCase()
                         //console.debug("search:",searchTerm)
                        // console.debug("translation:",lowertranslation)
@@ -3681,10 +3732,12 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                           // but start with the first one
                           //console.debug("we found more then one:",wordToFind)
                           if (thisresult!=null){
-                              console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
+                              //console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
                               for (let cnt = 0; cnt < thisresult.length; cnt++) {
                                   //console.debug("counter:",cnt)
                                   let searchTerm = thisresult[cnt]
+                                  // we need to remove all chars that do not belong to the single word
+                                  translation = translation.replace(/[:;!?,.()<>"/]/g,' ')
                                   lowertranslation = translation.toLowerCase()
                                   let words = lowertranslation.split(/[\s.,!?]+/)
                                   let orgwords = translation.split(/[\s.,!?]+/)
@@ -3707,14 +3760,14 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                                   }
                           }
                           else {
-                               console.debug("we did not have a result")
+                               //console.debug("we did not have a result")
                                toolTip += wordToFind + " - " + "NoGloss" + "\n"
                                }
                       }
                 }
             }
             else {
-                console.debug("no glossary")
+                //console.debug("no glossary")
                 wordCount=0;
                 toolTip =""
                 foundcount=0;
@@ -4655,7 +4708,7 @@ async function handleMutation(mutationsList, observer) {
                            // console.debug(`found in map: value = ${thisresult[0]}`)
                             //console.debug("we found it", thisresult[0])
                             if (!translation.includes(wordToFind)) {
-                                MutResult.toolTip += wordToFind + " - " + thisresult[0] + "\n"
+                                MyResult.toolTip += wordToFind + " - " + thisresult[0] + "\n"
                                 //console.debug("tooltip:", MutResult.toolTip)
                             }
                         }
