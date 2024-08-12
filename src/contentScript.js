@@ -2190,7 +2190,7 @@ async function checkbuttonClick(event) {
                                         markspan1.innerHTML = "<br>----- Missing glossary verbs are marked -----<br>"
                                         // markspan2.innerHTML = result.newText;
                                     }
-                                    else { console.debug("markerpresent found") }
+                                    //else { console.debug("markerpresent found") }
                                 }
                             }
                             else {
@@ -2200,8 +2200,8 @@ async function checkbuttonClick(event) {
                     });
                 }
                 else {
-                    console.debug("In editor no text is present!")
-                    console.debug("type toolTip:",typeof toolTip)
+                    //console.debug("In editor no text is present!")
+                    //console.debug("type toolTip:",typeof toolTip)
                       toolTip = []
                       mark_glossary(leftPanel, toolTip, textareaElem.textContent, rowId)
                 }
@@ -3048,7 +3048,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "1561")
+                        res = addCheckButton(rowId, checkElem, "3051")
                         SavelocalButton = res.SavelocalButton
                         SavelocalButton.innerText = button_name;
                         checkElem.title = "Check the string";
@@ -3645,6 +3645,8 @@ function validate(language, original, translation, locale, showDiff,rowId) {
     var isFound = false;
     var map;
     var thisresult;
+    var searchTerm;
+    var NewsearchTerm;
     
     if (DefGlossary == true) {
         myglossary = glossary
@@ -3675,95 +3677,137 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                 for (let i = 0; i < (spansArray.length); i++) {
                    // console.debug("loop through glossary links:",)
                    // console.debug("span content:", spansArray[i])
+                    thisresult =""
                     wordToFind = spansArray[i].textContent
                     wordToFind = wordToFind.toLowerCase()
-                    //console.debug("array text:",wordToFind)
-                    
                     thisresult = findByKey(map, wordToFind)
-                   
+                    //console.debug("this result:",thisresult)
+                    let wordCount = wordToFind.trim().split(/\s+/).filter(Boolean).length;
                     if (thisresult != null && thisresult.length == 1) {
-                        // console.debug("first length of result:",thisresult)
-                        // console.debug(`found in map: value = ${thisresult[0]}`)
-                        //console.debug("translation:",translation.toLowerCase())
-                        // console.debug("we found in map", thisresult[1])
-                        //console.debug("thisresult:",thisresult[0])
-                        let searchTerm = thisresult[0]
-                        // we need to remove all chars that do not belong to the single word
-                        translation = translation.replace(/[:;!?,.()<>"/]/g,' ')
-                        lowertranslation = translation.toLowerCase()
-                        //console.debug("search:",searchTerm)
-                       // console.debug("translation:",lowertranslation)
-                        let words = lowertranslation.split(/[\s.,!?]+/)
-                        let orgwords = translation.split(/[\s.,!?]+/)
-                        //let words = lowertranslation.split(/\W+/)
-                        //let orgwords = translation.split(/\W+/)
-                        //console.debug('words:',words)
-                        //console.debug("found:",words.some(word =>word === searchTerm))
-                        //let regex = new RegExp('\\b${searchTerm}\\b', 'gi')
-                        //let match = lowertranslation.match(regex)
-                        //console.debug("resultaat:",match)
-                         if (words.some(word =>word === searchTerm)) {
-                       // if (translation.toLowerCase().includes(thisresult[0])) {
-                       //if (regex.test(lowertranslation)){
-                           // console.debug("we found glossary in translation:",i)
-                            foundCount += 1
+                          if (wordCount ==1){
+                             // console.debug("first length of result:",thisresult)
+                             // console.debug(`found in map: value = ${thisresult[0]}`)
+                             //console.debug("translation:",translation.toLowerCase())
+                             // console.debug("we found in map", thisresult[1])
+                             //console.debug("thisresult:",thisresult[0])
+                             searchTerm = thisresult[0]
+                             // we need to remove all chars that do not belong to the single word
+                             translation = translation.replace(/[:;!?,.()<>"/]/g,' ')
+                             lowertranslation = translation.toLowerCase()
+                             //console.debug("search:",searchTerm)
+                             // console.debug("translation:",lowertranslation)
+                             let words = lowertranslation.split(/[\s.,!?]+/)
+                             let orgwords = translation.split(/[\s.,!?]+/)
+                             //let words = lowertranslation.split(/\W+/)
+                             //let orgwords = translation.split(/\W+/)
+                             //console.debug('words:',words)
+                             //console.debug("found:",words.some(word =>word === searchTerm))
+                             
+                             if (words.some(word =>word === searchTerm)) {
+                                // if (translation.toLowerCase().includes(thisresult[0])) {
+                                console.debug("we found glossary in translation:",searchTerm,i)
+                                foundCount += 1
                            
-                        }
-                        //else if (regex.test(translation)){
-                        
-                        else if (orgwords.some(word =>word === searchTerm)) {
-                        //else if (translation.includes(thisresult[0])) {
-                            foundCount += 1
-                            
-                        }
-                        else {
-                            // console.debug("translation does not contain glossaryword:"), thisresult[1]
-                           // if (!(toolTip.hasOwnProperty("`${gItemKey}`"))) {
-                               // let wordToFind = `${gItemKey}`
-                               // const wordExists = toolTip.includes(wordToFind.toLowerCase());
-                                //console.debug("word to find:", wordToFind,thisresult[0],thisresult[1])
-                                //toolTip += `${wordToFind} - ${thisresult[0]}\n`;
+                                // no break here otherwise the list of glossaries is not comleted
+                           
+                              }
+                              else if (orgwords.some(word =>word === searchTerm)) {
+                               //else if (translation.includes(thisresult[0])) {
+                               foundCount += 1  
+                               // no break here otherwise the list of glossaries is not comleted
+                              }
+                            else {
+                                console.debug("translation does not contain glossaryword:", searchTerm,thisresult[1])
                                 toolTip += wordToFind + " - " + thisresult[0] + "\n"
-                          //}
+                             }
                           }
-                    }
-                    else {
-                          // if the glossary does contain two words, we need to check the second word as well
+                           else {
+                              //console.debug("we found a glossary word with two words:",wordToFind)
+                              searchTerm = thisresult[0]
+                              lowertranslation = translation.toLowerCase()
+                              //console.debug("lowertrans:",lowertranslation)
+                              if (lowertranslation.includes(searchTerm)) {
+                                 // if (translation.toLowerCase().includes(thisresult[0])) {
+                                 //if (regex.test(lowertranslation)){
+                                 // console.debug("we found glossary in translation:",i)
+                                 foundCount += 1
+                                 break;
+                              }
+                              else {
+                                  toolTip += wordToFind + " - " + "check translation" + "\n"
+                              }
+                           }
+
+                     }
+                     else if (thisresult != null && thisresult.length >1){
+                          // if the glossary does contain more words, we need to check the second word as well
                           // but start with the first one
-                          //console.debug("we found more then one:",wordToFind)
-                          if (thisresult!=null){
-                              //console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
+                          //console.debug("we found more then one:",wordToFind,thisresult)
+                         // if (thisresult!=null){
+                              console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
+                              let found = false
                               for (let cnt = 0; cnt < thisresult.length; cnt++) {
                                   //console.debug("counter:",cnt)
-                                  let searchTerm = thisresult[cnt]
-                                  // we need to remove all chars that do not belong to the single word
-                                  translation = translation.replace(/[:;!?,.()<>"/]/g,' ')
-                                  lowertranslation = translation.toLowerCase()
-                                  let words = lowertranslation.split(/[\s.,!?]+/)
-                                  let orgwords = translation.split(/[\s.,!?]+/)
-                                  if (words.some(word =>word === searchTerm)) {
-                                  //if (translation.toLowerCase().includes(thisresult[cnt])) {
-                                     //  console.debug("we found glossary in translation")
-                                     foundCount += 1
-                                     break;
-                                  }
-                                   else if (orgwords.some(word =>word === searchTerm)) {
-                                  //else if (translation.includes(thisresult[cnt])) {
-                                      foundCount += 1
-                                      break;
-                                  }
-                              }   
-                               if (foundCount ==0) {
-                                    console.debug("we did not have a result")
-                                    toolTip += wordToFind + " - " + "NoGloss" + "\n"
+                                  //if (found == false) {
+                                  NewsearchTerm = thisresult[cnt]
+                                  console.debug("NewSearchTerm:",NewsearchTerm)
+                                  let wordCount = NewsearchTerm.trim().split(/\s+/).filter(Boolean).length;
+                                  console.debug("wordcount in multiple:",wordCount)
+                                  console.debug("zoekterm:",NewsearchTerm)
+                                  if (wordCount == 1){
+                                     // we need to remove all chars that do not belong to the single word
+                                     translation = translation.replace(/[:;!?,.()<>"/]/g,' ')
+                                     lowertranslation = translation.toLowerCase()
+                                     let words = lowertranslation.split(/[\s.,!?]+/)
+                                     let orgwords = translation.split(/[\s.,!?]+/)
+                                     if (words.some(word =>word === NewsearchTerm)) {
+                                        console.debug("we found glossary in translation:",searchTerm)
+                                        foundCount += 1
+                                        found = true
+                                        break;
+                                     }
+                                     else if (orgwords.some(word =>word === NewsearchTerm)) {
+                                          //else if (translation.includes(thisresult[cnt])) {
+                                          foundCount += 1
+                                          found=true
+                                          break;
+                                     }
+                                     else {
+                                          console.debug("in multi:",NewsearchTerm)
+                                          if (lowertranslation.includes(NewsearchTerm.trim())) {
+                                            foundCount += 1
+                                            break;
+                                            found=true
+                                          }
+                                          //else {
+                                          //   toolTip += wordToFind + " - " + NewsearchTerm + "\n"
+                                         // }
+                                     }
+                                  } 
+                                  else {console.debug("we found more then one word in the entry")}
+
+                             //  if (foundCount ==0 && found !=true ) {
+                              //      //console.debug("we did not have a result")
+                              //      toolTip += wordToFind + " - " + "wrong translation" + "\n" 
                                    // break;
-                                  }
-                          }
-                          else {
-                               //console.debug("we did not have a result")
-                               toolTip += wordToFind + " - " + "NoGloss" + "\n"
+                             //  }
+                              // if (found==true){
+                             
+                              // }
+                         }
+                         if (foundCount ==0 && found !=true ) {
+                                    //console.debug("we did not have a result")
+                                    toolTip += wordToFind + " - " + "wrong translation" + "\n" 
+                                   // break;
                                }
-                      }
+                          console.debug("found count after:",foundCount)
+                          console.debug("we need to clean!!")
+                          console.debug("found:",found,NewsearchTerm)
+                     }
+                     else {
+                         //console.debug("we have no result:",wordToFind)
+                         toolTip += wordToFind + " - " + "NoGloss" + "\n"
+                     }     
                 }
             }
             else {
@@ -3773,15 +3817,14 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                 foundcount=0;
                 percent=100;
             }
-
         }
         else {
-            console.debug("no leftpanel")
+           // console.debug("no leftpanel:",rowId)
             wordCount=0;
             toolTip =""
             foundcount=0;
             percent=100;
-            return { wordCount, foundCount, percent, toolTip, newText }
+            //return { wordCount, foundCount, percent, toolTip, newText }
             }
   
     
