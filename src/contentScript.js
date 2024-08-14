@@ -2753,8 +2753,21 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId) {
         let markleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel`)
     }
     if (markleftPanel != null) {
-        var spans = await markleftPanel.getElementsByClassName("glossary-word")
-        var spansArray = Array.from(spans)
+         singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
+         pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
+            console.debug("single present:",singlepresent)
+          //  console.debug("plural present:",pluralpresent)
+         //   if (pluralpresent !=null){
+         //      console.debug("plural text:",pluralpresent.innerText)
+        //    }
+         var spansSingular = singlepresent.getElementsByClassName("glossary-word")
+         if (pluralpresent!=null){
+         var spansPlural = pluralpresent.getElementsByClassName("glossary-word")
+         var spansPluralArray = Array.from(spansPlural)
+         }
+
+        var spansSingularArray = Array.from(spansSingular)
+       
         // we need to remove all existing highlights before setting the new ones
         await remove_all_gloss(markleftPanel)
         for (let i = 0; i < (toolTipArray.length - 1); i++) {
@@ -2765,7 +2778,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId) {
             wordToFind = wordToFind.trim()
             // we need to convert the textContext to lowercase otherwise find is not working
            // let spantext= span.innerText.toLowerCase()
-            foundarray = await spansArray.filter(span => span.innerText.toLowerCase().includes(wordToFind))
+            foundarray = await spansSingularArray.filter(span => span.innerText.toLowerCase().includes(wordToFind))
             if (typeof foundarray != 'undefined') {
                 if (foundarray.length > 0) {
                     for (let i = 0; i < foundarray.length; i++) {
@@ -3647,6 +3660,8 @@ function validate(language, original, translation, locale, showDiff,rowId) {
     var thisresult;
     var searchTerm;
     var NewsearchTerm;
+    var spansPlural;
+    var spansSingular;
     
     if (DefGlossary == true) {
         myglossary = glossary
@@ -3664,13 +3679,23 @@ function validate(language, original, translation, locale, showDiff,rowId) {
     //console.debug("leftpanel:",markleftPanel,rowId)
     newText = ""
     if (markleftPanel != null) {
-            var spans = markleftPanel.getElementsByClassName("glossary-word")
-             //console.debug("spans:",spans)
-            if (spans.length > 0) {
+            pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
+            singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
+            console.debug("single present:",singlepresent)
+            console.debug("plural present:",pluralpresent)
+            if (pluralpresent !=null){
+               console.debug("plural text:",pluralpresent.innerText.trim())
+               spansPlural = pluralpresent.getElementsByClassName("glossary-word")
+               console.debug("spans plural:",spansPlural)
+            }
+            spansSingular = singlepresent.getElementsByClassName("glossary-word")
+            console.debug("spans singular:",spansSingular)
+            
+            if (spansSingular.length > 0) {
                // console.debug("houston we have a glossary")
-                wordCount = spans.length
+                wordCount = spansSingular.length
                 //console.debug("span length:", spans.length)
-                var spansArray = Array.from(spans)
+                var spansArray = Array.from(spansSingular)
                // console.debug("array:", spansArray)
                 // we need to remove all existing highlights before setting the new ones
                 //remove_all_gloss(markleftPanel)
@@ -3683,6 +3708,7 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                     thisresult = findByKey(map, wordToFind)
                     //console.debug("this result:",thisresult)
                     let wordCount = wordToFind.trim().split(/\s+/).filter(Boolean).length;
+                    //console.debug("wordcount result:",wordCount,wordToFind)
                     if (thisresult != null && thisresult.length == 1) {
                           if (wordCount ==1){
                              // console.debug("first length of result:",thisresult)
@@ -3705,7 +3731,7 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                              
                              if (words.some(word =>word === searchTerm)) {
                                 // if (translation.toLowerCase().includes(thisresult[0])) {
-                                console.debug("we found glossary in translation:",searchTerm,i)
+                                //console.debug("we found glossary in translation:",searchTerm,i)
                                 foundCount += 1
                            
                                 // no break here otherwise the list of glossaries is not comleted
@@ -3717,7 +3743,7 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                                // no break here otherwise the list of glossaries is not comleted
                               }
                             else {
-                                console.debug("translation does not contain glossaryword:", searchTerm,thisresult[1])
+                               // console.debug("translation does not contain glossaryword:", searchTerm,thisresult[1])
                                 toolTip += wordToFind + " - " + thisresult[0] + "\n"
                              }
                           }
@@ -3731,7 +3757,13 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                                  //if (regex.test(lowertranslation)){
                                  // console.debug("we found glossary in translation:",i)
                                  foundCount += 1
-                                 break;
+                                 //break;
+                              }
+                              else if (translation.includes(searchTerm))
+                              {
+                                 // Sometimes we have a glossary entry starting with capital
+                                 foundCount += 1
+                                 //break;
                               }
                               else {
                                   toolTip += wordToFind + " - " + "check translation" + "\n"
@@ -3744,16 +3776,16 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                           // but start with the first one
                           //console.debug("we found more then one:",wordToFind,thisresult)
                          // if (thisresult!=null){
-                              console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
+                             // console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
                               let found = false
                               for (let cnt = 0; cnt < thisresult.length; cnt++) {
                                   //console.debug("counter:",cnt)
                                   //if (found == false) {
                                   NewsearchTerm = thisresult[cnt]
-                                  console.debug("NewSearchTerm:",NewsearchTerm)
+                                 // console.debug("NewSearchTerm:",NewsearchTerm)
                                   let wordCount = NewsearchTerm.trim().split(/\s+/).filter(Boolean).length;
-                                  console.debug("wordcount in multiple:",wordCount)
-                                  console.debug("zoekterm:",NewsearchTerm)
+                                 // console.debug("wordcount in multiple:",wordCount)
+                                 // console.debug("zoekterm:",NewsearchTerm)
                                   if (wordCount == 1){
                                      // we need to remove all chars that do not belong to the single word
                                      translation = translation.replace(/[:;!?,.()<>"/]/g,' ')
@@ -3761,7 +3793,7 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                                      let words = lowertranslation.split(/[\s.,!?]+/)
                                      let orgwords = translation.split(/[\s.,!?]+/)
                                      if (words.some(word =>word === NewsearchTerm)) {
-                                        console.debug("we found glossary in translation:",searchTerm)
+                                        //console.debug("we found glossary in translation:",searchTerm)
                                         foundCount += 1
                                         found = true
                                         break;
@@ -3773,7 +3805,7 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                                           break;
                                      }
                                      else {
-                                          console.debug("in multi:",NewsearchTerm)
+                                          //console.debug("in multi:",NewsearchTerm)
                                           if (lowertranslation.includes(NewsearchTerm.trim())) {
                                             foundCount += 1
                                             break;
@@ -3786,23 +3818,15 @@ function validate(language, original, translation, locale, showDiff,rowId) {
                                   } 
                                   else {console.debug("we found more then one word in the entry")}
 
-                             //  if (foundCount ==0 && found !=true ) {
-                              //      //console.debug("we did not have a result")
-                              //      toolTip += wordToFind + " - " + "wrong translation" + "\n" 
-                                   // break;
-                             //  }
-                              // if (found==true){
-                             
-                              // }
                          }
                          if (foundCount ==0 && found !=true ) {
                                     //console.debug("we did not have a result")
                                     toolTip += wordToFind + " - " + "wrong translation" + "\n" 
                                    // break;
                                }
-                          console.debug("found count after:",foundCount)
-                          console.debug("we need to clean!!")
-                          console.debug("found:",found,NewsearchTerm)
+                         // console.debug("found count after:",foundCount)
+                         // console.debug("we need to clean!!")
+                         // console.debug("found:",found,NewsearchTerm)
                      }
                      else {
                          //console.debug("we have no result:",wordToFind)
@@ -4646,7 +4670,7 @@ function stopObserving(observer) {
 }
 
 function startObserving(observer, textarea, config) {
-    //console.debug("observer is started")
+    console.debug("observer is started")
     //console.debug("observer:", typeof textarea)
     if (typeof textarea == 'object') {
         observer.observe(textarea, config);
@@ -4662,7 +4686,7 @@ function startObserving(observer, textarea, config) {
 
 function start_editor_mutation_server(textarea, action) {
         //console.debug("action =:",action)
-       // console.debug("typeof textarea:",typeof textarea)
+        console.debug("typeof textarea:",typeof textarea,textarea)
         // Set up the MutationObserver
         observer = new MutationObserver(handleMutation);
 
@@ -4673,7 +4697,7 @@ function start_editor_mutation_server(textarea, action) {
         // if (typeof textarea !='undefined') {
     if (typeof observer != 'undefined' && typeof textarea != 'undefined' || typeof textarea == 'object') {
         //console.debug("textarea in start:", textarea)
-        stopObserving(observer)
+       // stopObserving(observer)
         //   }
         // test 
         if (textarea.length != 0) {
@@ -4698,6 +4722,7 @@ async function handleMutation(mutationsList, observer) {
     var MyResult;
     var valResult;
     var original;
+    var OriginalText;
     var preview;
     var myRowId;
     var preview_original;
@@ -4722,22 +4747,66 @@ async function handleMutation(mutationsList, observer) {
             //console.debug(closestParent)
             // we need to go back in the Dom to get the rowId
             rowId = closestParent.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.getAttribute ("row")
-
-            detail_preview = document.querySelector(`#preview-${rowId}`);
+            
+            detailPreview = document.querySelector(`#preview-${rowId}`);
+            detailEditor = document.querySelector(`#editor-${rowId}`);
+            mypluralOriginal = detailEditor.getElementsByClassName("source-string__plural")
+            pluralOriginal = mypluralOriginal[0].querySelector(".original-raw")
+            
             // we only need to validate if there are glossary words
-            if (detail_preview !=null){
-            detail_glossary = detail_preview.querySelector(`.glossary-word`)
+            if (detailPreview !=null){
+            detail_glossary = detailPreview.querySelector(`.glossary-word`)
             var panelTransMenu;
             var markerpresent;
             leftPanel = closestParent.parentElement.parentElement.parentElement.parentElement
+            console.debug("leftPanel:",leftPanel)
             original = await leftPanel.getElementsByClassName("original-raw")[0]
+            console.debug("original:",original)
             textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
             translation = await mutation.target.value
+            mutation.target.focus()
+            let panelContent= await mutation.target.parentNode.parentNode.parentNode
+            console.debug("mutation.target:",mutation.target.parentNode)
+            let ClassList = await mutation.target.parentNode.classList
+            isPlural = ClassList.length==1
+            console.debug("is plural:",isPlural)
+            
+            if (isPlural == true){
+                 textarea = detailEditor.getElementsByClassName("textareas") 
+                 mytextarea = textarea[1].getElementsByClassName('foreign-text autosize')
+                 console.debug("textarea:",mytextarea)
+                 mytextarea[1].focus()
+                  start_editor_mutation_server(mytextarea[1], 'Details')
+                  console.debug("textarea:",mytextarea[1])
+                  //translation = await mutation.target.value
+                  // we double click to make focus active
+                  var clickEvent = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    button: 0
+                 });
+                 mytextarea[1].dispatchEvent(clickEvent)
+                 mytextarea[1].dispatchEvent(clickEvent)
+               //  start_editor_mutation_server(textarea[1], 'Details')
+           //    plural = await panelContent.getElementsByClassName("source-string__plural")
+           //    console.debug("plural:",plural)
+           //    OriginalText = "aap"
+           // }
+          //  else{
+            OriginalText = pluralOriginal.textContent
+            
+                
+            }
+            else {
+                OriginalText = original.textContent
+            }
+            console.debug("after check:",OriginalText)
+            console.debug("after check:",translation)
+
             myGlossArray = await Array.from(myglossary)
             map = new Map(myGlossArray.map(obj => [ obj.key, obj.value]))
-            let OriginalText = original.textContent
             MyResult = await validate(locale, OriginalText, translation, locale, false,rowId)
-            //console.debug("result in mutation:",MyResult,locale,original.TextContent)
+            console.debug("result in mutation:",MyResult)
             spans = await leftPanel.getElementsByClassName("glossary-word")
             if (MyResult.wordCount == 0) {
                 var spansArray = await Array.from(spans)
