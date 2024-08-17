@@ -489,10 +489,6 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 let rowId = textareaElem.parentElement.parentElement.parentElement
                     .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
 
-               // textareaElem.addEventListener("input", function (e, locale) {
-                    //language, textareaElem, newurl, showHistory, rowId, locale, record
-                    // validateEntry(language, e.target, newurl, showHistory, rowId, "nl",e);
-              //  });
                 // we need to fetch the status of the record to pass on
 
                 old_status = document.querySelector("#preview-" + rowId);
@@ -568,7 +564,8 @@ async function validatePage(language, showHistory, locale,showDiff) {
                     nameDiff = false;
                 }
 
-                var result = validate(language, original, translation, locale, false,rowId);
+                var result = validate(language, original, translation, locale, false, rowId, false);
+                //console.debug("in validatepage:",result)
                 let record = e.previousSibling.previousSibling.previousSibling
                 // this is the start of validation, so no prev_trans is present      
                 prev_trans = translation
@@ -579,7 +576,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
               //      waiting = 100;
               //  }
                // setTimeout(async function () {
-                  //       updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status,showDiff) {
+                // PSS this is the one with orange
                    await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
                 //}, waiting);
            if (rowcount == 1){

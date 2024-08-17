@@ -20,10 +20,8 @@ async function openDB(db) {
     };
 
     request.onsuccess = function (db) {
-        
         myDb = request.result;
-        console.debug("database opened",myDb);
-        
+        //console.debug("database opened",myDb);     
         db = getDbSchema();
         var isDbCreated = jsstoreCon.initDb(db);
 
@@ -31,7 +29,7 @@ async function openDB(db) {
             console.debug("Database is not created, so we create one", isDbCreated);
         }
         else {
-            console.debug("Database is present:",db);
+           // console.debug("Database is present:",db);
         }
         // check if the index is present, if not create it
         checkIndex(db);
@@ -416,7 +414,7 @@ async function checkIndex(event) {
         // console.debug("objectstore:", objectStore.indexNames)
         let indexNames = objectStore.indexNames;
         if (indexNames.contains('sourceCountry')){
-            console.debug("index does exist");
+            //console.debug("index does exist");
         } else {
             //console.debug('index does not exist!');
             messageBox("error", 'Error the index does not exist in your DB!<br>Please make a backup of your database<br>Then follow the steps described in the Wiki to reset your database<br><a href="https://github.com/vibgyj/WPTranslationFiller/wiki/13.-Fix-broken-local-database">https://github.com/vibgyj/WPTranslationFiller/wiki/13.-Fix-broken-local-database</a>');

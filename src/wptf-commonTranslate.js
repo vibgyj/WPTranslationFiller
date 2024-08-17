@@ -1946,7 +1946,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 if (currec != null) {
                     var current = currec.querySelector("span.panel-header__bubble");
                 }
-                validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
                // validateEntry(destlang, textareaElem, "", "", row);
                 
                 // PSS 10-05-2021 added populating the preview field issue #68
@@ -2143,7 +2143,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             current.innerText = "transFill";
                             current.value = "transFill";
                         }
-                        validateEntry(destlang, textareaElem1, "", "", row, locale, record);
+                        validateEntry(destlang, textareaElem1, "", "", row, locale, record,false);
                        // validateEntry(destlang, textareaElem1, "", "", row);
                     }
                 }
@@ -2179,7 +2179,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     let originalElem = document.querySelector("#preview-" + row + " .original");
                     showNameLabel(originalElem)
                 }
-                validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
                // validateEntry(destlang, textareaElem, "", "", row);
             }
         }
@@ -2685,7 +2685,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         else {rowchecked.checked =false}
                     }
                     if (result != "No suggestions") {
-                        result = validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                        result = validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
                         mark_as_translated(row)
                     }
                 }
@@ -3004,7 +3004,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                             // console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
                             // if it is a local translation we still need to set the quality of the translation!!
-                            await validateEntry(destlang, textareaElem, "", "", row, locale, record);
+                            await validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
                             // PSS 10-05-2021 added populating the preview field issue #68
                             // Fetch the first field Singular
                             let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
@@ -3512,7 +3512,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     var editor;
     var plural;
     setPostTranslationReplace(postTranslationReplace, formal);
-    editor = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
+    editor = await document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
     let original = editor.querySelector("span.original-raw").innerText;
     let text = editor.querySelector("textarea.foreign-text").value;
     // posprocess the translation
