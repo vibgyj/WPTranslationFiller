@@ -3892,10 +3892,18 @@ function createGlossArray(spansArray,map) {
         //thisresult = findByKey(map, glossText)
         console.debug("thisresult after find in map",thisresult)
        // console.debug("found in array:", thisresult[0], spancnt)
-        glossaryWord.push({
-            word: thisresult[1],
-            glossIndex: spancnt
-        });
+        if (thisresult != null) {
+            glossaryWord.push({
+                word: thisresult[0],
+                glossIndex: spancnt
+            });
+        }
+        else {
+            glossaryWord.push({
+                word: wordToFind,
+                glossIndex: spancnt
+            });
+        }
     }
     return glossaryWord
 }
@@ -3957,6 +3965,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                         spansArray[glossIndex].classList.add('highlight')
                     });
                 } else {
+                    remove_all_gloss(markleftPanel)
                     console.log("All glossary words are translated.");
                 }
             }
@@ -5545,8 +5554,8 @@ async function handleMutation(mutationsList, observer) {
             }
         //}
     }
-    console.debug("We can make markings!!")
-    mark_glossary(myleftPanel, "", translation, rowId, isPlural)
+    console.debug("We can make markings!! but it needs amending")
+    mark_glossary(myleftPanel, "", translation, rowId, false)
 
 }
 
