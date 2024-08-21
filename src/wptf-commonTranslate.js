@@ -1631,7 +1631,9 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 
 function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow) {
     repl_array = [];
+    var mark;
     let debug = false;
+
     if (debug == true) {
         console.debug("value1:", translatedText)
         console.debug("value2:", previewNewText)
@@ -1706,7 +1708,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                     translatedText = translatedText + ".";
                     repl_verb += myrow + " '.' " + "->" + "added" + "<br>";
                     let verb = myrow + " '.' " + "->" + "added" + "<br>";
-                    let mark = "."
+                    mark = "."
                     repl_array.push([mark, mark])
                     countReplaced++;
                     replaced = true;
@@ -1732,7 +1734,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                 // repl_verb += myrow + ": ':' after added" + "<br>";
                 let verb = myrow + ": ':' after added" + "<br>";
                 repl_verb += myrow + ": " + '->' + "':' after added" + "<br>"
-                let mark = ":"
+                mark = ":"
                 repl_array.push([mark, mark])
                 countReplaced++;
                 replaced = true;
@@ -1754,8 +1756,21 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                 previewNewText = previewNewText + "!";
                 translatedText = translatedText + "!";
                 repl_verb += myrow + ": '!' after added" + "<br>";
-                let mark = "!"
+                mark = "!"
                 repl_array.push([mark, mark])
+                countReplaced++;
+                replaced = true;
+            }
+        }
+        if (!original.endsWith("!")) {
+            if (previewNewText.endsWith("!")) {
+                previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
+                translatedText = translatedText.substring(0, translatedText.length - 1);
+               // let mark = "!"
+               // repl_array.push([mark, mark])
+                //repl_verb += myrow + ": " + '->' + "'!' after removed" + "<br>"
+                //mark = "!"
+               // repl_array.push([mark, mark])
                 countReplaced++;
                 replaced = true;
             }
@@ -1767,7 +1782,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                 // repl_verb += myrow + ": ':' after added" + "<br>";
                 let verb = myrow + ": '?' after added" + "<br>";
                 repl_verb += myrow + ": " + '->' + "'?' after added" + "<br>"
-                let mark = "?"
+                mark = "?"
                 repl_array.push([mark,mark])
                 countReplaced++;
                 replaced = true;
@@ -3602,12 +3617,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     // console.debug("detail row textarea:", myrec)
    // if (myrec != null) {
         // mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
-         mytextarea = document.querySelector(`#editor-${rowId} .textareas`)
+   // mytextarea = document.querySelector(`#editor-${rowId} .textareas`)
+    textarea = g.getElementsByClassName('foreign-text autosize')
          //console.debug("detail row textarea:", mytextarea)  
         //console.debug("start mutationsserver:",StartObserver)
         //if (StartObserver) {
            // if (detail_glossary) {
-                start_editor_mutation_server(mytextarea, "Details")
+               // start_editor_mutation_server(textarea, "Details")
            // }
             // PSS only within the editor we want to copy the original to clipboard is parameter is set
 
@@ -3729,10 +3745,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     textareaElem.value = translatedText;
                     current.innerText = "transFill";
                     current.value = "transFill";
-                    // we need to validate the results from local as well, to remove the glossary markings if present
-                    result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false);
-                    let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
-                    remove_all_gloss(myleftPanel)
+                   
                    
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                     // Translation completed
@@ -3865,6 +3878,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             }
             
             // Translation completed
+            // we need to validate the results from local as well, to remove the glossary markings if present
+            result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false);
+            let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+            remove_all_gloss(myleftPanel)
            // translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // if row is already translated the rowId has different format, so we need to search with this different format
            // if (translateButton == null) {

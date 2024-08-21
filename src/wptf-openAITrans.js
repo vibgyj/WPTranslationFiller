@@ -204,7 +204,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         //console.debug("text:",text)
                         translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation raw:",original,translatedText)
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        //translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation after postprocess:", original, translatedText)
                         processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)

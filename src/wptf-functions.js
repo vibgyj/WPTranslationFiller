@@ -565,7 +565,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
                 }
 
                 var result = validate(language, original, translation, locale, false, rowId, false);
-                //console.debug("in validatepage:",result)
+                console.debug("validate in validatepage line 568 :",result)
                 let record = e.previousSibling.previousSibling.previousSibling
                 // this is the start of validation, so no prev_trans is present      
                 prev_trans = translation
