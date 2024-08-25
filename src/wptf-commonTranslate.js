@@ -2136,7 +2136,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             textareaElem1.value = translatedText;
 
                             textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
-                            console.debug("elem2:", textareaElem2)
+                            //console.debug("elem2:", textareaElem2)
                             if (textareaElem2 != null) {
                                 plural = plural + "_02"
                                 let pretrans = await findTransline(plural, destlang);
@@ -3551,6 +3551,35 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     }
 }
 
+async function setLowerCase(rowId,spellCheckIgnore) {
+    var translatedText;
+    var editor;
+    editor = await document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
+    let original = editor.querySelector("span.original-raw").innerText;
+    let text = editor.querySelector("textarea.foreign-text").value;
+    // posprocess the translation
+    textareaElem = editor.querySelector("textarea.foreign-text");
+    if (text !=""){
+       translatedText = convert_lower(text, spellCheckIgnore);
+       textareaElem.innerText = translatedText;       
+       textareaElem.value = translatedText;
+       textareaElem.style.height = "auto";
+       textareaElem.style.height = textareaElem.scrollHeight + "px";
+       // We need to get the original of the plural
+       plural = await editor.querySelector(`#editor-${rowId} .source-string__plural span.original-raw`);
+       if (plural != null) {
+          original = plural.innerText;
+          if (original != null) {
+              let newrowId = rowId.split("-")[0];
+              textareaElem1 = editor.querySelector("textarea#translation_" + newrowId + "_1");
+              let pluralText = textareaElem1.value;
+              translatedText = convert_lower(text, spellCheckIgnore);
+              textareaElem1.value = translatedText
+          }
+       }
+    }
+}
+
 
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary,OpenAITone) {
     var translateButton;
@@ -3882,6 +3911,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false);
             let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
             remove_all_gloss(myleftPanel)
+            mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
+
            // translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // if row is already translated the rowId has different format, so we need to search with this different format
            // if (translateButton == null) {
@@ -4177,7 +4208,7 @@ function saveLocal_2(bulk_timer) {
                                             counter++
                                         }
                                         else {
-                                            console.debug("Timeout in waiting for message")
+                                            //console.debug("Timeout in waiting for message")
                                             original = editor.querySelector("span.original-raw").innerText;
                                             toastbox("info", "Skipping:" + original, "800", "Timeout in saving");
                                             // Sometimes the previewline is not hidden but saved, so we need to hide it
@@ -4235,7 +4266,7 @@ function saveLocal_2(bulk_timer) {
                 }
                 else {
                     toastbox("info", "Editor not open", "900", "Record not saved:" + original);
-                    console.debug("Editor not open!!")
+                   // console.debug("Editor not open!!")
                 }
             }
             else {
