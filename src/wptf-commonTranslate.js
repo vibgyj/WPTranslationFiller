@@ -2499,6 +2499,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var res;
     var counter = 0;
     var row;
+    var textareaElem;
     locale = checkLocale();
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
@@ -2589,13 +2590,15 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         }
                     });
                 });
-
+                textareaElem = editor.querySelector("textarea.foreign-text");
+                //console.debug("textareaElem populate TM:",textareaElem)
                 if (result != "No suggestions") {
                      myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale,TMtreshold).then(resli => {
                          if (typeof resli != null) {
                             // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
                             myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale,current);     
-                            let textareaElem = editor.querySelector("textarea.foreign-text");
+                            
+                             //console.debug("after fetchli:",textareaElem)
                             if (is_pte) {
                                 rowchecked = preview.querySelector("th input");
                             }
@@ -2615,7 +2618,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                             }
                          }
                          else {
-                            console.debug("notfound");
+                             console.debug("notfound");
                         }
 
                     }).catch((error) => {
@@ -2624,6 +2627,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 }
                 else {
                     console.debug("No suggestions");
+                    textareaElem.innerText="No suggestions"
                 }
             }
             else {
@@ -2658,7 +2662,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                         counter++;
                     }
                     if (result != "No suggestions") {
-                       
                         validateEntry(destlang, textareaElem, "", "", row, locale, record);
                         mark_as_translated(row)
                     }
@@ -4550,6 +4553,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
         result = await validateEntry(language, textareaElem, "", "", myRowId, locale, record, true);
         if (result.newText != "") {
             let editorElem = document.querySelector("#editor-" + myRowId + " .original");
+            //let editorElem = document.querySelector("#editor-" + rowId + " .original");
+           // mark_original(editorElem, result.newText)
             //console.debug("We are in editor!:",editorElem)
             //19-02-2023 PSS we do not add the marker twice, but update it if present
             let markerpresent = editorElem.querySelector("span.mark-explanation");
@@ -4565,14 +4570,14 @@ async function processTransl(original, translatedText, language, record, rowId, 
                 markdiv.appendChild(markspan2);
                 editorElem.appendChild(markdiv);
                 markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-                markspan2.innerHTML = result.newText;
+               // markspan2.innerHTML = result.newText;
             }
-           else {
-                if (markerpresent != null) {
-                    markerpresent.innerHTML = result.newText;
-                }
-                else { console.debug("markerpresent not found")}
-               }
+           //else {
+            //    if (markerpresent != null) {
+                   // markerpresent.innerHTML = result.newText;
+             //   }
+              //  else { console.debug("markerpresent not found")}
+             //  }
        
         }
     }

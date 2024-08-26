@@ -9,6 +9,28 @@ var LocRecCout
 var autoCopyClipBoard;
 
 adjustLayoutScreen();
+
+// The below is necessary to get the focus into the editor if it is opened straight from the menu
+window.onload = function () {
+    var textarea = document.getElementsByClassName("textareas active")
+    console.debug("text at start", textarea[0])
+    // if there is no texarea, then we do not want to set focus to it
+    if (typeof textarea[0] != 'undefined') {
+        textarea = textarea[0].firstChild.nextElementSibling
+        //if (textarea.length > 0) {
+        textarea.focus()
+        // we double click to make focus active
+        var clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            button: 0
+
+        });
+        textarea.dispatchEvent(clickEvent)
+        console.debug("We double clicked")
+    }
+}
+
 // Function to send a message to the injected script
 function sendMessageToInjectedScript(message) {
     window.postMessage(message, '*');
@@ -174,6 +196,7 @@ script.src = chrome.runtime.getURL('wptf-inject.js');
 //09-05-2021 PSS added fileselector for silent selection of file
 var fileSelector = document.createElement("input");
 fileSelector.setAttribute("type", "file");
+
 
 document.addEventListener("keydown", async function (event) {
     // PSS 31-07-2021 added new function to scrape consistency tool
@@ -2051,42 +2074,134 @@ async function checkbuttonClick(event) {
     var rowId
     var myrec;
     var mytextarea;
+    var detail_preview;
+    var detail_glossary;
     //var DefGlossary=true;
     if (event != undefined) {
        // console.debug("Details klik:",event, event.target)
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         //event.preventDefault(); caused a problem within the single page enttry  
         let action = event.target.textContent;
-       // console.debug("action:",action)
+        //console.debug("action:",action)
         // 30-06-2021 PSS added fetch status from local storage
         // Necessary to prevent showing old translation exist if started from link "Translation history"
         // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is activ
-         
-        if (action == "Details" || action == "✓Details") {
-            rowId = event.target.parentElement.parentElement.getAttribute("row");
+       // console.debug("activeElement:", document.activeElement)
+
+       // active = document.activeElement
+       // if (active.classList.contains("foreign-text")){
+       //     console.debug("We are in the editor");
+        //    editor_open = true;
+        //    active.focus()
+       // }
+       // else {
+        //    console.debug("No textarea active!")
+        //    editor_open = false;
+       // }
+        mytarget = event.target;
+        //console.debug("mytarget:",mytarget)
+        //console.debug("event target:", mytarget.classList.contains("foreign-text"))
+        // we do need to make sure that we are in the editor, not meta or discussion
+        if (action == "Details" || action == "✓Details" ) {
+            mytarget = event.target.parentElement.parentElement;
+            // defensive programming
+            if (mytarget != null) {
+                rowId = mytarget.getAttribute("row");
+            }
+            //console.debug("row found in detail:",rowId)
             glob_row = rowId;
             detailRow = rowId;
-            //start_editor_mutation_server()
-           // interCept = true;
-          //  sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept, transProcess: 'details' });
+            if (rowId == null) {
+                editor = await waitForMyElement(`.editor`, 100).then((res) => {
+                     //console.debug("dismiss message:", res)
+                    if (res != "Time-out reached") {
+                        rowId = res.getAttribute("row")
+                    }
+                    else { console.debug("not found:",res)}
+                });
+            }
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
             myrec = document.querySelector(`#editor-${rowId}`);
-            //console.debug("detail row textarea:", myrec)
+            detail_preview = document.querySelector(`#preview-${rowId}`);
+            detail_glossary = detail_preview.querySelector(`.glossary-word`)
+            if (detail_glossary != null) {
+                detail_glossary = true
+            }
+            else {
+                detail_glossary = false
+            }
+           // console.debug("detail row textarea:", myrec)
             if (myrec != null) {
-                mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
+               // mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
+                mytextarea = myrec.getElementsByClassName('foreign-text autosize')
                // console.debug("detail row textarea:", mytextarea)  
-                //console.debug("start mutationsserver:",StartObserver)
+               // console.debug("start mutationsserver:",StartObserver)
                 if (StartObserver) {
                     //console.debug("in details:", autoCopyClipBoard)
                     if (autoCopyClipBoard) {
                         copyToClipBoard(detailRow)
                     }
-                    start_editor_mutation_server(mytextarea, action)
+                    if (detail_glossary) {
+                        start_editor_mutation_server(mytextarea, action)
+                    }
                     // PSS only within the editor we want to copy the original to clipboard is parameter is set
                     
                 }
             }
+            await waitForMyElement(`.editor`, 100).then((res) => {
+                //console.debug("dismiss message:", res)
+                if (res != "Time-out reached") {
+                    textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
+                }
+                else { console.debug("editor not found:", res) }
+            });
+            // textareaElem =  document.querySelector(`#editor-${rowId} textarea.foreign-text`);
+            //console.debug("textareaElem:", textareaElem)
+            //myMarkElem = textareaElem.value
+           // console.debug("detail glossary:",detail_glossary)
+            if (detail_glossary) {
+                //console.debug("before :",rowId)
+                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
+
+                if (typeof textareaElem != "null") {
+                    // console.debug("before:", textareaElem)
+                    // we need to use await otherwise there is not result.newText
+                    // result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
+                    // console.debug("result in editor:",result)
+                    if (result.newText != "") {
+                        let editorElem = document.querySelector("#editor-" + rowId + " .original");
+
+                        mark_original(editorElem, result.newText)
+                        //19-02-2023 PSS we do not add the marker twice, but update it if present
+                        if (editorElem != null) {
+                            let markerpresent = editorElem.querySelector("span.mark-explanation");
+                            if (markerpresent == null) {
+                                let markdiv = document.createElement("div");
+                                markdiv.setAttribute("class", "marker");
+                                let markspan1 = document.createElement("span");
+                                let markspan2 = document.createElement("span");
+                                markspan1.setAttribute("class", "mark-devider");
+                                markspan2.setAttribute("class", "mark-explanation");
+                                markdiv.appendChild(markspan1);
+                                markdiv.appendChild(markspan2);
+                                editorElem.appendChild(markdiv);
+                                markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
+                                // markspan2.innerHTML = result.newText;
+                            }
+                            //  else {
+                            //     if (markerpresent != null) {
+                            // markerpresent.innerHTML = result.newText;
+                            //        editorElem.innerHTML = result.newText
+                            //    }
+                            //else { console.debug("markerpresent not found") }
+                            //}
+                        }
+                        // else { console.debug("markerpresent not found")}
+                    }
+                }
+            }
+            //console.debug("werkt niet :", result)
            // let myrec = document.querySelector(`#editor-${detailRow}`);
             if (!is_pte) {
                 if (myrec != null) {
@@ -2149,10 +2264,20 @@ async function checkbuttonClick(event) {
                 }
             }
             translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+           //console.debug("row before:",rowId)
             // We need the current textareaElem for evaluation of the translated text
-            textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
-            result = await validateEntry('nl', textareaElem, "", "", rowId, "nl","",false);
-
+        //    await waitForMyElement(`.editor`, 100).then((res) => {
+        //        //console.debug("dismiss message:", res)
+         //       if (res != "Time-out reached") {
+         //           textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
+          //      }
+         //       else { console.debug("editor not found:", res) }
+         //   });
+           // textareaElem =  document.querySelector(`#editor-${rowId} textarea.foreign-text`);
+           // console.debug("textareaElem:",textareaElem)
+            //myMarkElem = textareaElem.value
+          // result = await validateEntry('nl', textareaElem, "", "", rowId, "nl","",false);
+           // console.debug("werkt niet :",result)
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
             chrome.storage.local.set({ "noOldTrans": "True" }, function () {
             });
@@ -2282,39 +2407,6 @@ async function checkbuttonClick(event) {
             else {
                 //console.debug("we did find a 100 % score")
             }
-               
-            if (typeof textareaElem != "null") {
-                // we need to use await otherwise there is not result.newText
-                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
-               // console.debug("result in editor:",result)
-                if (result.newText != "") {
-                    let editorElem = document.querySelector("#editor-" + rowId + " .original");
-                    //19-02-2023 PSS we do not add the marker twice, but update it if present
-                    if (editorElem != null) {
-                        let markerpresent = editorElem.querySelector("span.mark-explanation");
-                        if (markerpresent == null) {
-                            let markdiv = document.createElement("div");
-                            markdiv.setAttribute("class", "marker");
-                            let markspan1 = document.createElement("span");
-                            let markspan2 = document.createElement("span");
-                            markspan1.setAttribute("class", "mark-devider");
-                            markspan2.setAttribute("class", "mark-explanation");
-                            markdiv.appendChild(markspan1);
-                            markdiv.appendChild(markspan2);
-                            editorElem.appendChild(markdiv);
-                            markspan1.innerHTML = "----- Missing glossary verbs are marked -----<br>"
-                            markspan2.innerHTML = result.newText;
-                        }
-                        else {
-                            if (markerpresent != null) {
-                                markerpresent.innerHTML = result.newText;
-                            }
-                            //else { console.debug("markerpresent not found") }
-                        }
-                    }
-                   // else { console.debug("markerpresent not found")}
-                }
-            }
         }
         
     }
@@ -2393,13 +2485,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var currText='untranslated'
     var debug = false;
     var currText = 'untranslated'
+   //console.debug("updateStyle rowId:",rowId)
     //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof rowId == "undefined") {
-        let myRow = textareaElem.parentElement.parentElement.parentElement
-            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+        let myRow = textareaElem.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.getAttribute("row");
         current = document.querySelector("#editor-" + myRow + " div.editor-panel__left div.panel-header span.panel-header__bubble");
         rowId = myrow
     }
@@ -2526,22 +2618,133 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
 async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     var translation;
-    var result=[];
-    translation = textareaElem.value;
-    //console.debug("value textareaElem",translation)
-    if (translation == "") {
-        translation ="Empty"
+    var result = [];
+    var original_preview;
+    var raw;
+    var myleftPanel;
+    var originalText;
+    var preview_raw;
+    var has_glossary;
+    var toolTip=[]
+    if (textareaElem != null) {
+        translation = textareaElem.value;
     }
-    let original = textareaElem.parentElement.parentElement.parentElement
-        .querySelector("span.original-raw");
-    let originalText = original.innerText;
-    //console.debug("we are validating the entry")
-    result = validate(language, originalText, translation, locale, record);
-    //console.debug("result validate:",result,translation)
-  //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
-    old_status = document.querySelector("#preview-" + rowId);
-               // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
-    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId,record,false,false,translation,[],translation,record,old_status,showDiff);
+    else {
+        translation = ""
+    }
+    //console.debug("value textareaElem", translation)
+    if (translation == "") {
+        translation = "Empty"
+    }
+    //console.debug("row in validateEntry ", rowId)
+
+    preview_raw = document.querySelector(`#preview-${rowId}`)
+    //console.debug("ValidateEntry waarde preview_raw:",preview_raw)
+    if (preview_raw != null) {
+        has_glossary = preview_raw.querySelector('.glossary-word')
+
+        if (has_glossary != null) {
+           // console.debug("has glossary:", has_glossary)
+            has_glossary = true;
+        }
+        else {
+            has_glossary = false;
+        }
+    }
+    else {
+        has_glossary = false;
+    }
+    if (has_glossary) {
+        original_preview = preview_raw.querySelector(`#preview-${rowId} .original-text`)
+        if (original_preview == null) {
+            original_preview = document.querySelector(`#preview-${rowId} .original`)
+        }
+        //console.debug("preview in validateEntry:", original_preview)
+        raw = document.querySelector(`#editor-${rowId}`)
+        myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
+       // console.debug("LeftPanel:", myleftPanel)
+       // console.debug("raw original:", raw)
+        if (raw != null) {
+            originalRaw = raw.querySelector("span.original-raw");
+          //  console.debug("we are validating original raw:", originalRaw.textContent);
+            originalNew = raw.querySelector("span.original")
+           // console.debug("we are validating original ", originalNew);
+           // var myne_original = raw.querySelector(".original")
+          //  console.debug("we are validating original context", myne_original.innerHTML);
+        }
+        //console.debug("textareaElem:", textareaElem)
+        if (typeof textareaElem == 'object') {
+            if (textareaElem.length == 0) {
+               // console.debug("we have no populated textareaElem")
+                wordCount = 0;
+                foundCount = 0;
+                percent = 0;
+               // toolTip = []
+                newText = "";
+            }
+            else {
+                originalText = originalRaw.textContent;
+                if (has_glossary) {
+                    //console.debug("We have a glossary word")
+                    result = await validate(language, originalText, translation, locale, record);
+                    console.debug("result validate:", result)
+                }
+                if (result.percent == 100) {
+                    console.debug("We have 100%")
+                    if (raw != null) {
+                       raw = originalNew.innerHTML
+                    }
+                }
+                else {
+                    console.debug("We are marking")
+                   // console.debug("marking for rowID:",rowId)
+                    //mark_myoriginal(rowId, myleftPanel, result.newText)
+                }
+                //original.innerText= result.newText
+            }
+            //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
+            old_status = document.querySelector("#preview-" + rowId);
+            updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+            //}
+        }
+        else {
+           // console.debug("We dont have a textareElement in validateEntry")
+           //console.debug("textareaElem:",textareaElem)
+            wordCount = 0;
+            foundCount = 0;
+            if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length != 0) {
+                percent = 100;
+            }
+            else {
+                percent = 0
+            }
+            toolTip = []
+            newText = "";
+            result = { wordCount, foundCount, percent, toolTip, newText }
+
+            old_status = document.querySelector("#preview-" + rowId);
+            updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+        }
+    }
+    else {
+       // console.debug("We dont have a glossary in validateEntry")
+        wordCount = 0;
+        foundCount = 0;
+        if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length !=0) {
+            percent = 100;  
+        }
+        else {
+            percent = 0
+        }
+        toolTip = []
+        newText = "";
+        result = { wordCount, foundCount, percent, toolTip,newText }
+
+        old_status = document.querySelector("#preview-" + rowId);
+        updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+
+    }
+    //console.debug("result before return:",result)
     return result;
 }
 
@@ -2795,8 +2998,19 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                                 }
                             }
                             else {
-                                checkElem.title = "Save the string";
-                                SavelocalButton.innerText = "NoGlos";
+                                if (currstring != "No suggestions") {
+                                    checkElem.title = "Save the string";
+                                    SavelocalButton.innerText = "NoGlos";
+                                }
+                                else {
+                                    //console.debug("We found an error!!!")
+                                    checkElem.title = "Do not save the string";
+                                    SavelocalButton.innerText = "Block";
+                                    checkElem.style.backgroundColor = "red";
+                                    res = addCheckButton(rowId, checkElem, "3024")
+                                    SavelocalButton = res.SavelocalButton
+                                    SavelocalButton.disabled = true;
+                                }
                             }
                             if (typeof headerElem != "undefined" && headerElem != null) {
                                 panelTransDiv.style.backgroundColor = "";
@@ -2811,7 +3025,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             let separator1 = document.createElement("div");
                             separator1.setAttribute("class", "checkElem_save");
                             checkElem.appendChild(separator1);
-                            res = addCheckButton(rowId, checkElem, "2327")
+                            res = addCheckButton(rowId, checkElem, "3024")
                             SavelocalButton = res.SavelocalButton
                             if (current != "untranslated" && current != 'current') {
                                 SavelocalButton.innerText = "Miss!";
@@ -3254,7 +3468,7 @@ function savetranslateEntryClicked(event) {
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
             setTimeout(() => {
                 if (autoCopyClipBoard) {
-                    console.debug("we switch ??", autoCopyClipBoard)
+                   // console.debug("we switch ??", autoCopyClipBoard)
                     autoCopySwitchedOff = true
                     autoCopyClipBoard = false
                 }
@@ -3351,15 +3565,17 @@ function savetranslateEntryClicked(event) {
 
 function validate(language, original, translation, locale, showDiff) {
     //console.debug("in validate translation:", translation)
-   // console.debug("in validate original:", original)
-    let originalWords = original.split(" ");
-    //console.debug("words:",originalWords)
+    //console.debug("in validate original:", original)
+    var originalWords = []
     var wordCount = 0;
     var foundCount = 0;
     let percent = 0;
     var toolTip = [];
     var isFound = false;
     var newText = "";
+    var oWord;
+    originalWords = original.split(" ");
+    //console.debug("originalWords:", originalWords)
     //PSS 09-03-2021 Added check to prevent calculatiing on a empty translation
    // console.debug("default glossary:",DefGlossary)
     if (DefGlossary == true ) {
@@ -3368,9 +3584,9 @@ function validate(language, original, translation, locale, showDiff) {
     else {
         myglossary = glossary1
     }
-    
+    //console.debug("lengte translation:",translation.length)
     if (translation.length > 0) {
-       for (let oWord of originalWords) {
+       for (oWord of originalWords) {
            for (let gItem of myglossary) {
                let gItemKey = gItem["key"];
                let gItemValue = gItem["value"];
@@ -3379,10 +3595,10 @@ function validate(language, original, translation, locale, showDiff) {
                oWord = oWord.replace(/[^a-zA-Z0-9\s-']/g, '');
                let regex = /[^a-zA-Z0-9\s-']/g;
                //checkTrans = translation.replace(/[<>]/g, '')
-               checkTrans1 = translation.replace(regex, '');
+              // checkTrans1 = translation.replace(regex, '');
               
                // we compare the original word against the key of the glossary
-              // console.debug("oWord:", oWord.toLowerCase(),"  Itemkey:", gItemKey.toLowerCase())
+               //console.debug("oWord:", oWord.toLowerCase(),"  Itemkey:", gItemKey.toLowerCase())
               // if (oWord.toLowerCase().includes(gItemKey.toLowerCase() == true)){
                if (oWord.toLowerCase() == gItemKey.toLowerCase()) {
                   // console.debug("found:", gItemKey, gItemValue)
@@ -3618,7 +3834,7 @@ function match(language, gWord, translation, gItemValue,original,oWord) {
             }
             else {
                 if (translation.includes(glossaryverb)) {
-                    console.debug("we found string containing glossary word:", glossaryverb, containsExactWord(translation, glossaryverb))
+                    //console.debug("we found string containing glossary word:", glossaryverb, containsExactWord(translation, glossaryverb))
                     count++
                     myresult = true
                 }
@@ -4252,7 +4468,10 @@ function stopObserving(observer) {
 
 function startObserving(observer, textarea, config) {
     //console.debug("observer is started")
-    observer.observe(textarea, config);
+    //console.debug("observer:", textarea)
+    if (typeof textarea == 'object') {
+        observer.observe(textarea, config);
+    }
     //console.debug("observer started:", observer)
     return observer
 }
@@ -4260,10 +4479,8 @@ function startObserving(observer, textarea, config) {
 
 
 function start_editor_mutation_server(textarea, action) {
-    console.debug("action =:",action)
-        //var observer
-        //console.debug("texarea:", textarea, typeof textarea)
-        //textarea.addEventListener('input', handleInputEvent);
+        //console.debug("action =:",action)
+       
         // Set up the MutationObserver
         observer = new MutationObserver(handleMutation);
 
@@ -4272,112 +4489,213 @@ function start_editor_mutation_server(textarea, action) {
 
         // Start observing the textarea
         // if (typeof textarea !='undefined') {
-        if (typeof observer != 'undefined') {
-            stopObserving(observer)
-            //   }
-            startObserving(observer, textarea, config)
-            // observer.observe(textarea, config);
+    if (typeof observer != 'undefined' && typeof textarea != 'undefined' || typeof textarea == 'object') {
+        //console.debug("textarea in start:", textarea)
+        stopObserving(observer)
+        //   }
+        // test 
+        if (textarea.length != 0) {
+            startObserving(observer, textarea[0], config)
         }
+        // observer.observe(textarea, config);
+    }
+    else {
+        console.debug("in observer start object or textarea is not defined")
+    }
 
 }
 // Function to handle DOM mutations
 async function handleMutation(mutationsList, observer) {
-    console.debug("We handle mutations")
+    //console.debug("We handle mutations")
     var leftPanel;
     var result;
+    var original;
+    var preview;
+    var myRowId;
+    var preview_original;
+    var myeditor_original;
     for (const mutation of mutationsList) {
-        console.debug("mutation type:",mutation,mutation.type)
+       // console.debug("mutation type:",mutation,mutation.type)
         if (mutation.type === 'childList') {
-           // console.debug('Child list mutation detected:', mutation);
+            //console.debug('Child list mutation detected:', mutation);
         }
         else if (mutation.type === 'attributes') {
-            console.debug('Attribute mutation detected:', mutation);
+          //  console.debug('Attribute mutation detected:', mutation.target);
             var closestParent = mutation.target;
             var panelTransMenu;
             var markerpresent;
             leftPanel = closestParent.parentElement.parentElement.parentElement.parentElement
-            console.debug("mutation parent:", leftPanel)
-            original = leftPanel.getElementsByClassName("original-raw")[0]
-            //console.debug("original in mutation:", original)
+            //console.debug("mutation parent:", leftPanel)
+            original = await leftPanel.getElementsByClassName("original-raw")[0]
+            textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
             translation = mutation.target.value
-            //console.debug("locale:",locale)
-            result = validate(locale, original.innerText, translation, locale, false)
-           // console.debug("result in mutation:", result)
+            //console.debug("original in mutation:", original.textContent)
+           // console.debug("translation in mutation:",translation)
+
+            result = await validate(locale,original.textContent, translation, locale, false)
+           // console.debug("result in mutation:", result);
             let missingVerbsButton = leftPanel.getElementsByClassName("translocal-entry-missing-button");
             panelTransMenu = leftPanel.getElementsByClassName("panelTransMenu")
-            //console.debug("panelTransMenu:",panelTransMenu)
-           // console.debug("missing verbs button:", missingVerbsButton[0])
             let headerElem = leftPanel.querySelector(`.panel-header`);
-            if (result.wordCount != result.foundCount) {
+            //console.debug("texelement:", textareaElem.id)
+            //console.debug("texelement tekst:", textareaElem)
+            editor = leftPanel.querySelector('.original-raw')
+            //console.debug("editoo:", editor)
+            preview = leftPanel.parentElement.parentElement.parentElement
+            myRowId = preview.getAttribute("row")
+           //console.debug("myRowId in mutation:", myRowId)
+            preview_original = document.querySelector(`#preview-${myRowId} .original-text`)
+            myeditor_original = document.querySelector(`#editor-${myRowId} .original`)
+            //preview = document.querySelectorAll(`[editor*="${rowId}-"]`)
+           // console.debug("editor:", myeditor_original)
+            if (typeof editor == 'object') {
+                editor_original = editor.innerHTML
+                //console.debug("previewww:", editor_original)
+                if (result.wordCount != result.foundCount) {
+                    if (result.toolTip.length > 0) {
+                        //console.debug("houston we have a difference:", result.toolTip)
+                        let newline = "\n";
+                        let missingverbs = "Missing glossary entry\n";
+                        let headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
+                        if (missingVerbsButton[0] != null) {
+                            missingVerbsButton[0].style.visibility = "visible"
+                            missingVerbsButton[0].title = headertitle;
+                            valresult = await validateEntry('nl', textareaElem, "", "", myRowId, "nl", "", false);
+                            console.debug("result:", valresult)
+                            markerpresent = leftPanel.getElementsByClassName("marker");
+                            if (result.percent == 100) {
 
-                if (result.toolTip.length > 0) {
-                    //console.debug("houston we have a difference:", result.toolTip)
-                    let newline = "\n";
-                    let missingverbs = "Missing glossary entry\n";
-                    let headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
-                    if (missingVerbsButton[0] != null) {
-                        missingVerbsButton[0].style.visibility = "visible"
-                        missingVerbsButton[0].title = headertitle;
-                        //console.debug("percentage:", result.percent)
-                        textareaElem = leftPanel.querySelector(`textarea.foreign-text`);
-                        console.debug("texelement:", textareaElem)
-                        valresult = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
-                        console.debug("result:", valresult)
-                        markerpresent = leftPanel.getElementsByClassName("marker");
-                        if (result.percent == 100) {
-                           
-                            if (markerpresent != null) {
-                                console.debug("We found explanation:", markerpresent)
-                                if (typeof markerpresent[0] != 'undefined') {
-                                    markerpresent[0].remove()
+                                //if (markerpresent != null) {
+                                   // console.debug("We found explanation:", markerpresent)
+                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                if (myeditor_original != null) {
+                                    myeditor_original.innerHTML = preview_original.innerHTML
                                 }
+                                    //myOriginal = "aap"
+                                   // myOriginal = preview_original.innerHTML
+                                    if (typeof markerpresent[0] != 'undefined') {
+                                        markerpresent[0].remove()
+                                    }
+                               // }
+                               // panelTransMenu[0].style.backgroundColor = "green";
+                                //mark_myoriginal(rowId, leftPanel)
                             }
-                            panelTransMenu[0].style.backgroundColor = "green";
+                            else if (result.percent >= 66) {
+                                panelTransMenu[0].style.backgroundColor = "yellow";
+                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                if (myeditor_original != null) {
+                                    myeditor_original.innerHTML = result.newText
+                                }
+                                //mark_myoriginal(rowId, leftPanel)
+                            }
+                            else if (result.percent >= 33) {
+                                panelTransMenu[0].style.backgroundColor = "orange";
+                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                if (myeditor_original != null) {
+                                    myeditor_original.innerHTML = result.newText
+                                }
+                                //mark_myoriginal(rowId, leftPanel)
+                            }
+                            else if (result.percent == 10) {
+                                panelTransMenu[0].style.backgroundColor = "purple";
+                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                if (myeditor_original != null) {
+                                    myeditor_original.innerHTML = result.newText
+                                }
+                               // mark_myoriginal(rowId, leftPanel)
+                            }
+                            else if (result.percent < 33 && result.percent > 0) {
+                                panelTransMenu[0].style.backgroundColor = "darkorange";
+                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                if (myeditor_original != null) {
+                                    myeditor_original.innerHTML = result.newText
+                                }
+                                //mark_myoriginal(rowId, leftPanel)
+                            }
+                            else if (result.percent == 0) {
+                                panelTransMenu[0].style.backgroundColor = "red";
+                                textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                                if (myeditor_original != null) {
+                                    myeditor_original.innerHTML = result.newText
+                                }
+                               // mark_myoriginal(rowId, leftPanel)
+                                //markerpresent.innerHTML = result.newText
+                            }
                         }
-                        else if (result.percent >= 66) {
-                            panelTransMenu[0].style.backgroundColor = "yellow";
-                        }
-                        else if (result.percent >= 33) {
-                            panelTransMenu[0].style.backgroundColor = "orange";
-                        }
-                        else if (result.percent == 10) {
-                            panelTransMenu[0].style.backgroundColor = "purple";
-                        }
-
-                        else if (result.percent < 33 && result.percent > 0) {
-                            panelTransMenu[0].style.backgroundColor = "darkorange";
-                        }
-                        else if (result.percent == 0) {
-                            panelTransMenu[0].style.backgroundColor = "red";
-                            markerpresent.innerHTML = result.newText
-                        }
+                    }
+                    else {
+                        console.debug("Tooltip empty")
                     }
                 }
                 else {
-                    console.debug("Tooltip empty")
+                    //console.debug("percentage:", result.percent, leftPanel)
+                    textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                    result = await validateEntry('nl', textareaElem, "", "", myRowId, "nl", "", false);
+                    myOriginal = leftPanel.getElementsByClassName("original")
+                    if (result.percent == 100) {
+                        let markerpresent = leftPanel.getElementsByClassName("marker");
+                        //if (markerpresent != null) {
+                            //console.debug("We found explanation:", markerpresent)
+                            if (typeof markerpresent[0] != 'undefined') {
+                                markerpresent[0].remove()
+                            }
+                           // if (result.newText == "") {
+                        textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+                       // console.debug("100%:", result)
+                       // console.debug("myeditor_original:", myeditor_original)
+                       // console.debug("preview_original:", preview_original)
+                        if (myeditor_original != null && preview_original != null) {
+                            myeditor_original.innerHTML = preview_original.innerHTML
+                        }
+                        //console.debug("editor_original:", myeditor_original.innerHTML)
+                       // console.debug("preview_original:", preview_original.innerHTML)
+                            
+                        //}
+                        panelTransMenu[0].style.backgroundColor = "green";
+                    }
+                    else if (result.percent == 0) {
+                        console.debug("We have 0%")
+                    }
+                    missingVerbsButton[0].style.visibility = "hidden"
+                    missingVerbsButton[0].title = "";
+                    toolTip = []
                 }
             }
             else {
-                //console.debug("percentage:", result.percent, leftPanel)
-                textareaElem = leftPanel.querySelector(`textarea.foreign-text`);
-                console.debug("texelement:",textareaElem)
-                result = validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
-                if (result.percent == 100) {
-
-                    let markerpresent = leftPanel.getElementsByClassName("marker");
-                    if (markerpresent != null) {
-                        console.debug("We found explanation:", markerpresent)
-                        if (typeof markerpresent[0] != 'undefined') {
-                            markerpresent[0].remove()
-                        }
-                    }
-                    panelTransMenu[0].style.backgroundColor = "green";
-                }
+               // console.debug("preview is null geen vertaling aanwezig")
                 missingVerbsButton[0].style.visibility = "hidden"
                 missingVerbsButton[0].title = "";
-                toolTip=[]
+                toolTip = []
             }
         }
     }
 }
 
+async function mark_myoriginal(rowId, leftPanel, newText) {
+    if (leftPanel != null) {
+        textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
+        //console.debug("newText:", newText)
+        if (newText == null) {
+            result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
+            newText = result.newText
+        }
+        myOriginal = leftPanel.getElementsByClassName("original")
+
+        if (newText != null) {
+            //console.debug("myOriginal:", myOriginal[0])
+            //console.debug("result:", result.newText)
+            if (newText != "") {
+                myOriginal[0].innerHTML = newText
+            }
+        }
+    }
+}
+
+function mark_original(original, newText) {
+    //console.debug("original:", original)
+   // console.debug("marked:", newText)
+    if (original != null) {
+        original.innerHTML = newText
+    }
+
+}
