@@ -279,6 +279,7 @@ async function validateOld(showDiff) {
     var newrow
     var startTime;
     var records = {};
+    var textareaElem;
    // console.debug("we are checking for old strings");
    
     const template = `
@@ -345,7 +346,7 @@ async function validateOld(showDiff) {
                 counter++;
                 //console.debug("record:", record)
                 current = document.querySelector("#editor-" + row + " div.editor-panel__left div.panel-header span.panel-header__bubble");
-                let textareaElem = record.querySelector(".translation.foreign-text");
+                textareaElem = record.querySelector(".translation.foreign-text");
                 // console.debug("current:", current.innerText)
                 let showName = false;
                 //let showDiff = true;

@@ -62,6 +62,7 @@ chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
 });
 
+
 chrome.storage.local.get('DefGlossary', async function (result) {
     DefGlossary = result.DefGlossary; // Assign the value to the global variable
 });
@@ -79,7 +80,6 @@ chrome.storage.local.get('strictValidate', async function (result) {
 
 chrome.storage.local.get('autoCopyClip', async function (result) {
     autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
-    console.debug("after get clip:",autoCopyClipBoard)
     // we get a sting so make it a boolean
     if (autoCopyClipBoard == true) {
         autoCopyClipBoard = true
@@ -163,6 +163,7 @@ var showGlosLine;
 
 gd_wait_table_alter();
 addCheckBox();
+
 
 var parrotActive;
 const script = document.createElement('script');
@@ -834,18 +835,22 @@ TmContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = "This button starts fetching existing translations from translation memory"
-let TM = localStorage.getItem(['switchTM']);
+//let TM = localStorage.getItem(['switchTM']);
 var tmtransButton = document.createElement("a");
 tmtransButton.href = "#";
 
-if (TM == "false") {
+//if (TM == "false") {
     tmtransButton.className = "tm-trans-button";
-}
-else {
-    tmtransButton.className = "tm-trans-button foreighn"
-}
+//}
+//else {
+ //   tmtransButton.className = "tm-trans-button foreighn"
+//}
 tmtransButton.onclick = tmTransClicked;
-tmtransButton.innerText = "TM";
+chrome.storage.local.get('TMtreshold', function (result) {
+    treshold = result.TMtreshold; // Assign the value to the global variable
+    tmtransButton.innerText = "TM " + treshold+"%";
+});
+//tmtransButton.innerText = "TM " +treshold;
 TmContainer.appendChild(tmtransButton)
 TmContainer.appendChild(classToolTip)
 
@@ -929,12 +934,25 @@ classToolTip.className = 'tooltiptext'
 classToolTip.innerText = "This button converts po and inserts to local database"
 var impDatabaseButton = document.createElement("a");
 impDatabaseButton.href = "#";
-impDatabaseButton.className = "impLoc-button";
+impDatabaseButton.className = "convLoc-button";
 impDatabaseButton.onclick = impLocDataseClicked;
 impDatabaseButton.innerText = "Conv po DB";
 implocDatabaseContainer.appendChild(impDatabaseButton)
 implocDatabaseContainer.appendChild(classToolTip)
 
+//23-03-2021 PSS added a new button on first page
+var checkAllContainer = document.createElement("div")
+checkAllContainer.className = 'button-tooltip'
+var classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = "This button selects all records"
+var checkAllButton = document.createElement("a");
+checkAllButton.href = "#";
+checkAllButton.className = "selectAll-button";
+checkAllButton.onclick = setmyCheckBox;
+checkAllButton.innerText = "Select all";
+checkAllContainer.appendChild(checkAllButton)
+checkAllContainer.appendChild(classToolTip)
 
 //07-05-2021 PSS added a export button on first page
 var exportContainer = document.createElement("div")
@@ -1029,6 +1047,10 @@ if (divPaging != null && divProjects == null) {
     if (statsButton != null) {
         divNavBar.appendChild(statsButton);
     }
+    if (!is_pte) {
+        console.debug("we are not pte")
+        divNavBar.appendChild(checkAllContainer);
+    }
     divNavBar.appendChild(importContainer);
     divNavBar.appendChild(exportContainer);
    // divNavBar.appendChild(exportButton);
@@ -1072,6 +1094,14 @@ SwitchTMButton.href = "#";
 SwitchTMButton.className = "Switch-TM-button";
 SwitchTMButton.onclick = SwitchTMClicked;
 SwitchTMButton.innerText = "SwitchTM";
+let TM = localStorage.getItem(['switchTM']);
+if (TM == "true") {
+    SwitchTMButton.style.background = "white"
+}
+else {
+    SwitchTMButton.style.background = "green"
+    SwitchTMButton.style.color = "white"
+}
 
 // We need to check if we have a glossary ID
 
@@ -1091,6 +1121,10 @@ var DispCount = document.createElement("a");
 DispCount.href = "#";
 DispCount.className = "DispCount-button";
 
+var WikiLink = document.createElement("a");
+WikiLink.href = 'https://github.com/vibgyj/WPTranslationFiller/wiki'
+WikiLink.innerText ="WPTF Docs"
+WikiLink.className = 'menu-item-wptf_wiki'
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
 var GpSpecials = document.querySelector("span.previous.disabled");
@@ -1098,10 +1132,10 @@ if (GpSpecials == null) {
     var GpSpecials = document.querySelector("a.previous");
 }
 if (GpSpecials != null && divProjects == null) {
+    divPaging.insertBefore(WikiLink, divPaging.childNodes[0]);
     divPaging.insertBefore(UpperCaseButton, divPaging.childNodes[0]);
     divPaging.insertBefore(SwitchGlossButton, divPaging.childNodes[0]);
     divPaging.insertBefore(tmDisableButton, divPaging.childNodes[0]);
-    
     divPaging.insertBefore(SwitchTMButton, divPaging.childNodes[0]);
     chrome.storage.local.get(["apikeyDeepl"], function (data) {
         //let apikey=data.apikeyDeepl
@@ -1118,7 +1152,7 @@ if (GpSpecials != null && divProjects == null) {
     else {
         UpperCaseButton.className = "UpperCase-button uppercase"
     }
-    //divPaging.insertBefore(impLocButton, divPaging.childNodes[0]);
+    
     //divPaging.insertBefore(exportButton, divPaging.childNodes[0]);
     //divPaging.insertBefore(importButton, divPaging.childNodes[0]);
 }
@@ -1349,8 +1383,8 @@ async function savetolocalClicked(event) {
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
     event.preventDefault();
-    chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower", "spellCheckIgnore"],
+    chrome.storage.local.get( 
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower", "spellCheckIgnore","TMtreshold"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -1366,7 +1400,7 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
-                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower,data.spellCheckIgnore);
+                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower,data.spellCheckIgnore,data.TMtreshold);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2023,6 +2057,7 @@ async function checkbuttonClick(event) {
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         //event.preventDefault(); caused a problem within the single page enttry  
         let action = event.target.textContent;
+       // console.debug("action:",action)
         // 30-06-2021 PSS added fetch status from local storage
         // Necessary to prevent showing old translation exist if started from link "Translation history"
         // 22-06-2021 PSS fixed issue #90 where the old translations were not shown if vladt WPGP Tool is activ
@@ -2043,7 +2078,7 @@ async function checkbuttonClick(event) {
                // console.debug("detail row textarea:", mytextarea)  
                 //console.debug("start mutationsserver:",StartObserver)
                 if (StartObserver) {
-                    console.debug("in details:", autoCopyClipBoard)
+                    //console.debug("in details:", autoCopyClipBoard)
                     if (autoCopyClipBoard) {
                         copyToClipBoard(detailRow)
                     }
@@ -2250,7 +2285,8 @@ async function checkbuttonClick(event) {
                
             if (typeof textareaElem != "null") {
                 // we need to use await otherwise there is not result.newText
-                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl","", false);
+                result = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
+               // console.debug("result in editor:",result)
                 if (result.newText != "") {
                     let editorElem = document.querySelector("#editor-" + rowId + " .original");
                     //19-02-2023 PSS we do not add the marker twice, but update it if present
@@ -3229,9 +3265,9 @@ function savetranslateEntryClicked(event) {
                     const editor = preview.nextElementSibling;
                     if (editor != null) {
                         editor.style.display = "none";
-                        console.debug("after we switch ??", autoCopyClipBoard)
+                       // console.debug("after we switch ??", autoCopyClipBoard)
                         editor.querySelector(".translation-actions__save").click();
-                        console.debug("after we switch ??", autoCopyClipBoard)
+                       // console.debug("after we switch ??", autoCopyClipBoard)
                     }
                     // PSS confirm the message for dismissal
                     foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
@@ -4215,7 +4251,7 @@ function stopObserving(observer) {
 }
 
 function startObserving(observer, textarea, config) {
-    console.debug("observer is started")
+    //console.debug("observer is started")
     observer.observe(textarea, config);
     //console.debug("observer started:", observer)
     return observer
@@ -4245,17 +4281,22 @@ function start_editor_mutation_server(textarea, action) {
 
 }
 // Function to handle DOM mutations
-function handleMutation(mutationsList, observer) {
+async function handleMutation(mutationsList, observer) {
+    console.debug("We handle mutations")
+    var leftPanel;
+    var result;
     for (const mutation of mutationsList) {
-       // console.debug("mutation type:",mutation,mutation.type)
+        console.debug("mutation type:",mutation,mutation.type)
         if (mutation.type === 'childList') {
            // console.debug('Child list mutation detected:', mutation);
-        } else if (mutation.type === 'attributes') {
-           // console.debug('Attribute mutation detected:', mutation);
+        }
+        else if (mutation.type === 'attributes') {
+            console.debug('Attribute mutation detected:', mutation);
             var closestParent = mutation.target;
             var panelTransMenu;
-            var leftPanel = closestParent.parentElement.parentElement.parentElement.parentElement
-           // console.debug("mutation parent:", leftPanel)
+            var markerpresent;
+            leftPanel = closestParent.parentElement.parentElement.parentElement.parentElement
+            console.debug("mutation parent:", leftPanel)
             original = leftPanel.getElementsByClassName("original-raw")[0]
             //console.debug("original in mutation:", original)
             translation = mutation.target.value
@@ -4278,7 +4319,19 @@ function handleMutation(mutationsList, observer) {
                         missingVerbsButton[0].style.visibility = "visible"
                         missingVerbsButton[0].title = headertitle;
                         //console.debug("percentage:", result.percent)
+                        textareaElem = leftPanel.querySelector(`textarea.foreign-text`);
+                        console.debug("texelement:", textareaElem)
+                        valresult = await validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
+                        console.debug("result:", valresult)
+                        markerpresent = leftPanel.getElementsByClassName("marker");
                         if (result.percent == 100) {
+                           
+                            if (markerpresent != null) {
+                                console.debug("We found explanation:", markerpresent)
+                                if (typeof markerpresent[0] != 'undefined') {
+                                    markerpresent[0].remove()
+                                }
+                            }
                             panelTransMenu[0].style.backgroundColor = "green";
                         }
                         else if (result.percent >= 66) {
@@ -4291,18 +4344,33 @@ function handleMutation(mutationsList, observer) {
                             panelTransMenu[0].style.backgroundColor = "purple";
                         }
 
-                        else if (result.percent <33 && result.percent >0) {
+                        else if (result.percent < 33 && result.percent > 0) {
                             panelTransMenu[0].style.backgroundColor = "darkorange";
                         }
                         else if (result.percent == 0) {
                             panelTransMenu[0].style.backgroundColor = "red";
+                            markerpresent.innerHTML = result.newText
                         }
                     }
                 }
+                else {
+                    console.debug("Tooltip empty")
+                }
             }
             else {
-                //console.debug("percentage:",result.percent)
+                //console.debug("percentage:", result.percent, leftPanel)
+                textareaElem = leftPanel.querySelector(`textarea.foreign-text`);
+                console.debug("texelement:",textareaElem)
+                result = validateEntry('nl', textareaElem, "", "", rowId, "nl", "", false);
                 if (result.percent == 100) {
+
+                    let markerpresent = leftPanel.getElementsByClassName("marker");
+                    if (markerpresent != null) {
+                        console.debug("We found explanation:", markerpresent)
+                        if (typeof markerpresent[0] != 'undefined') {
+                            markerpresent[0].remove()
+                        }
+                    }
                     panelTransMenu[0].style.backgroundColor = "green";
                 }
                 missingVerbsButton[0].style.visibility = "hidden"

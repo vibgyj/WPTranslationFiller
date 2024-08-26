@@ -83,7 +83,7 @@ const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
-const specialChar = new RegExp(/ # | #|->/ig);
+const specialChar = new RegExp(/ # | #|\#|&#->/ig);
 function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
     // prereplverb contains the verbs to replace before translation
@@ -144,6 +144,7 @@ function preProcessOriginal(original, preverbs, translator) {
             }
         }
         // DeepL does not like # and -> so we need to replace them before translating
+        
         const charmatches = original.matchAll(specialChar);
         if (charmatches != null) {
             index = 1;
@@ -1076,12 +1077,17 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     else {
                         transtype = "single";
                     }
+                    mypreview = document.querySelector("#preview-" + newrowId);
+                    if (mypreview == null) {
+                        mypreview = document.querySelector("#preview-" + row);
+                    }
                     if (transtype == "single") {
                         // Fetch the translations
                         let element = e.querySelector(".source-details__comment");
                         let textareaElem = e.querySelector("textarea.foreign-text");
                         translatedText = textareaElem.innerText;
-                        prev_trans = textareaElem.innerText;
+                        prev_trans = textareaElem.innerText;        
+                        
                         if (translatedText != "No suggestions") {
                             previewNewText = textareaElem.innerText;
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
@@ -1095,6 +1101,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 if (preview == null) {
                                     preview = document.querySelector("#preview-" + row + " span.translation-text");
                                 }
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 repl_verb = result.repl_verb;
                                 recWordCount += result.countReplaced;
                                 previewNewText = result.previewNewText
@@ -1123,7 +1131,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     var current = currec.querySelector("span.panel-header__bubble");
                                     var prevstate = current.innerText;
                                     current.innerText = "transFill";
+                                    //####
                                 }
+                               
                                 // Only update the style if verbs are replaced!!
                                 let wordCount = recWordCount;
                                 let percent = 10;
@@ -1155,6 +1165,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     var prevstate = current.innerText;
                                     current.innerText = "transFill";
                                 }
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 repl_verb = result.repl_verb;
                                 repl_array = result.repl_array
                                 recWordCount += result.countreplaced;
@@ -1257,6 +1269,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             replaced = result.replaced;
                             orgText = result.orgText;
                             if (replaced) {
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 recWordCount += result.countreplaced;
                                 repl_verb += result.repl_verb
                                 previewElem1.innerHTML = result.previewNewText
@@ -1282,6 +1296,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             replaced = result.replaced;
                             repl_array = result.repl_array;
                             if (replaced) {
+                                mypreview.classList.replace("status-current", "status-waiting");
+                                mypreview.classList.add("wptf-translated");
                                 recWordCount += result.countReplaced;
                                 repl_verb = result.repl_verb;
                                 previewElem2.innerHTML = result.previewNewText
@@ -1813,6 +1829,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     setPreTranslationReplace(preTranslationReplace);
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
+    let GlotPressBulkButton = document.getElementById("bulk-actions-toolbar-bottom")
     translateButton.innerText = "Translate";
     //console.debug("Button classname:", translateButton.className);
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
@@ -2201,7 +2218,15 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     translateButton.className += " translated";
     translateButton.innerText = "Translated";
     parrotActive = 'false';
-    messageBox("info", "We have found:" + counter + " local records");
+    toastbox("info", "We have found: " + counter, "2500", "local records");
+    if (GlotPressBulkButton != null) {
+        if (counter > 0) {
+            let button = GlotPressBulkButton.getElementsByClassName("button")
+            button[0].disabled = true;
+        }
+    }
+   
+    //messageBox("info", "We have found:" + counter + " local records");
 
     //console.timeEnd("translation");
 }
@@ -2228,7 +2253,7 @@ const throttleFunction = (preview) => {
 // Call the throttleFunction when needed
 function openEditor(preview) {
     throttleFunction(preview).then(result => {
-        console.debug("Editor open!")
+        //console.debug("Editor open!")
     }).catch(error => {
         console.debug(error);
     });
@@ -2264,7 +2289,7 @@ async function fetchsuggestions(row) {
 
 // Part of the solution issue #204
         
-function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal,spellIgnore,locale) {
+function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal,spellIgnore,locale,TMtreshold) {
     var res;
     //var myres;
     var ulfound;
@@ -2279,6 +2304,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
     var original;
     var DeepLres;
     var OpenAIres;
+    var treshold = TMtreshold;
     // We need to prepare the replacement list
     setPostTranslationReplace(postTranslationReplace, formal);
     return new Promise((resolve, reject) => {
@@ -2326,7 +2352,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                                 textFound = liSuggestion.innerText;
                             }
                         }
-                        else if (liscore > 90 && liscore < 100) {
+                        else if (liscore >= treshold && liscore < 100) {
                             liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
                             // We need to fetch Text otherwise characters get converted!!
                             // GlotPress can indicate differences between the original
@@ -2366,7 +2392,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                                 //resolve(textFound);
                             }
                         }
-                        else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore < 90) {
+                        else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore <treshold) {
                             //console.debug("There are no suggestions!")
                             textFound = "No suggestions";
                         }
@@ -2465,7 +2491,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
 
 
 // Part of the solution issue #204
-async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower,spellCheckIgnore) {
+async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower,spellCheckIgnore,TMtreshold) {
     var timeout = 0;
     var editoropen;
     var editor;
@@ -2473,11 +2499,11 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var res;
     var counter = 0;
     var row;
-    var counter = 0;
     locale = checkLocale();
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
+    let GlotPressBulkButton = document.getElementById("bulk-actions-toolbar-bottom")
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
         translateButton.innerText = "Translate";
@@ -2495,7 +2521,6 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     //myrecCount = document.getElementsByClassName("editor")
     //console.debug("record count:",myrecCount.length)
     for (let record of myrecCount) {
-        counter++;
         transtype = "single";  
         row = record.getAttribute("row");
         // we need to store current preview and editor for later usage
@@ -2566,7 +2591,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 });
 
                 if (result != "No suggestions") {
-                     myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale).then(resli => {
+                     myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale,TMtreshold).then(resli => {
                          if (typeof resli != null) {
                             // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
                             myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale,current);     
@@ -2584,6 +2609,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                                     }
                                     else {
                                         rowchecked.checked = true;
+                                        counter++;
                                     }
                                 }
                             }
@@ -2629,6 +2655,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     }
                     if (rowchecked != null) {
                         rowchecked.checked = true;
+                        counter++;
                     }
                     if (result != "No suggestions") {
                        
@@ -2652,6 +2679,14 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     editor.style.display = "";
     // PSS setting the value to "" solves the problem of closing the last preview
     preview.style.display = "";
+    toastbox("info", "We have found: " + counter, "2500", "TM records");
+    if (GlotPressBulkButton != null) {
+        if (counter > 0) {
+            let button = GlotPressBulkButton.getElementsByClassName("button")
+            button[0].disabled = true;
+        }
+    }
+
 }
 
 async function mark_as_translated(row){
@@ -4027,7 +4062,7 @@ function saveLocal_2(bulk_timer) {
         progressbar.style.display = 'block';
     }
     
-    processTableRecords('tr.preview.status-waiting', async function (preview) {
+    processTableRecords('.wptf-translated', async function (preview) {
         //console.debug("preview:",preview,preview.classList)
         // we only need to read the translated lines by wptf
         if (preview.classList.contains("wptf-translated")) {
@@ -4122,11 +4157,10 @@ function saveLocal_2(bulk_timer) {
                         //console.debug("checkbox present but not set or not in waiting mode")
                         let original = editor.querySelector("span.original-raw").innerText;
                         if (original != null) {
-                            toastbox("info", "Skipping:" + original, "900", "Skipping record:");
+                            toastbox("info", "Skipping:" + original, "700", "Skipping record:");
                         }
                         else {
-                            toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record:");
-                            // toastbox.close()
+                          //  toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record:");
                         }
                     }
                 }
@@ -4137,12 +4171,14 @@ function saveLocal_2(bulk_timer) {
             }
             else {
                // console.debug("unchecked count:", checkcount)
-                toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
+               // toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
                 //console.debug("No checkset found!")
             }
+            
+            //close_toast()
         }
         else {
-            console.log("ClassList of preview:",preview.classList)
+           // console.log("ClassList of preview:",preview.classList)
         }
     }, bulk_timer)
         .then(() => {
