@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "WordPress Translation Filler",
-  "version": "3.1.6",
+  "version": "3.1.7",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "resources": [
     "/img/*",
