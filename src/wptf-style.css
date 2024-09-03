@@ -763,7 +763,7 @@ mymarker {
 .translation-entry-my-button {
     content: '\f326';
     width: auto;
-    height: 25px !important;
+    height: 22px !important;
     padding: 4px !important;
     background-color: blue;
     color: white;
@@ -863,7 +863,7 @@ mymarker {
 
 .localcase-entry-my-button {
     width: auto;
-    height: 25px !important;
+    height: 22px !important;
     padding: 4px !important;
     background-color: blue;
     color: white;
@@ -894,7 +894,7 @@ mymarker {
 
 .addtranslation-entry-my-button {
     width: auto;
-    height: 25px !important;
+    height: 22px !important;
     padding: 4px !important;
     background-color: blue;
     color: white;
@@ -928,7 +928,7 @@ mymarker {
 
 .checktranslation-entry-my-button {
     width: auto;
-    height: 25px !important;
+    height: 22px !important;
     padding: 4px !important;
     background-color: blue;
     color: white;
@@ -963,7 +963,7 @@ mymarker {
 
 .translocal-entry-missing-button {
     width: auto;
-    height: 25px !important;
+    height: 22px !important;
     padding: 4px !important;
     background: darkcyan;
     color: white;
@@ -975,7 +975,7 @@ mymarker {
 
 .translocal-entry-local-button {
     width: auto;
-    height: 25px !important;
+    height: 22px !important;
     padding: 4px !important;
     background: darkcyan;
     color: white;
@@ -993,7 +993,7 @@ mymarker {
     padding-top: 2px;
     padding-left: 3px;
     padding-right: 5px;
-    height: 25px;
+    height: 22px;
     font: normal 16px/1 'dashicons';
     -webkit-user-select: none;
     -moz-user-select: none;
