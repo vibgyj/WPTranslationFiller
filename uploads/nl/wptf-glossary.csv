@@ -19,6 +19,8 @@ Header,header
 header,header
 Hero,Hero
 hero,hero
+icons,iconen
+icon,icoon
 Item,Item
 item,item
 Keys,Sleutels
@@ -44,6 +46,7 @@ Sections,Secties
 Section,Sectie
 sections,secties
 section,sectie
+sticky,sticky
 Websites,sites
 websites,sites
 Website,site
