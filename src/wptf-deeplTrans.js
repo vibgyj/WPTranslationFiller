@@ -29,7 +29,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
     var data;
     var link;
     var deepLresult;
-    errorstate ="NOK"
+    //errorstate ="NOK"
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
@@ -70,48 +70,28 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
                 console.debug("processedData:",processedData)
                 // Return the processed data to the higher function
                 if (processedData === "OK"){
-                errorstate="OK"
+                errorstate = "OK"
                 }
                 else {
-                    errorstate =processedData
+                    errorstate = processedData
                 }
                 return errorstate;
             });
             console.log('Processed Data in Higher Function:', processedData);
-            return processedData;  // Returning the processed data
+            return errorstate;  // Returning the processed data
        } catch (error) {
-            if (error[2] == "400") {
-                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
-                console.debug("glossary value is not supported")
-                errorstate = "Error 400";
-            }
-            if (error[2] == "403") {
-                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
-                errorstate = "Error 403";
-            }
-            else if (error[2] == '404') {
-                alert("Error 404 The requested resource could not be found.")
-                errorstate = "Error 404";
-            }
-            else if (error[2] == '456') {
-                messageBox("warning", "Error 456 Quota exceeded.<br> The character limit has been reached");
-                errorstate = "Error 456";
-            }
-            else if (error[2] == '503') {
-                messageBox("warning", "Dienst niet beschikbaar");
-                errorstate = "Error 503";
-            }
+            
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
-            else if (error == 'TypeError: Failed to fetch') {
+            if (error == 'TypeError: Failed to fetch') {
                 errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
             }
             else {
                 //messageBox("warning", "There has been an error<br>"+ data.message);
                // alert("Error message: " + error[1]);
                 console.debug("Error:",error)
-                errorstate = "Error " + error[1];
+                errorstate = "Error " + error;
             }
-            //return errorstate
+            return errorstate
         };
 
     //console.debug("deepl link:",link)
@@ -159,7 +139,7 @@ async function processData(data,original,record, row, originalPreProcessed,repla
                 errorstate = "OK"
                 resolve(errorstate)
                 //resolve({ ...data, processed: true });
-            }, 1000);
+            }, 100);
         });
     } else {
         // Handle other data types if necessary
