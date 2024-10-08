@@ -1,0 +1,14 @@
+{
+	"Casing":"Remove cap",
+	"DefGlos":"DefGlos",
+	"Disable machine":"Stop autoTrans"
+	"DispGloss":"DispGloss",
+	"LoadGloss":"LoadGloss",
+	"Local":"Local",
+	"SwitchTM":"SwitchTM",
+	"This button starts fetching existing translations from translation memory":"This button starts fetching existing translations from translation memory",
+	"This button disables fetching existing translations from translation memory":"This button disables fetching existing translations from translation memory",
+	"This function checks the page for missing verbs and if set starts spellchecking":"This function checks the page for missing verbs and if set starts spellchecking",
+	"This function populates the table with translations from the local database":"This function populates the table with translations from the local database",
+	"Translate":"Translate"
+}

@@ -7,6 +7,42 @@ var strictValidation = true
 var StartObserver = true;
 var LocRecCout
 var autoCopyClipBoard;
+var LoadGloss;
+var DispCount;
+
+
+let translations = {};
+
+// Function to load a specific language JSON file
+async function loadTranslations(language) {
+    try {
+        const response = await fetch(chrome.runtime.getURL(`locales/${language}.json`));
+        if (!response.ok) {
+            throw new Error(`Failed to load ${language} translations`);
+        }
+        translations = await response.json(); // Store translations
+        console.log("Translations loaded:", translations);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Function to get the translated string
+function __(key) {
+    console.debug("key:",key,translations[key])
+    return translations[key] || key; // Return the translation or the key if not found
+}
+
+
+async function initTranslations() {
+    let userLang = checkLocale() || 'en';
+     console.debug("userlanguage:",userLang)
+    await loadTranslations(userLang); // Load Dutch translations (or any other language)
+    await translatedButton()
+}
+
+// Load the default language on startup
+initTranslations();
 
 adjustLayoutScreen();
 
@@ -41,6 +77,10 @@ window.onload = function () {
 }
 
 // Function to send a message to the injected script
+// Object to store the translations
+
+
+
 function sendMessageToInjectedScript(message) {
     window.postMessage(message, '*');
 }
@@ -838,12 +878,15 @@ document.addEventListener('click', function (event) {
     }
 });
 
+function translatedButton (){
 //Add translate button - start
 var translateButton = document.createElement("a");
 translateButton.href = "#";
+//translateButton.ID = 'Translate'
 translateButton.className = "translation-filler-button";
 translateButton.onclick = translatePageClicked;
-translateButton.innerText = "Translate";
+translateButton.innerText = __('Translate')
+//translateButton.innerText = "Translate";
 var divPaging = document.querySelector("div.paging");
 // 1-05-2021 PSS fix for issue #75 do not show the buttons on project page
 var divProjects = document.querySelector("div.projects");
@@ -853,13 +896,13 @@ var localtransContainer = document.createElement("div")
 localtransContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
-classToolTip.innerText = "This function populates the table with translations from the local database"
+classToolTip.innerText = __("This function populates the table with translations from the local database")
 
 var localtransButton = document.createElement("a");
 localtransButton.href = "#";
 localtransButton.className = "local-trans-button";
 localtransButton.onclick = localTransClicked;
-localtransButton.innerText = "Local";
+localtransButton.innerText = __("Local");
 localtransContainer.appendChild(localtransButton)
 localtransContainer.appendChild(classToolTip)
 
@@ -868,7 +911,7 @@ var TmContainer = document.createElement("div")
 TmContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
-classToolTip.innerText = "This button starts fetching existing translations from translation memory"
+classToolTip.innerText = __("This button starts fetching existing translations from translation memory")
 //let TM = localStorage.getItem(['switchTM']);
 var tmtransButton = document.createElement("a");
 tmtransButton.href = "#";
@@ -893,7 +936,7 @@ var TmDisableContainer = document.createElement("div")
 TmDisableContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
-classToolTip.innerText = "This button disables fetching existing translations from translation memory"
+classToolTip.innerText = __("This button disables fetching existing translations from translation memory")
 
 // Use chrome.local.get to retrieve the value
 interCept = localStorage.getItem("interXHR");
@@ -927,7 +970,7 @@ else {
 }
 tmDisableButton.onclick = tmDisableClicked;
 
-tmDisableButton.innerText = "Disable machine";
+tmDisableButton.innerText = __("Disable machine");
 TmDisableContainer.appendChild(tmDisableButton)
 TmDisableContainer.appendChild(classToolTip)
 
@@ -936,7 +979,7 @@ var checkContainer = document.createElement("div")
 checkContainer.className = 'button-tooltip'
 var classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
-classToolTip.innerText = "This function checks the page for missing verbs and if set starts spellchecking"
+classToolTip.innerText = __("This function checks the page for missing verbs and if set starts spellchecking")
 
 var checkButton = document.createElement("a");
 checkButton.href = "#";
@@ -1107,7 +1150,7 @@ if (divPaging != null && divProjects == null) {
 var UpperCaseButton = document.createElement("a");
 UpperCaseButton.href = "#";
 UpperCaseButton.onclick = UpperCaseClicked;
-UpperCaseButton.innerText = "Casing";
+UpperCaseButton.innerText = __("Casing");
 
 var SwitchGlossButton = document.createElement("a");
 SwitchGlossButton.href = "#";
@@ -1116,7 +1159,7 @@ SwitchGlossButton.className = "Switch-Gloss-button";
 
 chrome.storage.local.get("DefGlossary").then((res) => {
     if (res.DefGlossary == true) {
-        SwitchGlossButton.innerText = "DefGlos";
+        SwitchGlossButton.innerText = __("DefGlos");
         SwitchGlossButton.style.background = "green"
         SwitchGlossButton.style.color = "white"
     }
@@ -1130,7 +1173,7 @@ var SwitchTMButton = document.createElement("a");
 SwitchTMButton.href = "#";
 SwitchTMButton.className = "Switch-TM-button";
 SwitchTMButton.onclick = SwitchTMClicked;
-SwitchTMButton.innerText = "SwitchTM";
+SwitchTMButton.innerText = __("SwitchTM");
 let TM = localStorage.getItem(['switchTM']);
 if (TM == "true") {
     SwitchTMButton.style.background = "red"
@@ -1143,17 +1186,17 @@ else {
 
 // We need to check if we have a glossary ID
 
-var LoadGloss = document.createElement("a");
+LoadGloss = document.createElement("a");
 LoadGloss.href = "#";
 LoadGloss.onclick = LoadGlossClicked;
-LoadGloss.innerText = "LoadGloss";
+LoadGloss.innerText = __("LoadGloss");
 
 
 var DispGloss = document.createElement("a");
 DispGloss.href = "#";
 DispGloss.className = "DispGloss-button";
 DispGloss.onclick = DispGlossClicked;
-DispGloss.innerText = "DispGloss";
+DispGloss.innerText = __("DispGloss");
 
 var DispClipboard = document.createElement("a");
 DispClipboard.href = "#";
@@ -1173,7 +1216,7 @@ chrome.storage.local.get('autoCopyClip', async function (result) {
 
 
 
-var DispCount = document.createElement("a");
+DispCount = document.createElement("a");
 DispCount.href = "#";
 DispCount.className = "DispCount-button";
 
@@ -1210,6 +1253,8 @@ if (GpSpecials != null && divProjects == null) {
         UpperCaseButton.className = "UpperCase-button uppercase"
     }
 }
+}
+
 
 async function checkGlossary(event) {
     var glos_isloaded = await localStorage.getItem(['deeplGlossary']);

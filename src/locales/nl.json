@@ -1,0 +1,14 @@
+{
+	"Casing":"Verw hoofd",
+	"DefGlos":"Stand gloss",
+	"Disable machine":"Stop autoTrans",
+	"DispGloss":"Toon gloss",
+	"LoadGloss":"Laad gloss",
+	"Local":"Lokaal",
+	"SwitchTM":"Wissel TM",
+	"This button starts fetching existing translations from translation memory":"Deze knop start het ophalen van vertalingen uit het vertaal geheugen",
+	"This button disables fetching existing translations from translation memory":"Deze knop schakelt automatisch ophalen van vertalingen uit translation memory uit",
+	"This function checks the page for missing verbs and if set starts spellchecking":"Deze functie controleert de pagina voor ontbrekende woorden, en indien ingesteld start de spellingcontrole",
+	"This function populates the table with translations from the local database":"Deze functie vult de tabel met vertalingen uit de lokale database",
+	"Translate":"Vertalen"
+}
