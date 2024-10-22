@@ -3,6 +3,9 @@
 // This function shows the amount of records present in the local translation table
 function Show_RecCount() {
     let count_locale = checkLocale();
+    DispCount = document.createElement("a");
+    DispCount.href = "#";
+    DispCount.className = "DispCount-button";
     countTable(count_locale).then(count => {
         var divPaging = document.querySelector("div.paging");
         if (divPaging != null) {
@@ -376,7 +379,7 @@ async function validateOld(showDiff) {
             }
         };
 
-        const delayBetweenProcessing = 50; // Delay between processing each record in milliseconds
+        const delayBetweenProcessing = 100; // Delay between processing each record in milliseconds
 
         const processRecordsSequentially = async () => {
             try {
@@ -387,7 +390,8 @@ async function validateOld(showDiff) {
                     }
                     else {
                         if ((records.length) > 1) {
-                                messageBox("info", "Check old is ready")
+                            let check=__("Check old is ready")
+                                messageBox("info", check)
                             }
                     // checking old records done
                     progressbar = document.querySelector(".indeterminate-progress-bar");
