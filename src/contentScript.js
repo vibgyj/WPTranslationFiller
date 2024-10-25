@@ -1717,7 +1717,7 @@ function checkLocale() {
     // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
     var local = localeString.split("/");
-    //console.debug("length locale:",local.length,local)
+    console.debug("length locale:",local.length,local)
     if (local.length == 8) {
         locale = local[4];
     }
