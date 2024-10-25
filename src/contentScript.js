@@ -1722,14 +1722,20 @@ function checkLocale() {
         locale = local[4];
     }
     else if (local.length == 9) {
-        locale = local[6];
         // if we are not within the tanslation table, the locale is at a different position
-        if (locale.length >5){
-            locale = local[4]
+        if (local.includes("locale")){
+            locale = local[4];
+            console.debug("we found 4")
         }
+        else {
+           locale = local[6];
+        }  
     }
     else if (local.length == 10) {
-        locale = local[6];
+        locale = local[7];
+    }
+    else if (local.length == 11) {
+        locale = local[8];
     }
     else {
         locale ="en";
