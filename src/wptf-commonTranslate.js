@@ -1844,9 +1844,11 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     var plural_present = "";
     var record = "";
     var row = "";
-    var preview = "";
+    var preview;
     var pretrans = 'notFound';
-    var counter=0;
+    var counter = 0;
+    var rowchecked;
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     //destlang = "nl"
     parrotActive = 'true';
     locale = checkLocale();
@@ -1899,7 +1901,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
             curbut.style.backgroundColor = "#0085ba";
             curbut.innerText = "Save";
-            curbut.title = "Save the string";
+            curbut.title = __("Save the string");
             transtype = "single";
         }
 
@@ -2204,7 +2206,22 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     showNameLabel(originalElem)
                 }
                 validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
-               // validateEntry(destlang, textareaElem, "", "", row);
+                validateEntry(destlang, textareaElem, "", "", row);
+                // we need to set the checkbox as marked
+                preview = document.querySelector(`#preview-${row}`);
+               // console.debug("set check",preview,is_pte)
+                if (is_pte) {
+                    rowchecked = preview.querySelector(".checkbox input");
+                }
+                else {
+                    rowchecked = preview.querySelector(".myCheckBox input");
+                }
+                //console.debug("rowchecked:",rowchecked)
+                if (rowchecked != null) {
+                    if (!rowchecked.checked) {
+                        rowchecked.checked = true;
+                    }
+                }
             }
         }
 
@@ -2221,23 +2238,31 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             preview.classList.replace("untranslated", "status-waiting");
             preview.classList.replace("status-fuzzy", "status-waiting");
             preview.classList.add("wptf-translated");
-            // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
-            //preview.style.backgroundColor = "#ffe399";
-            rowchecked = preview.querySelector("th input");
-            if (rowchecked == null) {
-                rowchecked = preview.querySelector("td input");
-            }
-            if (!rowchecked.checked) {
-                rowchecked.checked = true;
-            }
+           
         }
         else {
             // We need to adept the class to hide the untranslated lines
-            // Hiding the row is done through CSS tr.preview.status-hidden
-           
+            // Hiding the row is done through CSS tr.preview.status-hidden 
             preview.classList.replace("untranslated", "status-hidden");
         }
+       
+
     }
+    // we need to set the checkbox as marked
+   // preview = document.querySelector(`#preview-${row}`);
+   // console.debug("set check",preview,is_pte)
+   // if (is_pte) {
+   //     rowchecked = preview.querySelector(".checkbox input");
+   // }
+   // else {
+   //     rowchecked = preview.querySelector(".myCheckBox input");
+   // }
+    //console.debug("rowchecked:",rowchecked)
+   // if (rowchecked != null) {
+     //   if (!rowchecked.checked) {
+       //     rowchecked.checked = true;
+       // }
+    //}
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
     translateButton.className += " translated";
@@ -2564,7 +2589,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             rowchecked = preview.querySelector("th input");
             }
             else {
-                        rowchecked = preview.querySelector("td input");
+               rowchecked = preview.querySelector("td input");
             }
         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
         // We need to determine the current state of the record
@@ -2647,7 +2672,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     });
                 }
                 else {
-                    console.debug("No suggestions");
+                    //console.debug("No suggestions");
                     textareaElem.innerText = "No suggestions"
                     if (is_pte) {
                         rowchecked = preview.querySelector("th input");
@@ -2655,7 +2680,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     else {
                         rowchecked = preview.querySelector("td input");
                     }
-                    console.debug("rowchecked:", rowchecked, resli, result)
+                    //console.debug("rowchecked:", rowchecked, resli, result)
                     if (rowchecked != null) {
                         if (!rowchecked.checked) {
                             if (resli == "No suggestions") {
@@ -2671,7 +2696,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             }
             else {
                 let translatedText = original;
-                let textareaElem = record.querySelector("textarea.foreign-text");
+                textareaElem = record.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
                 textareaElem.innerHTML = translatedText;
                 textareaElem.value = translatedText;
@@ -2693,18 +2718,17 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
              if (preview.innerText.includes('No suggestions')!= true){
                  if (is_pte) {
                   rowchecked= document.querySelector(`#preview-${row} th input`);
-                  console.debug("rowcheckedd:",rowchecked)
                   }
                   else {
                       rowchecked= document.querySelector(`#preview-${row} td input`);
                   }
-                    console.debug("checked:",rowchecked)
                   if (rowchecked != null) {
-                      console.debug("we set checked")
                       rowchecked.checked = true;
-                      
                   }
-                  counter++;
+                 counter++;
+                 if (typeof textareaElem == "undefined") {
+
+                 }
                   result = validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
                   mark_as_translated(row)
              }
@@ -2723,7 +2747,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     editor.style.display = "";
     // PSS setting the value to "" solves the problem of closing the last preview
     preview.style.display = "";
-    toastbox("info", __("We have found: ") + counter, "2500", "TM records");
+    toastbox("info", __("We have found: ") + counter, "2500", " TM records");
     if (GlotPressBulkButton != null) {
         if (counter > 0) {
             let button = GlotPressBulkButton.getElementsByClassName("button")
@@ -4191,7 +4215,7 @@ function saveLocal_2(bulk_timer) {
             checkset = preview.querySelector('input[type="checkbox"]')
             //console.debug("checkset:", checkset)
             if (checkset != null && checkset.checked == true) {
-                // 13-06-2024 PSS we only count the read lines when the checkbox is ticket
+                // 13-06-2024 PSS we only count the read lines when the checkbox is ticked
                 line_read++
                 editor = preview.nextElementSibling;
                 if (editor != null) {

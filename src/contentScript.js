@@ -1717,7 +1717,7 @@ function checkLocale() {
     // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
     var local = localeString.split("/");
-    console.debug("length locale:",local.length,local)
+    //console.debug("length locale:",local.length,local)
     if (local.length == 8) {
         locale = local[4];
     }
@@ -2607,7 +2607,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var currText = 'untranslated'
     var single
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-   //console.debug("updateStyle rowId:",rowId)
+    //console.debug("updateStyle rowId:",rowId)
     //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
@@ -2674,24 +2674,27 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     // pss 12-10-2023 this one needs to be improved as we now have the record containing the editor details
     //current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof checkElem == "object") {
+        //console.debug("checkelem is object", checkElem)
         if (SavelocalButton == null) {
-            let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
             if (!is_pte) {
-                //let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
+                let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
                 // if there is no checkbox, we do not need to add the input to it and alter the columns
-                if (checkBx != null) { 
-                   mycheckbox = document.createElement('input');
-                   mycheckbox.setAttribute("type", "checkbox");
-                   mycheckbox.setAttribute("name", "selected-row[]");
-                   checkBx.appendChild(mycheckbox);
-                   let myrec = document.querySelector(`#editor-${rowId}`);
-                   // We need to expand the amount of columns otherwise the editor is to small
-                   var tds = myrec.getElementsByTagName("td")[0];
-                   tds.setAttribute("colspan", 5);
+                if (checkBx != null) {
+                    inputBox = document.querySelector("#preview-" + rowId + " td input")
+                    mycheckbox = document.createElement('input');
+                    mycheckbox.setAttribute("type", "checkbox");
+                    mycheckbox.setAttribute("name", "selected-row[]");
+                    // if the inputBox is already present, we do not need to add it again
+                    if (inputBox == null) {
+                        checkBx.appendChild(mycheckbox);
+                    }
+                    let myrec = document.querySelector(`#editor-${rowId}`);
+                    // We need to expand the amount of columns otherwise the editor is to small
+                    var tds = myrec.getElementsByTagName("td")[0];
+                    tds.setAttribute("colspan", 5);
                 }
             }
-
-           
+          
             // check for the status of the record
             var separator1 = document.createElement("div");
             separator1.setAttribute("class", "checkElem_save");
@@ -2699,8 +2702,29 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem,"1978")
+            let res = await addCheckButton(rowId, checkElem, "1978")
             SavelocalButton = res.SavelocalButton;
+        }
+        else {
+            // if the button is present but the checkbox not, then we need to add it (happens with first row of table)
+            if (!is_pte) {
+                let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
+                // if there is no checkbox, we do not need to add the input to it and alter the columns
+                if (checkBx != null) {
+                    inputBox = document.querySelector("#preview-" + rowId + " td input")
+                    mycheckbox = document.createElement('input');
+                    mycheckbox.setAttribute("type", "checkbox");
+                    mycheckbox.setAttribute("name", "selected-row[]");
+                    // if the inputBox is already present, we do not need to add it again
+                    if (inputBox == null) {
+                        checkBx.appendChild(mycheckbox);
+                    }
+                    let myrec = document.querySelector(`#editor-${rowId}`);
+                    // We need to expand the amount of columns otherwise the editor is to small
+                    var tds = myrec.getElementsByTagName("td")[0];
+                    tds.setAttribute("colspan", 5);
+                }
+            }
         }
     }
     else {
@@ -2824,16 +2848,26 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             //}
         }
         else {
+            console.debug("textareaElem:",textareaElem)
             wordCount = 0;
-            foundCount = 0;
-            if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length != 0) {
-                percent = 100;
-                toolTip = ""
+            foundCount = 0; 
+            if (typeof textareaElem != "undefined") {
+                if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length != 0) {
+                    percent = 100;
+                    toolTip = ""
+                }
+                else {
+                    percent = 0
+                }
             }
             else {
-                percent = 0
+                console.debug("we have no textareaElem!!")
+                percent = 100
+                tooltip = ""
+                wordCount = 0
+                foundCount =0
             }
-            toolTip = ""
+            //toolTip = ""
             newText = "";
             result = { wordCount, foundCount, percent, toolTip, newText }
             old_status = document.querySelector("#preview-" + rowId);
@@ -3083,47 +3117,47 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     if (typeof rowId != "undefined" && SavelocalButton !=null) {
         switch (current) {
             case "transFill":
-                 SavelocalButton.innerText = "Save";
-                 checkElem.title = "save the string";
+                 SavelocalButton.innerText = __("Save");
+                 checkElem.title = __("save the string");
                  SavelocalButton.disabled = false;
                  break;
             case "waiting":
-                 SavelocalButton.innerText = "Appr";
-                 checkElem.title = "Approve the string";
+                 SavelocalButton.innerText = __("Appr");
+                 checkElem.title = __("Approve the string");
                  SavelocalButton.disabled = false;
                  break;
             case "current":
-                SavelocalButton.innerText = "Curr";
+                SavelocalButton.innerText = __("Curr");
                 SavelocalButton.className = "tf-save-button-disabled"
                 checkElem.title = "Current translation";
                 break;
             case "fuzzy":
-                SavelocalButton.innerText = ("Rej");
-                checkElem.title = "Reject the string";
+                SavelocalButton.innerText = __("Rej");
+                checkElem.title = __("Reject the string");
                 break;
             case "changes requested":
-                SavelocalButton.innerText = ("Rej");
-                checkElem.title = "Reject the string";
+                SavelocalButton.innerText = __("Rej");
+                checkElem.title = __("Reject the string");
                 break;
             case "rejected":
-                SavelocalButton.innerText = ("Rej");
+                SavelocalButton.innerText = __("Rej");
                 SavelocalButton.disabled = true;
                 SavelocalButton.className = "tf-save-button-disabled"
-                checkElem.title = "Rejected string";
+                checkElem.title = __("Reject the string");
                 break;
             case "untranslated":
-                SavelocalButton.innerText = "Empt";
+                SavelocalButton.innerText = __("Empt");
                 SavelocalButton.style.backgroundColor = "grey";
                 checkElem.style.backgroundColor = "white";
-                checkElem.title = "No translation";
+                checkElem.title = __("No translation");
                 break;
             case "old":
-                SavelocalButton.innerText = ("Old");
+                SavelocalButton.innerText = __("Old");
                 checkElem.title = "Old translation";
                 break;
             default:
-                SavelocalButton.innerText = "Undef";
-                checkElem.title = "Something is wrong";
+                SavelocalButton.innerText = __("Undef");
+                checkElem.title = __("Something is wrong");
                 break;
         }
     }
@@ -3202,16 +3236,16 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             }
         }
         if (current == 'current') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else if (current == 'waiting') {
-            button_name = 'Appr'
+            button_name = __('Appr')
         }
         else if (current == 'fuzzy') {
-            button_name = 'Rej'
+            button_name = __('Rej')
         }
         else if (current =='transFill') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else {button_name == 'Undef!!'}
         // We do not need to style the record if it concerns the name label
@@ -3239,7 +3273,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             }
                         }
                         checkElem.style.backgroundColor = "green";
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                        // span_glossary = myleftPanel.querySelector(".glossary-word")
                         remove_all_gloss(myleftPanel)
@@ -3267,7 +3301,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.style.backgroundColor = "yellow";
 
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                         //span_glossary = myleftPanel.querySelector(".glossary-word")
                         //remove_all_gloss(myleftPanel)
@@ -3286,7 +3320,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         res = addCheckButton(rowId, checkElem, "1561")
                         SavelocalButton = res.SavelocalButton
                         SavelocalButton.innerText = button_name;
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         checkElem.style.backgroundColor = "orange";
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                         //remove_all_gloss(myleftPanel)
@@ -3307,7 +3341,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         SavelocalButton.onclick = savetranslateEntryClicked;
                         checkElem.style.backgroundColor = "purple";
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                        // span_glossary = myleftPanel.querySelector(".glossary-word")
                        // remove_all_gloss(myleftPanel)
@@ -3362,7 +3396,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             }
                             else {
                                 if (currstring != "No suggestions") {
-                                    checkElem.title = "Save the string";
+                                    checkElem.title = __("Save the string");
                                     SavelocalButton.innerText = "NoGlos";
                                 }
                                 else {
@@ -5595,16 +5629,16 @@ async function handleMutation(mutationsList, observer) {
             }
         
         if (current == 'current') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else if (current == 'waiting') {
-            button_name = 'Appr'
+            button_name = __('Appr')
         }
         else if (current == 'fuzzy') {
-            button_name = 'Rej'
+            button_name = __('Rej')
         }
         else if (current =='transFill') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else {button_name == 'Undef!!'}
                         if (typeof editor == 'object') {

@@ -207,6 +207,8 @@ function addCheckBox() {
                 }
                 //}
                 for (let e of document.querySelectorAll("tr.preview")) {
+                    //let mycheckBox = e.querySelector("td input");
+                    //console.debug("mycheckbox:", mycheckBox)
                     var x = e.insertCell(0);
                     x.className = "myCheckBox";
                 }

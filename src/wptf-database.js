@@ -263,10 +263,6 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              element1.appendChild(document.createTextNode("TM"));
              preview.appendChild(element1);
 
-            // we need to set the checkbox as marked
-             // we need to set the checkbox as marked
-            
-           
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record but only if we found a translation!!
              if (translatedText != 'No suggestions') {
@@ -331,9 +327,9 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
         }
     }
     //console.debug("Before return validate:",translatedText)
-     if (translatedText != 'No suggestions') {
-        validateEntry(destlang, textareaElem, "", "", row,"");
-    }
+   //  if (translatedText != 'No suggestions') {
+      //  validateEntry(destlang, textareaElem, "", "", row,"");
+    //}
     return myLi;
 }
 
