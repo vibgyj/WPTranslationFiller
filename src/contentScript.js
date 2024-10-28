@@ -405,7 +405,8 @@ document.addEventListener("keydown", async function (event) {
                         reader.readAsText(myFile);
                     }
                     else {
-                        messageBox(info, "No file selected")
+                        let errMessage = __("No file selected")
+                        messageBox(info, errMessage)
                     }
                 };
                 input.click();
@@ -697,7 +698,8 @@ document.addEventListener("keydown", async function (event) {
             }
             else {
                 // File is wrong type so do not process it
-                messageBox("error", "File is not a csv!");
+                let errMessage = __("File is not a csv!")
+                messageBox("error", errMessage);
             }
         });
     }
@@ -1033,7 +1035,7 @@ var impDatabaseButton = document.createElement("a");
 impDatabaseButton.href = "#";
 impDatabaseButton.className = "convLoc-button";
 impDatabaseButton.onclick = impLocDataseClicked;
-impDatabaseButton.innerText = "Conv po DB";
+impDatabaseButton.innerText = __("Conv po DB");
 implocDatabaseContainer.appendChild(impDatabaseButton)
 implocDatabaseContainer.appendChild(classToolTip)
 
@@ -1062,7 +1064,7 @@ var exportButton = document.createElement("a");
 exportButton.href = "#";
 exportButton.className = "export_translation-button";
 exportButton.onclick = exportPageClicked;
-exportButton.innerText = "Export";
+exportButton.innerText = __("Export");
 exportContainer.appendChild(exportButton)
 exportContainer.appendChild(classToolTip)
 
@@ -1079,7 +1081,7 @@ importButton.id = "ImportDb";
 //importButton.style="display: none";
 importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
-importButton.innerText = "Import";
+importButton.innerText = __("Import");
 importContainer.appendChild(importButton)
 importContainer.appendChild(classToolTip)
 
@@ -1124,7 +1126,7 @@ if (typeof handleStats === "function") {
     statsButton.id = "statsButton";
     statsButton.className = "stats-button";
     statsButton.onclick = handleStats;
-    statsButton.innerText = "Stats";
+    statsButton.innerText = __("Stats");
 }
 
 var divGpActions = document.querySelector("div.paging");
@@ -1221,7 +1223,7 @@ var DispClipboard = document.createElement("a");
 DispClipboard.href = "#";
 DispClipboard.className = "DispClipboard-button";
 DispClipboard.onclick = DispClipboardClicked;
-DispClipboard.innerText = "ClipBoard";
+DispClipboard.innerText = __("ClipBoard");
 chrome.storage.local.get('autoCopyClip', async function (result) {
     if (result.autoCopyClip == true){
         DispClipboard.style.background = "red"
@@ -1241,7 +1243,7 @@ chrome.storage.local.get('autoCopyClip', async function (result) {
 
 var WikiLink = document.createElement("a");
 WikiLink.href = 'https://github.com/vibgyj/WPTranslationFiller/wiki'
-WikiLink.innerText ="WPTF Docs"
+WikiLink.innerText = __("WPTF Docs")
 WikiLink.className = 'menu-item-wptf_wiki'
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
@@ -1306,7 +1308,8 @@ function DispClipboardClicked(event) {
         });
         DispClipboard.style.background = "green"
         DispClipboard.style.color = "white"
-        messageBox('info',"Auto copy to clipboard switched off")
+        let errMessage = __("Auto copy to clipboard switched off")
+        messageBox('info',errMessage)
     }
     else {
         autoCopyClipBoard = true
@@ -1314,7 +1317,8 @@ function DispClipboardClicked(event) {
             autoCopyClip: autoCopyClipBoard
         });
         DispClipboard.style.background = "red"
-        messageBox('info',"Auto copy to clipboard switched on")
+        let errMessage = __("Auto copy to clipboard switched on");
+        messageBox('info', errMessage);
     }
 });
 }
@@ -1353,6 +1357,7 @@ fileSelector.addEventListener("change", (event) => {
     }
     else {
         // File is wrong type so do not process it
+        let errMessage = __("File is not a csv!")
         messageBox("error", "File is not a csv!");
     }
 });
@@ -1618,7 +1623,8 @@ function impLocDataseClicked(event) {
                     reader.readAsText(myFile);
                 }
                 else {
-                    messageBox("info", "No file selected")
+                    let errMessage = __("No file selected");
+                    messageBox("info", errMessage);
                 }
                 close_toast();
             };
@@ -1659,13 +1665,15 @@ function impFileClicked(event) {
                             }
                         }
                         countimported = new_import_po(data.destlang, myFile, allrows);
-                        messageBox( info, "Records imported:" +countimported)
+                        let errMessage = __("Records imported: ")
+                        messageBox( info, errMessage +countimported)
                         
                     });
                     reader.readAsText(myFile);
                 }
                 else {
-                    messageBox("info", "No file selected")
+                    let errMessage = __("No file selected")
+                    messageBox("info", errMessage)
                 }
                 close_toast();
             };
@@ -2055,7 +2063,8 @@ function importPageClicked(event) {
         }
         else {
             // File is wrong type so do not process it
-            messageBox("error", "File is not a csv!");
+            errMessage = __("File is not a csv!")
+            messageBox("error", errMessage);
         }
     });
 }
@@ -2093,7 +2102,8 @@ async function parseDataBase(data) {
             }
         }
         close_toast();
-        messageBox("info", "Import is ready records imported: " + (i-1));
+        let errMessage = __("Import is ready records imported: ")
+        messageBox("info", errMessage + (i-1));
     }
     importButton.className += " ready";
 }

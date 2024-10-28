@@ -969,8 +969,8 @@ function checkFormalPage(dataFormal) {
                 }
             }
         }
-        let repldone = "Replace verbs done: "
-        let replaced = " replaced words<br>"
+        let repldone = __("Replace verbs done: ")
+        let replaced = __(" replaced words<br>")
         messageBox("info", repldone  + countreplaced + replaced + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
@@ -1402,7 +1402,11 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     progressbar.style.display = "none";
                 }
             }
-            else { messageBox("error", "You do not have translations to check!");}
+            
+            else {
+                let errMessage = __("You do not have translations to check!")
+                messageBox("error", errMessage);
+            }
         }
     }
     else {
@@ -2027,7 +2031,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             var element1 = document.createElement("div");
                             element1.setAttribute("class", "trans_local_div");
                             element1.setAttribute("id", "trans_local_div");
-                            element1.appendChild(document.createTextNode("Local"));
+                            element1.appendChild(document.createTextNode(__("Local")));
                             preview.appendChild(element1);
                             
                             // we need to set the checkbox as marked
@@ -2053,7 +2057,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         var element1 = document.createElement("div");
                         element1.setAttribute("class", "trans_local_div");
                         element1.setAttribute("id", "trans_local_div");
-                        element1.appendChild(document.createTextNode("Local"));
+                        element1.appendChild(document.createTextNode(__("Local")));
                         preview.appendChild(element1);
                         // we need to set the checkbox as marked
                         preview = document.querySelector(`#preview-${row}`);
@@ -3566,6 +3570,8 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     editor = await document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
     let original = editor.querySelector("span.original-raw").innerText;
     let text = editor.querySelector("textarea.foreign-text").value;
+    let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
+    console.debug("check:",checkTranslateButton)
     // posprocess the translation
     translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
     textareaElem = editor.querySelector("textarea.foreign-text");
@@ -3584,6 +3590,10 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
             translatedText = postProcessTranslation(original, pluralText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
             textareaElem1.value = translatedText
         }
+    }
+    if (checkTranslateButton != null) {
+        checkTranslateButton.className = "checktranslation-entry-my-button-ready";
+        checkTranslateButton.style.color = 'white';
     }
 }
 
@@ -5141,10 +5151,12 @@ async function bulkSaveToLocal() {
         }
     } else {
         counter = saveToLocal();
+        let errMessage = __("Records are processed: ")
+        let infoMessage = __("Bulk save to local")
         cuteAlert({
             type: "info",
-            title: "Bulk save to local",
-            message: "Records are processed: " + RecCount,
+            title: infoMessage,
+            message: errMessage + RecCount,
             confirmText: "Confirm",
             cancelText: "Cancel",
             myWindow: currWindow

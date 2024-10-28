@@ -593,7 +593,8 @@ async function addTransline(rowId,showMessage){
                 }
         }
         if (showMessage == true) {
-            messageBox("info", "addTransline record added/updated to database");
+            let addedRecord = __("addTransline record added / updated to database")
+            messageBox("info", addedRecord);
         }
         }
     });
