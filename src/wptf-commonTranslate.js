@@ -2298,6 +2298,7 @@ const throttleFunction = (preview) => {
     if (currentTime - lastExecution >= throttleDuration) {
         lastExecution = currentTime;
         if (typeof editoropen !== "undefined" && editoropen !== null) {
+            
             editoropen.click();
             return Promise.resolve("Open");
         } else {
@@ -2557,9 +2558,9 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var row;
     var textareaElem;
     var rowchecked;
+    var copyClip
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     locale = checkLocale();
-
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
@@ -2640,9 +2641,18 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 toTranslate = checkComments(comment.trim());
             }
             if (toTranslate) {
+                if (autoCopyClipBoard) {
+                    copyClip = true;
+                }
+                autoCopyClipBoard = false;
                 editoropen = await openEditor(preview);
                 result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
                     return new Promise((resolve, reject) => {
+                        // we need to disable autoCopyClipboard as it is unwanted here
+                       // if (autoCopyClipBoard) {
+                       //     copyClip = true;
+                      //  }
+                       // autoCopyClipBoard = false;
                         myTM = fetchsuggestions(row);
                         if (typeof myTM != 'undefined') {
                             setTimeout(() => {
@@ -2656,8 +2666,11 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                                 // glotpress_close.click();
                             }, 500);
                         }
+                        
                     });
+                    
                 });
+                
                 textareaElem = editor.querySelector("textarea.foreign-text");
                 //console.debug("textareaElem populate TM:",textareaElem)
                 if (result != "No suggestions") {
@@ -2739,7 +2752,8 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
         }
         else {
             console.debug('Found plural!');
-        }   
+        }
+       
     }
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
@@ -2757,6 +2771,10 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             let button = GlotPressBulkButton.getElementsByClassName("button")
             button[0].disabled = true;
         }
+    }
+    // We need to enable autoCopyClipBoard if it was active
+    if (copyClip) {
+        autoCopyClipBoard = true;
     }
 }
 
@@ -4002,7 +4020,12 @@ async function saveLocal() {
     var timeout = 0;
     var timout = 1000;
     vartime = 1000;
+    var MycopyClip;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    if (autoCopyClipBoard) {
+        MycopyClip = true;
+    }
+    autoCopyClipBoard = false;
     //console.debug("saveLocal started",is_pte)
     for (let preview of document.querySelectorAll("tr.preview.status-waiting")) {
     //document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
@@ -4044,6 +4067,7 @@ async function saveLocal() {
                         if (current.innerText == 'waiting' || current.innerText == 'transFill') {
                             //console.debug("we have a waiting")
                             // 06-07-2023 PSS changed to not open the editor anymore
+                            
                             let bulk_save = preview.querySelector(".tf-save-button");
                             bulk_save.click();          
                             // else we need to select the save button
@@ -4100,6 +4124,8 @@ async function saveLocal() {
 // Function to walk through the HTML table
 function walkThroughTable(selector, interval) {
     var timeout = 1000;
+    var MycopyClip
+    console.debug("we walk through table")
     return new Promise((resolve, reject) => {
         const checkInterval = setInterval(() => {
             const element = document.querySelector(selector);
@@ -4128,6 +4154,10 @@ function walkThroughTable(selector, interval) {
                             if (current.innerText == 'waiting' || current.innerText == 'transFill') {
                                 //console.debug("we have a waiting")
                                 // 06-07-2023 PSS changed to not open the editor anymore
+                                if (autoCopyClipBoard) {
+                                    MycopyClip = true;
+                                }
+                                autoCopyClipBoard = false;
                                 let bulk_save = preview.querySelector(".tf-save-button");
                                 bulk_save.click();
                                 waitForMyElement('.gp-js-message', 300)
@@ -4202,6 +4232,7 @@ function saveLocal_2(bulk_timer) {
     var editor;
     var original;
     var dismiss;
+    var My1copyClip
     StartObserver =false
     const template = `
     <div class="indeterminate-progress-bar">
@@ -4246,6 +4277,10 @@ function saveLocal_2(bulk_timer) {
                         editor.style.display = "";
                         glotpress_suggest.classList.remove("disabled")
                         //glotpress_suggest.click();
+                        if (autoCopyClipBoard) {
+                            My1copyClip = true;
+                        }
+                        autoCopyClipBoard = false;
                         new Promise(resolve => setTimeout(async () => {
                             preview.querySelector("td.actions .edit").click();
                             try {
@@ -4329,8 +4364,6 @@ function saveLocal_2(bulk_timer) {
                // toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
                 //console.debug("No checkset found!")
             }
-            
-            //close_toast()
         }
         else {
            // console.log("ClassList of preview:",preview.classList)
@@ -4344,6 +4377,9 @@ function saveLocal_2(bulk_timer) {
                 let read=__("We have read:")
                 let saved= __(" records and saved:")
                 messageBox("info", read + line_read + saved + counter);
+                if (My1copyClip) {
+                    autoCopyClipBoard = true;
+                }
                // console.log('All records processed    
             }
             else {console.debug("no progressbar!")}
