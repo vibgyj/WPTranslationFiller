@@ -609,7 +609,7 @@ async function dbExport(destlang) {
     var header = arrayHeader.join(delimiter) + "\n";
     var csv = header;
     // 01-02-2022 altered the messagebox into a toast so you do not need to dismiss it issue #181
-    toastbox("info", "Export database in progress" + "<br>" + "Wait for saving the file!", "2500", "Saving");
+    toastbox("info", __("Export database in progress") + "<br>" + __("Wait for saving the file!"), "2500", __("Saving"));
     //messageBox("info", "Export database in progress" + "<br>" + "Wait for saving the file!");
     const trans = await jsstoreCon.select({
         from: "Translation"
@@ -650,8 +650,72 @@ async function dbExport(destlang) {
     let exportButton = document.querySelector("a.export_translation-button");
     exportButton.className += " ready";
     //close_toast();
-    messageBox("info", "Export database done amount of records exported: " + i + "<br>Wait until explorer is shown to save the file");  
+    messageBox("info", __("Export database done amount of records exported: ") + i + __("<br>Wait until explorer is shown to save the file"));  
 }
+
+async function exportIndexedDBToPO(countryFilter) {
+    // Open IndexedDB
+    toastbox("info", __("Export database in progress") + "<br>" + __("Wait for saving the file!"), "3500", __("Saving"));
+    var poCount = 0
+    const request = indexedDB.open("My-Trans", 1);
+
+    request.onsuccess = function (event) {
+        const db = event.target.result;
+        const transaction = db.transaction("Translation", "readonly");
+        const store = transaction.objectStore("Translation");
+
+        // Retrieve all entries from the store
+        const getAllRequest = store.getAll();
+
+        getAllRequest.onsuccess = function () {
+            const entries = getAllRequest.result;
+
+            // Initialize the .po file content
+            let poContent = "";
+
+            entries.forEach((trans) => {
+                if (trans.country === countryFilter) { // Only include matching country
+                    const original = trans.source;
+                    const translation = trans.translation;
+
+                    // Format each entry as per .po file standards without msgctxt
+                    poContent += `msgid "${original}"\n`;
+                    poContent += `msgstr "${translation}"\n\n`;
+                    poCount++;
+                }
+            });
+
+            if (poContent) {
+                // Get the current date and format it as YYYY-MM-DD
+                const date = new Date();
+                const formattedDate = date.toISOString().split('T')[0];
+                // Create a Blob and download the file if content exists
+                const blob = new Blob([poContent], { type: "text/plain;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `translations_${countryFilter}_${formattedDate}.po`; // Include country and date in the file name
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                messageBox("info", __("Export database done amount of records exported: ") + poCount + __("<br>Wait until explorer is shown to save the file"));
+            } else {
+                console.log("No entries matched the specified country filter.");
+            }
+        };
+
+        getAllRequest.onerror = function () {
+            console.error("Failed to retrieve data from IndexedDB");
+        };
+    };
+
+    request.onerror = function () {
+        console.error("Failed to open IndexedDB");
+    };
+}
+
+
 
 async function tryPersistWithoutPromtingUser() {
     if (!navigator.storage || !navigator.storage.persisted) {

@@ -3571,7 +3571,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     let original = editor.querySelector("span.original-raw").innerText;
     let text = editor.querySelector("textarea.foreign-text").value;
     let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
-    console.debug("check:",checkTranslateButton)
+    //console.debug("check:",checkTranslateButton)
     // posprocess the translation
     translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
     textareaElem = editor.querySelector("textarea.foreign-text");
