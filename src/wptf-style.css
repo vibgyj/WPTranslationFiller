@@ -42,6 +42,9 @@ mymarker {
     overflow: hidden;
 }
 
+
+
+
 .indeterminate-progress-bar__progress {
     /* Color */
     background-color: #3b82f6;
@@ -53,10 +56,10 @@ mymarker {
     top: 0;
     width: 50%;
     /* Move the bar infinitely */
-    animation-duration: 2s;
-    animation-iteration-count: infinite;
+    animation: indeterminate 2s infinite;
     animation-name: indeterminate-progress-bar;
 }
+
 
 @keyframes indeterminate-progress-bar {
     from {
@@ -67,6 +70,7 @@ mymarker {
         left: 100%;
     }
 }
+
 
 
 /* The Modal (background) */

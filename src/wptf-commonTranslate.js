@@ -1399,11 +1399,19 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     checkButton.innerText = "Checked";
                     checkButton.className += " ready";
                     progressbar = document.querySelector(".indeterminate-progress-bar");
+                    let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
+                    progressbarStyle.style.animation = 'none'
                     progressbar.style.display = "none";
                 }
+
             }
             
             else {
+                progressbar = document.querySelector(".indeterminate-progress-bar");
+                let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
+                console.debug("bars:",progressbar,"<br>",progressbarStyle)
+                progressbarStyle.style.animation = 'none'
+                progressbar.style.display = "none";
                 let errMessage = __("You do not have translations to check!")
                 messageBox("error", errMessage);
             }
@@ -3683,7 +3691,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             translateButton.className = "translation-entry-my-button restarted";
             translateButton.innerText = __("Translate")
     }
-    
+    let preview = document.querySelector(`#preview-${rowId} .translation.foreign-text`);
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     // 07-07-2021 PSS need to determine if current record
     let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -3980,12 +3988,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             }
             
             // Translation completed
+
             // we need to validate the results from local as well, to remove the glossary markings if present
             result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false);
             let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
             remove_all_gloss(myleftPanel)
             mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
-
+            
            // translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // if row is already translated the rowId has different format, so we need to search with this different format
            // if (translateButton == null) {

@@ -305,7 +305,7 @@ async function validateOld(showDiff) {
     // we do not want to show the progress bar outside of the project table list
     //console.debug("lengte:",records.length,typeof records.length)
     if ((records.length) > 1) {
-        progressbar = document.querySelector(".indeterminate-progress-bar");
+        let progressbar = document.querySelector(".indeterminate-progress-bar");
         if (progressbar == null) {
             myheader.insertAdjacentHTML('beforebegin', template);
             // progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -396,8 +396,11 @@ async function validateOld(showDiff) {
                                 messageBox("info", check)
                             }
                     // checking old records done
-                    progressbar = document.querySelector(".indeterminate-progress-bar");
-                    progressbar.style.display = "none";            
+                        progressbar = document.querySelector(".indeterminate-progress-bar");
+                        let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
+
+                        progressbarStyle.style.animation = 'none'
+                        progressbar.style.display = "none";            
                         }
                 }
             } catch (error) {

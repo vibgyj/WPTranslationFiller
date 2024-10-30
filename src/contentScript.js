@@ -19,7 +19,7 @@ function triggerGarbageCollection() {
     console.debug("we are garbage collecting")
 }
 
-triggerGarbageCollection();
+//triggerGarbageCollection();
 
 if (typeof addon_translations == 'undefined'){
     console.debug("we are setting up langvar")
@@ -2217,6 +2217,9 @@ async function checkbuttonClick(event) {
                 });
             }
             addTranslateButtons(rowId);
+            //let translateButton = createElementWithId("my-button", `translate-${rowId}-translation-entry-my-button`);
+            //console.debug("translateButton:",translateButton)
+            //translateButton.class = "translation-entry-my-button"
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
             myrec = document.querySelector(`#editor-${rowId}`);
