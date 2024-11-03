@@ -969,8 +969,8 @@ function checkFormalPage(dataFormal) {
                 }
             }
         }
-        let repldone = "Replace verbs done: "
-        let replaced = " replaced words<br>"
+        let repldone = __("Replace verbs done: ")
+        let replaced = __(" replaced words<br>")
         messageBox("info", repldone  + countreplaced + replaced + repl_verb);
         // Translation replacement completed
         let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
@@ -1399,10 +1399,22 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     checkButton.innerText = "Checked";
                     checkButton.className += " ready";
                     progressbar = document.querySelector(".indeterminate-progress-bar");
+                    let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
+                    progressbarStyle.style.animation = 'none'
                     progressbar.style.display = "none";
                 }
+
             }
-            else { messageBox("error", "You do not have translations to check!");}
+            
+            else {
+                progressbar = document.querySelector(".indeterminate-progress-bar");
+                let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
+                console.debug("bars:",progressbar,"<br>",progressbarStyle)
+                progressbarStyle.style.animation = 'none'
+                progressbar.style.display = "none";
+                let errMessage = __("You do not have translations to check!")
+                messageBox("error", errMessage);
+            }
         }
     }
     else {
@@ -1844,9 +1856,11 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     var plural_present = "";
     var record = "";
     var row = "";
-    var preview = "";
+    var preview;
     var pretrans = 'notFound';
-    var counter=0;
+    var counter = 0;
+    var rowchecked;
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     //destlang = "nl"
     parrotActive = 'true';
     locale = checkLocale();
@@ -1899,7 +1913,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
             curbut.style.backgroundColor = "#0085ba";
             curbut.innerText = "Save";
-            curbut.title = "Save the string";
+            curbut.title = __("Save the string");
             transtype = "single";
         }
 
@@ -2025,7 +2039,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             var element1 = document.createElement("div");
                             element1.setAttribute("class", "trans_local_div");
                             element1.setAttribute("id", "trans_local_div");
-                            element1.appendChild(document.createTextNode("Local"));
+                            element1.appendChild(document.createTextNode(__("Local")));
                             preview.appendChild(element1);
                             
                             // we need to set the checkbox as marked
@@ -2051,7 +2065,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                         var element1 = document.createElement("div");
                         element1.setAttribute("class", "trans_local_div");
                         element1.setAttribute("id", "trans_local_div");
-                        element1.appendChild(document.createTextNode("Local"));
+                        element1.appendChild(document.createTextNode(__("Local")));
                         preview.appendChild(element1);
                         // we need to set the checkbox as marked
                         preview = document.querySelector(`#preview-${row}`);
@@ -2204,7 +2218,22 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     showNameLabel(originalElem)
                 }
                 validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
-               // validateEntry(destlang, textareaElem, "", "", row);
+                validateEntry(destlang, textareaElem, "", "", row);
+                // we need to set the checkbox as marked
+                preview = document.querySelector(`#preview-${row}`);
+               // console.debug("set check",preview,is_pte)
+                if (is_pte) {
+                    rowchecked = preview.querySelector(".checkbox input");
+                }
+                else {
+                    rowchecked = preview.querySelector(".myCheckBox input");
+                }
+                //console.debug("rowchecked:",rowchecked)
+                if (rowchecked != null) {
+                    if (!rowchecked.checked) {
+                        rowchecked.checked = true;
+                    }
+                }
             }
         }
 
@@ -2221,23 +2250,31 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             preview.classList.replace("untranslated", "status-waiting");
             preview.classList.replace("status-fuzzy", "status-waiting");
             preview.classList.add("wptf-translated");
-            // 12-03-2022 PSS changed the background if record was set to fuzzy and new translation is set
-            //preview.style.backgroundColor = "#ffe399";
-            rowchecked = preview.querySelector("th input");
-            if (rowchecked == null) {
-                rowchecked = preview.querySelector("td input");
-            }
-            if (!rowchecked.checked) {
-                rowchecked.checked = true;
-            }
+           
         }
         else {
             // We need to adept the class to hide the untranslated lines
-            // Hiding the row is done through CSS tr.preview.status-hidden
-           
+            // Hiding the row is done through CSS tr.preview.status-hidden 
             preview.classList.replace("untranslated", "status-hidden");
         }
+       
+
     }
+    // we need to set the checkbox as marked
+   // preview = document.querySelector(`#preview-${row}`);
+   // console.debug("set check",preview,is_pte)
+   // if (is_pte) {
+   //     rowchecked = preview.querySelector(".checkbox input");
+   // }
+   // else {
+   //     rowchecked = preview.querySelector(".myCheckBox input");
+   // }
+    //console.debug("rowchecked:",rowchecked)
+   // if (rowchecked != null) {
+     //   if (!rowchecked.checked) {
+       //     rowchecked.checked = true;
+       // }
+    //}
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
     translateButton.className += " translated";
@@ -2269,6 +2306,7 @@ const throttleFunction = (preview) => {
     if (currentTime - lastExecution >= throttleDuration) {
         lastExecution = currentTime;
         if (typeof editoropen !== "undefined" && editoropen !== null) {
+            
             editoropen.click();
             return Promise.resolve("Open");
         } else {
@@ -2528,9 +2566,9 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     var row;
     var textareaElem;
     var rowchecked;
+    var copyClip
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     locale = checkLocale();
-
     // We need to populate the posttranslate array
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
@@ -2564,7 +2602,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             rowchecked = preview.querySelector("th input");
             }
             else {
-                        rowchecked = preview.querySelector("td input");
+               rowchecked = preview.querySelector("td input");
             }
         let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
         // We need to determine the current state of the record
@@ -2611,9 +2649,18 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                 toTranslate = checkComments(comment.trim());
             }
             if (toTranslate) {
+                if (autoCopyClipBoard) {
+                    copyClip = true;
+                }
+                autoCopyClipBoard = false;
                 editoropen = await openEditor(preview);
                 result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
                     return new Promise((resolve, reject) => {
+                        // we need to disable autoCopyClipboard as it is unwanted here
+                       // if (autoCopyClipBoard) {
+                       //     copyClip = true;
+                      //  }
+                       // autoCopyClipBoard = false;
                         myTM = fetchsuggestions(row);
                         if (typeof myTM != 'undefined') {
                             setTimeout(() => {
@@ -2627,8 +2674,11 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                                 // glotpress_close.click();
                             }, 500);
                         }
+                        
                     });
+                    
                 });
+                
                 textareaElem = editor.querySelector("textarea.foreign-text");
                 //console.debug("textareaElem populate TM:",textareaElem)
                 if (result != "No suggestions") {
@@ -2647,7 +2697,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     });
                 }
                 else {
-                    console.debug("No suggestions");
+                    //console.debug("No suggestions");
                     textareaElem.innerText = "No suggestions"
                     if (is_pte) {
                         rowchecked = preview.querySelector("th input");
@@ -2655,7 +2705,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
                     else {
                         rowchecked = preview.querySelector("td input");
                     }
-                    console.debug("rowchecked:", rowchecked, resli, result)
+                    //console.debug("rowchecked:", rowchecked, resli, result)
                     if (rowchecked != null) {
                         if (!rowchecked.checked) {
                             if (resli == "No suggestions") {
@@ -2671,7 +2721,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
             }
             else {
                 let translatedText = original;
-                let textareaElem = record.querySelector("textarea.foreign-text");
+                textareaElem = record.querySelector("textarea.foreign-text");
                 textareaElem.innerText = translatedText;
                 textareaElem.innerHTML = translatedText;
                 textareaElem.value = translatedText;
@@ -2693,25 +2743,25 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
              if (preview.innerText.includes('No suggestions')!= true){
                  if (is_pte) {
                   rowchecked= document.querySelector(`#preview-${row} th input`);
-                  console.debug("rowcheckedd:",rowchecked)
                   }
                   else {
                       rowchecked= document.querySelector(`#preview-${row} td input`);
                   }
-                    console.debug("checked:",rowchecked)
                   if (rowchecked != null) {
-                      console.debug("we set checked")
                       rowchecked.checked = true;
-                      
                   }
-                  counter++;
+                 counter++;
+                 if (typeof textareaElem == "undefined") {
+
+                 }
                   result = validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
                   mark_as_translated(row)
              }
         }
         else {
             console.debug('Found plural!');
-        }   
+        }
+       
     }
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
@@ -2723,12 +2773,16 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     editor.style.display = "";
     // PSS setting the value to "" solves the problem of closing the last preview
     preview.style.display = "";
-    toastbox("info", __("We have found: ") + counter, "2500", "TM records");
+    toastbox("info", __("We have found: ") + counter, "2500", " TM records");
     if (GlotPressBulkButton != null) {
         if (counter > 0) {
             let button = GlotPressBulkButton.getElementsByClassName("button")
             button[0].disabled = true;
         }
+    }
+    // We need to enable autoCopyClipBoard if it was active
+    if (copyClip) {
+        autoCopyClipBoard = true;
     }
 }
 
@@ -3542,6 +3596,8 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     editor = await document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
     let original = editor.querySelector("span.original-raw").innerText;
     let text = editor.querySelector("textarea.foreign-text").value;
+    let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
+    //console.debug("check:",checkTranslateButton)
     // posprocess the translation
     translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
     textareaElem = editor.querySelector("textarea.foreign-text");
@@ -3560,6 +3616,10 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
             translatedText = postProcessTranslation(original, pluralText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
             textareaElem1.value = translatedText
         }
+    }
+    if (checkTranslateButton != null) {
+        checkTranslateButton.className = "checktranslation-entry-my-button-ready";
+        checkTranslateButton.style.color = 'white';
     }
 }
 
@@ -3631,7 +3691,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             translateButton.className = "translation-entry-my-button restarted";
             translateButton.innerText = __("Translate")
     }
-    
+    let preview = document.querySelector(`#preview-${rowId} .translation.foreign-text`);
     //16 - 06 - 2021 PSS fixed this function to prevent double buttons issue #74
     // 07-07-2021 PSS need to determine if current record
     let g = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -3928,12 +3988,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             }
             
             // Translation completed
+
             // we need to validate the results from local as well, to remove the glossary markings if present
             result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false);
             let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
             remove_all_gloss(myleftPanel)
             mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
-
+            
            // translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // if row is already translated the rowId has different format, so we need to search with this different format
            // if (translateButton == null) {
@@ -3968,7 +4029,12 @@ async function saveLocal() {
     var timeout = 0;
     var timout = 1000;
     vartime = 1000;
+    var MycopyClip;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    if (autoCopyClipBoard) {
+        MycopyClip = true;
+    }
+    autoCopyClipBoard = false;
     //console.debug("saveLocal started",is_pte)
     for (let preview of document.querySelectorAll("tr.preview.status-waiting")) {
     //document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
@@ -4010,6 +4076,7 @@ async function saveLocal() {
                         if (current.innerText == 'waiting' || current.innerText == 'transFill') {
                             //console.debug("we have a waiting")
                             // 06-07-2023 PSS changed to not open the editor anymore
+                            
                             let bulk_save = preview.querySelector(".tf-save-button");
                             bulk_save.click();          
                             // else we need to select the save button
@@ -4066,6 +4133,8 @@ async function saveLocal() {
 // Function to walk through the HTML table
 function walkThroughTable(selector, interval) {
     var timeout = 1000;
+    var MycopyClip
+    console.debug("we walk through table")
     return new Promise((resolve, reject) => {
         const checkInterval = setInterval(() => {
             const element = document.querySelector(selector);
@@ -4094,6 +4163,10 @@ function walkThroughTable(selector, interval) {
                             if (current.innerText == 'waiting' || current.innerText == 'transFill') {
                                 //console.debug("we have a waiting")
                                 // 06-07-2023 PSS changed to not open the editor anymore
+                                if (autoCopyClipBoard) {
+                                    MycopyClip = true;
+                                }
+                                autoCopyClipBoard = false;
                                 let bulk_save = preview.querySelector(".tf-save-button");
                                 bulk_save.click();
                                 waitForMyElement('.gp-js-message', 300)
@@ -4168,6 +4241,7 @@ function saveLocal_2(bulk_timer) {
     var editor;
     var original;
     var dismiss;
+    var My1copyClip
     StartObserver =false
     const template = `
     <div class="indeterminate-progress-bar">
@@ -4191,7 +4265,7 @@ function saveLocal_2(bulk_timer) {
             checkset = preview.querySelector('input[type="checkbox"]')
             //console.debug("checkset:", checkset)
             if (checkset != null && checkset.checked == true) {
-                // 13-06-2024 PSS we only count the read lines when the checkbox is ticket
+                // 13-06-2024 PSS we only count the read lines when the checkbox is ticked
                 line_read++
                 editor = preview.nextElementSibling;
                 if (editor != null) {
@@ -4212,6 +4286,10 @@ function saveLocal_2(bulk_timer) {
                         editor.style.display = "";
                         glotpress_suggest.classList.remove("disabled")
                         //glotpress_suggest.click();
+                        if (autoCopyClipBoard) {
+                            My1copyClip = true;
+                        }
+                        autoCopyClipBoard = false;
                         new Promise(resolve => setTimeout(async () => {
                             preview.querySelector("td.actions .edit").click();
                             try {
@@ -4295,8 +4373,6 @@ function saveLocal_2(bulk_timer) {
                // toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
                 //console.debug("No checkset found!")
             }
-            
-            //close_toast()
         }
         else {
            // console.log("ClassList of preview:",preview.classList)
@@ -4310,6 +4386,9 @@ function saveLocal_2(bulk_timer) {
                 let read=__("We have read:")
                 let saved= __(" records and saved:")
                 messageBox("info", read + line_read + saved + counter);
+                if (My1copyClip) {
+                    autoCopyClipBoard = true;
+                }
                // console.log('All records processed    
             }
             else {console.debug("no progressbar!")}
@@ -5117,10 +5196,12 @@ async function bulkSaveToLocal() {
         }
     } else {
         counter = saveToLocal();
+        let errMessage = __("Records are processed: ")
+        let infoMessage = __("Bulk save to local")
         cuteAlert({
             type: "info",
-            title: "Bulk save to local",
-            message: "Records are processed: " + RecCount,
+            title: infoMessage,
+            message: errMessage + RecCount,
             confirmText: "Confirm",
             cancelText: "Cancel",
             myWindow: currWindow

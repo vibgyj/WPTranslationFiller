@@ -10,6 +10,16 @@ var autoCopyClipBoard;
 var LoadGloss;
 var DispCount;
 var is_pte;
+var classToolTip;
+
+
+function triggerGarbageCollection() {
+    let tempArray = new Array(1000000).fill(0);
+    tempArray = null; // Clear the reference
+    console.debug("we are garbage collecting")
+}
+
+//triggerGarbageCollection();
 
 if (typeof addon_translations == 'undefined'){
     console.debug("we are setting up langvar")
@@ -30,7 +40,7 @@ async function loadTranslations(language) {
         }
         else {
            addon_translations = await response.json(); // Store translations
-           console.log("Translations loaded:");
+           console.log("Translations loaded");
         }
     } catch (error) {
         console.error(error);
@@ -46,7 +56,7 @@ function __(key) {
 
 async function initTranslations(event) {
     let userLang = checkLocale() || 'en';
-     console.debug("userlanguage:",userLang,addon_translations.length)
+     console.debug("userlanguage:",userLang)
      if (typeof addon_translations.length == 'undefined'){
          console.debug("Language will be loaded")
          
@@ -405,7 +415,8 @@ document.addEventListener("keydown", async function (event) {
                         reader.readAsText(myFile);
                     }
                     else {
-                        messageBox(info, "No file selected")
+                        let errMessage = __("No file selected")
+                        messageBox(info, errMessage)
                     }
                 };
                 input.click();
@@ -697,7 +708,8 @@ document.addEventListener("keydown", async function (event) {
             }
             else {
                 // File is wrong type so do not process it
-                messageBox("error", "File is not a csv!");
+                let errMessage = __("File is not a csv!")
+                messageBox("error", errMessage);
             }
         });
     }
@@ -815,37 +827,6 @@ document.addEventListener("keydown", async function (event) {
 });
 
 
-//the below code can be removed if starting from non PTE is 100% working
-//the  belowremoved
-//let bulkbutton = document.getElementById("tf-bulk-button");
-//if (bulkbutton != null){
- //   bulkbutton.addEventListener("click", (event) => {
- //       event.preventDefault();
- //       console.debug("I clicked bulksave")
- //       chrome.storage.local.get(["bulkWait"], async function (data) {
- //           let bulkWait = data.bulkWait
- //           var myInterCept;
- //           var interCept;
- //           if (bulkWait != null && typeof bulkWait != 'undefined') {    
-  //              myInterCept = await localStorage.getItem('interXHR')
-  //              console.debug("startbulksave via eventlistener:", myInterCept)
-  //              if (myInterCept === 'true') {
-  //                  interCept = true
-  //              }
-  //              else {
-   //                 interCept = false
-  //              }
-                //localStorage.setItem('interXHR', interCept); // Set this to true or false based on your condition
-                // Set this based on your condition
-  //              sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-   //             bulk_timer = bulkWait
-   //             console.debug("bulk_timer")
-   //             bulkSave("false", bulk_timer);
-   //         }
-   //     });
-  //  });
-// }
-
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
@@ -862,18 +843,18 @@ if (el3 != null) {
 }
 
 //Add option link
-var optionlink = document.createElement("li");
+let optionlink = document.createElement("li");
 var a = document.createElement('a');
 a.href = chrome.runtime.getURL('wptf-options.html');
-var link = document.createTextNode("WPTF options");
+let link = document.createTextNode("WPTF options");
 a.appendChild(link);
 optionlink.className = 'menu-item wptf_settings_menu'
 
-var databaselink = document.createElement("li");
+let databaselink = document.createElement("li");
 var b = document.createElement('a');
 b.href = "#"
 //b.target = "_self";
-var link = document.createTextNode("WPTF database");
+link = document.createTextNode("WPTF database");
 b.id = "openModalLink"
 b.appendChild(link);
 databaselink.className = 'menu-item wptf_database_menu'
@@ -900,24 +881,24 @@ document.addEventListener('click', function (event) {
 
 function translatedButton(){
 //Add translate button - start
-var translateButton = document.createElement("a");
+let translateButton = document.createElement("a");
 translateButton.href = "#";
 //translateButton.ID = 'Translate'
 translateButton.className = "translation-filler-button";
 translateButton.onclick = translatePageClicked;
 translateButton.innerText = __('Translate');
-var divPaging = document.querySelector("div.paging");
+let divPaging = document.querySelector("div.paging");
 // 1-05-2021 PSS fix for issue #75 do not show the buttons on project page
-var divProjects = document.querySelector("div.projects");
+let divProjects = document.querySelector("div.projects");
 
 //12-05-2022 PSS added a new button for local translate
-var localtransContainer = document.createElement("div")
+let localtransContainer = document.createElement("div")
 localtransContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This function populates the table with translations from the local database")
 
-var localtransButton = document.createElement("a");
+let localtransButton = document.createElement("a");
 localtransButton.href = "#";
 localtransButton.className = "local-trans-button";
 localtransButton.onclick = localTransClicked;
@@ -926,13 +907,13 @@ localtransContainer.appendChild(localtransButton)
 localtransContainer.appendChild(classToolTip)
 
 //12-05-2022 PSS added a new button for local translate
-var TmContainer = document.createElement("div")
+let TmContainer = document.createElement("div")
 TmContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This button starts fetching existing translations from translation memory")
 //let TM = localStorage.getItem(['switchTM']);
-var tmtransButton = document.createElement("a");
+let tmtransButton = document.createElement("a");
 tmtransButton.href = "#";
 
 //if (TM == "false") {
@@ -951,9 +932,9 @@ TmContainer.appendChild(tmtransButton)
 TmContainer.appendChild(classToolTip)
 
 //12-05-2022 PSS added a new button for local translate
-var TmDisableContainer = document.createElement("div")
+let TmDisableContainer = document.createElement("div")
 TmDisableContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This button disables fetching existing translations from translation memory")
 
@@ -967,7 +948,7 @@ if (interCept === null || (interCept !== "true" && interCept !== "false")) {
     localStorage.setItem("interXHR", interCept);
 }
 
-var tmDisableButton = document.createElement("a");
+let tmDisableButton = document.createElement("a");
 tmDisableButton.href = "#";
 tmDisableButton.className = "tm-disable-button";
 if (interCept === 'false') {
@@ -994,13 +975,13 @@ TmDisableContainer.appendChild(tmDisableButton)
 TmDisableContainer.appendChild(classToolTip)
 
 //23-03-2021 PSS added a new button on first page
-var checkContainer = document.createElement("div")
+let checkContainer = document.createElement("div")
 checkContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This function checks the page for missing verbs and if set starts spellchecking")
 
-var checkButton = document.createElement("a");
+let checkButton = document.createElement("a");
 checkButton.href = "#";
 checkButton.className = "check_translation-button";
 checkButton.onclick = checkPageClicked;
@@ -1009,12 +990,12 @@ checkContainer.appendChild(checkButton)
 checkContainer.appendChild(classToolTip)
 
 //23-03-2021 PSS added a new button on first page
-var implocContainer = document.createElement("div")
+let implocContainer = document.createElement("div")
 implocContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This button starts the import of a local po file containing translations into the current table")
-var impLocButton = document.createElement("a");
+let impLocButton = document.createElement("a");
 impLocButton.href = "#";
 impLocButton.className = "impLoc-button";
 impLocButton.onclick = impFileClicked;
@@ -1024,26 +1005,26 @@ implocContainer.appendChild(classToolTip)
 
 
 //23-03-2021 PSS added a new button on first page
-var implocDatabaseContainer = document.createElement("div")
+let implocDatabaseContainer = document.createElement("div")
 implocDatabaseContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This button converts po and inserts to local database")
-var impDatabaseButton = document.createElement("a");
+let impDatabaseButton = document.createElement("a");
 impDatabaseButton.href = "#";
 impDatabaseButton.className = "convLoc-button";
 impDatabaseButton.onclick = impLocDataseClicked;
-impDatabaseButton.innerText = "Conv po DB";
+impDatabaseButton.innerText = __("Conv po DB");
 implocDatabaseContainer.appendChild(impDatabaseButton)
 implocDatabaseContainer.appendChild(classToolTip)
 
 //23-03-2021 PSS added a new button on first page
-var checkAllContainer = document.createElement("div")
+let checkAllContainer = document.createElement("div")
 checkAllContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = "This button selects all records"
-var checkAllButton = document.createElement("a");
+let checkAllButton = document.createElement("a");
 checkAllButton.href = "#";
 checkAllButton.className = "selectAll-button";
 checkAllButton.onclick = setmyCheckBox;
@@ -1052,34 +1033,50 @@ checkAllContainer.appendChild(checkAllButton)
 checkAllContainer.appendChild(classToolTip)
 
 //07-05-2021 PSS added a export button on first page
-var exportContainer = document.createElement("div")
+let exportContainer = document.createElement("div")
 exportContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This button starts the export of the local database")
 
-var exportButton = document.createElement("a");
+let exportButton = document.createElement("a");
 exportButton.href = "#";
 exportButton.className = "export_translation-button";
 exportButton.onclick = exportPageClicked;
-exportButton.innerText = "Export";
+exportButton.innerText = __("Export");
 exportContainer.appendChild(exportButton)
 exportContainer.appendChild(classToolTip)
 
+
+let exportPoContainer = document.createElement("div")
+exportPoContainer.className = 'button-tooltip'
+classToolTip = document.createElement("span")
+classToolTip.className = 'tooltiptext'
+classToolTip.innerText = __("This button starts the export of the local database to a .po file")
+
+let exportPoButton = document.createElement("a");
+exportPoButton.href = "#";
+exportPoButton.className = "export_translation-po-button";
+exportPoButton.onclick = exportPoClicked;
+exportPoButton.innerText = __("ExportPo");
+exportPoContainer.appendChild(exportPoButton)
+exportPoContainer.appendChild(classToolTip)
+
+
 //07-05-2021 PSS added a import button on first page
-var importContainer = document.createElement("div")
+let importContainer = document.createElement("div")
 importContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
 classToolTip.innerText = __("This button starts the import of a local file into the local database")
-var importButton = document.createElement("a");
+let importButton = document.createElement("a");
 importButton.href = "#";
 importButton.id = "ImportDb";
 //importButton.type = "file";
 //importButton.style="display: none";
 importButton.className = "import_translation-button";
 importButton.onclick = importPageClicked;
-importButton.innerText = "Import";
+importButton.innerText = __("Import");
 importContainer.appendChild(importButton)
 importContainer.appendChild(classToolTip)
 
@@ -1088,11 +1085,11 @@ if (is_pte) {
     //07-05-2021 PSS added a bulksave button on first page
     var bulksaveContainer = document.createElement("div")
     bulksaveContainer.className = 'button-tooltip'
-    var classToolTip = document.createElement("span")
+    classToolTip = document.createElement("span")
     classToolTip.className = 'tooltiptext'
     classToolTip.innerText = __("This is the function to save all suggestions selected in bulk")
 
-    var bulksaveButton = document.createElement("a");
+    let bulksaveButton = document.createElement("a");
     bulksaveButton.href = "#";
     bulksaveButton.id = "BulkSave";
     bulksaveButton.className = "bulksave-button";
@@ -1103,13 +1100,13 @@ if (is_pte) {
 }
 
 //07-05-2021 PSS added a bulk save for existing translations into the local database
-var bulktolocContainer = document.createElement("div")
+let bulktolocContainer = document.createElement("div")
 bulktolocContainer.className = 'button-tooltip'
-var classToolTip = document.createElement("span")
+classToolTip = document.createElement("span")
 classToolTip.className='tooltiptext'
 classToolTip.innerText = __("This is the function to populate the local database with selected items")
 
-var bulktolocalButton = document.createElement("a");
+let bulktolocalButton = document.createElement("a");
 bulktolocalButton.href = "#";
 bulktolocalButton.id = "BulkSave";
 bulktolocalButton.className = "save_tolocal-button";
@@ -1124,12 +1121,12 @@ if (typeof handleStats === "function") {
     statsButton.id = "statsButton";
     statsButton.className = "stats-button";
     statsButton.onclick = handleStats;
-    statsButton.innerText = "Stats";
+    statsButton.innerText = __("Stats");
 }
 
-var divGpActions = document.querySelector("div.paging");
-var wptfNavBar = document.createElement("div");
-var wptfNavBarCont = document.createElement("div");
+let divGpActions = document.querySelector("div.paging");
+let wptfNavBar = document.createElement("div");
+let wptfNavBarCont = document.createElement("div");
 wptfNavBarCont.className = 'wptfNavBarCont'
 wptfNavBar.appendChild(wptfNavBarCont);
 wptfNavBar.className = "wptfNavBar";
@@ -1137,7 +1134,7 @@ wptfNavBar.id = "wptfNavBar";
 
 if (divPaging != null && divProjects == null) {
     divGpActions.parentNode.insertBefore(wptfNavBar, divGpActions);
-    const divNavBar = document.querySelector("div.wptfNavBarCont")
+    let divNavBar = document.querySelector("div.wptfNavBarCont")
     if (is_pte) {
         divNavBar.appendChild(bulksaveContainer);
     }
@@ -1151,6 +1148,7 @@ if (divPaging != null && divProjects == null) {
     divNavBar.appendChild(importContainer);
     divNavBar.appendChild(exportContainer);
    // divNavBar.appendChild(exportButton);
+    divNavBar.appendChild(exportPoContainer);
     divNavBar.appendChild(implocDatabaseContainer);
     divNavBar.appendChild(bulktolocContainer);
   //  divNavBar.appendChild(bulktolocalButton);
@@ -1166,12 +1164,12 @@ if (divPaging != null && divProjects == null) {
 }
 
 //12-05-2022 PSS added a new buttons specials
-var UpperCaseButton = document.createElement("a");
+let UpperCaseButton = document.createElement("a");
 UpperCaseButton.href = "#";
 UpperCaseButton.onclick = UpperCaseClicked;
 UpperCaseButton.innerText = __("Casing");
 
-var SwitchGlossButton = document.createElement("a");
+let SwitchGlossButton = document.createElement("a");
 SwitchGlossButton.href = "#";
 SwitchGlossButton.onclick = SwitchGlossClicked;
 SwitchGlossButton.className = "Switch-Gloss-button";
@@ -1188,7 +1186,7 @@ chrome.storage.local.get("DefGlossary").then((res) => {
     }
 });
 
-var SwitchTMButton = document.createElement("a");
+let SwitchTMButton = document.createElement("a");
 SwitchTMButton.href = "#";
 SwitchTMButton.className = "Switch-TM-button";
 SwitchTMButton.onclick = SwitchTMClicked;
@@ -1211,17 +1209,17 @@ LoadGloss.onclick = LoadGlossClicked;
 LoadGloss.innerText = __("LoadGloss");
 
 
-var DispGloss = document.createElement("a");
+let DispGloss = document.createElement("a");
 DispGloss.href = "#";
 DispGloss.className = "DispGloss-button";
 DispGloss.onclick = DispGlossClicked;
 DispGloss.innerText = __("DispGloss");
 
-var DispClipboard = document.createElement("a");
+let DispClipboard = document.createElement("a");
 DispClipboard.href = "#";
 DispClipboard.className = "DispClipboard-button";
 DispClipboard.onclick = DispClipboardClicked;
-DispClipboard.innerText = "ClipBoard";
+DispClipboard.innerText = __("ClipBoard");
 chrome.storage.local.get('autoCopyClip', async function (result) {
     if (result.autoCopyClip == true){
         DispClipboard.style.background = "red"
@@ -1239,15 +1237,15 @@ chrome.storage.local.get('autoCopyClip', async function (result) {
 //DispCount.href = "#";
 //DispCount.className = "DispCount-button";
 
-var WikiLink = document.createElement("a");
+let WikiLink = document.createElement("a");
 WikiLink.href = 'https://github.com/vibgyj/WPTranslationFiller/wiki'
-WikiLink.innerText ="WPTF Docs"
+WikiLink.innerText = __("WPTF Docs")
 WikiLink.className = 'menu-item-wptf_wiki'
 
 // 12-05-2022 PSS here we add all buttons in the pagina together
-var GpSpecials = document.querySelector("span.previous.disabled");
+let GpSpecials = document.querySelector("span.previous.disabled");
 if (GpSpecials == null) {
-    var GpSpecials = document.querySelector("a.previous");
+    GpSpecials = document.querySelector("a.previous");
 }
 if (GpSpecials != null && divProjects == null) {
     divPaging.insertBefore(WikiLink, divPaging.childNodes[0]);
@@ -1276,7 +1274,7 @@ if (GpSpecials != null && divProjects == null) {
 
 
 async function checkGlossary(event) {
-    var glos_isloaded = await localStorage.getItem(['deeplGlossary']);
+    let glos_isloaded = await localStorage.getItem(['deeplGlossary']);
     if (glos_isloaded == null || glos_isloaded=="") {
         LoadGloss.className = "LoadGloss-button-red";
     } else {
@@ -1288,7 +1286,7 @@ function DispGlossClicked(event) {
     // function to show glossary
     chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
         var formal = checkFormal(false);
-        var DeeplFree = data.DeeplFree;
+        let DeeplFree = data.DeeplFree;
         show_glossary(data.apikeyDeepl, DeeplFree, data.destlang)
     });
 }
@@ -1306,7 +1304,8 @@ function DispClipboardClicked(event) {
         });
         DispClipboard.style.background = "green"
         DispClipboard.style.color = "white"
-        messageBox('info',"Auto copy to clipboard switched off")
+        let errMessage = __("Auto copy to clipboard switched off")
+        messageBox('info',errMessage)
     }
     else {
         autoCopyClipBoard = true
@@ -1314,7 +1313,8 @@ function DispClipboardClicked(event) {
             autoCopyClip: autoCopyClipBoard
         });
         DispClipboard.style.background = "red"
-        messageBox('info',"Auto copy to clipboard switched on")
+        let errMessage = __("Auto copy to clipboard switched on");
+        messageBox('info', errMessage);
     }
 });
 }
@@ -1353,6 +1353,7 @@ fileSelector.addEventListener("change", (event) => {
     }
     else {
         // File is wrong type so do not process it
+        let errMessage = __("File is not a csv!")
         messageBox("error", "File is not a csv!");
     }
 });
@@ -1389,11 +1390,11 @@ function SwitchGlossClicked(event) {
     event.preventDefault(event);
     chrome.storage.local.get("DefGlossary").then((res) => { 
         if (res.DefGlossary == true) {
-        toastbox("info", "Switching Glossary to second", "1200", "Glossary switch");
+        toastbox("info", __("Switching Glossary to second"), "2500", __("Glossary switch"));
         chrome.storage.local.set({ DefGlossary: false});
     }
     else {
-        toastbox("info", "Switching Glossary to default", "1200", "Glossary switch");
+        toastbox("info", __("Switching Glossary to default"), "2500", __("Glossary switch"));
         chrome.storage.local.set({ DefGlossary: true });
     }
     location.reload();
@@ -1405,11 +1406,11 @@ function SwitchTMClicked(event) {
     event.preventDefault(event);
     int = localStorage.getItem(['switchTM']);
     if (int == "false") {
-        toastbox("info", "Switching TM to foreign", "1200", "TM switch");
+        toastbox("info", __("Switching TM to foreign"), "2500", "TM switch");
         localStorage.setItem('switchTM', 'true');
     }
     else {
-        toastbox("info", "Switching TM to local", "1200", "TM switch");
+        toastbox("info", __("Switching TM to local"), "2500", "TM switch");
         localStorage.setItem('switchTM', 'false');
     }
     location.reload();
@@ -1530,7 +1531,7 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
-                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower,data.spellCheckIgnore,data.TMtreshold);
+                                result = populateWithTM(data.apikey, data.apikeyDeep, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower, data.spellCheckIgnore, data.TMtreshold);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -1586,26 +1587,26 @@ function impLocDataseClicked(event) {
     chrome.storage.local.get(
         ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
         function (data) {
-            var allrows = [];
-            var myrows = [];
+            let allrows = [];
+            let myrows = [];
             var myFile;
             var pretrans;
             var transtype;
             toastbox("info", "Select file is started", "2000", "Select po file");
-            var input = document.createElement('input');
+            let input = document.createElement('input');
             input.type = 'file';
             input.onchange = _this => {
                 let files = Array.from(input.files);
                 //   console.log(files);
                 if (files && files[0]) {
                     myFile = files[0];
-                    var reader = new FileReader();
+                    let reader = new FileReader();
                     reader.addEventListener('load', function (e) {
                         //output.textContent = e.target.result;
                         myrows = e.target.result.replace(/\r/g, "").split(/\n/);
                         // allrows = e.target.result.split(/\r|\n/);
                         // remove all unnessesary lines as those will take time to process
-                        var regel = '';
+                        let regel = '';
                         for (var i = 0; i < myrows.length - 1; i++) {
                             regel = myrows[i];
                             if (regel.startsWith("msgid") || regel.startsWith("msgstr") || regel.startsWith("msgctxt") || regel.startsWith("msgid_plural") || regel.startsWith("msgstr[0]") || regel.startsWith("msgstr[1]") || regel.startsWith("msgstr[2]") || regel.startsWith("msgstr[3]")) {
@@ -1618,7 +1619,8 @@ function impLocDataseClicked(event) {
                     reader.readAsText(myFile);
                 }
                 else {
-                    messageBox("info", "No file selected")
+                    let errMessage = __("No file selected");
+                    messageBox("info", errMessage);
                 }
                 close_toast();
             };
@@ -1632,8 +1634,8 @@ function impFileClicked(event) {
     chrome.storage.local.get(
         ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
         function (data) {
-            var allrows = [];
-            var myrows = [];
+            let allrows = [];
+            let myrows = [];
             var myFile;
             var pretrans;
             var transtype;
@@ -1645,13 +1647,13 @@ function impFileClicked(event) {
                 //   console.log(files);
                 if (files && files[0]) {
                     myFile = files[0];
-                    var reader = new FileReader();
+                    let reader = new FileReader();
                     reader.addEventListener('load', function (e) {
                         //output.textContent = e.target.result;
                         myrows = e.target.result.replace(/\r/g, "").split(/\n/);
                         // allrows = e.target.result.split(/\r|\n/);
                         // remove all unnessesary lines as those will take time to process
-                        var regel = '';
+                        let regel = '';
                         for (var i = 0; i < myrows.length - 1; i++) {
                             regel = myrows[i];
                             if (regel.startsWith("msgid") || regel.startsWith("msgstr") || regel.startsWith("msgctxt") || regel.startsWith("msgid_plural") || regel.startsWith("msgstr[0]") || regel.startsWith("msgstr[1]")) {
@@ -1659,13 +1661,15 @@ function impFileClicked(event) {
                             }
                         }
                         countimported = new_import_po(data.destlang, myFile, allrows);
-                        messageBox( info, "Records imported:" +countimported)
+                        let errMessage = __("Records imported: ")
+                        messageBox( info, errMessage +countimported)
                         
                     });
                     reader.readAsText(myFile);
                 }
                 else {
-                    messageBox("info", "No file selected")
+                    let errMessage = __("No file selected")
+                    messageBox("info", errMessage)
                 }
                 close_toast();
             };
@@ -1716,7 +1720,7 @@ function translatePageClicked(event) {
 function checkLocale() {
     // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
-    var local = localeString.split("/");
+    let local = localeString.split("/");
     //console.debug("length locale:",local.length,local)
     if (local.length == 8) {
         locale = local[4];
@@ -1725,17 +1729,27 @@ function checkLocale() {
         // if we are not within the tanslation table, the locale is at a different position
         if (local.includes("locale")){
             locale = local[4];
-            console.debug("we found 4")
+            //console.debug("we found 4")
         }
         else {
            locale = local[6];
         }  
     }
     else if (local.length == 10) {
-        locale = local[7];
+        if (local.includes("import-translations")) {
+            locale = local[6];
+        }
+        else {
+            locale = local[7];
+        }
     }
     else if (local.length == 11) {
-        locale = local[8];
+        if (local.includes("import-translations")) {
+            locale = local[7];
+        }
+        else {
+            locale = local[8];
+        }
     }
     else {
         locale ="en";
@@ -1804,12 +1818,24 @@ function exportPageClicked(event) {
     chrome.storage.local.get(
         ["apikey", "destlang"],
         function (data) {
+            // Run the export function
             dbExport(data.destlang);
         }
     );
     // res= dbExport();
 }
 
+function exportPoClicked(event) {
+    event.preventDefault();
+    chrome.storage.local.get(
+        ["apikey", "destlang"],
+        function (data) {
+            // Run the export function
+            exportIndexedDBToPO(data.destlang);
+        }
+    );
+    // res= dbExport();
+}
 
 function loadGlossary(event) {
     //event.preventDefault()
@@ -2055,7 +2081,8 @@ function importPageClicked(event) {
         }
         else {
             // File is wrong type so do not process it
-            messageBox("error", "File is not a csv!");
+            errMessage = __("File is not a csv!")
+            messageBox("error", errMessage);
         }
     });
 }
@@ -2093,7 +2120,8 @@ async function parseDataBase(data) {
             }
         }
         close_toast();
-        messageBox("info", "Import is ready records imported: " + (i-1));
+        let errMessage = __("Import is ready records imported: ")
+        messageBox("info", errMessage + (i-1));
     }
     importButton.className += " ready";
 }
@@ -2189,6 +2217,9 @@ async function checkbuttonClick(event) {
                 });
             }
             addTranslateButtons(rowId);
+            //let translateButton = createElementWithId("my-button", `translate-${rowId}-translation-entry-my-button`);
+            //console.debug("translateButton:",translateButton)
+            //translateButton.class = "translation-entry-my-button"
             // We need to expand the amount of columns otherwise the editor is to small due to the addition of the extra column
             // if the translator is a PTE then we do not need to do this, as there is already an extra column
             myrec = document.querySelector(`#editor-${rowId}`);
@@ -2607,7 +2638,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var currText = 'untranslated'
     var single
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-   //console.debug("updateStyle rowId:",rowId)
+    //console.debug("updateStyle rowId:",rowId)
     //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
@@ -2674,24 +2705,27 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     // pss 12-10-2023 this one needs to be improved as we now have the record containing the editor details
     //current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof checkElem == "object") {
+        //console.debug("checkelem is object", checkElem)
         if (SavelocalButton == null) {
-            let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
             if (!is_pte) {
-                //let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
+                let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
                 // if there is no checkbox, we do not need to add the input to it and alter the columns
-                if (checkBx != null) { 
-                   mycheckbox = document.createElement('input');
-                   mycheckbox.setAttribute("type", "checkbox");
-                   mycheckbox.setAttribute("name", "selected-row[]");
-                   checkBx.appendChild(mycheckbox);
-                   let myrec = document.querySelector(`#editor-${rowId}`);
-                   // We need to expand the amount of columns otherwise the editor is to small
-                   var tds = myrec.getElementsByTagName("td")[0];
-                   tds.setAttribute("colspan", 5);
+                if (checkBx != null) {
+                    inputBox = document.querySelector("#preview-" + rowId + " td input")
+                    mycheckbox = document.createElement('input');
+                    mycheckbox.setAttribute("type", "checkbox");
+                    mycheckbox.setAttribute("name", "selected-row[]");
+                    // if the inputBox is already present, we do not need to add it again
+                    if (inputBox == null) {
+                        checkBx.appendChild(mycheckbox);
+                    }
+                    let myrec = document.querySelector(`#editor-${rowId}`);
+                    // We need to expand the amount of columns otherwise the editor is to small
+                    var tds = myrec.getElementsByTagName("td")[0];
+                    tds.setAttribute("colspan", 5);
                 }
             }
-
-           
+          
             // check for the status of the record
             var separator1 = document.createElement("div");
             separator1.setAttribute("class", "checkElem_save");
@@ -2699,8 +2733,29 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem,"1978")
+            let res = await addCheckButton(rowId, checkElem, "1978")
             SavelocalButton = res.SavelocalButton;
+        }
+        else {
+            // if the button is present but the checkbox not, then we need to add it (happens with first row of table)
+            if (!is_pte) {
+                let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
+                // if there is no checkbox, we do not need to add the input to it and alter the columns
+                if (checkBx != null) {
+                    inputBox = document.querySelector("#preview-" + rowId + " td input")
+                    mycheckbox = document.createElement('input');
+                    mycheckbox.setAttribute("type", "checkbox");
+                    mycheckbox.setAttribute("name", "selected-row[]");
+                    // if the inputBox is already present, we do not need to add it again
+                    if (inputBox == null) {
+                        checkBx.appendChild(mycheckbox);
+                    }
+                    let myrec = document.querySelector(`#editor-${rowId}`);
+                    // We need to expand the amount of columns otherwise the editor is to small
+                    var tds = myrec.getElementsByTagName("td")[0];
+                    tds.setAttribute("colspan", 5);
+                }
+            }
         }
     }
     else {
@@ -2824,16 +2879,26 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             //}
         }
         else {
+            console.debug("textareaElem:",textareaElem)
             wordCount = 0;
-            foundCount = 0;
-            if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length != 0) {
-                percent = 100;
-                toolTip = ""
+            foundCount = 0; 
+            if (typeof textareaElem != "undefined") {
+                if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length != 0) {
+                    percent = 100;
+                    toolTip = ""
+                }
+                else {
+                    percent = 0
+                }
             }
             else {
-                percent = 0
+                console.debug("we have no textareaElem!!")
+                percent = 100
+                tooltip = ""
+                wordCount = 0
+                foundCount =0
             }
-            toolTip = ""
+            //toolTip = ""
             newText = "";
             result = { wordCount, foundCount, percent, toolTip, newText }
             old_status = document.querySelector("#preview-" + rowId);
@@ -3083,47 +3148,47 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     if (typeof rowId != "undefined" && SavelocalButton !=null) {
         switch (current) {
             case "transFill":
-                 SavelocalButton.innerText = "Save";
-                 checkElem.title = "save the string";
+                 SavelocalButton.innerText = __("Save");
+                 checkElem.title = __("save the string");
                  SavelocalButton.disabled = false;
                  break;
             case "waiting":
-                 SavelocalButton.innerText = "Appr";
-                 checkElem.title = "Approve the string";
+                 SavelocalButton.innerText = __("Appr");
+                 checkElem.title = __("Approve the string");
                  SavelocalButton.disabled = false;
                  break;
             case "current":
-                SavelocalButton.innerText = "Curr";
+                SavelocalButton.innerText = __("Curr");
                 SavelocalButton.className = "tf-save-button-disabled"
                 checkElem.title = "Current translation";
                 break;
             case "fuzzy":
-                SavelocalButton.innerText = ("Rej");
-                checkElem.title = "Reject the string";
+                SavelocalButton.innerText = __("Rej");
+                checkElem.title = __("Reject the string");
                 break;
             case "changes requested":
-                SavelocalButton.innerText = ("Rej");
-                checkElem.title = "Reject the string";
+                SavelocalButton.innerText = __("Rej");
+                checkElem.title = __("Reject the string");
                 break;
             case "rejected":
-                SavelocalButton.innerText = ("Rej");
+                SavelocalButton.innerText = __("Rej");
                 SavelocalButton.disabled = true;
                 SavelocalButton.className = "tf-save-button-disabled"
-                checkElem.title = "Rejected string";
+                checkElem.title = __("Reject the string");
                 break;
             case "untranslated":
-                SavelocalButton.innerText = "Empt";
+                SavelocalButton.innerText = __("Empt");
                 SavelocalButton.style.backgroundColor = "grey";
                 checkElem.style.backgroundColor = "white";
-                checkElem.title = "No translation";
+                checkElem.title = __("No translation");
                 break;
             case "old":
-                SavelocalButton.innerText = ("Old");
+                SavelocalButton.innerText = __("Old");
                 checkElem.title = "Old translation";
                 break;
             default:
-                SavelocalButton.innerText = "Undef";
-                checkElem.title = "Something is wrong";
+                SavelocalButton.innerText = __("Undef");
+                checkElem.title = __("Something is wrong");
                 break;
         }
     }
@@ -3202,16 +3267,16 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             }
         }
         if (current == 'current') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else if (current == 'waiting') {
-            button_name = 'Appr'
+            button_name = __('Appr')
         }
         else if (current == 'fuzzy') {
-            button_name = 'Rej'
+            button_name = __('Rej')
         }
         else if (current =='transFill') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else {button_name == 'Undef!!'}
         // We do not need to style the record if it concerns the name label
@@ -3239,7 +3304,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             }
                         }
                         checkElem.style.backgroundColor = "green";
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                        // span_glossary = myleftPanel.querySelector(".glossary-word")
                         remove_all_gloss(myleftPanel)
@@ -3267,7 +3332,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         checkElem.style.backgroundColor = "yellow";
 
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                         //span_glossary = myleftPanel.querySelector(".glossary-word")
                         //remove_all_gloss(myleftPanel)
@@ -3286,7 +3351,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         res = addCheckButton(rowId, checkElem, "1561")
                         SavelocalButton = res.SavelocalButton
                         SavelocalButton.innerText = button_name;
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         checkElem.style.backgroundColor = "orange";
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                         //remove_all_gloss(myleftPanel)
@@ -3307,7 +3372,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         SavelocalButton.innerText = button_name;
                         SavelocalButton.onclick = savetranslateEntryClicked;
                         checkElem.style.backgroundColor = "purple";
-                        checkElem.title = "Save the string";
+                        checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                        // span_glossary = myleftPanel.querySelector(".glossary-word")
                        // remove_all_gloss(myleftPanel)
@@ -3362,7 +3427,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             }
                             else {
                                 if (currstring != "No suggestions") {
-                                    checkElem.title = "Save the string";
+                                    checkElem.title = __("Save the string");
                                     SavelocalButton.innerText = "NoGlos";
                                 }
                                 else {
@@ -5595,16 +5660,16 @@ async function handleMutation(mutationsList, observer) {
             }
         
         if (current == 'current') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else if (current == 'waiting') {
-            button_name = 'Appr'
+            button_name = __('Appr')
         }
         else if (current == 'fuzzy') {
-            button_name = 'Rej'
+            button_name = __('Rej')
         }
         else if (current =='transFill') {
-            button_name = 'Save'
+            button_name = __('Save')
         }
         else {button_name == 'Undef!!'}
                         if (typeof editor == 'object') {
