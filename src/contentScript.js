@@ -5649,6 +5649,13 @@ async function handleMutation(mutationsList, observer) {
                         myRowId = preview.getAttribute("row")
                         preview_original = document.querySelector(`#preview-${myRowId} .original-text`)
                         myeditor_original = document.querySelector(`#editor-${myRowId} .original`)
+                        // We meed to activate the cursor again
+                        let inputId = `translation_${myRowId}_0`
+                        const inputElement = document.getElementById(inputId);
+                        if (inputElement) {
+                            inputElement.focus();    // Focus the input to show the cursor
+                        }
+
                         let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
             if (h != null) {
                 current = h.querySelector("span.panel-header__bubble");

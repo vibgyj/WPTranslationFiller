@@ -181,9 +181,7 @@ async function retrieveDataFromIndexedDB(input) {
     // Perform operations to retrieve data from indexedDB based on the input
     // Replace this with your indexedDB retrieval logic
     let result = await findTransline(input, locale)
-    return result;
-   
-       
+    return result; 
 }
 
 //async function initDb() {

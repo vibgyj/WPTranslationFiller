@@ -8,7 +8,7 @@ function orgdeepLTranslate(original, destlang, record, apikeyDeepl, preverbs, ro
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     //console.debug("original:",original,row,record)
     let result =  getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry);
-    console.debug("result after:",result,errorstate)
+    //console.debug("result after:",result,errorstate)
     return errorstate;
 }
 
@@ -315,7 +315,7 @@ async function oldgetTransDeepl(original, language, record, apikeyDeepl, origina
                 errorstate = "Error 404";
             }
             else if (error[2] == '456') {
-                messageBox("warning", "Error 456 Quota exceeded.<br> The character limit has been reached");
+                messageBox("warning", __("Error 456 Quota exceeded.<br> The character limit has been reached"));
                 errorstate = "Error 456";
             }
             else if (error[2] == '503') {

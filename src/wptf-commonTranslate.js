@@ -4703,6 +4703,12 @@ async function processTransl(original, translatedText, language, record, rowId, 
         //PSS 25-03-2021 Fixed problem with description box issue #13
         textareaElem.style.height = "auto";
         textareaElem.style.height = textareaElem.scrollHeight + "px";
+        // We need to activate the cursor again obviously
+        let inputId = `translation_${myRowId}_0`
+        const inputElement = document.getElementById(inputId);
+        if (inputElement) {
+            inputElement.focus();    // Focus the input to show the cursor
+        }
       
         if (current.innerText != "waiting" && current.innerText != "fuzzy") {
             preview = await record.previousElementSibling
