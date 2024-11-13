@@ -554,7 +554,7 @@ async function addTransline(rowId,showMessage){
     var addTrans = textareaElem.value;
     //console.debug("translation:", textareaElem.value)
     if (addTrans === "") {
-        messageBox("error", "No translation to store!");
+        messageBox("error", __("No translation to store!"));
     } else {
         res = addTransDb(orig, addTrans, language);
         let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
@@ -624,6 +624,32 @@ async function dbExport(destlang) {
         };
         i++;
     });
+    
+// Step 2: Sort arrayData based on new logic
+arrayData.sort((a, b) => {
+    // Remove any potential "s" at the end for base term comparison (handle both cases)
+    const baseA = a.original.replace(/\s*s$/i, "").toLowerCase();
+    const baseB = b.original.replace(/\s*s$/i, "").toLowerCase();
+
+    // Primary sort: group by base term (ignore case)
+    const baseCompare = baseA.localeCompare(baseB);
+    if (baseCompare !== 0) return baseCompare;
+
+    // Secondary sort: prioritize capitalized words over lowercase ones (case-sensitive)
+    const caseCompare = a.original.localeCompare(b.original);
+    if (caseCompare !== 0) return caseCompare;
+
+    // Tertiary sort: ensure singular terms (e.g., "Year") come before plural terms (e.g., "Years")
+    if (a.original.toLowerCase() === baseA && b.original.toLowerCase() === baseB) {
+        // Check for singular vs plural by comparing lengths
+        return a.original.length - b.original.length;
+    }
+
+    return 0;
+});
+
+
+
     arrayData.forEach( obj => {
         var row = [];
         for (key in obj) {
@@ -668,6 +694,27 @@ async function exportIndexedDBToPO(countryFilter) {
         getAllRequest.onsuccess = function () {
             const entries = getAllRequest.result;
 
+            entries.sort((a, b) => {
+        // Remove any potential "s" at the end for base term comparison (handle both cases)
+        const baseA = a.source.replace(/\s*s$/i, "").toLowerCase();
+        const baseB = b.source.replace(/\s*s$/i, "").toLowerCase();
+
+        // Primary sort: group by base term (ignore case)
+        const baseCompare = baseA.localeCompare(baseB);
+        if (baseCompare !== 0) return baseCompare;
+
+        // Secondary sort: prioritize capitalized words over lowercase ones (case-sensitive)
+        const caseCompare = a.source.localeCompare(b.source);
+        if (caseCompare !== 0) return caseCompare;
+
+        // Tertiary sort: ensure singular terms (e.g., "Year") come before plural terms (e.g., "Years")
+        if (a.source.toLowerCase() === baseA && b.source.toLowerCase() === baseB) {
+            // Check for singular vs plural by comparing lengths
+            return a.source.length - b.source.length;
+        }
+
+        return 0;
+    });
             // Initialize the .po file content
             let poContent = "";
 

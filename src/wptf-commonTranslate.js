@@ -977,7 +977,7 @@ function checkFormalPage(dataFormal) {
         checkButton.className += " ready";
     }
     else {
-        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
+        messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
     }
 }
 
@@ -1418,7 +1418,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
         }
     }
     else {
-        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
+        messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
     }
 }
 
@@ -2954,7 +2954,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             if (transsel == "google") {
                                 result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                                 if (errorstate == "Error 400") {
-                                    messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
+                                    messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
                                     //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                     stop = true;
                                     // break;
@@ -2972,7 +2972,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 // console.debug("before translate:",original,row)
                                 result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                                 if (result == "Error 403") {
-                                    messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
+                                    messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                                     stop = true;
                                     // break;
@@ -2984,7 +2984,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     // break;
                                 }
                                 else if (result == "Error 456") {
-                                    messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
+                                    messageBox("error", __("Error 456 Quota exceeded. The character limit has been reached"));
                                     stop = true;
                                     //break;
                                 }
@@ -3002,7 +3002,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             else if (transsel == "microsoft") {
                                 result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                                 if (result == "Error 401") {
-                                    messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
+                                    messageBox("error", __("Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!"));
                                     //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
                                     stop = true;
                                     //  break;
@@ -3025,7 +3025,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             else if (transsel == "OpenAI") {
                                 let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone);
                                 if (errorstate == "Error 401") {
-                                    messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                                    messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                                     // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                                     stop = true;
                                     // break;
@@ -3242,7 +3242,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     if (transsel == "google") {
                                         result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore);
                                         if (errorstate == "Error 400") {
-                                            messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
+                                            messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
                                             //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                                             // break;
                                         }
@@ -3258,7 +3258,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
                                         result = deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                                         if (result == "Error 403") {
-                                            messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
+                                            messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                                             //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
                                             //  break;
                                         }
@@ -3282,7 +3282,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     else if (transsel == "microsoft") {
                                         result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                                         if (result == "Error 401") {
-                                            messageBox("error", "Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!");
+                                            messageBox("error", __("Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!"));
                                             //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
                                             //break;
                                         }
@@ -3303,7 +3303,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone);
 
                                         if (result == "Error 401") {
-                                            messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                                             // break;
                                             stop = true;
@@ -3536,13 +3536,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                 }
             }
         } else {
-            messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!");
+            messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
             // 07-07-2021 Fix for issue #98
             translateButton = document.querySelector(".paging a.translation-filler-button");
             translateButton.className += " after_error";
         }
     } else {
-        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
+        messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
         // 07-07-2021 Fix for issue #98
         translateButton = document.querySelector(".paging a.translation-filler-button");
         translateButton.className += " after_error";
@@ -3759,7 +3759,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     if (transsel == "google") {
                         result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                         if (errorstate == "Error 400") {
-                            messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
+                            messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
                            // alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
                         }
                         else {
@@ -3773,7 +3773,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                         console.debug("result:",result)
                         if (result == 'Error 403') {
-                            messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
+                            messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                         }
                         else if (result == 'Error 404') {
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.<br>Or the glossary provided is not present<br>" + deeplGlossary);
@@ -3789,7 +3789,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                             messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
                         }
                         else if (errorstate == "Error 456") {
-                            messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
+                            messageBox("error", __("Error 456 Quota exceeded. The character limit has been reached"));
                         }
                         else {
                             if (errorstate != "OK" && errorstate !=false) {
@@ -3801,7 +3801,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     else if (transsel == "microsoft") {
                         result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                         if (result == "Error 401") {
-                            messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
@@ -3819,7 +3819,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         let editor = true;
                         result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
                         if (result == "Error 401") {
-                            messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
@@ -3898,7 +3898,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     if (transsel == "google") {
                         result = googleTranslate(plural, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
                         if (errorstate == "Error 400") {
-                            messageBox("error", "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!");
+                            messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
                         }
                         else {
                             if (errorstate != "OK") {
@@ -3910,7 +3910,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                        // console.debug("language:",destlang)
                         result = await deepLTranslate(plural, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                         if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
+                            messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                         }
                         else if (result == 'Error 404') {
                             messageBox("error", "Error in translation received status 404 The requested resource could not be found.");
@@ -3948,7 +3948,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         let editor = true;
                         result = await AITranslate(plural, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
                         if (result == "Error 401") {
-                            messageBox("error", "Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid.");
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                         }
                         else if (result == "Error 403") {
@@ -4011,13 +4011,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             }
         }
         else {
-            messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!!");
+            messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!!"));
             let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             translateButton.className += " translated_error";
         }
     }
     else {
-        messageBox("error", "Your postreplace verbs are not populated add at least on line!");
+        messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
         let translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
         translateButton.className += " translated_error";
     }
