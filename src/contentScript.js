@@ -1662,7 +1662,7 @@ function impFileClicked(event) {
                         }
                         countimported = new_import_po(data.destlang, myFile, allrows);
                         let errMessage = __("Records imported: ")
-                        messageBox( info, errMessage +countimported)
+                        messageBox( "info", errMessage +countimported)
                         
                     });
                     reader.readAsText(myFile);
@@ -3595,12 +3595,12 @@ function showNameLabel(originalElem) {
             if (nameDiff == true) {
                 element1.setAttribute("class", "trans_name_div_true");
                 element1.setAttribute("id", "trans_name_div_true");
-                element1.appendChild(document.createTextNode("Difference in URL, name of theme or plugin or author!"));
+                element1.appendChild(document.createTextNode(__("Difference in URL, name of theme or plugin or author!")));
             }
             else {
                 element1.setAttribute("class", "trans_name_div");
                 element1.setAttribute("id", "trans_name_div");
-                element1.appendChild(document.createTextNode("URL, name of theme or plugin or author!"));
+                element1.appendChild(document.createTextNode(__("URL, name of theme or plugin or author!")));
             }
         }
     }
@@ -3664,7 +3664,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
         let preview = document.querySelector(`#preview-${rowId}`)
         if (my_check != true) {
                originalElem.appendChild(element1);
-               element1.appendChild(document.createTextNode("Existing string(s)! " + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
+               element1.appendChild(document.createTextNode(__("Existing string(s)! ") + currcount + " " + wait + " " + rejec + " " + fuz + " " + old));
                 currcount = currcount.replace("Current:", "");
                 var diffexist = preview.querySelector("trans_original_div");
                 if (diffexist != null) {

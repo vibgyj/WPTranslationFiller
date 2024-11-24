@@ -424,7 +424,7 @@ async function import_po_to_local(destlang, myFile, allrows) {
             }
         }
           
-        console.debug("orig:",original,"trans:",translation)
+       // console.debug("orig:",original,"trans:",translation)
         if (complete) {
             console.debug("we are saving plural")
             if (plural_original != "") {
@@ -434,7 +434,7 @@ async function import_po_to_local(destlang, myFile, allrows) {
            plural_orginal = ""
            translation=""
         }
-        console.debug("item:",item)
+        //console.debug("item:",item)
         if (item.startsWith("msgstr[2] ")) {
             translation = item.replace("msgstr[2] ", "")
             translation = removeQuotes(translation)

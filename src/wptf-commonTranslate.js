@@ -1908,7 +1908,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
         let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
         if (transname != null) {
             transname.className = "trans_name_div";
-            transname.innerText = "URL, name of theme or plugin or author!";
+            transname.innerText = __("URL, name of theme or plugin or author!");
             // In case of a plugin/theme name we need to set the button to blue
             let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
             curbut.style.backgroundColor = "#0085ba";
@@ -2616,12 +2616,12 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
         let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
         if (transname != null) {
             transname.className = "trans_name_div";
-            transname.innerText = "URL, name of theme or plugin or author!";
+            transname.innerText = __("URL, name of theme or plugin or author!");
             // In case of a plugin/theme name we need to set the button to blue
             let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
             curbut.style.backgroundColor = "#0085ba";
             curbut.innerText = "Save";
-            curbut.title = "Save the string";
+            curbut.title = __("Save the string");
             transtype = "single";
         }
         // If in the original field "Singular is present we have a plural translation
@@ -2909,13 +2909,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     //console.debug("transname:",transname)
                     if (transname != null) {
                         transname.className = "trans_name_div";
-                        transname.innerText = "URL, name of theme or plugin or author!";
+                        transname.innerText = __("URL, name of theme or plugin or author!");
                         // In case of a plugin/theme name we need to set the button to blue
                         let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
                        // console.debug("currbut:",curbut)
                         curbut.style.backgroundColor = "#0085ba";
                         curbut.innerText = "Save";
-                        curbut.title = "Save the string";
+                        curbut.title = __("Save the string");
                         transtype = "single";
                     }
                     // If in the original field "Singular is present we have a plural translation
@@ -3497,8 +3497,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         //console.debug("currbut:", curbut)
                         if (curbut != null) { 
                            curbut.style.backgroundColor = "#0085ba";
-                           curbut.innerText = "Save";
-                           curbut.title = "Save the string";
+                           curbut.innerText = __("Save");
+                           curbut.title = __("Save the string");
                         }
                         rowchecked = preview.querySelector("td input");
                         if (rowchecked == null) {
@@ -3783,7 +3783,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                                 translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
                             }
                             translateButton.className += " translated_error";
-                            translateButton.innerText = "Error";
+                            translateButton.innerText = __("Error");
                         }
                         else if (result == "Error 400") {
                             messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
@@ -4941,7 +4941,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         translateButton.classList.remove("started", "translated");
         translateButton.classList.remove("restarted", "translated");    
         translateButton.className += " translated";
-        translateButton.innerText = "Translated";
+        translateButton.innerText = __("Translated");
     }
     //14-09-2021 PSS changed the class to meet GlotDict behavior
     let currentClass = record;
@@ -5176,8 +5176,8 @@ async function bulkSaveToLocal() {
         if (recordsFound == true) {
             cuteAlert({
                 type: "question",
-                title: "Bulk save to local",
-                message: "There are no records selected, <br>are you sure you want to select all records?",
+                title: __("Bulk save to local"),
+                message: __("There are no records selected, <br>are you sure you want to select all records?"),
                 confirmText: "Confirm",
                 cancelText: "Cancel",
                 myWindow: currWindow
@@ -5187,15 +5187,15 @@ async function bulkSaveToLocal() {
                     counter = saveToLocal();
                     cuteAlert({
                         type: "info",
-                        title: "Bulk save to local",
-                        message: "All records are selected and processed: " + RecCount,
+                        title: __("Bulk save to local"),
+                        message: __("All records are selected and processed: ") + RecCount,
                         confirmText: "Confirm",
                         cancelText: "Cancel",
                         myWindow: currWindow
                     })
                 }
                 else {
-                    messageBox("info", "Bulk save cancelled");
+                    messageBox("info", __("Bulk save cancelled"));
                 }
                 
             })

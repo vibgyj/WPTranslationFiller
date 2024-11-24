@@ -724,8 +724,8 @@ async function exportIndexedDBToPO(countryFilter) {
                     const translation = trans.translation;
 
                     // Format each entry as per .po file standards without msgctxt
-                    poContent += `msgid "${original}"\n`;
-                    poContent += `msgstr "${translation}"\n\n`;
+                    poContent += `msgid '${original}'\n`;
+                    poContent += `msgstr '${translation}'\n\n`;
                     poCount++;
                 }
             });
