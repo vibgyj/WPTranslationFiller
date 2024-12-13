@@ -22,7 +22,7 @@ function triggerGarbageCollection() {
 //triggerGarbageCollection();
 
 if (typeof addon_translations == 'undefined'){
-    console.debug("we are setting up langvar")
+    //console.debug("we are setting up langvar")
     var addon_translations ={}
     //console.debug("length:",addon_translations.length)
 }
@@ -40,7 +40,7 @@ async function loadTranslations(language) {
         }
         else {
            addon_translations = await response.json(); // Store translations
-           console.log("Translations loaded");
+           //console.log("Translations loaded");
         }
     } catch (error) {
         console.error(error);
@@ -56,9 +56,9 @@ function __(key) {
 
 async function initTranslations(event) {
     let userLang = checkLocale() || 'en';
-     console.debug("userlanguage:",userLang)
+     //console.debug("userlanguage:",userLang)
      if (typeof addon_translations.length == 'undefined'){
-         console.debug("Language will be loaded")
+         //console.debug("Language will be loaded")
          
          await loadTranslations(userLang); // Load Dutch translations (or any other language)
      }

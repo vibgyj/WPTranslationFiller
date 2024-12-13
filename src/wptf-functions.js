@@ -626,8 +626,17 @@ function countWordsinTable() {
             wordCount = wordCount + countWords(pluralpresent);
         }
         else {
-            original = record.querySelector("span.original-text").innerText;
-            wordCount = wordCount + countWords(original);
+           // console.debug('record:', record)
+            myClassList = record.classList
+           // console.debug("classlist:",myClassList)
+            if (myClassList.contains('status-current')) {
+                original = record.querySelector("span.original-text");
+                //console.debug("original:", original)
+                if (original != null) {
+                    wordCount = wordCount + countWords(original.innerText);
+                }
+            }
+            //else {console.debug("not found!") }
         }
     }
     // console.debug("records counted:", counter, wordCount);

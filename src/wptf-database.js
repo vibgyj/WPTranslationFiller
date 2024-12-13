@@ -195,7 +195,7 @@ async function retrieveDataFromIndexedDB(input) {
 //}
 
 // Part of the solution issue #204
-async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale,current) {
+async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale,current,isOpenAI) {
     //console.debug("getTM:",spellIgnore)
     var timeout = 0;
     var timer = 0;
@@ -209,7 +209,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     if (translatedText != 'No suggestions') {                    
         translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, spellIgnore, locale);
     }
-    processTransl(original, translatedText, locale, record, row, "single", "0", locale, convertToLower, current);
+    //processTransl(original, translatedText, locale, record, row, "single", "0", locale, convertToLower, current);
    // record.style.display = "display: table-row";
   
     let textareaElem = record.querySelector("textarea.foreign-text");
@@ -247,19 +247,33 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     else {
          let preview = document.querySelector("#preview-" + row + " td.translation");
          let spanmissing = preview.querySelector(" span.missing");
-         if (spanmissing != null) {
-             preview.innerText = translatedText;
-             preview.value = translatedText;
-             if (translatedText != 'No suggestions') {
-                 current.innerText = "transFill";
-                 current.value = "transFill";
-                 status.value = "untranslated";
+        if (spanmissing != null) {
+            preview.innerText = translatedText;
+            preview.value = translatedText;
+            if (translatedText != 'No suggestions') {
+                current.innerText = "transFill";
+                current.value = "transFill";
+                status.value = "untranslated";
+            }
+            var element1 = document.createElement("div");
+            element1.setAttribute("class", "trans_local_div");
+            element1.setAttribute("id", "trans_local_div");
+            if (translatedText != "No suggestions") {
+               if (isOpenAI != 'OpenAI') {
+                   element1.appendChild(document.createTextNode("TM"));
+               }
+               else {
+                    element1.appendChild(document.createTextNode("AUTO"))
+               }
+               preview.appendChild(element1);
              }
-             var element1 = document.createElement("div");
-             element1.setAttribute("class", "trans_local_div");
-             element1.setAttribute("id", "trans_local_div");
-             element1.appendChild(document.createTextNode("TM"));
-             preview.appendChild(element1);
+
+             textareaElem = await record.querySelector("textarea.foreign-text");
+             textareaElem.innerText = translatedText;
+             textareaElem.innerHTML = translatedText;
+             textareaElem1 = textareaElem
+             // PSS 29-03-2021 Added populating the value of the property to retranslate            
+             textareaElem.value = translatedText;
 
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record but only if we found a translation!!
@@ -279,7 +293,12 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              var element1 = document.createElement("div");
              element1.setAttribute("class", "trans_local_div");
              element1.setAttribute("id", "trans_local_div");
-             element1.appendChild(document.createTextNode("TM"));
+             if (isOpenAI != 'OpenAI') {
+                 element1.appendChild(document.createTextNode("TM"));
+             }
+             else {
+                 element1.appendChild(document.createTextNode("AUTO"))
+             }
              preview.appendChild(element1);
              
              // we need to set the checkbox as marked

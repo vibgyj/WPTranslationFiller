@@ -123,7 +123,7 @@ const cuteAlert = ({
 
             cancelButton.addEventListener('click', () => {
                 alertWrapper.remove();
-                resolve();
+                resolve('cancel');
             });
         } else {
             const alertButton = myWindow.document.querySelector('.alert-button');

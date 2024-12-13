@@ -1906,6 +1906,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
         // 14-08-2021 PSS we need to put the status back of the label after translating
         let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+        console.debug("transname:",transname)
         if (transname != null) {
             transname.className = "trans_name_div";
             transname.innerText = __("URL, name of theme or plugin or author!");
@@ -2146,7 +2147,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                                     var element1 = document.createElement("div");
                                     element1.setAttribute("class", "trans_local_div");
                                     element1.setAttribute("id", "trans_local_div");
-                                    element1.appendChild(document.createTextNode("Local"));
+                                    element1.appendChild(document.createTextNode(__("Local")));
                                     preview.appendChild(element1);
                                 }
                             }
@@ -2174,7 +2175,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                                 var element1 = document.createElement("div");
                                 element1.setAttribute("class", "trans_local_div");
                                 element1.setAttribute("id", "trans_local_div");
-                                element1.appendChild(document.createTextNode("Local"));
+                                element1.appendChild(document.createTextNode(__("Local")));
                                 my_previewElem = document.querySelector("#preview-" + row + " .translation li:nth-of-type(2)");
                                 my_previewElem.appendChild(element1);
                             }
@@ -2260,21 +2261,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
        
 
     }
-    // we need to set the checkbox as marked
-   // preview = document.querySelector(`#preview-${row}`);
-   // console.debug("set check",preview,is_pte)
-   // if (is_pte) {
-   //     rowchecked = preview.querySelector(".checkbox input");
-   // }
-   // else {
-   //     rowchecked = preview.querySelector(".myCheckBox input");
-   // }
-    //console.debug("rowchecked:",rowchecked)
-   // if (rowchecked != null) {
-     //   if (!rowchecked.checked) {
-       //     rowchecked.checked = true;
-       // }
-    //}
+   
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
     translateButton.className += " translated";
@@ -2289,8 +2276,6 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             button[0].disabled = true;
         }
     }
-   
-    //messageBox("info", "We have found:" + counter + " local records");
 
     //console.timeEnd("translation");
 }
@@ -2361,7 +2346,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
     var lires;
     var newres;
     var liscore;
-    var APIScore;
+    var APIScore= 'None';
     var liSuggestion;
     var TMswitch;
     var TMswitch = localStorage.getItem('switchTM')
@@ -2507,18 +2492,18 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                     if (textFound == "") {
                        // console.debug("liSuggestion present but no result from postProcessTranslation!")
                         textFound = "No suggestions";
-                        resolve(textFound);
+                        resolve({ textFound, APIScore });
                     }
-                    resolve(textFound);
+                    resolve({ textFound, APIScore });
                 }
                 else {
                     textFound ="No suggestions"
-                    resolve(textFound);
+                    resolve({ textFound, APIScore });
                   }
               }
               else {
                   textFound = "No suggestions"
-                  resolve(textFound);
+                  resolve({ textFound, APIScore });
                    }
             } else {
                 newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
@@ -2532,7 +2517,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                     textFound = unEscape(textFound)
                     if (textFound == "") {
                         textFound = "No suggestions";
-                        resolve(textFound);
+                        resolve({ textFound, APIScore });
                     }
                     else {
                         // We need to convert to lower if that is setconveert
@@ -2542,12 +2527,12 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                         else {
                             textFound = check_hyphen(textFound, spellIgnore);
                         }
-                        resolve(textFound);
+                        resolve({ textFound, APIScore });
                     }
                 }
                 else {
                     textFound = "No suggestions"
-                    resolve(textFound);
+                    resolve({ textFound, APIScore });
                 }
             }
         }, TMwait);
@@ -2589,201 +2574,456 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
     myrecCount = document.querySelectorAll("tr.editor")
     //myrecCount = document.getElementsByClassName("editor")
     //console.debug("record count:",myrecCount.length)
-    for (let record of myrecCount) {
+    interCept = localStorage.getItem("interXHR");
+    let currWindow = window.self
+    //console.debug("intercept:",interCept)
+    if (interCept == 'false') {
+        //console.debug("auto translations are fetched")
+        cuteAlert({
+            type: "question",
+            title: __("Auto translate"),
+            message: __("Auto translate is on, do you want to continue?"),
+            confirmText: "Confirm",
+            cancelText: "Cancel",
+            myWindow: currWindow
+        }).then(async (e) => {
+            //console.debug("e:",e)
+            if (e == "cancel") {
+                translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+                translateButton.className += " translated";
+                translateButton.innerText = __("Translated");
+                messageBox("info", __("TM is stopped!"));
 
-        transtype = "single";  
-        row = record.getAttribute("row");
-        // we need to store current preview and editor for later usage
-        preview = document.querySelector(`#preview-${row}`);
-        editor = document.querySelector(`#editor-${row}`);
-        // we need to set the checkbox as marked
-                  //  preview = document.querySelector(`#preview-${row}`);
-        if (is_pte) {
-            rowchecked = preview.querySelector("th input");
             }
             else {
-               rowchecked = preview.querySelector("td input");
-            }
-        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-        // We need to determine the current state of the record
-        if (currec != null) {
-            var current = currec.querySelector("span.panel-header__bubble");
-            var prevstate = current.innerText;
-        }
-        let original = editor.querySelector("span.original-raw").innerText;
-        //console.debug("original:", editor, original)
-        // 14-08-2021 PSS we need to put the status back of the label after translating
-        let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
-        if (transname != null) {
-            transname.className = "trans_name_div";
-            transname.innerText = __("URL, name of theme or plugin or author!");
-            // In case of a plugin/theme name we need to set the button to blue
-            let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
-            curbut.style.backgroundColor = "#0085ba";
-            curbut.innerText = "Save";
-            curbut.title = __("Save the string");
-            transtype = "single";
-        }
-        // If in the original field "Singular is present we have a plural translation
-        pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
-        //console.debug("pluralpresent:",pluralpresent)
-        if (pluralpresent != null) {
-            // currently we do not process plural within TM, as it will only give one result
-            original = pluralpresent.innerText;
-            transtype = "plural";
-            plural_line = "1";
-        }
-        else {
-            transtype = "single";
-            plural_line = "0";
-        }
-        if (transtype == "single") {
-            // PSS 09-03-2021 added check to see if we need to translate
-            //Needs to be put into a function, because now it is unnessary double code
-            toTranslate = true;
-            // Check if the comment is present, if not then if will block the request for the details name etc.
-            let element = record.querySelector(".source-details__comment");
-            if (element != null) {
-                let comment = record.querySelector(".source-details__comment p").innerText;
-                comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-                toTranslate = checkComments(comment.trim());
-            }
-            if (toTranslate) {
-                if (autoCopyClipBoard) {
-                    copyClip = true;
-                }
-                autoCopyClipBoard = false;
-                editoropen = await openEditor(preview);
-                result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
-                    return new Promise((resolve, reject) => {
-                        // we need to disable autoCopyClipboard as it is unwanted here
-                       // if (autoCopyClipBoard) {
-                       //     copyClip = true;
-                      //  }
-                       // autoCopyClipBoard = false;
-                        myTM = fetchsuggestions(row);
-                        if (typeof myTM != 'undefined') {
-                            setTimeout(() => {
-                                //glotpress_close.click();
-                                resolve(myTM);
-                            }, 800);
-                        }
-                        else {
-                            setTimeout(() => {
-                                resolve("No suggestions");
-                                // glotpress_close.click();
-                            }, 500);
-                        }
-                        
-                    });
-                    
-                });
-                
-                textareaElem = editor.querySelector("textarea.foreign-text");
-                //console.debug("textareaElem populate TM:",textareaElem)
-                if (result != "No suggestions") {
-                     myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore,locale,TMtreshold).then(resli => {
-                         if (typeof resli != null) {
-                            // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
-                            myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale,current);         
-                           // console.debug("after fetchli:",textareaElem)
-                         }
-                         else {
-                             console.debug("notfound");
-                        }
+                for (let record of myrecCount) {
 
-                    }).catch((error) => {
-                        console.error("Error in fetching li:", error);
-                    });
-                }
-                else {
-                    //console.debug("No suggestions");
-                    textareaElem.innerText = "No suggestions"
+                    transtype = "single";
+                    row = record.getAttribute("row");
+                    // we need to store current preview and editor for later usage
+                    preview = document.querySelector(`#preview-${row}`);
+                    editor = document.querySelector(`#editor-${row}`);
+                    // we need to set the checkbox as marked
+                    //  preview = document.querySelector(`#preview-${row}`);
                     if (is_pte) {
                         rowchecked = preview.querySelector("th input");
                     }
                     else {
                         rowchecked = preview.querySelector("td input");
                     }
-                    //console.debug("rowchecked:", rowchecked, resli, result)
-                    if (rowchecked != null) {
-                        if (!rowchecked.checked) {
-                            if (resli == "No suggestions") {
-                                rowchecked.checked = false;
+                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                    // We need to determine the current state of the record
+                    if (currec != null) {
+                        var current = currec.querySelector("span.panel-header__bubble");
+                        var prevstate = current.innerText;
+                    }
+                    let original = editor.querySelector("span.original-raw").innerText;
+                    //console.debug("original:", editor, original)
+                    // 14-08-2021 PSS we need to put the status back of the label after translating
+
+                    let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+                    if (transname != null) {
+                        transname.className = "trans_name_div";
+                        transname.innerText = __("URL, name of theme or plugin or author!");
+                        // In case of a plugin/theme name we need to set the button to blue
+                        let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                        curbut.style.backgroundColor = "#0085ba";
+                        curbut.innerText = "Save";
+                        curbut.title = __("Save the string");
+                        transtype = "single";
+                    }
+                    // If in the original field "Singular is present we have a plural translation
+                    pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
+                    //console.debug("pluralpresent:",pluralpresent)
+                    if (pluralpresent != null) {
+                        // currently we do not process plural within TM, as it will only give one result
+                        original = pluralpresent.innerText;
+                        transtype = "plural";
+                        plural_line = "1";
+                    }
+                    else {
+                        transtype = "single";
+                        plural_line = "0";
+                    }
+                    if (transtype == "single") {
+                        // PSS 09-03-2021 added check to see if we need to translate
+                        //Needs to be put into a function, because now it is unnessary double code
+                        toTranslate = true;
+                        // Check if the comment is present, if not then if will block the request for the details name etc.
+                        let element = record.querySelector(".source-details__comment");
+                        if (element != null) {
+                            let comment = record.querySelector(".source-details__comment p").innerText;
+                            comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                            toTranslate = checkComments(comment.trim());
+                        }
+                        if (toTranslate) {
+                            if (autoCopyClipBoard) {
+                                copyClip = true;
+                            }
+                            autoCopyClipBoard = false;
+                            editoropen = await openEditor(preview);
+                            result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
+                                return new Promise((resolve, reject) => {
+                                    // we need to disable autoCopyClipboard as it is unwanted here
+                                    // if (autoCopyClipBoard) {
+                                    //     copyClip = true;
+                                    //  }
+                                    // autoCopyClipBoard = false;
+                                    myTM = fetchsuggestions(row);
+                                    if (typeof myTM != 'undefined') {
+                                        setTimeout(() => {
+                                            //glotpress_close.click();
+                                            resolve(myTM);
+                                        }, 800);
+                                    }
+                                    else {
+                                        setTimeout(() => {
+                                            resolve("No suggestions");
+                                            // glotpress_close.click();
+                                        }, 500);
+                                    }
+
+                                });
+
+                            });
+                            //console.debug("result:", result)
+                            textareaElem = editor.querySelector("textarea.foreign-text");
+                            //console.debug("textareaElem populate TM:",textareaElem)
+                            if (result != "No suggestions") {
+                                myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold).then(resli => {
+                                    if (typeof resli != null) {
+                                        // console.debug("li:",resli.textFound,resli.APIScore)
+                                        // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
+                                        myres = getTM(resli.textFound, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale, current, resli.APIScore);
+                                        // console.debug("after fetchli:",textareaElem)
+                                    }
+                                    else {
+                                        console.debug("notfound");
+                                    }
+
+                                }).catch((error) => {
+                                    console.error("Error in fetching li:", error);
+                                });
                             }
                             else {
-                               // rowchecked.checked = true;
-                               // counter++;
+                                //console.debug("No suggestions");
+                                textareaElem.innerText = "No suggestions"
+                                if (is_pte) {
+                                    rowchecked = preview.querySelector("th input");
+                                }
+                                else {
+                                    rowchecked = preview.querySelector("td input");
+                                }
+                                //console.debug("rowchecked:", rowchecked, resli, result)
+                                if (rowchecked != null) {
+                                    if (!rowchecked.checked) {
+                                        if (resli == "No suggestions") {
+                                            rowchecked.checked = false;
+                                        }
+                                        else {
+                                            // rowchecked.checked = true;
+                                            // counter++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            // here we add a copy of the original as it is a name!
+                            let translatedText = original;
+                            textareaElem = record.querySelector("textarea.foreign-text");
+                            textareaElem.innerText = translatedText;
+                            textareaElem.innerHTML = translatedText;
+                            textareaElem.value = translatedText;
+                            let preview = document.querySelector("#preview-" + row + " td.translation");
+                            if (preview != null) {
+                                preview.innerText = translatedText;
+                                preview.value = translatedText;
+                                pretrans = "FoundName";
+                                // We need to alter the status otherwise the save button does not work
+                                current.innerText = "transFill";
+                                current.value = "transFill";
+                                //10-05-2022 PSS added poulation of status
+                                select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                                var status = select.querySelector("dt").nextElementSibling;
+                                status.innerText = "transFill";
+                                status.value = "transFill";
+                                if (toTranslate == false) {
+                                    showName = true;
+                                }
+                                else {
+                                    showName = false;
+                                }
+                                if (showName == true) {
+                                    let originalElem = document.querySelector("#preview-" + row + " .original");
+                                    showNameLabel(originalElem)
+                                }
+                            }
+                        }
+                        if (preview.innerText.includes('No suggestions') != true) {
+                            if (is_pte) {
+                                rowchecked = document.querySelector(`#preview-${row} th input`);
+                            }
+                            else {
+                                rowchecked = document.querySelector(`#preview-${row} td input`);
+                            }
+                            if (rowchecked != null) {
+                                rowchecked.checked = true;
+                            }
+                            counter++;
+                            if (typeof textareaElem == "undefined") {
+
+                            }
+                            result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                            mark_as_translated(row)
+                        }
+                    }
+                    else {
+                        console.debug('Found plural!');
+                    }
+
+
+                }
+
+                // Translation completed  
+                translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+                translateButton.className += " translated";
+                translateButton.innerText = __("Translated");
+                //let Buttons = editor.querySelector(".panel-header-actions")
+                // let closeButton = Buttons.querySelectorAll("button")
+                // PSS we need to hide the last editor
+                editor.style.display = "";
+                // PSS setting the value to "" solves the problem of closing the last preview
+                preview.style.display = "";
+                toastbox("info", __("We have found: ") + counter, "2500", " TM records");
+                if (GlotPressBulkButton != null) {
+                    if (counter > 0) {
+                        let button = GlotPressBulkButton.getElementsByClassName("button")
+                        button[0].disabled = true;
+                    }
+                }
+                // We need to enable autoCopyClipBoard if it was active
+                if (copyClip) {
+                    autoCopyClipBoard = true;
+                }
+            }
+
+        })
+
+    }
+    else {
+        for (let record of myrecCount) {
+
+            transtype = "single";
+            row = record.getAttribute("row");
+            // we need to store current preview and editor for later usage
+            preview = document.querySelector(`#preview-${row}`);
+            editor = document.querySelector(`#editor-${row}`);
+            // we need to set the checkbox as marked
+            //  preview = document.querySelector(`#preview-${row}`);
+            if (is_pte) {
+                rowchecked = preview.querySelector("th input");
+            }
+            else {
+                rowchecked = preview.querySelector("td input");
+            }
+            let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+            // We need to determine the current state of the record
+            if (currec != null) {
+                var current = currec.querySelector("span.panel-header__bubble");
+                var prevstate = current.innerText;
+            }
+            let original = editor.querySelector("span.original-raw").innerText;
+            //console.debug("original:", editor, original)
+            // 14-08-2021 PSS we need to put the status back of the label after translating
+
+            let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+            if (transname != null) {
+                transname.className = "trans_name_div";
+                transname.innerText = __("URL, name of theme or plugin or author!");
+                // In case of a plugin/theme name we need to set the button to blue
+                let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
+                curbut.style.backgroundColor = "#0085ba";
+                curbut.innerText = "Save";
+                curbut.title = __("Save the string");
+                transtype = "single";
+            }
+            // If in the original field "Singular is present we have a plural translation
+            pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
+            //console.debug("pluralpresent:",pluralpresent)
+            if (pluralpresent != null) {
+                // currently we do not process plural within TM, as it will only give one result
+                original = pluralpresent.innerText;
+                transtype = "plural";
+                plural_line = "1";
+            }
+            else {
+                transtype = "single";
+                plural_line = "0";
+            }
+            if (transtype == "single") {
+                // PSS 09-03-2021 added check to see if we need to translate
+                //Needs to be put into a function, because now it is unnessary double code
+                toTranslate = true;
+                // Check if the comment is present, if not then if will block the request for the details name etc.
+                let element = record.querySelector(".source-details__comment");
+                if (element != null) {
+                    let comment = record.querySelector(".source-details__comment p").innerText;
+                    comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                    toTranslate = checkComments(comment.trim());
+                }
+                if (toTranslate) {
+                    if (autoCopyClipBoard) {
+                        copyClip = true;
+                    }
+                    autoCopyClipBoard = false;
+                    editoropen = await openEditor(preview);
+                    result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
+                        return new Promise((resolve, reject) => {
+                            // we need to disable autoCopyClipboard as it is unwanted here
+                            // if (autoCopyClipBoard) {
+                            //     copyClip = true;
+                            //  }
+                            // autoCopyClipBoard = false;
+                            myTM = fetchsuggestions(row);
+                            if (typeof myTM != 'undefined') {
+                                setTimeout(() => {
+                                    //glotpress_close.click();
+                                    resolve(myTM);
+                                }, 800);
+                            }
+                            else {
+                                setTimeout(() => {
+                                    resolve("No suggestions");
+                                    // glotpress_close.click();
+                                }, 500);
+                            }
+
+                        });
+
+                    });
+                    //console.debug("result:", result)
+                    textareaElem = editor.querySelector("textarea.foreign-text");
+                    //console.debug("textareaElem populate TM:",textareaElem)
+                    if (result != "No suggestions") {
+                        myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold).then(resli => {
+                            if (typeof resli != null) {
+                                // console.debug("li:",resli.textFound,resli.APIScore)
+                                // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
+                                myres = getTM(resli.textFound, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale, current, resli.APIScore);
+                                // console.debug("after fetchli:",textareaElem)
+                            }
+                            else {
+                                console.debug("notfound");
+                            }
+
+                        }).catch((error) => {
+                            console.error("Error in fetching li:", error);
+                        });
+                    }
+                    else {
+                        //console.debug("No suggestions");
+                        textareaElem.innerText = "No suggestions"
+                        if (is_pte) {
+                            rowchecked = preview.querySelector("th input");
+                        }
+                        else {
+                            rowchecked = preview.querySelector("td input");
+                        }
+                        //console.debug("rowchecked:", rowchecked, resli, result)
+                        if (rowchecked != null) {
+                            if (!rowchecked.checked) {
+                                if (resli == "No suggestions") {
+                                    rowchecked.checked = false;
+                                }
+                                else {
+                                    // rowchecked.checked = true;
+                                    // counter++;
+                                }
                             }
                         }
                     }
                 }
+                else {
+                    // here we add a copy of the original as it is a name!
+                    let translatedText = original;
+                    textareaElem = record.querySelector("textarea.foreign-text");
+                    textareaElem.innerText = translatedText;
+                    textareaElem.innerHTML = translatedText;
+                    textareaElem.value = translatedText;
+                    let preview = document.querySelector("#preview-" + row + " td.translation");
+                    if (preview != null) {
+                        preview.innerText = translatedText;
+                        preview.value = translatedText;
+                        pretrans = "FoundName";
+                        // We need to alter the status otherwise the save button does not work
+                        current.innerText = "transFill";
+                        current.value = "transFill";
+                        //10-05-2022 PSS added poulation of status
+                        select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
+                        var status = select.querySelector("dt").nextElementSibling;
+                        status.innerText = "transFill";
+                        status.value = "transFill";
+                        if (toTranslate == false) {
+                            showName = true;
+                        }
+                        else {
+                            showName = false;
+                        }
+                        if (showName == true) {
+                            let originalElem = document.querySelector("#preview-" + row + " .original");
+                            showNameLabel(originalElem)
+                        }
+                    }
+                }
+                if (preview.innerText.includes('No suggestions') != true) {
+                    if (is_pte) {
+                        rowchecked = document.querySelector(`#preview-${row} th input`);
+                    }
+                    else {
+                        rowchecked = document.querySelector(`#preview-${row} td input`);
+                    }
+                    if (rowchecked != null) {
+                        rowchecked.checked = true;
+                    }
+                    counter++;
+                    if (typeof textareaElem == "undefined") {
+
+                    }
+                    result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                    mark_as_translated(row)
+                }
             }
             else {
-                let translatedText = original;
-                textareaElem = record.querySelector("textarea.foreign-text");
-                textareaElem.innerText = translatedText;
-                textareaElem.innerHTML = translatedText;
-                textareaElem.value = translatedText;
-                let preview = document.querySelector("#preview-" + row + " td.translation");
-                if (preview != null) {
-                    preview.innerText = translatedText;
-                    preview.value = translatedText;
-                    pretrans = "FoundName";
-                    // We need to alter the status otherwise the save button does not work
-                    current.innerText = "transFill";
-                    current.value = "transFill";
-                    //10-05-2022 PSS added poulation of status
-                    select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-                    var status = select.querySelector("dt").nextElementSibling;
-                    status.innerText = "transFill";
-                    status.value = "transFill";        
-                }     
+                console.debug('Found plural!');
             }
-             if (preview.innerText.includes('No suggestions')!= true){
-                 if (is_pte) {
-                  rowchecked= document.querySelector(`#preview-${row} th input`);
-                  }
-                  else {
-                      rowchecked= document.querySelector(`#preview-${row} td input`);
-                  }
-                  if (rowchecked != null) {
-                      rowchecked.checked = true;
-                  }
-                 counter++;
-                 if (typeof textareaElem == "undefined") {
 
-                 }
-                  result = validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
-                  mark_as_translated(row)
-             }
+
         }
-        else {
-            console.debug('Found plural!');
+
+        // Translation completed  
+        translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+        translateButton.className += " translated";
+        translateButton.innerText = __("Translated");
+        //let Buttons = editor.querySelector(".panel-header-actions")
+        // let closeButton = Buttons.querySelectorAll("button")
+        // PSS we need to hide the last editor
+        editor.style.display = "";
+        // PSS setting the value to "" solves the problem of closing the last preview
+        preview.style.display = "";
+        toastbox("info", __("We have found: ") + counter, "2500", " TM records");
+        if (GlotPressBulkButton != null) {
+            if (counter > 0) {
+                let button = GlotPressBulkButton.getElementsByClassName("button")
+                button[0].disabled = true;
+            }
         }
-       
-    }
-    // Translation completed  
-    translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
-    translateButton.className += " translated";
-    translateButton.innerText = __("Translated");
-    //let Buttons = editor.querySelector(".panel-header-actions")
-   // let closeButton = Buttons.querySelectorAll("button")
-    // PSS we need to hide the last editor
-    editor.style.display = "";
-    // PSS setting the value to "" solves the problem of closing the last preview
-    preview.style.display = "";
-    toastbox("info", __("We have found: ") + counter, "2500", " TM records");
-    if (GlotPressBulkButton != null) {
-        if (counter > 0) {
-            let button = GlotPressBulkButton.getElementsByClassName("button")
-            button[0].disabled = true;
+        // We need to enable autoCopyClipBoard if it was active
+        if (copyClip) {
+            autoCopyClipBoard = true;
         }
     }
-    // We need to enable autoCopyClipBoard if it was active
-    if (copyClip) {
-        autoCopyClipBoard = true;
-    }
+   
 }
 
 async function mark_as_translated(row){
