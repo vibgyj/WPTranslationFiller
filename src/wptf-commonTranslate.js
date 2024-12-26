@@ -1906,7 +1906,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
         // 14-08-2021 PSS we need to put the status back of the label after translating
         let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
-        console.debug("transname:",transname)
+        //console.debug("transname:",transname)
         if (transname != null) {
             transname.className = "trans_name_div";
             transname.innerText = __("URL, name of theme or plugin or author!");
