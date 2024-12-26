@@ -3858,7 +3858,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
         }
     }
     if (checkTranslateButton != null) {
-        checkTranslateButton.className = "checktranslation-entry-my-button-ready";
+        checkTranslateButton.className = "checktranslation-entry-my-button ready";
         checkTranslateButton.style.color = 'white';
     }
 }

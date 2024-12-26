@@ -980,9 +980,9 @@ mymarker {
         padding-top: 5px !important;
     }
 
-    .checktranslation-entry-my-button.ready {
-        background-color: green;
-    }
+.checktranslation-entry-my-button.ready {
+    background-color: green;
+}
 
 
 .translocal-entry-missing-button {
