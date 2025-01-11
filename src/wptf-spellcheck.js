@@ -334,6 +334,11 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                 console.debug("We have an error no data:", errorstate);
 
             }
+            else if (error[2] == '504') {
+                errorstate = "Error 504";
+                console.debug("We have an error:", "Gateway timeout spellchecker");
+
+            }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
                 errorstate = '<br>We did not get an answer from Languagetool<br>Check your internet connection';

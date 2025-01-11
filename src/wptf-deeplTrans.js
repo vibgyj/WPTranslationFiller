@@ -39,17 +39,27 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
     language = language.toUpperCase();
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
-    //console.debug("glossary:",deeplGlossary)
+    //console.debug("glossary:", deeplGlossary)
+    if (typeof deeplGlossary == "undefined") {
+        deeplGlossary =""
+    }
+    if (language == 'NL') {
+        wordCount = originalPreProcessed.trim().split(/\s+/).length;
+        console.debug("count:",wordCount)
+        if (wordCount <= 5) {
+            originalPreProcessed = originalPreProcessed[0] + originalPreProcessed.slice(1).toLowerCase();
+        }
+    }
     if (language == "RO") {
         link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=default&split_sentences=nonewlines"
     }
     else {
         if (!formal) {
             if (deeplGlossary == null) {
-                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=prefer_less&split_sentences=nonewlines&outline_detection=0"
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&preserve_formatting=true&tag_handling=xml&ignore_tags=x&formality=prefer_less&split_sentences=nonewlines&outline_detection=0"
             }
             else {
-               link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=false&tag_handling=xml&ignore_tags=x&formality=prefer_less&split_sentences=nonewlines&outline_detection=0"
+                link = deeplServer + "/v2/translate?auth_key=" + apikeyDeepl + "&text=" + originalPreProcessed + "&source_lang=EN" + "&target_lang=" + language + "&glossary_id=" + deeplGlossary + "&preserve_formatting=true&tag_handling=xml&ignore_tags=x&formality=prefer_less&split_sentences=nonewlines&outline_detection=0"
             }
         }
         else {
@@ -67,7 +77,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
         const processedData = await fetchWithRetry(link, {}, 3, 5000)
        .then(data => processData(data,original,record, row, originalPreProcessed,replaceVerb,spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent,language))  // Processing data with async function
        .then(processedData => {
-                console.debug("processedData:",processedData)
+               // console.debug("processedData:",processedData)
                 // Return the processed data to the higher function
                 if (processedData === "OK"){
                 errorstate = "OK"
@@ -77,7 +87,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
                 }
                 return errorstate;
             });
-            console.log('Processed Data in Higher Function:', processedData);
+            //console.log('Processed Data in Higher Function:', processedData);
             return errorstate;  // Returning the processed data
        } catch (error) {
             
@@ -104,7 +114,7 @@ async function processData(data,original,record, row, originalPreProcessed,repla
         // Process data if it's an array
         return new Promise((resolve) => {
             setTimeout(() => {
-                console.log('Processing array data...');
+                //console.log('Processing array data...');
                 resolve(data.map(item => ({ ...item, processed: true }))); // Example processing
             }, 1000);
         });
@@ -112,13 +122,13 @@ async function processData(data,original,record, row, originalPreProcessed,repla
         // Process data if it's an object
         return new Promise((resolve) => {
             setTimeout(() => {
-                console.log('Processing object data...');
+                //console.log('Processing object data...');
                 if (data.status === 403){
                     errorstate="403 check licence"
                     resolve(errorstate)
                 }
                 else if (data.status === 404){
-                    errorstate= "404 The requested resource could not be found."
+                    errorstate= "404 The requested resource could not be found.<br>Maybe the glossary number is wrong!<br>Try loading a new glossary"
                     resolve(errorstate)
                 }
                 else if (data.status === 456) {
@@ -174,7 +184,7 @@ async function fetchWithRetry(url, options = {}, retries = 3, timeout = 5000) {
         try {
             const response = await fetchWithTimeout(url, { ...options, timeout });
             if (response.status === 404) {
-                errorstate= "404 The requested resource could not be found."
+                errorstate= "404 The requested resource could not be found.<br> Maybe the glossary for DeepL is not loaded<br>Try loading the glossary"
                 return response;
             }
             else if (response.status === 403) {
@@ -203,7 +213,7 @@ async function fetchWithRetry(url, options = {}, retries = 3, timeout = 5000) {
             console.error(`Attempt ${i + 1} failed: ${error.message}`);
             
             if (i === retries - 1) {
-                errorstate = 'Failed after ${retries} retries: ${error.message}'
+                errorstate = `Failed after ${retries} retries: ${error.message}`
                 return errorstate
                // throw new Error(`Failed after ${retries} retries: ${error.message}`);
             }
@@ -303,7 +313,7 @@ async function oldgetTransDeepl(original, language, record, apikeyDeepl, origina
         .catch(error => {
             if (error[2] == "400") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
-                console.debug("glossary value is not supported")
+                console.debug("glossary value DeepL might not be loaded")
                 errorstate = "Error 400";
             }
             if (error[2] == "403") {

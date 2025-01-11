@@ -319,6 +319,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.substring(0, translatedText.length - 1)
             }
         }
+        // OpenAI adds sometimes a "'" due to the placeholder at te beginning of the line like '<x>1</x>'
+        // So we need to remove the "'"
         if (translatedText.startsWith("'") == true) {
             if (original.startsWith("'") != true) {
                 translatedText = translatedText.substring(1, translatedText.length)
@@ -329,6 +331,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.substring(0, translatedText.length - 1)
             }
         }
+        //console.debug("translated:", translatedText)
+        //console.debug("Original:",original)
         if (translatedText.startsWith('"') == true) {
             if (original.startsWith('"') != true) {
                 translatedText = translatedText.substring(1, translatedText.length)
@@ -339,18 +343,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.substring(0, translatedText.length - 1)
             }
         }
-        // OpenAI adds sometimes a "'" due to the placeholder at te beginning of the line like '<x>1</x>'
-        // So we need to remove the "'"
-        if (translatedText.startsWith("'") == true) {
-           if (original.startsWith("'") != true) {
-               translatedText = translatedText.substring(1, translatedText.length)
-           }
-        }
-       // console.debug("orig:",original,translatedText)
-        if (translatedText.endsWith("'") == true) {
-            if (original.endsWith("'") != true) {
-               translatedText = translatedText.substring(0, translatedText.length - 1)
-            }
+        if (translatedText.startsWith("'") == true && translatedText.endsWith('"') == true){
+            if (original.startsWith("'") != true && original.endsWith('"') != true)
+            translatedText = translatedText.substring(1, translatedText.length)
+            translatedText = translatedText.substring(0, translatedText.length - 1)
         }
     }
     //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
@@ -3961,7 +3957,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
         // mytextarea = myrec.getElementsByClassName('foreign-text autosize')[0];
    // mytextarea = document.querySelector(`#editor-${rowId} .textareas`)
     textarea = g.getElementsByClassName('foreign-text autosize')
-         //console.debug("detail row textarea:", mytextarea)  
+         //console.debug("detail row textarea:", mytextarea)
         //console.debug("start mutationsserver:",StartObserver)
         //if (StartObserver) {
            // if (detail_glossary) {
@@ -3973,8 +3969,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
    // }
 
     // 15-05-2021 PSS added fix for issue #73
-    if (postTranslationReplace.length != 0) {
-        if (preTranslationReplace != 0) {
+     
+    if (typeof postTranslationReplace != "undefined" && postTranslationReplace.length != 0) {
+        if (preTranslationReplace.length != 0) {
             // PSS 21-07-2022 Currently when using formal, the translation is still default #225
             setPostTranslationReplace(postTranslationReplace, formal);
             setPreTranslationReplace(preTranslationReplace);
@@ -4011,7 +4008,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
-                        console.debug("result:",result)
+                        //console.debug("result:",result)
                         if (result == 'Error 403') {
                             messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                         }

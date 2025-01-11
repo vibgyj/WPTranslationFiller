@@ -507,7 +507,6 @@ async function validatePage(language, showHistory, locale,showDiff) {
                     checkbox = old_status.getElementsByClassName("checkbox")
                     glossary_word = old_status.getElementsByClassName("glossary-word")
                 }
-                
                 if (checkbox[0] != null) {
                     my_line_counter = checkbox[0].querySelector("div.line-counter")
                     // mark lines with glossary word into checkbox
@@ -629,7 +628,7 @@ function countWordsinTable() {
            // console.debug('record:', record)
             myClassList = record.classList
            // console.debug("classlist:",myClassList)
-            if (myClassList.contains('status-current')) {
+            if (myClassList.contains('status-current') || myClassList.contains('untranslated')) {
                 original = record.querySelector("span.original-text");
                 //console.debug("original:", original)
                 if (original != null) {

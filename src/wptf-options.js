@@ -299,7 +299,19 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
 
 let backbutton = document.getElementById("backbutton");
 backbutton.addEventListener("click", function () {
-window.history.back()
+    chrome.storage.local.get('lastPageVisited', async function (result) {
+        const pathname = ""
+        const url = window.location.href.replace(pathname, result.lastPageVisited);
+        // window.location.href = result.lastPageVisited
+        //window.location.href = result.lastPageVisited
+       // window.location.reload(url);
+        window.close()
+        //window.history.back()
+        //window.location.reload(url);
+        //location.assign(url)
+    })
+   // window.location.replace(url);
+//window.history.back()
 });
 
 let button = document.getElementById("save");

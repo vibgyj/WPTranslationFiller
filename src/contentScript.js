@@ -12,6 +12,14 @@ var DispCount;
 var is_pte;
 var classToolTip;
 
+function savePage() {
+    var currentUrl = window.location.href
+    //console.debug("curr:", currentUrl)
+    chrome.storage.local.set({
+        lastPageVisited: currentUrl
+    });
+}
+savePage()
 
 function triggerGarbageCollection() {
     let tempArray = new Array(1000000).fill(0);
@@ -27,24 +35,29 @@ if (typeof addon_translations == 'undefined'){
     //console.debug("length:",addon_translations.length)
 }
 
-
-
+function addname_to_checkbox(){
+    header_check = document.querySelector("th input")
+    //console.debug("header checkbox:", header_check)
+    header_check.setAttribute("name","checkbox")
+}
 
 // Function to load a specific language JSON file
 async function loadTranslations(language) {
-    try {
-        const response = await fetch(chrome.runtime.getURL(`locales/${language}.json`));
-        if (!response.ok) {
-            console.debug('file not loaded ${language} translations')
-            //throw new Error(`Failed to load ${language} translations`);
+        try {
+            const response = await fetch(chrome.runtime.getURL(`locales/${language}.json`));
+            //console.debug("res:",response)
+            if (!response.ok) {
+                console.debug('file not loaded ${language} translations')
+                //throw new Error(`Failed to load ${language} translations`);
+            }
+            else {
+                addon_translations = await response.json(); // Store translations
+                //console.log("Translations loaded");
+            }
+        } catch (error) {
+            console.error(error);
+
         }
-        else {
-           addon_translations = await response.json(); // Store translations
-           //console.log("Translations loaded");
-        }
-    } catch (error) {
-        console.error(error);
-    }
 }
 
 // Function to get the translated string
@@ -57,10 +70,9 @@ function __(key) {
 async function initTranslations(event) {
     let userLang = checkLocale() || 'en';
      //console.debug("userlanguage:",userLang)
-     if (typeof addon_translations.length == 'undefined'){
-         //console.debug("Language will be loaded")
-         
-         await loadTranslations(userLang); // Load Dutch translations (or any other language)
+    if (typeof addon_translations.length == 'undefined') {
+        //console.debug("Language will be loaded")
+           await loadTranslations(userLang); // Load Dutch translations (or any other language)
      }
      else {
          console.debug("Language is already present")
@@ -68,11 +80,13 @@ async function initTranslations(event) {
     await translatedButton()
 }
 
-
-adjustLayoutScreen();
+document.addEventListener("DOMContentLoaded", () => {
+    adjustLayoutScreen();
+});
 
 // The below is necessary to get the focus into the editor if it is opened straight from the menu
-window.onload = async function () {
+window.onload = async function (event) {
+    //addname_to_checkbox()
     initTranslations(event);
     var textarea = document.getElementsByClassName("textareas active")
    // console.debug("text at start", textarea)
@@ -103,15 +117,16 @@ window.onload = async function () {
        const myCustomEvent = new CustomEvent('myCustomEvent', {
         detail: { message: 'This is a custom event!' }
        });
-       loadGlossary(CustomEvent);
+        loadGlossary(CustomEvent);
+        //checkLicences(CustomEvent)
         
     }
 }
 
+function checkLicences(event) {
+
+}
 // Function to send a message to the injected script
-
-
-
 function sendMessageToInjectedScript(message) {
     window.postMessage(message, '*');
 }
@@ -121,7 +136,6 @@ function sendMessageToInjectedScript(message) {
  //   detail: { message: 'This is a custom event!' }
 //});
 //loadGlossary(CustomEvent);
-
 
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
@@ -845,8 +859,10 @@ if (el3 != null) {
 //Add option link
 let optionlink = document.createElement("li");
 var a = document.createElement('a');
-a.href = chrome.runtime.getURL('wptf-options.html');
+a.href ="#"
+//a.href = chrome.runtime.getURL('wptf-options.html');
 let link = document.createTextNode("WPTF options");
+a.id = "openOptionsLink"
 a.appendChild(link);
 optionlink.className = 'menu-item wptf_settings_menu'
 
@@ -868,6 +884,21 @@ if (divMenu != null) {
     divMenu.appendChild(databaselink);
 }
 
+document.addEventListener('click', function (event) {
+    // Check if the clicked element is the link that should open the modal
+    if (event.target.id == 'openOptionsLink') {
+        // Prevent the default action of the link
+        event.preventDefault();
+        // Create and open the modal
+        openOptionsPage();
+    }
+});
+
+function openOptionsPage(event) {
+    const url = chrome.runtime.getURL("wptf-options.html");
+    window.open(url)
+}
+
 // Example: Listen for clicks on a link to trigger opening the modal
 document.addEventListener('click', function (event) {
     // Check if the clicked element is the link that should open the modal
@@ -879,7 +910,7 @@ document.addEventListener('click', function (event) {
     }
 });
 
-function translatedButton(){
+async function translatedButton(){
 //Add translate button - start
 let translateButton = document.createElement("a");
 translateButton.href = "#";
@@ -1131,7 +1162,6 @@ wptfNavBarCont.className = 'wptfNavBarCont'
 wptfNavBar.appendChild(wptfNavBarCont);
 wptfNavBar.className = "wptfNavBar";
 wptfNavBar.id = "wptfNavBar";
-
 if (divPaging != null && divProjects == null) {
     divGpActions.parentNode.insertBefore(wptfNavBar, divGpActions);
     let divNavBar = document.querySelector("div.wptfNavBarCont")
@@ -2233,16 +2263,18 @@ async function checkbuttonClick(event) {
             }
             if (myrec != null) {
                 mytextarea = myrec.getElementsByClassName('foreign-text autosize')
-               // console.debug("mytext:",mytextarea)
-                textarea = mytextarea[0]
-                // Ensure the textarea is visible and enabled
-                textarea.style.display = 'block'; // Ensure it's visible
-                textarea.style.visibility = 'visible'; // Ensure it's visible
-                textarea.disabled = false; // Ensure it's enabled
-                // Scroll to the textarea if necessary
-                textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Focus on the textarea to make it active
-                textarea.focus();
+                //console.debug("mytext:",mytextarea)
+                if (typeof textarea != 'undefined') {
+                     textarea = mytextarea[0]
+                     // Ensure the textarea is visible and enabled
+                     textarea.style.display = 'block'; // Ensure it's visible
+                     textarea.style.visibility = 'visible'; // Ensure it's visible
+                     textarea.disabled = false; // Ensure it's enabled
+                    // Scroll to the textarea if necessary
+                     textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                     // Focus on the textarea to make it active
+                     textarea.focus();
+                 }
 
                 // we need to select the second element in the form
                 newRowId = rowId.split("-")[0] +"_1"
@@ -2621,7 +2653,12 @@ function translateEntryClicked(event) {
         var OpenAItemp = parseFloat(data.OpenAItemp);
         var deeplGlossary = localStorage.getItem('deeplGlossary');
         var OpenAITone = data.OpenAITone
-        translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary,OpenAITone);
+        if (data.destlang != "undefined" && data.destlang != "") {
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone);
+        }
+        else {
+                messageBox("error", "You need to set the parameter for Destination language");
+            }
         });
 }
 
@@ -2946,7 +2983,7 @@ function remove_all_gloss(myleftPanel, isPlural) {
 
        // console.debug("remove_all length:",spansArray.length)
         for (let i = 0; i < spansArray.length; i++) {
-            console.debug()
+           // console.debug()
             spansArray[i].classList.remove('highlight');
         }
     }
@@ -5261,7 +5298,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
             if (error.response && error.response.status === 429) {
                 console.debug('Too many requests. Please try again later.');
             } else {
-                console.debug('Error fetching or processing data:', error.message);
+                console.debug('Error fetching or processing data possible not in projects!:', error.message);
             }
          })
 }
