@@ -365,7 +365,7 @@ async function validateOld(showDiff) {
                     let result = { wordCount, foundCount, percent, toolTip, newText }
 
                     checkElem = record.querySelector(".priority");
-                    if (current.innerText != 'untranslated') {
+                    if (current.innerText != 'untranslated' && current.innerText != null) {
                         await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
                     }
                 }
@@ -763,4 +763,9 @@ function messageBox(type, message) {
 
 function sleep(milliseconds) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+function getPreview(rowId) {
+    preview = document.querySelector(`#preview-${rowId}`)
+    return preview
 }

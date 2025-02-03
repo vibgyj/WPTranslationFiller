@@ -213,9 +213,10 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
    // record.style.display = "display: table-row";
   
     let textareaElem = record.querySelector("textarea.foreign-text");
+    //console.debug("text1:",textareaElem)
     // PSS 29-03-2021 Added populating the value of the property to retranslate            
-    //textareaElem.value = translatedText;
-   // textareaElem.innerText = translatedText;
+    textareaElem.value = translatedText;
+    textareaElem.innerText = translatedText;
     //PSS 25-03-2021 Fixed problem with description box issue #13
     textareaElem.style.height = "auto";
     textareaElem.style.height = textareaElem.scrollHeight + "px";
@@ -245,7 +246,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
         }
     }
     else {
-         let preview = document.querySelector("#preview-" + row + " td.translation");
+        let preview = document.querySelector("#preview-" + row + " td.translation");
          let spanmissing = preview.querySelector(" span.missing");
         if (spanmissing != null) {
             preview.innerText = translatedText;
@@ -267,7 +268,6 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                }
                preview.appendChild(element1);
              }
-
              textareaElem = await record.querySelector("textarea.foreign-text");
              textareaElem.innerText = translatedText;
              textareaElem.innerHTML = translatedText;

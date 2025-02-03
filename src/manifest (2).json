@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.3.8",
+  "version": "3.3.3",
   "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -32,13 +32,6 @@
       ]
     }
   ],
-
-  "permissions": [
-    "storage",
-    "declarativeNetRequest",
-    "declarativeNetRequestWithHostAccess",
-    "declarativeNetRequestFeedback"
-  ],
   "declarative_net_request": {
     "rule_resources": [
       {
@@ -48,6 +41,13 @@
       }
     ]
   },
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+  ],
+
   "host_permissions": [
     "<all_urls>",
     "*://translate.wordpress.org/*",
@@ -69,6 +69,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "background.js",
         "wptf-inject.js",
         "wptf-deeplGloss.js",
         "wptf-spellcheck.js",

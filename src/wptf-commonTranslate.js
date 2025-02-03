@@ -1005,10 +1005,13 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     var myheader = document.querySelector('header');
    // setPostTranslationReplace(postTranslationReplace, formal);
     progressbar = document.querySelector(".indeterminate-progress-bar");
+
     if (progressbar == null) {
         myheader.insertAdjacentHTML('beforebegin', template);
-       // progressbar = document.querySelector(".indeterminate-progress-bar");
-       // progressbar.style.display = 'block';
+        progressbar = document.querySelector(".indeterminate-progress-bar");
+        if (progressbar.style != null) {
+            progressbar.style.display = 'block';
+        }
     }
     else {
         progressbar.style.display = 'block';
@@ -1395,18 +1398,14 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     checkButton.innerText = "Checked";
                     checkButton.className += " ready";
                     progressbar = document.querySelector(".indeterminate-progress-bar");
-                    let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
-                    progressbarStyle.style.animation = 'none'
                     progressbar.style.display = "none";
                 }
-
             }
-            
             else {
                 progressbar = document.querySelector(".indeterminate-progress-bar");
-                let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
-                console.debug("bars:",progressbar,"<br>",progressbarStyle)
-                progressbarStyle.style.animation = 'none'
+                //let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
+                //console.debug("bars:",progressbar,"<br>",progressbarStyle)
+               // progressbarStyle.style.animation = 'none'
                 progressbar.style.display = "none";
                 let errMessage = __("You do not have translations to check!")
                 messageBox("error", errMessage);
@@ -3040,7 +3039,7 @@ async function mark_as_translated(row){
     prevcurrentClass.style.backgroundColor = "#ffe399";
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone,DeepLWait) {
     //console.time("translation")
     var translate;
     var transtype = "";
@@ -3052,7 +3051,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var rowfound = "";
     var preview = "";
     var pretrans;
-    var timeout = 0;
+    var timeout = 100;
     var mytimeout = 1000;
     var vartime = 500;
     var stop = false;
@@ -3060,15 +3059,33 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var counter = 0;
     var myrecCount = 0;
     var previewClass;
+    var localRow;
+    var myheader = document.querySelector('header');
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>
+    `;
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
 
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+        // progressbar = document.querySelector(".indeterminate-progress-bar");
+        //progressbar.style.display = 'block;';
+    }
+    else {
+        // we need to remove the style of inprogress to see the animation again
+        inprogressbar.style = ""
+        progressbar.style.display = 'block';
+    }
     //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
     if (transsel == 'OpenAI') {
-        if (OpenAISelect != 'gpt-4') {
-            vartime = 800;
-        }
-        else {
             vartime = openAIWait;
-        }
+    }
+    //console.debug("DeepL:",transsel,DeepLWait)
+    if (transsel == 'deepl') {
+        vartime = DeepLWait
     }
     locale = checkLocale();
     // We need to fetch the setting for mocking
@@ -3112,15 +3129,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             setPostTranslationReplace(postTranslationReplace,formal);
             setPreTranslationReplace(preTranslationReplace);
             myrecCount = document.querySelectorAll("tr.editor")   
+            tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
             for (let record of myrecCount) { 
-               // setTimeout(async function () {
+                //setTimeout(async function () {
                     counter++;
                     transtype = "single";
                     // 16-08-2021 PSS fixed retranslation issue #118
                     //rowfound =record.id
                     //rowfound = await record.parentElement.parentElement.parentElement.parentElement.id;
                     //console.debug("from preview:", record)
-                    
+                   // console.debug("record:",record)
                    // row = rowfound.split("-")[1];
                     let myrow = record.getAttribute("row");
                     let newrow = rowfound.split("-")[1];
@@ -3142,7 +3160,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     // 14-08-2021 PSS we need to put the status back of the label after translating
 
                     let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
-                    //console.debug("transname:",transname)
                     if (transname != null) {
                         transname.className = "trans_name_div";
                         transname.innerText = __("URL, name of theme or plugin or author!");
@@ -3156,9 +3173,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     }
                     // If in the original field "Singular is present we have a plural translation
                     
-
                     pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
-                    //console.debug(" plural present:",pluralpresent)
                     if (pluralpresent != null) {
                         original = pluralpresent.innerText;
                         transtype = "plural";
@@ -3182,13 +3197,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     if (toTranslate) {
                         pretrans = await findTransline(original, destlang);
                         // 07-05-2021 PSS added pretranslate in pages
+                        if (pretrans != "notFound") { 
+                            localRow = myrow
+                        }
                         if (pretrans == "notFound") {
                             // 20-06-2021 PSS fixed that translation stopped when the page already is completely translated issue #85
                             if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
                                 document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "hide";
                             }
                             if (transsel == "google") {
-                                result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
+                                result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore,false);
                                 if (errorstate == "Error 400") {
                                     messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
                                     //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
@@ -3206,7 +3224,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                             else if (transsel == "deepl") {
                                 // console.debug("before translate:",original,row)
-                                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
+                                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary,false);
                                 if (result == "Error 403") {
                                     messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -3236,7 +3254,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                             else if (transsel == "microsoft") {
-                                result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
+                                result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore,false);
                                 if (result == "Error 401") {
                                     messageBox("error", __("Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!"));
                                     //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -3259,7 +3277,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                             }
                             else if (transsel == "OpenAI") {
-                                let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone);
+                                let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone,false);
                                 if (errorstate == "Error 401") {
                                     messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                                     // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -3290,10 +3308,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                         } else {
                             // Pretranslation found!
+                            //console.debug("we found a pretranslated!",pretrans,row,localRow)
                             let translatedText = pretrans;
                             // check if the returned translation does have the same start/ending as the original
                             if (translatedText != "No suggestions") {
-                                result = await check_start_end(translatedText, "", 0, "", original, "", 0);
+                               // console.debug("trnans:",translatedText)
+                                result = check_start_end(translatedText, "", 0, "", original, "", 0);
                             }
                             let textareaElem = record.querySelector("textarea.foreign-text");
                             textareaElem.innerText = translatedText;
@@ -3314,12 +3334,19 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                             // console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
                             // if it is a local translation we still need to set the quality of the translation!!
-                            await validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
+                            validateEntry(destlang, textareaElem, "", "", rowId, locale, record,false);
                             // PSS 10-05-2021 added populating the preview field issue #68
                             // Fetch the first field Singular
-                            let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
+                            preview =  document.querySelector(`#preview-${localRow}`)
+                            //preview = await document.getElementById("preview-" + row)
+                            let previewElem = preview.getElementsByClassName("translation foreign-text");
                             if (previewElem != null) {
-                                previewElem.innerText = translatedText;
+                                previewElem[0].innerText = translatedText;
+                                previewClass = preview;
+                                previewClass.classList.replace("no-translations", "has-translations");
+                                previewClass.classList.replace("untranslated", "status-waiting");
+                                previewClass.classList.replace("status-fuzzy", "status-waiting");
+                                previewClass.classList.add("wptf-translated");
                             } else {
                                 //console.debug("we are in the wrong preview:", row)
                                 var preview = document.querySelector("#preview-" + row + " td.translation");
@@ -3399,6 +3426,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         await mark_as_translated(row);
                                     }
                                 } else {
+                                   // console.debug("single")
                                     // if it is as single with local then we need also update the preview
                                     let spanmissing = preview.querySelector(" span.missing");
                                     if (spanmissing != null) {
@@ -3421,7 +3449,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     }
                                     current.innerText = "transFill";
                                     current.value = "transFill";
-                                    let localpresent = preview.querySelector("div.trans_local_div:nth-of-type(1)");
+                                    let localpresent = preview.querySelector(".trans_local_div:nth-of-type(1)");
+                                    //console.debug("local:",localpresent)
                                     // 17-02-2034 PSS do not add the label twice
                                     if (localpresent == null) {
                                         let element1 = document.createElement("div");
@@ -3431,7 +3460,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         preview.appendChild(element1);
                                     }
                                     // we need to set the checkbox as marked
-                                    preview = document.querySelector(`#preview-${row}`);
+                                    preview = getPreview(rowId);
+                                    //preview = document.querySelector(`#preview-${rowId}`);
                                     if (is_pte) {
                                         rowchecked = preview.querySelector(".checkbox input");
                                     }
@@ -3448,10 +3478,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 }
                                 // we need to set the editor record to translated
                                 currentClass = record;
+                               // console.debug("class:",currentClass)
                                 currentClass.classList.replace("no-translations", "has-translations");
                                 currentClass.classList.replace("untranslated", "status-waiting");
                                 currentClass.classList.replace("status-fuzzy", "status-waiting");
                                 currentClass.classList.add("wptf-translated");
+                                //console.debug("preview in local:",preview)
                                 previewClass = preview;
                                 previewClass.classList.replace("no-translations", "has-translations");
                                 previewClass.classList.replace("untranslated", "status-waiting");
@@ -3476,7 +3508,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 let pretrans = await findTransline(plural, destlang);
                                 if (pretrans == "notFound") {
                                     if (transsel == "google") {
-                                        result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore);
+                                        result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore,false);
                                         if (errorstate == "Error 400") {
                                             messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
                                             //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
@@ -3492,7 +3524,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     }
                                     else if (transsel == "deepl") {
                                         // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-                                        result = deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
+                                        result = deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary,false);
                                         if (result == "Error 403") {
                                             messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                                             //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -3516,7 +3548,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         }
                                     }
                                     else if (transsel == "microsoft") {
-                                        result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
+                                        result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore,false);
                                         if (result == "Error 401") {
                                             messageBox("error", __("Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!"));
                                             //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -3536,7 +3568,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         }
                                     }
                                     else if (transsel == "OpenAI") {
-                                        result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone);
+                                        result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone,false);
 
                                         if (result == "Error 401") {
                                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -3581,18 +3613,18 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         if (textareaElem2 != null) {
                                             plural = plural + "_02"
                                             let pretrans = await findTransline(plural, destlang);
-                                            console.debug("res:", pretrans)
+                                            //console.debug("res:", pretrans)
                                             translatedText = pretrans
                                             textareaElem2.innerText = translatedText;
                                             textareaElem2.value = translatedText;
                                         }
 
                                         textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
-                                        console.debug("elem3:", textareaElem3)
+                                        //console.debug("elem3:", textareaElem3)
                                         if (textareaElem3 != null) {
                                             plural = plural + "_03"
                                             let pretrans = await findTransline(plural, destlang);
-                                            console.debug("res:", pretrans)
+                                            //console.debug("res:", pretrans)
                                             translatedText = pretrans
                                             textareaElem3.innerText = translatedText;
                                             textareaElem3.value = translatedText;
@@ -3628,7 +3660,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                             plural = plural + "_02"
                                             let pretrans = await findTransline(plural, destlang);
                                             if (pretrans != null) {
-                                                console.debug("res:", pretrans)
+                                                //console.debug("res:", pretrans)
                                                 translatedText = pretrans
                                                 textareaElem2.innerText = translatedText;
                                                 textareaElem2.value = translatedText;
@@ -3636,12 +3668,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                         }
 
                                         textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
-                                        console.debug("elem3:", textareaElem3)
+                                        //console.debug("elem3:", textareaElem3)
                                         if (textareaElem3 != null) {
                                             plural = plural + "_03"
                                             let pretrans = await findTransline(plural, destlang);
                                             if (pretrans != null) {
-                                                console.debug("res:", pretrans)
+                                                //console.debug("res:", pretrans)
                                                 translatedText = pretrans
                                                 textareaElem3.innerText = translatedText;
                                                 textareaElem3.value = translatedText;
@@ -3691,6 +3723,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         // This is when urls/plugin/theme names are present or local translation is present
                         let translatedText = original;
                         let preview = document.querySelector("#preview-" + row + " td.translation");
+                        //console.debug("we have a local",original,row)
                         if (preview == null) {
                             preview = document.querySelector("#preview-" + myrow + " td.translation");
                         }
@@ -3755,14 +3788,18 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         let textareaElem = record.querySelector("textarea.foreign-text");
                         completedCallback(original, textareaElem.innerText);
                     }
-                    if (counter == myrecCount.length) {
+                    if (counter == tableRecords) {
                         // Translation completed we need to stop spinning the translate button
                         let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                         translateButton.className += " translated";
                         translateButton.innerText = __("Translated"); 
-                    }  
-               // }, timeout);
-               // timeout += vartime;  
+                        progressbar = document.querySelector(".indeterminate-progress-bar");
+                        progressbar.style.display = "none";
+                        messageBox("info", "Translation is ready");
+                } 
+                // We need to wait a bit before fetching the net record
+                await delay( vartime * counter)
+               // }, vartime * counter)
                 if (stop == true){
                     let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                     translateButton.className += " translated";
@@ -3771,7 +3808,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     break;
                 }
             }
-        } else {
+        }
+        else {
             messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
             // 07-07-2021 Fix for issue #98
             translateButton = document.querySelector(".paging a.translation-filler-button");
@@ -3785,7 +3823,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
          }
    // console.timeEnd("translation");
 }
-
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve,ms))
+}
 function check_span_missing(row,plural_line) {
     let preview = document.querySelector("#preview-" + row + " td.translation");
     let spanmissing = preview.querySelector(" span.missing");
@@ -3892,6 +3932,7 @@ async function setLowerCase(rowId,spellCheckIgnore) {
 async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary,OpenAITone) {
     var translateButton;
     var result;
+    errorstate = "OK"
     locale = checkLocale();
    // addTranslateButtons(rowId);
     currWindow = window.self;
@@ -3944,7 +3985,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
         transtype = "plural";
         plural_line = "1";
     }
-    detail_preview = document.querySelector(`#preview-${rowId}`);
+    detail_preview = getPreview(rowId)
+    //detail_preview = document.querySelector(`#preview-${rowId}`);
     detail_glossary = detail_preview.querySelector(`.glossary-word`)
     if (detail_glossary != null) {
         detail_glossary = true
@@ -4007,33 +4049,35 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         }
                     }
                     else if (transsel == "deepl") {
-                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
-                        //console.debug("result:",result)
-                        if (result == 'Error 403') {
-                            messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
-                        }
-                        else if (result == 'Error 404') {
-                            messageBox("error", "Error in translation received status 404 The requested resource could not be found.<br>Or the glossary provided is not present<br>" + deeplGlossary);
-                            translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+                        is_entry = true
+                        deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary,is_entry)     
+                        //console.debug("result:",errorstate)
+                       // if (result == 'Error 403') {
+                       //     messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
+                       // }
+                      //  else if (result == 'Error 404') {
+                         //   messageBox("error", "Error in translation received status 404 The requested resource could not be found.<br>Or the glossary provided is not present<br>" + deeplGlossary);
+                         //   translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
                             // if row is already translated the rowId has different format, so we need to search with this different format
-                            if (translateButton == null) {
-                                translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
-                            }
-                            translateButton.className += " translated_error";
-                            translateButton.innerText = __("Error");
-                        }
-                        else if (result == "Error 400") {
-                            messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
-                        }
-                        else if (errorstate == "Error 456") {
-                            messageBox("error", __("Error 456 Quota exceeded. The character limit has been reached"));
-                        }
-                        else {
-                            if (errorstate != "OK" && errorstate !=false) {
-                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                         //   if (translateButton == null) {
+                         //       translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+                         //   }
+                         //   translateButton.className += " translated_error";
+                         //   translateButton.innerText = __("Error");
+                       // }
+                       // else if (result == "Error 400") {
+                       //     messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
+                       // }
+                       // else if (errorstate == "Error 456") {
+                       //     messageBox("error", __("Error 456 Quota exceeded. The character limit has been reached"));
+                       // }
+                       // else {
+                         //   if (errorstate != "OK" && errorstate !=false) {
+                         //       messageBox("error", "There has been some uncatched error: " + errorstate);
                                // alert("There has been some uncatched error: " + errorstate);
-                            }
-                        }
+                         //   }
+                        //}
+                    
                     }
                     else if (transsel == "microsoft") {
                         result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
@@ -4064,6 +4108,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                             //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
+                           // console.debug("errorstate:",errorstate)
                             if (errorstate != "OK") {
                                 messageBox("error", "There has been some uncatched error: " + errorstate);
                                 //alert("There has been some uncatched error: " + errorstate);
@@ -4265,7 +4310,7 @@ async function saveLocal() {
     var counter = 0;
     var timeout = 0;
     var timout = 1000;
-    vartime = 1000;
+    vartime = 100;
     var MycopyClip;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     if (autoCopyClipBoard) {
@@ -4275,7 +4320,7 @@ async function saveLocal() {
     //console.debug("saveLocal started",is_pte)
     for (let preview of document.querySelectorAll("tr.preview.status-waiting")) {
     //document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
-        setTimeout(async function (stop) {
+        //setTimeout(async function (stop) {
        
         if(is_pte) {
                 checkset = preview.querySelector(".checkbox input");
@@ -4361,8 +4406,9 @@ async function saveLocal() {
         else {
             console.debug("No checkbox available");
             }
-        }, timeout, stop);
-        timeout += vartime;
+       // }, timeout, stop);
+        // timeout += vartime;
+        await delay(vartime * counter)
     }
     return counter;
 }
@@ -4951,12 +4997,13 @@ async function processTransl(original, translatedText, language, record, rowId, 
             preview = await record.previousElementSibling
         }
         else {
-            preview = await document.querySelector("#preview-" + myRowId)
+            preview = await getPreview(rowId)
+            //preview = await document.querySelector("#preview-" + myRowId)
         }
         current.innerText = "transFill";
         current.value = "transFill";
        // console.debug("in process:",preview)
-        if (preview != null) {
+        if (typeof preview != "undefined" && preview != null) {
             td_preview = preview.querySelector("td.translation");
         }
         else {
@@ -4974,7 +5021,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
         }
         // PSS this needs improvement
         let process_current = document.querySelector(`#editor-${myRowId} span.panel-header__bubble`);
-        if (typeof process_current != 'undefined') {
+        if (typeof process_current != 'undefined' && process_current != null) {
             process_current.innerText = "transFill"
         }
        // preview = document.querySelector(`#preview-${myRowId}`);
@@ -5190,7 +5237,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
         currentClass.classList.replace("status-fuzzy", "status-waiting");
         currentClass.classList.add("wptf-translated");
     }
-    preview = document.querySelector(`#preview-${rowId}`);
+    preview = getPreview(rowId)
+    //preview = document.querySelector(`#preview-${rowId}`);
     //console.debug("my preview:",preview)
     //let prevcurrentClass = document.querySelector(`#preview-${myRowId}`);
     let prevcurrentClass = preview;

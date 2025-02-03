@@ -153,9 +153,9 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
         const isJson = response.headers.get('content-type')?.includes('application/json; charset=utf-8');
         //const isJson = response.headers.get('content-type')
         var data = isJson && await response.json();
-        //console.debug("response:", response, response.text,data);
+        // console.debug("response:", response, response.text);
         //check for error response
-        if (response.ok && typeof data != "undefined") {
+        if (response.ok) {
             var glossaryId = data.glossaries
            // var currWindow = window.self;
            // console.debug("all the glossaries:", glossaryId)

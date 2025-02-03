@@ -1683,10 +1683,8 @@ table.translations tr.preview.status-fuzzy {
     }
 
 .marked {
-    background-color: white;
+    background-color: #0085ba;
 }
-
-
 
 /* Tooltip container */
 .tooltip {

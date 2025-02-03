@@ -1,3 +1,4 @@
+appearance,weergave
 backend,back-end
 Block,Blok
 block,blok
@@ -50,6 +51,8 @@ Sections,Secties
 Section,Sectie
 sections,secties
 section,sectie
+tabs,tabs
+tab,tab
 sticky,sticky
 Websites,sites
 websites,sites
