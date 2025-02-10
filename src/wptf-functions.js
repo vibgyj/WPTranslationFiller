@@ -1,4 +1,5 @@
 // This file contains functions used within various files
+
 // This function shows the amount of records present in the local translation table
 function Show_RecCount() {
     let count_locale = checkLocale();
@@ -584,7 +585,7 @@ async function validatePage(language, showHistory, locale,showDiff) {
               mytextarea = e.getElementsByClassName('foreign-text autosize')
               //console.debug("after start textarea:",mytextarea)
              //if (StartObserver) {
-              start_editor_mutation_server(mytextarea, "Details") 
+             // start_editor_mutation_server(mytextarea, "Details") 
               //}
            }
             }, timeout);
@@ -599,6 +600,29 @@ async function validatePage(language, showHistory, locale,showDiff) {
 
         
     });
+}
+
+function countWordsinTable() {
+    var counter = 0;
+    var wordCount = 0;
+    var pluralpresent;
+    var original;
+    // toastbox("info", "Counting started", "1000", "Counting");
+    for (let record of document.querySelectorAll("tr.preview")) {
+        counter++;
+        pluralpresent = record.querySelector(`.translation.foreign-text li:nth-of-type(1) span.translation-text`);
+        if (pluralpresent != null) {
+            wordCount = wordCount + countWords(pluralpresent.innerText);
+            pluralpresent = record.querySelector(`.translation.foreign-text li:nth-of-type(2) span.translation-text`).innerText;
+            wordCount = wordCount + countWords(pluralpresent);
+        }
+        else {
+            original = record.querySelector("span.original-text").innerText;
+            wordCount = wordCount + countWords(original);
+        }
+    }
+    // console.debug("records counted:", counter, wordCount);
+    messageBox("info", "Records counted: " + counter+ " Words counted:" + wordCount);
 }
 
 async function set_glotdict_style() {
