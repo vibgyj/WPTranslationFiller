@@ -42,6 +42,9 @@ mymarker {
     overflow: hidden;
 }
 
+
+
+
 .indeterminate-progress-bar__progress {
     /* Color */
     background-color: #3b82f6;
@@ -53,10 +56,10 @@ mymarker {
     top: 0;
     width: 50%;
     /* Move the bar infinitely */
-    animation-duration: 2s;
-    animation-iteration-count: infinite;
+    animation: indeterminate 2s infinite;
     animation-name: indeterminate-progress-bar;
 }
+
 
 @keyframes indeterminate-progress-bar {
     from {
@@ -67,6 +70,7 @@ mymarker {
         left: 100%;
     }
 }
+
 
 
 /* The Modal (background) */
@@ -563,6 +567,17 @@ mymarker {
     border-color: grey !important;
     border-radius: 5px !important;
 }
+
+.wptfNavBarCont .export_translation-po-button {
+    background: darkcyan;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
 .wptfNavBarCont .export_translation-button::before {
       content: '\f326';
       -webkit-font-smoothing: antialiased;
@@ -729,6 +744,15 @@ mymarker {
     .paging .DispClipboard-button {
         background: green;
         color: white !important;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+    }
+
+    .paging .DispCount-button {
+        background: white;
         margin-left: 2px;
         margin-right: 2px;
         border: 2px solid !important;

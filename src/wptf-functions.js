@@ -3,6 +3,9 @@
 // This function shows the amount of records present in the local translation table
 function Show_RecCount() {
     let count_locale = checkLocale();
+    DispCount = document.createElement("a");
+    DispCount.href = "#";
+    DispCount.className = "DispCount-button";
     countTable(count_locale).then(count => {
         var divPaging = document.querySelector("div.paging");
         if (divPaging != null) {
@@ -204,6 +207,8 @@ function addCheckBox() {
                 }
                 //}
                 for (let e of document.querySelectorAll("tr.preview")) {
+                    //let mycheckBox = e.querySelector("td input");
+                    //console.debug("mycheckbox:", mycheckBox)
                     var x = e.insertCell(0);
                     x.className = "myCheckBox";
                 }
@@ -300,7 +305,7 @@ async function validateOld(showDiff) {
     // we do not want to show the progress bar outside of the project table list
     //console.debug("lengte:",records.length,typeof records.length)
     if ((records.length) > 1) {
-        progressbar = document.querySelector(".indeterminate-progress-bar");
+        let progressbar = document.querySelector(".indeterminate-progress-bar");
         if (progressbar == null) {
             myheader.insertAdjacentHTML('beforebegin', template);
             // progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -376,7 +381,7 @@ async function validateOld(showDiff) {
             }
         };
 
-        const delayBetweenProcessing = 50; // Delay between processing each record in milliseconds
+        const delayBetweenProcessing = 100; // Delay between processing each record in milliseconds
 
         const processRecordsSequentially = async () => {
             try {
@@ -387,11 +392,15 @@ async function validateOld(showDiff) {
                     }
                     else {
                         if ((records.length) > 1) {
-                                messageBox("info", "Check old is ready")
+                            let check=__("Check old is ready")
+                                messageBox("info", check)
                             }
                     // checking old records done
-                    progressbar = document.querySelector(".indeterminate-progress-bar");
-                    progressbar.style.display = "none";            
+                        progressbar = document.querySelector(".indeterminate-progress-bar");
+                        let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
+
+                        progressbarStyle.style.animation = 'none'
+                        progressbar.style.display = "none";            
                         }
                 }
             } catch (error) {
