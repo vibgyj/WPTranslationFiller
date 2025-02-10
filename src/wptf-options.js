@@ -74,6 +74,7 @@ let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
+
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -170,7 +171,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     uploadedFile.innerText = `${data.glossaryFile}`;
     uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
     verbsTextbox.value = data.postTranslationReplace;
-    preverbsTextbox.value = data.preTranslationReplace;
+    preverbsTextbox.value = sortTextarea(data.preTranslationReplace);
 
     if (typeof data.OpenAIPrompt == 'undefined') {
         promptTextbox.value = 'Enter prompt'
@@ -188,7 +189,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         spellcheckTextbox.value = 'WordPress'
     }
     else {
-        spellcheckTextbox.value = data.spellCheckIgnore;
+        spellcheckTextbox.value = sortTextarea(data.spellCheckIgnore);
     }
     if (data.showHistory != "null") {
         if (data.showHistory == true) {
@@ -933,7 +934,12 @@ second_file.addEventListener("change", function () {
 });
 
 
-
+function sortTextarea(text) {
+    let lines = text.split('\n')
+    lines.sort()
+    let sortedText = lines.join('\n')
+    return sortedText
+}
 function checkLocale() {
     // function currently not used but maybe in future
     //need to fetch the locale from the filename

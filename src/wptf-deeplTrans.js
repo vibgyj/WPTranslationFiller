@@ -87,8 +87,13 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
                     errorstate = "456 Quota exceeded.<br> The character limit has been reached"
 
                 }
-                else {
-                    console.debug("We have unknown error:",translated)
+                else if (translated.message == "Quota Exceeded") {
+
+                    messageBox("warning", "You have exceeded your translation quota!")
+                }
+                else
+                {
+                    console.debug("We have unknown error:",translated.message)
                 }
             }
 

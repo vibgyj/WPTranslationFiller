@@ -195,7 +195,8 @@ async function retrieveDataFromIndexedDB(input) {
 //}
 
 // Part of the solution issue #204
-async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale,current,isOpenAI) {
+async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale, current, isOpenAI) {
+    // record is the editor
     //console.debug("getTM:",spellIgnore)
     var timeout = 0;
     var timer = 0;
@@ -215,11 +216,13 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     let textareaElem = record.querySelector("textarea.foreign-text");
     //console.debug("text1:",textareaElem)
     // PSS 29-03-2021 Added populating the value of the property to retranslate            
-    textareaElem.value = translatedText;
-    textareaElem.innerText = translatedText;
+   // textareaElem.value = translatedText;
+   // textareaElem.innerText = translatedText;
+   // textareaElem.innerHTML = translatedText;
+   // textareaElem.Context = translatedText;
     //PSS 25-03-2021 Fixed problem with description box issue #13
-    textareaElem.style.height = "auto";
-    textareaElem.style.height = textareaElem.scrollHeight + "px";
+    textareaElem.style.height = 'auto';
+    //textareaElem.style.height = textareaElem.scrollHeight + "px";
     
     if (typeof current != "undefined") {
         current.innerText = "transFill";
@@ -235,7 +238,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     if (currec != null) {
        var current = currec.querySelector("span.panel-header__bubble");
     }
-   
+    preview = document.querySelector("#preview-" + row + " td.translation");
     // PSS 10-05-2021 added populating the preview field issue #68
     // Fetch the first field Singular
     let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
@@ -246,8 +249,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
         }
     }
     else {
-        let preview = document.querySelector("#preview-" + row + " td.translation");
-         let spanmissing = preview.querySelector(" span.missing");
+        let spanmissing = preview.querySelector(" span.missing");
         if (spanmissing != null) {
             preview.innerText = translatedText;
             preview.value = translatedText;
@@ -268,12 +270,12 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                }
                preview.appendChild(element1);
              }
-             textareaElem = await record.querySelector("textarea.foreign-text");
-             textareaElem.innerText = translatedText;
-             textareaElem.innerHTML = translatedText;
-             textareaElem1 = textareaElem
+            // textareaElem = await record.querySelector("textarea.foreign-text");
+           //  textareaElem.innerText = translatedText;
+           //  textareaElem.innerHTML = translatedText;
+          //   textareaElem1 = textareaElem
              // PSS 29-03-2021 Added populating the value of the property to retranslate            
-             textareaElem.value = translatedText;
+          //   textareaElem.value = translatedText;
 
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record but only if we found a translation!!
@@ -286,7 +288,8 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          }
          else {
              // if it is as single with local then we need also update the preview
-             preview.innerText = translatedText;
+            preview.innerText = translatedText;
+             preview.innerHTML = translatedText
              preview.value = translatedText;
              current.innerText = "transFill";
              current.value = "transFill";
@@ -300,26 +303,6 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                  element1.appendChild(document.createTextNode("AUTO"))
              }
              preview.appendChild(element1);
-             
-             // we need to set the checkbox as marked
-             preview = document.querySelector(`#preview-${row}`);
-             if (is_pte) {
-                 rowchecked = preview.querySelector("th input");
-             }
-             else {
-                 rowchecked = preview.querySelector("td input");
-             }
-             if (rowchecked != null) {
-                 if (!rowchecked.checked) {
-                     //if (transtype == 'single') {
-                     if (translatedText == "No suggestions") {
-                         rowchecked.checked = false;
-                     }
-                     else {
-                        rowchecked.checked = true;
-                     }
-                 }
-             }
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record 
              preview.classList.replace("no-translations", "has-translations");
@@ -328,26 +311,17 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          }
     }
     let localButton = document.querySelector("#translate-" + row + "-translocal-entry-local-button");
-    if (localButton != null) {
+    if (localButton != null && typeof localButton != "undefined") {
         localButton.style.visibility = "visible";
-    } else {
-         console.debug("TM not found single!");
-         console.debug("preview:", preview);
-        if (preview != null) {
-            preview.style.display = "none";
-            rowchecked = preview.querySelector("td input");
-            if (rowchecked != null) {
-                //if (!rowchecked.checked) {
-                rowchecked.checked = false;
-                //  }
-            }
-        }
     }
-    //console.debug("Before return validate:",translatedText)
-   //  if (translatedText != 'No suggestions') {
-      //  validateEntry(destlang, textareaElem, "", "", row,"");
-    //}
-    return myLi;
+    //console.debug("translatedText:", translatedText)
+    if (translatedText != "") {
+
+        return translatedText;
+    }
+        else {
+            return myLi
+        }
 }
 
 function getDbSchema() {
