@@ -2541,7 +2541,7 @@ function myFunction() {
 }
 
 async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, GlotPressBulkButton, FetchLiDelay,interCept) {
-    console.debug("process started")
+    //console.debug("process started")
     var timeout = 0;
     var current;
     var editoropen;
@@ -3620,7 +3620,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         if (pretrans == "notFound") {
                             // 20-06-2021 PSS fixed that translation stopped when the page already is completely translated issue #85
                             if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
-                                document.getElementById("translate-" + row + "-translocal-entry-local-button").style.visibility = "hide";
+                                let transhide = document.getElementById("translate-" + row + "-translocal-entry-local-button");
+                                transhide.style.visibility = 'hidden'
                             }
                             if (transsel == "google") {
                                 result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore,false);

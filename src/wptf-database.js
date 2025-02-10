@@ -312,7 +312,10 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     }
     let localButton = document.querySelector("#translate-" + row + "-translocal-entry-local-button");
     if (localButton != null && typeof localButton != "undefined") {
-        localButton.style.visibility = "visible";
+        if (translatedText != "No suggestions") {
+            localButton.style.visibility = "visible";
+            localButton.innerText = "TM"
+        }
     }
     //console.debug("translatedText:", translatedText)
     if (translatedText != "") {
