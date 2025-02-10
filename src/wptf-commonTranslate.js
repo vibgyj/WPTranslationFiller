@@ -85,7 +85,10 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
     }
 }
 
-const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
+
+const placeHolderRegex = /%(\d{1,2}\$)?[sdl]|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi;
+// the below regex did not work anymore for "%1$s" !!!
+//const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
@@ -100,12 +103,11 @@ function preProcessOriginal(original, preverbs, translator) {
     }
     // 15-05-2021 PSS added check for translator
     if (translator == "google") {
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
                 original = original.replace(match, `[${index}]`);
-
                 index++;
             }
         }
@@ -120,7 +122,7 @@ function preProcessOriginal(original, preverbs, translator) {
         original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
        // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
 
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
@@ -241,17 +243,17 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
-                translatedText = translatedText.replaceAll(`{${index}}`, match);
+                translatedText = translatedText.replaceAll(`[${index}]`, match);
                 index++;
             }
         }
     }
     else if (translator == "deepl") {
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
@@ -2503,7 +2505,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                     else {
                         textFound = check_hyphen(textFound, spellIgnore);
                     }
-                    //textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
+                    textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
                     if (textFound == "") {
                        // console.debug("liSuggestion present but no result from postProcessTranslation!")
                         textFound = "No suggestions";
@@ -2542,6 +2544,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                         else {
                             textFound = check_hyphen(textFound, spellIgnore);
                         }
+                        textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore, locale)
                         resolve(textFound);
                     }
                 }
@@ -3771,7 +3774,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
-                        console.debug("result:",result)
+                        //console.debug("result:",result)
                         if (result == 'Error 403') {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                         }

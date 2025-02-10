@@ -8,7 +8,7 @@ function orgdeepLTranslate(original, destlang, record, apikeyDeepl, preverbs, ro
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     //console.debug("original:",original,row,record)
     let result =  getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry);
-    console.debug("result after:",result,errorstate)
+    //console.debug("result after:",result,errorstate)
     return errorstate;
 }
 
@@ -31,6 +31,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
     var deepLresult;
     //errorstate ="NOK"
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
+    //console.debug("pre:",originalPreProcessed)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
    // console.debug("current in deepl:", deepLcurrent)
@@ -67,7 +68,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
         const processedData = await fetchWithRetry(link, {}, 3, 5000)
        .then(data => processData(data,original,record, row, originalPreProcessed,replaceVerb,spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent,language))  // Processing data with async function
        .then(processedData => {
-                console.debug("processedData:",processedData)
+                //console.debug("processedData:",processedData)
                 // Return the processed data to the higher function
                 if (processedData === "OK"){
                 errorstate = "OK"
@@ -77,7 +78,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
                 }
                 return errorstate;
             });
-            console.log('Processed Data in Higher Function:', processedData);
+           // console.log('Processed Data in Higher Function:', processedData);
             return errorstate;  // Returning the processed data
        } catch (error) {
             
@@ -104,7 +105,7 @@ async function processData(data,original,record, row, originalPreProcessed,repla
         // Process data if it's an array
         return new Promise((resolve) => {
             setTimeout(() => {
-                console.log('Processing array data...');
+               // console.log('Processing array data...');
                 resolve(data.map(item => ({ ...item, processed: true }))); // Example processing
             }, 1000);
         });
@@ -112,7 +113,7 @@ async function processData(data,original,record, row, originalPreProcessed,repla
         // Process data if it's an object
         return new Promise((resolve) => {
             setTimeout(() => {
-                console.log('Processing object data...');
+                //console.log('Processing object data...');
                 if (data.status === 403){
                     errorstate="403 check licence"
                     resolve(errorstate)
