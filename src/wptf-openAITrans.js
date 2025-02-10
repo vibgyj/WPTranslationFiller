@@ -5,8 +5,10 @@
 
 async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone) {
     var timeout = 100;
+    errorstate="OK"
     // First we have to preprocess the original to remove unwanted chars
-    var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
+    //console.debug("ai original:",original)
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
     //errorstate = "NOK"
     setTimeout(async function (timeout) {
         var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
@@ -202,11 +204,11 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         }
                         //text = text.trim('\n');
                         //console.debug("text:",text)
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation raw:",original,translatedText)
                         //translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation after postprocess:", original, translatedText)
-                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                        await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)
                     }
                     else {

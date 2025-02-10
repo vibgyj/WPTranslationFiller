@@ -3,175 +3,16 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent) {
-    destlang = destlang.toUpperCase()
-    // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
-    //console.debug("original:",original)
-    if (formal) {
-        formal_value = "prefer_more"
-    }
-    else {
-        formal_value = "prefer_less"
-    }
-
-    if (destlang == "RO") {
-        myformat = "0"
-    }
-    else {
-        myformat = "1"
-    }
-        let url = DeeplFree == true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
-        const requestBody = {
-            auth_key: apikeyDeepl, // Include the API key in the body
-            text: [originalPreProcessed],
-            source_lang: "EN",
-            target_lang: destlang,
-            preserve_formatting: myformat, // false as "0", true as "1".
-            tag_handling: "xml",
-            ignore_tags: ["x"],
-            formality: formal_value,
-            split_sentences: "nonewlines",
-            outline_detection: "0", // false as "0", true as "1"
-            glossary_id: deeplGlossary
-        };
-      // console.debug("url:",url,requestBody)
-    await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded", // Allowed header
-        },
-        body: new URLSearchParams(requestBody).toString(), // Encode the body as URL-encoded
-    })
-        .then((response) => {
-            //console.debug("response:", response)
-            if (response.ok) {
-                data = response.json();
-               //console.debug("we found data:", data) 
-            }
-            else if (!response.ok) {
-               // console.debug("we found data:", response, response.ok, response.status)
-                data = response.json()
-               
-                // throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return data
-        })
-        .then((translated) => {
-          // console.debug("translation:", translated, "status: ", translated.ok)
-            if (translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
-               // console.log("The result contains 'translations'");
-                  processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang)
-                    .then(processedData => {
-                        //console.debug("processedData:", processedData)
-                        // Return the result to the higher function
-                        if (processedData === "OK") {
-                            errorstate = "OK"
-                        }
-                        else {
-                            errorstate = processedData
-                        }
-                        return errorstate;
-                    })
-            } else {
-                console.log("The result does not contain 'translations' :", translated);
-                if (translated.status == '403') {
-                    messageBox("warning", "Request forbidden<br>Please check your license!");
-                    errorstate = "Request forbidden<br>Please check your license!"
-                }
-                else if (translated.status == '404') {
-                    console.debug("Error during translation:", translated)
-                    messageBox("warning", "Page not found<br>Please check your DeepL glossary!<br>Or load a new glossary")
-                    errorstate = 'Page not found<br>Please check your DeepL glossary!<br>Or load a new glossary'
-                }
-                else if (translated.status == '456') {
-                    errorstate = "456 Quota exceeded.<br> The character limit has been reached"
-
-                }
-                else if (translated.message == "Quota Exceeded") {
-
-                    messageBox("warning", "You have exceeded your translation quota!")
-                }
-                else
-                {
-                    console.debug("We have unknown error:",translated.message)
-                }
-            }
-
-        })
-        .catch((error) => {
-            console.debug("Entry:",is_entry,error)
-            if (is_entry) {
-                console.debug("Error during translation:", error);
-                if (error == 'Error: HTTP error! Status: 403') {
-                    messageBox("warning", "Request forbidden<br>" + error + "<br>Please check your license!");
-                }
-                else if (error == 'Error: HTTP error! Status: 404') {
-                    console.debug("Error during translation:", error)
-                    messageBox("warning", "Request forbidden<br>" + error + "<br>Please check your DeepL glossary!<br>Or load a new glossary")
-                }
-                else if (error.status == 'Error: HTTP error! Status: 456') {
-                    errorstate = "456 Quota exceeded.<br> The character limit has been reached"
-           
-                }
-                else if (error == 'TypeError: Failed to fetch') {
-                    console.debug("Error during translation:", error)
-                    errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
-                }
-                else {
-                    messageBox("warning", "There has been an error<br>" + data.message);
-                    // alert("Error message: " + error[1]);
-                    console.debug("Error:", error)
-                    errorstate = "Error " + error;
-                }
-            }
-            else {
-                console.debug("We are in page translation")
-                    console.debug("Error:", error)
-                    errorstate = "Error " + error;
-                }
-         });
-        //await new Promise((resolve) => setTimeout(resolve, delay));
-    //}
-}
-
-
-async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry) {
+function orgdeepLTranslate(original, destlang, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
+    // First we have to preprocess the original to remove unwanted chars
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    language = language.toUpperCase();
-    //console.debug("lang:",language)
-    if (language == 'NL') {
-        wordCount = originalPreProcessed.trim().split(/\s+/).length;
-        //console.debug("wordcount:",wordCount)
-        if (wordCount <= 5) {
-            originalPreProcessed = originalPreProcessed[0] + originalPreProcessed.slice(1).toLowerCase();
-           // console.debug("count kleiner:",originalPreProcessed)
-        }
-    }
-    //console.debug("prepro:",originalPreProcessed)
-    // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
-    prevstate = deepLcurrent.innerText;
-    //console.debug("fetchin!")
-    try {
-        await translateText(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,deepLcurrent)
-    }
-    catch (error) {
-        // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
-        if (error == 'TypeError: Failed to fetch') {
-            errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
-        }
-        else {
-            //messageBox("warning", "There has been an error<br>"+ data.message);
-            // alert("Error message: " + error[1]);
-            console.debug("Error:", error)
-            errorstate = "Error " + error;
-        }
-        return errorstate
-    };
+    //console.debug("original:",original,row,record)
+    let result =  getTransDeepl(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry);
+    //console.debug("result after:",result,errorstate)
+    return errorstate;
 }
 
-
-async function okdeepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
+async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
     var translatedText = "";
     var ul = "";
     //var current = "";
@@ -190,7 +31,6 @@ async function okdeepLTranslate(original, language, record, apikeyDeepl, preverb
     var deepLresult;
     //errorstate ="NOK"
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
-    //console.debug("pre:",originalPreProcessed)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
    // console.debug("current in deepl:", deepLcurrent)
@@ -267,8 +107,9 @@ async function okdeepLTranslate(original, language, record, apikeyDeepl, preverb
     //console.debug("deepl link:",link)
    
 }
+ // Simulate async processing
 
-async function processData(data, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, language) {
+async function processData(data,original,record, row, originalPreProcessed,replaceVerb,spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent,language) {
     if (Array.isArray(data)) {
         // Process data if it's an array
         return new Promise((resolve) => {
@@ -317,6 +158,7 @@ async function processData(data, original, record, row, originalPreProcessed, re
     }
 }
    
+
 async function fetchWithRetry(url, options = {}, retries = 3, timeout = 5000) {
     const fetchWithTimeout = (resource, options) => {
         const { timeout } = options;

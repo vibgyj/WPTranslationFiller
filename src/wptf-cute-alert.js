@@ -8,7 +8,7 @@ const cuteAlert = ({
     buttonText = 'OK',
     confirmText = 'OK',
     vibrate = [],
-    playSound = "/error-alert.flac",
+    playSound = "error-alert.flac",
     cancelText = 'Cancel',
     closeStyle,
     myWindow = ""
@@ -69,22 +69,27 @@ const cuteAlert = ({
                 Notification.requestPermission((permission) => {
                     if (permission === "granted") {
                         console.debug('granted:', permission)
+                        let sound = new Audio(src + playSound);
+                        const promise = sound.play();
+                        console.debug("sound:",promise)
+                        if (promise !== undefined) {
+                            promise.then(() => {
+                                console.debug("sound is played!")
+                                sound = new Audio(src + playSound);
+                                sound.muted = true;
+                                sound.play();
+                            }).catch(error => {
+                                // Autoplay was prevented.
+                                console.debug("sound is not allowed!!")
+                            });
+                        }
+                        else {
+                            console.debug("promise undefined")
+                        }
                     };
                 });
             }
-            let sound = new Audio(src + playSound);
-            const promise = sound.play();
-            if (promise !== undefined) {
-                promise.then(() => {
-                    console.debug("sound is played!")
-                    sound = new Audio(src + playSound);
-                    sound.muted = true;
-                    sound.play();
-                }).catch(error => {
-                    // Autoplay was prevented.
-                    console.debug("sound is not allowed!!")
-                });
-            }
+            
         }
 
         const template = `
@@ -123,7 +128,7 @@ const cuteAlert = ({
 
             cancelButton.addEventListener('click', () => {
                 alertWrapper.remove();
-                resolve();
+                resolve('cancel');
             });
         } else {
             const alertButton = myWindow.document.querySelector('.alert-button');
@@ -236,7 +241,7 @@ const cuteToast = ({ type, message, timer = 2000, vibrate = [], playSound = "/er
 
         if (playSound !== null) {
             let sound = new Audio(src + playSound);
-            sound.play();
+           // sound.play();
         }
         setTimeout(() => {
             toastContent.remove();

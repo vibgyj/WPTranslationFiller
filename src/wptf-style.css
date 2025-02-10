@@ -22,7 +22,7 @@ mymarker {
 }
 
 .panelTransMenu {
-    height: 40px;
+    height: 40px !important;
     text-align: right;
     border-bottom: 1px solid;
     border-color: #72777c;
@@ -36,7 +36,7 @@ mymarker {
     /* Rounded border */
     border-radius: 9999px;
     /* Size */
-    height: 0.8rem;
+    height: 0.8em;
     top: 32px;
     position: sticky;
     overflow: hidden;
@@ -980,9 +980,9 @@ mymarker {
         padding-top: 5px !important;
     }
 
-    .checktranslation-entry-my-button.ready {
-        background-color: green;
-    }
+.checktranslation-entry-my-button.ready {
+    background-color: green;
+}
 
 
 .translocal-entry-missing-button {
@@ -1681,6 +1681,12 @@ table.translations tr.preview.status-fuzzy {
         visibility: visible;
         opacity: 1;
     }
+
+.marked {
+    background-color: white;
+}
+
+
 
 /* Tooltip container */
 .tooltip {

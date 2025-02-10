@@ -181,9 +181,7 @@ async function retrieveDataFromIndexedDB(input) {
     // Perform operations to retrieve data from indexedDB based on the input
     // Replace this with your indexedDB retrieval logic
     let result = await findTransline(input, locale)
-    return result;
-   
-       
+    return result; 
 }
 
 //async function initDb() {
@@ -197,7 +195,8 @@ async function retrieveDataFromIndexedDB(input) {
 //}
 
 // Part of the solution issue #204
-async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale,current) {
+async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale, current, isOpenAI) {
+    // record is the editor
     //console.debug("getTM:",spellIgnore)
     var timeout = 0;
     var timer = 0;
@@ -211,16 +210,19 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     if (translatedText != 'No suggestions') {                    
         translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, spellIgnore, locale);
     }
-    processTransl(original, translatedText, locale, record, row, "single", "0", locale, convertToLower, current);
+    //processTransl(original, translatedText, locale, record, row, "single", "0", locale, convertToLower, current);
    // record.style.display = "display: table-row";
   
     let textareaElem = record.querySelector("textarea.foreign-text");
+    //console.debug("text1:",textareaElem)
     // PSS 29-03-2021 Added populating the value of the property to retranslate            
-    //textareaElem.value = translatedText;
+   // textareaElem.value = translatedText;
    // textareaElem.innerText = translatedText;
+   // textareaElem.innerHTML = translatedText;
+   // textareaElem.Context = translatedText;
     //PSS 25-03-2021 Fixed problem with description box issue #13
-    textareaElem.style.height = "auto";
-    textareaElem.style.height = textareaElem.scrollHeight + "px";
+    textareaElem.style.height = 'auto';
+    //textareaElem.style.height = textareaElem.scrollHeight + "px";
     
     if (typeof current != "undefined") {
         current.innerText = "transFill";
@@ -236,7 +238,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     if (currec != null) {
        var current = currec.querySelector("span.panel-header__bubble");
     }
-   
+    preview = document.querySelector("#preview-" + row + " td.translation");
     // PSS 10-05-2021 added populating the preview field issue #68
     // Fetch the first field Singular
     let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
@@ -247,21 +249,33 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
         }
     }
     else {
-         let preview = document.querySelector("#preview-" + row + " td.translation");
-         let spanmissing = preview.querySelector(" span.missing");
-         if (spanmissing != null) {
-             preview.innerText = translatedText;
-             preview.value = translatedText;
-             if (translatedText != 'No suggestions') {
-                 current.innerText = "transFill";
-                 current.value = "transFill";
-                 status.value = "untranslated";
+        let spanmissing = preview.querySelector(" span.missing");
+        if (spanmissing != null) {
+            preview.innerText = translatedText;
+            preview.value = translatedText;
+            if (translatedText != 'No suggestions') {
+                current.innerText = "transFill";
+                current.value = "transFill";
+                status.value = "untranslated";
+            }
+            var element1 = document.createElement("div");
+            element1.setAttribute("class", "trans_local_div");
+            element1.setAttribute("id", "trans_local_div");
+            if (translatedText != "No suggestions") {
+               if (isOpenAI != 'OpenAI') {
+                   element1.appendChild(document.createTextNode("TM"));
+               }
+               else {
+                    element1.appendChild(document.createTextNode("AUTO"))
+               }
+               preview.appendChild(element1);
              }
-             var element1 = document.createElement("div");
-             element1.setAttribute("class", "trans_local_div");
-             element1.setAttribute("id", "trans_local_div");
-             element1.appendChild(document.createTextNode("TM"));
-             preview.appendChild(element1);
+            // textareaElem = await record.querySelector("textarea.foreign-text");
+           //  textareaElem.innerText = translatedText;
+           //  textareaElem.innerHTML = translatedText;
+          //   textareaElem1 = textareaElem
+             // PSS 29-03-2021 Added populating the value of the property to retranslate            
+          //   textareaElem.value = translatedText;
 
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record but only if we found a translation!!
@@ -274,35 +288,21 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          }
          else {
              // if it is as single with local then we need also update the preview
-             preview.innerText = translatedText;
+            preview.innerText = translatedText;
+             preview.innerHTML = translatedText
              preview.value = translatedText;
              current.innerText = "transFill";
              current.value = "transFill";
              var element1 = document.createElement("div");
              element1.setAttribute("class", "trans_local_div");
              element1.setAttribute("id", "trans_local_div");
-             element1.appendChild(document.createTextNode("TM"));
-             preview.appendChild(element1);
-             
-             // we need to set the checkbox as marked
-             preview = document.querySelector(`#preview-${row}`);
-             if (is_pte) {
-                 rowchecked = preview.querySelector("th input");
+             if (isOpenAI != 'OpenAI') {
+                 element1.appendChild(document.createTextNode("TM"));
              }
              else {
-                 rowchecked = preview.querySelector("td input");
+                 element1.appendChild(document.createTextNode("AUTO"))
              }
-             if (rowchecked != null) {
-                 if (!rowchecked.checked) {
-                     //if (transtype == 'single') {
-                     if (translatedText == "No suggestions") {
-                         rowchecked.checked = false;
-                     }
-                     else {
-                        rowchecked.checked = true;
-                     }
-                 }
-             }
+             preview.appendChild(element1);
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record 
              preview.classList.replace("no-translations", "has-translations");
@@ -311,26 +311,17 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          }
     }
     let localButton = document.querySelector("#translate-" + row + "-translocal-entry-local-button");
-    if (localButton != null) {
+    if (localButton != null && typeof localButton != "undefined") {
         localButton.style.visibility = "visible";
-    } else {
-         console.debug("TM not found single!");
-         console.debug("preview:", preview);
-        if (preview != null) {
-            preview.style.display = "none";
-            rowchecked = preview.querySelector("td input");
-            if (rowchecked != null) {
-                //if (!rowchecked.checked) {
-                rowchecked.checked = false;
-                //  }
-            }
-        }
     }
-    //console.debug("Before return validate:",translatedText)
-   //  if (translatedText != 'No suggestions') {
-      //  validateEntry(destlang, textareaElem, "", "", row,"");
-    //}
-    return myLi;
+    //console.debug("translatedText:", translatedText)
+    if (translatedText != "") {
+
+        return translatedText;
+    }
+        else {
+            return myLi
+        }
 }
 
 function getDbSchema() {
@@ -556,7 +547,7 @@ async function addTransline(rowId,showMessage){
     var addTrans = textareaElem.value;
     //console.debug("translation:", textareaElem.value)
     if (addTrans === "") {
-        messageBox("error", "No translation to store!");
+        messageBox("error", __("No translation to store!"));
     } else {
         res = addTransDb(orig, addTrans, language);
         let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
@@ -593,8 +584,12 @@ async function addTransline(rowId,showMessage){
                 }
         }
         if (showMessage == true) {
+            let addedButton = document.querySelector(`#translate-${rowId}-addtranslation-entry-my-button`);
+            addedButton.className += " ready";
+           // }
             let addedRecord = __("addTransline record added / updated to database")
             messageBox("info", addedRecord);
+
         }
         }
     });
@@ -626,6 +621,32 @@ async function dbExport(destlang) {
         };
         i++;
     });
+    
+// Step 2: Sort arrayData based on new logic
+arrayData.sort((a, b) => {
+    // Remove any potential "s" at the end for base term comparison (handle both cases)
+    const baseA = a.original.replace(/\s*s$/i, "").toLowerCase();
+    const baseB = b.original.replace(/\s*s$/i, "").toLowerCase();
+
+    // Primary sort: group by base term (ignore case)
+    const baseCompare = baseA.localeCompare(baseB);
+    if (baseCompare !== 0) return baseCompare;
+
+    // Secondary sort: prioritize capitalized words over lowercase ones (case-sensitive)
+    const caseCompare = a.original.localeCompare(b.original);
+    if (caseCompare !== 0) return caseCompare;
+
+    // Tertiary sort: ensure singular terms (e.g., "Year") come before plural terms (e.g., "Years")
+    if (a.original.toLowerCase() === baseA && b.original.toLowerCase() === baseB) {
+        // Check for singular vs plural by comparing lengths
+        return a.original.length - b.original.length;
+    }
+
+    return 0;
+});
+
+
+
     arrayData.forEach( obj => {
         var row = [];
         for (key in obj) {
@@ -670,6 +691,27 @@ async function exportIndexedDBToPO(countryFilter) {
         getAllRequest.onsuccess = function () {
             const entries = getAllRequest.result;
 
+            entries.sort((a, b) => {
+        // Remove any potential "s" at the end for base term comparison (handle both cases)
+        const baseA = a.source.replace(/\s*s$/i, "").toLowerCase();
+        const baseB = b.source.replace(/\s*s$/i, "").toLowerCase();
+
+        // Primary sort: group by base term (ignore case)
+        const baseCompare = baseA.localeCompare(baseB);
+        if (baseCompare !== 0) return baseCompare;
+
+        // Secondary sort: prioritize capitalized words over lowercase ones (case-sensitive)
+        const caseCompare = a.source.localeCompare(b.source);
+        if (caseCompare !== 0) return caseCompare;
+
+        // Tertiary sort: ensure singular terms (e.g., "Year") come before plural terms (e.g., "Years")
+        if (a.source.toLowerCase() === baseA && b.source.toLowerCase() === baseB) {
+            // Check for singular vs plural by comparing lengths
+            return a.source.length - b.source.length;
+        }
+
+        return 0;
+    });
             // Initialize the .po file content
             let poContent = "";
 

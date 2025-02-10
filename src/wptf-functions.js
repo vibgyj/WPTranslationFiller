@@ -365,7 +365,7 @@ async function validateOld(showDiff) {
                     let result = { wordCount, foundCount, percent, toolTip, newText }
 
                     checkElem = record.querySelector(".priority");
-                    if (current.innerText != 'untranslated') {
+                    if (current.innerText != 'untranslated' && current.innerText != null) {
                         await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
                     }
                 }
@@ -507,7 +507,6 @@ async function validatePage(language, showHistory, locale,showDiff) {
                     checkbox = old_status.getElementsByClassName("checkbox")
                     glossary_word = old_status.getElementsByClassName("glossary-word")
                 }
-                
                 if (checkbox[0] != null) {
                     my_line_counter = checkbox[0].querySelector("div.line-counter")
                     // mark lines with glossary word into checkbox
@@ -626,8 +625,17 @@ function countWordsinTable() {
             wordCount = wordCount + countWords(pluralpresent);
         }
         else {
-            original = record.querySelector("span.original-text").innerText;
-            wordCount = wordCount + countWords(original);
+           // console.debug('record:', record)
+            myClassList = record.classList
+           // console.debug("classlist:",myClassList)
+            if (myClassList.contains('status-current') || myClassList.contains('untranslated')) {
+                original = record.querySelector("span.original-text");
+                //console.debug("original:", original)
+                if (original != null) {
+                    wordCount = wordCount + countWords(original.innerText);
+                }
+            }
+            //else {console.debug("not found!") }
         }
     }
     // console.debug("records counted:", counter, wordCount);
@@ -755,4 +763,9 @@ function messageBox(type, message) {
 
 function sleep(milliseconds) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+function getPreview(rowId) {
+    preview = document.querySelector(`#preview-${rowId}`)
+    return preview
 }

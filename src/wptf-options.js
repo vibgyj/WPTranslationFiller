@@ -50,6 +50,7 @@ let LtToolLangTextbox = document.getElementById("languagetool_language");
 let LtToolLangCheckbox = document.getElementById("LangToolFree");
 let TMwaitValue = document.getElementById("tmWait");
 let OpenAIwaitValue = document.getElementById("OpenAIWait");
+let DeepLwaitValue = document.getElementById("DeepLWait");
 let bulkWaitValue = document.getElementById("bulkWait");
 let TMtresholdValue = document.getElementById("TMtreshold");
 let myScreenWidthValue = document.getElementById("screenWidth");
@@ -70,9 +71,10 @@ let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
+
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -81,7 +83,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             apikeydeeplCheckbox.checked = false
         }
     }
-    if (typeof data.TMwait == 'undefined') {
+    if (typeof data.TMwait == "undefined") {
         TMwait = 500;
     }
     else {
@@ -89,7 +91,16 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         TMwaitValue.value = TMwait;
 
     }
-    if (typeof data.OpenAIWait == 'undefined') {
+    if (typeof data.DeepLWait == "undefined") {
+        DeepLWait = 500;
+    }
+    else {
+        DeepLWaitVal = data.DeepLWait;
+        DeepLWait.value = DeepLWaitVal;
+
+    }
+
+    if (typeof data.OpenAIWait == "undefined") {
         OpenAIWait = 7500;
     }
     else {
@@ -97,7 +108,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         OpenAIWait.value = OpenAIWaitVal;
 
     }
-    if (typeof data.bulkWait == 'undefined') {
+    if (typeof data.bulkWait == "undefined") {
         bulkWait = 1000;
     }
     else {
@@ -105,7 +116,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         bulkWaitValue.value = bulkWait;
 
     }
-    if (typeof data.TMtreshold == 'undefined') {
+    if (typeof data.TMtreshold == "undefined") {
         TMtreshold.value = '100';
     }
     else {
@@ -113,7 +124,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         TMtresholdValue.value = TMtreshold;
 
     }
-    if (typeof data.WPTFscreenWidth == 'undefined') {
+    if (typeof data.WPTFscreenWidth == "undefined") {
         myScreenWidth = '90';
         myScreenWidthValue.value = myScreenWidth;
         rangeValue.textContent = myScreenWidth
@@ -123,14 +134,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         myScreenWidthValue.value = myScreenWidth;
         rangeValue.textContent = myScreenWidth
     }
-    if (typeof data.OpenAItemp == 'undefined') {
+    if (typeof data.OpenAItemp == "undefined") {
         OpenAItemp = 1;
     }
     else {
         OpenAItempBox.value = data.OpenAItemp;
         OpenAItemp = data.OpenAItemp
     }
-    if (typeof data.OpenAITone == 'undefined') {
+    if (typeof data.OpenAITone == "undefined") {
         OpenTone = 'informal';
     }
     else {
@@ -160,7 +171,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     uploadedFile.innerText = `${data.glossaryFile}`;
     uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
     verbsTextbox.value = data.postTranslationReplace;
-    preverbsTextbox.value = data.preTranslationReplace;
+    preverbsTextbox.value = sortTextarea(data.preTranslationReplace);
 
     if (typeof data.OpenAIPrompt == 'undefined') {
         promptTextbox.value = 'Enter prompt'
@@ -178,7 +189,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         spellcheckTextbox.value = 'WordPress'
     }
     else {
-        spellcheckTextbox.value = data.spellCheckIgnore;
+        spellcheckTextbox.value = sortTextarea(data.spellCheckIgnore);
     }
     if (data.showHistory != "null") {
         if (data.showHistory == true) {
@@ -299,7 +310,19 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
 
 let backbutton = document.getElementById("backbutton");
 backbutton.addEventListener("click", function () {
-window.history.back()
+    chrome.storage.local.get('lastPageVisited', async function (result) {
+        const pathname = ""
+        const url = window.location.href.replace(pathname, result.lastPageVisited);
+        // window.location.href = result.lastPageVisited
+        //window.location.href = result.lastPageVisited
+       // window.location.reload(url);
+        window.close()
+        //window.history.back()
+        //window.location.reload(url);
+        //location.assign(url)
+    })
+   // window.location.replace(url);
+//window.history.back()
 });
 
 let button = document.getElementById("save");
@@ -356,6 +379,7 @@ button.addEventListener("click", function () {
     let spellIgnoreverbs = spellcheckTextbox.value;
     let TMwaitVal = TMwaitValue.value;
     let OpenAIVal = OpenAIwaitValue.value;
+    let DeepLVal = DeepLwaitValue.value;
     let bulkWaitVal = bulkWaitValue.value;
     let OpenAItempVal = OpenAItempBox.value;
     let TMtresholdVal = document.getElementById("TMtreshold").value;
@@ -446,7 +470,7 @@ button.addEventListener("click", function () {
     else {
         autoCopyClipBoard = "false";
     }
-
+    console.debug("deepL:",DeepLVal)
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -469,6 +493,7 @@ button.addEventListener("click", function () {
             glotDictGlos: showDictGlosLine,
             convertToLower: showConvertToLower,
             TMwait: TMwaitVal,
+            DeepLWait:DeepLVal,
             OpenAIWait: OpenAIVal,
             bulkWait: bulkWaitVal,
             TMtreshold:TMtresholdVal,
@@ -909,7 +934,12 @@ second_file.addEventListener("change", function () {
 });
 
 
-
+function sortTextarea(text) {
+    let lines = text.split('\n')
+    lines.sort()
+    let sortedText = lines.join('\n')
+    return sortedText
+}
 function checkLocale() {
     // function currently not used but maybe in future
     //need to fetch the locale from the filename

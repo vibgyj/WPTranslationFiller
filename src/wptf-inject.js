@@ -61,7 +61,6 @@ function adjustLayoutScreen() {
     });
 }
 
-
 // Function to intercept XMLHttpRequests
 function interceptXHR(xhr) {
     // Intercept the open method to store the URL
@@ -119,10 +118,24 @@ function toggleInterception(shouldIntercept,transProcess) {
 
 // Add a listener to handle messages from the content script
 window.addEventListener('message', function (event) {
+   // console.debug("injected:",event)
     // Check if the event is from a trusted source
     if (event.source === window && event.data.action === 'updateInterceptRequests') {
         // Update interception based on the message data
-        toggleInterception(event.data.interceptRequests,event.data.transProcess);
+        toggleInterception(event.data.interceptRequests, event.data.transProcess);
+    }
+    else {
+        if (MessageEvent.action === 'translate') {
+            translateText(message.text, message.targetLang)
+                .then(translatedText => {
+                    sendResponse({ translatedText: translatedText });
+                })
+                .catch(error => {
+                    sendResponse({ translatedText: 'Error: ' + error });
+                });
+
+            return true; // Keep the message channel open for async response
+        }
     }
 });
 

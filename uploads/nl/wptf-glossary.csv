@@ -1,12 +1,17 @@
+appearance,weergave
+backend,back-end
 Block,Blok
 block,blok
 Boxen,vakken
 boxen,vakken
 Box,vak
 box,vak
+date format,datumnotatie
 Emails,e-mails
 Email,e-mail
 email,e-mail
+footer,footer
+frontend,front-end
 Global,Globale
 global,globale
 Gradient,Gradient
@@ -46,6 +51,8 @@ Sections,Secties
 Section,Sectie
 sections,secties
 section,sectie
+tabs,tabs
+tab,tab
 sticky,sticky
 Websites,sites
 websites,sites

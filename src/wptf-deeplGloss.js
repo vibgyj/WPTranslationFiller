@@ -4,13 +4,15 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
     let formal = false
     let deeplServer = DeeplFree == true ? "https://cors-anywhere.herokuapp.com/https://api-free.deepl.com" : "https://cors-anywhere.herokuapp.com/https://api.deepl.com";
     const url = deeplServer + "/v2/glossaries"
-    
+    //console.debug("key:",apikeyDeepl)
     let response = await fetch(url, {
         method: "POST",
         accept: "*/*",
         Encoding: "gzip, deflate, br",
         body: gloss,
         headers: {
+            'Access-Control-Allow-Headers': 'X-Requested-With',
+            'X-Requested-With': 'XMLHttpRequest',
              'Content-Type' : 'application/json',
              'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
         }
@@ -67,31 +69,44 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
                 else {
                  messageBox("warning","There is an error retrieving the glossary ID" + data.message)
                  }
-            }
+         }
          else {
-             messageBox("info","We did not get a result of the request")
+         //    messageBox("info","We did not get a result of the request<br>",response)
               console.debug("result:",response)
-              return Promise.resolve("OK");
-           }
+              return Promise.reject(response);
+          }
         })
-       .catch(error => {
-           if (error[2] == "400") {
-                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
-                //console.debug("glossary value is not supported")
+        .catch(error => {
+           //console.debug("error:",error)
+           if (error.status == "400") {
+                //alert("Error 400 Authorization failed. Please supply a valid auth_key parameter.")
+                console.debug("glossary value is not supported error 400")
                 errorstate = "Error 400";
-            }
-            if (error[2] == "403") {
+           }
+           if (error.status == "401") {
+               //alert("Error 400 Authorization failed. Please supply a valid auth_key parameter.")
+               console.debug("Error 401 unautorised")
+               errorstate = "Error 401";
+           }
+            if (error.status == "403") {
                 //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
+                console.debug("Error 403 Authorization failed")
                 errorstate = "Error 403";
             }
-            else if (error[2] == '404') {
+            else if (error.status == '404') {
                 //     alert("Error 404 The requested resource could not be found.")
+                console.debug("Error 404 The requested resource could not be found.")
                 errorstate = "Error 404";
             }
-         //   else if (error[2] == '456') {
+            else if (error.status == '429') {
+                console.debug("Error 429 to many requests")
+                errorstate = "Error 429";
+            }
+            else if (error.status == '456') {
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
-        //        errorstate = "Error 456";
-        //    }
+                console.debug("Error 456 Quota exceeded. The character limit has been reached")
+                errorstate = "Error 456";
+            }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
             else if (error == 'TypeError: Failed to fetch') {
                 //console.debug("Typerror:", error)
@@ -100,8 +115,9 @@ async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
             }
             else {
                 //alert("Error message: " + error[1]);
+                messageBox("info", "We did not get a proper result of the request<br>" + error.status + "  "+ error.statusText)
                 console.debug("Error:", error)
-                errorstate = "Error " + error[1];
+                errorstate = "Error 401";
             }
         });
 }
@@ -114,51 +130,32 @@ async function show_glossary( apikeyDeepl, DeeplFree, language) {
     var currWindow = window.self;
     
    let deeplServer = DeeplFree == true ? "https://cors-anywhere.herokuapp.com/https://api-free.deepl.com" : "https://cors-anywhere.herokuapp.com/https://api.deepl.com";
-   // link = deeplServer + "/v2/glossaries?auth_key=" + apikeyDeepl
-   // var parrotMockDefinitions = [{
-    //    "active": true,
-    //    "description": "GET",
-    //    "method": "OPTIONS",
-    //    "pattern": "/v2/glossaries",
-    //    "status": "200",
-    //    "type": "JSON",
-    //    "response": 'Access-Control-Allow-Origin: *',
-    //    "Access-Control-Allow-Methods": 'GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS',
-    //    "Access-Control-Allow-Headers": 'Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With',
-    //    "delay": "100"
-   // }];
-  //  window.postMessage({
-    //    sender: 'commontranslate',
-    //    parrotActive: true,
-    //    parrotMockDefinitions
-   // }, location.origin);
-    // Create a new XMLHttpRequest object
-    // Create a new XMLHttpRequest object
-  //  var xhr = new XMLHttpRequest();
-
-   
-    const req = new Request('https://cors-anywhere.herokuapp.com/https://api.deepl.com/v2/glossaries', {
+    url = deeplServer + "/v2/glossaries/"
+    const req = new Request(url, {
+        method: "GET",
         headers: {
-            method: 'GET',
             'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
         }
     });
-
-    const headers = Object.fromEntries(Array.from(req.headers.entries()));
-    // console.debug(" headers:",headers)
-  //  myheader = JSON.stringify(headers);
-  //  let link = url+ headers
     var url = deeplServer + "/v2/glossaries"
-    let response = await fetch(url, { headers })
+    let response = await fetch(url, {
+        method: "Get",
+        headers: {
+            'Access-Control-Allow-Headers': 'X-Requested-With',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+            'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
+        }
+    })
         .then(async response => {
        // console.debug("responseurl:", response.url)
        // console.debug("responsejson:", response.json)
         const isJson = response.headers.get('content-type')?.includes('application/json; charset=utf-8');
         //const isJson = response.headers.get('content-type')
         var data = isJson && await response.json();
-        // console.debug("response:", response, response.text);
+        //console.debug("response:", response, response.text,data);
         //check for error response
-        if (response.ok) {
+        if (response.ok && typeof data != "undefined") {
             var glossaryId = data.glossaries
            // var currWindow = window.self;
            // console.debug("all the glossaries:", glossaryId)
@@ -323,6 +320,8 @@ async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
     let response = await fetch(url, {
         method: "DELETE",
         headers: {
+            'Access-Control-Allow-Headers': 'X-Requested-With',
+            'X-Requested-With': 'XMLHttpRequest',
             'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
         }
     }).then(async response => {

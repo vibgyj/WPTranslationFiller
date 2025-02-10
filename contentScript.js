@@ -12,7 +12,6 @@ var LoadGloss;
 var DispCount;
 var is_pte;
 var classToolTip;
-var is_entry = false;
 
 function savePage() {
     var currentUrl = window.location.href
@@ -2261,16 +2260,13 @@ async function checkbuttonClick(event) {
                     else { console.debug("not found:",res)}
                 });
             }
-           addTranslateButtons(rowId);
+            addTranslateButtons(rowId);
             await waitForMyElement(`.editor`, 500).then((res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
                     mytextarea = myrec.getElementsByClassName('foreign-text')
-                    mytextarea[0].style.height = 'auto'
-                    mytextarea[0].style.height = mytextarea[0].scrollHeight + 'px';
-                    //console.debug("mytext in open:",mytextarea)
                     if (typeof mytextarea != 'undefined') {
-                       // console.debug("mytext:", mytextarea,"2270")
+                        //console.debug("mytext:", mytextarea)
                         detail_preview = getPreview(rowId)
                         //detail_preview = document.querySelector(`#preview-${rowId}`);
                         detail_glossary = detail_preview.querySelector(`.glossary-word`)
@@ -2290,8 +2286,8 @@ async function checkbuttonClick(event) {
                 else { console.debug("editor not found:", res) }
             })
             if (myrec != null) {
-                 mytextarea = await myrec.getElementsByClassName('foreign-text autosize')
-                 //console.debug("mytext:",mytextarea)
+              //  mytextarea = await myrec.getElementsByClassName('foreign-text autosize')
+                //console.debug("mytext:",mytextarea)
                 if (typeof textarea != 'undefined') {
                      textarea = mytextarea[0]
                      // Ensure the textarea is visible and enabled
@@ -2324,10 +2320,10 @@ async function checkbuttonClick(event) {
                         copyToClipBoard(detailRow)
                 }
                 if (StartObserver) {
-                        if (detail_glossary) {
-                            //console.debug("We are starting the observer:", mytextarea)
-                            start_editor_mutation_server(mytextarea, action)
-                        }
+                    if (detail_glossary) {
+                        console.debug("We are starting the observer:",mytextarea)
+                        start_editor_mutation_server(mytextarea, action)
+                    }
                     // PSS only within the editor we want to copy the original to clipboard is parameter is set
                 }
             }
@@ -2421,6 +2417,60 @@ async function checkbuttonClick(event) {
                 myrec.scrollIntoView(true);
             }
 
+            //let panelTransDiv = document.querySelector(`#editor-${rowId} div.panelTransMenu`)
+            //if (panelTransDiv == null) {
+                // If the transdiv is not present we need to add it
+              //  var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
+              //  if (newTransDiv != null) {
+                //    newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
+                    // We need to repopulate the panelTransDiv as it now exists
+                //    panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+                //    translateButton = document.querySelector(`#editor-${rowId}-translation-entry-my-button`);
+
+                 //   translateButton = createElementWithId("my-button", `translate-${rowId}--translation-entry-my-button`);
+                 //   translateButton.className = "translation-entry-my-button";
+                 //   translateButton.onclick = translateEntryClicked;
+                  //  translateButton.innerText = __("Translate");
+                  //  panelTransDiv.insertBefore(translateButton, panelTransDiv.childNodes[0]);
+
+                 //   addTranslateButton = createElementWithId("my-button", `translate-${rowId}-addtranslation-entry-my-button`);
+                  //  addTranslateButton.className = "addtranslation-entry-my-button";
+                  //  addTranslateButton.onclick = addtranslateEntryClicked;
+                   // addTranslateButton.innerText = __("Add Translation");
+                   // panelTransDiv.insertBefore(addTranslateButton, panelTransDiv.childNodes[0]);
+
+                    // Add checktranslate button
+                  //  let checkTranslateButton = createElementWithId("my-button", `translate-${rowId}-checktranslation-entry-my-button`);
+                  //  checkTranslateButton.href = "#";
+                  //  checkTranslateButton.className = "checktranslation-entry-my-button";
+                  //  checkTranslateButton.onclick = checktranslateEntryClicked;
+                  //  checkTranslateButton.innerText = __("Check Translation");
+                   // checkTranslateButton.style.cursor = "pointer";
+                   // panelTransDiv.insertBefore(checkTranslateButton, panelTransDiv.childNodes[0]);
+
+                    // Add lowercase button
+                   // let LocalCaseButton = createElementWithId("my-button", `translate-${rowId}-localcase-entry-my-button`);
+                   // LocalCaseButton.href = "#";
+                   // LocalCaseButton.className = "localcase-entry-my-button";
+                   // LocalCaseButton.onclick = LowerCaseClicked;
+                   // LocalCaseButton.innerText = __("LowerCase");
+                   // LocalCaseButton.style.cursor = "pointer";
+                   // panelTransDiv.insertBefore(LocalCaseButton, panelTransDiv.childNodes[0]);
+
+                   // TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
+                   // TranslocalButton.className = "translocal-entry-local-button";
+                   // TranslocalButton.innerText = __("Local");
+                   // TranslocalButton.style.visibility = "hidden";
+                   // panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
+
+                  //  MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
+                   // MissinglocalButton.className = "translocal-entry-missing-button";
+                   // MissinglocalButton.innerText = __("Missing glossary entry");
+                   // MissinglocalButton.style.visibility = "hidden";
+                   // MissinglocalButton.style.animation = "blinking 1s infinite";
+                   // panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
+                //}
+            //}
             //translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // 02-07-2021 PSS fixed issue #94 to prevent showing label of existing records in the historylist
             chrome.storage.local.set({ "noOldTrans": "True" }, function () {

@@ -1,0 +1,14 @@
+Version changes as of version 3.3
+1. Altered the DeeplTranslate.js to meet new specs for DeepL
+2. Improved behavior of ToolTips within FireFox
+3. Added new timeout in configuration for translatePage
+4. Fixed a problem with showing the glossary words within the editor
+5. Created a general function to fetch preview lines
+6. Fixed a problem within checkpage, the progressbar not showing properly
+7. Added a textbox to show translation is ready
+8. Version 3.8.8 Minor fixes
+9. Version 3.8.9 Prevented StartObserver to start when running populateWithTM
+10. Reworked populatwithTM
+11. Version 3.8.10 Added sorting of Pre translate and SpellcheckIgnore\
+12. Version 3.8.11 Various fixes and overhaul of populate with TM
+13. Version 3.8.12 Within the editor the textarea is set to the length of the translation

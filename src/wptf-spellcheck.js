@@ -19,6 +19,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     var result;
     var countreplaced = 0;
     var checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+    var tableRecords;
 
     const template = `
     <div class="indeterminate-progress-bar">
@@ -46,15 +47,18 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     var table = document.getElementById("translations");
     var tr = table.rows;
     //var tbodyRowCount = table.tBodies[0].rows.length;
-    var tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
+    tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
     progressbar = document.querySelector(".indeterminate-progress-bar");
-    //console.debug("progressbar:", progressbar)
+    inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
+
     if (progressbar == null) {
         myheader.insertAdjacentHTML('beforebegin', template);
         // progressbar = document.querySelector(".indeterminate-progress-bar");
-        // progressbar.style.display = 'block;';
+        progressbar.style.display = 'block;';
     }
     else {
+        // we need to remove the style of inprogress to see the animation again
+        inprogressbar.style=""
         progressbar.style.display = 'block';
     }
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
@@ -77,87 +81,84 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                 row = rowfound.split("_")[1];
             }
             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header span.panel-header__bubble`);
-            // We only need to process the actual lines not the untranslated
-            if (currec.innerText == "transFill" || currec.innerText == "current" || currec.innerText == "waiting") {
-                //countrows++;
-                let spanmissing = document.querySelector(`#preview-${row} span.missing`);
-                // If the page does not contain translations, we do not need to handle the
-                if (spanmissing == null) {
-                    // 30-08-2021 PSS fix for issue # 125
-                    let precomment = e.querySelector(".source-details__comment p");
-                    if (precomment != null) {
-                        comment = precomment.innerText;
-                        comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-                        toTranslate = checkComments(comment.trim());
-                    }
-                    else {
-                        toTranslate = true;
-                    }
-                    if (toTranslate == true) {
-                        // Check if it is a plural
-                        // If in the original field "Singular is present we have a plural translation                
-                        var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
-                        if (pluralpresent != null) {
-                            transtype = "plural";
+            // We only need to process the actual lines not the untranslatedy
+            if (currec != null) {
+                if (currec.innerText == "transFill" || currec.innerText == "current" || currec.innerText == "waiting") {
+                    //countrows++;
+                    let spanmissing = document.querySelector(`#preview-${row} span.missing`);
+                    // If the page does not contain translations, we do not need to handle the
+                    if (spanmissing == null) {
+                        // 30-08-2021 PSS fix for issue # 125
+                        let precomment = e.querySelector(".source-details__comment p");
+                        if (precomment != null) {
+                            comment = precomment.innerText;
+                            comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                            toTranslate = checkComments(comment.trim());
                         }
                         else {
-                            transtype = "single";
+                            toTranslate = true;
                         }
-
-                        if (transtype == "single") {
-                            // Fetch the translations
-                            let element = e.querySelector(".source-details__comment");
-                            let textareaElem = e.querySelector("textarea.foreign-text");
-                            translatedText = textareaElem.innerText;
-                            // Enhencement issue #123
-                            previewNewText = textareaElem.innerText;
-                            // Need to replace the existing html before replacing the verbs! issue #124
-                            // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-                           // console.debug("line to check:",translatedText,previewNewText)
-                            if (translatedText != "") {
-                                let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                               // console.debug("before LT:",translatedText)
-                                spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
-                                //errorstate = spell_result;
+                        if (toTranslate == true) {
+                            // Check if it is a plural
+                            // If in the original field "Singular is present we have a plural translation                
+                            var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
+                            if (pluralpresent != null) {
+                                transtype = "plural";
                             }
-                         //   console.debug("na spell single:", spell_result,errorstate)
-                            
-                            // console.debug("single replaced val:",replaced)
-
-                        }
-                        else {
-                            replaced = false;
-                            let previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
-                            previewNewText = previewElem.innerText;
-                            translatedText = previewElem.innerText;
-                            //console.debug("plural1 found:",previewElem,translatedText,previewNewText);
-                            currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                            if (translatedText != "") {
-                                spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
+                            else {
+                                transtype = "single";
                             }
-                            // plural line 2
-                            previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
-                            //console.debug("plural2:", previewNewText, translatedText);
-                            if (previewElem != null) {
-                                previewNewText = previewElem.innerText;
-                                translatedText = previewElem.innerText;
-                                replaced = false;
+
+                            if (transtype == "single") {
+                                // Fetch the translations
+                                let element = e.querySelector(".source-details__comment");
+                                let textareaElem = e.querySelector("textarea.foreign-text");
+                                translatedText = textareaElem.innerText;
+                                // Enhencement issue #123
+                                previewNewText = textareaElem.innerText;
+                                // Need to replace the existing html before replacing the verbs! issue #124
+                                // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                                // console.debug("line to check:",translatedText,previewNewText)
                                 if (translatedText != "") {
+                                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                                    // console.debug("before LT:",translatedText)
                                     spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
                                 }
                             }
+                            else {
+                                replaced = false;
+                                let previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
+                                previewNewText = previewElem.innerText;
+                                translatedText = previewElem.innerText;
+                                //console.debug("plural1 found:",previewElem,translatedText,previewNewText);
+                                currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                                if (translatedText != "") {
+                                    spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
+                                }
+                                // plural line 2
+                                previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
+                                //console.debug("plural2:", previewNewText, translatedText);
+                                if (previewElem != null) {
+                                    previewNewText = previewElem.innerText;
+                                    translatedText = previewElem.innerText;
+                                    replaced = false;
+                                    if (translatedText != "") {
+                                        spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
+                                    }
+                                }
+                            }
+                        }
+                        if (replaced) {
+                            // Only update the style if verbs are replaced!!
+                            let wordCount = countreplaced;
+                            let percent = 10;
+                            let toolTip = "";
+                            result = { wordCount, percent, toolTip };
+                            updateStyle(textareaElem, result, "", true, false, false, row);
                         }
                     }
-                    if (replaced) {
-                        // Only update the style if verbs are replaced!!
-                        let wordCount = countreplaced;
-                        let percent = 10;
-                        let toolTip = "";
-                        result = { wordCount, percent, toolTip };
-                        updateStyle(textareaElem, result, "", true, false, false, row);
-                    }
+
                 }
-               
             }
             // tbodyRowCount includes also the editor rows, so we need to devide by "2"
             if (countrows == tableRecords ) {
@@ -169,21 +170,20 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                 checkButton.className += " ready";
                 if (errorstate != "OK") {
                     messageBox("error", "Check spelling done<br> " + errorstate + "<br> on one of the records")
+                    errorstate = "OK"
                 }
                 else {
                     messageBox("info", "Check spelling done<br> " + "OK" + "<br>")
                 }
+                progressbar = document.querySelector(".indeterminate-progress-bar");
+                progressbar.style.display = "none";
                 setTimeout(() => {
                     close_toast();
                     toastbox("info", "Spellcheck ready", "2000", "Spellcheck");
-                }, 200);
-                
-                
-                progressbar = document.querySelector(".indeterminate-progress-bar");
-                progressbar.style.display = "none";
+                }, 200);    
             }
             }, timeout, errorstate, countrows);
-        timeout += 200;
+        timeout += 800;
     }
     return errorstate
   }
@@ -220,31 +220,49 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
     } else {
        myurl = 'https://api.languagetoolplus.com/v2/check?text=' + text + '&language=' + LtLang + '&username=' + LtUser + '&apiKey=' + LtKey + '&enabledOnly=false'
     }
-    response = fetch(myurl, {
+    response = await fetch(myurl, {
         method: 'POST',
         mode: 'cors',
         credentials: "same-origin"
-    })
-        .then(async response => {
+    }).then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
-           // console.debug("response:", isJson, response)
-            //data = isJson && await response.json();
-            //console.debug("Response:", data);
+           // console.debug("response:", response)
+            //console.debug("response ata:", data)
+           
+           // console.debug("Response:", response);
             // check for error response
             if (!response.ok) {
                 replaced = false
                 // get error message from body or default to response status
                 //console.debug("data:", response.status)
                 if (typeof data != "undefined") {
-                    error = [data, "", response.status];
+                    //mydata = "No results"
+                    //var myerror = { data:mydata, message: "Response not OK", status: response.status }
+                    if (response.status != "") {
+                        errorstate = response.status
+                    }
+                    else {
+                        errorstate = 'NOK'
+                    }
+                    throw new Error(response.status);
                 }
                 else {
-                    let message = 'Nodata received!';
-                    data = "noData";
-                    error = [data, message, response.status];
+                   // let message = 'Nodata received!';
+                    //mydata = "noData";
+                   // var myerror = response.status
+                   // console.debug("errrr:", myerror)
+                    //console.debug("status:",response.status)
+                    if (response.status != "") {
+                        errorstate = response.status
+                    }
+                    else {
+                        errorstate == "NOK"
+                    }
+                    throw new Error(response.status);
                 }
-                return Promise.reject(error);
+                //return Promise.reject(error);
+                //throw new Error("There has been an error:"+ [data,"noData", response.status]);
             }
             else {
                 //We do have a result so process it
@@ -301,49 +319,56 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
             checkButton.className += " translated";
             checkButton.innerText = "Checked";
             checkButton.className += " ready";
-            if (errorstate != "OK") {
+            //if (errorstate != "OK") {
                // messageBox("error", "Error during spell check: " + error[2]+"<br>"+translation.substr(0,30))
-            }
-            if (error[2] == "400") {
+            //}
+           // console.debug("error in spellcheck:", error)
+           // console.debug("error in spellcheck:", errorstate)
+           // console.debug("message:", error.message)
+            if (error.message == "400" || errorstate == '400') {
                 //   alert("Error 400 NoData.")
                 errorstate = "Error 400";
                // errorstate = '<br>We did not get data<br>';
-                console.debug("We have an error:", errorstate);
+               // console.debug("We have an error:", errorstate);
 
             }
-            if (error[2] == "403") {
+            else if (error.message == "403" || errorstate == '403') {
                 // alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
-                errorstate = "Error 403";
-                console.debug("We have an error:", errorstate);
+                errorstate = "Error 403 Authorization failed";
+               // console.debug("We have an error:",error.message);
             }
-            else if (error[2] == '404') {
+            else if (error.message == '404' || errorstate == '404') {
                 //   alert("Error 404 The requested resource could not be found.")
-                errorstate = "Error 404";
-                console.debug("We have an error:", errorstate);
+                errorstate = "Error 404 resource could not be found<br>Perhaps wrong glossary";
+                //console.debug("We have an error:", errorstate);
 
             }
-            else if (error[2] == '456') {
+            else if (error.message == '456' || errorstate == '406') {
                 //alert("Error 456 Quota exceeded. The character limit has been reached")
-                errorstate = "Error 456";
-                console.debug("We have an error:", errorstate);
+                errorstate = "Error 456 Quota exceeded";
+              //  console.debug("We have an error:", errorstate);
 
             }
-            else if (error[2] == '500') {
+            else if (error.message == '500' || errorstate == '500') {
+                errorstate = "Error 500 no data received";
+               // console.debug("We have an error no data:", errorstate);
+
+            }
+            else if (error.message == '504' || errorstate == '504') {
+                errorstate = "Error 504 gateway timout";
                 
-                errorstate = "OK";
-                console.debug("We have an error no data:", errorstate);
+              //  console.debug("We have an error:", "Gateway timeout spellchecker");
 
             }
             // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
-            else if (error == 'TypeError: Failed to fetch') {
+            else if (error.message == 'TypeError: Failed to fetch') {
                 errorstate = '<br>We did not get an answer from Languagetool<br>Check your internet connection';
-                console.debug("We have an error:", errorstate);
-                errorstate = "OK";
+              //  console.debug("We have an error:", errorstate);
 
             }
             else {
                 //alert("Error message: " + error[1])
-                console.debug("Error:", error)
+              //  console.debug("Error:", error)
                 errorstate = "Error " + error[1];
 
             }

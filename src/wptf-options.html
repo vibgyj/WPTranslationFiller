@@ -72,6 +72,10 @@
             width: 50px;
         }
 
+        #DeepLWait {
+            width: 50px;
+        }
+
         #OpenAIWait {
             width: 50px;
         }
@@ -434,19 +438,23 @@
                         <input id="tmWait" type="text" value="500" />
                         <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
                         <label style="margin: 10px" for="OpenAIWait">OpenAI waiting time</label>
-                        <input id="OpenAIWait" type="text" value="7500" />
+                        <input id="OpenAIWait" type="text" value="10" />
                         <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <label for="bulkWait">Bulk save waiting time</label>
+                    <label for="bulkWait">Bulk and DeepL save waiting time</label>
                 </td>
                 <td>
                     <div class="form-input">
                         <input id="bulkWait" type="text" value="1000" />
                         <span class="tooltip" data-tooltip="Change this when bulk save skips records">?</span>
+                        <label style="margin: 15px" for="DeepLWait">DeepL waiting time</label>
+                        <input id="DeepLWait" type="text" value="5" />
+                        <span class="tooltip" data-tooltip="Change this when DeepL skips records">?</span>
+
                     </div>
                 </td>
             </tr>
