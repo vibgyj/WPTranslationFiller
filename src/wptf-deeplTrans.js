@@ -168,7 +168,6 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
         }
         return errorstate
     };
-
 }
 
 
@@ -191,6 +190,7 @@ async function okdeepLTranslate(original, language, record, apikeyDeepl, preverb
     var deepLresult;
     //errorstate ="NOK"
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
+    //console.debug("pre:",originalPreProcessed)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     let deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
    // console.debug("current in deepl:", deepLcurrent)
