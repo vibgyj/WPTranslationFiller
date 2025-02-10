@@ -85,7 +85,10 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
     }
 }
 
-const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
+
+const placeHolderRegex = /%(\d{1,2}\$)?[sdl]|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%|#/gi;
+// the below regex did not work anymore for "%1$s" !!!
+//const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
@@ -100,12 +103,11 @@ function preProcessOriginal(original, preverbs, translator) {
     }
     // 15-05-2021 PSS added check for translator
     if (translator == "google") {
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
                 original = original.replace(match, `[${index}]`);
-
                 index++;
             }
         }
@@ -120,7 +122,7 @@ function preProcessOriginal(original, preverbs, translator) {
         original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
        // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
 
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
@@ -241,17 +243,17 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
-                translatedText = translatedText.replaceAll(`{${index}}`, match);
+                translatedText = translatedText.replaceAll(`[${index}]`, match);
                 index++;
             }
         }
     }
     else if (translator == "deepl") {
-        const matches = original.matchAll(placeHolderRegex);
+        const matches = original.match(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
@@ -2460,7 +2462,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                     else {
                         textFound = check_hyphen(textFound, spellIgnore);
                     }
-                    //textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
+                    textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
                     if (textFound == "") {
                        // console.debug("liSuggestion present but no result from postProcessTranslation!")
                         textFound = "No suggestions";
@@ -2499,6 +2501,7 @@ function fetchli(result, editor, row, TMwait, postTranslationReplace, preTransla
                         else {
                             textFound = check_hyphen(textFound, spellIgnore);
                         }
+                        textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore, locale)
                         resolve(textFound);
                     }
                 }
@@ -2769,7 +2772,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var timeout = 0;
     var mytimeout = 1000;
     var vartime = 500;
-    const stop = false;
+    var stop = false;
     var editor = false;
     var counter = 0;
     var myrecCount = 0;
@@ -2827,7 +2830,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             setPreTranslationReplace(preTranslationReplace);
             myrecCount = document.querySelectorAll("tr.editor")   
             for (let record of myrecCount) { 
-                setTimeout(async function (stop) {
+               // setTimeout(async function () {
                     counter++;
                     transtype = "single";
                     // 16-08-2021 PSS fixed retranslation issue #118
@@ -2920,7 +2923,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                             else if (transsel == "deepl") {
                                 // console.debug("before translate:",original,row)
-                                result = deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
+                                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                                 if (result == "Error 403") {
                                     messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -2939,11 +2942,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     //break;
                                 }
                                 else {
+                                    //console.debug("errorstate:",errorstate)
                                     if (errorstate != "OK") {
-                                        messageBox("error", "There has been some uncatched error: " + errorstate);
+                                       // messageBox("error", "There has been some uncatched error: " + errorstate);
                                         //alert("There has been some uncatched error: " + errorstate);
                                         stop = true;
-                                        // break;
+                                        console.debug("we break!!")
+                                        //break;
                                     }
                                 }
                             }
@@ -2991,9 +2996,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     // break
                                 }
                                 else {
+                                    //console.debug("errorstate:",errorstate)
                                     if (errorstate != "OK") {
                                         messageBox("error", "There has been some uncatched error: " + errorstate);
-                                        stop = 'True';
+                                        stop = 'true';
                                         // break;
                                         //alert("There has been some uncatched error: " + errorstate);
                                     }
@@ -3471,9 +3477,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                         translateButton.className += " translated";
                         translateButton.innerText = "Translated"; 
-                    }               
-                }, timeout,stop);
-                timeout += vartime;   
+                    }  
+               // }, timeout);
+               // timeout += vartime;  
+                if (stop == true){
+                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                    translateButton.className += " translated";
+                    translateButton.innerText = "Translated"; 
+                    messageBox("error", "End There has been some uncatched error: " + errorstate);
+                    break;
+                }
             }
         } else {
             messageBox("error", "Your pretranslate replace verbs are not populated add at least on line!");
@@ -3704,6 +3717,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "deepl") {
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
+                        //console.debug("result:",result)
                         if (result == 'Error 403') {
                             messageBox("error", "Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!");
                         }
@@ -3767,6 +3781,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "hide";
                     let textareaElem = e.querySelector("textarea.foreign-text");
+                    translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
+                    // if row is already translated the rowId has different format, so we need to search with this different format
+                    if (translateButton == null) {
+                        translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
+                    }
+                    translateButton.className += " translated";
+                    translateButton.innerText = "Translated";
                    // console.debug("translatedText:",translatedText)
                 }
                 else {

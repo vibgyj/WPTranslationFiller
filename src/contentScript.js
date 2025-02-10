@@ -3721,7 +3721,7 @@ function savetranslateEntryClicked(event) {
       //  else {
       //      bulk_timer = 1500;
       //  }
-    var bulk_timer = 50
+    var bulk_timer = 200
     // Determine status of record
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     var current = h.querySelector("span.panel-header__bubble");
@@ -3733,7 +3733,7 @@ function savetranslateEntryClicked(event) {
             let glotpress_save = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content div.translation-wrapper div.translation-actions .translation-actions__save`);
             select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content`);
             var status = select.querySelector("dt").nextElementSibling;
-            status.innerText = "waiting";
+            status.innerText = "waiting"
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
             setTimeout(() => {
                 if (autoCopyClipBoard) {
@@ -5101,9 +5101,9 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
             }
         }).catch(error => {
             if (error.response && error.response.status === 429) {
-                console.error('Too many requests. Please try again later.');
+                console.debug('Too many requests. Please try again later.');
             } else {
-                console.error('Error fetching or processing data:', error.message);
+                console.debug('Error fetching or processing data:', error.message);
             }
          })
 }
@@ -5442,7 +5442,9 @@ async function handleMutation(mutationsList, observer) {
                     map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
                     //console.debug("before MyResult:", OriginalText)
                     //console.debug("before MyResult:", translation)
-                    MyResult = await validate(locale, OriginalText, translation, locale, false, rowId, false) 
+                    if (typeof translation != 'undefined'){
+                        MyResult = await validate(locale, OriginalText, translation, locale, false, rowId, false) 
+                    }
 
                     spans = await leftPanel.getElementsByClassName("glossary-word")
                     if (MyResult != null) {
