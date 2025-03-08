@@ -207,33 +207,28 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     //console.debug("myLi:",myLi)
     translatedText = myLi;
     //z("myLI:", myLi, translatedText)
-    if (translatedText != 'No suggestions') {                    
-        translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, spellIgnore, locale);
-    }
-    //processTransl(original, translatedText, locale, record, row, "single", "0", locale, convertToLower, current);
-   // record.style.display = "display: table-row";
-  
-    let textareaElem = record.querySelector("textarea.foreign-text");
-    //console.debug("text1:",textareaElem)
-    // PSS 29-03-2021 Added populating the value of the property to retranslate            
-   // textareaElem.value = translatedText;
-   // textareaElem.innerText = translatedText;
-   // textareaElem.innerHTML = translatedText;
-   // textareaElem.Context = translatedText;
-    //PSS 25-03-2021 Fixed problem with description box issue #13
-    textareaElem.style.height = 'auto';
-    //textareaElem.style.height = textareaElem.scrollHeight + "px";
-    
-    if (typeof current != "undefined") {
-        current.innerText = "transFill";
-        current.value = "transFill";
-    }
     // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
     select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-    //select = next_editor.getElementsByClassName("meta");
     var status = select.querySelector("dt").nextElementSibling;
-    status.innerText = "transFill";
-    status.value = "transFill";
+    if (translatedText != 'No suggestions') {
+        status.innerText = "transFill";
+        status.value = "transFill";
+        // we need to clean the translatedText if it contains wrong words
+        translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, spellIgnore, locale);
+       // let textareaElem = record.querySelector("textarea.foreign-text");
+        //PSS 25-03-2021 Fixed problem with description box issue #13
+       // textareaElem.style.height = "auto";
+        //textareaElem.style.height = textareaElem.scrollHeight + "px";
+       // console.debug("We found:",translatedText)
+    }
+    else {
+        translated = false
+        current.innerText = "untranslated"
+        current.value = "untranslated";
+        myResult = "No suggestions"
+        status.innerText = "untranslated";
+        status.value = "untranslated";
+        }
     let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
     if (currec != null) {
        var current = currec.querySelector("span.panel-header__bubble");
@@ -245,10 +240,11 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
     if (previewElem != null) {
         // we found a plural obviously, we do not fetch TM for that
         if (preview != null) {
-            preview.style.display = "none";
+           //27-6  preview.style.display = "hidden";
         }
     }
     else {
+        // here we populate the preview
         let spanmissing = preview.querySelector(" span.missing");
         if (spanmissing != null) {
             preview.innerText = translatedText;
@@ -256,7 +252,8 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
             if (translatedText != 'No suggestions') {
                 current.innerText = "transFill";
                 current.value = "transFill";
-                status.value = "untranslated";
+                status.value = "transFill";
+                status.innerText = "transFill";
             }
             var element1 = document.createElement("div");
             element1.setAttribute("class", "trans_local_div");
@@ -270,13 +267,6 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
                }
                preview.appendChild(element1);
              }
-            // textareaElem = await record.querySelector("textarea.foreign-text");
-           //  textareaElem.innerText = translatedText;
-           //  textareaElem.innerHTML = translatedText;
-          //   textareaElem1 = textareaElem
-             // PSS 29-03-2021 Added populating the value of the property to retranslate            
-          //   textareaElem.value = translatedText;
-
              // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
              // we need to change the state of the record but only if we found a translation!!
              if (translatedText != 'No suggestions') {
@@ -287,27 +277,30 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
              }
          }
          else {
-             // if it is as single with local then we need also update the preview
-            preview.innerText = translatedText;
+            // if it is as single with local then we need also update the preview
+             preview.innerText = translatedText;
              preview.innerHTML = translatedText
              preview.value = translatedText;
              current.innerText = "transFill";
              current.value = "transFill";
              var element1 = document.createElement("div");
              element1.setAttribute("class", "trans_local_div");
-             element1.setAttribute("id", "trans_local_div");
-             if (isOpenAI != 'OpenAI') {
-                 element1.appendChild(document.createTextNode("TM"));
-             }
-             else {
-                 element1.appendChild(document.createTextNode("AUTO"))
-             }
-             preview.appendChild(element1);
-             // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
-             // we need to change the state of the record 
-             preview.classList.replace("no-translations", "has-translations");
-             preview.classList.replace("untranslated", "status-waiting");
-             preview.classList.add("wptf-translated");
+                element1.setAttribute("id", "trans_local_div");
+            if (translatedText != "No suggestions") {
+                if (isOpenAI != 'OpenAI') {
+                    element1.appendChild(document.createTextNode("TM"));
+                }
+                else {
+                    element1.appendChild(document.createTextNode("AUTO"))
+                }
+                preview.appendChild(element1);
+
+                // 04-08-2022 PSS translation with TM does not set the status of the record to status - waiting #229
+                // we need to change the state of the record 
+                preview.classList.replace("no-translations", "has-translations");
+                preview.classList.replace("untranslated", "status-waiting");
+                preview.classList.add("wptf-translated");
+            }
          }
     }
     let localButton = document.querySelector("#translate-" + row + "-translocal-entry-local-button");
@@ -317,14 +310,7 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
             localButton.innerText = "TM"
         }
     }
-    //console.debug("translatedText:", translatedText)
-    if (translatedText != "") {
-
-        return translatedText;
-    }
-        else {
-            return myLi
-        }
+    return translatedText;
 }
 
 function getDbSchema() {

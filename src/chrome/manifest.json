@@ -1,9 +1,15 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.3.12",
-  "description": "Automatically fill translations fom Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
-
+  "version": "3.3.24",
+  "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' ; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "web_accessible_resources": [
     {
       "resources": [
@@ -14,22 +20,25 @@
         "warning-marker.png",
         "/_metadata",
         "wptf-options.html",
-        "wptf-inject.js",
         "wptf-database.js",
+        "wptf-inject.js",
         "wptf-buildstats.js",
-        "wptf-glossary.csv"
+        "wptf-cute-alert.js",
+        "wptf-glossary.csv",
+        "locales/*.json"
       ],
       "matches": [
         "https://translate.wordpress.org/*"
       ]
     }
   ],
-  "background.service_worker": {
-    "scripts": [
-      "jsstore.js",
-      "jsstore.worker.js"
-    ]
-  },
+
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+  ],
   "declarative_net_request": {
     "rule_resources": [
       {
@@ -39,13 +48,8 @@
       }
     ]
   },
-  "permissions": [
-    "storage",
-    "declarativeNetRequest",
-    "declarativeNetRequestWithHostAccess",
-    "declarativeNetRequestFeedback"
-  ],
   "host_permissions": [
+    "<all_urls>",
     "*://translate.wordpress.org/*",
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",
@@ -53,7 +57,10 @@
     "*://api.languagetoolplus.com/v2/*",
     "*://analytics.languagetoolplus.com/*",
     "*://api.cognitive.microsofttranslator.com/*",
-    "*://api.openai.com/*"
+    "*://127.0.0.1/*",
+    "*://api.openai.com/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "options_page": "wptf-options.html",
   "content_scripts": [
@@ -88,11 +95,11 @@
         "wptf-style.css"
       ],
       "json": [
-        "wptf-block_rules.json"
+        "wptf-block_rules.json",
+        "locales/*.json"
       ],
       "csv": [
         "wptf-glossary.csv"
-
       ]
     }
   ]

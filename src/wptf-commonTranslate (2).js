@@ -413,13 +413,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
     }
-    else {
-        // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
-       // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-        translatedText = correctSentence(translatedText, spellCheckIgnore);
-        //console.debug(translatedText); // Output: "this is an example with Apple and Microsoft."
-
-    }
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -469,32 +462,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     translatedText = result.translatedText;
     // console.debug("end of post:",translatedText)
     return translatedText;
-}
-
-function correctSentence(translatedText, ignoreList) {
-    // Ensure ignoreList is always an array, even if undefined or invalid
-    if (!ignoreList || typeof ignoreList !== "string") {
-        ignoreList = "";
-    }
-
-    // Convert ignore list into an array, handling different line endings
-    let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
-
-    // Convert ignore list to a map for fast lookup (case-insensitive)
-    let ignoreMap = new Map();
-    ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
-
-    // Split sentence into words (preserving punctuation)
-    let words = translatedText.split(/\b/);
-
-    // Process each word
-    let correctedWords = words.map(word => {
-        let lowerWord = word.toLowerCase();
-        return ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word;
-    });
-
-    // Reconstruct and return the corrected sentence
-    return correctedWords.join('');
 }
 
 function check_hyphen(translatedText, spellCheckIgnore) {
@@ -602,7 +569,7 @@ function convert_lower(text, spellCheckIgnore) {
                     }
                     // check if the first letter of the word is a capital and it is not in the ignorelist
                     allUpper = false;
-                    // is a word constains "',s" we need to remove it, otherwise the result is wrong example API's
+                    // is a word constains "',s" we need to remove itg, otherwise the result is wrong example API's
                     if (checkword.endsWith("'s")) {
                         checkword = checkword.replace("'s", "")
                     }
@@ -628,14 +595,7 @@ function convert_lower(text, spellCheckIgnore) {
                     }
                     else {
                         //it is in the ignore list so keep the first letter as capital
-                        // we could improve it by converting it to uppercase if the word found is lowercase, but in ignoren it is with uppercase
-                        console.debug("we do not convert:",word)
-                        if (startsWithCapital(word)) {
-                            capsArray.push(word)
-                        }
-                        else {
-                            capsArray.push(word[0].toUpperCase() + word.slice(1));
-                        }
+                        capsArray.push(word)
                     }
                 }
                 else {
@@ -1130,15 +1090,12 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     }
                     if (transtype == "single") {
                         // Fetch the translations
-                        let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
-                        // let element = e.querySelector(".source-details__comment");
+                        let element = e.querySelector(".source-details__comment");
                         let textareaElem = e.querySelector("textarea.foreign-text");
-                        //console.debug("textareaELem:",textareaElem)
                         translatedText = textareaElem.innerText;
-                        //console.debug("translatedText:",translatedText)
                         prev_trans = textareaElem.innerText;
 
-                        if (translatedText != "No suggestions" && translatedText != "") {
+                        if (translatedText != "No suggestions") {
                             previewNewText = textareaElem.innerText;
                             let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                             // PSS we need to check for missing periods en blanks before replacing verbs 
@@ -1147,7 +1104,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             replaced = result.replaced;
                             repl_array = result.repl_array;
                             if (replaced) {
-
+                                preview = document.querySelector("#preview-" + newrowId + " span.translation-text");
+                                if (preview == null) {
+                                    preview = document.querySelector("#preview-" + row + " span.translation-text");
+                                }
                                 mypreview.classList.replace("status-current", "status-waiting");
                                 mypreview.classList.add("wptf-translated");
                                 repl_verb = result.repl_verb;
@@ -1157,6 +1117,20 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     preview.innerHTML = result.previewNewText
                                     textareaElem.innerText = result.previewNewText;
                                 }
+                                else {
+                                    console.debug("preview is null!:", row, newrowId, typeof preview)
+                                }
+
+                                // PSS this needs to be improved
+                                //let repl = []
+                                //let rec = '.,.'
+                                //repl.push(rec.split(","))
+                                //rec = ' , '
+                                // repl.push(rec.split(","))
+                                preview = document.querySelector("#preview-" + newrowId + " span.translation-text");
+                                if (preview == null) {
+                                    preview = document.querySelector("#preview-" + row + " span.translation-text");
+                                }
 
                                 await markElements(preview, repl_array, original, spellcheckIgnore, repl_array, translatedText);
                                 // 09-09-2022 PSS fix for issue #244
@@ -1164,7 +1138,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     var current = currec.querySelector("span.panel-header__bubble");
                                     var prevstate = current.innerText;
                                     current.innerText = "transFill";
-                                    
+                                    //####
                                 }
 
                                 // Only update the style if verbs are replaced!!
@@ -2358,27 +2332,36 @@ async function fetchsuggestions(row) {
 }
 
 function waitForElements(rowNumber, class1, class2, interval = 500, timeout = 5000) {
+    console.debug("parameters:",rowNumber,class2,interval,timeout)
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
         function checkElements() {
-            const row = document.querySelector(`tr[id^="editor"][row="${rowNumber}"]`);
+           
+            const row = document.querySelector(`tr[id^="editor-"][row="${rowNumber}"]`);
             if (!row) {
                 if (Date.now() - startTime > timeout) return reject("Timeout: Row not found");
                 return setTimeout(checkElements, interval);
             }
             // Find the <ul> element dynamically within the row
-            const suggestionsList = row.querySelector("ul.suggestions-list");
-            if (!suggestionsList) {
+            //console.debug("row found:",row)
+            let  suggestionsList = row.querySelector("div.suggestions-wrapper");
+            console.debug("found suggestionsList:",suggestionsList)
+            if (suggestionsList == null) {
                 if (Date.now() - startTime > timeout) return reject("Timeout: Suggestions list not found");
                 return setTimeout(checkElements, interval);
             }
             // Find the <li> elements inside the <ul>
-            const elements = suggestionsList.querySelectorAll(`li.${class1}, li.${class2}`);
-            if (elements.length > 0) {
+            //console.debug("class2:",class2)
+            let elements = suggestionsList.querySelectorAll(`${class2}`);
+            console.debug("elements in wait:",elements)
+            if (elements.length > 3 && typeof elements !="undefined") {
+                console.debug("element found:",elements[0])
                 resolve(elements);
             } else if (Date.now() - startTime < timeout) {
                 setTimeout(checkElements, interval);
             } else {
+                console.debug("element niet gevonden in waitfor!!")
+                //alert ("element not found!!")
                 reject("Timeout: Elements not found");
             }
         }
@@ -2391,22 +2374,34 @@ function findSuggestionsListIndex(collection) {
     //console.debug("collection:",collection.children)
     if (typeof collection != 'undefined') {
         collection = collection.children
-        // console.debug("collection:",collection)
+        console.debug("collection:",collection,"Length",collection.length)
         for (let i = 0; i < collection.length; i++) {
-            // console.debug(`Checking index ${i}:`, collection[i].tagName, collection[i].classList); // Debugging line
-            if (collection[i].classList.contains("suggestions-list")) {
-                //console.debug("we found it :",i)
-                //console.debug("list:",collection[i])
-                return i; // Return the index when found
+            console.debug(`Checking index ${i}:`,  collection[i].classList); // Debugging line
+            //console.debug(`Checking index ${i}:`, collection[i].tagName, collection[i].classList); // Debugging line
+            if (collection[i].classList.length != 0) {
+                if (collection[i].classList.contains("suggestions-list")) {
+                    //console.debug("we found it :",i)
+                    //console.debug("list:",collection[i])
+                    return i; // Return the index when found
+                }
+                else {
+                    console.debug("we did not find:", collection[i])
+                }
+            }
+            else {
+                console.debug("classList = 0")
             }
         }
+        console.debug("we ended the loop without result",collection)
+        return -1
     }
+    console.debug("end of check without result",collection)
     return -1; // Return -1 if not found
 }
 
 // Part of the solution issue #204
 
-function fetchli(result, editor, row, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellIgnore, locale, TMtreshold, TMswitch) {
+async function fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellIgnore, locale, TMtreshold) {
     var res;
     //var myres;
     var ulfound;
@@ -2421,10 +2416,12 @@ function fetchli(result, editor, row, postTranslationReplace, preTranslationRepl
     var DeepLres;
     var OpenAIres;
     var treshold = TMtreshold;
+    var collection;
+    var index;
     // We need to prepare the replacement list
     //console.debug("we are fetching li:",editor,row,result)
     setPostTranslationReplace(postTranslationReplace, formal);
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         //res = elementReady(`#editor-${row} .suggestions__translation-memory.initialized`);
         //console.debug("resli editor:", editor)
         const myres = document.querySelector(`#editor-${row} .suggestions__translation-memory.initialized`);
@@ -2433,248 +2430,217 @@ function fetchli(result, editor, row, postTranslationReplace, preTranslationRepl
         //setTimeout(async function () {
         original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
         original = original.querySelector("span.original-raw").innerText;
-
-        //console.debug("editor in li:",editor)
-        //console.debug("result in li:",result)
-        //console.debug("result in li:",result.children)
-
-        //result = result.children
         collection = result
-        index = findSuggestionsListIndex(collection);
-        // console.debug("Index of <suggestions-list>:", index);
-        if (index != -1) {
-            // console.debug("result in li:",result.children[index])
-            newres = result.children[index]
-        }
-        //nosuggest= result[1].innerText
-        //console.debug("nosuggest:",nosuggest)
-        //  newres =  myres.getElementsByClassName("suggestions-list");
-        if (typeof newres != 'undefined') {
-            //console.debug("newres:",newres)
-        }
-        //console.debug("result:",result)
-        //if (newres !== null && newres.length != 0) {
-        //if (nosuggest !="No suggestions."){   
-        if (typeof newres != 'undefined' && newres.length != 0) {
-            APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`)
-            if (APIScore != null) {
-                APIScore = "OpenAI"
-            }
-            else {
-                APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`)
-                if (APIScore != null) {
-                    APIScore = "DeepL"
-                }
-                else {
-                    APIScore = "None"
-                }
-            }
-            // Get the li list from the suggestions
-            lires = result
-            // console.debug(lires.querySelector('ul.suggestions-list'))
-            if (lires != null) {
-                liscore = editor.querySelector(`span.translation-suggestion__score`);
-                //console.debug("liscore:",liscore)
-                if (TMswitch == 'false') {
-                    if (liscore != null) {
-                        if (TMswitch != 'true') {
-                            liscore = liscore.innerText;
-                            liscore = Number(liscore.substring(0, liscore.length - 1))
-                            //console.debug("liscore:", liscore)
-                            //console.debug("lires:", lires)
-                            if (liscore == 100) {
-                                //liSuggestion = lires[1]
-                                //console.debug("liSuggestion:",liSuggestion)
-                                liSuggestion = lires.querySelector(`span.translation-suggestion__translation`)
-                                //console.debug("lisuggestion:",liSuggestion.innerText)
-                                if (liSuggestion != null) {
-                                    textFound = liSuggestion.innerHTML;
-                                    textFoundSplit = textFound.split("<span")[0]
-                                    //console.debug("suggestion >90:", textFoundSplit)
-                                }
-                                if (textFoundSplit != null) {
-                                    textFound = textFoundSplit;
-                                }
-                                else {
-                                    textFound = liSuggestion.innerText;
-                                }
-                            }
-                            else if (liscore >= treshold && liscore < 100) {
-                                //liSuggestion = lires[2]
-                                liSuggestion = lires.querySelector(`span.translation-suggestion__translation`);
-                                // We need to fetch Text otherwise characters get converted!!
-                                // GlotPress can indicate differences between the original
-                                // So we need to remove the indication
-                                if (typeof liSuggestion != 'undefined') {
-                                    textFound = liSuggestion.innerHTML;
-                                    textFoundSplit = textFound.split("<span")[0]
-                                    //console.debug("suggestion >90:",textFoundSplit)
-                                    if (textFoundSplit != null) {
-                                        textFound = textFoundSplit;
-                                    }
-                                    else {
-                                        textFound = liSuggestion.innerText;
-                                    }
-                                }
-                                else {
-                                    textFound = 'No suggestion';
-                                }
-                            }
-
-                            else if (APIScore == "OpenAI") {
-                                OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
-                                if (OpenAIres != null) {
-                                    liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                                    textFound = liSuggestion.innerText
-                                }
-                                else {
-                                    // console.debug("OpenAIres == null!")
-                                    textFound = "No suggestions";
-                                }
-                            }
-                            else if (APIScore == "DeepL") {
-                                DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
-                                if (DeepLres != null) {
-                                    liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
-                                    textFound = liSuggestion.innerText
-                                }
-                                else {
-                                    //  console.debug("DeepLres == null!")
-                                    textFound = "No suggestions";
-                                    //resolve(textFound);
-                                }
-                            }
-                            else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore < treshold) {
-                                //console.debug("There are no suggestions!")
-                                textFound = "No suggestions";
-                            }
-                        }
-                        // We do have no suggestions!
-                        else {
-                            if (APIScore == "OpenAI") {
-                                OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
-                                if (OpenAIres != null) {
-                                    liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
-                                    textFound = liSuggestion.innerText
-                                }
-                                else {
-                                    // console.debug("OpenAIres == null!")
-                                    textFound = "No suggestions";
-                                }
-                            }
-                            else if (APIScore == "DeepL") {
-                                DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
-                                if (DeepLres != null) {
-                                    liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
-                                    textFound = liSuggestion.innerText
-                                }
-                                else {
-                                    // console.debug("DeepLres == null!")
-                                    textFound = "No suggestions";
-                                    //resolve(textFound);
-                                }
-                            }
-                            else if (APIScore == null) {
-                                textFound = "No suggestions"
-                            }
-                        }
-                        //sometimes we have a second <span> within the text, we need to drop thatOpenAI
-                        //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
-                        // PSS made a fix for issue #300
-
-                        //textFound = textFound.split("<span")[0]
-                        textFound = unEscape(textFound)
-                        // console.debug("before postprocess:"," '"+original+"' ",textFound,spellIgnore)
-                        // We need to convert to lower if that is setconveert
-                        // console.debug("convert in fetchli:",convertToLower)
-                        if (convertToLower == true) {
-                            textFound = convert_lower(textFound, spellIgnore)
-                        }
-                        else {
-                            textFound = check_hyphen(textFound, spellIgnore);
-                        }
-                        //textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
-                        if (textFound == "") {
-                            // console.debug("liSuggestion present but no result from postProcessTranslation!")
-                            textFound = "No suggestions";
-                            resolve({ textFound, APIScore });
-                        }
-                        resolve({ textFound, APIScore });
-                    }
-                    else {
-                        textFound = "No suggestions"
-                        resolve({ textFound, APIScore });
-                    }
-                }
-                else {
-                    //console.debug("We have a foreighn")
-                    textFound = "Foreighn"
-                    newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
-                    if (newres !== null) {
-                        // Get the li list from the foreighn suggestions
-                        lires = newres.getElementsByTagName("li");
-                        liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
-                        // We need to fetch Text otherwise characters get converted!!
-                        textFound = liSuggestion.innerHTML
-                        textFound = textFound.split("<span")[0]
-                        textFound = unEscape(textFound)
-                        if (textFound == "") {
-                            textFound = "No suggestions";
-                            resolve({ textFound, APIScore });
-                        }
-                        else {
-                            // We need to convert to lower if that is setconveert
-                            if (convertToLower == true) {
-                                textFound = convert_lower(textFound, spellIgnore)
+        //console.debug("collection result:", collection)
+        ///console.debug("editor:", editor)
+        //console.debug("TMswitch:",TMswitch)
+        if (TMswitch == "false") {
+            // Usage example:
+              
+                   // console.log("Elements found:", elements[0])
+                   
+                    index = findSuggestionsListIndex(collection);
+                   // console.debug("Index of <suggestions-list>:", index);
+                    if (index != -1) {
+                        // console.debug("result in li:",result.children[index])
+                        newres = result.children[index]
+                        //console.debug("result:",result)
+                        //if (newres !== null && newres.length != 0) {
+                        if (typeof newres != 'undefined' && newres.length != 0) {
+                            APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.openai`)
+                            if (APIScore != null) {
+                                APIScore = "OpenAI"
                             }
                             else {
-                                textFound = check_hyphen(textFound, spellIgnore);
+                                APIScore = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`)
+                                if (APIScore != null) {
+                                    APIScore = "DeepL"
+                                }
                             }
+                            if (typeof APIscore == "undefined") {
+                                APIScore = "None"
+                            }
+                            // Get the li list from the suggestions
+                            lires = result
+
+                            // console.debug(lires.querySelector('ul.suggestions-list'))
+                            if (lires != null) {
+                                liscore = editor.querySelector(`span.translation-suggestion__score`);
+                                //console.debug("liscore:",liscore)
+                                if (liscore != null) {
+                                    liscore = liscore.innerText;
+                                    liscore = Number(liscore.substring(0, liscore.length - 1))
+                                    //console.debug("liscore:", liscore)
+                                    //console.debug("lires:", lires)
+                                    if (liscore == 100) {
+                                        //liSuggestion = lires[1]
+                                        //console.debug("liSuggestion:",liSuggestion)
+                                        liSuggestion = lires.querySelector(`span.translation-suggestion__translation`)
+                                        //console.debug("lisuggestion:",liSuggestion.innerText)
+                                        if (liSuggestion != null) {
+                                            textFound = liSuggestion.innerHTML;
+                                            textFoundSplit = textFound.split("<span")[0]
+                                            //console.debug("suggestion >90:", textFoundSplit)
+                                        }
+                                        if (textFoundSplit != null) {
+                                            textFound = textFoundSplit;
+                                        }
+                                        else {
+                                            textFound = liSuggestion.innerText;
+                                        }
+                                    }
+                                    else if (liscore >= treshold && liscore < 100) {
+                                        //liSuggestion = lires[2]
+                                        liSuggestion = lires.querySelector(`span.translation-suggestion__translation`);
+                                        // We need to fetch Text otherwise characters get converted!!
+                                        // GlotPress can indicate differences between the original
+                                        // So we need to remove the indication
+                                        if (typeof liSuggestion != 'undefined') {
+                                            textFound = liSuggestion.innerHTML;
+                                            textFoundSplit = textFound.split("<span")[0]
+                                            if (textFoundSplit != null) {
+                                                textFound = textFoundSplit;
+                                            }
+                                            else {
+                                                textFound = liSuggestion.innerText;
+                                            }
+                                        }
+                                        else {
+                                            console.debug("liSuggestion undefined!!")
+                                            textFound = 'No suggestions';
+                                        }
+                                    }
+                                    else if (liscore < treshold) {
+                                        textFound = 'No suggestions'
+                                    }
+
+                                    else if (APIScore == "OpenAI") {
+                                        OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
+                                        if (OpenAIres != null) {
+                                            liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
+                                            textFound = liSuggestion.innerText
+                                        }
+                                        else {
+                                            // console.debug("OpenAIres == null!")
+                                            textFound = "No suggestions";
+                                        }
+                                    }
+                                    else if (APIScore == "DeepL") {
+                                        DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
+                                        if (DeepLres != null) {
+                                            liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
+                                            textFound = liSuggestion.innerText
+                                        }
+                                        else {
+                                            //  console.debug("DeepLres == null!")
+                                            textFound = "No suggestions";
+                                            //resolve(textFound);
+                                        }
+                                    }
+                                    else if (APIScore != 'OpenAI' && APIScore != "Deepl" && liscore < treshold) {
+                                        //console.debug("There are no suggestions!")
+                                        textFound = "No suggestions";
+                                    }
+                                }
+                                // We do have no suggestions!
+                                else {
+                                    if (APIScore == "OpenAI") {
+                                        OpenAIres = editor.querySelector(`#editor-${row} div.translation-suggestion.with-tooltip.openai`);
+                                        if (OpenAIres != null) {
+                                            liSuggestion = OpenAIres.querySelector(`span.translation-suggestion__translation`);
+                                            textFound = liSuggestion.innerText
+                                        }
+                                        else {
+                                            // console.debug("OpenAIres == null!")
+                                            textFound = "No suggestions";
+                                        }
+                                    }
+                                    else if (APIScore == "DeepL") {
+                                        DeepLres = editor.querySelector(`div.translation-suggestion.with-tooltip.deepl`);
+                                        if (DeepLres != null) {
+                                            liSuggestion = DeepLres.querySelector(`span.translation-suggestion__translation`);
+                                            textFound = liSuggestion.innerText
+                                        }
+                                        else {
+                                            // console.debug("DeepLres == null!")
+                                            textFound = "No suggestions";
+                                            //resolve(textFound);
+                                        }
+                                    }
+                                    else if (APIScore == null) {
+                                        textFound = "No suggestions"
+                                    }
+                                }
+                                //sometimes we have a second <span> within the text, we need to drop thatOpenAI
+                                //console.debug("li result:", lires[0].querySelector(`span.translation-suggestion__translation`);
+                                // PSS made a fix for issue #300
+
+                                //textFound = textFound.split("<span")[0]
+                                textFound = unEscape(textFound)
+                                // We need to convert to lower if that is setconveert
+                                // console.debug("convert in fetchli:",convertToLower)
+                                if (convertToLower == true) {
+                                    textFound = convert_lower(textFound, spellIgnore)
+                                }
+                                else {
+                                    textFound = check_hyphen(textFound, spellIgnore);
+                                }
+                                //textFound = await postProcessTranslation(original, textFound, replaceVerb, "", "", convertToLower, spellIgnore,locale)
+                                if (textFound == "") {
+                                    // console.debug("liSuggestion present but no result from postProcessTranslation!")
+                                    textFound = "No suggestions";
+                                    resolve({ textFound, APIScore });
+                                }
+                                resolve({ textFound, APIScore });
+                            }
+                            else {
+                                textFound = "No suggestions"
+                                resolve({ textFound, APIScore });
+                            }
+                        }
+                        else {
+                           
+                            textFound = "No suggestions"
                             resolve({ textFound, APIScore });
                         }
                     }
                     else {
+                        console.debug("collection:", collection)
                         textFound = "No suggestions"
+                        APIscore ="None"
                         resolve({ textFound, APIScore });
                     }
-                    resolve({ textFound, APIScore})
-                }
+       // })
+                 //   .catch(error => {
+                  //      console.debug(error)
+                    //    textFound = "No suggestions"
+                    //    APIscore = "None"
+                     //   resolve({ textFound, APIScore });
+                      //  resolve
+                  //  })
 
-            }
-            else {
-                textFound = "No suggestions"
-                resolve({ textFound, APIScore });
-            }
-
-        }
-        else {
-            if (TMswitch == "true") {
-                newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
-                if (newres !== null) {
-                    // Get the li list from the foreighn suggestions
-                    lires = newres.getElementsByTagName("li");
-                    liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
-                    // We need to fetch Text otherwise characters get converted!!
-                    textFound = liSuggestion.innerHTML
-                    textFound = textFound.split("<span")[0]
-                    textFound = unEscape(textFound)
-                    if (textFound == "") {
-                        textFound = "No suggestions";
-                        resolve({ textFound, APIScore });
-                    }
-                    else {
-                        // We need to convert to lower if that is setconveert
-                        if (convertToLower == true) {
-                            textFound = convert_lower(textFound, spellIgnore)
-                        }
-                        else {
-                            textFound = check_hyphen(textFound, spellIgnore);
-                        }
-                        resolve({ textFound, APIScore });
-                    }
+        } else {
+            newres = editor.querySelector(`#editor-${row} .suggestions__other-languages.initialized .suggestions-list`);
+            if (newres !== null) {
+                // Get the li list from the foreighn suggestions
+                lires = newres.getElementsByTagName("li");
+                liSuggestion = lires[0].querySelector(`span.translation-suggestion__translation`);
+                // We need to fetch Text otherwise characters get converted!!
+                textFound = liSuggestion.innerHTML
+                textFound = textFound.split("<span")[0]
+                textFound = unEscape(textFound)
+                if (textFound == "") {
+                    textFound = "No suggestions";
+                    resolve({ textFound, APIScore });
                 }
                 else {
-                    textFound = "No suggestions"
+                    // We need to convert to lower if that is setconveert
+                    if (convertToLower == true) {
+                        textFound = convert_lower(textFound, spellIgnore)
+                    }
+                    else {
+                        textFound = check_hyphen(textFound, spellIgnore);
+                    }
                     resolve({ textFound, APIScore });
                 }
             }
@@ -2683,7 +2649,7 @@ function fetchli(result, editor, row, postTranslationReplace, preTranslationRepl
                 resolve({ textFound, APIScore });
             }
         }
-
+        // }, TMwait);
     });
 }
 
@@ -2695,7 +2661,7 @@ function myFunction() {
 
 function openEditorOnRow(preview, editor) {
     const Openeditor = preview.getElementsByClassName("action edit");
-    //console.debug("editor:", editor)
+    //console.debug("editor:",editor)
     Openeditor[0].click()
     //console.debug("Editor should be open")
     // Wait for the result from the <ul> element
@@ -2712,60 +2678,82 @@ function openEditorOnRow(preview, editor) {
 }
 
 async function processResult(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold, original, destlang, record) {
-    let myResult = "No suggestions";
-    try {
-        const resli = await fetchli(result, editor, row, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold);
-        if (resli !== null) {
-            myResult = await getTM(
-                resli.textFound, row, editor, locale, original,
-                replaceVerb, transtype, convertToLower, spellCheckIgnore,
-                locale, current, resli.APIScore
-            );
+    //console.debug("ulElement:", result)
+    // console.debug("ulElement:", ulElement[0])
+    var myResult = "No suggestions"
+    //if (typeof ulElement[0].children != 'undefined' ) {
+    //if (ulElement[0] != null && typeof ulElement[0] != 'undefined' && ulElement[0].children !='undefined') {
+    //    const listItems = Array.from(ulElement.children);  // Convert <li> elements into an array
+    //    myResult = ulElement[0].children
+    //myResult = listItems.map(item => item.textContent).join(', ');  // Join the text content of each <li>
+    // }
 
-            if (myResult === "No suggestions") {
-                translated = false;
-                current.innerText = "untranslated";
-                current.value = "untranslated";
-            } else {
-                let textareaElem = await record.querySelector("textarea.foreign-text");
-                textareaElem.innerText = myResult;
-                textareaElem.innerHTML = myResult;
-
-                translated = true;
-                result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                mark_as_translated(row, current, translated, preview);
-            }
-        } else {
+    //console.debug("ulElement:",myResult)
+    // if (myResult != "No suggestions") {
+    myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold).then(resli => {
+        //console.debug("resli:",resli.textFound)
+        if (typeof resli != null) {
+            myress = getTM(resli.textFound, row, editor, locale, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale, current, resli.APIScore).then(async myres => {
+                //  console.debug("getTM:",myres)
+                if (myres == "No suggestions") {
+                    translated = false
+                    current.innerText = "untranslated"
+                    current.value = "untranslated";
+                    myResult = "No suggestions"
+                }
+                else {
+                    if (myres != "") {
+                        textareaElem = record.querySelector("textarea.foreign-text");
+                        translatedText = postProcessTranslation(original, myres, replaceVerb, myres, "checkEntry", convertToLower, spellCheckIgnore, locale);
+                        textareaElem.innerText = translatedText
+                        textareaElem.innerHTMl = translatedText
+                        myResult = translatedText
+                        //submitData(textareaElem)
+                        translated = true
+                        result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                        //console.debug("preview:",preview)
+                        mark_as_translated(row, current, translated, preview)
+                        editor.style.display = 'hidden'
+                    }
+                    else {
+                        //myResult = "No suggestions"
+                    }
+                }
+            });
+        }
+        else {
             current.innerText = "untranslated";
             current.value = "untranslated";
-            translated = false;
-            myResult = "No suggestions";
+            translated = false
+            myResult = "No suggestions"
         }
+        // editor.style.display = 'hidden'
 
-        return myResult;  // Ensure function returns the final result
-
-    } catch (error) {
-        console.error("Error in processResult:", error);
-        return "Error occurred";
-    }
+    }).catch((error) => {
+        console.error("Error in fetching li:", error);
+    });
+    //}
+    return myResult;
 }
 
-function waitForMyneElement(selector, editor, FetchLiDelay = 2000) {
+function waitForMyneElement(selector, editor, FetchLiDelay) {
     //console.debug("delay:", FetchLiDelay)
     return new Promise((resolve) => {
-        const element = editor.getElementsByClassName(selector);
+        let element = editor.getElementsByClassName(selector);
         //console.debug("element:",element)
         if (typeof element != 'undefined') {
             // Check if the element exists and contains items
             const checkExistence = setInterval(() => {
                 if (typeof element[0] != "undefined" && element[0].children.length > 0) {
                     //console.debug("found element",element[0])
-                    resolve(element[0]);  // Resolve with the <ul> element
                     clearInterval(checkExistence);  // Stop checking once it's ready
-
+                    resolve(element[0]);  // Resolve with the <ul> element
+                   // clearInterval(checkExistence);  // Stop checking once it's ready
                 }
                 else {
+                    clearInterval(checkExistence);  // Stop checking once it's ready
                     resolve("No suggestions")
+
                 }
             }, FetchLiDelay);  // Check every 500ms for the element to be populated
         }
@@ -2775,92 +2763,10 @@ function waitForMyneElement(selector, editor, FetchLiDelay = 2000) {
         }
     });
 }
-
-async function waitForSuggestions(rowNo, TMswitch, timeout = 5000, retryInterval = 500, extraDelay = 1000) {
-    //var firstListItems
-    //console.debug(timeout, retryInterval, extraDelay)
-   // console.debug("row:",rowNo)
-    const startTime = Date.now();
-    const row = await document.querySelector(`tr[id="editor-${rowNo}"]`);
-   // console.debug("row:",row)
-    if (!row) return false; // Row not found
-    //console.debug("load")
-    const loadingIndicator = await row.querySelector(".suggestions__loading-indicator");
-
-    let timeoutReached = false;
-
-    if (loadingIndicator && document.contains(loadingIndicator)) {
-        while (document.contains(loadingIndicator)) {
-            if (Date.now() - startTime >= timeout) {
-                timeoutReached = true;
-                break; // Exit the loop instead of returning
-            }
-            await new Promise((resolve) => setTimeout(resolve, retryInterval));
-        }
-    }
-
-    // Now you can check `timeoutReached` and continue with the next steps
-    if (timeoutReached) {
-        //console.debug("Timeout reached, but continuing execution...");
-    } else {
-      //  console.debug("Loading indicator disappeared, proceeding...");
-    }
-
-    // Continue execution normally
-
-
-   // if (loadingIndicator && document.contains(loadingIndicator)) {
-    //    while (document.contains(loadingIndicator)) {
-      //      if (Date.now() - startTime >= timeout) return false; // Timeout reached
-      //      await new Promise((resolve) => setTimeout(resolve, retryInterval));
-      //  }
-    //}
-    //console.debug("after load")
-    let NewRow = await document.querySelector(`tr[id="editor-${rowNo}"]`);
-    let textFound = await NewRow.querySelector(".translation-suggestion__translation")
-    let suggestionList = await NewRow.querySelector("ul.suggestions-list");
-    let firstListItems = await suggestionList ? suggestionList.querySelectorAll("li") : [];
-
-    while (Date.now() - startTime < timeout) {
-        firstListItems = await suggestionList ? suggestionList.querySelectorAll("li") : [];
-        if (firstListItems.length > 0) {
-            if (String(TMswitch).toLowerCase() === "false") return true;
-            break;
-        }
-        else {
-           // console.debug("we did not find it!!")
-            return true
-            break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, retryInterval));
-    }
-
-    if (!TMswitch) return false;
-
-   // console.debug("we check for the next li")
-   // console.debug("editor:",NewRow)
-    suggestionList = await NewRow.getElementsByClassName("suggestions__other-languages initialized")[0];
-   
-    suggestionList = suggestionList.querySelector("ul.suggestions-list");
-    //console.debug("foreighn:", suggestionList)
-    initialCount = suggestionList ? suggestionList.querySelectorAll("li").length : 0;
-    while (Date.now() - startTime < extraDelay) {
-        const newListItems = suggestionList ? suggestionList.querySelectorAll("li") : [];
-       // console.debug("Did we find it:",newListItems)
-        if (newListItems.length >= initialCount) {
-            return true;
-            break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, retryInterval));
-    }
-    return false;
-}
-
-
-
 async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, GlotPressBulkButton, FetchLiDelay, interCept) {
     var timeout = 0;
     var current;
+    var editoropen;
     var editor;
     var original;
     var preview;
@@ -2874,7 +2780,6 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
     var translated = false;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var myheader = document.querySelector('header');
-    var TMswitch = localStorage.getItem('switchTM')
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
@@ -2927,7 +2832,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
         else {
             rowchecked = preview.querySelector("td input");
         }
-        //let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
+        let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
         pretrans = await findTransline(original, destlang);
         if (pretrans != "notFound" && transtype != "plural") {
             let previewName = preview.querySelector("td.translation");
@@ -3019,61 +2924,39 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                 //We need to fetch the data as we have a single!
                 autoCopyClipBoard = false;
                 //------------------------
-                let Openeditor = await preview.getElementsByClassName("action edit");
-                await delay(50)
-                Openeditor[0].click()
-                await delay(50)
-                await waitForSuggestions(row, TMswitch, 800, 500, 2500).then(sugpresent => {
-                   // console.debug("suggestionsPresent:", sugpresent, " ", original)
-                    return sugpresent
-                }).then(async sugpresent => {
-                    // Wait for the result from the <ul> elemen
-                    if (sugpresent == true) {
-                        if (TMswitch == "false") {
-                            searchFor = 'suggestions__translation-memory initialized'
-                        }
-                        else {
-                            searchFor = "suggestions__other-languages initialized"
-                        }
+                // let Openeditor = preview.getElementsByClassName("action edit");
+                preview.querySelector("td.actions .edit").click();
+                //console.debug("editor is open:",editor)
+                // Openeditor[0].click()
+                // Open the editor
+                // Wait for the result from the <ul> element
+               // waitForElements(row, "ul.suggestions-list", "li span.translation-suggestion__translation", 1000, 20000)
+               //     .then(elements => {
+                result = await waitForMyneElement('suggestions__translation-memory initialized', editor, FetchLiDelay).then(res => {
+                    //console.debug("sugg:",res)
+                    return new Promise((resolve, reject) => {
+                        console.debug("We seem to have found a li:",res)
+                        resolve(res)
+                    });
 
-                        await waitForMyneElement(searchFor, editor, FetchLiDelay).then(res => {
-                           // console.debug("result", res)
-                            //result = await waitForMyneElement('suggestions__translation-memory initialized', editor, FetchLiDelay).then(res => {
-                            // console.debug("sugg:", res)
-                            return new Promise((resolve, reject) => {
-                                //console.debug("We seem to have found a li")
-                                resolve(res)
-                            }).then(async result => {
-                                // Process the result (for example, extracting text from the <ul> list items)
-                                // console.debug("Result of element:",result)
-                                // console.debug("type:", typeof result)
-                                //  console.debug("preview: ", preview)
-                                if (typeof result == "object") {
-                                    //console.debug("before processing:",result)
-                                    processed = await processResult(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold, original, destlang, record)
+                }).then(async result => {
+                    // Process the result (for example, extracting text from the <ul> list items)
+                    // console.debug("Result of element:",result)
+                    // console.debug("type:", typeof result)
+                    //  console.debug("preview: ", preview)
+                    if (typeof result == "object") {
+                        //console.debug("before processing:",result)
+                        await processResult(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold, original, destlang, record)
+                            .then(processed => {
+
+                                if (processed != "No suggestions") {
+                                    // console.debug("processed:", processed,foundTM)
+                                    foundTM++
                                     editor.style.display = ""
-                                    preview.style.removeProperty("display");
-                                    //}
-                                    if (processed != "No suggestions") {
-                                       foundTM++
-                                    }
+                                    preview.style.display = ""
                                 }
-                                else {
-                                    // console.debug("No suggestions:", res)
-                                    let previewName = preview.querySelector("td.translation");
-                                    //console.debug("preview:", previewName)
-                                    if (previewName != null) {
-                                        previewName.innerText = "No suggestions"
-                                        previewName.value = "No suggestions"
-                                    }
-                                    select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content`);
-                                    var status = select.querySelector("dt").nextElementSibling;
-                                    status.innerText = "untranslated";
-                                    status.value = "untranslated";
-                                    //return processedResult
-                                }
-                            });
-                        })
+
+                            })
                     }
                     else {
                         // console.debug("No suggestions:", res)
@@ -3087,19 +2970,14 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                         var status = select.querySelector("dt").nextElementSibling;
                         status.innerText = "untranslated";
                         status.value = "untranslated";
-                        //editor.style.display = ""
-                        preview.style.removeProperty("display");
+                        //return processedResult
                     }
-                });
+                })
             }
         }
         else if (transtype != "single") {
             console.debug("We have a plural")
         }
-
-        // We need to put back the Empt button, as it is sometimes no longer present
-        checkElem = document.querySelector("#preview-" + row + " .priority");
-        addCheckButton(row, checkElem, 3028)
 
         if (counter == myrecCount.length) {
             // Translation completed  
@@ -3119,15 +2997,10 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
             if (copyClip) {
                 autoCopyClipBoard = true;
             }
-            // This one is closing the last editor!!
-            // We need to enable the preview again, as it is set to none at this point
-            editor.style.removeProperty("display");
-            preview.style.removeProperty("display");
-            //editor.style.display = ""
+            editor.style.display = "none"
 
         }
         else if (counter == counter.myrecCount - 1) {
-            // No need to clos it here
             // editorClose[0].click()
             //editor.style.display = "none"
         }
@@ -3177,14 +3050,14 @@ function sortRowsArrayByRowAttribute() {
 }
 
 async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, spellCheckIgnore, TMtreshold, interCept) {
-  //  const sortedRows = sortRowsArrayByRowAttribute();
-   // myrecCount = sortedRows
+    const sortedRows = sortRowsArrayByRowAttribute();
+    myrecCount = sortedRows
     if (transsel == "OpenAI" && interCept == 'false') {
         FetchLiDelay = 1500
     }
     else {
         // setting this to a lower value will cause missing suggestions
-        FetchLiDelay = 1000
+        FetchLiDelay = 600
     }
     locale = checkLocale();
     StartObserver = false;
@@ -3203,7 +3076,7 @@ async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, de
         translateButton.classList.remove("tm-trans-button", "restarted", "translated");
         translateButton.className = "tm-trans-button restarted";
     }
-    myrecCount = document.querySelectorAll("tr.editor")
+    //myrecCount = document.querySelectorAll("tr.editor")
     interCept = localStorage.getItem("interXHR");
 
     let currWindow = window.self
@@ -3524,9 +3397,9 @@ async function oldpopulateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 //let Buttons = editor.querySelector(".panel-header-actions")
                 // let closeButton = Buttons.querySelectorAll("button")
                 // PSS we need to hide the last editor
-                // 27-6 editor.style.display = "";
+                editor.style.display = "";
                 // PSS setting the value to "" solves the problem of closing the last preview
-                //preview.style.display = "";
+                preview.style.display = "";
                 toastbox("info", __("We have found: ") + counter, "2500", " TM records");
                 StartObserver = true
                 if (GlotPressBulkButton != null) {
@@ -3553,7 +3426,6 @@ async function oldpopulateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
             row = record.getAttribute("row");
             // we need to store current preview and editor for later usage
             preview = document.querySelector(`#preview-${row}`);
-           // console.debug("sug4:", preview)
             editor = document.querySelector(`#editor-${row}`);
             editorClose = editor.getElementsByClassName("screen-reader-text")
             //console.debug("close:",editorClose)
@@ -3616,8 +3488,7 @@ async function oldpopulateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     }
                     autoCopyClipBoard = false;
                     //console.debug("preview:",preview)
-                    editoropen = await openEditor(preview)
-                  //  console.debug("sug3:", preview)
+                    editoropen = await openEditor(preview);
                     result = await waitForElm(".suggestions__translation-memory.initialized .suggestions-list").then(res => {
                         return new Promise((resolve, reject) => {
 
@@ -3640,19 +3511,17 @@ async function oldpopulateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
                     });
 
-                  //  console.debug("result:", result)
+                    console.debug("result:", result)
                     textareaElem = editor.querySelector("textarea.foreign-text");
                     //console.debug("textareaElem populate TM:",textareaElem)
-                   // console.debug("sug2:", preview)
                     if (result != "No suggestions") {
                         myresult = await fetchli(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold).then(resli => {
-                          //  console.debug("resli:", resli.textFound)
+                            console.debug("resli:", resli.textFound)
                             if (typeof resli != null) {
                                 // console.debug("li:",resli.textFound,resli.APIScore)
                                 // myres = getTM(resli, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale);
                                 myres = getTM(resli.textFound, row, editor, destlang, original, replaceVerb, transtype, convertToLower, spellCheckIgnore, locale, current, resli.APIScore);
                                 //console.debug("after fetchli:",textareaElem)
-                              //  console.debug("sug1:", preview)
                             }
                             else {
                                 console.debug("notfound");
@@ -3733,10 +3602,7 @@ async function oldpopulateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     mark_as_translated(row, current, translatedText, preview)
                 }
                 else {
-                   // console.debug("sug:", preview)
-                    editor = document.querySelector(`#editor-${row}`);
-                    //console.debug("editor:",editor)
-                    //editor.style.display = ''
+                    editor.style.display = 'none'
                     // editorClose[0].click()
                 }
             }
@@ -3753,9 +3619,9 @@ async function oldpopulateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
         //let Buttons = editor.querySelector(".panel-header-actions")
         // let closeButton = Buttons.querySelectorAll("button")
         // PSS we need to hide the last editor
-        //27-6 editor.style.display = "";
+        editor.style.display = "";
         // PSS setting the value to "" solves the problem of closing the last preview
-        //preview.style.display = "";
+        preview.style.display = "";
         toastbox("info", __("We have found: ") + counter, "2500", " TM records");
         StartObserver = true
         if (GlotPressBulkButton != null) {
@@ -4031,7 +3897,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     // messageBox("error", "There has been some uncatched error: " + errorstate);
                                     //alert("There has been some uncatched error: " + errorstate);
                                     stop = true;
-                                   // console.debug("we break!!")
+                                    console.debug("we break!!")
                                     //break;
                                 }
                             }
@@ -4505,7 +4371,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     }
                 } else {
                     // This is when urls/plugin/theme names are present or local translation is present
-                    translated = true
                     let translatedText = original;
                     let preview = document.querySelector("#preview-" + row + " td.translation");
                     //console.debug("we have a local",original,row)
@@ -4661,7 +4526,6 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     //console.debug("check:",checkTranslateButton)
     // posprocess the translation
     translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
-    console.debug("translatedtext:",translatedText)
     textareaElem = editor.querySelector("textarea.foreign-text");
     if (textareaElem != null && typeof textareaElem != "undefined") {
         textareaElem.innerText = translatedText;
@@ -5199,7 +5063,7 @@ async function saveLocal() {
 function walkThroughTable(selector, interval) {
     var timeout = 1000;
     var MycopyClip
-   // console.debug("we walk through table")
+    console.debug("we walk through table")
     return new Promise((resolve, reject) => {
         const checkInterval = setInterval(() => {
             const element = document.querySelector(selector);
@@ -5323,185 +5187,125 @@ function saveLocal_2(bulk_timer) {
     }
 
     processTableRecords('.wptf-translated', async function (preview) {
-        //console.debug("preview in processtable:",preview)
-        var Edopen ;
-        var editorRow;
-        var myNewRow;
         //console.debug("preview:",preview,preview.classList)
         // we only need to read the translated lines by wptf
-        if (preview != null && preview.classList.contains("wptf-translated")) {
+        if (preview.classList.contains("wptf-translated")) {
             // Perform your action on the current row here 
-            let Edopen = ""
             checkset = preview.querySelector('input[type="checkbox"]')
-            // 13-06-2024 PSS we only count the read lines when the checkbox is ticked
+            //console.debug("checkset:", checkset)
             if (checkset != null && checkset.checked == true) {
-                myPreviewRow = preview.id
-                myNewRow = myPreviewRow.split("-")[1]
-                let rowfound = myPreviewRow;
-                //console.debug("rowfound:", rowfound)
-                // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
-                // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
-                if (rowfound.split("-")[2] != null) {
-                    myNewRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
-                }
+                // 13-06-2024 PSS we only count the read lines when the checkbox is ticked
                 line_read++
-                //editorOpen = preview.nextElementSibling;
-                waitForMyElement(`#editor-${myNewRow}`, 3000).then((Edopen) => {
-                    // console.debug("we found it:", Edopen)
-                    return Edopen
-                }).then(Edopen => {
-                    // console.debug("Editor open:", Edopen)
-                    if (Edopen == 'Time-out reached') {
-                        delay(500)
-                        // console.debug("editor not open trying again", myNewRow)
-
-                        // console.debug("Editor now open:", editorOpen)
+                editor = preview.nextElementSibling;
+                if (editor != null) {
+                    let rowfound = editor.id;
+                    let editorRow = rowfound.split("-")[1];
+                    // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
+                    // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
+                    if (rowfound.split("-")[2] != null) {
+                        editorRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
                     }
-                    Edopen = document.querySelector(`#editor-${myNewRow}`)
-                   
-                    //delay(100)
-                    if (Edopen != null && Edopen != "Time-out reached") {
-
-                        let current = Edopen.querySelector('span.panel-header__bubble');
-                        // console.debug("current:", current, myNewRow)
-                        original = Edopen.querySelector("span.original-raw").innerText;
-
-                        // let preview = document.querySelector(`#preview-${myNewRow}`)
-                        if (preview != null && current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true && !myNewRow.includes("old")) {
-                            let glotpress_suggest = Edopen.querySelector(".translation-actions__save");
-                            glotpress_suggest.classList.remove("disabled")
-                            //glotpress_suggest.click();
-                            if (autoCopyClipBoard) {
-                                My1copyClip = true;
-                            }
-                            autoCopyClipBoard = false;
-                            new Promise(resolve => setTimeout(async () => {
-                                preview.querySelector("td.actions .edit").click();
-                                waitForMyElement(`.editor-panel`, 3000).then((editorOpen) => {
-                                    // console.debug("Editor open!",editorOpen)
-                                    //    try {
-                                    glotpress_suggest.click();
-                                    new Promise(resolve => setTimeout(async () => {
-                                        // we need to wait for saving the record        
-                                        // waitForMyElement(`#gp-js-message`, 500)
-                                        waitForMyElement(`.gp-js-message-dismiss`, 1500).then(async (dismiss) => {
-                                           // console.debug("dismiss message:", dismiss)
-                                            //    if (dismiss != "Time-out reached") {
-                                            if (dismiss != "Time-out reached") {
-                                                dismiss = await document.querySelector(`.gp-js-message-dismiss`)
-                                                if (dismiss != null) {
-                                                    dismiss.click()
-                                                }
-                                            }
-                                            if (is_pte) {
-                                                current.innerText = "current"
-                                            }
-                                            else {
-                                                current.innerText = "waiting"
+                    let current = editor.querySelector('span.panel-header__bubble');
+                    if (current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true) {
+                        let preview = document.querySelector(`#preview-${editorRow}`);
+                        let editor = preview.nextElementSibling;
+                        original = editor.querySelector("span.original-raw").innerText;
+                        let glotpress_suggest = editor.querySelector(".translation-actions__save");
+                        // PSS do not set style to none!!! it will then skip records
+                        editor.style.display = "";
+                        glotpress_suggest.classList.remove("disabled")
+                        //glotpress_suggest.click();
+                        if (autoCopyClipBoard) {
+                            My1copyClip = true;
+                        }
+                        autoCopyClipBoard = false;
+                        new Promise(resolve => setTimeout(async () => {
+                            preview.querySelector("td.actions .edit").click();
+                            try {
+                                glotpress_suggest.click();
+                                new Promise(resolve => setTimeout(async () => {
+                                    // we need to wait for saving the record        
+                                    // waitForMyElement(`#gp-js-message`, 500)
+                                    await waitForMyElement(`.gp-js-message-dismiss`, 1500).then((dismiss) => {
+                                        // console.debug("dismiss message:", dismiss)
+                                        if (dismiss != "Time-out reached") {
+                                            dismiss = document.querySelector(`.gp-js-message-dismiss`)
+                                            if (dismiss != null) {
+                                                dismiss.click()
                                             }
                                             counter++
-                                        })
-                                        resolve("ready")
-
-                                        // PSS we need to give GlotPress time to remove the "saved" message
-                                    }), 8500).then((resolve) => {
-                                        // Sometimes the editor is saved, but the preview line is not set to saved
-                                        preview = document.querySelector(`#preview-${myNewRow}`);
-                                        //console.debug("preview after dismiss:", preview)
-                                        if (preview != null) {
-                                            //  console.debug("preview:", preview, myNewRow)
-                                            //  console.log("Before timeout:", preview.classList.value);
-                                            setTimeout(() => {
-                                                //preview = document.querySelector(`#preview-${myNewRow}`);
-                                                if (preview != null) {
-                                                    //  console.debug("classlist:", preview.classList, myNewRow)
-                                                    if (preview.classList.contains("status-waiting")) {
-                                                        if (preview.classList.contains("wptf-translated")) {
-                                                            //  console.debug("preview has status waiting")
-                                                            preview.style.display = "table-row"
-                                                            preview.classList.replace('status-waiting', 'status-current');
-                                                        }
+                                        }
+                                        else {
+                                            //console.debug("Timeout in waiting for message")
+                                            original = editor.querySelector("span.original-raw").innerText;
+                                            toastbox("info", "Skipping:" + original, "800", "Timeout in saving");
+                                            // Sometimes the previewline is not hidden but saved, so we need to hide it
+                                            preview = document.querySelector(`#preview-${editorRow}`);
+                                            if (preview != null) {
+                                                if (preview.style.display != " none") {
+                                                    if (preview.classList.contains("wptf-translated")) {
+                                                        // preview.style.display = "none"
+                                                        preview.classList.replace("status-waiting", "status-hidden");
                                                     }
                                                 }
-                                                preview = document.querySelector(`#preview-${myNewRow}`);
-                                                if (preview != null) {
-                                                   preview.classList.replace('status-waiting', 'status-current');
-                                                   //console.debug("classlist:", preview.classList, myNewRow)
-                                                }
-                                            }, 50);
+                                            }
                                         }
-
                                     });
-                                })
-                            }), bulk_timer);
-                        }
-                        else {
-                            //console.debug("checkbox present but not set or not in waiting mode")
-                            if (!myNewRow.includes("old")) {
-                                let original = Edopen.querySelector("span.original-raw").innerText;
-                                if (original != null) {
-                                    toastbox("info", "Problem with:" + original, "700", "Check record:");
-                                    translated = true;
-                                    counter++
-                                    mark_as_translated(myNewRow, current, translated, preview)
-                                }
+                                    if (is_pte) {
+                                        current.innerText = "current"
+                                    }
+                                    else {
+                                        current.innerText = "waiting"
+                                    }
+                                    resolve("ready")
+                                    // PSS we need to give GlotPress time to removed the "saved" message
+                                }), 20000).then(() => {
+                                    // Sometimes the previewline is not hidden but saved, so we need to hide it
+                                    preview = document.querySelector(`#preview-${editorRow}`);
+                                    if (preview != null) {
+                                        if (preview.style.display != " none") {
+                                            if (preview.classList.contains("wptf-translated")) {
+                                                //preview.style.display = ""
+                                                preview.classList.replace("status-waiting", "status-hidden");
+                                            }
+                                        }
+                                    }
+                                    //glotpress_close.click()
+                                    //checkset.checked = false;
+                                    resolve("ready")
+                                });
+                            } catch (error) {
+                                console.log(`Error: ${error.message}`);
                             }
-                        }
+                            //await glotpress_suggest.click();
+
+                        }), bulk_timer);
                     }
                     else {
-                        // console.debug("before skip:",Edopen)
-                        if (Edopen != null && Edopen != "Time-out reached") {
-                            let current = Edopen.querySelector('span.panel-header__bubble');
-                            // console.debug("current:", current, myNewRow)
-                            if (!current.innerText == "current") {
-                                toastbox("info", "Editor not open", "900", "Record might not be saved:" + original);
-                                // console.debug("Editor not open!!")
-                            }
-                          
-                            preview = document.querySelector(`#preview-${myNewRow}`)
-                            if (preview != null) {
-                                preview.classList.replace("status-waiting", "status-current")
-                                if (is_pte) {
-                                    rowchecked = preview.querySelector("th input");
-                                }
-                                else {
-                                    rowchecked = preview.querySelector("td input");
-                                }
-                                //console.debug("translated:",translated,row,rowchecked)
-                                if (translated) {
-                                    rowchecked.checked = true;
-                                }
-                                else {
-                                    rowchecked.checked = false
-                                }
-                            }
+                        //console.debug("checkbox present but not set or not in waiting mode")
+                        let original = editor.querySelector("span.original-raw").innerText;
+                        if (original != null) {
+                            toastbox("info", "Skipping:" + original, "700", "Skipping record:");
                         }
                         else {
-                            console.debug("We do not have a Edopen!!", preview.classList, myNewRow)
-                            preview = document.querySelector(`#preview-${myNewRow}`)
-                            if (preview != null) {
-                                preview.classList.replace("status-waiting", "status-current")
-                                if (is_pte) {
-                                    rowchecked = preview.querySelector("th input");
-                                }
-                                else {
-                                    rowchecked = preview.querySelector("td input");
-                                }
-                                //console.debug("translated:",translated,row,rowchecked)
-                                if (translated) {
-                                    rowchecked.checked = true;
-                                }
-                                else {
-                                    rowchecked.checked = false
-                                }
-                                counter++
-                            }
+                            //  toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record:");
                         }
                     }
-                })
+                }
+                else {
+                    toastbox("info", "Editor not open", "900", "Record not saved:" + original);
+                    // console.debug("Editor not open!!")
+                }
             }
-        }       
-    
+            else {
+                // console.debug("unchecked count:", checkcount)
+                // toastbox("info", "Record maybe already saved or not selected", "900", "Skipping record");
+                //console.debug("No checkset found!")
+            }
+        }
+        else {
+            // console.log("ClassList of preview:",preview.classList)
+        }
     }, bulk_timer)
         .then(() => {
             progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -5574,7 +5378,7 @@ async function bulkSave(noDiff, bulk_timer) {
                 //chrome.storage.local.set({ toonDiff: value }).then((result) => {
                 //  console.log("Value toonDiff is set to false");
                 //});
-                setmyCheckBox(e);
+                setmyCheckBox(event);
                 let value = noDiff;
                 await setToonDiff({ toonDiff: value });
                 counter = saveLocal_2(bulk_timer);
@@ -6310,7 +6114,7 @@ async function bulkSaveToLocal() {
                 myWindow: currWindow
             }).then(async (e) => {
                 if (e == ("confirm")) {
-                    setmyCheckBox(e );
+                    setmyCheckBox(event);
                     counter = saveToLocal();
                     cuteAlert({
                         type: "info",
