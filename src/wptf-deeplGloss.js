@@ -1,5 +1,5 @@
 function loadMyGlossary(apiKey, DeeplFree, gloss) {
-    //console.debug("we start loading", apiKey, DeeplFree, gloss)
+   // console.debug("we start loading", apiKey, DeeplFree, gloss)
     chrome.runtime.sendMessage({
         action: "load_deepl_glossary",
         apiKey: apiKey,
@@ -101,6 +101,7 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
 
 async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
     currWindow = window.self;
+    //console.debug("glosss:",glossary)
     var gloss = await prepare_glossary(glossary, language)
     gloss = JSON.stringify(gloss)
     await loadMyGlossary(apikeyDeepl, DeeplFree, gloss);

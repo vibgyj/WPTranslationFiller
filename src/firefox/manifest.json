@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.3.24",
+  "version": "3.3.27",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
   "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -87,28 +87,28 @@
     "content_scripts": [
       {
 	   "matches": ["<all_urls>"],
-       "js": [
-        "wptf-inject.js",
-		"wptf-cute-alert.js",
-		"jsstore.js",
-        "jsstore.worker.js",
-        "wptf-deeplGloss.js",
-        "wptf-spellcheck.js",
-        "wptf-buildstats.js",
-        "wptf-functions.js",
-        "wptf-purify.min.js",
-        "wptf-consistency.js",
-        "wptf-commonTranslate.js",
-        "wptf-openAITrans.js",
-        "wptf-deeplTrans.js",
-        "wptf-googleTrans.js",
-        "wptf-microsoftTrans.js",
-        "jsdiff.js",
-        "wptf-database.js",
-        "wptf-importfile.js",
-        "wptf-database-maintenance.js",
-        "contentScript.js"
-		],
+        "js": [
+          "wptf-buildstats.js",
+          "wptf-database.js",
+          "wptf-inject.js",
+          "wptf-deeplGloss.js",
+          "wptf-spellcheck.js",
+          "wptf-functions.js",
+          "wptf-purify.min.js",
+          "wptf-cute-alert.js",
+          "wptf-consistency.js",
+          "jsstore.js",
+          "jsstore.worker.js",
+          "wptf-commonTranslate.js",
+          "wptf-openAITrans.js",
+          "wptf-deeplTrans.js",
+          "wptf-googleTrans.js",
+          "wptf-microsoftTrans.js",
+          "jsdiff.js",
+          "wptf-importfile.js",
+          "wptf-database-maintenance.js",
+          "contentScript.js"
+        ],
 		  "css": ["wptf-style.css"] 
 	}
   ],

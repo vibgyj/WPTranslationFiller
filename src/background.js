@@ -90,7 +90,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 });
 
             return true; // Keeps sendResponse alive for async operations
-        }
-});
+    }
+    else if (request.action === 'getGlossary') {
+        console.debug("We started getGlossary")
+        // Get all glossary records
+        const transaction = DeepLdb.transaction(['glossary'], 'readonly');
+        const store = transaction.objectStore('glossary');
+        const index = store.index('localeOriginal');
+        const requestData = index.getAll(); // Retrieve all records from the index
 
+        requestData.onsuccess = (event) => {
+            sendResponse(event.target.result); // Send the records back to the content script
+        };
+
+        requestData.onerror = (event) => {
+            console.error('Error retrieving data:', event);
+            sendResponse([]); // Send an empty array if there’s an error
+        };
+
+        return true; // Indicate asynchronous response
+    }
+
+    else if (request.action === 'addGlossaryRecord') {
+        const record = request.record;
+        const result = addRecordToDB(record); // Replace this with your actual function to add the record
+        sendResponse({ success: result });  // Send a response back
+        // Return true to indicate asynchronous response
+        return true;
+    }
+
+    
+});
 

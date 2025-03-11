@@ -1,0 +1,221 @@
+﻿<
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndexedDB Grid with Search & Import/Export</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        button {
+            padding: 5px 10px;
+            margin: 5px;
+        }
+
+        input {
+            width: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Translation Database</h2>
+
+    <!-- Search Filter -->
+    <input type="text" id="searchInput" placeholder="Search records..." onkeyup="filterTable()">
+
+    <!-- Buttons for Import/Export -->
+    <button onclick="addRow()">➕ Add Record</button>
+    <button onclick="exportData()">📥 Export Data</button>
+    <input type="file" id="importFile" onchange="importData(event)" />
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Locale</th>
+                <th>Original</th>
+                <th>Translation</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        let db;
+        const dbName = "DeeplGloss";
+        const storeName = "translations";
+
+        // Open IndexedDB and Load Data
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                let request = indexedDB.open(dbName, 1);
+
+                request.onsuccess = function (event) {
+                    db = event.target.result;
+                    loadTableData();
+                    resolve(db);
+                };
+
+                request.onerror = function (event) {
+                    console.error("Database error:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        // Load Existing Data into Table
+        function loadTableData(query = "") {
+            let transaction = db.transaction(storeName, "readonly");
+            let store = transaction.objectStore(storeName);
+            let request = store.getAll();
+
+            request.onsuccess = function () {
+                let data = request.result;
+                let tbody = document.querySelector("#dataTable tbody");
+                tbody.innerHTML = ""; // Clear previous entries
+
+                // Filter data if search query exists
+                data = data.filter(record =>
+                    record.locale.toLowerCase().includes(query.toLowerCase()) ||
+                    record.original.toLowerCase().includes(query.toLowerCase())
+                );
+
+                data.forEach(record => {
+                    addTableRow(record.id, record.locale, record.original, record.translation);
+                });
+            };
+        }
+
+        // Add Row to Table
+        function addTableRow(id, locale = "", original = "", translation = "") {
+            let tbody = document.querySelector("#dataTable tbody");
+            let row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td><input type="text" value="${locale}" data-field="locale"></td>
+                <td><input type="text" value="${original}" data-field="original"></td>
+                <td><input type="text" value="${translation}" data-field="translation"></td>
+                <td>
+                    <button onclick="saveRow(this, ${id})">💾 Save</button>
+                    <button onclick="deleteRow(${id})">❌ Delete</button>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        }
+
+        // Add a New Record
+        function addRow() {
+            addTableRow(null); // Adds an empty row for new input
+        }
+
+        // Save Record (New or Edited)
+        function saveRow(button, id) {
+            let row = button.parentElement.parentElement;
+            let inputs = row.querySelectorAll("input");
+            let locale = inputs[0].value.trim();
+            let original = inputs[1].value.trim();
+            let translation = inputs[2].value.trim();
+
+            if (!locale || !original || !translation) {
+                alert("All fields are required!");
+                return;
+            }
+
+            let transaction = db.transaction(storeName, "readwrite");
+            let store = transaction.objectStore(storeName);
+
+            let record = { locale, original, translation };
+
+            if (id) {
+                record.id = id; // Maintain ID for updates
+                store.put(record);
+            } else {
+                store.add(record);
+            }
+
+            transaction.oncomplete = function () {
+                loadTableData(); // Refresh the table
+            };
+        }
+
+        // Delete Record
+        function deleteRow(id) {
+            let transaction = db.transaction(storeName, "readwrite");
+            let store = transaction.objectStore(storeName);
+            store.delete(id);
+
+            transaction.oncomplete = function () {
+                loadTableData(); // Refresh table
+            };
+        }
+
+        // Filter Table by Search Query
+        function filterTable() {
+            let query = document.getElementById("searchInput").value;
+            loadTableData(query);
+        }
+
+        // Export Data to JSON
+        function exportData() {
+            let transaction = db.transaction(storeName, "readonly");
+            let store = transaction.objectStore(storeName);
+            let request = store.getAll();
+
+            request.onsuccess = function () {
+                let data = request.result;
+                let dataBlob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                let url = URL.createObjectURL(dataBlob);
+                let a = document.createElement("a");
+                a.href = url;
+                a.download = "translations_data.json";
+                a.click();
+            };
+        }
+
+        // Import Data from JSON
+        function importData(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                let data = JSON.parse(e.target.result);
+                let transaction = db.transaction(storeName, "readwrite");
+                let store = transaction.objectStore(storeName);
+
+                data.forEach(record => {
+                    store.put(record); // Insert data into the IndexedDB
+                });
+
+                transaction.oncomplete = function () {
+                    loadTableData(); // Refresh the table after import
+                };
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Initialize Database on Page Load
+        openDB();
+    </script>
+
+</body>
+</html>

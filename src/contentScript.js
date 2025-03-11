@@ -1,6 +1,7 @@
 // This is the starting script for the addon
 //var glossary;
 var db;
+var dbDeepL;
 var jsstoreCon;
 var myGlotDictStat;
 var interCept = false;
@@ -125,9 +126,7 @@ window.onload = async function (event) {
     }
 }
 
-function checkLicences(event) {
 
-}
 // Function to send a message to the injected script
 function sendMessageToInjectedScript(message) {
    // console.debug("message:",message)
@@ -148,7 +147,9 @@ else {
     // PSS added jsStore to be able to store and retrieve default translations
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
-    
+    //console.debug("db:",db)
+    dbDeepL = myDeepLDB();
+  //  console.debug("in content:",dbDeepL)
 }
 
 var translator; // Declare the global variable
@@ -887,15 +888,6 @@ if (divMenu != null) {
     divMenu.appendChild(databaselink);
 }
 
-document.addEventListener('click', function (event) {
-    // Check if the clicked element is the link that should open the modal
-    if (event.target.id == 'openOptionsLink') {
-        // Prevent the default action of the link
-        event.preventDefault();
-        // Create and open the modal
-        openOptionsPage();
-    }
-});
 
 function openOptionsPage(event) {
     const url = chrome.runtime.getURL("wptf-options.html");
@@ -910,6 +902,12 @@ document.addEventListener('click', function (event) {
         event.preventDefault();
         // Create and open the modal
         createAndOpenModal();
+    }
+    else if (event.target.id == 'openOptionsLink') {
+        // Prevent the default action of the link
+        event.preventDefault();
+        // Create and open the modal
+        openOptionsPage();
     }
 });
 
@@ -1238,7 +1236,7 @@ else {
 
 LoadGloss = document.createElement("a");
 LoadGloss.href = "#";
-LoadGloss.onclick = LoadGlossClicked;
+//LoadGloss.onclick = LoadGlossClicked;
 LoadGloss.innerText = __("LoadGloss");
 
 
@@ -1275,6 +1273,87 @@ WikiLink.href = 'https://github.com/vibgyj/WPTranslationFiller/wiki'
 WikiLink.innerText = __("WPTF Docs")
 WikiLink.className = 'menu-item-wptf_wiki'
 
+    // Create a <select> element
+    let dropdown = document.createElement("select");
+
+    // Add a default option (always visible, not selectable)
+    let defaultOption = document.createElement("option");
+    defaultOption.textContent = "DeepL";
+    defaultOption.value = "";
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    dropdown.appendChild(defaultOption);
+
+    // Add actual options
+    let options = [__("DispGloss"), __("LoadGloss"), __("EditGloss"), __("Upload")];
+    options.forEach(optionText => {
+        let option = document.createElement("option");
+        option.value = optionText.toLowerCase().replace(/\s+/g, "-");
+        option.textContent = optionText;
+        dropdown.appendChild(option);
+    });
+
+    // Function to handle selection
+    function handleSelectionChange(event) {
+        let selectedIndex = event.target.selectedIndex; // Get the index
+        if (selectedIndex > 0) { // Ignore default option (index 0)
+           // console.log("Selected Index:", selectedIndex);
+            myFunction(selectedIndex);
+        }
+
+        // Reset dropdown to default option
+        setTimeout(() => {
+            dropdown.selectedIndex = 0;
+        }, 100); // Short delay before reset
+    }
+
+    // Add event listener
+    dropdown.addEventListener("change", handleSelectionChange);
+    window.addEventListener("click", function (event) {
+        let modal = document.getElementById("glossaryModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    });
+    document.getElementById('add-record')?.addEventListener('click', function () {
+        const newRecord = {
+            locale: 'NL',
+            original: 'original',
+            translation: 'origineel'
+        };
+        chrome.runtime.sendMessage({ action: 'addGlossaryRecord', record: newRecord }, function (response) {
+            if (response.success) {
+                getGlossary(); // Reload the table with the updated records
+            }
+        });
+    });
+
+
+ 
+
+    function myFunction(index) {
+        if (index == 1) {
+            DispGlossClicked()
+        }
+        else if (index == 2) {
+            //glossloaded = checkGlossary(LoadGloss)
+            LoadGlossClicked(index)
+            //glossloaded = checkGlossary(LoadGloss)
+        }
+        else if (index == 3) {
+            openModalDeepL()
+
+        }
+        else if (index == 4) {
+            chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
+                loadGlossaryFromDB(data.apikeyDeepl, data.DeeplFree)
+            })       
+        }
+        else { 
+          alert("You selected: " + index);
+         }
+    }
+
 // 12-05-2022 PSS here we add all buttons in the pagina together
 let GpSpecials = document.querySelector("span.previous.disabled");
 if (GpSpecials == null) {
@@ -1290,10 +1369,13 @@ if (GpSpecials != null && divProjects == null) {
         //let apikey=data.apikeyDeepl
         if (data.apikeyDeepl != null && data.apikeyDeepl !="" && typeof data.apikeyDeepl != 'undefined') {
             divPaging.insertBefore(LoadGloss, divPaging.childNodes[0]);
-            divPaging.insertBefore(DispGloss, divPaging.childNodes[0]);
+         //   divPaging.insertBefore(DispGloss, divPaging.childNodes[0]);
             glossloaded = checkGlossary(LoadGloss)
+            divPaging.insertBefore(dropdown, divPaging.childNodes[0])
+            
         }
     });
+    divPaging.insertBefore(dropdown,divPaging.childNodes[0])
     divPaging.insertBefore(DispClipboard, divPaging.childNodes[0]);
     UpperCase = localStorage.getItem(['switchUpper'])
     if (UpperCase == 'false') {
@@ -1306,6 +1388,7 @@ if (GpSpecials != null && divProjects == null) {
 }
 
 
+
 async function checkGlossary(event) {
     let glos_isloaded = await localStorage.getItem(['deeplGlossary']);
     if (glos_isloaded == null || glos_isloaded=="") {
@@ -1313,6 +1396,11 @@ async function checkGlossary(event) {
     } else {
         LoadGloss.className = "LoadGloss-button-green"
     }
+}
+
+function openModalDeepL(event) {
+    openDeeplModal()
+   // injectDeepLModal(); // Call the function to inject the modal
 }
 
 function DispGlossClicked(event) {
@@ -1353,7 +1441,7 @@ function DispClipboardClicked(event) {
 }
 
 function LoadGlossClicked(event) {
-event.preventDefault(event);
+//event.preventDefault(event);
     var file;
     fileSelector.click();
     //fileSelector.addEventListener("change", () => console.debug("Event triggered"));
@@ -1497,7 +1585,11 @@ async function myOpenDB(db) {
     return dbopen;
 }
 
-
+async function myDeepLDB(dbDeepL) {
+    dbDeepLOpen = await openDeepLDatabase(dbDeepL)
+    console.debug("myDeepLDB:",dbDeepLOpen)
+    return dbDeepLOpen
+}
 
 async function startBulkSave(event) {
     event.preventDefault(event);
@@ -1756,45 +1848,6 @@ function translatePageClicked(event) {
     );
 }
 
-function checkLocale() {
-    // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
-    const localeString = window.location.href;
-    let local = localeString.split("/");
-    //console.debug("length locale:",local.length,local)
-    if (local.length == 8) {
-        locale = local[4];
-    }
-    else if (local.length == 9) {
-        // if we are not within the tanslation table, the locale is at a different position
-        if (local.includes("locale")){
-            locale = local[4];
-            //console.debug("we found 4")
-        }
-        else {
-           locale = local[6];
-        }  
-    }
-    else if (local.length == 10) {
-        if (local.includes("import-translations")) {
-            locale = local[6];
-        }
-        else {
-            locale = local[7];
-        }
-    }
-    else if (local.length == 11) {
-        if (local.includes("import-translations")) {
-            locale = local[7];
-        }
-        else {
-            locale = local[8];
-        }
-    }
-    else {
-        locale ="en";
-    }
-    return locale;
-}
 
 function checkFormal(formal) {
    const locString = window.location.href;

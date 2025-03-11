@@ -5523,6 +5523,7 @@ function saveLocal_2(bulk_timer) {
         });
 
 }
+
 async function bulkSave(noDiff, bulk_timer) {
     //event.preventDefault();
     var counter = 0;

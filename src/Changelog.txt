@@ -24,3 +24,5 @@ Version changes as of version 3.3
                    Also moved closing of the editor window to a later time, as reports came in that lines were not saved
 23. Version 3.8.23 Improved bulksave function, it left suggestions as waiting, but on the background they were saved
 24. Version 3.8.24 TM was missing records due to a fault in the li search method, also remove sorting from the TM function as it disturbed the progress
+25. Version 3.8.25 Added functionality to store the DeepL glossary in the indexedDB database, Export the data, import the data
+26. Version 3.8.26 Fixed a problem when adding a record to the glossary, also added translations
