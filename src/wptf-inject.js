@@ -1,4 +1,4 @@
-// Injected script
+﻿// Injected script
 function checkLocale() {
     // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
@@ -34,7 +34,7 @@ function checkLocale() {
         }
     }
     else {
-        locale = "en";
+        locale = "en-gb";
     }
     return locale;
 }
@@ -206,7 +206,7 @@ async function openDeepLDatabase(dbDeepL) {
         };
 
         request.onsuccess = function (event) {
-            console.debug("Database opened successfully");
+            //console.debug("Database opened successfully");
             resolve(event.target.result); // Return the database reference
         };
 
@@ -252,6 +252,7 @@ function displayRecords(records) {
     const tableBody = document.getElementById("recordsTableBody");
     tableBody.innerHTML = "";
     let deleteText = __("Delete"); 
+    let myDelete = __("Record deleted: ")
     records.forEach((record) => {
         const row = document.createElement("tr");
 
@@ -270,7 +271,7 @@ function displayRecords(records) {
         deleteButton.addEventListener("click", function () {
             // Log the values when button is clicked to verify correct values
             //console.debug("Deleting record with locale:", record.locale, "and original:", record.original);
-            deleteRecord(record.locale, record.original); // Pass record values to deleteRecord
+            deleteRecord(record.locale, record.original,myDelete); // Pass record values to deleteRecord
         });
 
         // Append the row to the table body
@@ -319,7 +320,7 @@ function saveTranslation(locale, original,deleteText,message) {
     });
 }
 
-function deleteRecord(locale, original) {
+function deleteRecord(locale, original,myDelete) {
     //console.log("Deleting record with locale:", locale, "and original:", original);
 
     openDeepLDatabase().then(dbDeepL => {
@@ -337,7 +338,7 @@ function deleteRecord(locale, original) {
             if (cursor) {
                 cursor.delete(); // Delete the entry
                 //console.debug("Record deleted");
-                alert(__("Record deleted: ") + original)
+                alert(myDelete + original)
                 listAllRecords();
             }
         };
@@ -429,23 +430,26 @@ async function importDeepLCSV(event) {
     }
 }
 
-async function exportDeepLCSV() {
-    //console.debug("Export started")
+async function exportDeepLCSV(DownloadPath) {
+    //console.debug("Export started:", DownloadPath)
     const db = await openDeepLDatabase();
     const transaction = db.transaction("glossary", "readonly");
     const store = transaction.objectStore("glossary");
     const request = store.getAll();
-
-    request.onsuccess = () => {
-        const records = request.result;
-        const csvContent = records.map(r => `${r.original},${r.translation}`).join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "wptf-glossary.csv";
-        a.click();
+    let download = "wptf-glossary.csv"
+    //console.debug("Download path:", DownloadPath)
+        request.onsuccess = () => {
+            const records = request.result;
+            const csvContent = records.map(r => `${r.original},${r.translation}`).join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = download
+            a.click();
+            URL.revokeObjectURL(a.href);
     };
 }
+
 
 function searchRecord(locale, original,saveText,deleteText,message) {
     const tableBody = document.getElementById("recordsTableBody");

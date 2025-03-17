@@ -63,7 +63,7 @@ function setSearchLocale(locale) {
     document.getElementById("searchLocale").value = locale;
 }
 
-function openDeeplModal(DeepLdb) {
+async function openDeeplModal(DeepLdb) {
     // we need to set the text of the button here, otherwise the translation is not found
     let saveText = __("SaveRec")
     var deleteText = __("Delete")
@@ -79,14 +79,21 @@ function openDeeplModal(DeepLdb) {
     var locHead = __("Locale Header")
     var origHead = __("Original Header")
     var transHead = __("Translation Header")
-
-    const modalHTML = `
+    var DownLoadPath=""
+    await chrome.storage.local.get(["DownloadPath"], function (data) {
+       // console.debug("Download path:", data)
+        DownloadPath =  data.DownloadPath
+        if (DownloadPath == "" || DownloadPath == null) {
+            DownloadPath = "C:\\Temp\\"
+        }
+     // console.debug("pad:",DownloadPath)
+        const modalHTML = `
 <div id="DeepLmodal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
     <div style="background:white; padding:20px; margin:auto; width:60%;">
         <h2>${title}</h2 >
         <button onclick="closeModalClicked()">${DeepLClose}</button>
         <button onclick="importDeepLCSV()">${ImpCSV}</button>
-        <button onclick="exportDeepLCSV()">${ExpCSV}</button>
+        <button onclick="exportDeepLCSV('${DownloadPath}')">${ExpCSV}</button>
         <button id="addEntryButton">${AddEntry}</button>
         <input type="text" id="searchLocale" placeholder=${searchLoc}>
         <input type="text" id="searchOriginal" placeholder=${searchOrig}>
@@ -102,16 +109,18 @@ function openDeeplModal(DeepLdb) {
 </div>
 `;
 
-// Append modal to body
-    document.body.insertAdjacentHTML("beforeend", modalHTML);
-    document.getElementById("DeepLmodal").style.display = "block";
-    listAllRecords(DeepLdb);
-    document.getElementById("addEntryButton").addEventListener("click", addEntry);
-    // We need to set the locale to the working locale in the modal
-    let locale = checkLocale() || 'en';
-    locale = locale.toUpperCase()
-    setSearchLocale(locale)
+        // Append modal to body
+        document.body.insertAdjacentHTML("beforeend", modalHTML);
+        document.getElementById("DeepLmodal").style.display = "block";
+        listAllRecords(DeepLdb);
+        document.getElementById("addEntryButton").addEventListener("click", addEntry);
+        // We need to set the locale to the working locale in the modal
+        let locale = checkLocale() || 'en';
+        locale = locale.toUpperCase()
+        setSearchLocale(locale)
+    })
 }
+
 
 function createAndOpenModal() {
     //console.debug("locale:",locale)

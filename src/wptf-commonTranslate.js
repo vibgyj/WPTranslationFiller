@@ -414,11 +414,12 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     else {
+        
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
-       // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
+        // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
+
         translatedText = correctSentence(translatedText, spellCheckIgnore);
         //console.debug(translatedText); // Output: "this is an example with Apple and Microsoft."
-
     }
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
@@ -473,30 +474,42 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
 function correctSentence(translatedText, ignoreList) {
     // Ensure ignoreList is always an array, even if undefined or invalid
-    if (!ignoreList || typeof ignoreList !== "string") {
-        ignoreList = "";
+    // We do not want to replace anything if it is a URL
+    let myURL = isURL(translatedText)
+    if (!myURL) {
+        if (!ignoreList || typeof ignoreList !== "string") {
+            ignoreList = "";
+        }
+
+        // Convert ignore list into an array, handling different line endings
+        let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
+
+        // Convert ignore list to a map for fast lookup (case-insensitive)
+        let ignoreMap = new Map();
+        ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
+
+        // Split sentence into words (preserving punctuation)
+        let words = translatedText.split(/\b/);
+
+        // Process each word
+        let correctedWords = words.map(word => {
+            let lowerWord = word.toLowerCase();
+            // console.debug("translated after :", translatedText, ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word)
+            return ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word;
+        });
+
+        // Reconstruct and return the corrected sentence
+        return correctedWords.join('');
     }
-
-    // Convert ignore list into an array, handling different line endings
-    let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
-
-    // Convert ignore list to a map for fast lookup (case-insensitive)
-    let ignoreMap = new Map();
-    ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
-
-    // Split sentence into words (preserving punctuation)
-    let words = translatedText.split(/\b/);
-
-    // Process each word
-    let correctedWords = words.map(word => {
-        let lowerWord = word.toLowerCase();
-        return ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word;
-    });
-
-    // Reconstruct and return the corrected sentence
-    return correctedWords.join('');
+    else {
+        return translatedText
+    }
 }
 
+function isURL(text) {
+    const urlRegex = /^(https?|ftp|file):\/\/[^\s/$.?#].[^\s]*$/i;
+    return urlRegex.test(text.trim());
+}
 function check_hyphen(translatedText, spellCheckIgnore) {
     var lines = [];
     var myword;

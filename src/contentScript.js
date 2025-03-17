@@ -44,23 +44,19 @@ function addname_to_checkbox(){
     header_check.setAttribute("name","checkbox")
 }
 
-// Function to load a specific language JSON file
 async function loadTranslations(language) {
-        try {
-            const response = await fetch(chrome.runtime.getURL(`locales/${language}.json`));
-            //console.debug("res:",response)
-            if (!response.ok) {
-                console.debug('file not loaded ${language} translations')
-                //throw new Error(`Failed to load ${language} translations`);
-            }
-            else {
-                addon_translations = await response.json(); // Store translations
-                //console.log("Translations loaded");
-            }
-        } catch (error) {
-            console.error(error);
+    try {
+        const response = fetch(chrome.runtime.getURL(`locales/${language}.json`)); // No await yet
+        const res = await response; // Await only when needed
 
+        if (res.ok) {
+            addon_translations = await res.json();
+        } else {
+            console.debug(`File not loaded: ${language} translations`);
         }
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 // Function to get the translated string
@@ -71,11 +67,12 @@ function __(key) {
 
 
 async function initTranslations(event) {
-    let userLang = checkLocale() || 'en';
-     //console.debug("userlanguage:",userLang)
+    let userLang = checkLocale() || 'en-gb';
+     console.debug("userlanguage:",userLang)
     if (typeof addon_translations.length == 'undefined') {
-        //console.debug("Language will be loaded")
-           await loadTranslations(userLang); // Load Dutch translations (or any other language)
+        console.debug("Language will be loaded")
+        await loadTranslations(userLang); // Load Dutch translations (or any other language)
+         console.debug("Language loaded")
      }
      else {
          console.debug("Language is already present")
@@ -148,7 +145,7 @@ else {
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
     //console.debug("db:",db)
-    dbDeepL = myDeepLDB();
+    //dbDeepL = myDeepLDB();
   //  console.debug("in content:",dbDeepL)
 }
 
@@ -1285,7 +1282,7 @@ WikiLink.className = 'menu-item-wptf_wiki'
     dropdown.appendChild(defaultOption);
 
     // Add actual options
-    let options = [__("DispGloss"), __("LoadGloss"), __("EditGloss"), __("Upload")];
+    let options = [__("DispGloss"), __("LoadGloss"), __("EditGloss"), __("Upload"), __("DeleteAll")];
     options.forEach(optionText => {
         let option = document.createElement("option");
         option.value = optionText.toLowerCase().replace(/\s+/g, "-");
@@ -1328,9 +1325,6 @@ WikiLink.className = 'menu-item-wptf_wiki'
         });
     });
 
-
- 
-
     function myFunction(index) {
         if (index == 1) {
             DispGlossClicked()
@@ -1350,7 +1344,9 @@ WikiLink.className = 'menu-item-wptf_wiki'
             })       
         }
         else { 
-          alert("You selected: " + index);
+            chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
+                delete_all_glossary(data.apikeyDeepl, data.DeeplFree)
+            })
          }
     }
 
@@ -1375,7 +1371,7 @@ if (GpSpecials != null && divProjects == null) {
             
         }
     });
-    divPaging.insertBefore(dropdown,divPaging.childNodes[0])
+   // divPaging.insertBefore(dropdown,divPaging.childNodes[0])
     divPaging.insertBefore(DispClipboard, divPaging.childNodes[0]);
     UpperCase = localStorage.getItem(['switchUpper'])
     if (UpperCase == 'false') {
@@ -1587,7 +1583,7 @@ async function myOpenDB(db) {
 
 async function myDeepLDB(dbDeepL) {
     dbDeepLOpen = await openDeepLDatabase(dbDeepL)
-    console.debug("myDeepLDB:",dbDeepLOpen)
+    //console.debug("myDeepLDB:",dbDeepLOpen)
     return dbDeepLOpen
 }
 

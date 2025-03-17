@@ -26,3 +26,6 @@ Version changes as of version 3.3
 24. Version 3.8.24 TM was missing records due to a fault in the li search method, also remove sorting from the TM function as it disturbed the progress
 25. Version 3.8.25 Added functionality to store the DeepL glossary in the indexedDB database, Export the data, import the data
 26. Version 3.8.26 Fixed a problem when adding a record to the glossary, also added translations
+27. Version 3.8.27 From the dropdown, the load glossary was not started
+28. Version 3.8.28 Deleting from the modal was not working due to a translation that was missing. Renamed the translation for English from "en" to "en-gb"
+29. Version 3.8.29 Added deleting glossary ID's at once, improved loading languages

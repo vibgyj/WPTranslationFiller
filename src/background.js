@@ -1,6 +1,7 @@
 // background.js
 console.debug("background loaded")
 
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "load_deepl_glossary") {
         //console.debug(request.isFree)
