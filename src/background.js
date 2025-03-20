@@ -119,6 +119,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // Return true to indicate asynchronous response
         return true;
     }
+    else if (request.action === "translate") {
+        console.debug("We did get post");
+        fetch(request.url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams(request.body).toString(),
+        })
+            .then(response => {
+                if (!response.ok) {
+                    // Handle non-JSON errors (e.g., invalid API key, quota exceeded)
+                    return response.text().then(text => {
+                        console.error("DeepL API Error:", response.status, text);
+                        sendResponse({ error: `HTTP ${response.status}: ${text}` });
+                    });
+                }
+                return response.json(); // Parse JSON only if response is OK
+            })
+            .then(data => {
+                if (data) sendResponse(data);
+            })
+            .catch(error => {
+                console.error("Fetch error:", error);
+                sendResponse({ error: error.message });
+            });
+
+        return true; // Keep the message channel open
+    }
 
     
 });

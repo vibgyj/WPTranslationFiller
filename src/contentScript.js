@@ -68,11 +68,11 @@ function __(key) {
 
 async function initTranslations(event) {
     let userLang = checkLocale() || 'en-gb';
-     console.debug("userlanguage:",userLang)
+    // console.debug("userlanguage:",userLang)
     if (typeof addon_translations.length == 'undefined') {
-        console.debug("Language will be loaded")
+        //console.debug("Language will be loaded")
         await loadTranslations(userLang); // Load Dutch translations (or any other language)
-         console.debug("Language loaded")
+        // console.debug("Language loaded")
      }
      else {
          console.debug("Language is already present")
@@ -1052,7 +1052,7 @@ let checkAllContainer = document.createElement("div")
 checkAllContainer.className = 'button-tooltip'
 classToolTip = document.createElement("span")
 classToolTip.className = 'tooltiptext'
-classToolTip.innerText = "This button selects all records"
+classToolTip.innerText = __("This button selects all records")
 let checkAllButton = document.createElement("a");
 checkAllButton.href = "#";
 checkAllButton.className = "selectAll-button";
@@ -1142,15 +1142,23 @@ bulktolocalButton.className = "save_tolocal-button";
 bulktolocalButton.onclick = savetolocalClicked;
 bulktolocalButton.innerText = __("Bulk local");
 bulktolocContainer.appendChild(bulktolocalButton)
-bulktolocContainer.appendChild(classToolTip)
+    bulktolocContainer.appendChild(classToolTip)
+    let statsContainer = document.createElement("div")
 // add stats button if handleStats function is defined
-if (typeof handleStats === "function") {
-    var statsButton = document.createElement("a");
-    statsButton.href = "#";
-    statsButton.id = "statsButton";
-    statsButton.className = "stats-button";
-    statsButton.onclick = handleStats;
-    statsButton.innerText = __("Stats");
+    if (typeof handleStats === "function") {
+        
+        statsContainer.className = 'button-tooltip'
+        classToolTip = document.createElement("span")
+        classToolTip.className = 'tooltiptext'
+        classToolTip.innerText = __("This button starts fetching statistics of translations")
+        var statsButton = document.createElement("a");
+        statsButton.href = "#";
+        statsButton.id = "statsButton";
+        statsButton.className = "stats-button";
+        statsButton.onclick = handleStats;
+        statsButton.innerText = __("Stats");
+        statsContainer.appendChild(statsButton)
+        statsContainer.appendChild(classToolTip)
 }
 
 let divGpActions = document.querySelector("div.paging");
@@ -1166,8 +1174,9 @@ if (divPaging != null && divProjects == null) {
     if (is_pte) {
         divNavBar.appendChild(bulksaveContainer);
     }
-    if (statsButton != null) {
-        divNavBar.appendChild(statsButton);
+   // console.debug("stats:",statsContainer)
+    if (statsContainer != null) {
+       divNavBar.appendChild(statsContainer);
     }
     if (!is_pte) {
         console.debug("we are not pte")
@@ -1234,7 +1243,7 @@ else {
 LoadGloss = document.createElement("a");
 LoadGloss.href = "#";
 //LoadGloss.onclick = LoadGlossClicked;
-LoadGloss.innerText = __("LoadGloss");
+LoadGloss.innerText = __("GlossStatus");
 
 
 let DispGloss = document.createElement("a");
@@ -1340,7 +1349,8 @@ WikiLink.className = 'menu-item-wptf_wiki'
         }
         else if (index == 4) {
             chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
-                loadGlossaryFromDB(data.apikeyDeepl, data.DeeplFree)
+                let language = checkLocale()
+                loadGlossaryFromDB(data.apikeyDeepl, data.DeeplFree,language)
             })       
         }
         else { 

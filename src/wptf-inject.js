@@ -218,32 +218,31 @@ async function openDeepLDatabase(dbDeepL) {
 }
 
 // Function to list all records
-function listAllRecords() {
+function listAllRecords(locale) {
     openDeepLDatabase().then(dbDeepL => {
         const transaction = dbDeepL.transaction("glossary", "readonly");
         const store = transaction.objectStore("glossary");
         const index = store.index("locale_original"); // Compound index
 
         const records = [];
-        index.openCursor().onsuccess = function (event) {
+        const range = IDBKeyRange.bound([locale], [locale, "\uffff"]); // Query locale-specific entries
+
+        index.openCursor(range).onsuccess = function (event) {
             const cursor = event.target.result;
             if (cursor) {
                 records.push(cursor.value);
                 cursor.continue(); // Continue fetching
             } else {
-                // **Force proper sorting before displaying**
-                records.sort((a, b) => {
-                    if (a.locale !== b.locale) {
-                        return a.locale.localeCompare(b.locale); // Sort by locale
-                    }
-                    return a.original.localeCompare(b.original); // Sort by original text
-                });
+                // **Sort by "original" as locale is already filtered**
+                records.sort((a, b) => a.original.localeCompare(b.original));
 
                 displayRecords(records);
             }
         };
     });
 }
+
+
 
 
 
@@ -339,7 +338,7 @@ function deleteRecord(locale, original,myDelete) {
                 cursor.delete(); // Delete the entry
                 //console.debug("Record deleted");
                 alert(myDelete + original)
-                listAllRecords();
+                listAllRecords("NL");
             }
         };
         request.onerror = function (event) {
@@ -420,8 +419,9 @@ async function importDeepLCSV(event) {
                 });
 
                 transaction.oncomplete = function () {
-                    alert(__("Import completed successfully!"));
-                    listAllRecords(); // Refresh table
+                    let importReady = "Import completed successfully!"
+                    alert(importReady);
+                    listAllRecords("NL"); // Refresh table
                 };
             });
         };
@@ -485,7 +485,7 @@ function searchRecord(locale, original,saveText,deleteText,message) {
         alert("Record not found!");
     }
 }
-function loadGlossaryFromDB(apiKey, DeeplFree) {
+function loadGlossaryFromDB(apiKey, DeeplFree,language) {
     // Ensure gloss is properly initialized as an array
     let gloss = [];
 
@@ -500,15 +500,15 @@ function loadGlossaryFromDB(apiKey, DeeplFree) {
 
             // Convert records into "original,translation" format
             records.forEach(record => {
-               // console.debug("record:",record)
-                if (record.original && record.translation) { // Ensure values exist
+                if (record.locale === language.toUpperCase() && record.original && record.translation) { // Filter by locale
                     gloss.push(`${record.original},${record.translation}`);
                 }
             });
 
-            gloss = prepare_glossary(gloss, "NL").then(mygloss => {
+            gloss = prepare_glossary(gloss, language).then(mygloss => {
             gloss = JSON.stringify(mygloss)
-            // Call the function with the formatted glossary data
+                // Call the function with the formatted glossary data
+            //console.debug("gloss:",gloss)
             loadMyGlossary(apiKey, DeeplFree, gloss);
             })   
         };

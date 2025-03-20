@@ -37,15 +37,11 @@ function getCallerDetails() {
 }
 
 
-
-
 // Count words in a given string
 function countWords(str) {
     const arr = str.split(' ');
     return arr.filter(word => word !== '').length;
 }
-
-
 
 function setPreTranslationReplace(preTranslationReplace) {
     replacePreVerb = [];
@@ -213,11 +209,6 @@ function replaceWord(str, target, replacement) {
     return str.replace(regex, replacement);
 }
 
-function old_replaceWord(text, oldWord, newWord) {
-    // Create a regular expression with word boundaries and global flag
-    let regex = new RegExp(`\\b${oldWord}\\b`, 'g');
-    return text.replace(regex, newWord);
-}
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale) {
     var pos;
@@ -377,7 +368,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             //console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
 
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                // console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
+                //console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
                 translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]);
                 // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
@@ -400,6 +391,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
                 // PSS solution for issue #291
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+                //console.debug(CheckUrl(translatedText, replaceVerb[i][0]))
                 if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                     translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                 }
@@ -407,6 +399,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             else {
                 // PSS solution for issue #291
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+               // console.debug(CheckUrl(translatedText, replaceVerb[i][0]))
                 if (!CheckUrl(translatedText, replaceVerb[i][0])) {
                     translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                 }
@@ -414,7 +407,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     else {
-        
+        //console.debug(translatedText)
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
 
@@ -476,6 +469,7 @@ function correctSentence(translatedText, ignoreList) {
     // Ensure ignoreList is always an array, even if undefined or invalid
     // We do not want to replace anything if it is a URL
     let myURL = isURL(translatedText)
+    //console.debug("myURL:",myURL)
     if (!myURL) {
         if (!ignoreList || typeof ignoreList !== "string") {
             ignoreList = "";
@@ -507,7 +501,8 @@ function correctSentence(translatedText, ignoreList) {
 }
 
 function isURL(text) {
-    const urlRegex = /^(https?|ftp|file):\/\/[^\s/$.?#].[^\s]*$/i;
+    // 17-03-2024 PSS improved regex as it did not find an URL within the sentence
+    const urlRegex = /(https?|ftp|file):\/\/[^\s<>"]+/gi;
     return urlRegex.test(text.trim());
 }
 function check_hyphen(translatedText, spellCheckIgnore) {
@@ -2791,6 +2786,7 @@ function waitForMyneElement(selector, editor, FetchLiDelay = 2000) {
 
 async function waitForSuggestions(rowNo, TMswitch, timeout = 5000, retryInterval = 500, extraDelay = 1000) {
     //var firstListItems
+    //var suggestionList;
     //console.debug(timeout, retryInterval, extraDelay)
    // console.debug("row:",rowNo)
     const startTime = Date.now();
@@ -2853,18 +2849,19 @@ async function waitForSuggestions(rowNo, TMswitch, timeout = 5000, retryInterval
    // console.debug("we check for the next li")
    // console.debug("editor:",NewRow)
     suggestionList = await NewRow.getElementsByClassName("suggestions__other-languages initialized")[0];
-   
-    suggestionList = suggestionList.querySelector("ul.suggestions-list");
-    //console.debug("foreighn:", suggestionList)
-    initialCount = suggestionList ? suggestionList.querySelectorAll("li").length : 0;
-    while (Date.now() - startTime < extraDelay) {
-        const newListItems = suggestionList ? suggestionList.querySelectorAll("li") : [];
-       // console.debug("Did we find it:",newListItems)
-        if (newListItems.length >= initialCount) {
-            return true;
-            break;
+    if (typeof suggestionList != "undefined") {
+        suggestionList = suggestionList.querySelector("ul.suggestions-list");
+        //console.debug("foreighn:", suggestionList)
+        initialCount = suggestionList ? suggestionList.querySelectorAll("li").length : 0;
+        while (Date.now() - startTime < extraDelay) {
+            const newListItems = suggestionList ? suggestionList.querySelectorAll("li") : [];
+            // console.debug("Did we find it:",newListItems)
+            if (newListItems.length >= initialCount) {
+                return true;
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, retryInterval));
         }
-        await new Promise((resolve) => setTimeout(resolve, retryInterval));
     }
     return false;
 }

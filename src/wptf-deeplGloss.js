@@ -1,5 +1,5 @@
 function loadMyGlossary(apiKey, DeeplFree, gloss) {
-   // console.debug("we start loading", apiKey, DeeplFree, gloss)
+    //console.debug("we start loading", apiKey, DeeplFree, gloss)
     chrome.runtime.sendMessage({
         action: "load_deepl_glossary",
         apiKey: apiKey,

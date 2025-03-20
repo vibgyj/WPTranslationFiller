@@ -93,7 +93,7 @@ async function openDeeplModal(DeepLdb) {
         <h2>${title}</h2 >
         <button onclick="closeModalClicked()">${DeepLClose}</button>
         <button onclick="importDeepLCSV()">${ImpCSV}</button>
-        <button onclick="exportDeepLCSV('${DownloadPath}')">${ExpCSV}</button>
+        <button onclick="exportDeepLCSV()">${ExpCSV}</button>
         <button id="addEntryButton">${AddEntry}</button>
         <input type="text" id="searchLocale" placeholder=${searchLoc}>
         <input type="text" id="searchOriginal" placeholder=${searchOrig}>
@@ -112,7 +112,7 @@ async function openDeeplModal(DeepLdb) {
         // Append modal to body
         document.body.insertAdjacentHTML("beforeend", modalHTML);
         document.getElementById("DeepLmodal").style.display = "block";
-        listAllRecords(DeepLdb);
+        listAllRecords("NL");
         document.getElementById("addEntryButton").addEventListener("click", addEntry);
         // We need to set the locale to the working locale in the modal
         let locale = checkLocale() || 'en';
@@ -170,7 +170,7 @@ function createAndOpenModal() {
 
     const saveButton = document.createElement('button');
     saveButton.id = 'saveDataBtn';
-    saveButton.textContent = __('Save');
+    saveButton.textContent = __('SaveRec');
     const outputDiv = document.createElement('div');
     outputDiv.id = 'output';
     modalContent.appendChild(closeButton);
@@ -1009,7 +1009,7 @@ function addEntry() {
     // Add save button
     const saveTd = document.createElement("td");
     const saveButton = document.createElement("button");
-    saveButton.textContent = "Save";
+    saveButton.textContent = __("SaveRec");
     saveButton.onclick = function () {
         saveNewRecord(newRow);
     };
@@ -1059,7 +1059,7 @@ function saveNewRecord() {
 
         transaction.oncomplete = function () {
             console.debug("Transaction completed, reloading records...");
-            listAllRecords(); //Ensure records are refreshed in the correct order
+            listAllRecords("NL"); //Ensure records are refreshed in the correct order
         };
     });
 }
@@ -1067,6 +1067,7 @@ function saveNewRecord() {
 
 // Function to refresh table
 function displayRecordsFromDB() {
+    console.debug("we are displaying")
     openDeepLDatabase().then(dbDeepL => {
         const transaction = dbDeepL.transaction("glossary", "readonly");
         const store = transaction.objectStore("glossary");
