@@ -297,7 +297,7 @@ function saveTranslation(locale, original,deleteText,message) {
             const cursor = event.target.result;
             if (cursor) {
                 const updatedRecord = cursor.value;
-                updatedRecord.translation = newTranslation;
+                updatedRecord.translation = newTranslation.trim();
                 cursor.update(updatedRecord);
 
                // console.debug("Translation updated successfully!");

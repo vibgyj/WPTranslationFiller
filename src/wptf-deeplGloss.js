@@ -687,12 +687,12 @@ async function prepare_glossary(glossary, language) {
             }
             else {
                 console.debug("glossary ends with blank:", glossary[i])
-                glossentry = glossary[i].substring(0, glossary[i].length - 1) + '\n'
+                glossentry = glossary[i].trim() + '\n';
                 glossentry = toUtf8(glossentry)
             }
         }
         else {
-            glossentry = glossary[i].substring(0, glossary[i].length - 1)
+            glossentry = glossary[i].trim() + '\n';
             glossentry = toUtf8(glossentry)
         }
         if (typeof glossentry != 'undefined') {

@@ -6,12 +6,12 @@
 async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent) {
     destlang = destlang.toUpperCase()
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
-    //console.debug("original:",original)
-    if (formal) {
-        formal_value = "prefer_more"
+    //console.debug("original:",original,original,originalPreProcessed)
+    if (formal === true) {
+        formal_value = "more"
     }
     else {
-        formal_value = "prefer_less"
+        formal_value = "less"
     }
 
     if (destlang == "RO") {
@@ -62,9 +62,9 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
             console.error("Error:", chrome.runtime.lastError.message);
             return;
         }
-       // console.debug("response:", response);
+        // console.debug("response:", response);
         translated = response;
-      //  console.debug("translation:", translated);
+        //console.debug("translation:", translated.translations[0]);
 
         if (translated && translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
             processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang)
@@ -80,6 +80,20 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
             if (translated && translated.error) {
                let error = translated.error
                 switch (true) {
+                    case error.startsWith('HTTP 400:'):
+                        const match400 = error.match(/HTTP 400: \{"message":"([^"]+)"\}/);
+                        if (match400) {
+                            // Extract the message from the match and use it
+                            const errorMessage = match400[1]; // This will hold the error message from DeepL
+                            console.error("DeepL Error 400:", errorMessage);
+                            messageBox("warning", `Request forbidden: ${errorMessage}`);
+                            errorstate = `Request forbidden: ${errorMessage}`;
+                        } else {
+                            // If no specific message is found, handle as a generic 403 error
+                            messageBox("warning", "Request forbidden<br>Please check your license, or your glossary");
+                            errorstate = "Request forbidden<br>Please check your license, or glossary";
+                        }
+                        break;
                     case error.startsWith('HTTP 403:'):
                         const match403 = error.match(/HTTP 403: \{"message":"([^"]+)"\}/);
                         if (match403) {

@@ -31,3 +31,4 @@ Version changes as of version 3.3
 29. Version 3.8.29 Added deleting glossary ID's at once, improved loading languages
 30. Version 3.8.30 Added missing translations to the menu's, ExportCSV was not working, ImportCSV translation error
 31. Version 3.8.31 Added selecting only the Locale records in the glossary modal, also added translation of delete and save button. Also rewrote DeepL translation to prevent CORS error
+32. Version 3.8.32 New function added to delete words from the original like "Sorry", "Please". Also improved the replacement function

@@ -80,17 +80,33 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
         });
     }
 }
-
-const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
+                       //new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
+const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi);
 const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
-const specialChar = new RegExp(/ # | #|\#|&#->/ig);
+const specialChar = new RegExp(/ # | #|\#|\t|\r\n|\r|\n|&#->/ig);
 function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
+    
+    // We need to replace special chars before translating
+    const charmatches = original.matchAll(specialChar);
+    if (charmatches != null) {
+        index = 1;
+        for (const charmatch of charmatches) {
+            //  console.debug("charmatch:", charmatch)
+            original = original.replace(charmatch, `{special_var${index}}`);
+            index++;
+        }
+    }
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         if (!CheckUrl(original, preverbs[i][0])) {
+            // We need to remove the word provided
+            if (preverbs[i][0].startsWith("#remove")) {
+                original = removeWord(original, preverbs[i][1])
+                //console.debug("original after:",original)
+            }
             original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
         }
     }
@@ -110,12 +126,12 @@ function preProcessOriginal(original, preverbs, translator) {
 
         // Deepl does remove crlf so we need to replace them before sending them to the API
         //original = original.replaceAll('\r', "mylinefeed");
-        original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
+      //  original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
         // Deepl does remove tabs so we need to replace them before sending them to the API
         //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
-        original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
+      //  original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
         // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
-
+        // The above replacements are put into the specialchar regex for all api's
         const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
             index = 0;
@@ -145,18 +161,6 @@ function preProcessOriginal(original, preverbs, translator) {
                 index++;
             }
         }
-        // DeepL does not like # and -> so we need to replace them before translating
-
-        const charmatches = original.matchAll(specialChar);
-        if (charmatches != null) {
-            index = 1;
-            for (const charmatch of charmatches) {
-                //  console.debug("charmatch:", charmatch)
-                original = original.replace(charmatch, `{special_var${index}}`);
-                index++;
-            }
-        }
-
     }
     else if (translator == "microsoft") {
         // const matches = original.matchAll(placeHolderRegex);
@@ -167,25 +171,30 @@ function preProcessOriginal(original, preverbs, translator) {
     }
     if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
-        if (matches != null) {
-            index = 1;
+       // console.debug("matches:",matches.length)
+        if (matches !== null) {
+            let index = 1;
             for (const match of matches) {
-                original = original.replace(match, `{var ${index}}`);
+                const regex = new RegExp(match, "gi"); // Create a global and case-insensitive regex
+                original = original.replace(regex, `{var ${index}}`);
                 original = original.replace('.{', '. {');
                 index++;
             }
         }
+        //console.debug("Original:",original)
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
         if (linkmatches != null) {
             index = 1;
             for (const linkmatch of linkmatches) {
                 original = original.replace(linkmatch, `{linkvar ${index}}`);
-                original = original.replace('.{', '. {');
+                //original = original.replace('.{', '. {');
                 index++;
             }
         }
+       
     }
+    //console.debug("original:", original)
     return original;
 }
 
@@ -201,14 +210,15 @@ function startsWithCapital(word) {
  * @returns {string} - The modified string with the target word replaced.
  */
 function replaceWord(str, target, replacement) {
-    // Create a dynamic regular expression to match the target word
-    const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // Escape special characters in the target word
-    const regex = new RegExp(escapedTarget, 'g'); // Create a global regular expression
+    // Escape special characters in the target word to prevent regex issues
+    const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 
-    // Replace the target word with the replacement word
+    // Adjusted regex to match even when the target has no spaces around it
+    const regex = new RegExp(`\\b${escapedTarget}\\b|${escapedTarget}`, 'g');
+
+    // Replace occurrences with the replacement word
     return str.replace(regex, replacement);
 }
-
 
 function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale) {
     var pos;
@@ -366,12 +376,15 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
             replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
             //console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
-
+            // if we have a value "{replacevar[index]}" left in the translation we need to remove that 
+            let toreplace = "{replacevar" + i+"}"
+            translatedText = translatedText.replaceAll(toreplace,"")
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                //console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
-                translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]);
+               // console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
+                translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]); 
                 // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
+            //console.debug("translated after replace post:",translatedText)
         }
         else {
             // PSS solution for issue #291
@@ -462,8 +475,66 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("after checking:", result, result.translatedText)
     translatedText = result.translatedText;
     // console.debug("end of post:",translatedText)
+    // put special chars back
+    const charmatches = original.matchAll(specialChar);
+    if (charmatches != null) {
+        index = 1;
+        for (const charmatch of charmatches) {
+            //console.debug("char:", charmatch)
+            translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+            index++;
+        }
+    }
+    //console.debug("after post: ",translatedText)
     return translatedText;
 }
+
+function removeWord(sentence, searchWord) {
+    var formal = checkFormal(false);
+    var modifiedSentence = sentence
+       // console.debug("formal:",sentence,formal)
+       // console.debug("we remove:",searchWord)
+    // Step 1: Remove the search word (without the "!") including the comma and space after it
+    if (formal === false) {
+        const escapedSearchWord = searchWord.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+        // Regex to match the word, and any comma or spaces after it, including the start of the sentence
+        const regex = new RegExp(`(^|\\s)${escapedSearchWord},?\\s*`, 'gi');  // Case-insensitive match
+
+        // Replace the matched word and any trailing spaces/comma with an empty string
+        modifiedSentence = sentence.replace(regex, (match, p1) => {
+            // If p1 (the character before the word) is a space, don't remove it
+            return p1 === ' ' ? ' ' : ''; // If it's a space, return it, otherwise return empty string
+        });
+      //  console.debug("replaced:",modifiedSentence,formal)
+    }
+    else {
+        
+        const targetWord = searchWord.toLowerCase();
+       // console.debug("search:", searchWord, targetWord)
+        // Check if the searchWord is "please" or "Please" and prevent removal
+        if (targetWord != "please") {
+
+            const regex = new RegExp(`${searchWord},\\s*`, 'g');
+            modifiedSentence = sentence.replace(regex, '');
+           // console.debug("We are replacing:", searchWord);
+        }
+        else {
+            modifiedSentence = sentence
+           // console.debug("We did not replace:",modifiedSentence)
+        }
+        
+    }
+        // Step 2: Convert the first word after the comma to uppercase
+        // Find the first word after any leading spaces
+        const words = modifiedSentence.trim().split(' ');
+        if (words.length > 0) {
+            words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+        }
+        modifiedSentence = words.join(' ')
+       // console.debug("after remove:",modifiedSentence)
+        return modifiedSentence
+    }
 
 function correctSentence(translatedText, ignoreList) {
     // Ensure ignoreList is always an array, even if undefined or invalid
