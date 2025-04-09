@@ -1,15 +1,14 @@
 // background.js
 console.debug("background loaded")
 
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "load_deepl_glossary") {
-        //console.debug(request.isFree)
-       // console.debug(request.apiKey)
-        //console.debug(request.glossaryData)
-        let deeplServer = request.isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        // console.debug(request.isFree)
+        //   console.debug(request.apiKey)
+        //   console.debug(request.glossaryData)
+        let deeplServer = request.isFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
         let url = `${deeplServer}/v2/glossaries`;
-
+        // console.debug("Url:",url)
         let response = fetch(url, {
             method: "POST",
             accept: "*/*",
@@ -40,57 +39,57 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keeps sendResponse alive for async operations
     }
     else if (request.action === "fetch_deepl_glossaries") {
-            fetch("https://api-free.deepl.com/v2/glossaries", {
-                method: "GET",
-                headers: {
-                    "Authorization": `DeepL-Auth-Key ${request.apiKey}`, // Replace with your actual API key
-                    "Content-Type": "application/json"
+        fetch("https://api-free.deepl.com/v2/glossaries", {
+            method: "GET",
+            headers: {
+                "Authorization": `DeepL-Auth-Key ${request.apiKey}`, // Replace with your actual API key
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+                return response.json();
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("DeepL Response:", data); // Debugging step
-                    sendResponse({ success: true, glossaries: data });
-                })
-                .catch(error => {
-                    console.error("Fetch Error:", error); // Debugging step
-                    sendResponse({ success: false, error: error.message });
-                });
+            .then(data => {
+                console.log("DeepL Response:", data); // Debugging step
+                sendResponse({ success: true, glossaries: data });
+            })
+            .catch(error => {
+                console.error("Fetch Error:", error); // Debugging step
+                sendResponse({ success: false, error: error.message });
+            });
 
-            return true; //  Keeps sendResponse alive for async fetch()
+        return true; //  Keeps sendResponse alive for async fetch()
     }
     else if (request.action === "delete_deepl_glossary") {
-            let deeplServer = request.isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
-            let url = `${deeplServer}/v2/glossaries/${request.glossary_id}`;
+        let deeplServer = request.isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        let url = `${deeplServer}/v2/glossaries/${request.glossary_id}`;
 
-            fetch(url, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
-                    "Content-Type": "application/json"
+        fetch(url, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+                return response.text(); // DELETE request usually returns empty response
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.text(); // DELETE request usually returns empty response
-                })
-                .then(() => {
-                    //console.log(`Glossary ${request.glossary_id} deleted successfully`);
-                    sendResponse({ success: true, message: `Glossary ${request.glossary_id} deleted` });
-                })
-                .catch(error => {
-                    console.error("Error deleting glossary:", error);
-                    sendResponse({ success: false, error: error.message });
-                });
+            .then(() => {
+                //console.log(`Glossary ${request.glossary_id} deleted successfully`);
+                sendResponse({ success: true, message: `Glossary ${request.glossary_id} deleted` });
+            })
+            .catch(error => {
+                console.error("Error deleting glossary:", error);
+                sendResponse({ success: false, error: error.message });
+            });
 
-            return true; // Keeps sendResponse alive for async operations
+        return true; // Keeps sendResponse alive for async operations
     }
     else if (request.action === 'getGlossary') {
         console.debug("We started getGlossary")
@@ -120,13 +119,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
     else if (request.action === "translate") {
-        console.debug("We did get post");
-        fetch(request.url, {
+        //console.debug("We did get post", request.body);
+        // Convert the object to URL-encoded string
+        const urlEncodedBody = new URLSearchParams({
+            auth_key: request.body.auth_key,
+            text: request.body.text.join(''),  // Join the array into a single string
+            source_lang: request.body.source_lang,
+            target_lang: request.body.target_lang,
+            formality: request.body.formality,
+            preserve_formatting: request.body.preserve_formatting,
+            tag_handling: request.body.tag_handling,
+            ignore_tags: request.body.ignore_tags,
+            split_sentences: request.body.split_sentences,
+            outline_detection: request.body.outline_detection,
+            context: request.body.context,
+            glossary_id: request.body.glossary_id
+        }).toString();  // Convert to query string
+
+       // console.log('URL-encoded Body:', urlEncodedBody);
+
+        // Now, make the API request
+        fetch("https://api-free.deepl.com/v2/translate", {
             method: "POST",
             headers: {
+                "Authorization": "DeepL-Auth-Key "+request.body.auth_key,
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: new URLSearchParams(request.body).toString(),
+            body: urlEncodedBody  // Use the URL-encoded string
         })
             .then(response => {
                 if (!response.ok) {
@@ -148,7 +167,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // Keep the message channel open
     }
-
-    
 });
 

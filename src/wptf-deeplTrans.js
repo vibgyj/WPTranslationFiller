@@ -8,10 +8,12 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
     //console.debug("original:",original,original,originalPreProcessed)
     if (formal === true) {
-        formal_value = "more"
+        formal_value = "prefer_more"
+        mycontext = "This text is a legal message"
     }
     else {
-        formal_value = "less"
+        formal_value = "prefer_less"
+        mycontext = "This text is a casual conversation with a friend."
     }
 
     if (destlang == "RO") {
@@ -20,6 +22,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
     else {
         myformat = "1"
     }
+    //console.debug("formal in Deepl:", formal, formal_value)
     //console.debug("targetlang:",destlang,deeplGlossary)
         let url = DeeplFree == true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
       //  const requestBody = {
@@ -45,15 +48,16 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
     //})
     const requestBody = {
         auth_key: apikeyDeepl,
-        text: [originalPreProcessed],
-        source_lang: "EN",
+        text: [originalPreProcessed],  // You have text as an array
+        source_lang: 'EN',
         target_lang: destlang,
-        preserve_formatting: myformat ? "1" : "0",
-        tag_handling: "xml",
-        ignore_tags: "x",
         formality: formal_value,
-        split_sentences: "nonewlines",
-        outline_detection: "0",
+        preserve_formatting: myformat,
+        tag_handling: 'xml',
+        ignore_tags: 'x',
+        split_sentences: 'nonewlines',
+        outline_detection: '0',
+        context: [mycontext],
         glossary_id: deeplGlossary
     };
     // changed function to send the request via the background script, otherwise a CORS error is generated
@@ -64,7 +68,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
         }
         // console.debug("response:", response);
         translated = response;
-        //console.debug("translation:", translated.translations[0]);
+        console.debug("translation:", translated.translations);
 
         if (translated && translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
             processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang)
@@ -116,6 +120,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
 
                     case error.startsWith('HTTP 456:'):
                         errorstate = "456 Quota exceeded.<br> The character limit has been reached";
+                        messageBox("warning", "You have exeeded your quota!<br>Please wait for a day or purchase a new licence");
                         break;
 
                     default:
@@ -173,7 +178,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
 }
 
 
-async function okdeepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
+async function prevdeepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore,deeplGlossary,is_entry) {
     var translatedText = "";
     var ul = "";
     //var current = "";

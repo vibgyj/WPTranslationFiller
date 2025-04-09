@@ -467,7 +467,7 @@ document.addEventListener("keydown", async function (event) {
                     if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                         if (data.transsel != "undefined") {
                             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-                            var formal = checkFormal(false);
+                            8
                             //var locale = checkLocale();
                             convertToLow = data.convertToLower;
                             var DeeplFree = data.DeeplFree;
@@ -1534,14 +1534,27 @@ function SwitchGlossClicked(event) {
 
 function SwitchTMClicked(event) {
     event.preventDefault(event);
+    var formal = checkFormal(false);
     int = localStorage.getItem(['switchTM']);
     if (int == "false") {
-        toastbox("info", __("Switching TM to foreign"), "2500", "TM switch");
+        if (formal == false) {
+        toastbox("info", __("Switching TM to foreign"), "4500", "TM switch");
+        }
+        else {
+            toastbox("info", __("Switching TM to local"), "4500", "TM switch");
+        }
         localStorage.setItem('switchTM', 'true');
     }
     else {
-        toastbox("info", __("Switching TM to local"), "2500", "TM switch");
-        localStorage.setItem('switchTM', 'false');
+        if (formal == true) {
+            toastbox("info", __("Switching TM to foreign"), "4500", "TM switch");
+            
+        }
+        else {
+            toastbox("info", __("Switching TM to local"), "4500", "TM switch");
+        }
+            localStorage.setItem('switchTM', 'false');
+
     }
     location.reload();
 
@@ -2060,12 +2073,12 @@ function loadGlossary(event) {
                 }
                 else {
                     messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
-                    return;
+                    //return;
                 }
             }
             else {
-                messageBox("error", "Your second glossary is not loaded because no file is loaded!!");
-                return;
+               messageBox("error", "Your second glossary is not loaded because no file is loaded!!");
+               // return;
             }
         }
     );
@@ -2450,7 +2463,8 @@ async function checkbuttonClick(event) {
                                         markdiv.appendChild(markspan1);
                                         markdiv.appendChild(markspan2);
                                         editorElem.appendChild(markdiv);
-                                        markspan1.innerHTML = "<br>----- Missing glossary verbs are marked -----<br>"
+                                        let markspanText = "<br>--" + __("Missing glossary verbs are marked") + "--"
+                                        markspan1.innerHTML = markspanText
                                         // markspan2.innerHTML = result.newText;
                                     }
                                     //else { console.debug("markerpresent found") }

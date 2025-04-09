@@ -65,13 +65,13 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
                 else if (response.error == "HTTP error! Status: 401") {
                     messageBox("info", "We did not get a result of the request<br>" + response.error + "<br> Check your licence")
                 }
-                else if (error.status == "403") {
+                else if (response.status == "403") {
                     messageBox("info", "Authorization error<br>" + response.error + "<br> Check your licence")
                 }
-                else if (error.status == '404') {
+                else if (response.error.status == '404') {
                     messageBox("info", "The page could not be found" + response.error)
                 }
-                else if (error.status == '429') {
+                else if (response.status == '429') {
                     messageBox("error", "Error: We did perform to many requests to the CORS server");
                     cuteAlert({
                         type: "question",

@@ -1,61 +1,61 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.3.32",
+  "version": "3.3.40",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
-    "extension_pages": "script-src 'self' ; object-src 'self'"
-  },
-  "background": {
-    "scripts": [ "background.js" ]
+  "extension_pages": "script-src 'self' ; object-src 'self'"
+},
+   "background": {
+    "scripts": ["background.js"]
 
   },
-  "web_accessible_resources": [
-    {
-      "resources": [ "wptf-style" ],
-      "matches": [ "<all_urls>" ]
+   "web_accessible_resources": [
+     {
+      "resources": ["wptf-style"],
+      "matches": ["<all_urls>"]
+    },
+	  {
+      "resources": ["contentSript.js"],
+      "matches": ["<all_urls>"]
     },
     {
-      "resources": [ "contentSript.js" ],
-      "matches": [ "<all_urls>" ]
+      "resources": ["img/*.svg"],
+      "matches": ["<all_urls>"]
     },
     {
-      "resources": [ "img/*.svg" ],
-      "matches": [ "<all_urls>" ]
+      "resources": ["error-alert.flac"],
+      "matches": ["<all_urls>"]
+    },
+	{
+      "resources": ["error-alert.wav"],
+      "matches": ["<all_urls>"]
     },
     {
-      "resources": [ "error-alert.flac" ],
-      "matches": [ "<all_urls>" ]
+      "resources": ["wptf-options.html"],
+      "matches": ["<all_urls>"]
     },
-    {
-      "resources": [ "error-alert.wav" ],
-      "matches": [ "<all_urls>" ]
+	{
+      "resources": ["locales/*.json"],
+      "matches": ["<all_urls>"]
     },
-    {
-      "resources": [ "wptf-options.html" ],
-      "matches": [ "<all_urls>" ]
+	{
+      "resources": ["wptf-inject.js"],
+      "matches": ["<all_urls>"]
     },
-    {
-      "resources": [ "locales/*.json" ],
-      "matches": [ "<all_urls>" ]
+	{
+      "resources": ["wptf-cute-alert.js"],
+      "matches": ["<all_urls>"]
     },
-    {
-      "resources": [ "wptf-inject.js" ],
-      "matches": [ "<all_urls>" ]
-    },
-    {
-      "resources": [ "wptf-cute-alert.js" ],
-      "matches": [ "<all_urls>" ]
-    },
-    {
-      "resources": [ "wptf-purify.min.js" ],
-      "matches": [ "<all_urls>" ]
-    },
-    {
-      "resources": [ "/_metadata" ],
-      "matches": [ "<all_urls>" ]
-    }
-  ],
+	{
+	"resources": ["wptf-purify.min.js"],
+	"matches": ["<all_urls>"]
+	},
+	{
+	"resources": ["/_metadata"],
+	"matches": ["<all_urls>"]
+	}
+    ],
   "options_ui": {
     "page": "wptf-options.html",
     "browser_style": true,
@@ -69,30 +69,29 @@
     "declarativeNetRequestWithHostAccess",
     "declarativeNetRequestFeedback"
   ],
-  "host_permissions": [
-    "*://api-free.deepl.com/*",
-    "*://api.deepl.com/*",
-    "*://translation.googleapis.com/*",
-    "*://translate.wordpress.org/*",
-    "*://api.languagetool.org/*",
-    "*://api.languagetoolplus.com/*",
-    "*://analytics.languagetoolplus.com/*",
-    "*://api.cognitive.microsofttranslator.com/*",
-    "*://api.openai.com/*",
-    "*://cors-anywhere.herokuapp.com/*"
-  ],
-  "optional_host_permissions": [
-    "*://translate.wordpress.org/*",
-    "https://cors-anywhere.herokuapp.com/*"
-  ],
-
-  "optional_permissions": [
-    "webRequest"
-  ],
-  "content_scripts": [
-    {
-      "matches": [ "<all_urls>" ],
-      "js": [
+   "host_permissions": [
+        "*://api-free.deepl.com/*",
+        "*://api.deepl.com/*",
+        "*://translation.googleapis.com/*",
+        "*://translate.wordpress.org/*",
+        "*://api.languagetool.org/*",
+        "*://api.languagetoolplus.com/*",
+        "*://analytics.languagetoolplus.com/*",
+        "*://api.cognitive.microsofttranslator.com/*",
+        "*://api.openai.com/*",
+        "*://cors-anywhere.herokuapp.com/*"
+    ],
+	"optional_host_permissions": ["*://translate.wordpress.org/*",
+	"https://cors-anywhere.herokuapp.com/*"
+	],
+	
+    "optional_permissions": [
+      "webRequest"
+     ],
+    "content_scripts": [
+      {
+	   "matches": ["<all_urls>"],
+       "js": [
         "wptf-buildstats.js",
         "wptf-database.js",
         "wptf-inject.js",
@@ -113,9 +112,9 @@
         "wptf-importfile.js",
         "wptf-database-maintenance.js",
         "contentScript.js"
-      ],
-      "css": [ "wptf-style.css" ]
-    }
+		],
+		  "css": ["wptf-style.css"] 
+	}
   ],
   "browser_specific_settings": {
     "gecko": {

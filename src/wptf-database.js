@@ -112,11 +112,11 @@ async function openDeeplModal(DeepLdb) {
         // Append modal to body
         document.body.insertAdjacentHTML("beforeend", modalHTML);
         document.getElementById("DeepLmodal").style.display = "block";
-        listAllRecords("NL");
-        document.getElementById("addEntryButton").addEventListener("click", addEntry);
-        // We need to set the locale to the working locale in the modal
         let locale = checkLocale() || 'en';
         locale = locale.toUpperCase()
+        listAllRecords(locale);
+        document.getElementById("addEntryButton").addEventListener("click", addEntry);
+        // We need to set the locale to the working locale in the modal
         setSearchLocale(locale)
     })
 }
@@ -1074,7 +1074,7 @@ function displayRecordsFromDB() {
         const request = store.getAll();
 
         request.onsuccess = () => {
-            displayRecords(request.result);
+                displayRecords(request.result, __("Delete"), __("Record deleted: "));
         };
     });
 }

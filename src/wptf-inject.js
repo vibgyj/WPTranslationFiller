@@ -246,12 +246,12 @@ function listAllRecords(locale) {
 
 
 
-function displayRecords(records) {
+function displayRecords(records,DeleteText,myDeleteText) {
     //console.debug("Records Array:", records); // Check the structure of the array
     const tableBody = document.getElementById("recordsTableBody");
     tableBody.innerHTML = "";
-    let deleteText = __("Delete"); 
-    let myDelete = __("Record deleted: ")
+    let deleteText = DeleteText; 
+    let myDelete = myDeleteText
     records.forEach((record) => {
         const row = document.createElement("tr");
 

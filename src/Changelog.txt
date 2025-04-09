@@ -32,3 +32,11 @@ Version changes as of version 3.3
 30. Version 3.8.30 Added missing translations to the menu's, ExportCSV was not working, ImportCSV translation error
 31. Version 3.8.31 Added selecting only the Locale records in the glossary modal, also added translation of delete and save button. Also rewrote DeepL translation to prevent CORS error
 32. Version 3.8.32 New function added to delete words from the original like "Sorry", "Please". Also improved the replacement function
+33. Version 3.8.33 Fixed a problem with translating multiple sentences when removing "Please". The first word in the second sentence was in lowercase
+34. Version 3.8.34 There was no messagebox shown when the quota has been acceeded
+35. Version 3.8.35 DeepL has changed their API causing a warning 'text' field is missing
+36. Version 3.8.36 Destination language was set fixed to "NL", which is incorrect
+37. Version 3.8.37 Altered the text indicating missing verbs, it can now be translated. Changed the way that switch to different locale is shown
+38. Version 3.8.38 There was un untranslated label when performing TM
+39. Version 3.8.39 The modal for DeepL did only show Dutch records, not other locales. Also an translation error was generated
+40. Version 3.9.40 Something went wrong with building the Chrome version

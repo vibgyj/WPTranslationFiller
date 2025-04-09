@@ -260,6 +260,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 index++;
             }
         }
+       // console.debug("after Deepl replace:",translatedText)
         // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
         const markupmatches = original.match(markupRegex);
         index = 1;
@@ -491,50 +492,33 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
 function removeWord(sentence, searchWord) {
     var formal = checkFormal(false);
-    var modifiedSentence = sentence
-       // console.debug("formal:",sentence,formal)
-       // console.debug("we remove:",searchWord)
-    // Step 1: Remove the search word (without the "!") including the comma and space after it
+    var modifiedSentence = sentence;
+
     if (formal === false) {
         const escapedSearchWord = searchWord.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(^|\\s)${escapedSearchWord},?\\s*`, 'gi');
 
-        // Regex to match the word, and any comma or spaces after it, including the start of the sentence
-        const regex = new RegExp(`(^|\\s)${escapedSearchWord},?\\s*`, 'gi');  // Case-insensitive match
-
-        // Replace the matched word and any trailing spaces/comma with an empty string
         modifiedSentence = sentence.replace(regex, (match, p1) => {
-            // If p1 (the character before the word) is a space, don't remove it
-            return p1 === ' ' ? ' ' : ''; // If it's a space, return it, otherwise return empty string
+            return p1 === ' ' ? ' ' : '';
         });
-      //  console.debug("replaced:",modifiedSentence,formal)
-    }
-    else {
-        
+    } else {
         const targetWord = searchWord.toLowerCase();
-       // console.debug("search:", searchWord, targetWord)
-        // Check if the searchWord is "please" or "Please" and prevent removal
-        if (targetWord != "please") {
-
-            const regex = new RegExp(`${searchWord},\\s*`, 'g');
+        if (targetWord !== "please") {
+            const regex = new RegExp(`${searchWord},\\s*`, 'gi');
             modifiedSentence = sentence.replace(regex, '');
-           // console.debug("We are replacing:", searchWord);
         }
-        else {
-            modifiedSentence = sentence
-           // console.debug("We did not replace:",modifiedSentence)
-        }
-        
     }
-        // Step 2: Convert the first word after the comma to uppercase
-        // Find the first word after any leading spaces
-        const words = modifiedSentence.trim().split(' ');
-        if (words.length > 0) {
-            words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
-        }
-        modifiedSentence = words.join(' ')
-       // console.debug("after remove:",modifiedSentence)
-        return modifiedSentence
-    }
+
+    // Ensure proper capitalization for words starting new sentences
+    modifiedSentence = modifiedSentence.replace(/([.!?])\s+([a-z])/g, (match, p1, p2) => {
+        return p1 + ' ' + p2.toUpperCase();
+    });
+
+    // Capitalize the first word in the modified sentence if it starts with a lowercase letter
+    modifiedSentence = modifiedSentence.replace(/^([a-z])/, (match, p1) => p1.toUpperCase());
+
+    return modifiedSentence;
+}
 
 function correctSentence(translatedText, ignoreList) {
     // Ensure ignoreList is always an array, even if undefined or invalid
@@ -708,7 +692,7 @@ function convert_lower(text, spellCheckIgnore) {
                     else {
                         //it is in the ignore list so keep the first letter as capital
                         // we could improve it by converting it to uppercase if the word found is lowercase, but in ignoren it is with uppercase
-                        console.debug("we do not convert:",word)
+                       // console.debug("we do not convert:",word)
                         if (startsWithCapital(word)) {
                             capsArray.push(word)
                         }
@@ -3010,6 +2994,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
         }
         //let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
         pretrans = await findTransline(original, destlang);
+        //console.debug("pretrans:", pretrans, original)
         if (pretrans != "notFound" && transtype != "plural") {
             let previewName = preview.querySelector("td.translation");
             if (previewName != null) {
@@ -3029,7 +3014,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                     var element1 = document.createElement("div");
                     element1.setAttribute("class", "trans_local_div");
                     element1.setAttribute("id", "trans_local_div");
-                    element1.appendChild(document.createTextNode("Local"));
+                    element1.appendChild(document.createTextNode(__("Local")));
                     previewName.appendChild(element1);
                 }
                 mark_as_translated(row, current, translated, preview)
@@ -4661,7 +4646,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     translateButton.innerText = __("Translated");
                     progressbar = document.querySelector(".indeterminate-progress-bar");
                     progressbar.style.display = "none";
-                    messageBox("info", "Translation is ready");
+                    messageBox("info", __("Translation is ready"));
                 }
                 // We need to wait a bit before fetching the net record
                 await delay(vartime * counter)
@@ -4742,7 +4727,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     //console.debug("check:",checkTranslateButton)
     // posprocess the translation
     translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
-    console.debug("translatedtext:",translatedText)
+    //console.debug("translatedtext:",translatedText)
     textareaElem = editor.querySelector("textarea.foreign-text");
     if (textareaElem != null && typeof textareaElem != "undefined") {
         textareaElem.innerText = translatedText;
@@ -4990,6 +4975,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 }
                 else {
                     let translatedText = pretrans;
+                    translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, "", locale);
+
                     // check if the returned translation does have the same start/ending as the original
                     if (translatedText != "No suggestions") {
                         result = await check_start_end(translatedText, "", 0, "", original, "", 0);
