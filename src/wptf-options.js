@@ -933,9 +933,12 @@ second_file.addEventListener("change", function () {
 
 
 function sortTextarea(text) {
-    let lines = text.split('\n');
-    lines.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-    let sortedText = lines.join('\n');
+    var sortedText =""
+    if (typeof text != "undefined") {
+        let lines = text.split('\n');
+        lines.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+        sortedText = lines.join('\n');
+    }
     return sortedText
 }
 function checkLocale() {

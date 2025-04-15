@@ -1980,7 +1980,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 if (currec != null) {
                     var current = currec.querySelector("span.panel-header__bubble");
                 }
-                validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
                // validateEntry(destlang, textareaElem, "", "", row);
                 
                 // PSS 10-05-2021 added populating the preview field issue #68
@@ -2213,7 +2213,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     let originalElem = document.querySelector("#preview-" + row + " .original");
                     showNameLabel(originalElem)
                 }
-                validateEntry(destlang, textareaElem, "", "", row, locale, record,false);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
                 validateEntry(destlang, textareaElem, "", "", row);
                 // we need to set the checkbox as marked
                 preview = document.querySelector(`#preview-${row}`);
@@ -4823,9 +4823,9 @@ async function bulkSave(noDiff,bulk_timer) {
          cuteAlert({
              type: "question",
              title: "Bulk save",
-             message: "There are no records selected, <br>are you sure you want to select all records?",
-             confirmText: "Confirm",
-             cancelText: "Cancel",
+             message: __("There are no records selected, <br>are you sure you want to select all records?"),
+             confirmText: __("Confirm"),
+             cancelText: __("Cancel"),
              myWindow: currWindow
          }).then(async (e) => {
              if (e == ("confirm")) {

@@ -6,7 +6,7 @@
 async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent) {
     destlang = destlang.toUpperCase()
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
-    //console.debug("original:",original,original,originalPreProcessed)
+    //console.debug("original:",originalPreProcessed)
     if (formal === true) {
         formal_value = "prefer_more"
         mycontext = "This text is a legal message"
@@ -68,7 +68,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
         }
         // console.debug("response:", response);
         translated = response;
-        console.debug("translation:", translated.translations);
+        //console.debug("translation:", translated.translations);
 
         if (translated && translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
             processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang)

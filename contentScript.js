@@ -1,5 +1,6 @@
 // This is the starting script for the addon
 //var glossary;
+console.debug("we start contentscript")
 var db;
 var jsstoreCon;
 var myGlotDictStat;
@@ -13,6 +14,13 @@ var DispCount;
 var is_pte;
 var classToolTip;
 
+chrome.storage.local.get(null, function (items) {
+    const keysToRemove = Object.keys(items).filter(key => key.includes("glossary"));
+    chrome.storage.local.remove(keysToRemove, function () {
+        console.log("Removed keys:", keysToRemove);
+    });
+});
+console.debug("gloss at start:",glossary)
 function savePage() {
     var currentUrl = window.location.href
     //console.debug("curr:", currentUrl)
@@ -82,12 +90,15 @@ async function initTranslations(event) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    console.debug("We adjust the sreen")
     adjustLayoutScreen();
 });
 
 // The below is necessary to get the focus into the editor if it is opened straight from the menu
 window.onload = async function (event) {
     //addname_to_checkbox()
+    console.debug("We adjust the sreen")
+    adjustLayoutScreen();
     initTranslations(event);
     var textarea = document.getElementsByClassName("textareas active")
    // console.debug("text at start", textarea)
@@ -2345,7 +2356,7 @@ async function checkbuttonClick(event) {
                             translation = textareaElem.textContent
                         }
                         let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
-                        result = await validateEntry(locale, textareaElem, "", "", rowId, locale, "", false);
+                        result = await validateEntry(locale, textareaElem, "", "", rowId, locale, "", false, DefGlossary);
                         //console.debug("validate entry in content line 2192", result)
                         mark_glossary(leftPanel, result.toolTip, textareaElem.textContent, rowId, false)
                         
@@ -2377,7 +2388,7 @@ async function checkbuttonClick(event) {
                         }
                         if (pluralpresent != null) {
                            // we do have a plural
-
+                                                   //language, original, translation, locale, showDiff,rowId,isPlural
                               result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent, locale, "", rowId, true);
                               //console.debug("validate contentscript line 2228 resultplural:", result)
                               // plural is record with "_1"
@@ -2852,7 +2863,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
 }
 
-async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff) {
+async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff, DefGlossary) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     var translation;
     var result = [];
@@ -2913,7 +2924,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
                 originalText = originalRaw.textContent;
                 if (hasGlossary) {
                     //We have a glossary word
-                    result = await validate(language, originalText, translation, locale, "", rowId, false);
+                    result = await validate(language, originalText, translation, locale, "", rowId, false, DefGlossary);
                     //console.debug("validate in content line 2691",result)
                     if (result.percent == 100) {
                         missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
@@ -4361,13 +4372,13 @@ function validate(language, original, translation, locale, showDiff,rowId,isPlur
     var NewsearchTerm;
     var spansPlural;
     var spansSingular;
-    var debug = false;
+    var debug = true;
     var lowertranslation;
     var isFound = false
     var spancnt = 0;
     var rresult = 0;
     var transresult = 0;
-    
+    console.debug("validate")
    // console.debug('Caller:', getCallerDetails());
     if (debug == true) {
         console.debug("original:", original)
@@ -5734,7 +5745,7 @@ async function handleMutation(mutationsList, observer) {
                     //console.debug("before MyResult:", OriginalText)
                     //console.debug("before MyResult:", translation)
                     if (typeof translation != 'undefined'){
-                        MyResult = await validate(locale, OriginalText, translation, locale, false, rowId, false) 
+                        MyResult = await validate(locale, OriginalText, translation, locale, false, rowId, false, DefGlossary) 
                     }
 
                     spans = await leftPanel.getElementsByClassName("glossary-word")
@@ -5949,7 +5960,7 @@ async function handleMutation(mutationsList, observer) {
                             else {
                                 //console.debug("percentage:", result.percent, leftPanel)
                                 textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
-                                MutResult = await validate(locale, original.textContent, translation, locale, false, rowId, false)
+                                MutResult = await validate(locale, original.textContent, translation, locale, false, rowId, false, DefGlossary)
                                 //console.debug("validate in content line 5168", MutResult)
                                 // console.debug("MutResult:",MutResult)
                                 myOriginal = leftPanel.getElementsByClassName("original")
@@ -6042,7 +6053,7 @@ function MutationsPlural(mutations, observer) {
                 mutation.target.focus()
                 myGlossArray = await Array.from(myglossary)
                 map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
-                MyResult = await validate(locale, pluralOriginal.textContent, translation, "", false, rowId, true)
+                MyResult = await validate(locale, pluralOriginal.textContent, translation, "", false, rowId, true, DefGlossary)
                 mark_glossary(leftPanel, "", translation, rowId,true)
                 MyResult.percent = 0;
                 let missingVerbsButton = leftPanel.getElementsByClassName("translocal-entry-missing-button");
@@ -6131,7 +6142,7 @@ function MutationsPlural(mutations, observer) {
                       // pluralOriginal = mypluralOriginal[0].querySelector(".original-raw")
                         textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
                        // console.debug("detailEditor:",detailEditor)
-                        
+                                                 //language, original, translation, locale, showDiff,rowId,isPlural
                         MutResult = await validate(locale, pluralOriginal.textContent, translation, locale, false, rowId, true)
                         if (MutResult.percent == 100) {
                             let markerpresent = leftPanel.getElementsByClassName("marker");

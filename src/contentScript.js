@@ -1,5 +1,7 @@
 // This is the starting script for the addon
-//var glossary;
+//console.debug("We start content script")
+var glossary = [];
+var glossary1 = [];
 var db;
 var dbDeepL;
 var jsstoreCon;
@@ -14,7 +16,13 @@ var DispCount;
 var is_pte;
 var classToolTip;
 var is_entry = false;
-
+is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+chrome.storage.local.get(null, function (items) {
+    const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
+    //chrome.storage.local.remove(keysToRemove, function () {
+      //  console.log("Removed keys:", keysToRemove);
+   // });
+});
 function savePage() {
     var currentUrl = window.location.href
     //console.debug("curr:", currentUrl)
@@ -80,48 +88,124 @@ async function initTranslations(event) {
     await translatedButton()
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    adjustLayoutScreen();
+//console.debug("before listener")
+// The below is necessary to get the focus into the editor if it is opened straight from the menu
+const myobserver = new MutationObserver((mutationsList, observer) => {
+    // Your check logic here
+    if (document.querySelector(".textareas.active")) {
+        //console.debug("Textarea found!");
+        observeForTextarea();
+        myobserver.disconnect();
+    }
 });
 
+myobserver.observe(document.body, { childList: true, subtree: true });
+
+
 // The below is necessary to get the focus into the editor if it is opened straight from the menu
-window.onload = async function (event) {
-    //addname_to_checkbox()
-    initTranslations(event);
-    var textarea = document.getElementsByClassName("textareas active")
-   // console.debug("text at start", textarea)
-    // if there is no texarea, then we do not want to set focus to it
-    if (typeof textarea[0] != 'undefined') {
-        mytextarea = textarea[0].firstChild.nextElementSibling
-        //if (textarea.length > 0) {
-        start_editor_mutation_server(textarea, "Details")
-      //   const textarea = document.querySelector(`#translation_${rowId}_0`);
-                // Ensure the textarea is visible and enabled
-                mytextarea.style.display = 'block'; // Ensure it's visible
-                mytextarea.style.visibility = 'visible'; // Ensure it's visible
-                mytextarea.disabled = false; // Ensure it's enabled
-                // Scroll to the textarea if necessary
-                mytextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Focus on the textarea to make it active
-                mytextarea.focus();
+//window.addEventListener('load', () => {
+//    observeForTextarea();
+//});
+function observeForTextarea() {
+    const observer = new MutationObserver((mutations, obs) => {
+        const textarea = document.querySelector(".textareas.active");
 
-        // we double click to make focus active
-       var clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            button: 0
+        if (textarea && textarea.firstChild && textarea.firstChild.nextElementSibling) {
+           // console.debug("✅ Textarea found via MutationObserver");
 
-        });
-       mytextarea.dispatchEvent(clickEvent)
-       let event = "start"
-       const myCustomEvent = new CustomEvent('myCustomEvent', {
-        detail: { message: 'This is a custom event!' }
-       });
-       await loadGlossary(CustomEvent);
-        //checkLicences(CustomEvent)
-        
+            // Stop observing
+            obs.disconnect();
+
+            // Now continue with your logic
+            startFullScript([textarea]);
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
+function waitForTextareaAndStart(retries = 30) {
+    const textarea = document.getElementsByClassName("textareas active");
+
+    if (textarea.length > 0 && textarea[0].firstChild && textarea[0].firstChild.nextElementSibling) {
+        console.debug("Textarea found, continuing...");
+        startFullScript(textarea);
+    } else if (retries > 0) {
+        // Try again in the next frame
+        requestAnimationFrame(() => waitForTextareaAndStart(retries - 1));
+    } else {
+        console.warn("Textarea not found after retries");
+        messageBox("error", "Page is not fully loaded — textarea not found.");
     }
 }
+
+async function startFullScript(textarea) {
+    currWindow = window.self;
+    adjustLayoutScreen();
+    initTranslations();
+
+    mytextarea = textarea[0].firstChild.nextElementSibling;
+    start_editor_mutation_server(textarea, "Details");
+    mytextarea.style.display = 'block';
+    mytextarea.style.visibility = 'visible';
+    mytextarea.disabled = false;
+    mytextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    mytextarea.focus();
+
+    const clickEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        button: 0
+    });
+    mytextarea.dispatchEvent(clickEvent);
+
+    const myCustomEvent = new CustomEvent('myCustomEvent', {
+        detail: { message: 'This is a custom event!' }
+    });
+
+    let is_loaded = await loadGlossaries(myCustomEvent);
+    console.debug("glossary loaded:", is_loaded);
+
+    if (is_loaded === "success") {
+        doValidation();
+    } else {
+        cuteAlert({
+            type: "question",
+            title: __("Glossary not loaded"),
+            message: __("One of the glossaries is not loaded! Do you want to continue?"),
+            confirmText: "Confirm",
+            cancelText: "Cancel",
+            myWindow: currWindow
+        }).then((e) => {
+            if (e === "confirm") {
+                doValidation();
+            } else {
+                messageBox("info", __("Validate page aborted"));
+                doValidation();
+            }
+        });
+    }
+}
+function doValidation() {
+    chrome.storage.local.get(["showHistory", "destlang", "showTransDiff", "DefGlossary"], function (data) {
+        if (data.showHistory != "null") {
+            let locale = checkLocale();
+            validatePage(data.destlang, data.showHistory, locale, data.showTransDiff, data.DefGlossary);
+            if (data.showHistory === true) {
+                const currentURL = window.location.href;
+                if (!currentURL.includes("untranslated") && !check_untranslated()) {
+                    validateOld(data.showTransDiff);
+                }
+            }
+        }
+    });
+}
+
+
+
 
 
 // Function to send a message to the injected script
@@ -698,7 +782,7 @@ document.addEventListener("keydown", async function (event) {
                     reader.onload = function (e) {
                         var contents = e.target.result;
                         // console.debug("contents:", contents)
-                        var glossary = csvParser(contents)
+                        var ld_glossary = csvParser(contents)
                         //console.debug("glossary:", glossary)
                        // glossary = Array.from(glossary);
                         chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
@@ -706,7 +790,7 @@ document.addEventListener("keydown", async function (event) {
                             var formal = checkFormal(false);
                             var DeeplFree = data.DeeplFree;
                            // console.debug("before load_glossary")
-                            load_glossary(glossary, data.apikeyDeepl, DeeplFree, data.destlang)
+                            load_glossary(ld_glossary, data.apikeyDeepl, DeeplFree, data.destlang)
                             file = ""
                         });
 
@@ -1179,7 +1263,7 @@ if (divPaging != null && divProjects == null) {
        divNavBar.appendChild(statsContainer);
     }
     if (!is_pte) {
-        console.debug("we are not pte")
+        //console.debug("we are not pte")
         divNavBar.appendChild(checkAllContainer);
     }
     divNavBar.appendChild(importContainer);
@@ -1281,7 +1365,7 @@ WikiLink.className = 'menu-item-wptf_wiki'
 
     // Create a <select> element
     let dropdown = document.createElement("select");
-
+    dropdown.name="WPTF_select"
     // Add a default option (always visible, not selectable)
     let defaultOption = document.createElement("option");
     defaultOption.textContent = "DeepL";
@@ -1461,12 +1545,12 @@ function LoadGlossClicked(event) {
             var reader = new FileReader();
             reader.onload = function (e) {
                 var contents = e.target.result;
-                var glossary = csvParser(contents)
+                var ld_glossary = csvParser(contents)
                 chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
                     //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
                     var formal = checkFormal(false);
                     var DeeplFree = data.DeeplFree;
-                    load_glossary(glossary, data.apikeyDeepl, DeeplFree, data.destlang)
+                    load_glossary(ld_glossary, data.apikeyDeepl, DeeplFree, data.destlang)
                 });
                 reader.onerror = function () {
                     console.debug(reader.error);
@@ -1964,9 +2048,97 @@ function exportPoClicked(event) {
     // res= dbExport();
 }
 
-function loadGlossary(event) {
+//function getGlossaryData() {
+//    return new Promise((resolve, reject) => {
+//        chrome.storage.local.get([
+ //           "glossary", "glossaryA", "glossaryB", "glossaryC", "glossaryD",
+ //           "glossaryE", "glossaryF", "glossaryG", "glossaryH", "glossaryI",
+ //           "glossaryJ", "glossaryK", "glossaryL", "glossaryM", "glossaryN",
+//            "glossaryO", "glossaryP", "glossaryQ", "glossaryR", "glossaryS",
+//            "glossaryT", "glossaryU", "glossaryV", "glossaryW", "glossaryX",
+//            "glossaryY", "glossaryZ", "destlang"
+//        ], function (data) {
+//            if (chrome.runtime.lastError) {
+//                reject(chrome.runtime.lastError);
+//            } else {
+ //               resolve(data);
+ //           }
+ //       });
+ //   });
+//}
+
+
+// Wrap chrome.storage.local.get in a Promise
+function getGlossaryData() {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.get([
+            "glossary", "glossaryA", "glossaryB", "glossaryC", "glossaryD",
+            "glossaryE", "glossaryF", "glossaryG", "glossaryH", "glossaryI",
+            "glossaryJ", "glossaryK", "glossaryL", "glossaryM", "glossaryN",
+            "glossaryO", "glossaryP", "glossaryQ", "glossaryR", "glossaryS",
+            "glossaryT", "glossaryU", "glossaryV", "glossaryW", "glossaryX",
+            "glossaryY", "glossaryZ",
+            "glossary1", "glossary1A", "glossary1B", "glossary1C", "glossary1D",
+            "glossary1E", "glossary1F", "glossary1G", "glossary1H", "glossary1I",
+            "glossary1J", "glossary1K", "glossary1L", "glossary1M", "glossary1N",
+            "glossary1O", "glossary1P", "glossary1Q", "glossary1R", "glossary1S",
+            "glossary1T", "glossary1U", "glossary1V", "glossary1W", "glossary1X",
+            "glossary1Y", "glossary1Z",
+            "destlang"
+        ], function (data) {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(data);
+            }
+        });
+    });
+}
+// Load glossary and glossary1 into global arrays
+async function loadGlossaries() {
+    try {
+        const data = await getGlossaryData();
+
+        // Validate
+        const glossaryValid = typeof data.glossary !== "undefined";
+        const glossary1Valid = typeof data.glossary1 !== "undefined";
+
+        if (!glossaryValid && !glossary1Valid) {
+            //messageBox("error", "Neither glossary nor glossary1 were loaded because no files are available!");
+            return "unsuccessful";
+        }
+
+        // Clear existing arrays
+        glossary.length = 0;
+        glossary1.length = 0;
+
+        // Load glossary
+        if (glossaryValid) {
+            const keys = ["glossary", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(l => "glossary" + l);
+            keys.forEach(key => loadSet(glossary, data[key]));
+
+            glossary.sort((a, b) => b.key.length - a.key.length);
+        }
+
+        // Load glossary1
+        if (glossary1Valid) {
+            const keys1 = ["glossary1", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(l => "glossary1" + l);
+            keys1.forEach(key => loadSet(glossary1, data[key]));
+
+            glossary1.sort((a, b) => b.key.length - a.key.length);
+        }
+        
+        return "success";
+
+    } catch (error) {
+        console.error("Error loading glossaries:", error);
+        return "unsuccessful";
+    }
+}
+
+function old_loadGlossary(event) {
     //event.preventDefault()
-    glossary = [];
+    //glossary = [];
     chrome.storage.local.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
         , "glossaryD", "glossaryE", "glossaryF", "glossaryG", "glossaryH", "glossaryI"
         , "glossaryJ", "glossaryK", "glossaryL", "glossaryM", "glossaryN", "glossaryO"
@@ -2003,24 +2175,25 @@ function loadGlossary(event) {
                 loadSet(glossary, data.glossaryZ);
 
                 glossary.sort(function (a, b) {
-                    // to sory by descending order
+                    // to sort by descending order
                     return b.key.length - a.key.length;
                 });
+                //console.debug("gloss length:", glossary, length)
             }
             else {
                 messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
                 return;
             }
-        }
-    );
+        })
 
-    glossary1 = [];
+    //glossary1 = [];
     chrome.storage.local.get(["glossary1", "glossary1A", "glossary1B", "glossary1C"
         , "glossary1D", "glossary1E", "glossary1F", "glossary1G", "glossary1H", "glossary1I"
         , "glossary1J", "glossary1K", "glossary1L", "glossary1M", "glossary1N", "glossary1O"
         , "glossary1P", "glossary1Q", "glossary1R", "glossary1S", "glossary1T", "glossary1U"
         , "glossary1V", "glossary1W", "glossary1X", "glossary1Y", "glossary1Z", "destlang"],
         function (data) {
+            //console.debug("second gloss:",data.glossary1)
             if (typeof data.glossary1 != "undefined") {
                 loadSet1(glossary1, data.glossary1);
                 loadSet1(glossary1, data.glossary1A);
@@ -2054,42 +2227,74 @@ function loadGlossary(event) {
                     // to sort by descending order
                     return b.key.length - a.key.length;
                 });
+               // console.debug("glossary1:", glossary1.length)
 
-                if (glossary.length > 27) {
-                    chrome.storage.local.get(["showHistory", 'destlang', 'showTransDiff', 'DefGlossary'], function (data, event) {
-                        if (data.showHistory != "null") {
-                            let locale = checkLocale();
-                             validatePage(data.destlang, data.showHistory, locale, data.showTransDiff);
-                            if (data.showHistory == true) {
-                                // Get the current URL
-                                const currentURL = window.location.href;
-                                // Check if the URL contains "untranslated, and also check if we come from other location with untranslated
-                                if (!currentURL.includes("untranslated") && !check_untranslated()) {
-                                    validateOld(data.showTransDiff);
-                                }
-                            }
-                        }
-                    });
-                }
-                else {
-                    messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
-                    //return;
-                }
             }
             else {
-               messageBox("error", "Your second glossary is not loaded because no file is loaded!!");
-               // return;
+                messageBox("error", "Your second glossary is not loaded because no file is loaded!!");
+                //return ;
             }
-        }
-    );
+   
+        //console.debug("gloss length before:", glossary1)
+        if (glossary.length > 1) {
+        chrome.storage.local.get(["showHistory", 'destlang', 'showTransDiff', 'DefGlossary'], function (data, event) {
+            if (data.showHistory != "null") {
+                let locale = checkLocale();
+                validatePage(data.destlang, data.showHistory, locale, data.showTransDiff);
+                if (data.showHistory == true) {
+                    // Get the current URL
+                    const currentURL = window.location.href;
+                    // Check if the URL contains "untranslated, and also check if we come from other location with untranslated
+                    if (!currentURL.includes("untranslated") && !check_untranslated()) {
+                        validateOld(data.showTransDiff);
+                    }
+                }
+            }
+        });
+    }
+    else {
+        messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
+        //return;
+            }
+        });
+    let glossary_loaded = "OK"
+    let glossary1_loaded = "OK"
+    return { glossary_loaded, glossary1_loaded };
 }
+   
     
-function loadSet(x, set) {
-    glossary = glossary.concat(set);
+function loadSet(targetArray, sourceArray) {
+    if (!Array.isArray(sourceArray)) return;
+
+    sourceArray.forEach((item, index) => {
+        if (
+            item &&
+            typeof item === "object" &&
+            typeof item.key !== "undefined" &&
+            typeof item.value !== "undefined"
+        ) {
+            targetArray.push(item);
+        } else {
+            console.warn("Skipping invalid entry at index", index, ":", item);
+        }
+    });
 }
 
-function loadSet1(x, set) {
-    glossary1 = glossary1.concat(set);
+function loadSet1(targetArray, sourceArray) {
+    if (!Array.isArray(sourceArray)) return;
+
+    sourceArray.forEach((item, index) => {
+        if (
+            item &&
+            typeof item === "object" &&
+            typeof item.key !== "undefined" &&
+            typeof item.value !== "undefined"
+        ) {
+            targetArray.push(item);
+        } else {
+            console.warn("Skipping invalid entry at index", index, ":", item);
+        }
+    });
 }
 
 function addTranslateButtons(rowId) {
@@ -2443,7 +2648,7 @@ async function checkbuttonClick(event) {
                             translation = textareaElem.textContent
                         }
                         let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
-                        result = await validateEntry(locale, textareaElem, "", "", rowId, locale, "", false);
+                        result = await validateEntry(locale, textareaElem, "", "", rowId, locale, "", false, DefGlossary);
                         //console.debug("validate entry in content line 2192", result)
                         mark_glossary(leftPanel, result.toolTip, textareaElem.textContent, rowId, false)
                         
@@ -2477,7 +2682,7 @@ async function checkbuttonClick(event) {
                         if (pluralpresent != null) {
                            // we do have a plural
 
-                              result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent, locale, "", rowId, true);
+                              result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent, locale, "", rowId, true,DefGlossary);
                               //console.debug("validate contentscript line 2228 resultplural:", result)
                               // plural is record with "_1"
                               newRowId = rowId.split("-")[0] +"_1"
@@ -2743,6 +2948,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var currText = 'untranslated'
     var single
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    
     //console.debug("updateStyle rowId:",rowId)
     //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
@@ -2764,7 +2970,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
         let glossary = originalElem.querySelector('span .glossary-word');
     }
     let markerpresent = document.querySelector("#preview-" + rowId + " .mark-tooltip");
-    if (result.percent == 100) {
+    if (result != null && result.percent == 100) {
         if (markerpresent != null){
             markerpresent.remove();
             }
@@ -2883,8 +3089,10 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     // 01-07-2021 fixed a problem causing an undefined error
     // 05-07-2021 PSS prevent with toggle in settings to show label for existing strings #96
     if (showHistory == true) {
-            single = "True";
+        single = "True";
+       // console.debug("newurl", newurl)
         if (newurl.substring(1, 9) != "undefined") {
+         //   console.debug("newurl", newurl)
             single = "False";
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
@@ -2897,7 +3105,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
 }
 
-async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff) {
+async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff, DefGlossary) {
     // 22-06-2021 PSS fixed a problem that was caused by not passing the url issue #91
     var translation;
     var result = [];
@@ -2911,6 +3119,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
    // console.debug("glossary in validateEntry:",glossary)
     if (textareaElem != null) {
         translation = textareaElem.value;
+       // console.debug("textareaElem:",textareaElem)
     }
     else {
         translation = ""
@@ -2919,10 +3128,12 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
         translation = "Empty"
     }
     addTranslateButtons(rowId);
-    preview_raw =getPreview(rowId)
-    //preview_raw = document.querySelector(`#preview-${rowId}`)
+    //preview_raw = getPreview(rowId)
+   // console.debug("preview_raw:", preview_raw.querySelector('.original-text'))
+    //console.debug("row after AI:",rowId)
+    preview_raw = document.querySelector(`#preview-${rowId}`)
     if (preview_raw != null) {
-        hasGlossary = preview_raw.querySelector('.glossary-word')
+        hasGlossary = await preview_raw.querySelector('.glossary-word')
 
         if (hasGlossary != null) {
             hasGlossary = true;
@@ -2934,8 +3145,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     else {
         hasGlossary = false;
     }
-   let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+   //let leftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
     //remove_all_gloss(leftPanel)
+    //console.debug("do we have glossary:",hasGlossary,textareaElem.innerHTML)
     if (hasGlossary==true) {
         original_preview = preview_raw.querySelector(`#preview-${rowId} .original-text`)
         if (original_preview == null) {
@@ -2958,7 +3170,8 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
                 originalText = originalRaw.textContent;
                 if (hasGlossary) {
                     //We have a glossary word
-                    result = await validate(language, originalText, translation, locale, "", rowId, false);
+                                          //language, original, translation, locale, showDiff,rowId,isPlural
+                    result = await validate(language, originalText, translation, locale, "", rowId, false, DefGlossary);
                     //console.debug("validate in content line 2691",result)
                     if (result.percent == 100) {
                         missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
@@ -3363,6 +3576,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var newline = "\n";
     var button_name = "Empty";
     var debug = false;
+    var panelTransDiv;
     if (debug == true) {
         console.debug("updateElementStyle curr:", currstring)
         console.debug("updateElementStyle prev:", prev_trans)
@@ -3371,6 +3585,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     if (typeof rowId != "undefined") {
         // We need to have the new bar to be able to set the color
         panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+        //console.debug("panelTransDiv:",panelTransDiv)
         //let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
         // 05-07-2023 PSS corrected this to prevent error when innerText is not found
         if (current != null) {
@@ -3436,6 +3651,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         else {button_name == 'Undef!!'}
         // We do not need to style the record if it concerns the name label
+        //console.debug("showname:",showName,currstring)
         if (showName != true) {
             if (current != null) {
                 SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
@@ -3445,7 +3661,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 // we need to update the button color and content/tooltip
                 // 22-07-2021 PSS fix for wrong button text "Apply" #108 
                 // moved the below code, and remove the duplicat of this code
-               // console.debug("result.percentage:",result.percent)
+                //console.debug("result.percentage:",result.percent,currstring)
                 if (checkElem != null) {
                     if (result.percent == 100) {
                         checkElem.innerHTML = "100";
@@ -3495,7 +3711,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             missingVerbsButton.style.visibility = "visible";
                         }
                     }
-                    else if (result.percent >= 33 && result.percent <66) {
+                    else if (result.percent >= 33 && result.percent < 66) {
+                       // console.debug("We have a 50:",result.percent,headerElem)
                         newtitle = checkElem.title;
                         checkElem.innerHTML = "33";
                         separator1 = document.createElement("div");
@@ -3586,7 +3803,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                                     SavelocalButton.disabled = true;
                                 }
                             }
-                            if (typeof headerElem != "undefined" && headerElem != null) {
+                            if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                                 panelTransDiv.style.backgroundColor = "";
                             }
                         }
@@ -4098,7 +4315,9 @@ function savetranslateEntryClicked(event) {
             // we need to close the editor as we do not need it
             glotpress_close.click();
             prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
-            prevrow.style.backgroundColor = "#b5e1b9";
+            if (prevrow != null) {
+                prevrow.style.backgroundColor = "#b5e1b9";
+            }
         }
         else if (current.innerText == "fuzzy") {
             let glotpress_open = document.querySelector(`#preview-${rowId} td.actions .edit`);
@@ -4135,15 +4354,27 @@ function savetranslateEntryClicked(event) {
 }
 
 function countExactWordOccurrences(text, word) {
+
+    // Remove HTML tags (e.g., <a href="...">link</a>)
+    const plainText = text.replace(/<[^>]*>/g, ' ');
+
+    // Create a regex that matches the exact word using word boundaries
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+
+    // Match and count
+    const matches = plainText.match(regex);
+    return matches ? matches.length : 0;
+
+
     // Create a regular expression to match the exact word
     // \b asserts a word boundary, ensuring we match only whole words
-    const regex = new RegExp(`\\b${word}\\b`, 'g');
+   // const regex = new RegExp(`\\b${word}\\b`, 'g');
 
     // Use the match method to find all matches
-    const matches = text.match(regex);
+    //const matches = text.match(regex);
 
     // Return the number of matches or 0 if no matches were found
-    return matches ? matches.length : 0;
+    //return matches ? matches.length : 0;
 }
 
 //---------
@@ -4391,7 +4622,9 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
 
 }
 
-function validate(language, original, translation, locale, showDiff,rowId,isPlural) {
+
+function validate(language, original, translation, locale, showDiff, rowId, isPlural,DefGlossary) {
+    //console.debug("validate started!!")
     var count = 0;
     var wordCount = 0;
     var wordsCount = 0;
@@ -4412,22 +4645,31 @@ function validate(language, original, translation, locale, showDiff,rowId,isPlur
     var spancnt = 0;
     var rresult = 0;
     var transresult = 0;
-    
+    const stack = new Error().stack;
+   // console.debug("Call stack:\n", stack);
    // console.debug('Caller:', getCallerDetails());
+    //console.debug("debug:",debug)
     if (debug == true) {
         console.debug("original:", original)
         console.debug("translation:", translation)
         console.debug("Devglossary:", DefGlossary)
         console.debug("Glossary:",glossary)
     }
-    
+    //DefGlossary = true
     if (DefGlossary == true) {
         myglossary = glossary
     }
     else {
         myglossary = glossary1
     }
+    //console.debug("myglossary:",myglossary)
     if (myglossary.length != 0) {
+        Array.from(myglossary).forEach((obj, i) => {
+            if (!obj || typeof obj.key === "undefined" || typeof obj.value === "undefined") {
+                console.warn("Invalid glossary entry at index", i, ":", obj);
+            }
+        });
+       // console.log("Invalid entry at index 368:", myglossary[368]);
         myGlossArray = Array.from(myglossary)
         // console.debug("glossaryArray:", myGlossArray)
         map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
@@ -4454,7 +4696,7 @@ function validate(language, original, translation, locale, showDiff,rowId,isPlur
                 spans = spansSingular
             }
             if (spans.length > 0) {
-                // console.debug("houston we have a glossary")
+                 //console.debug("houston we have a glossary")
                 //console.debug("spans:", spansSingular)
                 wordCount = spans.length
                 //console.debug("span length:", spans.length)
@@ -5413,7 +5655,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         old = "";
                     }
                     //console.debug("result of records found:",wait, rejec, fuz, old, rowId)
-                   
+                    //console.debug("single:",single)
                     if (tbodyRowCount > 2 && single == "False") {
                         // we need to fetch the previous state first
                         old_status = document.querySelector("#preview-" + rowId);
@@ -5425,7 +5667,8 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, mycurrent, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff);
                         //console.debug("result before updateelementstyle:",result)
                         let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
-                        updateElementStyle(checkElem, headerElem, result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount, currstring, mycurrent, "", false, false, [], prev_trans, old_status, showDiff);
+                        // 12-04-PSS We do not need to update the style when we find an old one!!
+                       // updateElementStyle(checkElem, headerElem, result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount, currstring, mycurrent, "", false, false, [], prev_trans, old_status, showDiff);
                     }
                     else if (tbodyRowCount > 2 && single == "True") {
                          updateElementStyle(checkElem, headerElem, result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "",currcount,currstring,mycurrent,"",true,false,[],prev_trans,current);
@@ -5780,8 +6023,9 @@ async function handleMutation(mutationsList, observer) {
                     map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
                     //console.debug("before MyResult:", OriginalText)
                     //console.debug("before MyResult:", translation)
-                    if (typeof translation != 'undefined'){
-                        MyResult = await validate(locale, OriginalText, translation, locale, false, rowId, false) 
+                    if (typeof translation != 'undefined') {
+                        // this is the one for the editor in translateEntry
+                        MyResult = await validate(locale, OriginalText, translation, locale, false, rowId, false, DefGlossary) 
                     }
 
                     spans = await leftPanel.getElementsByClassName("glossary-word")

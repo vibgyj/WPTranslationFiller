@@ -41,13 +41,12 @@ function checkLocale() {
 
 function adjustLayoutScreen() {
     // Retrieve value from chrome local storage
-    
     chrome.storage.local.get(['WPTFscreenWidth'], function (result) {
         // Access the stored value
         var myScreenWidth;
         myScreenWidth = result.WPTFscreenWidth;
         var screenWidth = window.innerWidth;
-        //console.debug("screenWidth:",screenWidth)
+        //console.debug("screenWidth:", screenWidth)
         var gpContentElement = document.querySelector('.gp-content');
         //console.debug("found setting:",myScreenWidth)
         // Perform actions based on the stored value
@@ -69,7 +68,7 @@ function adjustLayoutScreen() {
                     WPTFscreenWidth: '90'
                 });
             }
-                
+
         } else if (typeof myScreenWidth == 'undefined') {
             if (screenWidth == 1455) {
                 myScreenWidth = '90%';
@@ -87,7 +86,7 @@ function adjustLayoutScreen() {
                     WPTFscreenWidth: '90'
                 });
             }
-       
+
         }
         else {
             // Generate the new max-width style based on the stored value
@@ -99,6 +98,8 @@ function adjustLayoutScreen() {
         }
     });
 }
+
+
 
 // Function to intercept XMLHttpRequests
 function interceptXHR(xhr) {
@@ -236,7 +237,7 @@ function listAllRecords(locale) {
                 // **Sort by "original" as locale is already filtered**
                 records.sort((a, b) => a.original.localeCompare(b.original));
 
-                displayRecords(records);
+                displayRecords(records, __("Delete"), __("Record deleted: "));
             }
         };
     });
@@ -246,7 +247,8 @@ function listAllRecords(locale) {
 
 
 
-function displayRecords(records,DeleteText,myDeleteText) {
+function displayRecords(records, DeleteText, myDeleteText) {
+    console.debug("display:",DeleteText,myDeleteText)
     //console.debug("Records Array:", records); // Check the structure of the array
     const tableBody = document.getElementById("recordsTableBody");
     tableBody.innerHTML = "";

@@ -40,3 +40,7 @@ Version changes as of version 3.3
 38. Version 3.8.38 There was un untranslated label when performing TM
 39. Version 3.8.39 The modal for DeepL did only show Dutch records, not other locales. Also an translation error was generated
 40. Version 3.9.40 Something went wrong with building the Chrome version
+41. Version 3.9.41 Screen with change did not work anymore
+42. Version 3.9.42 Added marking missing glossary words in preview. Completely overhauled glossary loading
+43. Version 3.9.43 Fixed a problem with validation. Fix a problem with replacing vars before DeepL translation
+44. Version 3.9.44 Firefox was no longer working due a statement for loading the window was not working

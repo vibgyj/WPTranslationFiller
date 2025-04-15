@@ -132,14 +132,16 @@ function preProcessOriginal(original, preverbs, translator) {
       //  original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
         // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
         // The above replacements are put into the specialchar regex for all api's
-        const matches = original.matchAll(placeHolderRegex);
+        const myplaceHolderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+        const matches = [...original.matchAll(myplaceHolderRegex)];
         if (matches != null) {
             index = 0;
             for (const match of matches) {
-                original = original.replace(match, `{replacevar${index}}`);
+                original = original.replace(match[0], `{replacevar${index}}`);
                 index++;
             }
         }
+        //console.debug("deepl replaced:",original)
         // We need to remove markup that contains & and ; otherwise translation will fail
         let markupmatches = original.match(markupRegex)
         if (markupmatches != null) {
@@ -252,11 +254,13 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     else if (translator == "deepl") {
-        const matches = original.matchAll(placeHolderRegex);
+        const placeHolderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+        const matches = [...original.matchAll(placeHolderRegex)];
+       // const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
-                translatedText = translatedText.replace(`{replacevar${index}}`, match);
+                translatedText = translatedText.replace(`{replacevar${index}}`, match[0]);
                 index++;
             }
         }
@@ -1098,6 +1102,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     var previewElem1;
     var previewElem2;
     var prev_trans;
+    var checkboxCounter=0
     //var spellcheckIgnore = [];
     var repl_verb = []; //contains the list of found and replaced words
     const template = `
@@ -1119,391 +1124,405 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     else {
         progressbar.style.display = 'block';
     }
-    //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-    var formal = checkFormal(false);
-    setPostTranslationReplace(postTranslationReplace, formal);
-    // console.debug('repl:',replaceVerb,formal)
-    // 15-05-2021 PSS added fix for issue #73add
-
-    var checkButton = await document.querySelector(".wptfNavBarCont a.check_translation-button");
-    checkButton.innerText = "Checking";
-    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-    if (checkButton.className == "check_translation-button") {
-        checkButton.className += " started";
+    if (is_pte) {
+        document.querySelectorAll('.checkbox input').forEach(function (elem) {
+           // console.debug("checkbox:",elem)
+            if (elem.checked == true) {
+                checkboxCounter++;
+            }
+        });
     }
     else {
-        // console.debug("checkbutton2:", typeof checkButton)
-        if (typeof checkbutton != null) {
-            checkButton.classList.remove("check_translation-button", "started", "translated");
-            checkButton.classList.remove("check_translation-button", "restarted", "translated");
-            checkButton.className = "check_translation-button restarted";
+        document.querySelectorAll('.myCheckBox input').forEach(function (elem) {
+            if (elem.checked == true) {
+                checkboxCounter++;
+            }
+        });
+    }
+    
+      //  console.debug("we are checking")
+        //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+        var formal = checkFormal(false);
+        setPostTranslationReplace(postTranslationReplace, formal);
+        // console.debug('repl:',replaceVerb,formal)
+        // 15-05-2021 PSS added fix for issue #73add
+
+        var checkButton = await document.querySelector(".wptfNavBarCont a.check_translation-button");
+        checkButton.innerText = "Checking";
+        // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
+        if (checkButton.className == "check_translation-button") {
+            checkButton.className += " started";
         }
         else {
-            checkButton.className = "check_translation-button started"
-        }
-    }
-
-    if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
-        //setPreTranslationReplace(preTranslationReplace);
-        var translatedText = "";
-        tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
-        for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-
-            countrows++;
-            //  setTimeout(() => {
-            replaced = false;
-            let original = e.querySelector("span.original-raw").innerText;
-            let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
-            row = rowfound.split("-")[1];
-            let newrow = rowfound.split("-")[2];
-            if (typeof newrow != "undefined") {
-                newrowId = row.concat("-", newrow);
-                row = newrowId;
+            // console.debug("checkbutton2:", typeof checkButton)
+            if (typeof checkbutton != null) {
+                checkButton.classList.remove("check_translation-button", "started", "translated");
+                checkButton.classList.remove("check_translation-button", "restarted", "translated");
+                checkButton.className = "check_translation-button restarted";
             }
             else {
-                rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
-                row = rowfound.split("_")[1];
+                checkButton.className = "check_translation-button started"
             }
-            let spanmissing = document.querySelector(`#preview-${row} span.missing`);
-            // If the page does not contain translations, we do not need to handle them
-            if (spanmissing == null) {
-                // 30-08-2021 PSS fix for issue # 125
-                let precomment = e.querySelector(".source-details__comment p");
-                if (precomment != null) {
-                    comment = precomment.innerText;
-                    comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-                    toTranslate = checkComments(comment.trim());
+        }
+
+        if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
+            //setPreTranslationReplace(preTranslationReplace);
+            var translatedText = "";
+            tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
+            for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
+
+                countrows++;
+                //  setTimeout(() => {
+                replaced = false;
+                let original = e.querySelector("span.original-raw").innerText;
+                let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
+                row = rowfound.split("-")[1];
+                let newrow = rowfound.split("-")[2];
+                if (typeof newrow != "undefined") {
+                    newrowId = row.concat("-", newrow);
+                    row = newrowId;
                 }
                 else {
-                    toTranslate = true;
+                    rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
+                    row = rowfound.split("_")[1];
                 }
-                if (toTranslate == true) {
-                    // Check if it is a plural
-                    // If in the original field "Singular is present we have a plural translation                
-                    var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
-                    if (pluralpresent != null) {
-                        transtype = "plural";
+                let spanmissing = document.querySelector(`#preview-${row} span.missing`);
+               // console.debug("spanmissing:", spanmissing)
+                // If the page does not contain translations, we do not need to handle them, if the span is not present, then it means there are translations
+                if (spanmissing == null) {
+                    // 30-08-2021 PSS fix for issue # 125
+                    let precomment = e.querySelector(".source-details__comment p");
+                    if (precomment != null) {
+                        comment = precomment.innerText;
+                        comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+                        toTranslate = checkComments(comment.trim());
                     }
                     else {
-                        transtype = "single";
+                        toTranslate = true;
                     }
-                    mypreview = document.querySelector("#preview-" + newrowId);
-                    if (mypreview == null) {
-                        mypreview = document.querySelector("#preview-" + row);
-                    }
-                    if (transtype == "single") {
-                        // Fetch the translations
-                        let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
-                        // let element = e.querySelector(".source-details__comment");
-                        let textareaElem = e.querySelector("textarea.foreign-text");
-                        //console.debug("textareaELem:",textareaElem)
-                        translatedText = textareaElem.innerText;
-                        //console.debug("translatedText:",translatedText)
-                        prev_trans = textareaElem.innerText;
+                    if (toTranslate == true) {
+                        // Check if it is a plural
+                        // If in the original field "Singular is present we have a plural translation                
+                        var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
+                        if (pluralpresent != null) {
+                            transtype = "plural";
+                        }
+                        else {
+                            transtype = "single";
+                        }
+                        mypreview = document.querySelector("#preview-" + newrowId);
+                        if (mypreview == null) {
+                            mypreview = document.querySelector("#preview-" + row);
+                        }
+                        if (transtype == "single") {
+                            // Fetch the translations
+                            let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
+                            // let element = e.querySelector(".source-details__comment");
+                            let textareaElem = e.querySelector("textarea.foreign-text");
+                            //console.debug("textareaELem:",textareaElem)
+                            translatedText = textareaElem.innerText;
+                            //console.debug("translatedText:",translatedText)
+                            prev_trans = textareaElem.innerText;
 
-                        if (translatedText != "No suggestions" && translatedText != "") {
-                            previewNewText = textareaElem.innerText;
-                            let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                            // PSS we need to check for missing periods en blanks before replacing verbs 
-                            //console.debug("before check_start:",translatedText)
-                            result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
-                            replaced = result.replaced;
-                            repl_array = result.repl_array;
-                            if (replaced) {
+                            if (translatedText != "No suggestions" && translatedText != "") {
+                                previewNewText = textareaElem.innerText;
+                                let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                                // PSS we need to check for missing periods en blanks before replacing verbs 
+                                //console.debug("before check_start:",translatedText)
+                                result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                                replaced = result.replaced;
+                                repl_array = result.repl_array;
+                                if (replaced) {
 
-                                mypreview.classList.replace("status-current", "status-waiting");
-                                mypreview.classList.add("wptf-translated");
-                                repl_verb = result.repl_verb;
-                                recWordCount += result.countReplaced;
-                                previewNewText = result.previewNewText
-                                if (preview != null) {
-                                    preview.innerHTML = result.previewNewText
-                                    textareaElem.innerText = result.previewNewText;
+                                    mypreview.classList.replace("status-current", "status-waiting");
+                                    mypreview.classList.add("wptf-translated");
+                                    repl_verb = result.repl_verb;
+                                    recWordCount += result.countReplaced;
+                                    previewNewText = result.previewNewText
+                                    if (preview != null) {
+                                        preview.innerHTML = result.previewNewText
+                                        textareaElem.innerText = result.previewNewText;
+                                    }
+
+                                    await markElements(preview, repl_array, original, spellcheckIgnore, repl_array, translatedText);
+                                    // 09-09-2022 PSS fix for issue #244
+                                    if (currec != null) {
+                                        var current = currec.querySelector("span.panel-header__bubble");
+                                        var prevstate = current.innerText;
+                                        current.innerText = "transFill";
+
+                                    }
+
+                                    // Only update the style if verbs are replaced!!
+                                    let wordCount = recWordCount;
+                                    let percent = 10;
+                                    let toolTip = "";
+                                    result = { wordCount, percent, toolTip };
+                                    old_status = document.querySelector("#preview-" + row);
+                                    // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
+                                    updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false)
                                 }
 
-                                await markElements(preview, repl_array, original, spellcheckIgnore, repl_array, translatedText);
-                                // 09-09-2022 PSS fix for issue #244
-                                if (currec != null) {
-                                    var current = currec.querySelector("span.panel-header__bubble");
-                                    var prevstate = current.innerText;
-                                    current.innerText = "transFill";
-                                    
-                                }
+                                // Need to replace the existing html before replacing the verbs! issue #124
+                                // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+                                // let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
+                                previewNewText = result.previewNewText;
+                                translatedText = result.translatedText;
+                                // countreplaced += result.countreplaced;
+                                replaced = result.replaced;
+                                orgText = result.orgText;
 
-                                // Only update the style if verbs are replaced!!
-                                let wordCount = recWordCount;
-                                let percent = 10;
-                                let toolTip = "";
-                                result = { wordCount, percent, toolTip };
-                                old_status = document.querySelector("#preview-" + row);
-                                // textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status, showDiff) {
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false)
-                            }
-
-                            // Need to replace the existing html before replacing the verbs! issue #124
-                            // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-                            // let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                            result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
-                            previewNewText = result.previewNewText;
-                            translatedText = result.translatedText;
-                            // countreplaced += result.countreplaced;
-                            replaced = result.replaced;
-                            orgText = result.orgText;
-
-                            // PSS 22-07-2021 fix for the preview text is not updated #109
-                            preview = document.querySelector("#preview-" + newrowId + " td.translation");
-                            if (preview == null) {
-                                preview = document.querySelector("#preview-" + myrow + " td.translation");
-                            }
-                            if (replaced) {
-                                if (currec != null) {
-                                    var current = currec.querySelector("span.panel-header__bubble");
-                                    var prevstate = current.innerText;
-                                    current.innerText = "transFill";
-                                }
-                                mypreview.classList.replace("status-current", "status-waiting");
-                                mypreview.classList.add("wptf-translated");
-                                repl_verb = result.repl_verb;
-                                repl_array = result.repl_array
-                                recWordCount += result.countreplaced;
-                                textareaElem.innerText = translatedText;
-                                textareaElem.value = translatedText;
-                                let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
-                                let row = rowfound.split("-")[1];
-                                let myrow = row;
-                                let newrow = rowfound.split("-")[2];
-                                if (newrow != "undefined") {
-                                    newrowId = row.concat("-", newrow);
-                                    row = newrowId;
-                                }
-                                // PSS we need to remove the current span, as the mark function adds one again
-                                // PSS fix for issue #157
-                                let span = document.querySelector("#preview-" + newrowId + " td.translation span.translation-text");
-                                if (span == null) {
-                                    span = document.querySelector("#preview-" + myrow + " td.translation span.translation-text");
-                                }
-                                if (span != null) {
-                                    span.remove();
-                                }
-                                // Enhancement issue #123
-                                var myspan1 = document.createElement("span");
-                                myspan1.className = "translation-text";
+                                // PSS 22-07-2021 fix for the preview text is not updated #109
                                 preview = document.querySelector("#preview-" + newrowId + " td.translation");
                                 if (preview == null) {
                                     preview = document.querySelector("#preview-" + myrow + " td.translation");
                                 }
-                                // if there is no preview for the plural, we do not need to populate it
-                                if (preview != null) {
-                                    preview.appendChild(myspan1);
-                                    myspan1.appendChild(document.createTextNode(previewNewText));
-                                    // PSS populate the preview before marking
-                                    preview.innerText = DOMPurify.sanitize(previewNewText);
-                                    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                    await markElements(preview, repl_verb, orgText, spellcheckIgnore, repl_array, prev_trans);
+                                if (replaced) {
+                                    if (currec != null) {
+                                        var current = currec.querySelector("span.panel-header__bubble");
+                                        var prevstate = current.innerText;
+                                        current.innerText = "transFill";
+                                    }
+                                    mypreview.classList.replace("status-current", "status-waiting");
+                                    mypreview.classList.add("wptf-translated");
+                                    repl_verb = result.repl_verb;
+                                    repl_array = result.repl_array
+                                    recWordCount += result.countreplaced;
+                                    textareaElem.innerText = translatedText;
+                                    textareaElem.value = translatedText;
+                                    let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
+                                    let row = rowfound.split("-")[1];
+                                    let myrow = row;
+                                    let newrow = rowfound.split("-")[2];
+                                    if (newrow != "undefined") {
+                                        newrowId = row.concat("-", newrow);
+                                        row = newrowId;
+                                    }
+                                    // PSS we need to remove the current span, as the mark function adds one again
+                                    // PSS fix for issue #157
+                                    let span = document.querySelector("#preview-" + newrowId + " td.translation span.translation-text");
+                                    if (span == null) {
+                                        span = document.querySelector("#preview-" + myrow + " td.translation span.translation-text");
+                                    }
+                                    if (span != null) {
+                                        span.remove();
+                                    }
+                                    // Enhancement issue #123
+                                    var myspan1 = document.createElement("span");
+                                    myspan1.className = "translation-text";
+                                    preview = document.querySelector("#preview-" + newrowId + " td.translation");
+                                    if (preview == null) {
+                                        preview = document.querySelector("#preview-" + myrow + " td.translation");
+                                    }
+                                    // if there is no preview for the plural, we do not need to populate it
+                                    if (preview != null) {
+                                        preview.appendChild(myspan1);
+                                        myspan1.appendChild(document.createTextNode(previewNewText));
+                                        // PSS populate the preview before marking
+                                        preview.innerText = DOMPurify.sanitize(previewNewText);
+                                        // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                        await markElements(preview, repl_verb, orgText, spellcheckIgnore, repl_array, prev_trans);
+                                    }
                                 }
-                            }
 
+                            }
+                            else {
+                                replaced = false;
+                            }
+                            let plural_line = "";
                         }
                         else {
+                            // plural line 1
                             replaced = false;
+                            let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                            previewElem = document.querySelector(`#preview-${row} .translation.foreign-text`)
+                            let my_li = previewElem.getElementsByTagName("li")
+                            previewElem1 = my_li[0].querySelector("span.translation-text")
+                            previewElem2 = my_li[1].querySelector("span.translation-text")
+                            previewNewText = previewElem1.innerText;
+                            translatedText = previewElem1.innerText;
+                            if (translatedText != "No suggestions") {
+                                result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                                replaced = result.replaced;
+                                repl_array = result.repl_array;
+                                if (replaced) {
+                                    recWordCount += result.countReplaced;
+                                    repl_verb = result.repl_verb;
+                                    previewElem1.innerHTML = result.previewNewText
+                                    previewElem1.innerText = result.previewNewText
+                                    previewElem1.value = result.previewNewText
+                                    // we have updatet the text of the first plural, so we need to update the var
+                                    previewNewText = result.previewNewText
+                                    let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                    // if current translation we need to split the rownumber
+                                    let newrowId = row.split("-")[0];
+                                    textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
+                                    let editor_text = result.previeNewText.replace("S")
+                                    textareaElem1.innerText = result.previewNewText;
+                                    textareaElem1.value = result.previewNewText;
+                                    // PSS this needs to be improved
+                                    let repl = []
+                                    let rec = '.,.'
+                                    repl.push(rec.split(","))
+                                    //rec = ' , '
+                                    // repl.push(rec.split(","))
+
+                                    await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
+                                    // 09-09-2022 PSS fix for issue #244
+                                    if (currec != null) {
+                                        var current = currec.querySelector("span.panel-header__bubble");
+                                        var prevstate = current.innerText;
+                                        current.innerText = "transFill";
+                                    }
+                                    // Only update the style if verbs are replaced!!
+                                    let wordCount = recWordCount;
+                                    let percent = 10;
+                                    let toolTip = "";
+                                    result = { wordCount, percent, toolTip };
+                                    old_status = document.querySelector("#preview-" + row);
+                                    updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+                                }
+
+                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
+                                replaced = result.replaced;
+                                orgText = result.orgText;
+                                if (replaced) {
+                                    mypreview.classList.replace("status-current", "status-waiting");
+                                    mypreview.classList.add("wptf-translated");
+                                    recWordCount += result.countreplaced;
+                                    repl_verb += result.repl_verb
+                                    previewElem1.innerHTML = result.previewNewText
+                                    previewElem1.innerText = result.previewNewText
+                                    previewElem1.value = result.previewNewText
+                                    previewNewText = result.previewNewText;
+                                    let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                    // if current translation we need to split the rownumber
+                                    let newrowId = row.split("-")[0];
+                                    textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
+                                    textareaElem1.innerText = translatedText;
+                                    textareaElem1.value = previewNewText;
+                                    // Highlight all keywords found in the page, so loop through the replacement array
+                                    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                    await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
+                                }
+                            }
+                            // here is plural 2
+                            previewNewText = previewElem2.innerText;
+                            translatedText = previewElem2.innerText;
+                            if (translatedText != "No suggestions") {
+                                result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                                replaced = result.replaced;
+                                repl_array = result.repl_array;
+                                if (replaced) {
+                                    mypreview.classList.replace("status-current", "status-waiting");
+                                    mypreview.classList.add("wptf-translated");
+                                    recWordCount += result.countReplaced;
+                                    repl_verb = result.repl_verb;
+                                    previewElem2.innerHTML = result.previewNewText
+                                    previewElem2.innerText = result.previewNewText
+                                    previewElem2.value = result.previewNewText
+                                    // we have updatet the text of the first plural, so we need to update the var
+                                    previewNewText = result.previewNewText
+                                    let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                    // if current translation we need to split the rownumber
+                                    let newrowId = row.split("-")[0];
+                                    textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
+                                    textareaElem1.innerText = result.previewNewText;
+                                    textareaElem1.value = result.previewNewText;
+                                    // PSS this needs to be improved
+                                    let repl = []
+                                    let rec = '.,.'
+                                    repl.push(rec.split(","))
+                                    //rec = ' , '
+                                    // repl.push(rec.split(","))
+                                    // await markElements(previewElem, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
+                                    // 09-09-2022 PSS fix for issue #244
+                                    if (currec != null) {
+                                        var current = currec.querySelector("span.panel-header__bubble");
+                                        var prevstate = current.innerText;
+                                        current.innerText = "transFill";
+                                    }
+                                    // Only update the style if verbs are replaced!!
+                                    let wordCount = recWordCount;
+                                    let percent = 10;
+                                    let toolTip = "";
+                                    result = { wordCount, percent, toolTip };
+                                    old_status = document.querySelector("#preview-" + row);
+                                    updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+                                    // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
+                                }
+                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
+                                replaced = result.replaced;
+                                orgText = result.orgText;
+                                if (replaced) {
+                                    recWordCount += result.countreplaced;
+                                    repl_verb = result.repl_verb
+                                    previewElem2.innerHTML = result.previewNewText
+                                    previewElem2.innerText = result.previewNewText
+                                    previewElem2.value = result.previewNewText
+                                    previewNewText = result.previewNewText;
+                                    let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                    // if current translation we need to split the rownumber
+                                    let newrowId = row.split("-")[0];
+                                    textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
+                                    textareaElem1.innerText = translatedText;
+                                    textareaElem1.value = previewNewText;
+                                    // Highlight all keywords found in the page, so loop through the replacement array
+                                    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                    await markElements(previewElem2, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
+                                }
+                            }
                         }
-                        let plural_line = "";
+                        if (replaced) {
+                            // Only update the style if verbs are replaced!!
+                            let wordCount = recWordCount;
+                            let percent = 10;
+                            let toolTip = "";
+                            result = { wordCount, percent, toolTip };
+                            old_status = document.querySelector("#preview-" + newrowId);
+                            //console.debug("checkpage:",old_status)
+                            updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+                        }
+                    }
+                    if (toTranslate == false) {
+                        showName = true;
                     }
                     else {
-                        // plural line 1
-                        replaced = false;
-                        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                        previewElem = document.querySelector(`#preview-${row} .translation.foreign-text`)
-                        let my_li = previewElem.getElementsByTagName("li")
-                        previewElem1 = my_li[0].querySelector("span.translation-text")
-                        previewElem2 = my_li[1].querySelector("span.translation-text")
-                        previewNewText = previewElem1.innerText;
-                        translatedText = previewElem1.innerText;
-                        if (translatedText != "No suggestions") {
-                            result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
-                            replaced = result.replaced;
-                            repl_array = result.repl_array;
-                            if (replaced) {
-                                recWordCount += result.countReplaced;
-                                repl_verb = result.repl_verb;
-                                previewElem1.innerHTML = result.previewNewText
-                                previewElem1.innerText = result.previewNewText
-                                previewElem1.value = result.previewNewText
-                                // we have updatet the text of the first plural, so we need to update the var
-                                previewNewText = result.previewNewText
-                                let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                                // if current translation we need to split the rownumber
-                                let newrowId = row.split("-")[0];
-                                textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
-                                let editor_text = result.previeNewText.replace("S")
-                                textareaElem1.innerText = result.previewNewText;
-                                textareaElem1.value = result.previewNewText;
-                                // PSS this needs to be improved
-                                let repl = []
-                                let rec = '.,.'
-                                repl.push(rec.split(","))
-                                //rec = ' , '
-                                // repl.push(rec.split(","))
-
-                                await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
-                                // 09-09-2022 PSS fix for issue #244
-                                if (currec != null) {
-                                    var current = currec.querySelector("span.panel-header__bubble");
-                                    var prevstate = current.innerText;
-                                    current.innerText = "transFill";
-                                }
-                                // Only update the style if verbs are replaced!!
-                                let wordCount = recWordCount;
-                                let percent = 10;
-                                let toolTip = "";
-                                result = { wordCount, percent, toolTip };
-                                old_status = document.querySelector("#preview-" + row);
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
-                            }
-
-                            result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
-                            replaced = result.replaced;
-                            orgText = result.orgText;
-                            if (replaced) {
-                                mypreview.classList.replace("status-current", "status-waiting");
-                                mypreview.classList.add("wptf-translated");
-                                recWordCount += result.countreplaced;
-                                repl_verb += result.repl_verb
-                                previewElem1.innerHTML = result.previewNewText
-                                previewElem1.innerText = result.previewNewText
-                                previewElem1.value = result.previewNewText
-                                previewNewText = result.previewNewText;
-                                let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                                // if current translation we need to split the rownumber
-                                let newrowId = row.split("-")[0];
-                                textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
-                                textareaElem1.innerText = translatedText;
-                                textareaElem1.value = previewNewText;
-                                // Highlight all keywords found in the page, so loop through the replacement array
-                                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
-                            }
-                        }
-                        // here is plural 2
-                        previewNewText = previewElem2.innerText;
-                        translatedText = previewElem2.innerText;
-                        if (translatedText != "No suggestions") {
-                            result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
-                            replaced = result.replaced;
-                            repl_array = result.repl_array;
-                            if (replaced) {
-                                mypreview.classList.replace("status-current", "status-waiting");
-                                mypreview.classList.add("wptf-translated");
-                                recWordCount += result.countReplaced;
-                                repl_verb = result.repl_verb;
-                                previewElem2.innerHTML = result.previewNewText
-                                previewElem2.innerText = result.previewNewText
-                                previewElem2.value = result.previewNewText
-                                // we have updatet the text of the first plural, so we need to update the var
-                                previewNewText = result.previewNewText
-                                let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                                // if current translation we need to split the rownumber
-                                let newrowId = row.split("-")[0];
-                                textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
-                                textareaElem1.innerText = result.previewNewText;
-                                textareaElem1.value = result.previewNewText;
-                                // PSS this needs to be improved
-                                let repl = []
-                                let rec = '.,.'
-                                repl.push(rec.split(","))
-                                //rec = ' , '
-                                // repl.push(rec.split(","))
-                                // await markElements(previewElem, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
-                                // 09-09-2022 PSS fix for issue #244
-                                if (currec != null) {
-                                    var current = currec.querySelector("span.panel-header__bubble");
-                                    var prevstate = current.innerText;
-                                    current.innerText = "transFill";
-                                }
-                                // Only update the style if verbs are replaced!!
-                                let wordCount = recWordCount;
-                                let percent = 10;
-                                let toolTip = "";
-                                result = { wordCount, percent, toolTip };
-                                old_status = document.querySelector("#preview-" + row);
-                                updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
-                                // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
-                            }
-                            result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
-                            replaced = result.replaced;
-                            orgText = result.orgText;
-                            if (replaced) {
-                                recWordCount += result.countreplaced;
-                                repl_verb = result.repl_verb
-                                previewElem2.innerHTML = result.previewNewText
-                                previewElem2.innerText = result.previewNewText
-                                previewElem2.value = result.previewNewText
-                                previewNewText = result.previewNewText;
-                                let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                                // if current translation we need to split the rownumber
-                                let newrowId = row.split("-")[0];
-                                textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
-                                textareaElem1.innerText = translatedText;
-                                textareaElem1.value = previewNewText;
-                                // Highlight all keywords found in the page, so loop through the replacement array
-                                // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                await markElements(previewElem2, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
-                            }
-                        }
+                        showName = false;
                     }
-                    if (replaced) {
-                        // Only update the style if verbs are replaced!!
-                        let wordCount = recWordCount;
-                        let percent = 10;
-                        let toolTip = "";
-                        result = { wordCount, percent, toolTip };
-                        old_status = document.querySelector("#preview-" + newrowId);
-                        //console.debug("checkpage:",old_status)
-                        updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+                    if (showName == true) {
+                        let originalElem = document.querySelector("#preview-" + row + " .original");
+                        showNameLabel(originalElem)
                     }
-                }
-                if (toTranslate == false) {
-                    showName = true;
+                    // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
+                    //timeout += 100;
+
+                    //console.debug("rows done:", countrows, original)
+                    if (countrows == tableRecords) {
+                        let repldone = __("Replace verbs done: ")
+                        let repltext = __(" replaced words<br>")
+                        messageBox("info", repldone + recWordCount + repltext + repl_verb);
+                        // Translation replacement completed
+                        let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
+                        checkButton.classList.remove("started");
+                        //checkButton.className += " translated";
+                        checkButton.innerText = "Checked";
+                        checkButton.className += " ready";
+                        progressbar = document.querySelector(".indeterminate-progress-bar");
+                        progressbar.style.display = "none";
+                    }
                 }
                 else {
-                    showName = false;
+                    console.debug("we have a record within the table without text")
                 }
-                if (showName == true) {
-                    let originalElem = document.querySelector("#preview-" + row + " .original");
-                    showNameLabel(originalElem)
-                }
-                // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
-                //timeout += 100;
-
-                //console.debug("rows done:", countrows, original)
-                if (countrows == tableRecords) {
-                    let repldone = __("Replace verbs done: ")
-                    let repltext = __(" replaced words<br>")
-                    messageBox("info", repldone + recWordCount + repltext + repl_verb);
-                    // Translation replacement completed
-                    let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-                    checkButton.classList.remove("started");
-                    //checkButton.className += " translated";
-                    checkButton.innerText = "Checked";
-                    checkButton.className += " ready";
-                    progressbar = document.querySelector(".indeterminate-progress-bar");
-                    progressbar.style.display = "none";
-                }
-            }
-            else {
-                progressbar = document.querySelector(".indeterminate-progress-bar");
-                //let progressbarStyle = document.querySelector(".indeterminate-progress-bar__progress");
-                //console.debug("bars:",progressbar,"<br>",progressbarStyle)
-                // progressbarStyle.style.animation = 'none'
-                progressbar.style.display = "none";
-                let errMessage = __("You do not have translations to check!")
-                messageBox("error", errMessage);
             }
         }
-    }
-    else {
-        messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
-    }
+        else {
+            messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
+        }
+
+    
 }
 
 async function reviewTrans() {
@@ -2069,9 +2088,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 if (currec != null) {
                     var current = currec.querySelector("span.panel-header__bubble");
                 }
-                validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                // validateEntry(destlang, textareaElem, "", "", row);
-
+               result= await validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
+                await mark_original(preview, result.toolTip, textareaElem.textContent, row, false)
                 // PSS 10-05-2021 added populating the preview field issue #68
                 // Fetch the first field Singular
                 let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) span.translation-text");
@@ -2266,8 +2284,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                             current.innerText = "transFill";
                             current.value = "transFill";
                         }
-                        validateEntry(destlang, textareaElem1, "", "", row, locale, record, false);
-                        // validateEntry(destlang, textareaElem1, "", "", row);
+                        validateEntry(destlang, textareaElem1, "", "", row, locale, record, false, DefGlossary);
                     }
                 }
             }
@@ -2302,7 +2319,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     let originalElem = document.querySelector("#preview-" + row + " .original");
                     showNameLabel(originalElem)
                 }
-                validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
                 validateEntry(destlang, textareaElem, "", "", row);
                 // we need to set the checkbox as marked
                 preview = document.querySelector(`#preview-${row}`);
@@ -3954,7 +3971,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     }
 
     sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-    8
+    
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
     translateButton.innerText = __("Translate");
@@ -3983,20 +4000,31 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                 counter++;
                 transtype = "single";
                 // 16-08-2021 PSS fixed retranslation issue #118
-                //rowfound =record.id
+                rowfound = record.id
+               // console.debug("rowfound:", rowfound)
+                const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
+
+                if (match) {
+                    row = match[1];
+                   // console.log("Extracted value:", row);
+                } else {
+                    console.log("No match found");
+                }
                 //rowfound = await record.parentElement.parentElement.parentElement.parentElement.id;
-                //console.debug("from preview:", record)
+                //console.debug("from preview:", rowfound)
                 // console.debug("record:",record)
                 // row = rowfound.split("-")[1];
-                let myrow = record.getAttribute("row");
-                let newrow = rowfound.split("-")[1];
-                if (typeof newrow != "undefined") {
-                    newrowId = row.concat("-", newrow);
-                    row = newrowId;
-                }
-                else {
-                    row = myrow
-                }
+            //    let myrow = record.getAttribute("row");
+               // console.debug("row in page:",myrow)
+             //   let newrow = rowfound.split("-")[1];
+             //   if (typeof newrow != "undefined") {
+                   // newrowId = row.concat("-", newrow);
+               //     row = newrow;
+             //   }
+              //  else {
+              //      row = myrow
+              //  }
+               // console.debug("row in page after:",row)
                 // let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                 let currec = record.querySelector("div.editor-panel__left div.panel-header");
                 // We need to determine the current state of the record
@@ -4046,7 +4074,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     pretrans = await findTransline(original, destlang);
                     // 07-05-2021 PSS added pretranslate in pages
                     if (pretrans != "notFound") {
-                        localRow = myrow
+                        localRow = row
                     }
                     if (pretrans == "notFound") {
                         // 20-06-2021 PSS fixed that translation stopped when the page already is completely translated issue #85
@@ -4072,7 +4100,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                         }
                         else if (transsel == "deepl") {
-                            // console.debug("before translate:",original,row)
+                            //console.debug("row in page before translate:",original,row)
                             result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false);
                             if (result == "Error 403") {
                                 messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
@@ -4126,6 +4154,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                             }
                         }
                         else if (transsel == "OpenAI") {
+                            //console.debug("row in page AI:",row)
                             let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false);
                             if (errorstate == "Error 401") {
                                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4183,7 +4212,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         }
                         // console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
                         // if it is a local translation we still need to set the quality of the translation!!
-                        validateEntry(destlang, textareaElem, "", "", rowId, locale, record, false);
+                        validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
                         // PSS 10-05-2021 added populating the preview field issue #68
                         // Fetch the first field Singular
                         preview = document.querySelector(`#preview-${localRow}`)
@@ -5122,7 +5151,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             // Translation completed
 
             // we need to validate the results from local as well, to remove the glossary markings if present
-            result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false);
+            result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false, DefGlossary);
             let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
             remove_all_gloss(myleftPanel)
             mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
@@ -5545,7 +5574,7 @@ function saveLocal_2(bulk_timer) {
                             }
                         }
                         else {
-                            console.debug("We do not have a Edopen!!", preview.classList, myNewRow)
+                           // console.debug("We do not have a Edopen!!", preview.classList, myNewRow)
                             preview = document.querySelector(`#preview-${myNewRow}`)
                             if (preview != null) {
                                 preview.classList.replace("status-waiting", "status-current")
@@ -5632,9 +5661,9 @@ async function bulkSave(noDiff, bulk_timer) {
         cuteAlert({
             type: "question",
             title: "Bulk save",
-            message: "There are no records selected, <br>are you sure you want to select all records?",
-            confirmText: "Confirm",
-            cancelText: "Cancel",
+            message: __("There are no records selected, <br>are you sure you want to select all records?"),
+            confirmText: __("Confirm"),
+            cancelText: __("Cancel"),
             myWindow: currWindow
         }).then(async (e) => {
             if (e == ("confirm")) {
@@ -5951,7 +5980,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
             prevcurrentClass.classList.replace("untranslated", "status-nosuggestions");
         }
         let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
-        result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false);
+        result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false, DefGlossary);
+        await mark_original(preview, result.toolTip, textareaElem.textContent, myRowId, false)
         //console.debug("translateEntry:",result)
         //  if (result.toolTip.length != 0) {
         //trans mark_glossary(leftPanel, result.toolTip, translatedText, rowId)
@@ -6043,7 +6073,7 @@ async function processTransl(original, translatedText, language, record, rowId, 
                         textareaElem3.value = translatedText;
                     }
                 }
-                result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record, true);
+                result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record, true, DefGlossary);
             }
             else {
                 //console.debug("myRowId:",myRowId,record)

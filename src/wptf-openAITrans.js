@@ -5,7 +5,8 @@
 
 async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone) {
     var timeout = 100;
-    errorstate="OK"
+    errorstate = "OK"
+    //console.debug("row in AI:",rowId)
     // First we have to preprocess the original to remove unwanted chars
     //console.debug("ai original:",original)
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
@@ -86,6 +87,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     //console.debug("taal:",lang)
     //console.debug("origpre:", originalPreProcessed)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
+    //console.debug("rowid:",rowId)
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
     language = language.toUpperCase();
@@ -204,11 +206,11 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         }
                         //text = text.trim('\n');
                         //console.debug("text:",text)
-                        translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation raw:",original,translatedText)
-                        //translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation after postprocess:", original, translatedText)
-                        await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)
                     }
                     else {
