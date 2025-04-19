@@ -79,7 +79,10 @@ async function openDeeplModal(DeepLdb) {
     var locHead = __("Locale Header")
     var origHead = __("Original Header")
     var transHead = __("Translation Header")
-    var DownLoadPath=""
+    var myDelete = __("Delete")
+    var myRecordDeleted = __("Record deleted: ")
+    var DownLoadPath = ""
+
     await chrome.storage.local.get(["DownloadPath"], function (data) {
        // console.debug("Download path:", data)
         DownloadPath =  data.DownloadPath
@@ -89,24 +92,34 @@ async function openDeeplModal(DeepLdb) {
      // console.debug("pad:",DownloadPath)
         const modalHTML = `
 <div id="DeepLmodal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
-    <div style="background:white; padding:20px; margin:auto; width:60%;">
-        <h2>${title}</h2 >
-        <button onclick="closeModalClicked()">${DeepLClose}</button>
-        <button onclick="importDeepLCSV()">${ImpCSV}</button>
-        <button onclick="exportDeepLCSV()">${ExpCSV}</button>
-        <button id="addEntryButton">${AddEntry}</button>
-        <input type="text" id="searchLocale" placeholder=${searchLoc}>
-        <input type="text" id="searchOriginal" placeholder=${searchOrig}>
-        <button onclick="startSearch('${saveText}','${deleteText}','${message}')">${mySearch}</button>
-        <table border="1">
-            <thead>
-                <tr><th>${locHead}</th><th>${origHead}</th><th>${transHead}</th></tr>
-            </thead>
-            <tbody id="recordsTableBody"></tbody>
-        </table>
-       
-    </div>
+  <div style="background:white; padding:20px; margin:auto; width:60%;">
+    <h2>${title}</h2>
+    <button onclick="closeModalClicked()">${DeepLClose}</button>
+    
+    <button 
+     data-delete="${myDelete}" 
+      data-deleted="${myRecordDeleted}" 
+      onclick="importDeepLCSV(this.dataset.delete, this.dataset.deleted)"
+    >
+      ${ImpCSV}
+    </button>
+    
+    <button onclick="exportDeepLCSV()">${ExpCSV}</button>
+    <button id="addEntryButton">${AddEntry}</button>
+    <input type="text" id="searchLocale" placeholder="${searchLoc}">
+    <input type="text" id="searchOriginal" placeholder="${searchOrig}">
+    
+    <button onclick="startSearch('${saveText}', '${deleteText}', '${message}')">${mySearch}</button>
+
+    <table border="1">
+      <thead>
+        <tr><th>${locHead}</th><th>${origHead}</th><th>${transHead}</th></tr>
+      </thead>
+      <tbody id="recordsTableBody"></tbody>
+    </table>
+  </div>
 </div>
+
 `;
 
         // Append modal to body
@@ -114,7 +127,7 @@ async function openDeeplModal(DeepLdb) {
         document.getElementById("DeepLmodal").style.display = "block";
         let locale = checkLocale() || 'en';
         locale = locale.toUpperCase()
-        listAllRecords(locale);
+        listAllRecords(locale, myDelete, myRecordDeleted);
         document.getElementById("addEntryButton").addEventListener("click", addEntry);
         // We need to set the locale to the working locale in the modal
         setSearchLocale(locale)
@@ -1025,10 +1038,11 @@ function addEntry() {
 
 function saveNewRecord() {
     console.debug("Saving record...");
-    const locale = document.getElementById("locale").value.trim();
+    let locale = document.getElementById("locale").value.trim();
     const original = document.getElementById("original").value.trim();
     const translation = document.getElementById("translation").value.trim();
-
+    myDelete = __("Delete")
+    myRecordDeleted = __("Record deleted: ")
     if (!locale || !original || !translation) {
         alert(__("All fields must be filled!"));
         return;
@@ -1059,25 +1073,26 @@ function saveNewRecord() {
 
         transaction.oncomplete = function () {
             console.debug("Transaction completed, reloading records...");
-            listAllRecords("NL"); //Ensure records are refreshed in the correct order
+            locale = locale.toUpperCase()
+            listAllRecords(locale,myDelete,myRecordDeleted); //Ensure records are refreshed in the correct order
         };
     });
 }
 
 
 // Function to refresh table
-function displayRecordsFromDB() {
-    console.debug("we are displaying")
-    openDeepLDatabase().then(dbDeepL => {
-        const transaction = dbDeepL.transaction("glossary", "readonly");
-        const store = transaction.objectStore("glossary");
-        const request = store.getAll();
+//function displayRecordsFromDB(myDelete,myRecordDeleted) {
+//    console.debug("we are displaying")
+//    openDeepLDatabase().then(dbDeepL => {
+//        const transaction = dbDeepL.transaction("glossary", "readonly");
+//        const store = transaction.objectStore("glossary");
+//        const request = store.getAll();
 
-        request.onsuccess = () => {
-                displayRecords(request.result, __("Delete"), __("Record deleted: "));
-        };
-    });
-}
+ //       request.onsuccess = () => {
+  //              displayRecords(request.result, myDelete, myRecordDeleted);
+  //      };
+ //   });
+//}
 
 function parseCSV(content) {
     return content.split("\n").map(line => {

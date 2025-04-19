@@ -2,17 +2,17 @@
  * This file includes all functions for translating with the deepL API and uses a promise
  * It depends on commonTranslate for additional translation functions
  */
-
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone) {
+async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor,openAiGloss) {
     var timeout = 100;
     errorstate = "OK"
+    //console.debug("gloss:", openAiGloss)
     //console.debug("row in AI:",rowId)
     // First we have to preprocess the original to remove unwanted chars
     //console.debug("ai original:",original)
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
     //errorstate = "NOK"
     setTimeout(async function (timeout) {
-        var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone);
+        var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     //console.debug("OpenAI errorstate:",errorstate,result)
     }, timeout);
     timeout += 1;
@@ -35,34 +35,8 @@ async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, 
     return errorstate;
 }
 
-const fetchPlus = (url, options = {}, retries) =>
-    fetch(url, options)
-        .then(async res => {
-            console.debug("retries", retries, options)
-            const isJson = res.headers.get('content-type')?.includes('application/json');
-            data = isJson && await res.json();
-            if (res.ok) {
-                console.debug('res in fetchPlus:', res)
-               
-                return res
-            }
-            if (retries > 0) {
-                let timeout = 7000;
-                setTimeout(() => {
-                    console.debug("second:",url,options,retries)
-                    return fetchPlus(url, options, retries - 1)
-                }, timeout);
-                timeout += 6000;
-            }
-            console.debug('restekst2:', res)
-            return res
-           // console.debug("error:",res)
-          //  throw new Error(response)
-        })
-        .catch(error => console.debug(error.message))
 
-
-function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore,OpenAITone) {
+function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -88,6 +62,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     //console.debug("origpre:", originalPreProcessed)
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     //console.debug("rowid:",rowId)
+    //console.debug("OpenAiGloss:", openAiGloss)
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
     language = language.toUpperCase();
@@ -95,18 +70,16 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
    // myprompt = myprompt.replace("informal", OpenAITone);
     // We need to replace the tone within the prompt
     myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+    myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss)
+    //console.debug("prompt:",myprompt)
     //var prompt = encodeURIComponent(prompt);
     //console.debug("counter:", counter, myprompt)
     originalPreProcessed = '"' + originalPreProcessed + '"';
     //console.debug("pre:", originalPreProcessed);`
-    var message = [{ 'role': 'system', 'content': myprompt }, { 'role': 'user', 'content': originalPreProcessed }];
+    var message = [{ 'role': 'system', 'content': myprompt }, { 'role': 'user', 'content': `translate this: ${originalPreProcessed}` }];
     if (OpenAISelect != 'undefined') {
         let mymodel = OpenAISelect.toLowerCase();
         //console.debug("mymodel:",mymodel)
-       
-        message = [{ role: 'user', content: myprompt },
-            { role: 'user', content: originalPreProcessed }];
-
         var dataNew = {
             messages: message,
             model: mymodel,
@@ -118,41 +91,6 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             top_p: 0.5
         };
 
-        var data1 = {
-            messages: message,
-            model: mymodel,
-            max_tokens: 1000,
-            n: 1,
-            temperature: OpenAItemp,
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            top_p: 0.5
-        }
-
-        var mydata = {
-            "model": "text-davinci-003",
-            "prompt": "${prompt}",
-            "temperature": 0,
-            "max_tokens": 1000,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0
-        }
-        var newdata = {
-            "model": "text-davinci-edit-001",
-            "input": originalPreProcessed,
-            "instruction": prompt,
-            "temperature": 0,
-            "top_p": 1
-        }
-        var data = {
-            "model": "text-davinci-003",
-            "prompt": "Translate into Dutch\n\n${originalPreProcessed}",
-            "temperature": 0,
-            "top_p": 1
-        }
-
-        // link = "https://api.openai.com/v1/engines/text-davinci-edit-001/edits";
         // link = "https://api.openai.com/v1/chat/completions";
         link = "https://api.openai.com/v1/chat/completions";
         // link = "https://api.openai.com/v1/edits";
@@ -166,13 +104,13 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
             console.debug("tone:",OpenAITone)
         }
         const response = fetch(link, {
-            body: JSON.stringify(dataNew),
             method: "POST",
             headers: {
                 "content-type": "application/json",
                 "Cache-Control": "no-cache",
                 Authorization: "Bearer " + apikeyOpenAI,
             },
+            body: JSON.stringify(dataNew)
         })
             .then(async response => {
                 const isJson = response.headers.get('content-type')?.includes('application/json');
@@ -312,7 +250,6 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     
 }
 
-
 async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
     var row = "";
     var ul = "";
@@ -358,15 +295,15 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
         stop: '|\n',
     }
 
-    var mydata = {
-        "model": "text-davinci-003",
-        "prompt": "${prompt}",
-        "temperature": 0,
-        "max_tokens": 1000,
-        "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0
-    }
+  //  var mydata = {
+   //     "model": "text-davinci-003",
+   //     "prompt": "${prompt}",
+    //    "temperature": 0,
+    //    "max_tokens": 1000,
+   //     "top_p": 1,
+  //      "frequency_penalty": 0,
+  //      "presence_penalty": 0
+  //  }
     var newdata = {
         "model": "text-davinci-edit-001",
         "input": originalPreProcessed,

@@ -219,7 +219,7 @@ async function openDeepLDatabase(dbDeepL) {
 }
 
 // Function to list all records
-function listAllRecords(locale) {
+function listAllRecords(locale,myDelete,myRecordDeleted) {
     openDeepLDatabase().then(dbDeepL => {
         const transaction = dbDeepL.transaction("glossary", "readonly");
         const store = transaction.objectStore("glossary");
@@ -236,8 +236,7 @@ function listAllRecords(locale) {
             } else {
                 // **Sort by "original" as locale is already filtered**
                 records.sort((a, b) => a.original.localeCompare(b.original));
-
-                displayRecords(records, __("Delete"), __("Record deleted: "));
+                displayRecords(records, myDelete, myRecordDeleted);
             }
         };
     });
@@ -248,8 +247,6 @@ function listAllRecords(locale) {
 
 
 function displayRecords(records, DeleteText, myDeleteText) {
-    console.debug("display:",DeleteText,myDeleteText)
-    //console.debug("Records Array:", records); // Check the structure of the array
     const tableBody = document.getElementById("recordsTableBody");
     tableBody.innerHTML = "";
     let deleteText = DeleteText; 
@@ -272,7 +269,7 @@ function displayRecords(records, DeleteText, myDeleteText) {
         deleteButton.addEventListener("click", function () {
             // Log the values when button is clicked to verify correct values
             //console.debug("Deleting record with locale:", record.locale, "and original:", record.original);
-            deleteRecord(record.locale, record.original,myDelete); // Pass record values to deleteRecord
+            deleteRecord(record.locale, record.original,deleteText,myDelete); // Pass record values to deleteRecord
         });
 
         // Append the row to the table body
@@ -302,8 +299,6 @@ function saveTranslation(locale, original,deleteText,message) {
                 updatedRecord.translation = newTranslation.trim();
                 cursor.update(updatedRecord);
 
-               // console.debug("Translation updated successfully!");
-
                 // Update the UI
                 const translationCell = document.getElementById("editTranslation").parentNode;
                 translationCell.innerHTML = newTranslation;
@@ -321,9 +316,8 @@ function saveTranslation(locale, original,deleteText,message) {
     });
 }
 
-function deleteRecord(locale, original,myDelete) {
+function deleteRecord(locale, original,myDelete,myRecordDeleted) {
     //console.log("Deleting record with locale:", locale, "and original:", original);
-
     openDeepLDatabase().then(dbDeepL => {
         const transaction = dbDeepL.transaction("glossary", "readwrite");
         const store = transaction.objectStore("glossary");
@@ -340,7 +334,7 @@ function deleteRecord(locale, original,myDelete) {
                 cursor.delete(); // Delete the entry
                 //console.debug("Record deleted");
                 alert(myDelete + original)
-                listAllRecords("NL");
+                listAllRecords(locale,myDelete,myRecordDeleted);
             }
         };
         request.onerror = function (event) {
@@ -369,17 +363,13 @@ function parseCSV(content) {
     }).filter(entry => entry);
 }
 
-async function importDeepLCSV(event) {
-    console.debug("Import started");
-
+async function importDeepLCSV(myDelete, myRecordDeleted) {
     // 09-05-2021 PSS added file selector for silent selection of file
     var fileSelector = document.createElement("input");
     fileSelector.setAttribute("type", "file");
     fileSelector.setAttribute("accept", "csv");
-
     fileSelector.addEventListener("change", handleFileImport);
     fileSelector.click();
-
     function handleFileImport(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -423,7 +413,7 @@ async function importDeepLCSV(event) {
                 transaction.oncomplete = function () {
                     let importReady = "Import completed successfully!"
                     alert(importReady);
-                    listAllRecords("NL"); // Refresh table
+                    listAllRecords("NL",myDelete, myRecordDeleted); // Refresh table
                 };
             });
         };

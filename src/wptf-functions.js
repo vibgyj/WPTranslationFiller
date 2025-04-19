@@ -699,7 +699,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
                 }
 
                 var result = validate(language, original, translation, locale, false, rowId, false, DefGlossary);
-               // console.debug("validate in validatepage line 580:",original,result)
+                // console.debug("validate in validatepage line 580:",original,result)
                 let record = e.previousSibling.previousSibling.previousSibling
                 // this is the start of validation, so no prev_trans is present      
                 prev_trans = translation
@@ -711,9 +711,9 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
               //  }
                // setTimeout(async function () {
                 // PSS this is the one with orange
-                await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+                 await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
 
-                await mark_original(preview, result.toolTip, textareaElem.textContent, rowId, false)
+                 await mark_original(preview, result.toolTip, textareaElem.textContent, rowId, false)
                 //}, waiting);
            if (rowcount == 1){
                //console.debug(" we are starting observer")
@@ -737,7 +737,6 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
         
     });
 }
-
 function countWordsinTable() {
     var counter = 0;
     var wordCount = 0;
@@ -896,4 +895,53 @@ function sleep(milliseconds) {
 function getPreview(rowId) {
     preview = document.querySelector(`#preview-${rowId}`)
     return preview
+}
+function exportGlossaryForOpenAi(locale = "nl") {
+    const request = indexedDB.open("DeeplGloss", 1); // use versioning to trigger onupgradeneeded
+
+    request.onupgradeneeded = function (event) {
+        const dbDeepL = event.target.result;
+        if (!dbDeepL.objectStoreNames.contains("glossary")) {
+            const store = dbDeepL.createObjectStore("glossary", { keyPath: "id", autoIncrement: true });
+            store.createIndex("locale_original", ["locale", "original"], { unique: true });
+        }
+    };
+
+
+    request.onsuccess = function (event) {
+        const db = event.target.result;
+
+        if (!db.objectStoreNames.contains("glossary")) {
+            console.warn("Glossary store not found after upgrade.");
+            return;
+        }
+
+        const transaction = db.transaction(["glossary"], "readonly");
+        const store = transaction.objectStore("glossary");
+
+        const glossaryMap = new Map();
+
+        store.openCursor().onsuccess = function (event) {
+            const cursor = event.target.result;
+            if (cursor) {
+                const { locale: entryLocale, original, translation } = cursor.value;
+                if (entryLocale?.toLowerCase() === locale.toLowerCase()) {
+                    glossaryMap.set(original, translation);
+                }
+                cursor.continue();
+            } else {
+                const lines = Array.from(glossaryMap.entries())
+                    .map(([key, value]) => `"${key}" -> "${value}"`)
+                    .join(", ");
+
+                chrome.storage.local.set({ OpenAiGloss: lines }, () => {
+                    console.log("OpenAiGloss stored");
+                });
+            }
+        };
+    };
+
+    request.onerror = function (event) {
+        console.error("Failed to open IndexedDB:", event);
+    };
 }

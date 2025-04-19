@@ -44,3 +44,7 @@ Version changes as of version 3.3
 42. Version 3.9.42 Added marking missing glossary words in preview. Completely overhauled glossary loading
 43. Version 3.9.43 Fixed a problem with validation. Fix a problem with replacing vars before DeepL translation
 44. Version 3.9.44 Firefox was no longer working due a statement for loading the window was not working
+45. Version 3.9.45 The DeepL modal was showing "undefined" instead of "Delete", The mutation server in the editor was not started
+46. Version 3.9.46 Modified behavior of bulksave to prevent skipping records, if skipped they are removed from the table
+47. Version 3.9.47 Removed code that was causing records to be set as "waiting"
+48. Version 3.9.48 Fixed a problem that caused the dropdown to be closed after opening

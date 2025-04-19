@@ -2804,7 +2804,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem, "1978")
+            //let res = await addCheckButton(rowId, checkElem, "2807") 
             SavelocalButton = res.SavelocalButton;
         }
         else {
@@ -3418,7 +3418,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "2211")
+                        res = addCheckButton(rowId, checkElem, "3421")
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
                             if (SavelocalButton != null) {

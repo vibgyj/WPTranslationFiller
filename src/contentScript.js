@@ -144,9 +144,7 @@ function waitForTextareaAndStart(retries = 30) {
 
 async function startFullScript(textarea) {
     currWindow = window.self;
-    adjustLayoutScreen();
     initTranslations();
-
     mytextarea = textarea[0].firstChild.nextElementSibling;
     start_editor_mutation_server(textarea, "Details");
     mytextarea.style.display = 'block';
@@ -154,7 +152,7 @@ async function startFullScript(textarea) {
     mytextarea.disabled = false;
     mytextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
     mytextarea.focus();
-
+    adjustLayoutScreen();
     const clickEvent = new MouseEvent('click', {
         bubbles: true,
         cancelable: true,
@@ -365,7 +363,7 @@ var showGlosLine;
 
 gd_wait_table_alter();
 addCheckBox();
-
+exportGlossaryForOpenAi()
 
 var parrotActive;
 const script = document.createElement('script');
@@ -1916,7 +1914,7 @@ function translatePageClicked(event) {
     event.preventDefault();
     var formal;
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"],
+        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined')
             {
@@ -1935,7 +1933,9 @@ function translatePageClicked(event) {
                         var OpenAItemp = parseFloat(data.OpenAItemp);
                         var deeplGlossary = localStorage.getItem('deeplGlossary');
                         var OpenAITone = data.OpenAITone;
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore,deeplGlossary,OpenAITone,data.DeepLWait);
+                        OpenAiGloss = data.OpenAiGloss;
+                       // console.debug("AiGloss:", data.OpenAiGloss)
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore,deeplGlossary,OpenAITone,data.DeepLWait,OpenAiGloss);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2541,7 +2541,7 @@ async function checkbuttonClick(event) {
             mytarget = event.target;
         }
         
-
+       // console.debug("action:",action)
         // we do need to make sure that we are in the editor, not meta or discussion
         if (action == "Details" || action == "✓Details" || FireFoxAction == "Details" ) {
             mytarget = event.target.parentElement.parentElement;
@@ -2549,10 +2549,11 @@ async function checkbuttonClick(event) {
             if (mytarget != null) {
                 rowId = mytarget.getAttribute("row");
             }
+            //console.debug("row:",rowId)
             glob_row = rowId;
             detailRow = rowId;
             if (rowId == null) {
-                editor = await waitForMyElement(`.editor`, 500).then((res) => {
+                editor = await waitForMyElement(`.editor`, 500,"2556").then((res) => {
                     if (res != "Time-out reached") {
                         //console.debug("We found it:",editor)
                         rowId = res.getAttribute("row")
@@ -2561,12 +2562,37 @@ async function checkbuttonClick(event) {
                 });
             }
            addTranslateButtons(rowId);
-            await waitForMyElement(`.editor`, 500).then((res) => {
+            await waitForMyElement(`#editor-${rowId}`, 500,"2565").then((res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
                     mytextarea = myrec.getElementsByClassName('foreign-text')
                     mytextarea[0].style.height = "auto"
                     mytextarea[0].style.height = mytextarea[0].scrollHeight + "px";
+                   
+
+                //    setTimeout(() => {
+                        //const textarea = document.querySelector(`#editor-${rowId}`);; // Adjust this selector if needed
+
+                       // if (textarea) {
+                            mytextarea[0].addEventListener("click", (e) => {
+                                //console.debug("Textarea clicked");
+                                if (detail_glossary) {
+                                    // console.debug("We are starting the observer:", mytextarea)
+                                   // We need to start the mutation server, if the textarea is clicked on
+                                  //  start_editor_mutation_server(mytextarea, action)
+                                }
+                                //mytextarea = textarea.getElementsByClassName('foreign-text')
+                                // Optional: get cursor position
+                                const cursorPos = mytextarea[0].selectionStart;
+                                //console.debug("Cursor position:", cursorPos);
+                                StartObserver = true;
+                                // Your logic here: maybe toggle a flag, or activate a mode
+                            });
+                      //  } else {
+                       //     console.warn("Textarea not found");
+                       // }
+                 //   }, 100); 
+
                     //console.debug("mytext in open:",mytextarea)
                     if (typeof mytextarea != 'undefined') {
                        // console.debug("mytext:", mytextarea,"2270")
@@ -2589,8 +2615,10 @@ async function checkbuttonClick(event) {
                 else { console.debug("editor not found:", res) }
             })
             if (myrec != null) {
-                 mytextarea = await myrec.getElementsByClassName('foreign-text autosize')
-                 //console.debug("mytext:",mytextarea)
+                myrec = await document.querySelector(`#editor-${rowId}`);
+               // console.debug("editor:",editor)
+                 mytextarea = await myrec.getElementsByClassName('foreign-text')
+                // console.debug("mytext:",mytextarea,myrec)
                 if (typeof textarea != 'undefined') {
                      textarea = mytextarea[0]
                      // Ensure the textarea is visible and enabled
@@ -2619,18 +2647,18 @@ async function checkbuttonClick(event) {
                 }
                 
                
-               if (autoCopyClipBoard) {
+                if (autoCopyClipBoard) {
                         copyToClipBoard(detailRow)
                 }
+                //console.debug("before startObserver",StartObserver)
                 if (StartObserver) {
                         if (detail_glossary) {
                             //console.debug("We are starting the observer:", mytextarea)
                             start_editor_mutation_server(mytextarea, action)
                         }
-                    // PSS only within the editor we want to copy the original to clipboard is parameter is set
                 }
             }
-            await waitForMyElement(`.editor`, 200).then((res) => {
+            await waitForMyElement(`#editor-${rowId}`, 200,"2661").then((res) => {
                 if (res != "Time-out reached") {
                     textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
                 }
@@ -2914,7 +2942,7 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore","ForceFormal"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal","OpenAiGloss"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         if (data.ForceFormal != true) {
             formal = checkFormal(false);
@@ -2926,8 +2954,9 @@ function translateEntryClicked(event) {
         var OpenAItemp = parseFloat(data.OpenAItemp);
         var deeplGlossary = localStorage.getItem('deeplGlossary');
         var OpenAITone = data.OpenAITone
+        var myOpenAiGloss = data.OpenAiGloss
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone,myOpenAiGloss);
         }
         else {
                 messageBox("error", "You need to set the parameter for Destination language");
@@ -3044,7 +3073,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 checkElem.appendChild(separator1);
             }
             // we need to add the button!
-            let res = await addCheckButton(rowId, checkElem, "1978")
+            // pss 18-04
+            res = await addCheckButton(rowId, checkElem, "3077")
             SavelocalButton = res.SavelocalButton;
         }
         else {
@@ -3071,7 +3101,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
     else {
         if (SavelocalButton == null) {
-            let res = await addCheckButton(rowId, checkElem,"1984")
+            res = await addCheckButton(rowId, checkElem,"1984")
             SavelocalButton = res.SavelocalButton
         }
     }
@@ -3273,28 +3303,26 @@ async function remove_all_gloss(myleftPanel, isPlural) {
            // spansArray[i].style.color = 'black'; 
            // spansArray[glossIndex].style.textDecorationColor = 'black'; 
         }
-        
+        //18-04-2025 PSS only close tooltips not dropdowns
         document.addEventListener("mouseover", (event) => {
             const tooltip = document.querySelector(".ui-tooltip");
 
-            if (tooltip) {
-               // console.debug("we still have a tooltip 1:", tooltip)
-                tooltip.style.display = "block"; // Ensure it appears first
+            // Only act if hovering over an element that has a tooltip
+            if (event.target.closest(".has-tooltip") && tooltip) {
+                tooltip.style.display = "block";
                 setTimeout(() => {
-                    if (!tooltip.matches(":hover")) {
-                        tooltip.style.display = "none"; // Hide only if not hovered
+                    if (!tooltip.matches(":hover") && !event.target.matches(":hover")) {
+                        tooltip.style.display = "none";
                     }
-                }, 2000); // Adjust timing as needed
+                }, 2000);
             }
         });
-        document.addEventListener("mouseout", () => {
-            const tooltip = document.querySelector(".ui-tooltip");
-            if (tooltip) {
-               // console.debug("we still have a tooltip 2:",tooltip)
-                // Get the parent of the tooltip (if any)
-                const parentElement = tooltip.parentElement;
 
-                // Hide the tooltip completely
+        document.addEventListener("mouseout", (event) => {
+            const tooltip = document.querySelector(".ui-tooltip");
+
+            // Only act if the mouse left a tooltip-related element
+            if (tooltip && !event.relatedTarget?.closest(".ui-tooltip") && !event.relatedTarget?.closest(".has-tooltip")) {
                 tooltip.style.display = "none";
                 tooltip.style.position = "";
                 tooltip.style.background = "transparent";
@@ -3302,16 +3330,15 @@ async function remove_all_gloss(myleftPanel, isPlural) {
                 tooltip.style.boxShadow = "none";
                 tooltip.style.left = "";
                 tooltip.style.top = "";
-                tooltip.innerHTML = ""; // Clear text (optional)
+                tooltip.innerHTML = "";
 
-                // Remove position: relative from the parent if it's set
-                if (parentElement) {
-                    parentElement.style.position = "";
+                if (tooltip.parentElement) {
+                    tooltip.parentElement.style.position = "";
                 }
-                tooltip.remove()
+
+                tooltip.remove();
             }
         });
-
 
 
 
@@ -3577,6 +3604,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     var button_name = "Empty";
     var debug = false;
     var panelTransDiv;
+    var res;
     if (debug == true) {
         console.debug("updateElementStyle curr:", currstring)
         console.debug("updateElementStyle prev:", prev_trans)
@@ -3668,7 +3696,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "2211")
+                        //18-04 pss
+                        res = addCheckButton(rowId, checkElem, "3701")
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
                             if (SavelocalButton != null) {
@@ -3698,10 +3727,12 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "3440")
+                        res = addCheckButton(rowId, checkElem, "3732")
                         //console.debug("res:",res)
-                        SavelocalButton = res.SavelocalButton
-                        SavelocalButton.innerText = button_name;
+                        if (res != null) {
+                            SavelocalButton = res.SavelocalButton
+                            SavelocalButton.innerText = button_name;
+                        }
                         checkElem.style.backgroundColor = "yellow";
                         checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
@@ -3718,7 +3749,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "3459")
+                        res = addCheckButton(rowId, checkElem, "3752")
                         SavelocalButton = res.SavelocalButton
                         SavelocalButton.innerText = button_name;
                         checkElem.title = __("Save the string");
@@ -3735,11 +3766,13 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "2264")
-                        SavelocalButton = res.SavelocalButton
-                        SavelocalButton.disabled = false;
-                        SavelocalButton.innerText = button_name;
-                        SavelocalButton.onclick = savetranslateEntryClicked;
+                        res = addCheckButton(rowId, checkElem, "3772")
+                        if (res != null) {
+                            SavelocalButton = res.SavelocalButton
+                            SavelocalButton.disabled = false;
+                            SavelocalButton.innerText = button_name;
+                            SavelocalButton.onclick = savetranslateEntryClicked;
+                        }
                         checkElem.style.backgroundColor = "purple";
                         checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
@@ -3755,9 +3788,11 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "3051")
-                        SavelocalButton = res.SavelocalButton
-                        SavelocalButton.innerText = button_name;
+                        res = addCheckButton(rowId, checkElem, "3794")
+                        if (res != null) {
+                            SavelocalButton = res.SavelocalButton
+                            SavelocalButton.innerText = button_name;
+                        }
                         checkElem.title = "Check the string";
                         checkElem.style.backgroundColor = "darkorange";
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
@@ -3776,16 +3811,20 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             let separator1 = document.createElement("div");
                             separator1.setAttribute("class", "checkElem_save");
                             checkElem.appendChild(separator1);
-                            res = addCheckButton(rowId, checkElem, "1593")
-                            SavelocalButton = res.SavelocalButton
+                            res = addCheckButton(rowId, checkElem, "3817")
+                            if (res != null) {
+                                SavelocalButton = res.SavelocalButton
+                            }
                             myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                             mark_glossary(myleftPanel, result.toolTip, currstring, rowId, false)
                             if (result.wordCount > 0) {
                                 checkElem.title = "Do not save the string";
                                 SavelocalButton.innerText = "Miss!";
                                 if (currstring == "No suggestions") {
-                                    SavelocalButton.innerText = "Block!";
-                                    SavelocalButton.disabled = true;
+                                    if (res != null) {
+                                        SavelocalButton.innerText = "Block!";
+                                        SavelocalButton.disabled = true;
+                                    }
                                 }
                             }
                             else {
@@ -3798,7 +3837,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                                     checkElem.title = "Do not save the string";
                                     SavelocalButton.innerText = "Block";
                                     checkElem.style.backgroundColor = "red";
-                                    res = addCheckButton(rowId, checkElem, "3024")
+                                    res = addCheckButton(rowId, checkElem, "3843")
                                     SavelocalButton = res.SavelocalButton
                                     SavelocalButton.disabled = true;
                                 }
@@ -3816,15 +3855,19 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             let separator1 = document.createElement("div");
                             separator1.setAttribute("class", "checkElem_save");
                             checkElem.appendChild(separator1);
-                            res = addCheckButton(rowId, checkElem, "3024")
+                            res = addCheckButton(rowId, checkElem, "3861")
                             SavelocalButton = res.SavelocalButton
                             myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                             mark_glossary(myleftPanel, result.toolTip, currstring, rowId, false)
                             if (current != "untranslated" && current != 'current') {
-                                SavelocalButton.innerText = "Miss!";
-                                if (currstring == "No suggestions") {
-                                    SavelocalButton.innerText = "Block!";
-                                    SavelocalButton.disabled = true;
+                                if (res != null) {
+                                    if (res != null) {
+                                        SavelocalButton.innerText = "Miss!";
+                                        if (currstring == "No suggestions") {
+                                            SavelocalButton.innerText = "Block!";
+                                            SavelocalButton.disabled = true;
+                                        }
+                                    }
                                 }
                             }
                             else {
@@ -3858,7 +3901,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 separator1 = document.createElement("div");
                 separator1.setAttribute("class", "checkElem_save");
                 checkElem.appendChild(separator1);
-                res = addCheckButton(rowId, checkElem, "1539")
+                res = addCheckButton(rowId, checkElem, "3907")
                 SavelocalButton = res.SavelocalButton
                 SavelocalButton.innerText = "Curr";
                 checkElem.style.backgroundColor = "green";
@@ -4185,7 +4228,7 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
 
 function addCheckButton(rowId, checkElem, lineNo) {
     var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
-    //console.debug("we add a checkbutton",currentcel,lineNo)
+    //console.debug("we add a checkbutton",currentcel,rowId,lineNo)
     // we came from translate entry, so there is no save button
         let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         if (SavelocalButton == null) {
@@ -4220,6 +4263,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
         }
         else {
             console.debug("We have no current")
+            SaveLocalButton=""
         }
     return { SavelocalButton };
 }
@@ -4388,52 +4432,40 @@ function normalizeText(text) {
 
 // Function to find missing translations
 function findMissingTranslations(spans, dutchText) {
-    var normalizedText = normalizeText(dutchText);
-    var wordFoundMap = {};
-    var textCopy = normalizedText; // Copy of the text to avoid modifying the original
-    //console.debug("textCopy:", textCopy);
+    const normalizedText = normalizeText(dutchText);
+    let textCopy = normalizedText;
+    const wordFoundMap = {};
 
     spans.forEach(({ word, glossIndex }) => {
-        let wordsToCheck = Array.isArray(word) ? word : [word];
+        const wordsToCheck = Array.isArray(word) ? word : [word];
         let found = false;
-        wordsToCheck.forEach((singleWord) => {
-            //console.debug("search for:", singleWord);
-            if (!found) {
-                var normalizedWord = normalizeText(singleWord);  // Normalize the glossary word
-                var regex = new RegExp(`\\b${escapeRegExp(normalizedWord)}\\b`, "g");
-                let match;
-                while ((match = regex.exec(textCopy)) !== null) {
-                    found = true;
-                    // Remove the found word from the text to avoid overlap
-                    textCopy = textCopy.slice(0, match.index) + textCopy.slice(match.index + match[0].length);
-                    break; // Stop searching after the first match for this word
-                }
-                // If not found in case-sensitive search, attempt a case-insensitive search
-                if (!found) {
-                    //console.debug("Attempting case-insensitive search");
-                    regex = new RegExp(`\\b${escapeRegExp(normalizedWord)}\\b`, "gi"); // 'i' for case-insensitivity
-                    while ((match = regex.exec(textCopy)) !== null) {
-                        found = true;
-                        // Remove the found word from the text to avoid overlap
-                        textCopy = textCopy.slice(0, match.index) + textCopy.slice(match.index + match[0].length);
-                        break; // Stop searching after the first match for this word
-                    }
-                }
+
+        for (const singleWord of wordsToCheck) {
+            const normalizedWord = normalizeText(singleWord);
+            const escapedWord = escapeRegExp(normalizedWord);
+            const regex = new RegExp(escapedWord, "gi"); // No word boundaries for compound words
+
+            let match;
+            while ((match = regex.exec(textCopy)) !== null) {
+                found = true;
+                // Remove matched part to avoid overlapping matches
+                textCopy = textCopy.slice(0, match.index) + textCopy.slice(match.index + match[0].length);
+                break;
             }
-        });
+
+            if (found) break; // No need to check other synonyms
+        }
+
         wordFoundMap[glossIndex] = found;
-        //console.log(`Found word "${Array.isArray(word) ? word.join(', ') : word}" with gloss-index ${glossIndex}: ${wordFoundMap[glossIndex]}`);
     });
 
-    //console.log('Word found map:', wordFoundMap);
-    var missingTranslations = [];
-    spans.forEach(({ word, glossIndex }) => {
-        if (!wordFoundMap[glossIndex]) {
-            missingTranslations.push({ word, glossIndex });
-        }
-    });
+    // Collect words that were not found
+    const missingTranslations = spans.filter(({ glossIndex }) => !wordFoundMap[glossIndex]);
+
     return missingTranslations;
 }
+
+
 
 // Helper function to normalize the text by removing unwanted characters and converting to lowercase
 function normalizeText(text) {
@@ -5558,6 +5590,14 @@ var stringToHTML = function (str) {
 // 11-06-2021 PSS added function to mark that existing translation is present
 async function fetchOld(checkElem, result, url, single, originalElem, row, rowId, showName, current, prev_trans, currcount, showDiff) {
     var mycurrent = current;
+    var rejected;
+    var waiting;
+    var fuzzy;
+    var current;
+    var old = "";
+    var wait = ""
+    var curr = ""
+    var rejec = ""
    // console.debug("fetchold:",mycurrent,url)
     // 30-06-2021 PSS added fetch status from local storage
     //chrome.storage.sync
@@ -5605,13 +5645,15 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     let currstring = "";
                     const tbodyRowCount = table.tBodies[0].rows.length;
                     // 04-07-2021 PSS added counter to message for existing translations
-                    let rejected = table.querySelectorAll("tr.preview.status-rejected");
-                    let waiting = table.querySelectorAll("tr.preview.status-waiting");
-                    let fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
-                    let current = table.querySelectorAll("tr.preview.status-current");
-                    let old = table.querySelectorAll("tr.preview.status-old");
-                    if (typeof current != "null" && current.length != 0) {
-                        currcount = " Current:" + current.length;
+                    rejected = table.querySelectorAll("tr.preview.status-rejected");
+                    waiting = table.querySelectorAll("tr.preview.status-waiting");
+                    fuzzy = table.querySelectorAll("tr.preview.status-fuzzy");
+                    curr = table.querySelectorAll("tr.preview.status-current");
+                    //console.debug("curr:",curr.length,tbodyRowCount)
+                    old = table.querySelectorAll("tr.preview.status-old");
+                    //console.debug("waiting:", curr)
+                    if (curr != "" && curr.length != 0 && curr.length != tbodyRowCount/2) {
+                        currcount = " Current:" + curr.length;
                         //console.debug("table:",table)
                         currstring = table.querySelector("tr.preview.status-current");
                         currstring = currstring.querySelector(".translation-text")
@@ -5623,7 +5665,8 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     else {
                         currcount = "";
                     }
-                    if (waiting.length != 0) {
+                    //console.debug("waiting:",waiting)
+                    if (waiting !="" && waiting.length != 0) {
                        // console.debug("Waiting:", waiting)
                         waiting_rec = waiting[0]
                         prev_trans = waiting_rec.querySelector("td.translation.foreign-text")
@@ -5888,7 +5931,7 @@ function startObserving(observer, textarea, config) {
             textarea.setAttribute('value',textarea.value)
         })
     }
-    //console.debug("observer started:", observer)
+    console.debug("observer started:", observer)
     return observer
 }
 
@@ -5910,14 +5953,15 @@ function start_editor_mutation_server(textarea, action) {
         //console.debug("textarea in start:", textarea)
         //console.debug("observer:", observer)
         if (typeof observer == 'object') {
-            stopObserving(observer)
-          //  console.debug(" we are stopping the observer!")
+         //   stopObserving(observer)
+           // console.debug(" we are stopping the observer!")
         }
-        
-        if (textarea.length != 0) {
+        //console.debug("textarea:",textarea[0])
+        if (textarea[0].length != 0) {
+          //  console.debug("text:",textarea[0])
             observer.observe(textarea[0], { attributes: true, childList: true, subtree: true });
            // let observerstart = startObserving(observer, textarea[0], config)
-           // console.debug("observerstart:",observerstart)
+            //console.debug("observerstarted")
         }
         // observer.observe(textarea, config);
     }

@@ -3928,8 +3928,8 @@ async function mark_as_translated(row, current, translated, preview) {
         curbut.title = __("Save the string");
     }
 }
-               
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss) {
+
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait) {
     //console.time("translation")
     var translate;
     var transtype = "";
@@ -3958,7 +3958,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     `;
     progressbar = document.querySelector(".indeterminate-progress-bar");
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
-    //console.debug("glos:", openAiGloss)
+
     if (progressbar == null) {
         myheader.insertAdjacentHTML('beforebegin', template);
         // progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -4180,7 +4180,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         }
                         else if (transsel == "OpenAI") {
                             //console.debug("row in page AI:",row)
-                            let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
+                            let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false);
                             if (errorstate == "Error 401") {
                                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                                 // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -4472,7 +4472,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     }
                                 }
                                 else if (transsel == "OpenAI") {
-                                    result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
+                                    result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false);
 
                                     if (result == "Error 401") {
                                         messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4837,7 +4837,7 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone) {
     var translateButton;
     var result;
     errorstate = "OK"
@@ -4994,7 +4994,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "OpenAI") {
                         let editor = true;
-                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -5132,7 +5132,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "OpenAI") {
                         let editor = true;
-                        result = await AITranslate(plural, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        result = await AITranslate(plural, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -5268,7 +5268,7 @@ async function saveLocal() {
                         // else we need to select the save button
                         // editor.querySelector(".translation-actions__save").click();
                         // PSS confirm the message for dismissal
-                        waitForMyElement('.gp-js-message', 1000,"5271")
+                        waitForMyElement('.gp-js-message', 1000)
                             .then(element => {
                                 // console.log('Element found:', element);
                                 // element.click();
@@ -5356,7 +5356,7 @@ function walkThroughTable(selector, interval) {
                                 autoCopyClipBoard = false;
                                 let bulk_save = preview.querySelector(".tf-save-button");
                                 bulk_save.click();
-                                waitForMyElement('.gp-js-message', 300,"5359")
+                                waitForMyElement('.gp-js-message', 300)
                             }
                         }
                     }
@@ -5420,7 +5420,7 @@ function hasTwoNumbers(row) {
     return parts.length === 2 && parts.every(part => /^\d+$/.test(part));
 }
 
-function waitForFullRowId(firstPart, timeout = 4000) {
+function waitForFullRowId(firstPart, timeout = 3000) {
     return new Promise((resolve, reject) => {
         let resolved = false;
 
@@ -5496,7 +5496,7 @@ function saveLocal_2(bulk_timer) {
     else {
         progressbar.style.display = 'block';
     }
-   
+
     processTableRecords('.wptf-translated', async function (preview) {
         //console.debug("preview in processtable:",preview)
         var Edopen ;
@@ -5511,30 +5511,39 @@ function saveLocal_2(bulk_timer) {
             // 13-06-2024 PSS we only count the read lines when the checkbox is ticked
             if (checkset != null && checkset.checked == true) {
                 myPreviewRow = preview.id
-                //console.debug("myPreviewRow:",myPreviewRow,myPreviewRow.includes("old"))
                 myNewRow = myPreviewRow.split("-")[1]
                 let rowfound = myPreviewRow;
-               // console.debug("rowfound:", rowfound)
+                //console.debug("rowfound:", rowfound)
                 // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
                 // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
                 if (rowfound.split("-")[2] != null) {
                     myNewRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
                 }
                 line_read++
-                if (!myNewRow.includes("old")) {
-                    Edopen = await document.querySelector(`#editor-${myNewRow}`)
-                    //console.debug("Edopen:", Edopen)
+                //editorOpen = preview.nextElementSibling;
+                waitForMyElement(`#editor-${myNewRow}`, 4000).then((Edopen) => {
+                    // console.debug("we found it:", Edopen)
+                    return Edopen
+                }).then(Edopen => {
+                    // console.debug("Editor open:", Edopen)
+                    if (Edopen == 'Time-out reached') {
+                        delay(500)
+                        // console.debug("editor not open trying again", myNewRow)
+
+                        // console.debug("Editor now open:", editorOpen)
+                    }
+                    Edopen = document.querySelector(`#editor-${myNewRow}`)
+                   
                     //delay(100)
                     if (Edopen != null && Edopen != "Time-out reached") {
+
                         let current = Edopen.querySelector('span.panel-header__bubble');
-                        //console.debug("current:", current, myNewRow)
+                        // console.debug("current:", current, myNewRow)
                         original = Edopen.querySelector("span.original-raw").innerText;
-                        //console.debug("Original:", original)
-                        //console.debug("Preview:", preview)
+
                         // let preview = document.querySelector(`#preview-${myNewRow}`)
                         if (preview != null && current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true && !myNewRow.includes("old")) {
-                            let glotpress_suggest = await Edopen.querySelector(".translation-actions__save");
-                            let preview_Unprocessed = preview
+                            let glotpress_suggest = Edopen.querySelector(".translation-actions__save");
                             glotpress_suggest.classList.remove("disabled")
                             //glotpress_suggest.click();
                             if (autoCopyClipBoard) {
@@ -5543,34 +5552,85 @@ function saveLocal_2(bulk_timer) {
                             autoCopyClipBoard = false;
                             new Promise(resolve => setTimeout(async () => {
                                 preview.querySelector("td.actions .edit").click();
-                                try {
-                                    const editorOpen = await waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 10000, "5545");
-                                    //console.debug("Editor open!", editorOpen, preview);
-                                    await glotpress_suggest.click();
-                                    try {
-                                        const fullRowId = await waitForFullRowId(myNewRow);
-                                        const preview = document.querySelector(`#preview-${fullRowId}`);
-                                       // console.debug("two numbers:", hasTwoNumbers(fullRowId), preview);
-                                       // console.debug("unprocessed:",preview_Unprocessed)
-                                        preview_Unprocessed.style.display = "none"
-                                        if (!hasTwoNumbers(fullRowId)) {
-                                            console.debug("no two numbers:", hasTwoNumbers(fullRowId), preview);
+                                waitForMyElement(`.editor-panel`, 3500).then((editorOpen) => {
+                                    // console.debug("Editor open!",editorOpen)
+                                    //    try {
+                                    glotpress_suggest.click();
+                                    new Promise(resolve => setTimeout(async () => {
+                                        // we need to wait for saving the record        
+                                        // waitForMyElement(`#gp-js-message`, 500)
+                                        waitForMyElement(`.gp-js-message-dismiss`, 2000).then(async (dismiss) => {
+                                           // console.debug("dismiss message:", dismiss)
+                                            //    if (dismiss != "Time-out reached") {
+                                            if (dismiss != "Time-out reached") {
+                                                dismiss = await document.querySelector(`.gp-js-message-dismiss`)
+                                                if (dismiss != null) {
+                                                    dismiss.click()
+                                                }
+                                            }
+                                            if (is_pte) {
+                                                current.innerText = "current"
+                                            }
+                                            else {
+                                                current.innerText = "waiting"
+                                            }
+                                            counter++
+                                        })
+                                        resolve("ready")
+
+                                        // PSS we need to give GlotPress time to remove the "saved" message
+                                    }),10000).then((resolve) => {
+                                        // Sometimes the editor is saved, but the preview line is not set to saved
+                                        waitForFullRowId(myNewRow)
+                                            .then(fullRowId => {
+                                                const preview = document.querySelector(`#preview-${fullRowId}`);
+                                               // console.debug("preview after dismiss:", preview);
+                                                //console.debug("two numbers:", hasTwoNumbers(fullRowId));
+                                            })
+                                            .catch(err => {
+                                                console.debug("myNewRow:",myNewRow)
+                                                preview = document.querySelector(`#preview-${myNewRow}`)
+                                                
+                                                preview.style="hidden"
+                                                console.debug("Row ID could not be resolved:", err.message);
+                                            });
+
+                                        
+                                           
+                                       // preview = document.querySelector(`#preview-${fullRowId}`);
+                                       // console.debug("preview after dismiss:", preview)
+                                       // console.debug("two numbers:",hasTwoNumbers(fullRowId))
+
+                                        if (preview != null) {
+                                            //  console.debug("preview:", preview, myNewRow)
+                                            //  console.log("Before timeout:", preview.classList.value);
+                                            setTimeout(() => {
+                                                //preview = document.querySelector(`#preview-${myNewRow}`);
+                                                if (preview != null) {
+                                                    //  console.debug("classlist:", preview.classList, myNewRow)
+                                                    if (preview.classList.contains("status-waiting")) {
+                                                        if (preview.classList.contains("wptf-translated")) {
+                                                            //  console.debug("preview has status waiting")
+                                                            preview.style.display = "table-row"
+                                                            if (is_pte) {
+                                                                preview.classList.replace('status-waiting', 'status-current');
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                preview = document.querySelector(`#preview-${myNewRow}`);
+                                                if (preview != null) {
+                                                    if (is_pte) {
+                                                        preview.classList.replace('status-waiting', 'status-current');
+                                                        //console.debug("classlist:", preview.classList, myNewRow)
+                                                    }
+                                                }
+                                            }, 200);
                                         }
 
-                                        counter++;
-                                    } catch (err) {
-                                        console.debug("myNewRow:", myNewRow);
-                                        const preview = document.querySelector(`#preview-${myNewRow}`);
-                                        console.debug("preview with error:", preview);
-                                        console.debug("Row ID could not be resolved:", err.message);
-                                    }
-                                } catch (err) {
-                                    console.error("Could not open editor:", err.message);
-                                }
-
-                                resolve();
-                            }));
-
+                                    });
+                                })
+                            }), bulk_timer);
                         }
                         else {
                             console.debug("checkbox present but not set or not in waiting mode or old record")
@@ -5580,7 +5640,7 @@ function saveLocal_2(bulk_timer) {
                                     toastbox("info", "Problem with:" + original, "700", "Check record:");
                                     translated = true;
                                     counter++
-                                   // mark_as_translated(myNewRow, current, translated, preview)
+                                    mark_as_translated(myNewRow, current, translated, preview)
                                 }
                             }
                             else {
@@ -5590,7 +5650,7 @@ function saveLocal_2(bulk_timer) {
                         }
                     }
                     else {
-                        console.debug("before skip:", Edopen)
+                        console.debug("before skip:",Edopen)
                         if (Edopen != null && Edopen != "Time-out reached") {
                             let current = Edopen.querySelector('span.panel-header__bubble');
                             // console.debug("current:", current, myNewRow)
@@ -5598,13 +5658,13 @@ function saveLocal_2(bulk_timer) {
                                 toastbox("info", "Editor not open", "900", "Record might not be saved:" + original);
                                 // console.debug("Editor not open!!")
                             }
-
+                          
                             preview = document.querySelector(`#preview-${myNewRow}`)
                             if (preview != null) {
-                                // preview.classList.replace("status-waiting", "status-current")
+                               // preview.classList.replace("status-waiting", "status-current")
                                 if (is_pte) {
                                     rowchecked = preview.querySelector("th input");
-                                  //  preview.classList.replace("status-waiting", "status-current")
+                                    preview.classList.replace("status-waiting", "status-current")
                                 }
                                 else {
                                     rowchecked = preview.querySelector("td input");
@@ -5619,10 +5679,10 @@ function saveLocal_2(bulk_timer) {
                             }
                         }
                         else {
-                           // console.debug("We do not have a Edopen!!", preview.classList, myNewRow)
+                            console.debug("We do not have a Edopen!!", preview.classList, myNewRow)
                             preview = document.querySelector(`#preview-${myNewRow}`)
                             if (preview != null) {
-                              //  preview.classList.replace("status-waiting", "status-current")
+                                preview.classList.replace("status-waiting", "status-current")
                                 if (is_pte) {
                                     rowchecked = preview.querySelector("th input");
                                 }
@@ -5640,17 +5700,17 @@ function saveLocal_2(bulk_timer) {
                             }
                         }
                     }
-                }
-                else {
-                    console.debug("We seem to have an old record:", preview)
-                    preview.style.display = "hidden"
-                }
+                })
+                 .catch(err => {
+                        preview = document.querySelector(`#preview-${myNewRow}`)
+                        preview.style = "hidden"
+                        console.debug("Editor not open:", err.message);
+                    });
             }
         }       
     
     }, bulk_timer)
         .then(() => {
-            // pss 18-04
             hideIncompletePreviewRows();
             progressbar = document.querySelector(".indeterminate-progress-bar");
             if (progressbar != null) {
@@ -5669,6 +5729,7 @@ function saveLocal_2(bulk_timer) {
         .catch(error => {
             console.error('Error:', error);
         });
+
 }
 
 async function bulkSave(noDiff, bulk_timer) {
@@ -5760,15 +5821,14 @@ function second(milliseconds) {
 }
 
 // Function to wait for an element to be shown on the page
-function waitForMyElement(selector, timeout,line) {
-    //console.debug("selector:",selector,line)
+function waitForMyElement(selector, timeout) {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
         // Function to check if the element is visible
         function checkElement() {
             const element = document.querySelector(selector);
             if (element) {
-               // console.debug("Found in:",element)
+                //console.debug("Found in:",element)
                 // Element found, resolve the promise
                 resolve(element);
             } else if (Date.now() - startTime >= timeout) {
@@ -5777,7 +5837,7 @@ function waitForMyElement(selector, timeout,line) {
                 //reject(new Error(`Timeout (${timeout} ms) exceeded while waiting for element with selector "${selector}"`));
             } else {
                 // Element not found, check again after a short delay
-                setTimeout(checkElement, 300); // Check again after 150 milliseconds
+                setTimeout(checkElement, 150); // Check again after 150 milliseconds
             }
         }
 
