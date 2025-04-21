@@ -2088,7 +2088,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 if (currec != null) {
                     var current = currec.querySelector("span.panel-header__bubble");
                 }
-               result= await validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
+                result= await validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
                 await mark_original(preview, result.toolTip, textareaElem.textContent, row, false)
                 // PSS 10-05-2021 added populating the preview field issue #68
                 // Fetch the first field Singular
@@ -2806,7 +2806,7 @@ function openEditorOnRow(preview, editor) {
     });
 }
 
-async function processResult(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold, original, destlang, record) {
+async function processResult(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold, original, destlang, record,current) {
     let myResult = "No suggestions";
     try {
         const resli = await fetchli(result, editor, row, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold);
@@ -3115,8 +3115,6 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                 result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
                 await mark_original(preview, result.toolTip, textareaElem.textContent, row, false)
 
-               // await mark_original(preview, result.toolTip, textareaElem.textContent, myRowId, false)
-
             }
             else {
                 //console.debug("preview:", preview)
@@ -3154,10 +3152,10 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                 //  console.debug("preview: ", preview)
                                 if (typeof result == "object") {
                                     //console.debug("before processing:",result)
-                                    processed = await processResult(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold, original, destlang, record)
+                                    processed = await processResult(result, editor, row, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, locale, TMtreshold, original, destlang, record,current)
                                     editor.style.display = ""
                                     preview.style.removeProperty("display");
-                                    //}
+                                    //console.debug("processed:",processed)
                                     if (processed != "No suggestions") {
                                         textareaElem = record.querySelector("textarea.foreign-text");
                                         result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
@@ -5179,7 +5177,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false, DefGlossary);
             let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
             remove_all_gloss(myleftPanel)
-            mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
+            //mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
 
             // translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
             // if row is already translated the rowId has different format, so we need to search with this different format
@@ -6032,11 +6030,8 @@ async function processTransl(original, translatedText, language, record, rowId, 
         }
         let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
         result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false, DefGlossary);
-        await mark_original(preview, result.toolTip, textareaElem.textContent, myRowId, false)
+       // await mark_original(preview, result.toolTip, textareaElem.textContent, myRowId, false)
         //console.debug("translateEntry:",result)
-        //  if (result.toolTip.length != 0) {
-        //trans mark_glossary(leftPanel, result.toolTip, translatedText, rowId)
-        //  }
         // if (result.newText != "") {
         //    let editorElem = document.querySelector("#editor-" + myRowId + " .original");
         //let editorElem = document.querySelector("#editor-" + rowId + " .original");

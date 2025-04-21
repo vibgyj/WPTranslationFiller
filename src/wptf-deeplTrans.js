@@ -135,9 +135,6 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
             }
         }
     });
-
-        //await new Promise((resolve) => setTimeout(resolve, delay));
-    //}
 }
 
 

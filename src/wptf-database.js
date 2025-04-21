@@ -67,6 +67,7 @@ async function openDeeplModal(DeepLdb) {
     // we need to set the text of the button here, otherwise the translation is not found
     let saveText = __("SaveRec")
     var deleteText = __("Delete")
+    var deletedText = __("Deleted")
     var message = __("Translation updated successfully!")
     var title = __("Manage glossary")
     var DeepLClose = __("Close")
@@ -81,6 +82,7 @@ async function openDeeplModal(DeepLdb) {
     var transHead = __("Translation Header")
     var myDelete = __("Delete")
     var myRecordDeleted = __("Record deleted: ")
+    var recordNotFound = __("Record not found: ")
     var DownLoadPath = ""
 
     await chrome.storage.local.get(["DownloadPath"], function (data) {
@@ -109,7 +111,7 @@ async function openDeeplModal(DeepLdb) {
     <input type="text" id="searchLocale" placeholder="${searchLoc}">
     <input type="text" id="searchOriginal" placeholder="${searchOrig}">
     
-    <button onclick="startSearch('${saveText}', '${deleteText}', '${message}')">${mySearch}</button>
+    <button onclick="startSearch('${saveText}', '${deleteText}','${myRecordDeleted}', '${recordNotFound}', '${message}')">${mySearch}</button>
 
     <table border="1">
       <thead>
@@ -256,7 +258,7 @@ function createAndOpenModal() {
         if (input1 != "") {
             let result = await findTransline(input1, locale)
             if (result == 'notFound') {
-                outputDiv.textContent = "Record not found!"
+                outputDiv.textContent = __("Record not found!")
             }
             else {
                 
@@ -1043,6 +1045,8 @@ function saveNewRecord() {
     const translation = document.getElementById("translation").value.trim();
     myDelete = __("Delete")
     myRecordDeleted = __("Record deleted: ")
+    myRecordSaved = __("Record saved successfully!")
+    myRecordUpdated = __("Record updated successfully!")
     if (!locale || !original || !translation) {
         alert(__("All fields must be filled!"));
         return;
@@ -1063,17 +1067,18 @@ function saveNewRecord() {
             if (existingRecord) {
                 existingRecord.translation = translation;
                 store.put(existingRecord);
-                alert("Record updated successfully!");
+                alert(myRecordUpdated);
             } else {
                 const newRecord = { locale, original, translation };
                 store.add(newRecord);
-                alert("Record saved successfully!");
+                alert(myRecordSaved);
             }
         };
 
         transaction.oncomplete = function () {
-            console.debug("Transaction completed, reloading records...");
+           // console.debug("Transaction completed, reloading records...");
             locale = locale.toUpperCase()
+            //console.debug("reloading:", locale, myDelete, myRecordDeleted)
             listAllRecords(locale,myDelete,myRecordDeleted); //Ensure records are refreshed in the correct order
         };
     });

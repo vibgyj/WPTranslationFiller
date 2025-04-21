@@ -1,4 +1,54 @@
 // This file contains functions used within various files
+function setupTooltipHandler() {
+    document.addEventListener("mouseover", (event) => {
+        const tooltip = document.querySelector(".ui-tooltip");
+
+        // Only act if hovering over an element that has a tooltip
+        if (event.target.closest(".has-tooltip") && tooltip) {
+            tooltip.style.display = "block";
+            setTimeout(() => {
+                if (!tooltip.matches(":hover") && !event.target.matches(":hover") && !event.target.closest(".dropdown")) {
+                    tooltip.style.display = "none";
+                }
+            }, 2000);
+        }
+    });
+
+    document.addEventListener("mouseout", (event) => {
+        const tooltip = document.querySelector(".ui-tooltip");
+
+        // Only act if the mouse left a tooltip-related element and not a dropdown
+        if (tooltip && !event.relatedTarget?.closest(".ui-tooltip") && !event.relatedTarget?.closest(".has-tooltip") && !event.relatedTarget?.closest(".dropdown")) {
+            tooltip.style.display = "none";
+            tooltip.style.position = "";
+            tooltip.style.background = "transparent";
+            tooltip.style.border = "none";
+            tooltip.style.boxShadow = "none";
+            tooltip.style.left = "";
+            tooltip.style.top = "";
+            tooltip.innerHTML = "";
+
+            if (tooltip.parentElement) {
+                tooltip.parentElement.style.position = "";
+            }
+
+            tooltip.remove();
+        }
+    });
+}
+
+function countOccurrences(text, term) {
+    // Handle contractions and count occurrences correctly
+    const pattern = new RegExp(`(?:\\b|')${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    const matches = text.match(pattern);
+
+    // Debugging output
+    console.debug(`Searching for term: "${term}", found ${matches ? matches.length : 0} occurrences in text: "${text}"`);
+
+    return (matches || []).length;
+}
+
+
 
 // This function shows the amount of records present in the local translation table
 function Show_RecCount() {
@@ -510,7 +560,7 @@ async function mark_original(preview, toolTip, translation, rowId, isPlural){
 
                     missingTranslations = [];
                     // Run the function
-                    missingTranslations = await findMissingTranslations(glossWords, dutchText);
+                    missingTranslations = await f(glossWords, dutchText);
                     //console.debug(missingTranslations)
                     if (missingTranslations.length > 0) {
                         //console.debug("missing:",missingTranslations)
