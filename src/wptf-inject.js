@@ -99,8 +99,6 @@ function adjustLayoutScreen() {
     });
 }
 
-
-
 // Function to intercept XMLHttpRequests
 function interceptXHR(xhr) {
     // Intercept the open method to store the URL
@@ -158,7 +156,7 @@ function toggleInterception(shouldIntercept,transProcess) {
 
 // Add a listener to handle messages from the content script
 window.addEventListener('message', function (event) {
-   // console.debug("injected:",event)
+    //console.debug("injected:",event)
     // Check if the event is from a trusted source
     if (event.source === window && event.data.action === 'updateInterceptRequests') {
         // Update interception based on the message data
@@ -168,6 +166,7 @@ window.addEventListener('message', function (event) {
         if (MessageEvent.action === 'translate') {
             translateText(message.text, message.targetLang)
                 .then(translatedText => {
+                    //console.debug("translated in inject:",translatedText)
                     sendResponse({ translatedText: translatedText });
                 })
                 .catch(error => {
@@ -241,10 +240,6 @@ function listAllRecords(locale,myDelete,myRecordDeleted) {
         };
     });
 }
-
-
-
-
 
 function displayRecords(records, myDelete, myRecordDeleted) {
     const tableBody = document.getElementById("recordsTableBody");

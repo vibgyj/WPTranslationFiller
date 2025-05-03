@@ -2643,7 +2643,7 @@ async function checkbuttonClick(event) {
                             // console.debug("We are starting the observer:", mytextarea)
                             // We need to start the mutation server, if the textarea is clicked on
                             let leftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
-                            console.debug("before mutation:", leftPanel)
+                            //console.debug("before mutation:", leftPanel)
                             start_editor_mutation_server(mytextarea, action, leftPanel)
                         }
                         //mytextarea = textarea.getElementsByClassName('foreign-text')
@@ -3040,9 +3040,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     var current;
     var SavelocalButton;
     var imgsrc;
-    var currText = 'untranslated'
-    var debug = false;
-    var currText = 'untranslated'
+    var debug = false
+    var currText;
     var single
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 
@@ -3050,17 +3049,12 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     //console.debug("updateStyle1:",showHistory,myHistory,my_checkpage,currstring)
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
-    current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
-    if (typeof rowId == "undefined") {
-        let myRow = textareaElem.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.getAttribute("row");
-        current = document.querySelector("#editor-" + myRow + " div.editor-panel__left div.panel-header span.panel-header__bubble");
-        rowId = myrow
-    }
-    if (current == null) {
-        currText = 'untranslated'
-    }
-    else {
+    current = await document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
+    //console.debug("before:", current.value)
+    //console.debug("before:", current.innerText)
+    if (current != null) {
         currText = current.innerText
+        //console.debug("current:", current,currText)
     }
     let originalElem = document.querySelector("#preview-" + rowId + " .original");
     if (originalElem != null) {
@@ -3074,6 +3068,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
     if (debug == true) {
         console.debug("updateStyle1:", showHistory, myHistory, my_checkpage, currstring)
+        console.debug("UpdateStyle1 record:", record)
         console.debug("updatestyle prev:", prev_trans)
         console.debug("updatestyle curr:", currstring, rowId)
         console.debug("ShowHistory:", showHistory)
@@ -3107,13 +3102,10 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     if (SavelocalButton == null) {
         SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
     }
-
     // we need to take care that the save button is not added twice
     //myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     // pss 12-10-2023 this one needs to be improved as we now have the record containing the editor details
-    //current = document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
     if (typeof checkElem == "object") {
-        //console.debug("checkelem is object", checkElem)
         if (SavelocalButton == null) {
             if (!is_pte) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
@@ -3142,7 +3134,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             }
             // we need to add the button!
             // pss 18-04
-            res = await addCheckButton(rowId, checkElem, "3077")
+            res = await addCheckButton(rowId, checkElem, "3139")
             SavelocalButton = res.SavelocalButton;
         }
         else {
@@ -3169,18 +3161,17 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
     else {
         if (SavelocalButton == null) {
-            res = await addCheckButton(rowId, checkElem, "1984")
+            res = await addCheckButton(rowId, checkElem, "3166")
             SavelocalButton = res.SavelocalButton
         }
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     let row = rowId.split("-")[0];
-    if (currText != 'untranslated') {
-        // console.debug("in updateStyle:",result)
-        // this one is orange
+    //console.debug("currText:",currText,currstring,rowId)
+    if (currText != 'untranslated') { 
         updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff);
     }
-
+   
     row = rowId.split("-")[0];
 
     // 12-06-2021 PSS do not fetch old if within the translation
@@ -3194,12 +3185,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             single = "False";
         }
         // 31-01-2023 PSS fetchold should not be performed on untranslated lines issue #278
-        //    if (current.innerText != 'untranslated') {
-        //    let waiting = 5000
-        //    setTimeout(async function () {
+       
         await fetchOld(checkElem, result, newurl + "?filters%5Bstatus%5D=either&filters%5Boriginal_id%5D=" + row + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=asc", single, originalElem, row, rowId, showName, current.innerText, prev_trans, currcount, showDiff);
-        //    }, waiting);
-        //  }
     }
 }
 
@@ -3214,17 +3201,20 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
     var hasGlossary;
     var span_glossary;
     var toolTip = ""
-    // console.debug("glossary in validateEntry:",glossary)
-    if (textareaElem != null) {
+    
+    //console.debug("RowId",rowId)
+    if (typeof textareaElem === 'string') {
+        translation = textareaElem;
+       // console.debug('It is a string');
+    } else if (textareaElem !== null && typeof textareaElem === 'object' && !Array.isArray(textareaElem)) {
+        //console.log('It is a plain object');
         translation = textareaElem.value;
-        // console.debug("textareaElem:",textareaElem)
+        //console.debug("Validate translation:", translation);
+    } else {
+       // console.log('It is something else');
+        translation = textareaElem.innerText;
     }
-    else {
-        translation = ""
-    }
-    if (translation == "") {
-        translation = "Empty"
-    }
+
     addTranslateButtons(rowId);
     //preview_raw = getPreview(rowId)
     // console.debug("preview_raw:", preview_raw.querySelector('.original-text'))
@@ -3270,7 +3260,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
                     //We have a glossary word
                     //language, original, translation, locale, showDiff,rowId,isPlural
                     result = await validate(language, originalText, translation, locale, "", rowId, false, DefGlossary);
-                    //console.debug("validate in content line 2691",result)
+                    //console.debug("validate in content line 3270",result)
                     if (result.percent == 100) {
                         missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
                         missingVerbsButton.style.visibility = "hidden"
@@ -3293,11 +3283,12 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             }
             //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
             old_status = document.querySelector("#preview-" + rowId);
+            //console.debug("validateEntry:",translation)
             updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
             //}
         }
         else {
-            console.debug("textareaElem:", textareaElem)
+           // console.debug("textareaElem:", textareaElem)
             wordCount = 0;
             foundCount = 0;
             if (typeof textareaElem != "undefined") {
@@ -3310,7 +3301,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
                 }
             }
             else {
-                console.debug("we have no textareaElem!!")
+                //console.debug("we have no textareaElem!!")
                 percent = 100
                 tooltip = ""
                 wordCount = 0
@@ -3320,14 +3311,26 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             newText = "";
             result = { wordCount, foundCount, percent, toolTip, newText }
             old_status = document.querySelector("#preview-" + rowId);
+            //console.debug("before updateStyle:", textareaElem, rowId, translation)
             updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
         }
     }
     else {
-        //We dont have a glossary in validateEntry
+       // console.debug("We dont have a glossary in validateEntry")
+        if (typeof textareaElem === 'string') {
+            translation = textareaElem
+            //console.debug('It is a string');
+        }
+        else if (textareaElem !== null && typeof value === 'object' && !Array.isArray(value)) {
+           // console.debug('It is a plain object');
+            translation = textareaElem.value;
+           // console.debug("Validate translation:", translation)
+        } 
+
         wordCount = 0;
         foundCount = 0;
-        if (textareaElem.innerText != 'No suggestions' && textareaElem.innerText.length != 0) {
+       
+        if (translation != 'No suggestions') {
             percent = 100;
         }
         else {
@@ -3336,8 +3339,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
         toolTip = ""
         newText = "";
         result = { wordCount, foundCount, percent, toolTip, newText }
-
+       // console.debug("result:",result)
         old_status = document.querySelector("#preview-" + rowId);
+        showDiff = false
         updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
 
     }
@@ -3345,6 +3349,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
 }
 
 async function remove_all_gloss(myleftPanel, isPlural) {
+    //console.debug("remove_all_glossary:",myleftPanel, isPlural)
     var spansArray
     if (typeof myleftPanel != 'undefined') {
         //console.debug("isPlural:",isPlural)
@@ -3425,20 +3430,6 @@ function findMissingOccurrenceIndex(englishSentence, dutchSentence) {
 }
 
 
-
-function countOccurrences(text, term) {
-    if (typeof text !== 'string' || typeof term !== 'string') {
-        console.warn("Invalid input to countOccurrences:", { text, term });
-        return 0;
-    }
-
-    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`(?:\\b|')${escapedTerm}\\b`, 'gi');
-    const matches = text.match(pattern);
-
-    return (matches || []).length;
-}
-
 function escapeRegExp(string) {
     return string.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, '\\$&');
 }
@@ -3455,93 +3446,10 @@ let isProcessing = false; // Flag to prevent multiple calls
 let currentTranslation = ""; // To track the current state of the translation
 
 
-async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
-    // If already processing, exit early
-    if (isProcessing) return;
-
-    isProcessing = true;  // Set the flag to indicate processing is in progress
-
-    try {
-        var missingTranslations = [];
-        if (translation != "") {
-            if (DefGlossary == true) {
-                myglossary = glossary;
-            } else {
-                myglossary = glossary1;
-            }
-            newGloss = createNewGlossArray(myglossary);
-
-            let markleftPanel = myleftPanel;
-            if (markleftPanel != null) {
-                singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
-                singularText = singlepresent.getElementsByClassName('original')[0];
-                if (isPlural == true) {
-                    pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
-                    pluralText = pluralpresent.getElementsByClassName('original')[0];
-                    if (pluralpresent != null) {
-                        spansPlural = pluralpresent.getElementsByClassName("glossary-word");
-                    }
-                }
-                if (singlepresent != null) {
-                    spansSingular = singlepresent.getElementsByClassName("glossary-word");
-                }
-
-                if (isPlural == true) {
-                    spans = spansPlural;
-                } else {
-                    spans = spansSingular;
-                }
-
-                if (spans.length > 0) {
-                    let spansArray = Array.from(spans);
-                    for (let spancnt = 1; spancnt < spansArray.length; spancnt++) {
-                        spansArray[spancnt].setAttribute('gloss-index', spancnt);
-                    }
-                    let glossWords = createGlossArray(spansArray, newGloss);
-                    let dutchText = translation;
-
-                    if (isPlural == false) {
-                        await remove_all_gloss(markleftPanel, false);
-                        missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText);
-
-                        if (missingTranslations.length > 0) {
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                spansArray[glossIndex].classList.add('highlight');
-                            });
-                        } else {
-                            await remove_all_gloss(markleftPanel, false);
-                        }
-                    }
-
-                    if (isPlural == true) {
-                        await remove_all_gloss(markleftPanel, true);
-                        missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText);
-
-                        if (missingTranslations.length > 0) {
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                spansArray[glossIndex].classList.add('highlight');
-                            });
-                        } else {
-                            await remove_all_gloss(markleftPanel, true);
-                        }
-                    }
-                }
-            }
-        } else {
-            console.debug("We do not have a translation!!!");
-        }
-    } finally {
-        isProcessing = false;  // Reset the flag to allow future executions
-    }
-}
-
-
 async function findMissingTranslations(glossWords, translatedText) {
     const stack = new Error().stack;
     const caller = stack.split('\n')[2]?.trim();
-    console.debug("findMissingTranslations called by:", caller);
+    //console.debug("findMissingTranslations called by:", caller);
 
     const missingTranslations = [];
 
@@ -3674,7 +3582,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
         //console.debug("concat:",rowId,"newline:",newline,"tooltip:",typeof result.toolTip,"missingverbs:",typeof missingverbs,typeof headerElem.title)
         //headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
-        if (typeof result.toolTip != "undefined" && typeof missingverbs != "undefined" && typeof headerElem != "undefined") {
+        // 02-05-2025 PSS needs to be improved
+        if (typeof result.toolTip != "undefined" && typeof missingverbs != "undefined" && typeof headerElem != "undefined" && headerElem != null) {
             headertitle = headerElem.title.concat(newline).concat(missingverbs).concat(result.toolTip);
             newtitle = checkElem.title.concat(missingverbs).concat(result.toolTip);
         }
@@ -3719,9 +3628,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
                 }
                 // we need to update the button color and content/tooltip
-                // 22-07-2021 PSS fix for wrong button text "Apply" #108 
+                // 22-07-2021 PSS fix for wrong button text "Apply" #108
                 // moved the below code, and remove the duplicat of this code
                 //console.debug("result.percentage:",result.percent,currstring)
+                //console.debug("result.precent:",result.percent,result.toolTip)
                 if (checkElem != null) {
                     if (result.percent == 100) {
                         checkElem.innerHTML = "100";
@@ -3740,7 +3650,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         checkElem.title = __("Save the string");
                         myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                         // span_glossary = myleftPanel.querySelector(".glossary-word")
-                        await remove_all_gloss(myleftPanel)
+                        await remove_all_gloss(myleftPanel,false)
                         if (typeof headerElem != "undefined" && headerElem != null && panelTransDiv != null) {
                             if (panelTransDiv != null) {
                                 panelTransDiv.style.backgroundColor = "green";
@@ -3820,7 +3730,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         separator1 = document.createElement("div");
                         separator1.setAttribute("class", "checkElem_save");
                         checkElem.appendChild(separator1);
-                        res = addCheckButton(rowId, checkElem, "3794")
+                        res = addCheckButton(rowId, checkElem, "3747")
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
                             SavelocalButton.innerText = button_name;
@@ -3843,14 +3753,14 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             let separator1 = document.createElement("div");
                             separator1.setAttribute("class", "checkElem_save");
                             checkElem.appendChild(separator1);
-                            res = addCheckButton(rowId, checkElem, "3817")
+                            res = addCheckButton(rowId, checkElem, "3771")
                             if (res != null) {
                                 SavelocalButton = res.SavelocalButton
                             }
                             myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                             mark_glossary(myleftPanel, result.toolTip, currstring, rowId, false)
                             if (result.wordCount > 0) {
-                                checkElem.title = "Do not save the string";
+                                checkElem.title = __("Do not save the string");
                                 SavelocalButton.innerText = "Miss!";
                                 if (currstring == "No suggestions") {
                                     if (res != null) {
@@ -3861,12 +3771,12 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                             }
                             else {
                                 if (currstring != "No suggestions") {
-                                    checkElem.title = __("Save the string");
+                                    //checkElem.title = __("Save the string");
                                     SavelocalButton.innerText = "NoGlos";
                                 }
                                 else {
                                     //We found an error!!!
-                                    checkElem.title = "Do not save the string";
+                                    checkElem.title = __("Do not save the string");
                                     SavelocalButton.innerText = "Block";
                                     checkElem.style.backgroundColor = "red";
                                     res = addCheckButton(rowId, checkElem, "3843")
@@ -3880,19 +3790,25 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         }
                         else {
                             // the string does contain glossary words that are not used!
-                            //console.debug("result when glossary words are not used:",result)
+                           // console.debug("result when glossary words are not used:",result,result.toolTip)
                             checkElem.innerText = result.wordCount - result.foundCount;
                             checkElem.title = "Check the string";
+                           if (result.wordCount - result.foundCount > 0) {
+                                //console.debug("result.toolTip:",result.toolTip)
+                                checkElem.title.concat(result.toolTip)
+                            }
+                            
                             checkElem.style.backgroundColor = "red";
                             let separator1 = document.createElement("div");
                             separator1.setAttribute("class", "checkElem_save");
                             checkElem.appendChild(separator1);
-                            res = addCheckButton(rowId, checkElem, "3861")
+                            res = addCheckButton(rowId, checkElem, "3815")
                             SavelocalButton = res.SavelocalButton
                             myleftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                             mark_glossary(myleftPanel, result.toolTip, currstring, rowId, false)
+                           // console.debug("current:",current)
                             if (current != "untranslated" && current != 'current') {
-                                if (res != null) {
+                               // console.debug("res:",res)   
                                     if (res != null) {
                                         SavelocalButton.innerText = "Miss!";
                                         if (currstring == "No suggestions") {
@@ -3900,7 +3816,6 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                                             SavelocalButton.disabled = true;
                                         }
                                     }
-                                }
                             }
                             else {
                                 SavelocalButton.innerText = "Rej";
@@ -3920,7 +3835,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                     // newline = "\n";
                     missingverbs = "Missing glossary entry\n";
                     // We need to update the rowbutton
-                    // await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "2005");
+                   // await updateRowButton(current, SavelocalButton, checkElem, result.wordCount, result.foundCount, rowId, "3847");
                 }
                 else {
                     console.debug("checkelem is null!!!")
@@ -4020,24 +3935,63 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
 }
 
 function showNameLabel(originalElem) {
-    var namelabelexist;
+    var namelabelExist;
+    var debug = false
+    if (debug == true) {
+        console.debug("ShowNameLabel originalElem:",originalElem)
+        console.debug("ShowNameLabel nameDiff:", nameDiff)
+    }
     if (typeof originalElem != 'undefined') {
-        namelabelexist = originalElem.querySelector(".trans_name_div");
+        namelabelExist = originalElem.querySelector(".trans_name_div, .trans_name_div_true");
+        //console.debug("namelabelexist:", namelabelExist)
         // do not add the label twice
-        if (namelabelexist == null) {
+        if (namelabelExist == null) {
+            //console.debug("We need to add the label")
             var element1 = document.createElement("div");
             originalElem.appendChild(element1);
             if (nameDiff == true) {
+                // We need to add the div and set the text accordingly
                 element1.setAttribute("class", "trans_name_div_true");
                 element1.setAttribute("id", "trans_name_div_true");
                 element1.appendChild(document.createTextNode(__("Difference in URL, name of theme or plugin or author!")));
+                //console.debug("label added!")
             }
             else {
+                // We need to set the label if it is a name
                 element1.setAttribute("class", "trans_name_div");
                 element1.setAttribute("id", "trans_name_div");
                 element1.appendChild(document.createTextNode(__("URL, name of theme or plugin or author!")));
             }
+
         }
+        else {
+           // console.debug("originalElem:",originalElem)
+            namelabelexist = originalElem.querySelector(".trans_name_div_true");
+           // console.debug("we do have alreay a label with namediff", namelabelexist)
+            if (namelabelexist != null) {
+                //console.debug("we have a div for difference")
+                // We need to nameDiff to false otherwise the label will be red
+                let originalElem = document.querySelector("#preview-" + row + " .original");
+                let currentTrans = document.querySelector("#preview-" + row + " td.translation.foreign-text");
+                let originalTrans = originalElem
+                console.debug("trans:", currentTrans)
+                console.debug("original:", originalElem.innerText)
+                nameDiff = isExactlyEqual(currentTrans, originalElem.innerText)
+                if (nameDiff != true) {
+                    console.debug("We have no difference!")
+                   // namelabelexist.innerText = __("URL, name of theme or plugin or author!")
+                    namelabelexist.setAttribute("class", "trans_name_div");
+                }
+                else {
+                    console.debug("we still have a difference")
+                }
+            }
+            else {
+                console.debug("there is no label at all")
+            }
+        }
+       
+       
     }
 }
 
@@ -4543,6 +4497,7 @@ function countOccurrences(text, term) {
 
 
 async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
+    //console.debug("mark_glossary:",translation)
     var missingTranslations = [];
     if (translation != "") {
         if (DefGlossary == true) {
@@ -4559,6 +4514,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
             if (isPlural == true) {
                 pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
                 pluralText = pluralpresent.getElementsByClassName('original')[0];
+               // console.debug("pluralText:",pluralText)
                 if (pluralpresent != null) {
                     spansPlural = pluralpresent.getElementsByClassName("glossary-word");
                 }
@@ -4656,424 +4612,421 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
         myglossary = glossary1
     }
     //console.debug("myglossary:",myglossary)
-    if (myglossary.length != 0) {
-        Array.from(myglossary).forEach((obj, i) => {
-            if (!obj || typeof obj.key === "undefined" || typeof obj.value === "undefined") {
-                console.warn("Invalid glossary entry at index", i, ":", obj);
-            }
-        });
-        // console.log("Invalid entry at index 368:", myglossary[368]);
-        myGlossArray = Array.from(myglossary)
-        // console.debug("glossaryArray:", myGlossArray)
-        map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
-        //console.debug("map :", map)
-        //if (glossary_word.length != 0) {
-        let markleftPanel = document.querySelector(`#editor-${rowId} .editor-panel`)
-        //console.debug("leftpanel:",markleftPanel,rowId)
-        newText = ""
-        if (markleftPanel != null) {
-            pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
-            singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
-            singularText = singlepresent.getElementsByClassName('original')[0]
+    let isURL = isOnlyURL(original)
+    
+    if (!isURL) {
+        if (myglossary.length != 0) {
+            Array.from(myglossary).forEach((obj, i) => {
+                if (!obj || typeof obj.key === "undefined" || typeof obj.value === "undefined") {
+                    console.warn("Invalid glossary entry at index", i, ":", obj);
+                }
+            });
+            // console.log("Invalid entry at index 368:", myglossary[368]);
+            myGlossArray = Array.from(myglossary)
+            // console.debug("glossaryArray:", myGlossArray)
+            map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
+            //console.debug("map :", map)
+            //if (glossary_word.length != 0) {
+            let markleftPanel = document.querySelector(`#editor-${rowId} .editor-panel`)
+            //console.debug("leftpanel:",markleftPanel,rowId)
+            newText = ""
+            if (markleftPanel != null) {
+                pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
+                singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
+                singularText = singlepresent.getElementsByClassName('original')[0]
 
-            if (pluralpresent != null) {
-                //console.debug("plural text:",pluralpresent.innerText.trim())
-                spansPlural = pluralpresent.getElementsByClassName("glossary-word")
-            }
-            spansSingular = singlepresent.getElementsByClassName("glossary-word")
-            //console.debug("spans singular:",spansSingular)
-            if (isPlural == true) {
-                spans = spansPlural
-            }
-            else {
-                spans = spansSingular
-            }
-            if (spans.length > 0) {
-                //console.debug("houston we have a glossary")
-                //console.debug("spans:", spansSingular)
-                wordCount = spans.length
-                //console.debug("span length:", spans.length)
-                var spansArray = Array.from(spans)
-                for (spancnt = 0; spancnt < (spansArray.length); spancnt++) {
-                    // console.debug("loop through glossary links:",)                      
-                    myfoundCount = 0
-                    thisresult = ""
-                    wordToFind = spansArray[spancnt].textContent
-                    wordToFind = wordToFind.toLowerCase()
-                    thisresult = findByKey(map, wordToFind)
-                    //console.debug("thisresult after find in map",thisresult,wordToFind)
-                    if (thisresult != null && typeof thisresult != 'undefined') {
-                        searchTerm = thisresult[0]
-                        const word = searchTerm;
-                        translation = translation.replace(/[;!?,.()<>"/]/g, ' ')
-                        //  console.debug("validate translation:",translation)
-                        lowertranslation = translation.toLowerCase()
-                        count = countExactWordOccurrences(original.toLowerCase(), wordToFind)
+                if (pluralpresent != null) {
+                    //console.debug("plural text:",pluralpresent.innerText.trim())
+                    spansPlural = pluralpresent.getElementsByClassName("glossary-word")
+                }
+                spansSingular = singlepresent.getElementsByClassName("glossary-word")
+                //console.debug("spans singular:",spansSingular)
+                if (isPlural == true) {
+                    spans = spansPlural
+                }
+                else {
+                    spans = spansSingular
+                }
+                if (spans.length > 0) {
+                    //console.debug("houston we have a glossary")
+                    //console.debug("spans:", spansSingular)
+                    wordCount = spans.length
+                    //console.debug("span length:", spans.length)
+                    var spansArray = Array.from(spans)
+                    for (spancnt = 0; spancnt < (spansArray.length); spancnt++) {
+                        // console.debug("loop through glossary links:",)                      
+                        myfoundCount = 0
+                        thisresult = ""
+                        wordToFind = spansArray[spancnt].textContent
+                        wordToFind = wordToFind.toLowerCase()
+                        thisresult = findByKey(map, wordToFind)
+                        //console.debug("thisresult after find in map",thisresult,wordToFind)
+                        if (thisresult != null && typeof thisresult != 'undefined') {
+                            searchTerm = thisresult[0]
+                            const word = searchTerm;
+                            translation = translation.replace(/[;!?,.()<>"/]/g, ' ')
+                            //  console.debug("validate translation:",translation)
+                            lowertranslation = translation.toLowerCase()
+                            count = countExactWordOccurrences(original.toLowerCase(), wordToFind)
 
-                        //console.log(`The word "${wordToFind}" appears ${count} times.`);
-                        wordsCount = wordToFind.trim().split(/[\s:]+/).filter(Boolean).length;
-                        //console.debug("wordcount result:", wordsCount, wordToFind,count)
-                        if (thisresult.length == 1) {
-                            // if we only have one existense of the original, we have only one translation
-                            if (count == 1) {
-                                if (wordsCount == 1) {
-                                    // we need to remove all chars that do not belong to the single word
-                                    let words = lowertranslation.split(/[\s.,!?&:]+/)
-                                    let orgwords = translation.split(/[\s.,!?&:]+/)
+                            //console.log(`The word "${wordToFind}" appears ${count} times.`);
+                            wordsCount = wordToFind.trim().split(/[\s:]+/).filter(Boolean).length;
+                            //console.debug("wordcount result:", wordsCount, wordToFind,count)
+                            if (thisresult.length == 1) {
+                                // if we only have one existense of the original, we have only one translation
+                                if (count == 1) {
+                                    if (wordsCount == 1) {
+                                        // we need to remove all chars that do not belong to the single word
+                                        let words = lowertranslation.split(/[\s.,!?&:]+/)
+                                        let orgwords = translation.split(/[\s.,!?&:]+/)
 
-                                    if (words.some(word => word === searchTerm)) {
-                                        // if (translation.toLowerCase().includes(thisresult[0])) {
-                                        // console.debug("we found glossary in translation:", searchTerm, spancnt)
-                                        foundCount += 1
-                                        // no break here otherwise the list of glossaries is not comleted
-                                    }
-                                    else if (orgwords.some(word => word === searchTerm)) {
-                                        foundCount += 1
-                                        // no break here otherwise the list of glossaries is not comleted
-                                    }
-                                    else if (lowertranslation.includes(" " + searchTerm + " ")) {
-                                        // this might be necessary to find words between ''
-                                        //  console.debug("this is wrong:", searchTerm)
-                                        foundCount += 1
-                                    }
-                                    else if (lowertranslation.includes(" " + searchTerm)) {
-                                        if (strictValidation == false) {
+                                        if (words.some(word => word === searchTerm)) {
+                                            // if (translation.toLowerCase().includes(thisresult[0])) {
+                                            // console.debug("we found glossary in translation:", searchTerm, spancnt)
                                             foundCount += 1
-                                            //console.debug('We found combined word')
+                                            // no break here otherwise the list of glossaries is not comleted
                                         }
-                                    }
-                                    else if (lowertranslation.includes(searchTerm + " ")) {
-                                        if (strictValidation == false) {
+                                        else if (orgwords.some(word => word === searchTerm)) {
                                             foundCount += 1
-                                            //console.debug('We found combined word')
+                                            // no break here otherwise the list of glossaries is not comleted
                                         }
-                                    }
-                                    else if (lowertranslation.includes(searchTerm)) {
-                                        foundCount += 1
-                                        //console.debug('We found combined word')
-                                    }
-                                    else if (!lowertranslation.includes(" " + searchTerm + " ")) {
-                                        lowertranslation = lowertranslation.replace(/['"/]/g, ' ')
-                                        if (lowertranslation.includes(" " + searchTerm + " ")) {
-                                            foundCount += 1
-                                        }
-                                        else {
-                                            // console.debug("translation does not contain glossaryword:", searchTerm, thisresult)
-                                            toolTip += wordToFind + " - " + searchTerm + "\n"
-                                        }
-                                    }
-
-                                }
-                                else {
-                                    // console.debug("multi we found a glossary word with two words:", wordToFind)
-                                    searchTerm = thisresult[0]
-                                    // console.debug("multi searchTerm:", searchTerm)
-                                    translation = translation.replace(/[;!?&,.()<>"/]/g, ' ')
-                                    lowertranslation = translation.toLowerCase()
-                                    rresult = highlightExactWordInText(singularText.textContent.toLowerCase(), wordToFind);
-                                    //  console.debug("multi result original:", rresult.found, rresult.count)
-                                    transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm);
-                                    //  console.debug("multi result trans:", transresult.found, transresult.count)
-                                    //console.debug("multi diff:", rresult.count - transresult.count)
-                                    //if (lowertranslation.includes(searchTerm)) {
-                                    if (rresult.count == transresult.count) {
-                                        // console.debug("multi we found glossary in translation:", searchTerm)
-                                        foundCount += 1
-                                    }
-                                    else if (rresult.count - transresult.count != 0) {
-                                        // Sometimes we have a glossary entry starting with capital, so we need to check it again
-                                        transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm.toLowerCase());
-                                        if (transresult.count == 0) {
-                                            //  console.debug("multi we do have a difference")
-                                            toolTip += wordToFind + " - " + "check translation" + "\n"
-                                            // console.debug("multi toolTip after find:",toolTip)
-                                        }
-                                        else {
-                                            foundCount += 1
-                                        }
-                                    }
-                                    else if (transresult.found == false) {
-                                        toolTip += wordToFind + " - " + "check translation" + "\n"
-                                    }
-                                    else { console.debug("multi something is wrong here!") }
-                                }
-
-                            } // count is more than one
-                            else {
-                                //console.debug("word is more than one time present!!: ",wordToFind)
-                                const word = searchTerm;
-                                translation = translation.replace(/[;!?,.()<>"/]/g, ' ')
-                                lowertranslation = translation.toLowerCase()
-                                // wordToFind = original word!!
-                                // console.debug("word:", wordToFind)
-                                wordsCount = wordToFind.trim().split(/[\s:]+/).filter(Boolean).length;
-                                //console.debug("wordlength original:", wordsCount)
-                                rresult = highlightExactWordInText(singularText.textContent.toLowerCase(), wordToFind);
-                                //console.debug("multi result original highlight:", rresult.found, rresult.count)
-                                transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm);
-                                const multicount = countExactWordOccurrences(lowertranslation, searchTerm);
-                                //console.debug("multi searchTerm found in translation:",rresult.count, transresult,multicount,wordToFind,searchTerm)
-                                if (wordsCount == 1 && multicount == 1) {
-                                    let words = lowertranslation.split(/[\s.,!?&:]+/)
-                                    let orgtranswords = translation.split(/[\s.,!?:&]+/)
-                                    // console.debug("validat multi:",words,"searchTerm:",searchTerm)
-                                    if (words.some(word => word === searchTerm)) {
-                                        //  console.debug("we found glossary in translation:", searchTerm, i)
-                                        foundCount += 1
-                                        // no break here otherwise the list of glossaries is not comleted
-                                    }
-                                    else if (orgtranswords.some(word => word === searchTerm)) {
-                                        foundCount += 1
-                                        // no break here otherwise the list of glossaries is not comleted
-                                    }
-                                    else if (lowertranslation.includes(" " + searchTerm)) {
-                                        if (strictValidation == false) {
-                                            foundCount += 1
-                                            // console.debug('We found combined word')
-                                        }
-                                    }
-                                    else if (lowertranslation.includes(searchTerm + " ")) {
-                                        if (strictValidation == false) {
-                                            foundCount += 1
-                                            console.debug('We found combined word')
-                                        }
-                                    }
-                                    else {
-                                        lowertranslation = lowertranslation.replace(/['",/]/g, ' ')
-                                        //     console.debug("lower:", lowertranslation, '"' + searchTerm + '"')
-                                        if (lowertranslation.includes(" " + searchTerm + " ")) {
+                                        else if (lowertranslation.includes(" " + searchTerm + " ")) {
                                             // this might be necessary to find words between ''
-                                            //   console.debug("this is wrong:", searchTerm)
+                                            //  console.debug("this is wrong:", searchTerm)
                                             foundCount += 1
                                         }
-                                        else {
-                                            //console.debug("translation does not contain glossaryword:", searchTerm, wordToFind)
-                                            toolTip += wordToFind + " - " + searchTerm + "\n"
+                                        else if (lowertranslation.includes(" " + searchTerm)) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                //console.debug('We found combined word')
+                                            }
                                         }
-                                    }
-                                    // if (multicount < count) {
-                                    //    console.debug("houston we have found it", searchTerm,wordToFind)
-                                    //    foundCount -= 1
-                                    //   toolTip += wordToFind + " - " + searchTerm + "\n"
-                                    // }
-                                    //console.debug("foundCount + myfoundCount + count:", foundCount, myfoundCount, count, toolTip)
-                                }
-                                else {
-                                    //  console.debug("multi with more then one :",searchTerm,wordToFind)
-                                    rresult = highlightExactWordInText(singularText.textContent.toLowerCase(), wordToFind.toLowerCase());
-                                    transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm);
-                                    // console.debug("multi more then one:", rresult.count, transresult.count, wordToFind, searchTerm)
-                                    // console.debug("resultaat:",rresult.count === transresult.count)
-                                    if (transresult.found == true && (rresult.count == transresult.count) == true) {
-                                        // console.debug("multi we found:", searchTerm)
-                                        foundCount += 1
-                                    }
-                                    else if (transresult.found == false) {
-                                        // check for exact compare e.g no convert to lowercase
-                                        let transresult = highlightExactWordInText(translation, searchTerm);
-                                        if (transresult.found == true) {
-                                            // if there are more then one then we need to make sure they all match
-                                            if (transresult.count == rresult.count) {
+                                        else if (lowertranslation.includes(searchTerm + " ")) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                //console.debug('We found combined word')
+                                            }
+                                        }
+                                        else if (lowertranslation.includes(searchTerm)) {
+                                            foundCount += 1
+                                            //console.debug('We found combined word')
+                                        }
+                                        else if (!lowertranslation.includes(" " + searchTerm + " ")) {
+                                            lowertranslation = lowertranslation.replace(/['"/]/g, ' ')
+                                            if (lowertranslation.includes(" " + searchTerm + " ")) {
                                                 foundCount += 1
                                             }
                                             else {
-                                                // console.debug("we did not catch it!!!")
+                                                // console.debug("translation does not contain glossaryword:", searchTerm, thisresult)
                                                 toolTip += wordToFind + " - " + searchTerm + "\n"
                                             }
                                         }
-                                        else {
-                                            // not the same to mark them
-                                            toolTip += wordToFind + " - " + searchTerm + "\n"
-                                        }
 
                                     }
-                                    else if (transresult.found == true && rresult.count - transresult.count < 0) {
-                                        foundCount += 1
-                                        //console.debug("We found more then in original:",searchTerm)
-                                        //   if (!(toolTip.hasOwnProperty("`${wordToFind}`"))) {
-                                        //      toolTip += `${wordToFind} - ${searchTerm}\n`;
-                                        //  }
-
-                                        // toolTip += wordToFind + " - " + searchTerm + "\n"
-                                    }
-                                    else if (transresult.found == true && rresult.count - transresult.count > 0 && transresult.count < rresult.count) {
-                                        foundCount += 1
-                                        //console.debug("We found less then in original:", searchTerm)
-                                        //   if (!(toolTip.hasOwnProperty("`${wordToFind}`"))) {
-                                        //      toolTip += `${wordToFind} - ${searchTerm}\n`;
-                                        //  }
-
-                                        // toolTip += wordToFind + " - " + searchTerm + "\n"
-                                    }
-                                    else if (lowertranslation.includes(" " + searchTerm)) {
-                                        if (strictValidation == false) {
+                                    else {
+                                        // console.debug("multi we found a glossary word with two words:", wordToFind)
+                                        searchTerm = thisresult[0]
+                                        // console.debug("multi searchTerm:", searchTerm)
+                                        translation = translation.replace(/[;!?&,.()<>"/]/g, ' ')
+                                        lowertranslation = translation.toLowerCase()
+                                        rresult = highlightExactWordInText(singularText.textContent.toLowerCase(), wordToFind);
+                                        //  console.debug("multi result original:", rresult.found, rresult.count)
+                                        transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm);
+                                        //  console.debug("multi result trans:", transresult.found, transresult.count)
+                                        //console.debug("multi diff:", rresult.count - transresult.count)
+                                        //if (lowertranslation.includes(searchTerm)) {
+                                        if (rresult.count == transresult.count) {
+                                            // console.debug("multi we found glossary in translation:", searchTerm)
                                             foundCount += 1
-                                            // console.debug('We found combined word')
                                         }
-                                    }
-                                    else if (lowertranslation.includes(searchTerm + " ")) {
-                                        if (strictValidation == false) {
-                                            foundCount += 1
-                                            // console.debug('We found combined word')
+                                        else if (rresult.count - transresult.count != 0) {
+                                            // Sometimes we have a glossary entry starting with capital, so we need to check it again
+                                            transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm.toLowerCase());
+                                            if (transresult.count == 0) {
+                                                //  console.debug("multi we do have a difference")
+                                                toolTip += wordToFind + " - " + "check translation" + "\n"
+                                                // console.debug("multi toolTip after find:",toolTip)
+                                            }
+                                            else {
+                                                foundCount += 1
+                                            }
                                         }
-                                    }
-
-                                    //  else if (translation.includes(searchTerm)) {
-                                    //      myfoundCount += 1
-                                    //   console.debug("translation does contain:", searchTerm, wordToFind)
-
-                                    //  }
-                                    //   else if (!translation.includes(searchTerm)) {
-                                    //myfoundCount += 1
-                                    //      console.debug("translation does not contain glossaryword:", searchTerm, wordToFind)
-                                    //      toolTip += wordToFind + " - " + searchTerm + "\n"
-                                    //  }
-                                    // console.debug("myfoundCount:",myfoundCount)
-                                }
-                            }
-
-                            //console.debug("translation + foundCount + count:",searchTerm, foundCount, count, toolTip)
-                        }
-                        else if (thisresult != null && thisresult.length > 1) {
-                            // if the glossary word does contain more words, we need to check the other words as well
-                            // but start with the first one
-                            // console.debug("we found more then one:", wordToFind, thisresult)
-                            // if (thisresult!=null){
-                            // console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
-
-                            isFound = false
-                            for (let cnt = 0; cnt < thisresult.length; cnt++) {
-                                //console.debug("counter:",cnt)
-                                //if (found == false) {
-                                NewsearchTerm = thisresult[cnt]
-                                // console.debug("NewSearchTerm:", NewsearchTerm)
-                                wordsCount = NewsearchTerm.trim().split(/\s+/).filter(Boolean).length;
-                                // console.debug("wordcount in multiple:", wordsCount)
-                                //   console.debug("zoekterm:", NewsearchTerm)
-                                if (wordsCount == 1) {
-                                    // we need to remove all chars that do not belong to the single word
-                                    translation = translation.replace(/[:;!?&,.()<>"/]/g, ' ')
-                                    // console.debug("translation:",translation)
-                                    lowertranslation = translation.toLowerCase()
-                                    let words = lowertranslation.split(/[\s.,!?&()]+/)
-                                    //   console.debug("words:", words)
-                                    let orgwords = translation.split(/[\s.,!?&()]+/)
-                                    if (words.some(word => word === NewsearchTerm)) {
-                                        // console.debug("we found glossary in translation:", NewsearchTerm.trim())
-                                        foundCount += 1
-                                        isFound = true
-                                    }
-                                    else if (orgwords.some(word => word === NewsearchTerm.trim())) {
-                                        foundCount += 1
-                                        isFound = true
-
-                                    }
-                                    else if (lowertranslation.includes(" " + NewsearchTerm.trim().toLowerCase() + " ")) {
-                                        // console.debug("Search for  multi")
-                                        foundCount += 1
-                                        isFound = true
-                                    }
-                                    else if (lowertranslation.includes(" " + NewsearchTerm)) {
-                                        if (strictValidation == false) {
-                                            foundCount += 1
-                                            //console.debug('We found combined word')
-                                            isFound = true
+                                        else if (transresult.found == false) {
+                                            toolTip += wordToFind + " - " + "check translation" + "\n"
                                         }
-                                    }
-                                    else if (lowertranslation.includes(NewsearchTerm + " ")) {
-                                        if (strictValidation == false) {
-                                            foundCount += 1
-                                            // console.debug('We found combined word')
-                                            isFound = true
-                                        }
+                                        else { console.debug("multi something is wrong here!") }
                                     }
 
-
-                                    // we did not find one of the words
-                                }
+                                } // count is more than one
                                 else {
-                                    //console.debug("we found more then one word in the entry")
+                                    //console.debug("word is more than one time present!!: ",wordToFind)
+                                    const word = searchTerm;
+                                    translation = translation.replace(/[;!?,.()<>"/]/g, ' ')
+                                    lowertranslation = translation.toLowerCase()
+                                    // wordToFind = original word!!
+                                    // console.debug("word:", wordToFind)
+                                    wordsCount = wordToFind.trim().split(/[\s:]+/).filter(Boolean).length;
+                                    //console.debug("wordlength original:", wordsCount)
+                                    rresult = highlightExactWordInText(singularText.textContent.toLowerCase(), wordToFind);
+                                    //console.debug("multi result original highlight:", rresult.found, rresult.count)
+                                    transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm);
+                                    const multicount = countExactWordOccurrences(lowertranslation, searchTerm);
+                                    //console.debug("multi searchTerm found in translation:",rresult.count, transresult,multicount,wordToFind,searchTerm)
+                                    if (wordsCount == 1 && multicount == 1) {
+                                        let words = lowertranslation.split(/[\s.,!?&:]+/)
+                                        let orgtranswords = translation.split(/[\s.,!?:&]+/)
+                                        // console.debug("validat multi:",words,"searchTerm:",searchTerm)
+                                        if (words.some(word => word === searchTerm)) {
+                                            //  console.debug("we found glossary in translation:", searchTerm, i)
+                                            foundCount += 1
+                                            // no break here otherwise the list of glossaries is not comleted
+                                        }
+                                        else if (orgtranswords.some(word => word === searchTerm)) {
+                                            foundCount += 1
+                                            // no break here otherwise the list of glossaries is not comleted
+                                        }
+                                        else if (lowertranslation.includes(" " + searchTerm)) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                // console.debug('We found combined word')
+                                            }
+                                        }
+                                        else if (lowertranslation.includes(searchTerm + " ")) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                console.debug('We found combined word')
+                                            }
+                                        }
+                                        else {
+                                            lowertranslation = lowertranslation.replace(/['",/]/g, ' ')
+                                            //     console.debug("lower:", lowertranslation, '"' + searchTerm + '"')
+                                            if (lowertranslation.includes(" " + searchTerm + " ")) {
+                                                // this might be necessary to find words between ''
+                                                //   console.debug("this is wrong:", searchTerm)
+                                                foundCount += 1
+                                            }
+                                            else {
+                                                //console.debug("translation does not contain glossaryword:", searchTerm, wordToFind)
+                                                toolTip += wordToFind + " - " + searchTerm + "\n"
+                                            }
+                                        }
+                                        // if (multicount < count) {
+                                        //    console.debug("houston we have found it", searchTerm,wordToFind)
+                                        //    foundCount -= 1
+                                        //   toolTip += wordToFind + " - " + searchTerm + "\n"
+                                        // }
+                                        //console.debug("foundCount + myfoundCount + count:", foundCount, myfoundCount, count, toolTip)
+                                    }
+                                    else {
+                                        //  console.debug("multi with more then one :",searchTerm,wordToFind)
+                                        rresult = highlightExactWordInText(singularText.textContent.toLowerCase(), wordToFind.toLowerCase());
+                                        transresult = highlightExactWordInText(translation.toLowerCase(), searchTerm);
+                                        // console.debug("multi more then one:", rresult.count, transresult.count, wordToFind, searchTerm)
+                                        // console.debug("resultaat:",rresult.count === transresult.count)
+                                        if (transresult.found == true && (rresult.count == transresult.count) == true) {
+                                            // console.debug("multi we found:", searchTerm)
+                                            foundCount += 1
+                                        }
+                                        else if (transresult.found == false) {
+                                            // check for exact compare e.g no convert to lowercase
+                                            let transresult = highlightExactWordInText(translation, searchTerm);
+                                            if (transresult.found == true) {
+                                                // if there are more then one then we need to make sure they all match
+                                                if (transresult.count == rresult.count) {
+                                                    foundCount += 1
+                                                }
+                                                else {
+                                                    // console.debug("we did not catch it!!!")
+                                                    toolTip += wordToFind + " - " + searchTerm + "\n"
+                                                }
+                                            }
+                                            else {
+                                                // not the same to mark them
+                                                toolTip += wordToFind + " - " + searchTerm + "\n"
+                                            }
+
+                                        }
+                                        else if (transresult.found == true && rresult.count - transresult.count < 0) {
+                                            foundCount += 1
+                                            //console.debug("We found more then in original:",searchTerm)
+                                            //   if (!(toolTip.hasOwnProperty("`${wordToFind}`"))) {
+                                            //      toolTip += `${wordToFind} - ${searchTerm}\n`;
+                                            //  }
+
+                                            // toolTip += wordToFind + " - " + searchTerm + "\n"
+                                        }
+                                        else if (transresult.found == true && rresult.count - transresult.count > 0 && transresult.count < rresult.count) {
+                                            foundCount += 1
+                                            //console.debug("We found less then in original:", searchTerm)
+                                            //   if (!(toolTip.hasOwnProperty("`${wordToFind}`"))) {
+                                            //      toolTip += `${wordToFind} - ${searchTerm}\n`;
+                                            //  }
+
+                                            // toolTip += wordToFind + " - " + searchTerm + "\n"
+                                        }
+                                        else if (lowertranslation.includes(" " + searchTerm)) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                // console.debug('We found combined word')
+                                            }
+                                        }
+                                        else if (lowertranslation.includes(searchTerm + " ")) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                // console.debug('We found combined word')
+                                            }
+                                        }
+                                    }
                                 }
 
-                                if (isFound == true) {
-                                    //console.debug("more then one isFound:", isFound)
-                                    break;
-                                }
+                                //console.debug("translation + foundCount + count:",searchTerm, foundCount, count, toolTip)
                             }
+                            else if (thisresult != null && thisresult.length > 1) {
+                                // if the glossary word does contain more words, we need to check the other words as well
+                                // but start with the first one
+                                // console.debug("we found more then one:", wordToFind, thisresult)
+                                // if (thisresult!=null){
+                                // console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
 
-                            //console.debug("at the end:", foundCount, isFound)
-                            if (foundCount == 0 && isFound != true) {
-                                //console.debug("we did not have a result")
-                                toolTip += wordToFind + " - " + "wrong translation" + "\n"
-                                // break;
+                                isFound = false
+                                for (let cnt = 0; cnt < thisresult.length; cnt++) {
+                                    //console.debug("counter:",cnt)
+                                    //if (found == false) {
+                                    NewsearchTerm = thisresult[cnt]
+                                    // console.debug("NewSearchTerm:", NewsearchTerm)
+                                    wordsCount = NewsearchTerm.trim().split(/\s+/).filter(Boolean).length;
+                                    // console.debug("wordcount in multiple:", wordsCount)
+                                    //   console.debug("zoekterm:", NewsearchTerm)
+                                    if (wordsCount == 1) {
+                                        // we need to remove all chars that do not belong to the single word
+                                        translation = translation.replace(/[:;!?&,.()<>"/]/g, ' ')
+                                        // console.debug("translation:",translation)
+                                        lowertranslation = translation.toLowerCase()
+                                        let words = lowertranslation.split(/[\s.,!?&()]+/)
+                                        //   console.debug("words:", words)
+                                        let orgwords = translation.split(/[\s.,!?&()]+/)
+                                        if (words.some(word => word === NewsearchTerm)) {
+                                            // console.debug("we found glossary in translation:", NewsearchTerm.trim())
+                                            foundCount += 1
+                                            isFound = true
+                                        }
+                                        else if (orgwords.some(word => word === NewsearchTerm.trim())) {
+                                            foundCount += 1
+                                            isFound = true
+
+                                        }
+                                        else if (lowertranslation.includes(" " + NewsearchTerm.trim().toLowerCase() + " ")) {
+                                            // console.debug("Search for  multi")
+                                            foundCount += 1
+                                            isFound = true
+                                        }
+                                        else if (lowertranslation.includes(" " + NewsearchTerm)) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                //console.debug('We found combined word')
+                                                isFound = true
+                                            }
+                                        }
+                                        else if (lowertranslation.includes(NewsearchTerm + " ")) {
+                                            if (strictValidation == false) {
+                                                foundCount += 1
+                                                // console.debug('We found combined word')
+                                                isFound = true
+                                            }
+                                        }
+
+
+                                        // we did not find one of the words
+                                    }
+                                    else {
+                                        //console.debug("we found more then one word in the entry")
+                                    }
+
+                                    if (isFound == true) {
+                                        //console.debug("more then one isFound:", isFound)
+                                        break;
+                                    }
+                                }
+
+                                //console.debug("at the end:", foundCount, isFound)
+                                if (foundCount == 0 && isFound != true) {
+                                    //console.debug("we did not have a result")
+                                    toolTip += wordToFind + " - " + "wrong translation" + "\n"
+                                    // break;
+                                }
+                                else if (foundCount > 0 && isFound != true) {
+                                    // the glossary translation did not match the translation
+                                    toolTip += wordToFind + " - " + "check translation" + "\n"
+                                }
+                                // console.debug("we need to clean!!")
                             }
-                            else if (foundCount > 0 && isFound != true) {
-                                // the glossary translation did not match the translation
-                                toolTip += wordToFind + " - " + "check translation" + "\n"
+                            else {
+                                // console.debug("we have no result:", wordToFind)
+                                toolTip += wordToFind + " - " + "NoGloss" + "\n"
                             }
-                            // console.debug("we need to clean!!")
                         }
                         else {
-                            // console.debug("we have no result:", wordToFind)
+                            //console.debug("we have no result:",wordToFind)
                             toolTip += wordToFind + " - " + "NoGloss" + "\n"
+                            // break;
                         }
                     }
-                    else {
-                        //console.debug("we have no result:",wordToFind)
-                        toolTip += wordToFind + " - " + "NoGloss" + "\n"
-                        // break;
-                    }
+                }
+                else {
+                    //console.debug("no glossary")
+                    wordCount = 0;
+                    toolTip = ""
+                    foundcount = 0;
+                    percent = 100;
                 }
             }
             else {
-                //console.debug("no glossary")
+                // console.debug("no leftpanel:",rowId)
                 wordCount = 0;
                 toolTip = ""
                 foundcount = 0;
                 percent = 100;
+                //return { wordCount, foundCount, percent, toolTip, newText }
             }
+
+            foundCount = foundCount + myfoundCount
+            if (wordCount == 0 && foundCount == 0 && translation != 'Empty') {
+                if (translation != 'No suggestions') {
+                    toolTip = ""
+                    percent = 100;
+                }
+                else {
+                    percent = 0;
+                    wordCount = 1;
+                    foundCount = 0;
+                    toolTip += `No glossary words\n`;
+                }
+            }
+            else if ((wordCount == 0 && foundCount == 0 && translation == 'Empty')) {
+                percent = 0;
+                toolTip = "Translation is empty"
+            }
+            else if (wordCount == foundCount) {
+                // console.debug("counts are equal!")
+                percent = 100;
+                toolTip = ""
+            }
+            else if ((wordCount - foundCount) > 0) {
+                //console.debug("we found a difference")
+                percent = Math.round((foundCount * 100) / wordCount);
+            }
+            //console.debug("total toolTip:",toolTip)
         }
         else {
-            // console.debug("no leftpanel:",rowId)
-            wordCount = 0;
-            toolTip = ""
-            foundcount = 0;
-            percent = 100;
-            //return { wordCount, foundCount, percent, toolTip, newText }
-        }
-
-        foundCount = foundCount + myfoundCount
-        if (wordCount == 0 && foundCount == 0 && translation != 'Empty') {
-            if (translation != 'No suggestions') {
-                toolTip = ""
-                percent = 100;
-            }
-            else {
-                percent = 0;
-                wordCount = 1;
-                foundCount = 0;
-                toolTip += `No glossary words\n`;
+            if (debug) {
+                console.debug("No glossary")
             }
         }
-        else if ((wordCount == 0 && foundCount == 0 && translation == 'Empty')) {
-            percent = 0;
-            toolTip = "Translation is empty"
-        }
-        else if (wordCount == foundCount) {
-            // console.debug("counts are equal!")
-            percent = 100;
-            toolTip = ""
-        }
-        else if ((wordCount - foundCount) > 0) {
-            //console.debug("we found a difference")
-            percent = Math.round((foundCount * 100) / wordCount);
-        }
-        //console.debug("total toolTip:",toolTip)
     }
     else {
-        if (debug) {
-            console.debug("No glossary")
-        }
+       // console.debug("We do have an URL only:", original, isURL)
+        percent = 100;
+        toolTip = ""
     }
     newText = ""
     // console.debug("before return:",wordCount,foundCount,percent,toolTip)
@@ -6230,33 +6183,34 @@ function MutationsPlural(mutations, observer) {
                                     //if (valResult.percent == 100) {
                                     // deze verwijderen en de algemene aanroep gebruiken!!!
 
-                                    mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
+                                   // mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
                                 }
-                                else if (MyResult.percent >= 66) {
-                                    mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
+                                else if (MyResult.percent >= 66 && MyResult.percent < 100) {
+                                    panelTransMenu[0].style.backgroundColor = "yellow";
+                                   // mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
                                 }
                                 else if (MyResult.percent >= 33) {
                                     //else if (valResult.percent >= 33) {
                                     panelTransMenu[0].style.backgroundColor = "orange";
 
-                                    mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
+                                   // mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
                                 }
                                 else if (MyResult.percent >= 10) {
                                     //else if (valResult.percent == 10) {
                                     panelTransMenu[0].style.backgroundColor = "purple";
-                                    mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
+                                   // mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
                                 }
                                 else if (MyResult.percent < 33 && MyResult.percent > 0) {
                                     // else if (valResult.percent < 33 && valResult.percent > 0) {
                                     panelTransMenu[0].style.backgroundColor = "darkorange";
-                                    mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
+                                 //   mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
                                 }
                                 else if (MyResult.percent == 0) {
                                     panelTransMenu[0].style.backgroundColor = "red";
-                                    mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
+                                   // mark_glossary(leftPanel, MyResult.toolTip, translation, rowId, true)
                                     //   }
                                 }
-                                //  mark_glossary(leftPanel, MyResult.toolTip, translation, rowId,true)
+                                mark_glossary(leftPanel, MyResult.toolTip, translation, rowId,true)
                             } // missingverbs is null
                         }
                         else {

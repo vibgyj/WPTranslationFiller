@@ -49,3 +49,6 @@ Version changes as of version 3.3
 47. Version 3.9.47 Removed code that was causing records to be set as "waiting"
 48. Version 3.9.48 Fixed a problem that caused the dropdown to be closed after opening
 49. Version 3.9.49 Overhauled finding missing glossary words, overhauled/renaming diverse observers
+50. Version 3.9.50 Various fixes
+51. Version 3.9.51 Completely overhauled the translatePage function, also corrected several wrong functions
+52. Version 3.9.52 Improved DeepL behavior with capitals
