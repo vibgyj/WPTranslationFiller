@@ -40,6 +40,101 @@ async function openDB(db) {
     };
 }
 
+function addRecord(data) {
+    if (!dbDeepL) {
+        console.error("Database not initialized.");
+        return;
+    }
+
+    const transaction = dbDeepL.transaction("glossary", "readwrite");
+    const store = transaction.objectStore("glossary");
+    const request = store.add(data);
+
+    request.onsuccess = () => {
+        console.debug("Record added successfully:", data);
+    };
+
+    request.onerror = (event) => {
+        console.error("Error adding record:", event.target.error);
+    };
+}
+
+function setSearchLocale(locale) {
+    document.getElementById("searchLocale").value = locale;
+}
+
+async function openDeeplModal(DeepLdb) {
+    // we need to set the text of the button here, otherwise the translation is not found
+    let saveText = __("SaveRec")
+    var deleteText = __("Delete")
+    var message = __("Translation updated successfully!")
+    var title = __("Manage glossary")
+    var DeepLClose = __("Close")
+    var ImpCSV = __("Import CSV")
+    var ExpCSV = __("Export CSV")
+    var AddEntry = __("Add Entry")
+    var mySearch = __("Search")
+    var searchLoc = __("Enter Locale")
+    var searchOrig = __("Enter Original")
+    var locHead = __("Locale Header")
+    var origHead = __("Original Header")
+    var transHead = __("Translation Header")
+    var myDelete = __("Delete")
+    var myRecordDeleted = __("Record deleted: ")
+    var DownLoadPath = ""
+
+    await chrome.storage.local.get(["DownloadPath"], function (data) {
+       // console.debug("Download path:", data)
+        DownloadPath =  data.DownloadPath
+        if (DownloadPath == "" || DownloadPath == null) {
+            DownloadPath = "C:\\Temp\\"
+        }
+     // console.debug("pad:",DownloadPath)
+        const modalHTML = `
+<div id="DeepLmodal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+  <div style="background:white; padding:20px; margin:auto; width:60%;">
+    <h2>${title}</h2>
+    <button onclick="closeModalClicked()">${DeepLClose}</button>
+    
+    <button 
+     data-delete="${myDelete}" 
+      data-deleted="${myRecordDeleted}" 
+      onclick="importDeepLCSV(this.dataset.delete, this.dataset.deleted)"
+    >
+      ${ImpCSV}
+    </button>
+    
+    <button onclick="exportDeepLCSV()">${ExpCSV}</button>
+    <button id="addEntryButton">${AddEntry}</button>
+    <input type="text" id="searchLocale" placeholder="${searchLoc}">
+    <input type="text" id="searchOriginal" placeholder="${searchOrig}">
+    
+    <button onclick="startSearch('${saveText}', '${deleteText}', '${message}')">${mySearch}</button>
+
+    <table border="1">
+      <thead>
+        <tr><th>${locHead}</th><th>${origHead}</th><th>${transHead}</th></tr>
+      </thead>
+      <tbody id="recordsTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+`;
+
+        // Append modal to body
+        document.body.insertAdjacentHTML("beforeend", modalHTML);
+        document.getElementById("DeepLmodal").style.display = "block";
+        let locale = checkLocale() || 'en';
+        locale = locale.toUpperCase()
+        listAllRecords(locale, myDelete, myRecordDeleted);
+        document.getElementById("addEntryButton").addEventListener("click", addEntry);
+        // We need to set the locale to the working locale in the modal
+        setSearchLocale(locale)
+    })
+}
+
+
 function createAndOpenModal() {
     //console.debug("locale:",locale)
     // Create the modal elements
@@ -84,11 +179,11 @@ function createAndOpenModal() {
 
     const deleteButton = document.createElement('button');
     deleteButton.id = 'deleteDataBtn';
-    deleteButton.textContent = 'Delete';
+    deleteButton.textContent = __('Delete');
 
     const saveButton = document.createElement('button');
     saveButton.id = 'saveDataBtn';
-    saveButton.textContent = 'Save';
+    saveButton.textContent = __('SaveRec');
     const outputDiv = document.createElement('div');
     outputDiv.id = 'output';
     modalContent.appendChild(closeButton);
@@ -822,7 +917,7 @@ async function resetDB() {
 
 }
 
-function clearData() {
+function clearData(event) {
     // open a read/write db transaction, ready for clearing the data
     event.preventDefault();
     currWindow = window.self;
@@ -863,7 +958,7 @@ function clearData() {
     })
 }
 
-function deleteDB() {
+function deleteDB(event) {
     event.preventDefault();
     currWindow = window.self;
 
@@ -903,4 +998,105 @@ function deleteDB() {
 
         }
     })
+}
+
+function addEntry() {
+    const tableBody = document.getElementById("recordsTableBody"); // Select correct tbody
+    let locale = checkLocale() || 'en';
+    locale = locale.toUpperCase()
+    // Create a new row
+    const newRow = document.createElement("tr");
+
+    // Create input fields
+    ["locale", "original", "translation"].forEach(field => {
+        const td = document.createElement("td");
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = field;
+        input.id = field
+        input.className = "editable"; // Add a class for styling
+        td.appendChild(input);
+        newRow.appendChild(td);
+    });
+
+    // Add save button
+    const saveTd = document.createElement("td");
+    const saveButton = document.createElement("button");
+    saveButton.textContent = __("SaveRec");
+    saveButton.onclick = function () {
+        saveNewRecord(newRow);
+    };
+    saveTd.appendChild(saveButton);
+    newRow.appendChild(saveTd);
+
+    // Append row to tbody
+   // tbody.appendChild(newRow);
+    const firstRow = tableBody.firstChild;
+    tableBody.insertBefore(newRow, firstRow);
+    document.getElementById("locale").value = locale;
+}
+
+function saveNewRecord() {
+    console.debug("Saving record...");
+    let locale = document.getElementById("locale").value.trim();
+    const original = document.getElementById("original").value.trim();
+    const translation = document.getElementById("translation").value.trim();
+    myDelete = __("Delete")
+    myRecordDeleted = __("Record deleted: ")
+    if (!locale || !original || !translation) {
+        alert(__("All fields must be filled!"));
+        return;
+    }
+
+    openDeepLDatabase().then(dbDeepL => {
+        console.debug("Database opened:", dbDeepL);
+        const transaction = dbDeepL.transaction("glossary", "readwrite");
+        const store = transaction.objectStore("glossary");
+        const index = store.index("locale_original");
+
+        const keyRange = IDBKeyRange.only([locale, original]);
+
+        const request = index.get(keyRange);
+        request.onsuccess = function (event) {
+            const existingRecord = event.target.result;
+
+            if (existingRecord) {
+                existingRecord.translation = translation;
+                store.put(existingRecord);
+                alert("Record updated successfully!");
+            } else {
+                const newRecord = { locale, original, translation };
+                store.add(newRecord);
+                alert("Record saved successfully!");
+            }
+        };
+
+        transaction.oncomplete = function () {
+            console.debug("Transaction completed, reloading records...");
+            locale = locale.toUpperCase()
+            listAllRecords(locale,myDelete,myRecordDeleted); //Ensure records are refreshed in the correct order
+        };
+    });
+}
+
+
+// Function to refresh table
+//function displayRecordsFromDB(myDelete,myRecordDeleted) {
+//    console.debug("we are displaying")
+//    openDeepLDatabase().then(dbDeepL => {
+//        const transaction = dbDeepL.transaction("glossary", "readonly");
+//        const store = transaction.objectStore("glossary");
+//        const request = store.getAll();
+
+ //       request.onsuccess = () => {
+  //              displayRecords(request.result, myDelete, myRecordDeleted);
+  //      };
+ //   });
+//}
+
+function parseCSV(content) {
+    return content.split("\n").map(line => {
+        const [original, translation] = line.split(",").map(item => item.trim());
+        return original && translation ? { original, translation } : null;
+    }).filter(entry => entry);
 }

@@ -65,13 +65,13 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
                 else if (response.error == "HTTP error! Status: 401") {
                     messageBox("info", "We did not get a result of the request<br>" + response.error + "<br> Check your licence")
                 }
-                else if (error.status == "403") {
+                else if (response.status == "403") {
                     messageBox("info", "Authorization error<br>" + response.error + "<br> Check your licence")
                 }
-                else if (error.status == '404') {
+                else if (response.error.status == '404') {
                     messageBox("info", "The page could not be found" + response.error)
                 }
-                else if (error.status == '429') {
+                else if (response.status == '429') {
                     messageBox("error", "Error: We did perform to many requests to the CORS server");
                     cuteAlert({
                         type: "question",
@@ -101,6 +101,7 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
 
 async function load_glossary(glossary, apikeyDeepl, DeeplFree, language) {
     currWindow = window.self;
+    //console.debug("glosss:",glossary)
     var gloss = await prepare_glossary(glossary, language)
     gloss = JSON.stringify(gloss)
     await loadMyGlossary(apikeyDeepl, DeeplFree, gloss);
@@ -554,6 +555,32 @@ async function oldshow_glossary(apikeyDeepl, DeeplFree, language) {
         });
 }
 
+async function delete_all_glossary(apikeyDeepl, DeeplFree) {
+    var myKey=apikeyDeepl
+    currWindow = window.self;
+    chrome.runtime.sendMessage({
+        action: "fetch_deepl_glossaries",
+        apiKey: apikeyDeepl
+    }, (response) => {
+        if (response && response.success) {
+            var glossaryId = response.glossaries.glossaries
+            //console.debug("all the glossaries:", glossaryId,glossaryId.length)
+            if (typeof glossaryId != 'undefined' && glossaryId.length != 0) {
+                var gloss = ""
+                for (let i = 0, len = glossaryId.length, text = ""; i < len; i++) {
+                    deleteGlossary(myKey, DeeplFree, glossaryId[i].glossary_id)
+                }
+            }
+        }
+        // We need to set the status back
+        localStorage.setItem('deeplGlossary', "");
+        let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-green`);
+        if (loadGlossButton != null) {
+            loadGlossButton.classList.remove("LoadGloss-button-green");
+            loadGlossButton.classList.add("LoadGloss-button-red");
+        }
+    })
+}
 function deleteGlossary(apiKey, isFree, glossaryId) {
     chrome.runtime.sendMessage({
         action: "delete_deepl_glossary",
@@ -660,12 +687,12 @@ async function prepare_glossary(glossary, language) {
             }
             else {
                 console.debug("glossary ends with blank:", glossary[i])
-                glossentry = glossary[i].substring(0, glossary[i].length - 1) + '\n'
+                glossentry = glossary[i].trim() + '\n';
                 glossentry = toUtf8(glossentry)
             }
         }
         else {
-            glossentry = glossary[i].substring(0, glossary[i].length - 1)
+            glossentry = glossary[i].trim() + '\n';
             glossentry = toUtf8(glossentry)
         }
         if (typeof glossentry != 'undefined') {

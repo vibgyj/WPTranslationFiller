@@ -48,6 +48,7 @@ let LtToolKeyTextbox = document.getElementById("languagetool_key");
 let LtToolUserTextbox = document.getElementById("languagetool_user");
 let LtToolLangTextbox = document.getElementById("languagetool_language");
 let LtToolLangCheckbox = document.getElementById("LangToolFree");
+//let DownloadTextbox = document.getElementById("Download_path");
 let TMwaitValue = document.getElementById("tmWait");
 let OpenAIwaitValue = document.getElementById("OpenAIWait");
 let DeepLwaitValue = document.getElementById("DeepLWait");
@@ -71,10 +72,15 @@ let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
-
+  //  if (data.DownloadPath != null) {
+  //      DownloadTextbox.value = data.DownloadPath
+  //  }
+  //  else {
+  //      DownloadTextbox.value = "C:\Temp"
+  //  }
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -313,16 +319,8 @@ backbutton.addEventListener("click", function () {
     chrome.storage.local.get('lastPageVisited', async function (result) {
         const pathname = ""
         const url = window.location.href.replace(pathname, result.lastPageVisited);
-        // window.location.href = result.lastPageVisited
-        //window.location.href = result.lastPageVisited
-       // window.location.reload(url);
         window.close()
-        //window.history.back()
-        //window.location.reload(url);
-        //location.assign(url)
     })
-   // window.location.replace(url);
-//window.history.back()
 });
 
 let button = document.getElementById("save");
@@ -470,7 +468,6 @@ button.addEventListener("click", function () {
     else {
         autoCopyClipBoard = "false";
     }
-    console.debug("deepL:",DeepLVal)
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -478,6 +475,7 @@ button.addEventListener("click", function () {
             apikeyOpenAI: apikeyOpenAI,
             apikeyMicrosoft: apikeyMicrosoft,
             DeeplFree: showDeepl,
+           // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
             OpenAISelect: OpenAIsel,
             OpenAITone:OpenAITone,
@@ -935,9 +933,12 @@ second_file.addEventListener("change", function () {
 
 
 function sortTextarea(text) {
-    let lines = text.split('\n');
-    lines.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-    let sortedText = lines.join('\n');
+    var sortedText =""
+    if (typeof text != "undefined") {
+        let lines = text.split('\n');
+        lines.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+        sortedText = lines.join('\n');
+    }
     return sortedText
 }
 function checkLocale() {

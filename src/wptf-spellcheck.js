@@ -44,13 +44,13 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
         }
     }
     // We need to know the amount of rows to show the finished message at the end of the process
-    var table = document.getElementById("translations");
-    var tr = table.rows;
+   // var table = document.getElementById("translations");
+   // var tr = table.rows;
     //var tbodyRowCount = table.tBodies[0].rows.length;
     tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
     progressbar = document.querySelector(".indeterminate-progress-bar");
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
-
+    //console.debug("table records:",tableRecords)
     if (progressbar == null) {
         myheader.insertAdjacentHTML('beforebegin', template);
         // progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -196,9 +196,9 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
     var myurl;
     const update = {
         text: 'fout',
-        language :'nl-NL',
-        username: 'peter@psmits.com',
-        apiKey: 'XX',
+        language :LtLang,
+        username: LtUser,
+        apiKey: LtKey,
         enabledOnly : 'false'
     };
 
@@ -210,10 +210,9 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
         body: JSON.stringify(update),
     };
     
-  
+   
     let text = prepare_spellcheck(translation);
-    //let text=translation
-    //text = encodeURI(text);
+    
     //console.debug("after prepare:",text)
     if (LtFree == true) {
         myurl = 'https://api.languagetool.org/v2/check?text=' + text + '&language=' + LtLang;
@@ -227,8 +226,8 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
     }).then(async response => {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             data = isJson && await response.json();
-           // console.debug("response:", response)
-            //console.debug("response ata:", data)
+            //console.debug("response:", response)
+            //console.debug("response data:", data)
            
            // console.debug("Response:", response);
             // check for error response
@@ -377,7 +376,16 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
 }
 
 function prepare_spellcheck(translation) {
-    
+    // We need to replace the placeholder, otherwise the spellcheck includes to many errors
+    const placeHolderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+    const matches = [...translation.matchAll(placeHolderRegex)];
+    if (matches != null) {
+        index = 0;
+        for (const match of matches) {
+            translation = translation.replace(match[0], `[${index}]`);
+            index++;
+        }
+    }
     // We need to convert the text to Utf8 otherwise the API does not accept it!!
     let prepared = translation.replace(/[&\/\\#,+()$~%'":*<>{}]/g, ' ')
     //let prepared = JSON.stringify(translation)
