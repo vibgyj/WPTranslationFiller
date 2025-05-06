@@ -1,4 +1,3 @@
-
 /**
  * This file includes all functions for translating with the deepL API and uses a promise
  * It depends on commonTranslate for additional translation functions
