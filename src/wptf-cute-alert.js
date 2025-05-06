@@ -68,19 +68,19 @@ const cuteAlert = ({
                 //   console.debug('permission:', Notification.permission)
                 Notification.requestPermission((permission) => {
                     if (permission === "granted") {
-                        console.debug('granted:', permission)
+                        //console.debug('granted:', permission)
                         let sound = new Audio(src + playSound);
                         const promise = sound.play();
-                        console.debug("sound:",promise)
+                        //console.debug("sound:",promise)
                         if (promise !== undefined) {
                             promise.then(() => {
-                                console.debug("sound is played!")
+                                //console.debug("sound is played!")
                                 sound = new Audio(src + playSound);
                                 sound.muted = true;
-                                sound.play();
+                               // sound.play();
                             }).catch(error => {
                                 // Autoplay was prevented.
-                                console.debug("sound is not allowed!!")
+                                //console.debug("sound is not allowed!!")
                             });
                         }
                         else {

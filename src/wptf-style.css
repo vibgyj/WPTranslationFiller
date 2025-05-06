@@ -43,8 +43,6 @@ mymarker {
 }
 
 
-
-
 .indeterminate-progress-bar__progress {
     /* Color */
     background-color: #3b82f6;
@@ -1160,9 +1158,9 @@ table.translations td.priority {
 }
 
 /* This setting is necessary to move the row down due to the header that is no longer fixed */
-/*table.translations tr.preview {
-    scroll-margin-top: 32px;
-}*/    
+table.translations tr.preview {
+    scroll-margin-top: 62px;
+}  
 
 /*table.translations tr.preview.has-glotdict th.checkbox {
     position: relative !important;
@@ -1494,7 +1492,7 @@ button[disabled] {
 .toast-container {
     top: 15px;
     right: 15px;
-    min-width: 250px;
+    min-width: 300px;
     overflow: hidden;
     position: fixed;
     border-radius: 5px;
@@ -1506,7 +1504,7 @@ button[disabled] {
 .toast-frame {
     padding: 5px 5px;
     display: flex;
-    min-width: 100px;
+    min-width: 300px;
     height: 60px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
@@ -1524,7 +1522,7 @@ button[disabled] {
     font-weight: 600;
     font-size: 15px;
     color: #fff;
-    margin-left: 10px;
+    margin-left: 20px;
 }
 
 .toast-close {
@@ -1534,7 +1532,7 @@ button[disabled] {
     font-size: 16px;
     cursor: pointer;
     transition: color 0.5s;
-    margin-left: 20px;
+    margin-left: 0px;
 }
 
 @keyframes timer {

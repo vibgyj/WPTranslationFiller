@@ -57,12 +57,13 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
             return data
         })
         .then((translated) => {
-          // console.debug("translation:", translated, "status: ", translated.ok)
+           // console.debug("translation:", translated, "status: ", translated.ok)
             if (translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
-               // console.log("The result contains 'translations'");
+                // console.log("The result contains 'translations'");
+               //console.debug("translation:",translated.translations[0])
                   processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang)
                     .then(processedData => {
-                        //console.debug("processedData:", processedData)
+                        console.debug("processedData:", processedData)
                         // Return the result to the higher function
                         if (processedData === "OK") {
                             errorstate = "OK"

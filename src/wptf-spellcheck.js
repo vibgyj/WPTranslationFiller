@@ -183,7 +183,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                 }, 200);    
             }
             }, timeout, errorstate, countrows);
-        timeout += 800;
+        timeout += 100;
     }
     return errorstate
   }

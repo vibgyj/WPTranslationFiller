@@ -510,7 +510,7 @@ document.addEventListener("keydown", async function (event) {
                             else {
                                 var TMwait = data.TMwait;
                             }
-                            result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.spellCheckIgnore);
+                            result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.spellCheckIgnore, TMtreshold, interCept);
                         }
                         else {
                             messageBox("error", "You need to set the translator API");
@@ -1354,15 +1354,16 @@ function DispClipboardClicked(event) {
 
 function LoadGlossClicked(event) {
 event.preventDefault(event);
-var file;
-var arrayFiles;
-fileSelector.click();
-fileSelector.addEventListener("change", (event) => {
-    fileList = event.target.files;
-    arrayFiles = Array.from(event.target.files)
-    file = fileList[0];
-    if (file.type == 'text/csv' || "application/vnd.ms-excel") {
-        if (fileList[0]) {
+    var file;
+    fileSelector.click();
+    //fileSelector.addEventListener("change", () => console.debug("Event triggered"));
+    fileSelector.addEventListener("change", (event) => {
+        // event.preventDefault();
+        file = event.target.files[0];
+        fileList = event.target.files;
+        if (!file) return;
+        if (file.type == 'text/csv' || "application/vnd.ms-excel") {
+          if (file) {
             var reader = new FileReader();
             reader.onload = function (e) {
                 var contents = e.target.result;
@@ -1372,24 +1373,26 @@ fileSelector.addEventListener("change", (event) => {
                     var formal = checkFormal(false);
                     var DeeplFree = data.DeeplFree;
                     load_glossary(glossary, data.apikeyDeepl, DeeplFree, data.destlang)
-                    file = ""
                 });
                 reader.onerror = function () {
-                    console.log(reader.error);
+                    console.debug(reader.error);
                 };
             };
             reader.readAsText(fileList[0]);
+          }
+          else {
+            console.debug("No file selected")
+          }
         }
         else {
-            console.debug("No file selected")
+          // File is wrong type so do not process it
+          let errMessage = __("File is not a csv!")
+          messageBox("error", "File is not a csv!");
         }
-    }
-    else {
-        // File is wrong type so do not process it
-        let errMessage = __("File is not a csv!")
-        messageBox("error", "File is not a csv!");
-    }
-});
+        // we need to clear this value otherwise the same file is not processed
+        event.target.value = ""
+        file=""            ;
+   });
 }
 
 function UpperCaseClicked(event) {
@@ -1494,8 +1497,11 @@ async function myOpenDB(db) {
     return dbopen;
 }
 
+
+
 async function startBulkSave(event) {
     event.preventDefault(event);
+   
     let sampleObject1 = {
         'toonDiff': true
     };
@@ -1564,7 +1570,7 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
-                                result = populateWithTM(data.apikey, data.apikeyDeep, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower, data.spellCheckIgnore, data.TMtreshold);
+                        result = populateWithTM(data.apikey, data.apikeyDeep, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower, data.spellCheckIgnore, data.TMtreshold, interCept);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -1796,18 +1802,33 @@ function checkFormal(formal) {
    return formal
 }
 
-
-function checkPageClicked(event) {
+async function checkPageClicked(event) {
     event.preventDefault();
     var formal = checkFormal(false);
-    var timeout = 500; 
+    chrome.storage.local.get(
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower", "showHistory", "showTransDiff"],
+        async function (data) {
+            try {
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI);
+                await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree);
+            } catch (error) {
+                console.error("An error occurred:", error);
+            }
+        }
+    );
+}
+function oldcheckPageClicked(event) {
+    event.preventDefault();
+    var formal = checkFormal(false);
+
     //toastbox("info", "Checkpage is started wait for the result!!", "2000", "CheckPage");
     chrome.storage.local.get(
         ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower", "showHistory", "showTransDiff"],
         function (data) { 
             const promise1 = new Promise(async function (resolve, reject) {
-                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore, data.showHistory, data.showTransDiff);
-                resolve(data);     
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, data.OpenAIPrompt, data.spellcheckIgnore, data.showHistory, data.showTransDiff).then(result =>{
+                    resolve(data);
+                })
             });
             const promise2 = new Promise(async function (resolve, reject) {
                 await promise1;
@@ -1815,8 +1836,9 @@ function checkPageClicked(event) {
                     if (typeof data.spellcheckIgnore == 'undefined') {
                         data.spellcheckIgnore = []
                         }
-                    await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
-                    resolve(data)
+                    await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore).then(result => {
+                        resolve(data)
+                    })
                 }
                 else {
                     resolve(data)
@@ -2266,8 +2288,8 @@ async function checkbuttonClick(event) {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
                     mytextarea = myrec.getElementsByClassName('foreign-text')
-                    mytextarea[0].style.height = 'auto'
-                    mytextarea[0].style.height = mytextarea[0].scrollHeight + 'px';
+                    mytextarea[0].style.height = "auto"
+                    mytextarea[0].style.height = mytextarea[0].scrollHeight + "px";
                     //console.debug("mytext in open:",mytextarea)
                     if (typeof mytextarea != 'undefined') {
                        // console.debug("mytext:", mytextarea,"2270")
@@ -3877,7 +3899,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
     // we came from translate entry, so there is no save button
         let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
         if (SavelocalButton == null) {
-            let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
+            SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
         }
         if (currentcel != null) {
            if (checkElem == null) {
@@ -4978,6 +5000,7 @@ function taMatch(gWord, tWord) {
 // 22-06-2021 PSS added functionality to show differences in the translations
 async function fetchOldRec(url, rowId,showDiff) {
     // 23-06-2021 PSS added original translation to show in Meta
+    var status;
     var tbodyRowCount = 0;
     var fetchOld_status ="";
     var diff;
@@ -5151,9 +5174,10 @@ async function fetchOldRec(url, rowId,showDiff) {
                         }
                         fragment = document.createDocumentFragment();
                         diff.forEach((part) => {
+                            // 03-03-2025 PSS changed the name "status" to "OldRec_status" as it generated a visual error, it was also nowhere defined
                             // green for additions, red for deletions
                             // dark grey for common parts
-                            if (status == "current") {
+                            if (OldRec_status == "current") {
                                 const color = part.added ? "green" :
                                     part.removed ? "red" : "dark-grey";
                                 const background_color = part.added ? "white" :
@@ -5165,7 +5189,7 @@ async function fetchOldRec(url, rowId,showDiff) {
                                     .createTextNode(part.value));
                                 fragment.appendChild(span);
                             }
-                            else if (status = "waiting"){
+                            else if (OldRec_status = "waiting"){
                                 const color = part.added ? "green" :
                                     part.removed ? "red" : "dark-grey";
                                 const background_color = part.added ? "white" :

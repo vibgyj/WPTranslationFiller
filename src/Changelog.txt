@@ -12,3 +12,15 @@ Version changes as of version 3.3
 11. Version 3.8.10 Added sorting of Pre translate and SpellcheckIgnore\
 12. Version 3.8.11 Various fixes and overhaul of populate with TM
 13. Version 3.8.12 Within the editor the textarea is set to the length of the translation
+14. Version 3.8.13 Improved populate TM again, there where several problem places
+15. Version 3.8.14 TM was missing one last translation
+16. Version 3.8.15 TM flow corrected, as it still missed translations
+17. Version 3.8.16 Converted import of glossary DeepL to utf-8, fixed a problem not loading the same glossary file twice
+18. Version 3.8.18 Fixed several problems within TM function
+19. Version 3.8.19 Fixed a problem within checkpage, checking an empty suggestion
+20. Version 3.8.20 Fixed the problem of closing the last preview in the table with TM
+21. Version 3.8.21 When performing TM from Formal, the suggestions were not found
+22. Version 3.8.22 Sort of the Pre and Post textareas improved, Also improved the Firefox manifest to support the new manifest voor background script
+                   Also moved closing of the editor window to a later time, as reports came in that lines were not saved
+23. Version 3.8.23 Improved bulksave function, it left suggestions as waiting, but on the background they were saved
+24. Version 3.8.24 TM was missing records due to a fault in the li search method, also remove sorting from the TM function as it disturbed the progress
