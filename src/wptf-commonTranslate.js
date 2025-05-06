@@ -1,3 +1,4 @@
+
 /**
  * This file includes all functions for translating commonly used
  */

@@ -12,6 +12,7 @@ async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, t
    // console.debug("spellcheckignore:", spellCheckIgnore)
     var trntype;
     let originalPreProcessed = preProcessOriginal(original, preverbs, "google");
+    //console.debug("pre:",originalPreProcessed)
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
     if (myArray == null) {
