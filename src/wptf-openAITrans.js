@@ -74,8 +74,12 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     //console.debug("prompt:",myprompt)
     //var prompt = encodeURIComponent(prompt);
     //console.debug("counter:", counter, myprompt)
+    if (originalPreProcessed == '') {
+       // console.debug("undefined:", originalPreProcessed)
+        originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!"
+    }
     originalPreProcessed = '"' + originalPreProcessed + '"';
-    //console.debug("pre:", originalPreProcessed);`
+    //console.debug("pre:", originalPreProcessed);
     var message = [{ 'role': 'system', 'content': myprompt }, { 'role': 'user', 'content': `translate this: ${originalPreProcessed}` }];
     if (OpenAISelect != 'undefined') {
         let mymodel = OpenAISelect.toLowerCase();
@@ -96,9 +100,10 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
         // link = "https://api.openai.com/v1/edits";
         if (show_debug) {
             console.debug("link", link);
+            console.debug("original:",original)
             console.debug("prompt:", myprompt);
             console.debug("model:", mymodel);
-            console.debug("header:", data1);
+           // console.debug("header:", data1);
             console.debug("browser lang:", lang)
             console.debug("temp:", OpenAItemp)
             console.debug("tone:",OpenAITone)
@@ -143,18 +148,23 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                             let token = data.usage.total_tokens
                         }
                         //text = text.trim('\n');
-                        //console.debug("text:",text)
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        //console.debug("text:", text,original)
+                        if (text == '""') {
+                            text = original + " no translation received"
+                            translatedText = original + " No translation received"
+                        }
+                        translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation raw:",original,translatedText)
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
-                        //console.debug("translation after postprocess:", original, translatedText)
-                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                        //console.debug("plural_line:",plural_line)
+                        await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                         return Promise.resolve(errorstate)
                     }
                     else {
                         text = "No suggestions"
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
-                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                        translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
+                        if (translatedText != "") {
+                            await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                        }
                         errorstate = "NOK";
                     }
                     return Promise.resolve(errorstate)
@@ -168,7 +178,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 else {
                     let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                 }
-                //console.debug("translateButton:",translateButton)
+                console.debug("translateButton:",translateButton)
                 translateButton.className += " translated";
                 translateButton.innerText = "Translated";
                 if (error[2] == "400") {

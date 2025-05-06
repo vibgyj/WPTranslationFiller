@@ -186,8 +186,9 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
         timeout += 100;
     }
     return errorstate
-  }
+}
 
+//# this handles the entry to check
 async function spellcheck_entry(translation, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) {
     var spellcheck_verb = [];
     found_verbs = [];
@@ -374,8 +375,8 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
         }).then(error => {return error})
     return replaced
 }
-
-function prepare_spellcheck(translation) {
+//# prepare the translation for spellchecking to prevent errors
+function prepare_spellcheck (translation) {
     // We need to replace the placeholder, otherwise the spellcheck includes to many errors
     const placeHolderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
     const matches = [...translation.matchAll(placeHolderRegex)];
@@ -394,7 +395,7 @@ function prepare_spellcheck(translation) {
     
     return prepared
 }
-
+//# this function processes the result of the check
 async function process_result(found_verbs, replaced, countfound, e, newrowId, currec, orgText, spellcheckIgnore) {
    // console.debug("foundverbs:", found_verbs, replaced,countfound,e,newrowId,currec,orgText,spellcheckIgnore)
     repl_verb = found_verbs;

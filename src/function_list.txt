@@ -1,0 +1,1286 @@
+contentScript.js - savePage
+No description provided.
+
+contentScript.js - triggerGarbageCollection
+No description provided.
+
+contentScript.js - addname_to_checkbox
+No description provided.
+
+contentScript.js - loadTranslations
+No description provided.
+
+contentScript.js - __
+No description provided.
+
+contentScript.js - initTranslations
+No description provided.
+
+contentScript.js - initTextareaDetection
+No description provided.
+
+contentScript.js - waitForEditableTextarea
+No description provided.
+
+contentScript.js - waitForTextareaAndStart
+No description provided.
+
+contentScript.js - setupTooltipHandler
+No description provided.
+
+contentScript.js - extractIdPart
+No description provided.
+
+contentScript.js - findEditorRow
+No description provided.
+
+contentScript.js - startFullScript
+No description provided.
+
+contentScript.js - doValidation
+No description provided.
+
+contentScript.js - sendMessageToInjectedScript
+No description provided.
+
+contentScript.js - sampleUse
+No description provided.
+
+contentScript.js - if
+No description provided.
+
+contentScript.js - openOptionsPage
+No description provided.
+
+contentScript.js - translatedButton
+No description provided.
+
+contentScript.js - handleSelectionChange
+No description provided.
+
+contentScript.js - myFunction
+No description provided.
+
+contentScript.js - checkGlossary
+No description provided.
+
+contentScript.js - openModalDeepL
+No description provided.
+
+contentScript.js - DispGlossClicked
+No description provided.
+
+contentScript.js - DispClipboardClicked
+No description provided.
+
+contentScript.js - LoadGlossClicked
+No description provided.
+
+contentScript.js - UpperCaseClicked
+No description provided.
+
+contentScript.js - SwitchGlossClicked
+No description provided.
+
+contentScript.js - SwitchTMClicked
+No description provided.
+
+contentScript.js - tmDisableClicked
+No description provided.
+
+contentScript.js - startSpellCheck
+No description provided.
+
+contentScript.js - createElementWithId
+No description provided.
+
+contentScript.js - sampleUse
+No description provided.
+
+contentScript.js - myOpenDB
+No description provided.
+
+contentScript.js - myDeepLDB
+No description provided.
+
+contentScript.js - startBulkSave
+No description provided.
+
+contentScript.js - savetolocalClicked
+No description provided.
+
+contentScript.js - tmTransClicked
+No description provided.
+
+contentScript.js - localTransClicked
+No description provided.
+
+contentScript.js - impLocDataseClicked
+No description provided.
+
+contentScript.js - impFileClicked
+No description provided.
+
+contentScript.js - translatePageClicked
+No description provided.
+
+contentScript.js - checkFormal
+No description provided.
+
+contentScript.js - checkPageClicked
+No description provided.
+
+contentScript.js - oldcheckPageClicked
+No description provided.
+
+contentScript.js - exportPageClicked
+No description provided.
+
+contentScript.js - exportPoClicked
+No description provided.
+
+contentScript.js - getGlossaryData
+No description provided.
+
+contentScript.js - loadGlossaries
+No description provided.
+
+contentScript.js - old_loadGlossary
+No description provided.
+
+contentScript.js - loadSet
+No description provided.
+
+contentScript.js - loadSet1
+No description provided.
+
+contentScript.js - addTranslateButtons
+No description provided.
+
+contentScript.js - importPageClicked
+No description provided.
+
+contentScript.js - parseDataBase
+No description provided.
+
+contentScript.js - addtoClipBoardClicked
+No description provided.
+
+contentScript.js - checkactionClick
+No description provided.
+
+contentScript.js - checkbuttonClick
+No description provided.
+
+contentScript.js - translationComplete
+No description provided.
+
+contentScript.js - checktranslateEntryClicked
+No description provided.
+
+contentScript.js - LowerCaseClicked
+No description provided.
+
+contentScript.js - translateEntryClicked
+No description provided.
+
+contentScript.js - updateStyle
+No description provided.
+
+contentScript.js - validateEntry
+No description provided.
+
+contentScript.js - remove_all_gloss
+No description provided.
+
+contentScript.js - highlightExactWordInText
+No description provided.
+
+contentScript.js - findMissingOccurrenceIndex
+No description provided.
+
+contentScript.js - escapeRegExp
+No description provided.
+
+contentScript.js - decodeHtmlEntities
+No description provided.
+
+contentScript.js - findMissingTranslations
+No description provided.
+
+contentScript.js - updateRowButton
+No description provided.
+
+contentScript.js - updateElementStyle
+No description provided.
+
+contentScript.js - showNameLabel
+No description provided.
+
+contentScript.js - showOldstringLabel
+No description provided.
+
+contentScript.js - addCheckButton
+No description provided.
+
+contentScript.js - savetranslateEntryClicked
+No description provided.
+
+contentScript.js - countExactWordOccurrences
+No description provided.
+
+contentScript.js - normalizeText
+No description provided.
+
+contentScript.js - normalizeText
+No description provided.
+
+contentScript.js - escapeRegExp
+No description provided.
+
+contentScript.js - escapeRegExp
+No description provided.
+
+contentScript.js - createGlossArray
+No description provided.
+
+contentScript.js - createNewGlossArray
+No description provided.
+
+contentScript.js - countOccurrences
+No description provided.
+
+contentScript.js - mark_glossary
+No description provided.
+
+contentScript.js - validate
+No description provided.
+
+contentScript.js - containsExactWord
+No description provided.
+
+contentScript.js - containsVerbMultipleTimes
+No description provided.
+
+contentScript.js - findWordPositions
+No description provided.
+
+contentScript.js - match
+No description provided.
+
+contentScript.js - taMatch
+No description provided.
+
+contentScript.js - fetchOldRec
+No description provided.
+
+contentScript.js - waitForElementInRow
+No description provided.
+
+contentScript.js - fetchOld
+No description provided.
+
+contentScript.js - gd_auto_hide_next_editor
+No description provided.
+
+contentScript.js - gd_wait_table_alter
+No description provided.
+
+contentScript.js - removeDiv
+No description provided.
+
+contentScript.js - handleNewNode
+No description provided.
+
+contentScript.js - handleInputEvent
+No description provided.
+
+contentScript.js - stopObserving
+No description provided.
+
+contentScript.js - startObserving
+No description provided.
+
+contentScript.js - start_editor_mutation_server
+No description provided.
+
+contentScript.js - start_editor_mutation_server2
+No description provided.
+
+contentScript.js - prevstart_editor_mutation_server2
+No description provided.
+
+contentScript.js - findByKey
+No description provided.
+
+contentScript.js - decodeHTML
+No description provided.
+
+contentScript.js - handleMutation
+No description provided.
+
+contentScript.js - MutationsPlural
+No description provided.
+
+jsdiff.js - clonePath
+No description provided.
+
+jsdiff.js - removeEmpty
+No description provided.
+
+jsdiff.js - escapeHTML
+No description provided.
+
+jsdiff.js - contextLines
+No description provided.
+
+jsdiff.js - eofNL
+No description provided.
+
+jsdiff.js - check
+No description provided.
+
+jsstore.js - __webpack_require__
+No description provided.
+
+jsstore.js - Config
+No description provided.
+
+jsstore.js - LogHelper
+No description provided.
+
+jsstore.js - ConnectionHelper
+No description provided.
+
+jsstore.js - __
+No description provided.
+
+jsstore.js - Connection
+No description provided.
+
+jsstore.worker.js - __webpack_require__
+No description provided.
+
+jsstore.worker.js - Base
+No description provided.
+
+jsstore.worker.js - IdbHelper
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Remove
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Set
+No description provided.
+
+jsstore.worker.js - Utils
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Get
+No description provided.
+
+jsstore.worker.js - Main
+No description provided.
+
+jsstore.worker.js - QueryExecutor
+No description provided.
+
+jsstore.worker.js - KeyStore
+No description provided.
+
+jsstore.worker.js - Config
+No description provided.
+
+jsstore.worker.js - LogHelper
+No description provided.
+
+jsstore.worker.js - BaseDb
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - DropDb
+No description provided.
+
+jsstore.worker.js - IdbHelper
+No description provided.
+
+jsstore.worker.js - SchemaChecker
+No description provided.
+
+jsstore.worker.js - ValueChecker
+No description provided.
+
+jsstore.worker.js - ValuesChecker
+No description provided.
+
+jsstore.worker.js - QueryHelper
+No description provided.
+
+jsstore.worker.js - BaseHelper
+No description provided.
+
+jsstore.worker.js - WhereChecker
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Base
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Clear
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - InitDb
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - WhereBase
+No description provided.
+
+jsstore.worker.js - ThenEvaluator
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - BaseSelect
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - NotWhere
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - In
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Regex
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Where
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - GroupByHelper
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Helper
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Join
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Instance
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - BaseCount
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - NotWhere
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - In
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Regex
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Where
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Instance
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Instance
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - BaseRemove
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - NotWhere
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - In
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Regex
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Where
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Instance
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - BaseUpdate
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - NotWhere
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - In
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Regex
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Where
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Instance
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Instance
+No description provided.
+
+jsstore.worker.js - TableHelper
+No description provided.
+
+jsstore.worker.js - DbHelper
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Union
+No description provided.
+
+jsstore.worker.js - __
+No description provided.
+
+jsstore.worker.js - Intersect
+No description provided.
+
+jsstore.worker.js - QueryExecutor
+No description provided.
+
+wptf-buildstats.js - mySelection
+No description provided.
+
+wptf-buildstats.js - showTypesel
+No description provided.
+
+wptf-buildstats.js - createStatsTable
+No description provided.
+
+wptf-buildstats.js - process_projects
+No description provided.
+
+wptf-buildstats.js - handleStats
+No description provided.
+
+wptf-commonTranslate.js - getCallerDetails
+No description provided.
+
+wptf-commonTranslate.js - countWords
+No description provided.
+
+wptf-commonTranslate.js - setPreTranslationReplace
+No description provided.
+
+wptf-commonTranslate.js - setIgnoreSpellCheck
+No description provided.
+
+wptf-commonTranslate.js - setPostTranslationReplace
+No description provided.
+
+wptf-commonTranslate.js - preProcessOriginal
+No description provided.
+
+wptf-commonTranslate.js - startsWithCapital
+No description provided.
+
+wptf-commonTranslate.js - replaceWord
+No description provided.
+
+wptf-commonTranslate.js - postProcessTranslation
+//# this function processes the translation after it has been received
+
+wptf-commonTranslate.js - removeWord
+No description provided.
+
+wptf-commonTranslate.js - correctSentence
+No description provided.
+
+wptf-commonTranslate.js - isURL
+No description provided.
+
+wptf-commonTranslate.js - check_hyphen
+No description provided.
+
+wptf-commonTranslate.js - capt
+No description provided.
+
+wptf-commonTranslate.js - isUpperCase
+No description provided.
+
+wptf-commonTranslate.js - convert_lower
+No description provided.
+
+wptf-commonTranslate.js - removeTags
+No description provided.
+
+wptf-commonTranslate.js - applySentenceCase
+No description provided.
+
+wptf-commonTranslate.js - CheckUrl
+//# This function checks if a text contains an URL
+
+wptf-commonTranslate.js - isStartsWithUpperCase
+No description provided.
+
+wptf-commonTranslate.js - checkComments
+No description provided.
+
+wptf-commonTranslate.js - pretranslate
+No description provided.
+
+wptf-commonTranslate.js - checkFormalPage
+No description provided.
+
+wptf-commonTranslate.js - checkPage
+No description provided.
+
+wptf-commonTranslate.js - reviewTrans
+No description provided.
+
+wptf-commonTranslate.js - needsMarking
+No description provided.
+
+wptf-commonTranslate.js - markElements
+No description provided.
+
+wptf-commonTranslate.js - markElements_previous
+No description provided.
+
+wptf-commonTranslate.js - replElements
+No description provided.
+
+wptf-commonTranslate.js - check_start_end
+No description provided.
+
+wptf-commonTranslate.js - populateWithLocal
+No description provided.
+
+wptf-commonTranslate.js - openEditor
+No description provided.
+
+wptf-commonTranslate.js - old_openEditor
+No description provided.
+
+wptf-commonTranslate.js - fetchsuggestions
+No description provided.
+
+wptf-commonTranslate.js - waitForElements
+No description provided.
+
+wptf-commonTranslate.js - checkElements
+No description provided.
+
+wptf-commonTranslate.js - findSuggestionsListIndex
+No description provided.
+
+wptf-commonTranslate.js - fetchli
+No description provided.
+
+wptf-commonTranslate.js - myFunction
+No description provided.
+
+wptf-commonTranslate.js - openEditorOnRow
+No description provided.
+
+wptf-commonTranslate.js - processResult
+//# This function process the result of a translation
+
+wptf-commonTranslate.js - waitForMyneElement
+No description provided.
+
+wptf-commonTranslate.js - waitForSuggestions
+No description provided.
+
+wptf-commonTranslate.js - processTM
+No description provided.
+
+wptf-commonTranslate.js - getFirstCharsUntilPercent
+No description provided.
+
+wptf-commonTranslate.js - sortRowsArrayByRowAttribute
+No description provided.
+
+wptf-commonTranslate.js - populateWithTM
+No description provided.
+
+wptf-commonTranslate.js - submitData
+No description provided.
+
+wptf-commonTranslate.js - mark_as_translated
+No description provided.
+
+wptf-commonTranslate.js - determineName
+No description provided.
+
+wptf-commonTranslate.js - determineType
+No description provided.
+
+wptf-commonTranslate.js - handleType
+No description provided.
+
+wptf-commonTranslate.js - translatePage
+No description provided.
+
+wptf-commonTranslate.js - oldtranslatePage
+No description provided.
+
+wptf-commonTranslate.js - delay
+No description provided.
+
+wptf-commonTranslate.js - check_span_missing
+No description provided.
+
+wptf-commonTranslate.js - checkEntry
+No description provided.
+
+wptf-commonTranslate.js - setLowerCase
+No description provided.
+
+wptf-commonTranslate.js - translateEntry
+No description provided.
+
+wptf-commonTranslate.js - saveLocal
+No description provided.
+
+wptf-commonTranslate.js - walkThroughTable
+No description provided.
+
+wptf-commonTranslate.js - saveLocal_1
+No description provided.
+
+wptf-commonTranslate.js - processTableRecords
+No description provided.
+
+wptf-commonTranslate.js - processNextRecord
+No description provided.
+
+wptf-commonTranslate.js - hasTwoNumbers
+No description provided.
+
+wptf-commonTranslate.js - waitForFullRowId
+No description provided.
+
+wptf-commonTranslate.js - hideIncompletePreviewRows
+No description provided.
+
+wptf-commonTranslate.js - saveLocal_2
+No description provided.
+
+wptf-commonTranslate.js - bulkSave
+No description provided.
+
+wptf-commonTranslate.js - second
+No description provided.
+
+wptf-commonTranslate.js - waitForMyElement
+No description provided.
+
+wptf-commonTranslate.js - checkElement
+No description provided.
+
+wptf-commonTranslate.js - _waitForElement
+No description provided.
+
+wptf-commonTranslate.js - _search
+No description provided.
+
+wptf-commonTranslate.js - elementReady
+No description provided.
+
+wptf-commonTranslate.js - waitForElm
+No description provided.
+
+wptf-commonTranslate.js - highlight
+No description provided.
+
+wptf-commonTranslate.js - processTransl
+//# This function processes the result of the fetch
+
+wptf-commonTranslate.js - processPlaceholderSpaces
+No description provided.
+
+wptf-commonTranslate.js - bulkSaveToLocal
+No description provided.
+
+wptf-commonTranslate.js - saveToLocal
+No description provided.
+
+wptf-consistency.js - scrapeconsistency
+No description provided.
+
+wptf-consistency.js - submitClicked
+No description provided.
+
+wptf-consistency.js - startsearch
+No description provided.
+
+wptf-consistency.js - wptf_download
+No description provided.
+
+wptf-database-maintenance.js - addscreen
+No description provided.
+
+wptf-database.js - openDB
+No description provided.
+
+wptf-database.js - addRecord
+No description provided.
+
+wptf-database.js - setSearchLocale
+No description provided.
+
+wptf-database.js - openDeeplModal
+No description provided.
+
+wptf-database.js - createAndOpenModal
+No description provided.
+
+wptf-database.js - retrieveDataFromIndexedDB
+No description provided.
+
+wptf-database.js - initDb
+No description provided.
+
+wptf-database.js - getTM
+No description provided.
+
+wptf-database.js - getDbSchema
+No description provided.
+
+wptf-database.js - checkIndex
+No description provided.
+
+wptf-database.js - deleteTransDb
+No description provided.
+
+wptf-database.js - addTransDb
+No description provided.
+
+wptf-database.js - updateTransDb
+No description provided.
+
+wptf-database.js - countTable
+No description provided.
+
+wptf-database.js - countTransline
+No description provided.
+
+wptf-database.js - findTransline
+No description provided.
+
+wptf-database.js - convPromise
+No description provided.
+
+wptf-database.js - addTransline
+No description provided.
+
+wptf-database.js - dbExport
+No description provided.
+
+wptf-database.js - exportIndexedDBToPO
+No description provided.
+
+wptf-database.js - tryPersistWithoutPromtingUser
+No description provided.
+
+wptf-database.js - initStoragePersistence
+No description provided.
+
+wptf-database.js - addtranslateEntryClicked
+No description provided.
+
+wptf-database.js - resetDB
+No description provided.
+
+wptf-database.js - clearData
+No description provided.
+
+wptf-database.js - deleteDB
+No description provided.
+
+wptf-database.js - addEntry
+No description provided.
+
+wptf-database.js - saveNewRecord
+No description provided.
+
+wptf-database.js - displayRecordsFromDB
+No description provided.
+
+wptf-database.js - parseCSV
+No description provided.
+
+wptf-deeplGloss.js - loadMyGlossary
+No description provided.
+
+wptf-deeplGloss.js - load_glossary
+No description provided.
+
+wptf-deeplGloss.js - oldload_glossary
+No description provided.
+
+wptf-deeplGloss.js - show_glossary
+No description provided.
+
+wptf-deeplGloss.js - oldshow_glossary
+No description provided.
+
+wptf-deeplGloss.js - delete_all_glossary
+No description provided.
+
+wptf-deeplGloss.js - deleteGlossary
+No description provided.
+
+wptf-deeplGloss.js - delete_glossary
+No description provided.
+
+wptf-deeplGloss.js - olddelete_glossary
+No description provided.
+
+wptf-deeplGloss.js - toUtf8
+No description provided.
+
+wptf-deeplGloss.js - prepare_glossary
+No description provided.
+
+wptf-deeplGloss.js - no_cors
+No description provided.
+
+wptf-deeplTrans.js - translateText
+No description provided.
+
+wptf-deeplTrans.js - deepLTranslate
+No description provided.
+
+wptf-deeplTrans.js - prevdeepLTranslate
+No description provided.
+
+wptf-deeplTrans.js - if
+No description provided.
+
+wptf-deeplTrans.js - processData
+No description provided.
+
+wptf-deeplTrans.js - fetchWithRetry
+No description provided.
+
+wptf-deeplTrans.js - oldgetTransDeepl
+No description provided.
+
+wptf-functions.js - setupTooltipHandler
+No description provided.
+
+wptf-functions.js - countOccurrences
+No description provided.
+
+wptf-functions.js - Show_RecCount
+No description provided.
+
+wptf-functions.js - getGlotDictStat
+No description provided.
+
+wptf-functions.js - check_untranslated
+No description provided.
+
+wptf-functions.js - findFirstBlankAfter
+No description provided.
+
+wptf-functions.js - unEscape
+No description provided.
+
+wptf-functions.js - checkDiscussion
+No description provided.
+
+wptf-functions.js - findArrayLine
+No description provided.
+
+wptf-functions.js - addtoClipBoardClicked
+No description provided.
+
+wptf-functions.js - copyToClipBoard
+No description provided.
+
+wptf-functions.js - addCheckBox
+No description provided.
+
+wptf-functions.js - setmyCheckBox
+No description provided.
+
+wptf-functions.js - deselectCheckBox
+No description provided.
+
+wptf-functions.js - validateOld
+No description provided.
+
+wptf-functions.js - stripQuotes
+No description provided.
+
+wptf-functions.js - countOccurrences
+No description provided.
+
+wptf-functions.js - mark_glossary
+No description provided.
+
+wptf-functions.js - mark_original
+No description provided.
+
+wptf-functions.js - validatePage
+No description provided.
+
+wptf-functions.js - countWordsinTable
+No description provided.
+
+wptf-functions.js - set_glotdict_style
+No description provided.
+
+wptf-functions.js - toastbox
+No description provided.
+
+wptf-functions.js - close_toast
+No description provided.
+
+wptf-functions.js - messageBox
+No description provided.
+
+wptf-functions.js - sleep
+No description provided.
+
+wptf-functions.js - getPreview
+No description provided.
+
+wptf-functions.js - exportGlossaryForOpenAi
+No description provided.
+
+wptf-functions.js - isOnlyURL
+//# This function checks if a text contains only an URL
+
+wptf-googleTrans.js - googleTranslate
+No description provided.
+
+wptf-googleTrans.js - getTransGoogle
+No description provided.
+
+wptf-importfile.js - new_import_po
+No description provided.
+
+wptf-importfile.js - removeQuotes
+No description provided.
+
+wptf-importfile.js - import_po_to_local
+No description provided.
+
+wptf-inject.js - checkLocale
+No description provided.
+
+wptf-inject.js - adjustLayoutScreen
+No description provided.
+
+wptf-inject.js - interceptXHR
+No description provided.
+
+wptf-inject.js - toggleInterception
+No description provided.
+
+wptf-inject.js - openDeepLDatabase
+No description provided.
+
+wptf-inject.js - listAllRecords
+No description provided.
+
+wptf-inject.js - displayRecords
+No description provided.
+
+wptf-inject.js - saveTranslation
+No description provided.
+
+wptf-inject.js - deleteRecord
+No description provided.
+
+wptf-inject.js - closeModalClicked
+No description provided.
+
+wptf-inject.js - startSearch
+No description provided.
+
+wptf-inject.js - parseCSV
+No description provided.
+
+wptf-inject.js - importDeepLCSV
+No description provided.
+
+wptf-inject.js - handleFileImport
+No description provided.
+
+wptf-inject.js - exportDeepLCSV
+No description provided.
+
+wptf-inject.js - searchRecord
+No description provided.
+
+wptf-inject.js - loadGlossaryFromDB
+No description provided.
+
+wptf-microsoftTrans.js - microsoftTranslate
+No description provided.
+
+wptf-microsoftTrans.js - getTransMicrosoft
+No description provided.
+
+wptf-openAITrans.js - AITranslate
+No description provided.
+
+wptf-openAITrans.js - AIreview
+No description provided.
+
+wptf-openAITrans.js - getTransAI
+No description provided.
+
+wptf-openAITrans.js - reviewTransAI
+No description provided.
+
+wptf-openAITrans.js - startreviewOpenAI
+No description provided.
+
+wptf-options.js - sortTextarea
+No description provided.
+
+wptf-options.js - checkLocale
+No description provided.
+
+wptf-options.js - pushToGlossary
+No description provided.
+
+wptf-options.js - export_verbs_csv
+No description provided.
+
+wptf-options.js - setPostTranslationReplace
+No description provided.
+
+wptf-options.js - parseData
+No description provided.
+
+wptf-options.js - messageBox
+No description provided.
+
+wptf-purify.min.js - x
+No description provided.
+
+wptf-spellcheck.js - spellcheck_page
+No description provided.
+
+wptf-spellcheck.js - spellcheck_entry
+//# this handles the entry to check
+
+wptf-spellcheck.js - prepare_spellcheck
+//# prepare the translation for spellchecking to prevent errors
+
+wptf-spellcheck.js - process_result
+//# this function processes the result of the check

@@ -8,7 +8,8 @@ var textareaElem = "";
 var preview = "";
 var translatedText = "";
 var trntype = "";
-async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore) {
+async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore, deeplGlossary, is_entry) {
+   // console.debug("spellcheckignore:", spellCheckIgnore)
     var trntype;
     let originalPreProcessed = preProcessOriginal(original, preverbs, "google");
     //console.debug("pre:",originalPreProcessed)
@@ -27,11 +28,11 @@ async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, t
         "target": destlang,
         "format": trntype
     };
-    let result = await getTransGoogle(e, destlang, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
+    let result = await getTransGoogle(e, destlang, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore, deeplGlossary, is_entry);
     return errorstate;
 }
 
-async function getTransGoogle(record, language, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore) {
+async function getTransGoogle(record, language, apikey, requestBody, original, originalPreProcessed, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore, deeplGlossary, is_entry) {
     var row = "";
     var translatedText = "";
     var ul = "";
@@ -83,8 +84,9 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
             else {
                 //We do have a result so process it
                 translatedText = data.data.translations[0].translatedText;
-                //console.debug("translated text:", translatedText);
+                console.debug("translated text:", translatedText);
                 // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
+                console.debug("spellcheckignore:",spellCheckIgnore)
                 translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower, spellCheckIgnore,locale);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");

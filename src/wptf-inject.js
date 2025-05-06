@@ -99,8 +99,6 @@ function adjustLayoutScreen() {
     });
 }
 
-
-
 // Function to intercept XMLHttpRequests
 function interceptXHR(xhr) {
     // Intercept the open method to store the URL
@@ -158,7 +156,7 @@ function toggleInterception(shouldIntercept,transProcess) {
 
 // Add a listener to handle messages from the content script
 window.addEventListener('message', function (event) {
-   // console.debug("injected:",event)
+    //console.debug("injected:",event)
     // Check if the event is from a trusted source
     if (event.source === window && event.data.action === 'updateInterceptRequests') {
         // Update interception based on the message data
@@ -168,6 +166,7 @@ window.addEventListener('message', function (event) {
         if (MessageEvent.action === 'translate') {
             translateText(message.text, message.targetLang)
                 .then(translatedText => {
+                    //console.debug("translated in inject:",translatedText)
                     sendResponse({ translatedText: translatedText });
                 })
                 .catch(error => {
@@ -242,15 +241,11 @@ function listAllRecords(locale,myDelete,myRecordDeleted) {
     });
 }
 
-
-
-
-
-function displayRecords(records, DeleteText, myDeleteText) {
+function displayRecords(records, myDelete, myRecordDeleted) {
     const tableBody = document.getElementById("recordsTableBody");
     tableBody.innerHTML = "";
-    let deleteText = DeleteText; 
-    let myDelete = myDeleteText
+    let deleteText =myDelete; 
+    
     records.forEach((record) => {
         const row = document.createElement("tr");
 
@@ -269,7 +264,7 @@ function displayRecords(records, DeleteText, myDeleteText) {
         deleteButton.addEventListener("click", function () {
             // Log the values when button is clicked to verify correct values
             //console.debug("Deleting record with locale:", record.locale, "and original:", record.original);
-            deleteRecord(record.locale, record.original,deleteText,myDelete); // Pass record values to deleteRecord
+            deleteRecord(record.locale, record.original, deleteText, myRecordDeleted); // Pass record values to deleteRecord
         });
 
         // Append the row to the table body
@@ -305,7 +300,7 @@ function saveTranslation(locale, original,deleteText,message) {
 
                 // Restore the delete button
                 const saveCell = translationCell.nextElementSibling;
-                saveCell.innerHTML = `<button class="delete-btn" onclick="deleteRecord('${locale}', '${original}')">${deleteText})</button>`;
+                saveCell.innerHTML = `<button class="delete-btn" onclick="deleteRecord('${locale}', '${original}', '${deleteText}')">${deleteText})</button>`;
                 alert(message);
             }
         };
@@ -332,8 +327,8 @@ function deleteRecord(locale, original,myDelete,myRecordDeleted) {
             const cursor = event.target.result;
             if (cursor) {
                 cursor.delete(); // Delete the entry
-                //console.debug("Record deleted");
-                alert(myDelete + original)
+                console.debug("Record deleted",myDelete,myRecordDeleted);
+                alert(myRecordDeleted + original)
                 listAllRecords(locale,myDelete,myRecordDeleted);
             }
         };
@@ -346,12 +341,12 @@ function closeModalClicked() {
     document.getElementById("DeepLmodal").style.display = "none";
    // console.debug("we closed the modal")
 }
-function startSearch(knopText,deleteText,message) {
+function startSearch(knopText, deleteText, myRecordDeleted, recordNotFound, message) {
     const locale = document.getElementById("searchLocale").value.trim();
     const original = document.getElementById("searchOriginal").value.trim();
 
     if (locale && original) {
-        searchRecord(locale, original, knopText,deleteText,message);
+        searchRecord(locale, original, knopText, deleteText, myRecordDeleted, recordNotFound, message);
     } else {
         alert(__("Please enter both Locale and Original text!"));
     }
@@ -413,7 +408,7 @@ async function importDeepLCSV(myDelete, myRecordDeleted) {
                 transaction.oncomplete = function () {
                     let importReady = "Import completed successfully!"
                     alert(importReady);
-                    listAllRecords("NL",myDelete, myRecordDeleted); // Refresh table
+                    listAllRecords(mylocale,myDelete, myRecordDeleted); // Refresh table
                 };
             });
         };
@@ -443,11 +438,13 @@ async function exportDeepLCSV(DownloadPath) {
 }
 
 
-function searchRecord(locale, original,saveText,deleteText,message) {
+function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, recordNotFound, message) {
+    console.debug("deleteText:", deleteText)
+    console.debug("not found:", recordNotFound)
     const tableBody = document.getElementById("recordsTableBody");
     const rows = tableBody.getElementsByTagName("tr");
     let found = false;
-    
+
     for (let row of rows) {
         const localeCell = row.cells[0].textContent.trim();
         const originalCell = row.cells[1].textContent.trim();
@@ -464,19 +461,22 @@ function searchRecord(locale, original,saveText,deleteText,message) {
             // Replace translation with an editable input field
             translationCell.innerHTML = `<input type="text" value="${currentTranslation}" id="editTranslation">`;
 
-            // Add a save button
-            const saveCell = row.cells[3]; // Assuming the 4th column holds the delete button
-            saveCell.innerHTML = `<button onclick="saveTranslation('${locale}', '${original}', '${deleteText}','${message}')">${saveText}</button>`;
+            // Add save button in 4th column
+            const saveCell = row.cells[3];
+            saveCell.innerHTML = `<button onclick="saveTranslation('${locale}', '${original}', '${deleteText}','${message}')">${saveText}</button>
+                                  <button onclick="deleteRecord('${locale}', '${original}', '${deleteText}', '${myRecordDeleted}')">${deleteText}</button>`;
+
 
             found = true;
-            break; // Stop after finding the first match
+            break;
         }
     }
 
     if (!found) {
-        alert("Record not found!");
+        alert(recordNotFound);
     }
 }
+
 function loadGlossaryFromDB(apiKey, DeeplFree,language) {
     // Ensure gloss is properly initialized as an array
     let gloss = [];
