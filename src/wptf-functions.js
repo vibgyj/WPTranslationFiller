@@ -489,8 +489,17 @@ function oldmatchesWithDutchVerbPrefix(baseWord, tokens, locale = 'nl') {
 }
 
 function normalizeText(text) {
-    return text.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    return (typeof text === 'string' ? text : '')
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/<[^>]*>/g, '')   // Remove HTML tags
+        .replace(/%[\d\$]*[a-z]/gi, '')  // Remove placeholder tokens like %s, %1$s
+        .replace(/[^\w\s]/g, ' ') // Replace non-word chars with space
+        .replace(/\s+/g, ' ')     // Collapse spaces
+        .trim();
 }
+
 
 function countOccurrences(words) {
     const counts = new Map();
@@ -504,6 +513,7 @@ function countOccurrences(words) {
 
 async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
     // If already processing, exit early
+    var dutchText=""
     if (isProcessing) return;
 
     isProcessing = true;  // Set the flag to indicate processing is in progress
@@ -545,7 +555,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                         spansArray[spancnt].setAttribute('gloss-index', spancnt);
                     }
                     let glossWords = createGlossArray(spansArray, newGloss);
-                    let dutchText = translation;
+                    dutchText = translation;
 
                     if (isPlural == false) {
                         await remove_all_gloss(markleftPanel, false);
