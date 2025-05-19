@@ -12,7 +12,7 @@ async function googleTranslate(original, destlang, e, apikey, preverbs, rowId, t
    // console.debug("spellcheckignore:", spellCheckIgnore)
     var trntype;
     let originalPreProcessed = preProcessOriginal(original, preverbs, "google");
-    //console.debug("pre:",originalPreProcessed)
+    //console.debug("originalPreprocessed:", originalPreProcessed)
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
     var myArray = myRe.exec(originalPreProcessed);
     if (myArray == null) {
@@ -84,9 +84,9 @@ async function getTransGoogle(record, language, apikey, requestBody, original, o
             else {
                 //We do have a result so process it
                 translatedText = data.data.translations[0].translatedText;
-                console.debug("translated text:", translatedText);
+                //console.debug("translated text:", translatedText);
                 // Currently for postProcessTranslation  "deepl" is set, this might need to be changed!!!
-                console.debug("spellcheckignore:",spellCheckIgnore)
+               // console.debug("spellcheckignore:",spellCheckIgnore)
                 translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "google", convertToLower, spellCheckIgnore,locale);
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");

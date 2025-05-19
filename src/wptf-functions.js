@@ -461,24 +461,46 @@ async function validateOld(showDiff) {
         processRecordsSequentially();
     }
 }
+
+// PSS -------------------------------------------------------------------------------
 function stripQuotes(str) {
     return str.replace(/^["']|["']$/g, '');
 }
-function countOccurrences(text, term) {
-    console.debug("Text:", text)
-    console.debug("Term:", term)
-    if (typeof text !== 'string' || typeof term !== 'string') {
-        console.warn("Invalid input to countOccurrences:", { text, term });
-        return 0;
-    }
+function oldmatchesWithDutchVerbPrefix(baseWord, tokens, locale = 'nl') {
+    const localePrefixes = {
+        'nl': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
+        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op']
+    };
 
-    const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`(?:\\b|')${escapedTerm}\\b`, 'gi');
-    const matches = text.match(pattern);
+    const prefixes = localePrefixes[locale] || [];
 
-    return (matches || []).length;
+    return tokens.some(token => {
+        for (const prefix of prefixes) {
+            if (
+                token.startsWith(prefix) &&
+                token.endsWith(baseWord) &&
+                token.length > baseWord.length + 1
+            ) {
+                return true;
+            }
+        }
+        return false;
+    });
 }
 
+function normalizeText(text) {
+    return text.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+function countOccurrences(words) {
+    const counts = new Map();
+    for (const word of words) {
+        counts.set(word, (counts.get(word) || 0) + 1);
+    }
+    return counts;
+}
+
+//------------------------------------------------------------------------------
 
 async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
     // If already processing, exit early
@@ -528,7 +550,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                     if (isPlural == false) {
                         await remove_all_gloss(markleftPanel, false);
                         missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText);
+                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
 
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
@@ -542,7 +564,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                     if (isPlural == true) {
                         await remove_all_gloss(markleftPanel, true);
                         missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText);
+                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
 
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
@@ -562,6 +584,30 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
     }
 }
 
+
+
+function matchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
+    const localePrefixes = {
+        nl: ['ge', 'her', 'ver', 'be', 'ont', 'op'],
+        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
+        // future locales can be added here
+    };
+
+    const prefixes = localePrefixes[locale] || [];
+
+    return tokens.some(token => {
+        for (const prefix of prefixes) {
+            if (
+                token.startsWith(prefix) &&
+                token.endsWith(baseWord) &&
+                token.length > baseWord.length + 1
+            ) {
+                return true;
+            }
+        }
+        return false;
+    });
+}
 
 //# mark missing glossary words in original 
 async function mark_original(preview, toolTip, translation, rowId, isPlural){
@@ -624,7 +670,7 @@ async function mark_original(preview, toolTip, translation, rowId, isPlural){
                         missingTranslations = [];
                         // Run the function
                         //console.debug("Translation:",translation)
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText);
+                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
 
                         // Output the result
                         if (missingTranslations.length > 0) {
@@ -1130,7 +1176,7 @@ function isExactlyEqual(text1, text2) {
 // Version 2025.05.02b - Fix inner capitalization and URL safety
 
 
-function restoreCase(original, translated, ignoreList = '', debug = false) {
+function restoreCase(original, translated, locale, ignoreList = '', debug = false) {
     if (debug) console.debug("[restoreCase] Original:", original);
     if (!translated || typeof translated !== 'string') return translated;
 
@@ -1142,17 +1188,36 @@ function restoreCase(original, translated, ignoreList = '', debug = false) {
     const ignoreSet = new Set(ignoreArray.map(w => w.toLowerCase()));
     if (debug) console.debug("[restoreCase] Ignore list:", ignoreArray);
 
-    // Step 1: Capitalize after punctuation (., !, ?)
+    // === Step 1: Protect URLs ===
+    const urls = [];
+    trimmed = trimmed.replace(/\bhttps?:\/\/[^\s]+/gi, match => {
+        urls.push(match);
+        return `{{url${urls.length - 1}}}`;
+    });
+
+    // === Step 2: Protect placeholders (like %s, [%s], etc.) ===
+    const placeholders = [];
+    let placeholderIndex = 0;
+    trimmed = trimmed.replace(/(\[%?\d*\$?[sd]\])|(%\d*\$?[sd])/gi, match => {
+        const token = `__PLACEHOLDER_${placeholderIndex}__`;
+        placeholders.push({ token, original: match });
+        placeholderIndex++;
+        return token;
+    });
+
+    // === Step 3: Capitalize sentence starts after ., !, ? ===
     trimmed = trimmed.replace(/(^|[.?!]\s+)([a-zà-ÿ])/g, (match, p1, p2) => {
         return p1 + p2.toUpperCase();
     });
 
-    // Step 2: Heuristic lowercase if needed
+    // === Step 4: Heuristic lowercase if needed ===
     const words = trimmed.split(/\b/);
     let capitalizedCount = 0, totalWords = 0;
 
-    const updatedWords = words.map(word => {
-        if (/^\w{2,}/.test(word) && !ignoreSet.has(word.toLowerCase())) {
+    const updatedWords = words.map((word) => {
+        if (/^\w{2,}/.test(word) &&
+            !ignoreSet.has(word.toLowerCase()) &&
+            !/^__PLACEHOLDER_\d+__$/.test(word)) {
             totalWords++;
             if (/^[A-ZÀ-Ý]/.test(word)) capitalizedCount++;
         }
@@ -1165,14 +1230,27 @@ function restoreCase(original, translated, ignoreList = '', debug = false) {
         trimmed = words.map((word, idx) => {
             if (
                 /^\w{2,}/.test(word) &&
-                !ignoreSet.has(word.toLowerCase())
+                !ignoreSet.has(word.toLowerCase()) &&
+                !/^__PLACEHOLDER_\d+__$/.test(word) &&
+                !/^{{url\d+}}$/.test(word)
             ) {
+                // Skip if fully uppercase (likely acronym)
+                if (/^[A-ZÀ-Ý0-9]{2,}$/.test(word)) return word;
+
                 const prev = words[idx - 1] || '';
                 const isAfterPunctuation = /[.?!]\s*$/.test(prev);
-                const isAfterColon = /:\s*$/.test(prev);
-                const isAllCaps = /^[A-ZÀ-Ý0-9]+$/.test(word);
 
-                if (!isAfterPunctuation && !(isAfterColon && isAllCaps)) {
+                // If locale is nl or nl-be, allow casing after ':' unless it's all-uppercase
+                const isAfterColon = /[:：]\s*$/.test(prev);
+                if (
+                    isAfterColon &&
+                    (locale === 'nl' || locale === 'nl-be') &&
+                    /^[A-ZÀ-Ý0-9]{2,}$/.test(word)
+                ) {
+                    return word; // leave all-uppercase alone
+                }
+
+                if (!isAfterPunctuation) {
                     if (debug) console.debug("[restoreCase] Lowercasing inner word:", word);
                     return word.charAt(0).toLowerCase() + word.slice(1);
                 }
@@ -1181,272 +1259,42 @@ function restoreCase(original, translated, ignoreList = '', debug = false) {
         }).join('');
     }
 
+    // === Step 5: Restore placeholders ===
+    placeholders.forEach(({ token, original }) => {
+        trimmed = trimmed.replace(token, original);
+    });
+
+    // === Step 6: Restore URLs ===
+    urls.forEach((url, index) => {
+        trimmed = trimmed.replace(`{{url${index}}}`, url);
+    });
+
     return trimmed;
 }
-
-
-
-
-
-
-
-
-
-function next1_restoreCase(original, translated, locale, ignoreList = [], debug = false) {
-    const log = (...args) => { if (debug) console.debug('[restoreCase]', ...args); };
-
-    function isIgnored(word) {
-        return ignoreList.includes(word);
-    }
-
-    function isAllCaps(word) {
-        return /^[A-Z]+$/.test(word);
-    }
-
-    const leadingSpace = /^\s+/.exec(translated)?.[0] || '';
-    const trailingSpace = /\s+$/.exec(translated)?.[0] || '';
-    let trimmed = translated.trim();
-
-    log('Original:', original);
-    log('Translated:', translated);
-    log('Trimmed:', trimmed);
-    log('Ignore list:', ignoreList);
-
-    // Fix repeated punctuation like "??" or "!!"
-    trimmed = trimmed.replace(/([.?!])\1+/g, '$1');
-
-    // Avoid processing if it's a full URL
-    const isOnlyURL = /^(https?|ftp|file):\/\/[^\s<>"]+$/i.test(trimmed);
-    if (isOnlyURL) return translated;
-
-    if (locale === 'nl' || locale === 'nl-be') {
-        if (!/^[A-Z\s]+$/.test(original.trim())) {
-            trimmed = trimmed[0].toUpperCase() + trimmed.slice(1);
-        }
-
-        // Capitalize first letter after ., ?, or ! followed by space(s)
-        trimmed = trimmed.replace(/([.?!])(\s+)(\p{Ll})/gu, (_, p1, p2, p3) => {
-            log('Capitalizing after punctuation:', p3);
-            return p1 + p2 + p3.toUpperCase();
-        });
-
-        // Lowercase word after ':' or ';' unless ignored or all caps
-        trimmed = trimmed.replace(/([:;])\s*([^\s]+)/g, (match, p1, p2) => {
-            const needsSpace = `${p1} `;
-            if (isAllCaps(p2) || isIgnored(p2)) {
-                log('Keeping capitalization after', p1, 'for', p2);
-                return `${needsSpace}${p2}`;
-            }
-            log('Lowercasing after', p1, 'for', p2);
-            return `${needsSpace}${p2[0].toLowerCase()}${p2.slice(1)}`;
-        });
-
-        // Protect URLs
-        trimmed = trimmed.replace(/https?:\/\/[^\s]+/g, (url) => `¤${url}¤`);
-
-        const segments = trimmed.split(/¤/g).map(segment => {
-            if (/^https?:\/\//.test(segment)) return segment;
-
-            const words = segment.split(/\b/);
-            const capitalizedInnerWords = words.filter((w, i) =>
-                i > 0 && /^[A-Z][a-z]+$/.test(w) && !isIgnored(w)
-            );
-            const totalInner = words.length - 1;
-            const capitalizeRate = capitalizedInnerWords.length / totalInner;
-
-            if (totalInner >= 2 && capitalizeRate > 0.5) {
-                return words.map((w, i) => {
-                    if (
-                        i > 0 &&
-                        /^[A-Z][a-z]+$/.test(w) &&
-                        !isIgnored(w)
-                    ) {
-                        log('Lowercasing inner word:', w);
-                        return w[0].toLowerCase() + w.slice(1);
-                    }
-                    return w;
-                }).join('');
-            }
-            return segment;
-        });
-
-        trimmed = segments.join('');
-    }
-
-    const finalResult = leadingSpace + trimmed + trailingSpace;
-    log('Final result:', finalResult);
-    return finalResult;
+async function handlePlural1(row,translatedText) {
+    console.debug("We handle plural 1:", row, translatedText)
+    previewElem = document.querySelector(`#preview-${row} .ul-plural li:nth-of-type(1) .translation-text`);
+    console.debug("in plural first line:", previewElem)
+    previewElem.innerText = translatedText
 }
 
-function next_restoreCase(original, translated, locale, ignoreList = [], debug = false) {
-    const log = (...args) => { if (debug) console.debug('[restoreCase]', ...args); };
+async function handlePlural2() {
+    console.debug("We handle plural 2:", row, translatedText)
 
-    function isIgnored(word) {
-        return ignoreList.includes(word);
-    }
-
-    function isAllCaps(word) {
-        return /^[A-Z]+$/.test(word);
-    }
-
-    const leadingSpace = /^\s+/.exec(translated)?.[0] || '';
-    const trailingSpace = /\s+$/.exec(translated)?.[0] || '';
-    let trimmed = translated.trim();
-
-    log('Original:', original);
-    log('Translated:', translated);
-    log('Trimmed:', trimmed);
-    log('Ignore list:', ignoreList);
-
-    trimmed = trimmed.replace(/([.?!])\1+/g, '$1');
-
-    const isOnlyURL = /^(https?|ftp|file):\/\/[^\s<>"]+$/i.test(trimmed);
-    if (isOnlyURL) return translated;
-
-    if (locale === 'nl' || locale === 'nl-be') {
-        if (!/^[A-Z\s]+$/.test(original.trim())) {
-            trimmed = trimmed[0].toUpperCase() + trimmed.slice(1);
-        }
-
-        // Track capitalized words after punctuation
-        const capitalizedAfterPunctuation = new Set();
-        let wordIndex = 0;
-
-        trimmed = trimmed.replace(/([.?!])(\s+)(\p{Ll})/gu, (match, p1, p2, p3, offset) => {
-            const start = offset + match.length - 1;
-            log('Capitalizing after punctuation:', p3);
-            // We'll mark the next word as protected
-            capitalizedAfterPunctuation.add(start);
-            return p1 + p2 + p3.toUpperCase();
-        });
-
-        trimmed = trimmed.replace(/([:;])\s*([^\s]+)/g, (match, p1, p2) => {
-            const needsSpace = `${p1} `;
-            if (isAllCaps(p2) || isIgnored(p2)) {
-                log('Keeping capitalization after', p1, 'for', p2);
-                return `${needsSpace}${p2}`;
-            }
-            log('Lowercasing after', p1, 'for', p2);
-            return `${needsSpace}${p2[0].toLowerCase()}${p2.slice(1)}`;
-        });
-
-        // Extract and protect URLs
-        const urls = [];
-        trimmed = trimmed.replace(/https?:\/\/[^\s]+/g, (url) => {
-            urls.push(url);
-            return `¤${urls.length - 1}¤`;
-        });
-
-        const segments = trimmed.split(/¤\d+¤/g);
-        const resultSegments = [];
-
-        for (let segIndex = 0; segIndex < segments.length; segIndex++) {
-            const segment = segments[segIndex];
-            const words = segment.split(/\b/);
-
-            let currentCharIndex = 0;
-            const processed = words.map((w, idx) => {
-                const startIndex = currentCharIndex;
-                currentCharIndex += w.length;
-
-                if (
-                    idx > 0 &&
-                    /^[A-Z][a-z]+$/.test(w) &&
-                    !isIgnored(w) &&
-                    !isAllCaps(w) &&
-                    !capitalizedAfterPunctuation.has(startIndex)
-                ) {
-                    log('Lowercasing inner word:', w);
-                    return w[0].toLowerCase() + w.slice(1);
-                }
-                return w;
-            }).join('');
-
-            resultSegments.push(processed);
-            if (segIndex < urls.length) {
-                resultSegments.push(urls[segIndex]); // restore original URL
-            }
-        }
-
-        trimmed = resultSegments.join('');
-    }
-
-    const finalResult = leadingSpace + trimmed + trailingSpace;
-    log('Final result:', finalResult);
-    return finalResult;
 }
 
-function previous_restoreCase(original, translated, locale, ignoreList = [], debug = false) {
-    const log = (...args) => { if (debug) console.debug('[restoreCase]', ...args); };
+function replacePlaceholdersBeforeTranslation(text) {
+    let counter = 0;
+    return text.replace(/%(\d{1,2})?\$?[sdl]/gi, (match) => {
+        return `__PH_${counter++}__`;
+    });
+}
 
-    function isIgnored(word) {
-        return ignoreList.includes(word);
-    }
-
-    function isAllCaps(word) {
-        return /^[A-Z]+$/.test(word);
-    }
-
-    const leadingSpace = /^\s+/.exec(translated)?.[0] || '';
-    const trailingSpace = /\s+$/.exec(translated)?.[0] || '';
-    let trimmed = translated.trim();
-
-    log('Original:', original);
-    log('Translated:', translated);
-    log('Trimmed:', trimmed);
-    log('Ignore list:', ignoreList);
-
-    trimmed = trimmed.replace(/([.?!])\1+/g, '$1');
-
-    const isOnlyURL = /^(https?|ftp|file):\/\/[^\s<>"]+$/i.test(trimmed);
-    if (isOnlyURL) return translated;
-
-    if (locale === 'nl' || locale === 'nl-be') {
-        if (!/^[A-Z\s]+$/.test(original.trim())) {
-            trimmed = trimmed[0].toUpperCase() + trimmed.slice(1);
-        }
-
-        trimmed = trimmed.replace(/([.?!])(\s+)(\p{Ll})/gu, (_, p1, p2, p3) => {
-            log('Capitalizing after punctuation:', p3);
-            return p1 + p2 + p3.toUpperCase();
-        });
-
-        trimmed = trimmed.replace(/([:;])\s*([^\s]+)/g, (match, p1, p2) => {
-            const needsSpace = `${p1} `;
-            if (isAllCaps(p2) || isIgnored(p2)) {
-                log('Keeping capitalization after', p1, 'for', p2);
-                return `${needsSpace}${p2}`;
-            }
-            log('Lowercasing after', p1, 'for', p2);
-            return `${needsSpace}${p2[0].toLowerCase()}${p2.slice(1)}`;
-        });
-
-        // Replace URLs with placeholders to avoid tampering
-        trimmed = trimmed.replace(/https?:\/\/[^\s]+/g, (url) => `¤${url}¤`);
-
-        const segments = trimmed.split(/¤/g).map(segment => {
-            if (/^https?:\/\//.test(segment)) return segment;
-
-            const words = segment.split(/\b/);
-            return words.map((w, i) => {
-                if (
-                    i > 0 &&
-                    /^[A-Z][a-z]+$/.test(w) &&
-                    !isIgnored(w) &&
-                    !isAllCaps(w)
-                ) {
-                    log('Lowercasing inner word:', w);
-                    return w[0].toLowerCase() + w.slice(1);
-                }
-                return w;
-            }).join('');
-        });
-
-        trimmed = segments.join('');
-    }
-
-    const finalResult = leadingSpace + trimmed + trailingSpace;
-    log('Final result:', finalResult);
-    return finalResult;
+function restorePlaceholdersAfterTranslation(text, originalText) {
+    const placeholders = [...originalText.matchAll(/%(\d{1,2})?\$?[sdl]/gi)].map(m => m[0]);
+    let counter = 0;
+    return text.replace(/__PH_(\d+)__/g, () => {
+        return placeholders[counter++] || '';
+    });
 }
 

@@ -135,11 +135,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             context: request.body.context,
             glossary_id: request.body.glossary_id
         }).toString();  // Convert to query string
-
-       // console.log('URL-encoded Body:', urlEncodedBody);
-
+        let url = request.body.DeeplURL
+       // let url = request.body.DeeplFreePar == true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
+       
         // Now, make the API request
-        fetch("https://api-free.deepl.com/v2/translate", {
+        fetch(url, {
             method: "POST",
             headers: {
                 "Authorization": "DeepL-Auth-Key "+request.body.auth_key,
