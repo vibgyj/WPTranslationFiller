@@ -6114,15 +6114,27 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     // 07-07-2021 PSS fixed problem with populating when status is current
                     if (current != "null") {
                         let row = rowId.split("-")[0];
+                        let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
                         textareaElem1 = f.querySelector("textarea#translation_" + row + "_1");
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
+                        textareaElem2 = f.querySelector("textarea#translation_" + row + "_2");
+                        if (textareaElem2 != 'undefined') { 
+                            textareaElem2.innerText = translatedText;
+                            textareaElem2.value = translatedText;
+                        }
                         await validateEntry(destlang, textareaElem1, "", "", rowId, locale, e, false, DefGlossary);
                     }
                     else {
+                        let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
                         textareaElem1 = f.querySelector("textarea#translation_" + rowId + "_1");
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
+                        textareaElem2 = f.querySelector("textarea#translation_" + row + "_2");
+                        if (textareaElem2 != 'undefined') {
+                            textareaElem2.innerText = translatedText;
+                            textareaElem2.value = translatedText;
+                        }
                         await validateEntry(destlang, textareaElem1, "", "", rowId, locale, e, false, DefGlossary);
                         document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
                     }
@@ -7020,7 +7032,7 @@ async function processTransl (original, translatedText, language, record, rowId,
         if (current != "null" && current.innerText == "current" && current.innerText == "waiting" && current.innerText == "transFill" && current.innerText == "untranslated") {
             plural_row = myRowId.split("-")[0];
            // console.debug('rowId plural:', row)
-            textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_0");
+            textareaElem1 = record.querySelector("textarea#translation_" + plural_row + "_0");
             //console.debug("processTransl texareaElem:",textareaElem1)
         }
         else {

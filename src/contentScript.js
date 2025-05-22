@@ -3448,7 +3448,7 @@ let currentTranslation = ""; // To track the current state of the translation
 
 
 
-function matchesWithDutchVerbPrefix(variant, translatedTokens, locale = "nl") {
+function prevmatchesWithDutchVerbPrefix(variant, translatedTokens, locale = "nl") {
     if (!Array.isArray(translatedTokens)) {
         console.warn("matchesWithDutchVerbPrefix: expected array for translatedTokens, got:", translatedTokens);
         return false;
@@ -3469,22 +3469,60 @@ function matchesWithDutchVerbPrefix(variant, translatedTokens, locale = "nl") {
 
     return false;
 }
-
-
-function countOccurrences(text, term) {
-    if (typeof term !== 'string' || !term) {
-        console.warn('Invalid input to countOccurrences:', { text, term });
-        return 0;
+function matchesWithDutchVerbPrefix(variant, translatedTokens, locale = 'nl') {
+    if (!Array.isArray(translatedTokens)) {
+        console.warn("matchesWithDutchVerbPrefix: expected array for translatedTokens, got:", translatedTokens);
+        return false;
     }
-    const normalizedText = text.toLowerCase();
-    const normalizedTerm = term.toLowerCase();
-    const regex = new RegExp(`\\b${normalizedTerm}\\b`, 'g');
-    const matches = normalizedText.match(regex);
-    return matches ? matches.length : 0;
+
+    if (!variant || typeof variant !== 'string') return false;
+
+    const prefixesByLocale = {
+        'nl': ['ge', 'her', 'ver', 'be', 'ont', 'mis'],
+        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'mis'],
+    };
+
+    const prefixes = prefixesByLocale[locale] || [];
+
+    return translatedTokens.some(token =>
+        prefixes.some(prefix => token.startsWith(prefix + variant))
+    );
 }
 
-function findMissingTranslations(glossWords, translatedText, glossary, locale = "nl") {
-    console.debug("glossWords:");
+function matchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
+    const localePrefixes = {
+        nl: ['ge', 'her', 'ver', 'be', 'ont', 'op'],
+        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
+        // future locales can be added here
+    };
+
+    const prefixes = localePrefixes[locale] || [];
+
+    // Ensure tokens is always treated as an array
+    if (!Array.isArray(tokens)) tokens = [tokens];
+
+    return tokens.some(token => {
+        for (const prefix of prefixes) {
+            if (
+                token.startsWith(prefix) &&
+                token.endsWith(baseWord) &&
+                token.length > baseWord.length + 1
+            ) {
+                return true;
+            }
+        }
+        return false;
+    });
+}
+
+
+// Updated findMissingTranslations with fair glossary variant distribution
+
+// 21-05-2025 Working with proper counts nothing changed
+
+function findMissingTranslations(glossWords, original, translatedText, glossary, locale = "nl") {
+    var version = '1.0.0'
+    console.debug("glossWords:", glossWords);
     if (typeof translatedText !== "string") {
         console.warn("findMissingTranslations: translatedText must be a string", translatedText);
         return [];
@@ -3494,15 +3532,157 @@ function findMissingTranslations(glossWords, translatedText, glossary, locale = 
     const normalizedTranslatedTokens = normalizedTranslatedText.split(/\s+/);
 
     const glossIndexUsage = new Map();
+    const requiredCounts = new Map();
+    const variantCounts = new Map();
+    const variantUsageByGlossIndex = new Map();
+
     const missingWords = [];
+
+    // Count required per glossIndex
+    for (const item of glossWords) {
+        const glossIndex = item.glossIndex;
+        requiredCounts.set(glossIndex, (requiredCounts.get(glossIndex) || 0) + 1);
+    }
+
+    // Count total available per variant in translated text
+    for (const item of glossWords) {
+        const rawWords = Array.isArray(item.word) ? item.word : [item.word];
+        for (let raw of rawWords) {
+            const variants = raw.split('/').map(v =>
+                v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim()
+            );
+            for (let variant of variants) {
+                if (!variantCounts.has(variant)) {
+                    const count = countOccurrences(normalizedTranslatedText, variant);
+                    variantCounts.set(variant, count);
+                }
+            }
+        }
+    }
+
+    // Attempt match for each glossary word
+    for (const item of glossWords) {
+        const rawWords = Array.isArray(item.word) ? item.word : [item.word];
+        const glossIndex = item.glossIndex;
+        const required = requiredCounts.get(glossIndex);
+        let used = glossIndexUsage.get(glossIndex) || 0;
+
+        if (used >= required) continue;
+
+        for (let raw of rawWords) {
+            const variants = raw.split('/').map(v =>
+                v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim()
+            );
+
+            for (let variant of variants) {
+                if (!variant) continue;
+
+                const totalAvailable = variantCounts.get(variant) || 0;
+
+                const glossKey = glossIndex + '|' + variant;
+                const usedByThisGloss = variantUsageByGlossIndex.get(glossKey) || 0;
+
+                const globalUsed = [...variantUsageByGlossIndex.entries()]
+                    .filter(([k, _]) => k.endsWith('|' + variant))
+                    .reduce((sum, [, val]) => sum + val, 0);
+
+                const prefixMatchAllowed = variant.length > 1;
+                const prefixMatch = prefixMatchAllowed && matchesWithLocalePrefix(variant, normalizedTranslatedTokens, locale);
+
+                const combinedMatch = variant.length > 2 &&
+                    normalizedTranslatedTokens.some(token =>
+                        token.length > variant.length && token.includes(variant)
+                    );
+
+                const canUse =
+                    globalUsed < totalAvailable || prefixMatch || combinedMatch;
+
+                if (canUse && used < required) {
+                    used++;
+                    glossIndexUsage.set(glossIndex, used);
+                    variantUsageByGlossIndex.set(glossKey, usedByThisGloss + 1);
+
+                    console.debug(`✅ GlossIndex ${glossIndex} - Variant "${variant}" assigned, used by this gloss: ${usedByThisGloss + 1}, global used: ${globalUsed + 1}`);
+                    break; // stop after assigning 1 usage for this glossWord
+                }
+
+                console.debug(`GlossIndex ${glossIndex} - Variant "${variant}" found ${totalAvailable} time(s), used by this gloss: ${usedByThisGloss}, global used: ${globalUsed}`);
+            }
+
+            if (used >= required) break;
+        }
+    }
+
+    // Check for any glossIndex that didn't meet required matches
+    for (const [glossIndex, required] of requiredCounts.entries()) {
+        const used = glossIndexUsage.get(glossIndex) || 0;
+        if (used < required) {
+            const firstItem = glossWords.find(g => g.glossIndex === glossIndex);
+            if (firstItem) {
+                missingWords.push({
+                    word: firstItem.word,
+                    glossIndex,
+                    missingCount: required - used
+                });
+                console.warn(`❌ Glossary word(s) not fully matched: ${firstItem.word} (glossIndex: ${glossIndex}, missing: ${required - used})`);
+            }
+        }
+    }
+
+    console.debug("✅ Final GlossIndexUsage map:", glossIndexUsage);
+    return missingWords;
+}
+
+
+function workingfindMissingTranslations(glossWords, original, translatedText, glossary, locale = "nl") {
+    console.debug("glossWords:", glossWords);
+    if (typeof translatedText !== "string") {
+        console.warn("findMissingTranslations: translatedText must be a string", translatedText);
+        return [];
+    }
+
+    const normalizedTranslatedText = translatedText.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    const normalizedTranslatedTokens = normalizedTranslatedText.split(/\s+/);
+
+    const glossIndexUsage = new Map();        // Track per glossIndex how many matches used
+    const requiredCounts = new Map();         // How many times each glossIndex is required
+    const variantGlobalUsage = new Map();     // Track total usage per variant
+    const variantGlobalCounts = new Map();    // Track total occurrences per variant
+
+    const missingWords = [];
+
+    // Count how many times each glossIndex should appear
+    for (const item of glossWords) {
+        const glossIndex = item.glossIndex;
+        requiredCounts.set(glossIndex, (requiredCounts.get(glossIndex) || 0) + 1);
+    }
+
+    // Count occurrences of each unique variant only once
+    const countedVariants = new Set();
+
+    for (const item of glossWords) {
+        const rawWords = Array.isArray(item.word) ? item.word : [item.word];
+        for (let raw of rawWords) {
+            const variants = raw.split('/').map(v =>
+                v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim()
+            );
+            for (let variant of variants) {
+                if (!variant) continue;
+                if (countedVariants.has(variant)) continue;  // already counted this variant
+                const count = countOccurrences(normalizedTranslatedText, variant);
+                variantGlobalCounts.set(variant, count);
+                countedVariants.add(variant);
+            }
+        }
+    }
 
     for (const item of glossWords) {
         const rawWords = Array.isArray(item.word) ? item.word : [item.word];
         const glossIndex = item.glossIndex;
 
-        if (glossIndexUsage.has(glossIndex) && glossIndexUsage.get(glossIndex) > 0) {
-            continue;
-        }
+        const requiredCount = requiredCounts.get(glossIndex);
+        const usedCount = glossIndexUsage.get(glossIndex) || 0;
+        if (usedCount >= requiredCount) continue;
 
         let found = false;
 
@@ -3514,38 +3694,149 @@ function findMissingTranslations(glossWords, translatedText, glossary, locale = 
             for (let variant of variants) {
                 if (!variant) continue;
 
-                const usedCount = glossIndexUsage.get(glossIndex) || 0;
-                const availableCount = countOccurrences(normalizedTranslatedText, variant);
+                const globalUsed = variantGlobalUsage.get(variant) || 0;
+                const globalAvailable = variantGlobalCounts.get(variant) || 0;
+
+                console.debug(`GlossIndex ${glossIndex} - Variant "${variant}" found ${globalAvailable} time(s), used ${globalUsed} time(s)`);
 
                 const prefixMatchAllowed = variant.length > 1;
 
-                // Combined word detection: variant appears inside a longer word
                 const combinedMatch = variant.length > 2 && normalizedTranslatedTokens.some(token =>
                     token.length > variant.length && token.includes(variant)
                 );
 
+                const prefixMatch = prefixMatchAllowed && matchesWithDutchVerbPrefix(variant, normalizedTranslatedTokens, locale);
+
                 if (
-                    availableCount > usedCount ||
-                    (prefixMatchAllowed && matchesWithDutchVerbPrefix(variant, normalizedTranslatedTokens, locale)) ||
+                    globalUsed < globalAvailable ||
+                    prefixMatch ||
                     combinedMatch
                 ) {
                     glossIndexUsage.set(glossIndex, usedCount + 1);
+                    variantGlobalUsage.set(variant, globalUsed + 1);
                     found = true;
                     break;
                 }
             }
+
             if (found) break;
         }
 
-        if (!found) {
-            missingWords.push({ word: rawWords, glossIndex });
+        const updatedUsed = glossIndexUsage.get(glossIndex) || 0;
+        if (updatedUsed < requiredCount) {
+            const existing = missingWords.find(w => w.glossIndex === glossIndex);
+            if (!existing) {
+                missingWords.push({ word: rawWords, glossIndex });
+                console.warn(`❌ Glossary word(s) not found: ${rawWords.join(', ')} (glossIndex: ${glossIndex})`);
+                console.debug("🔎 Current translation text:", normalizedTranslatedText);
+                console.debug("🧠 Current translation tokens:", normalizedTranslatedTokens);
+                console.debug("🗂 GlossIndexUsage map:", glossIndexUsage);
+            }
         }
     }
 
     return missingWords;
 }
 
+function prevfindMissingTranslations(glossWords, translatedText, glossary, locale = "nl") {
+    console.debug("glossWords:", glossWords);
+    if (typeof translatedText !== "string") {
+        console.warn("findMissingTranslations: translatedText must be a string", translatedText);
+        return [];
+    }
 
+    const normalizedTranslatedText = translatedText.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    const normalizedTranslatedTokens = normalizedTranslatedText.split(/\s+/);
+
+    const glossIndexUsage = new Map();        // Track per glossIndex
+    const requiredCounts = new Map();         // Count how many times each glossIndex should be matched
+    const variantGlobalUsage = new Map();     // Track how many times each normalized variant is already matched
+    const variantGlobalCounts = new Map();    // Count total appearances in translatedText
+
+    const missingWords = [];
+
+    // Count how many times each glossIndex should appear
+    for (const item of glossWords) {
+        const glossIndex = item.glossIndex;
+        requiredCounts.set(glossIndex, (requiredCounts.get(glossIndex) || 0) + 1);
+    }
+
+    // Pre-calculate global available counts for all variants
+    for (const item of glossWords) {
+        const rawWords = Array.isArray(item.word) ? item.word : [item.word];
+        for (let raw of rawWords) {
+            const variants = raw.split('/').map(v =>
+                v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim()
+            );
+            for (let variant of variants) {
+                if (!variant) continue;
+                const existing = variantGlobalCounts.get(variant) || 0;
+                variantGlobalCounts.set(variant, existing + countOccurrences(normalizedTranslatedText, variant));
+            }
+        }
+    }
+
+    for (const item of glossWords) {
+        const rawWords = Array.isArray(item.word) ? item.word : [item.word];
+        const glossIndex = item.glossIndex;
+
+        const requiredCount = requiredCounts.get(glossIndex);
+        const usedCount = glossIndexUsage.get(glossIndex) || 0;
+        if (usedCount >= requiredCount) continue;
+
+        let found = false;
+
+        for (let raw of rawWords) {
+            const variants = raw.split('/').map(v =>
+                v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim()
+            );
+
+            for (let variant of variants) {
+                if (!variant) continue;
+
+                const globalUsed = variantGlobalUsage.get(variant) || 0;
+                const globalAvailable = variantGlobalCounts.get(variant) || 0;
+
+                console.debug(`GlossIndex ${glossIndex} - Variant "${variant}" found ${globalAvailable} time(s), used ${globalUsed} time(s)`);
+
+                const prefixMatchAllowed = variant.length > 1;
+
+                const combinedMatch = variant.length > 2 && normalizedTranslatedTokens.some(token =>
+                    token.length > variant.length && token.includes(variant)
+                );
+
+                const prefixMatch = prefixMatchAllowed && matchesWithDutchVerbPrefix(variant, normalizedTranslatedTokens, locale);
+
+                if (
+                    globalUsed < globalAvailable ||
+                    prefixMatch ||
+                    combinedMatch
+                ) {
+                    glossIndexUsage.set(glossIndex, usedCount + 1);
+                    variantGlobalUsage.set(variant, globalUsed + 1);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) break;
+        }
+
+        const updatedUsed = glossIndexUsage.get(glossIndex) || 0;
+        if (updatedUsed < requiredCount) {
+            const existing = missingWords.find(w => w.glossIndex === glossIndex);
+            if (!existing) {
+                missingWords.push({ word: rawWords, glossIndex });
+                console.warn(`❌ Glossary word(s) not found: ${rawWords.join(', ')} (glossIndex: ${glossIndex})`);
+                console.debug("🔎 Current translation text:", normalizedTranslatedText);
+                console.debug("🧠 Current translation tokens:", normalizedTranslatedTokens);
+                console.debug("🗂 GlossIndexUsage map:", glossIndexUsage);
+            }
+        }
+    }
+
+    return missingWords;
+}
 
 
 function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundCount, rowId, lineNo) {
@@ -4575,7 +4866,8 @@ function countOccurrences(text, term) {
 async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
     //console.debug("mark_glossary:",translation)
     var missingTranslations = [];
-    var dutchText=""
+    var dutchText = ""
+    let locale = checkLocale() || 'en-gb'
     if (translation != "") {
         if (DefGlossary == true) {
             myglossary = glossary;
@@ -4587,6 +4879,9 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
         let markleftPanel = myleftPanel;
         if (markleftPanel != null) {
             singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
+            console.debug("singlepresent:", singlepresent)
+            original = singlepresent.querySelector('.original-raw').innerText
+            console.debug("original raw:",original)
             singularText = singlepresent.getElementsByClassName('original')[0];
             if (isPlural == true) {
                 pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
@@ -4618,7 +4913,8 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                 if (isPlural == false) {
                     await remove_all_gloss(markleftPanel, false);
                     missingTranslations = [];
-                    missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss,"nl");
+                    console.debug("original in mark_glossary:",original)
+                    missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss,locale);
                     console.debug("missingtranslations:",missingTranslations,missingTranslations.length)
                     if (missingTranslations.length > 0) {
                         missingTranslations.forEach(({ word, glossIndex }) => {
@@ -4632,7 +4928,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                 if (isPlural == true) {
                     await remove_all_gloss(markleftPanel, true);
                     missingTranslations = [];
-                    missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
+                    missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, locale);
 
                     if (missingTranslations.length > 0) {
                         missingTranslations.forEach(({ word, glossIndex }) => {
@@ -6138,7 +6434,8 @@ async function handleMutation(mutationsList, observer) {
 
     const glossWords = createGlossArray(spansArray, newGloss);
     //console.debug("translation in mutation:",translation)
-    const missingTranslations = await findMissingTranslations(glossWords, translation, newGloss, "nl");
+    console.debug("originalText:",originalText)
+    const missingTranslations = await findMissingTranslations(glossWords, originalText, translation, newGloss, "nl");
     //console.debug("missing:",missingTranslations)
     const toolTipLines = [];
     missingTranslations.forEach(({ word, glossIndex }) => {

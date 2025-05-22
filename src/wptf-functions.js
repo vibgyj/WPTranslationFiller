@@ -37,7 +37,7 @@ function setupTooltipHandler() {
     });
 }
 
-function countOccurrences(text, term) {
+function oldcountOccurrences(text, term) {
     // Handle contractions and count occurrences correctly
     const pattern = new RegExp(`(?:\\b|')${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
     const matches = text.match(pattern);
@@ -487,8 +487,19 @@ function oldmatchesWithDutchVerbPrefix(baseWord, tokens, locale = 'nl') {
         return false;
     });
 }
-
 function normalizeText(text) {
+    return (typeof text === 'string' ? text : '')
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/<[^>]*>/g, '')         // Remove HTML tags
+        .replace(/%[\d\$]*[a-z]/gi, '')  // Remove placeholder tokens like %s, %1$s
+        .replace(/[^\w\s]/g, ' ')        // Replace non-word chars with space
+        .replace(/\s+/g, ' ')            // Collapse spaces
+        .trim();
+}
+
+function oldnormalizeText(text) {
     return (typeof text === 'string' ? text : '')
         .toLowerCase()
         .normalize("NFD")
@@ -501,17 +512,10 @@ function normalizeText(text) {
 }
 
 
-function countOccurrences(words) {
-    const counts = new Map();
-    for (const word of words) {
-        counts.set(word, (counts.get(word) || 0) + 1);
-    }
-    return counts;
-}
 
 //------------------------------------------------------------------------------
 
-async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
+async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
     // If already processing, exit early
     var dutchText=""
     if (isProcessing) return;
@@ -560,7 +564,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                     if (isPlural == false) {
                         await remove_all_gloss(markleftPanel, false);
                         missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
+                        missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
 
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
@@ -574,7 +578,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                     if (isPlural == true) {
                         await remove_all_gloss(markleftPanel, true);
                         missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
+                        missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
 
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
@@ -594,9 +598,18 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
     }
 }
 
-
-
 function matchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
+    if (!Array.isArray(tokens)) tokens = [tokens];
+    if (typeof baseWord !== "string") return false;
+
+    if (locale === "nl" || locale === "nl-be") {
+        return tokens.some(token => matchesWithDutchVerbPrefix(baseWord, token));
+    }
+
+    return false;
+}
+
+function prevmatchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
     const localePrefixes = {
         nl: ['ge', 'her', 'ver', 'be', 'ont', 'op'],
         'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
@@ -680,7 +693,7 @@ async function mark_original(preview, toolTip, translation, rowId, isPlural){
                         missingTranslations = [];
                         // Run the function
                         //console.debug("Translation:",translation)
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
+                        missingTranslations = await findMissingTranslations(glossWords, singularText, dutchText, newGloss, "nl");
 
                         // Output the result
                         if (missingTranslations.length > 0) {
