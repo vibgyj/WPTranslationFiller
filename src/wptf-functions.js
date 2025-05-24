@@ -564,7 +564,8 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
                     if (isPlural == false) {
                         await remove_all_gloss(markleftPanel, false);
                         missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
+                        missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
+                        //missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
 
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
@@ -598,39 +599,7 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
     }
 }
 
-function matchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
-    if (!Array.isArray(tokens)) tokens = [tokens];
-    if (typeof baseWord !== "string") return false;
 
-    if (locale === "nl" || locale === "nl-be") {
-        return tokens.some(token => matchesWithDutchVerbPrefix(baseWord, token));
-    }
-
-    return false;
-}
-
-function prevmatchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
-    const localePrefixes = {
-        nl: ['ge', 'her', 'ver', 'be', 'ont', 'op'],
-        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
-        // future locales can be added here
-    };
-
-    const prefixes = localePrefixes[locale] || [];
-
-    return tokens.some(token => {
-        for (const prefix of prefixes) {
-            if (
-                token.startsWith(prefix) &&
-                token.endsWith(baseWord) &&
-                token.length > baseWord.length + 1
-            ) {
-                return true;
-            }
-        }
-        return false;
-    });
-}
 
 //# mark missing glossary words in original 
 async function mark_original(preview, toolTip, translation, rowId, isPlural){
@@ -693,7 +662,8 @@ async function mark_original(preview, toolTip, translation, rowId, isPlural){
                         missingTranslations = [];
                         // Run the function
                         //console.debug("Translation:",translation)
-                        missingTranslations = await findMissingTranslations(glossWords, singularText, dutchText, newGloss, "nl");
+                        missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
+                        //missingTranslations = await findMissingTranslations(glossWords, singularText, dutchText, newGloss, "nl");
 
                         // Output the result
                         if (missingTranslations.length > 0) {

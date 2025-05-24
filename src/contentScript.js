@@ -3446,81 +3446,338 @@ function decodeHtmlEntities(str) {
 let isProcessing = false; // Flag to prevent multiple calls
 let currentTranslation = ""; // To track the current state of the translation
 
+//-------
 
 
-function prevmatchesWithDutchVerbPrefix(variant, translatedTokens, locale = "nl") {
-    if (!Array.isArray(translatedTokens)) {
-        console.warn("matchesWithDutchVerbPrefix: expected array for translatedTokens, got:", translatedTokens);
-        return false;
-    }
+// -----------------------------
+function getPluralFormsForLocale(locale, word) {
+    const pluralForms = new Set();
 
-    if (locale !== "nl" && locale !== "nl-be") return false;
+    if (locale === 'nl' || locale === 'nl-be') {
+        const commonSuffixes = ['en', 's', 'eren'];
+        for (const suffix of commonSuffixes) {
+            pluralForms.add(word + suffix);
+        }
 
-    const prefixes = ["ge", "be", "ver", "her", "ont"];
+        if (word.endsWith('en')) {
+            const stem = word.slice(0, -2);
+            pluralForms.add(stem + 'ing');
+            pluralForms.add(stem + 'ingen');
+        }
 
-    for (let token of translatedTokens) {
-        const cleanToken = token.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-        for (let prefix of prefixes) {
-            if (cleanToken.startsWith(prefix + variant)) {
-                return true;
-            }
+        if (word.endsWith('ing')) {
+            pluralForms.add(word + 'en');
+            pluralForms.add(word.slice(0, -3) + 'ingen');
         }
     }
 
+    if (locale === 'de') {
+        const germanSuffixes = ['e', 'en', 'n', 'er', 's'];
+        for (const suffix of germanSuffixes) {
+            pluralForms.add(word + suffix);
+        }
+    }
+
+    if (locale === 'ru') {
+        const russianSuffixes = ['ы', 'и', 'а', 'я'];
+        for (const suffix of russianSuffixes) {
+            pluralForms.add(word + suffix);
+        }
+    }
+
+    return Array.from(pluralForms);
+}
+
+function matchesWithLocalePrefix(locale, variant, translationWord) {
+    if (locale === 'nl' || locale === 'nl-be') {
+        const prefixes = ['ge', 'her', 'ver', 'be', 'ont'];
+        return prefixes.some(prefix =>
+            translationWord === prefix + variant
+        );
+    }
+
+    // Placeholder for future locale logic
     return false;
 }
-function matchesWithDutchVerbPrefix(variant, translatedTokens, locale = 'nl') {
-    if (!Array.isArray(translatedTokens)) {
-        console.warn("matchesWithDutchVerbPrefix: expected array for translatedTokens, got:", translatedTokens);
-        return false;
-    }
 
-    if (!variant || typeof variant !== 'string') return false;
+function findAllMissingWords(translationText, glossWords, locale = 'nl') {
+    console.debug("translationText:", translationText);
+    const translation = translationText.toLowerCase();
+    const wordsInTranslation = translation.split(/\W+/);
 
-    const prefixesByLocale = {
-        'nl': ['ge', 'her', 'ver', 'be', 'ont', 'mis'],
-        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'mis'],
-    };
+    const matchPool = {}; // key: stringified word array, value: total matches
+    const entriesByKey = {}; // key: stringified word array, value: array of entries
+    const missingTranslations = [];
 
-    const prefixes = prefixesByLocale[locale] || [];
+    // First pass: accumulate total matches per word group
+    glossWords.forEach((entry) => {
+        const wordKey = JSON.stringify(entry.word);
 
-    return translatedTokens.some(token =>
-        prefixes.some(prefix => token.startsWith(prefix + variant))
-    );
-}
+        if (!entriesByKey[wordKey]) entriesByKey[wordKey] = [];
+        entriesByKey[wordKey].push(entry);
 
-function matchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
-    const localePrefixes = {
-        nl: ['ge', 'her', 'ver', 'be', 'ont', 'op'],
-        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
-        // future locales can be added here
-    };
+        if (matchPool[wordKey] !== undefined) return; // already processed
 
-    const prefixes = localePrefixes[locale] || [];
+        let matchCount = 0;
+        for (const variant of entry.word) {
+            const lowerVariant = variant.toLowerCase();
+            const isShort = lowerVariant.length <= 2;
 
-    // Ensure tokens is always treated as an array
-    if (!Array.isArray(tokens)) tokens = [tokens];
+            // Check if originalWord appears untranslated in the translation
+            let originalWordAppearsUntranslated = false;
+            if (entry.originalWord) {
+                const originalWordRegex = new RegExp(`\\b${entry.originalWord.toLowerCase()}\\b`, 'i');
+                originalWordAppearsUntranslated = originalWordRegex.test(translation) &&
+                    !entry.word.some(tw => tw.toLowerCase() === entry.originalWord.toLowerCase());
+            }
 
-    return tokens.some(token => {
-        for (const prefix of prefixes) {
-            if (
-                token.startsWith(prefix) &&
-                token.endsWith(baseWord) &&
-                token.length > baseWord.length + 1
-            ) {
-                return true;
+            const shortMatches = wordsInTranslation.filter(w => w === lowerVariant).length;
+            const pluralForms = getPluralFormsForLocale(locale, lowerVariant);
+            const pluralMatches = wordsInTranslation.filter(w => pluralForms.includes(w)).length;
+            const prefixMatches = wordsInTranslation.filter(w => matchesWithLocalePrefix(locale, lowerVariant, w)).length;
+
+            // Only count combinedMatches if originalWord is NOT found untranslated
+            const combinedMatches = (!originalWordAppearsUntranslated && !isShort)
+                ? (translation.match(new RegExp(`\\b\\w*${lowerVariant}\\w*\\b`, 'g')) || []).length
+                : 0;
+
+            const totalMatches = shortMatches + pluralMatches + prefixMatches + combinedMatches;
+            matchCount += totalMatches;
+
+            console.debug(`[DEBUG] Glossary variant "${variant}" — short=${shortMatches}, plural=${pluralMatches}, prefix=${prefixMatches}, combined=${combinedMatches}, totalMatches=${totalMatches}`);
+        }
+
+        matchPool[wordKey] = matchCount;
+    });
+
+    // Second pass: check each group of same word entries
+    for (const wordKey in entriesByKey) {
+        const entries = entriesByKey[wordKey];
+        const expectedCount = entries.length;
+        const foundMatches = matchPool[wordKey] || 0;
+        const missingCount = expectedCount - foundMatches;
+
+        if (missingCount > 0) {
+            // Check if original English word appears untranslated (only if originalWord exists)
+            const originalWordFoundUntranslated = entries.some(entry => {
+                if (!entry.originalWord) return false;
+
+                // Check if originalWord exists as a whole word in translation text
+                const originalWordRegex = new RegExp(`\\b${entry.originalWord}\\b`, 'i');
+                const foundOriginal = originalWordRegex.test(translation);
+
+                // Check if originalWord is one of the translated words (case-insensitive)
+                const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === entry.originalWord.toLowerCase());
+
+                // Only count untranslated if original found AND it's NOT a valid translation
+                return foundOriginal && !originalIsTranslation;
+            });
+
+            if (!originalWordFoundUntranslated) {
+                // None of the original words are untranslated => report missing
+                entries.forEach((entry) => {
+                    missingTranslations.push({
+                        glossIndex: glossWords.indexOf(entry),
+                        word: entry.word,
+                        missingCount
+                    });
+                });
+            } else {
+                // Some original word found untranslated => report missing for those entries
+                entries.forEach((entry) => {
+                    const originalWord = entry.originalWord;
+                    if (!originalWord) return;
+
+                    const originalWordRegex = new RegExp(`\\b${originalWord}\\b`, 'i');
+                    if (originalWordRegex.test(translation)) {
+                        const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === originalWord.toLowerCase());
+                        if (!originalIsTranslation) {
+                            missingTranslations.push({
+                                glossIndex: glossWords.indexOf(entry),
+                                word: entry.word,
+                                missingCount
+                            });
+                        }
+                    }
+                });
             }
         }
-        return false;
-    });
+    }
+
+    if (missingTranslations.length > 0) {
+        console.debug("[DEBUG] Missing glossary entries:", missingTranslations);
+    }
+
+    return missingTranslations;
 }
 
 
-// Updated findMissingTranslations with fair glossary variant distribution
+// Base version: V1.1 with enhanced Dutch plural handling for 'ing' → 'ingen'
 
-// 21-05-2025 Working with proper counts nothing changed
+function working2findAllMissingWords(translation, expectedWords, locale = 'nl') {
+    const lowerTranslation = translation.toLowerCase();
+    const pluralize = plural_rules[locale] || (() => []);
 
-function findMissingTranslations(glossWords, original, translatedText, glossary, locale = "nl") {
+    // Group expectedWords by joined word variants string
+    const groupedByWord = expectedWords.reduce((acc, entry) => {
+        const key = entry.word.join('|');
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(entry);
+        return acc;
+    }, {});
+
+    const missingGroups = [];
+
+    for (const key in groupedByWord) {
+        const group = groupedByWord[key];
+        const wordVariants = group[0].word;
+        const expectedCount = group.length;
+        const distinctWords = [...new Set(wordVariants.map(w => w.toLowerCase()))];
+        let actualCount = 0;
+
+        // Check for combined words
+        if (distinctWords.length > 1) {
+            const concat1 = distinctWords.join('');
+            const concat2 = distinctWords.slice().reverse().join('');
+            if (lowerTranslation.includes(concat1) || lowerTranslation.includes(concat2)) {
+                actualCount = expectedCount;
+            }
+        }
+
+        // If no combined word match, search individual variants
+        if (actualCount === 0) {
+            for (const variant of wordVariants) {
+                const variantLower = variant.toLowerCase();
+
+                // Exact match (whole word)
+                const regex = new RegExp(`\\b${variantLower}\\b`, 'gi');
+                const matches = lowerTranslation.match(regex);
+                if (matches) actualCount += matches.length;
+
+                // Substring fallback for short words like "u"
+                if (actualCount < expectedCount && variantLower.length <= 2) {
+                    const fallbackRegex = new RegExp(`${variantLower}`, 'gi');
+                    const fallbackMatches = lowerTranslation.match(fallbackRegex);
+                    if (fallbackMatches) actualCount += fallbackMatches.length;
+                }
+
+                // Check plural forms
+                const plurals = pluralize(variantLower);
+                for (const plural of plurals) {
+                    const pluralRegex = new RegExp(`\\b${plural}\\b`, 'gi');
+                    const pluralMatches = lowerTranslation.match(pluralRegex);
+                    if (pluralMatches) actualCount += pluralMatches.length;
+                }
+
+                // If still not matched, check if variant is part of any translation word
+                if (actualCount < expectedCount) {
+                    const wordsInTranslation = lowerTranslation.split(/\s+/);
+                    for (const word of wordsInTranslation) {
+                        if (
+                            word.includes(variantLower) &&
+                            variantLower.length > 2 &&
+                            !new RegExp(`\\b${variantLower}\\b`, 'i').test(word)
+                        ) {
+                            actualCount += 1;
+                            console.debug(`[DEBUG] "${variantLower}" found inside combined word "${word}"`);
+                            break;
+                        }
+                    }
+                }
+
+                console.debug(
+                    `[DEBUG] Glossary variant "${variant}" | Count so far: ${actualCount}/${expectedCount}`
+                );
+            }
+        }
+
+        // If actual occurrences less than expected, mark all as missing
+        if (actualCount < expectedCount) {
+            group.forEach(entry => {
+                missingGroups.push({
+                    glossIndex: entry.glossIndex,
+                    word: entry.word,
+                    missingCount: 1,
+                });
+            });
+        }
+    }
+
+    // Sort by glossIndex for consistent ordering
+    missingGroups.sort((a, b) => a.glossIndex - b.glossIndex);
+    return missingGroups;
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^=!:${}()|[\]\/\\]/g, '\\$&');
+}
+
+function working_findAllMissingWords(translation, expectedWords) {
+    const lowerTranslation = translation.toLowerCase();
+
+    // Group expectedWords by joined word variants string
+    const groupedByWord = expectedWords.reduce((acc, entry) => {
+        const key = entry.word.join('|'); // join variants for unique key
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(entry);
+        return acc;
+    }, {});
+
+    const missingGroups = [];
+
+    for (const key in groupedByWord) {
+        const group = groupedByWord[key];
+        const wordVariants = group[0].word; // same for all in group
+
+        // Count how many times this group should appear
+        const expectedCount = group.length;
+
+        // --- Combined word check ---
+        // If more than one distinct word, check if concatenation(s) present in translation
+        const distinctWords = [...new Set(wordVariants.map(w => w.toLowerCase()))];
+        let combinedFoundCount = 0;
+
+        if (distinctWords.length > 1) {
+            // Build possible concatenations in both orders (just in case)
+            const concat1 = distinctWords.join('');
+            const concat2 = distinctWords.slice().reverse().join('');
+            const foundConcat1 = lowerTranslation.includes(concat1);
+            const foundConcat2 = lowerTranslation.includes(concat2);
+            if (foundConcat1 || foundConcat2) {
+                combinedFoundCount = expectedCount; // treat all as found
+            }
+        }
+
+        // Count how many times any variant appears in the translation (if not combinedFoundCount)
+        let actualCount = combinedFoundCount;
+        if (actualCount === 0) {
+            for (const variant of wordVariants) {
+                // Regex for whole word match, global, case-insensitive
+                const regex = new RegExp(`\\b${variant.toLowerCase()}\\b`, 'gi');
+                const matches = lowerTranslation.match(regex);
+                if (matches) actualCount += matches.length;
+            }
+        }
+
+        // If actual occurrences less than expected, mark all missing
+        if (actualCount < expectedCount) {
+            group.forEach(entry => {
+                missingGroups.push({
+                    glossIndex: entry.glossIndex,
+                    word: entry.word,
+                    missingCount: 1,
+                });
+            });
+        }
+    }
+
+    // Sort missingGroups by glossIndex to keep order
+    missingGroups.sort((a, b) => a.glossIndex - b.glossIndex);
+
+    return missingGroups;
+}
+
+function works2105findMissingTranslations(glossWords, original, translatedText, glossary, locale = "nl") {
     var version = '1.0.0'
     console.debug("glossWords:", glossWords);
     if (typeof translatedText !== "string") {
@@ -4758,7 +5015,7 @@ function countExactWordOccurrences(text, word) {
 
 
 //-------------
-function createGlossArray(spanElements) {
+function workingcreateGlossArray(spanElements) {
     const glossArray = [];
     let glossIndexCounter = 0;
 
@@ -4794,6 +5051,142 @@ function createGlossArray(spanElements) {
 
     return glossArray;
 }
+
+
+// Create glossArray from span elements
+function createGlossArray(spanElements) {
+    const glossArray = [];
+    let glossIndexCounter = 0;
+
+    for (const span of spanElements) {
+        const dataTranslations = span.getAttribute('data-translations');
+        if (!dataTranslations) continue;
+
+        try {
+            const parsedEntries = JSON.parse(dataTranslations);
+            const allVariants = [];
+
+            for (const entry of parsedEntries) {
+                if (entry.translation) {
+                    const unescaped = entry.translation.replace(/\\\//g, '/');
+                    const splitVariants = unescaped
+                        .split('/')
+                        .map(t => t.trim().toLowerCase())
+                        .filter(Boolean);
+                    allVariants.push(...splitVariants);
+                }
+            }
+
+            if (allVariants.length > 0) {
+                glossArray.push({
+                    word: allVariants,
+                    originalWord: span.textContent.trim().toLowerCase(),  // <-- store original English word here
+                    glossIndex: glossIndexCounter++
+                });
+            }
+        } catch (e) {
+            console.warn('Invalid JSON in data-translations:', dataTranslations, e);
+        }
+    }
+
+    return glossArray;
+}
+
+
+// Find missing glossary entries in a given translation
+function findMissingTranslations(translationText, glossWords, locale = 'nl') {
+    const translation = translationText.toLowerCase();
+    const missingGlossaryEntries = [];
+
+    glossWords.forEach((glossEntry) => {
+        const glossaryTranslations = glossEntry.word || [];
+        const originalWord = glossEntry.originalWord || '';
+
+        // 1) Check if any glossary translation word is present in the translation
+        const hasGlossTranslation = glossaryTranslations.some(variant => {
+            return isGlossaryWordInTranslation(translation, variant, locale);
+        });
+
+        if (hasGlossTranslation) {
+            // Found glossary translation word -> no missing
+            return;
+        }
+
+        // 2) No glossary translation found -> check if original English word is untranslated in translation
+        if (originalWord && isWordPresentUntranslated(translation, originalWord)) {
+            // untranslated original English word found -> report missing
+            missingGlossaryEntries.push({
+                glossIndex: glossEntry.glossIndex,
+                word: glossaryTranslations,
+                originalWord: originalWord,
+                reason: 'original word untranslated'
+            });
+            return;
+        }
+
+        // 3) Neither found -> report missing glossary translation
+        missingGlossaryEntries.push({
+            glossIndex: glossEntry.glossIndex,
+            word: glossaryTranslations,
+            originalWord: originalWord,
+            reason: 'glossary translation missing'
+        });
+    });
+
+    return missingGlossaryEntries;
+}
+
+
+// Helper: Check if glossary translation word (variant) is in the translation
+function isGlossaryWordInTranslation(translation, variant, locale) {
+    const lowerVariant = variant.toLowerCase();
+
+    // Split translation into words (including handling combined words)
+    const wordsInTranslation = translation.split(/\W+/);
+
+    if (wordsInTranslation.includes(lowerVariant)) {
+        return true;
+    }
+
+    // Check for Dutch verb prefixes, plurals, combined words etc.
+    if (matchesWithDutchVerbPrefix(locale, lowerVariant, translation)) {
+        return true;
+    }
+
+    // You can add more custom checks here if needed
+
+    return false;
+}
+
+
+// Helper: Check if untranslated original English word is present in translation text
+function isWordPresentUntranslated(translation, originalWord) {
+    if (!originalWord) return false;
+
+    // Escape special regex characters in originalWord
+    const escapedWord = originalWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Look for whole word or combined word occurrences containing originalWord
+    // E.g. 'website' or 'mywebsite' or 'website123' (combined)
+    const regex = new RegExp(`\\b${escapedWord}\\b|\\w*${escapedWord}\\w*`, 'i');
+    return regex.test(translation);
+}
+
+
+// Example stub for matchesWithDutchVerbPrefix (replace with your own logic)
+function matchesWithDutchVerbPrefix(locale, word, translation) {
+    // Your existing logic for Dutch prefixes, plurals, combined words etc.
+    // Return true if word with Dutch verb prefix or plural form is found in translation
+
+    // Simple example placeholder: match exact or with 'ge' prefix
+    if (translation.includes(word)) return true;
+    if (locale.startsWith('nl')) {
+        if (translation.includes('ge' + word)) return true;
+        // Add other prefix/plural logic as needed
+    }
+    return false;
+}
+
 
 function oldcreateGlossArray(spansArray, map) {
     var glossaryWord = []
@@ -4864,7 +5257,23 @@ function countOccurrences(text, term) {
 
 
 async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
+    const expectedWords = [
+        { glossIndex: 0, word: ['uw'] },
+        { glossIndex: 1, word: ['site'] },
+        { glossIndex: 2, word: ['u'] },
+        { glossIndex: 3, word: ['toevoegen', 'toevoegen'] },
+        { glossIndex: 4, word: ['uw'] }
+    ];
+    console.debug("expectedWords:",expectedWords)
+  //  translation = "je site template is succesvol geïmporteerd en alles is klaar voor gebruik. Het is tijd om persoonlijke accenten toe te voegen en uw eigen magische stofje te strooien.";
+
+   // console.debug(findAllMissingWords(translation, expectedWords));
     //console.debug("mark_glossary:",translation)
+
+    console.debug("prefix:",matchesWithLocalePrefix('nl', 'site', 'website')); // false
+    console.debug("prefix:",matchesWithLocalePrefix('nl', 'site', 'besite'));  // true
+    console.debug("prefix:",matchesWithLocalePrefix('nl', 'site', 'site'));    // false, prefix does not apply here
+
     var missingTranslations = [];
     var dutchText = ""
     let locale = checkLocale() || 'en-gb'
@@ -4913,11 +5322,16 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                 if (isPlural == false) {
                     await remove_all_gloss(markleftPanel, false);
                     missingTranslations = [];
-                    console.debug("original in mark_glossary:",original)
-                    missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss,locale);
+                    console.debug("original in mark_glossary:", original)
+                    console.debug("translation in mark_glossary:", dutchText)
+                    console.debug("glossWords:",glossWords)
+                    missingTranslations = await findAllMissingWords(dutchText,glossWords,locale)
+                    //missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss,locale);
                     console.debug("missingtranslations:",missingTranslations,missingTranslations.length)
                     if (missingTranslations.length > 0) {
+                        console.debug("we found missing")
                         missingTranslations.forEach(({ word, glossIndex }) => {
+                            console.debug("word/index:",word,glossIndex)
                             spansArray[glossIndex].classList.add('highlight');
                         });
                     } else {
@@ -4928,7 +5342,8 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                 if (isPlural == true) {
                     await remove_all_gloss(markleftPanel, true);
                     missingTranslations = [];
-                    missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, locale);
+                    missingranslations = await findAllMissingWords(dutchText, glossWords,locale)
+                   // missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, locale);
 
                     if (missingTranslations.length > 0) {
                         missingTranslations.forEach(({ word, glossIndex }) => {
@@ -6434,8 +6849,9 @@ async function handleMutation(mutationsList, observer) {
 
     const glossWords = createGlossArray(spansArray, newGloss);
     //console.debug("translation in mutation:",translation)
-    console.debug("originalText:",originalText)
-    const missingTranslations = await findMissingTranslations(glossWords, originalText, translation, newGloss, "nl");
+    console.debug("originalText:", originalText)
+    missingTranslations = await findAllMissingWords(translation, glossWords, locale)
+   // const missingTranslations = await findMissingTranslations(glossWords, originalText, translation, newGloss, "nl");
     //console.debug("missing:",missingTranslations)
     const toolTipLines = [];
     missingTranslations.forEach(({ word, glossIndex }) => {
