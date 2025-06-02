@@ -56,9 +56,7 @@ function setPreTranslationReplace(preTranslationReplace) {
     }
 }
 
-function setIgnoreSpellCheck() {
 
-}
 function setPostTranslationReplace(postTranslationReplace, formal) {
     // PSS 21-07-2022 Currently when using formal, the translation is still default #225
     replaceVerb = [];
@@ -82,7 +80,9 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
 }
                        //new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
 const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi);
-const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
+const linkRegex = /(https?|ftp|file):\/\/[^\s]+/gi;
+// the below regex did not work for links
+//const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
 const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
 //const specialChar = new RegExp(/ # | #|\#|\t|\r\n|\r|\n|&#->/ig);
@@ -289,7 +289,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
 
         const linkmatches = original.match(linkRegex);
-        //console.debug("linkmatches1:",linkmatches)
+        
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -303,6 +303,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
             for (const charmatch of charmatches) {
                 //console.debug("char:", charmatch)
                 translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+                translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
                 index++;
             }
         }
@@ -494,6 +495,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         for (const charmatch of charmatches) {
             //console.debug("char:", charmatch)
             translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+            translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
             index++;
         }
     }
@@ -1197,6 +1199,7 @@ function checkFormalPage(dataFormal) {
 }
 
 async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt, spellcheckIgnore, showHistory) {
+    console.debug("checkpage started")
     var timeout = 10;
     var countrows = 0;
     var tableRecords = 0;
@@ -1284,7 +1287,6 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
             for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
 
                 countrows++;
-                //  setTimeout(() => {
                 replaced = false;
                 let original = e.querySelector("span.original-raw").innerText;
                 let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
@@ -1342,10 +1344,11 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 // PSS we need to check for missing periods en blanks before replacing verbs 
                                 //console.debug("before check_start:",translatedText)
                                 result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                                //console.debug("result:",result)
                                 replaced = result.replaced;
                                 repl_array = result.repl_array;
+                                translatedText = textareaElem.innerText;
                                 if (replaced) {
-
                                     mypreview.classList.replace("status-current", "status-waiting");
                                     mypreview.classList.add("wptf-translated");
                                     repl_verb = result.repl_verb;
@@ -1357,6 +1360,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     }
 
                                     await markElements(preview, repl_array, original, spellcheckIgnore, repl_array, translatedText);
+                                    
                                     // 09-09-2022 PSS fix for issue #244
                                     if (currec != null) {
                                         var current = currec.querySelector("span.panel-header__bubble");
@@ -1608,8 +1612,6 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         let originalElem = document.querySelector("#preview-" + row + " .original");
                         showNameLabel(originalElem,row)
                     }
-                    // }, timeout, countrows, tableRecords, countreplaced, repl_verb);
-                    //timeout += 100;
 
                     //console.debug("rows done:", countrows, original)
                     if (countrows == tableRecords) {
@@ -1633,9 +1635,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
         }
         else {
             messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
-        }
-
-    
+        }  
 }
 
 async function reviewTrans() {
@@ -2066,6 +2066,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
 }
 
 async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
+    
     //console.time("translation")
     var translate;
     var transtype = "";
@@ -2218,10 +2219,12 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
             case 'pretranslated':
                 counter++;
-                // preview = document.querySelector(`#preview-${row}`);
-                spanmissing = preview.querySelector(" span.missing");
-                if (spanmissing != null) {
-                    spanmissing.remove();
+                preview = document.querySelector(`#preview-${row}`);
+                if (preview != null) {
+                    spanmissing = preview.querySelector(" span.missing");
+                    if (spanmissing != null) {
+                        spanmissing.remove();
+                    }
                 }
                 // if a plural is present within the pretrans we need to deal with it
                 pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
@@ -2472,7 +2475,7 @@ async function old_populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, trans
         // If in the original field "Singular is present we have a plural translation
         pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) span.original-text`);
        // pluralpresent = document.querySelector("textarea#translation_" + row + "_1");
-        console.debug("pluralpresent:",pluralpresent)
+       // console.debug("pluralpresent:",pluralpresent)
         if (pluralpresent != null) {
             original = pluralpresent.innerText;
             transtype = "plural";
@@ -2540,17 +2543,17 @@ async function old_populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, trans
                 }
                 
                 result= await validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
-                await mark_original(preview, result.toolTip, textareaElem.textContent, row, false)
+                await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
                 // PSS 10-05-2021 added populating the preview field issue #68
                 // Fetch the first field Singular
                 previewElem = document.querySelector(`#preview-${row} li:nth-of-type(1) span.original-text`);
                 //previewElem = document.querySelector(`#preview-${row} .ul-plural li:nth-of-type(1)`);
-                console.debug("in plural first line:",previewElem)
+                //console.debug("in plural first line:",previewElem)
                 if (previewElem != null) {
                     plural_single_text = translatedText
                     //previewElem.innerText = translatedText
                    // previewElem.value = translatedText
-                     console.debug("We are updating:",translatedText)
+                   //  console.debug("We are updating:",translatedText)
                 } else {
                     //console.debug("it seems to be a single as li is not found");
                     let preview = document.querySelector("#preview-" + row + " td.translation");
@@ -2665,14 +2668,14 @@ async function old_populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, trans
                     let plural = checkplural.innerText;
                     let pretrans = await findTransline(plural, destlang);
                     if (pretrans == "notFound") {
-                        console.debug("plural pretrans not found!");
+                     //   console.debug("plural pretrans not found!");
                     }
                     else {
-                        console.debug("We did find the plural")
+                    //    console.debug("We did find the plural")
                         // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
                         // 17-08-2021 PSS additional fix #118 when translation is already present we only need the first part of the rowId
                         let translatedText = pretrans;
-                        console.debug("pretrans:",pretrans)
+                    //    console.debug("pretrans:",pretrans)
                         // Plural second line
                         let rowId = row.split("-")[0];
                         if (current.innerText == "current") {
@@ -2724,7 +2727,7 @@ async function old_populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, trans
                              textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
                              textareaElem1.innerText = translatedText;
                              textareaElem1.value = translatedText;
-                             console.debug("here we add the second text to the editor second line;",translatedText)
+                            // console.debug("here we add the second text to the editor second line;",translatedText)
                              textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
                             //console.debug("elem2:", textareaElem2)
                             if (textareaElem2 != null) {
@@ -2909,12 +2912,15 @@ function old_openEditor(preview) {
 
     });
 }
+
 // Part of the solution issue #204
 async function fetchsuggestions(row) {
+    var timeoutID
     setTimeout(async function () {
         myTM = await document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .suggestions-wrapper`);
         return myTM;
     }, 800);
+    clearTimeout(timeoutID)
 }
 
 function waitForElements(rowNumber, class1, class2, interval = 500, timeout = 5000) {
@@ -3462,6 +3468,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
         transtype = "single";
         plural_line = "0";
         row = record.getAttribute("row");
+        // console.debug("in processTM:",row)
         // If in the original field "Singular is present we have a plural translation
         pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
         //console.debug("plural:",pluralpresent)
@@ -3473,6 +3480,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
         }
         // we need to store current preview and editor for later usage
         preview = document.querySelector(`#preview-${row}`);
+        //console.debug("preview in processTM:",preview)
         editor = document.querySelector(`#editor-${row}`);
         editoropen = preview.querySelector("td.actions .edit");
         editorClose = editor.getElementsByClassName("panel-header-actions__cancel with-tooltip")
@@ -3517,7 +3525,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                 }
                 mark_as_translated(row, current, translated, preview)
                 result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                await mark_original(preview, result.toolTip, textareaElem.textContent, row, false)
+                await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
                 foundTM++
             }
         }
@@ -3579,7 +3587,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                 foundTM++
                 mark_as_translated(row, current, translated, preview)
                 result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                await mark_original(preview, result.toolTip, textareaElem.textContent, row, false)
+                await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
 
             }
             else {
@@ -3625,7 +3633,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     if (processed != "No suggestions") {
                                         textareaElem = record.querySelector("textarea.foreign-text");
                                         result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                                        await mark_original(preview, result.toolTip, textareaElem.textContent, row, false)
+                                        await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
                                        foundTM++
                                     }
                                 }
@@ -4256,7 +4264,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 }
             }
             
-            //await mark_original(preview, result.toolTip, textareaElem[0].textContent, row, false)
+            //await mark_preview(preview, result.toolTip, textareaElem[0].textContent, row, false)
             break;
         case 'plural':
             console.log('Handling a plural type...');
@@ -4277,7 +4285,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 plural_line = "0";
             }
             transtype = "plural"
-            console.debug("we start handling the plural:", plural)
+           // console.debug("we start handling the plural:", plural)
             plural_line = "1"
             check_span_missing(row, plural_line);
             await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor)
@@ -5123,7 +5131,7 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                         }
                     } else {
                         // Pretranslation found!
-                        console.debug("we found a pretranslated!",pretrans,row,localRow)
+                       // console.debug("we found a pretranslated!",pretrans,row,localRow)
                         let translatedText = pretrans;
                         // check if the returned translation does have the same start/ending as the original
                         if (translatedText != "No suggestions") {
@@ -5250,7 +5258,7 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                             } else {
                                 // console.debug("single")
                                 // if it is as single with local then we need also update the preview
-                                console.debug("We have a single with local")
+                               // console.debug("We have a single with local")
                                 let spanmissing = preview.querySelector(" span.missing");
                                 if (spanmissing != null) {
                                     // console.debug("removing span");
@@ -5985,7 +5993,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 }
                 else {
                     let translatedText = pretrans;
-                    console.debug("pretrans:",pretrans)
+                    //console.debug("pretrans:",pretrans)
                     translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, "", locale);
 
                     // check if the returned translation does have the same start/ending as the original
@@ -6052,7 +6060,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "deepl") {
                         // console.debug("language:",destlang)
-                        console.debug("we translate plural_line:",plural_line)
+                        //console.debug("we translate plural_line:",plural_line)
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
                         if (result == "Error 403") {
                             messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
@@ -6145,11 +6153,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             }
 
             // Translation completed
-
+            let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+            //remove_all_gloss(markleftPanel, false)
             // we need to validate the results from local as well, to remove the glossary markings if present
             result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false, DefGlossary);
-            let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
-            remove_all_gloss(myleftPanel,false)
+           
             //mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
 
             // translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
@@ -6194,8 +6202,6 @@ async function saveLocal() {
     autoCopyClipBoard = false;
     //console.debug("saveLocal started",is_pte)
     for (let preview of document.querySelectorAll("tr.preview.status-waiting")) {
-        //document.querySelectorAll("tr.preview.status-waiting").forEach((preview) => {
-        //setTimeout(async function (stop) {
 
         if (is_pte) {
             checkset = preview.querySelector(".checkbox input");
@@ -6212,7 +6218,6 @@ async function saveLocal() {
         }
         // If a translation alreay has been saved, there is no checkbox available
         if (checkset != null) {
-            //nextpreview = preview.nextElementSibling.nextElementSibling;
             if (checkset.checked) {
                 counter++;
                 //toastbox("info", "Saving suggestion: " + (i + 1), "600", "Saving", myWindow);
@@ -6281,8 +6286,6 @@ async function saveLocal() {
         else {
             console.debug("No checkbox available");
         }
-        // }, timeout, stop);
-        // timeout += vartime;
         await delay(vartime * counter)
     }
     return counter;
@@ -6305,7 +6308,7 @@ function walkThroughTable(selector, interval) {
             const tableRows = document.querySelectorAll('tr.preview.status-waiting');
             tableRows.forEach(preview => {
                 // Do something with each row of the table
-                setTimeout(() => {
+                let walkThroughId = setTimeout(() => {
                     let editor = preview.nextElementSibling;
                     if (editor != null) {
                         //  console.log("editor:", editor);
@@ -6334,7 +6337,9 @@ function walkThroughTable(selector, interval) {
                 }, timeout);
                 timeout += 1000;
             });
+            clearTimeout(walkThroughId)
         }, interval);
+        
         resolve("Ready")
     });
 }
@@ -6354,7 +6359,8 @@ function saveLocal_1() {
 
 // Function to perform an action on each record in the HTML table
 function processTableRecords(selector, action, interval) {
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    //var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    var nextTimoutId
     return new Promise((resolve, reject) => {
         const tableRows = document.querySelectorAll(selector);
         //console.debug("tableRows:",tableRows)
@@ -6369,12 +6375,13 @@ function processTableRecords(selector, action, interval) {
                     .then(() => {
                         // Move to the next record after the action is completed
                         //currentIndex++;
-                        setTimeout(processNextRecord, interval);
+                        nextTimoutId = setTimeout(processNextRecord, interval);
                         currentIndex++;
                     })
                     .catch(error => {
                         reject(error);
                     });
+                clearTimeout(nextTimoutId)
 
             } else {
                 // All records processed
@@ -6440,7 +6447,6 @@ function hideIncompletePreviewRows() {
 }
 
 function saveLocal_2(bulk_timer) {
-    // Usage example: Process each row in the HTML table with class "myTable", perform an action, and wait 1000 milliseconds between records
     // console.debug("bulk save started")
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var preview;
@@ -6468,10 +6474,9 @@ function saveLocal_2(bulk_timer) {
     else {
         progressbar.style.display = 'block';
     }
-   
-    processTableRecords('.wptf-translated', async function (preview) {
-        //console.debug("preview in processtable:",preview)
-       
+
+    let procRecId = processTableRecords('.wptf-translated', async function (preview) {
+        
         var editorRow;
         var myNewRow;
         //console.debug("preview:",preview,preview.classList)
@@ -6486,7 +6491,7 @@ function saveLocal_2(bulk_timer) {
                 //console.debug("myPreviewRow:",myPreviewRow,myPreviewRow.includes("old"))
                 myNewRow = myPreviewRow.split("-")[1]
                 let rowfound = myPreviewRow;
-               // console.debug("rowfound:", rowfound)
+                // console.debug("rowfound:", rowfound)
                 // 27-09-2022 PSS added a fix for issue #246 do not show saved previews
                 // 11-02-2023 PSS added fix for issue #280 bulksave if waiting suggestions does not work
                 if (rowfound.split("-")[2] != null) {
@@ -6494,7 +6499,7 @@ function saveLocal_2(bulk_timer) {
                 }
                 line_read++
                 if (!myNewRow.includes("old")) {
-                    Edopen = await document.querySelector(`#editor-${myNewRow}`)
+                    Edopen = document.querySelector(`#editor-${myNewRow}`)
                     //console.debug("Edopen:", Edopen)
                     //delay(100)
                     if (Edopen != null && Edopen != "Time-out reached") {
@@ -6505,65 +6510,68 @@ function saveLocal_2(bulk_timer) {
                         //console.debug("Preview:", preview)
                         // let preview = document.querySelector(`#preview-${myNewRow}`)
                         if (preview != null && current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true && !myNewRow.includes("old")) {
-                            let glotpress_suggest = await Edopen.querySelector(".translation-actions__save");
+                            let glotpress_suggest = Edopen.querySelector(".translation-actions__save");
                             let preview_Unprocessed = preview
                             glotpress_suggest.classList.remove("disabled")
-                            //glotpress_suggest.click();
+                            
                             if (autoCopyClipBoard) {
                                 My1copyClip = true;
                             }
                             autoCopyClipBoard = false;
-                            new Promise(resolve => setTimeout(async () => {
-                                counter++;
-                                preview.querySelector("td.actions .edit").click();
-                                try {
-                                    const editorOpen = await waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 10000, "5545");
+                            new Promise(resolve => setTimeout(async () => {                          
+                                 try {
+                                   preview.querySelector("td.actions .edit").click();
+                                  //  waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 8000, "6523");
                                     //console.debug("Editor open!", editorOpen, preview);
-                                    await glotpress_suggest.click();
-                                    try {
-                                        const fullRowId = await waitForFullRowId(myNewRow);
-                                        const preview = document.querySelector(`#preview-${fullRowId}`);
-                                       // console.debug("two numbers:", hasTwoNumbers(fullRowId), preview);
-                                       // console.debug("unprocessed:",preview_Unprocessed)
-                                        preview_Unprocessed.style.display = "none"
-                                        
-                                        if (!hasTwoNumbers(fullRowId)) {
-                                            console.debug("no two numbers:", hasTwoNumbers(fullRowId), preview);
-                                        } 
-                                    } catch (err) {
-                                       // console.debug("myNewRow:", myNewRow);
-                                        const preview = document.querySelector(`#preview-${myNewRow}`);
-                                        //console.debug("preview with error:", preview);
+
+                                     // try {
+                                        glotpress_suggest.click();
+                                        counter++;
+                                      
+                                       // const fullRowId =  waitForFullRowId(myNewRow);
+                                      //  const preview = document.querySelector(`#preview-${fullRowId}`);
+                                        // console.debug("two numbers:", hasTwoNumbers(fullRowId), preview);
+                                        // console.debug("unprocessed:",preview_Unprocessed)
+                                       // preview_Unprocessed.style.display = "none"
+
+                                      //  if (!hasTwoNumbers(fullRowId)) {
+                                          //  console.debug("no two numbers:", hasTwoNumbers(fullRowId), preview);
+                                       // }
+
+                                   // } catch (err) {
+                                        // console.debug("myNewRow:", myNewRow);
+                                     //   const preview = document.querySelector(`#preview-${myNewRow}`);
+                                      //  console.debug("preview with error:", preview);
                                         // console.debug("Row ID could not be resolved:", err.message);
-                                       counter--
-                                    }
-                                } catch (err) {
-                                    counter--
-                                    console.error("Could not open editor:", err.message);
-                                }      
+                                      //  counter--
+                                   // }
+                               } catch (err) {
+                                   // counter--
+                                    console.debug("Could not open editor:", err.message);
+                                }
                                 resolve();
                             }));
 
                         }
                         else {
-                            console.debug("checkbox present but not set or not in waiting mode or old record")
+                            //console.debug("checkbox present but not set or not in waiting mode or old record")
                             if (!myNewRow.includes("old")) {
                                 let original = Edopen.querySelector("span.original-raw").innerText;
                                 if (original != null) {
                                     toastbox("info", "Problem with:" + original, "700", "Check record:");
                                     translated = true;
                                     //counter++
-                                   // mark_as_translated(myNewRow, current, translated, preview)
+                                    // mark_as_translated(myNewRow, current, translated, preview)
                                 }
                             }
                             else {
-                                console.debug("houston we have an old")
+                                //console.debug("houston we have an old")
                                 myNewRow.style = "none"
                             }
                         }
                     }
                     else {
-                        console.debug("before skip:", Edopen)
+                        //console.debug("before skip:", Edopen)
                         if (Edopen != null && Edopen != "Time-out reached") {
                             let current = Edopen.querySelector('span.panel-header__bubble');
                             // console.debug("current:", current, myNewRow)
@@ -6577,7 +6585,7 @@ function saveLocal_2(bulk_timer) {
                                 // preview.classList.replace("status-waiting", "status-current")
                                 if (is_pte) {
                                     rowchecked = preview.querySelector("th input");
-                                  //  preview.classList.replace("status-waiting", "status-current")
+                                    //  preview.classList.replace("status-waiting", "status-current")
                                 }
                                 else {
                                     rowchecked = preview.querySelector("td input");
@@ -6591,11 +6599,11 @@ function saveLocal_2(bulk_timer) {
                                 }
                             }
                         }
-                        else {  
-                           // console.debug("We do not have a Edopen!!", preview.classList, myNewRow)
+                        else {
+                            // console.debug("We do not have a Edopen!!", preview.classList, myNewRow)
                             preview = document.querySelector(`#preview-${myNewRow}`)
                             if (preview != null) {
-                              //  preview.classList.replace("status-waiting", "status-current")
+                                //  preview.classList.replace("status-waiting", "status-current")
                                 if (is_pte) {
                                     rowchecked = preview.querySelector("th input");
                                 }
@@ -6614,12 +6622,12 @@ function saveLocal_2(bulk_timer) {
                     }
                 }
                 else {
-                   // console.debug("We seem to have an old record:", preview)
+                    // console.debug("We seem to have an old record:", preview)
                     preview.style.display = "hidden"
                 }
             }
-        }       
-    
+        }
+
     }, bulk_timer)
         .then(() => {
             // pss 18-04
@@ -6641,7 +6649,10 @@ function saveLocal_2(bulk_timer) {
         .catch(error => {
             console.error('Error:', error);
         });
+        clearTimeout(procRecId)
+
 }
+
 
 async function bulkSave(noDiff, bulk_timer) {
     //event.preventDefault();
@@ -6654,16 +6665,7 @@ async function bulkSave(noDiff, bulk_timer) {
 
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     currWindow = window.self;
-    //interCept = localStorage.getItem('interXHR')
-    // Check if the value exists and is either "true" or "false"
-    //if (interCept === null || (interCept !== "true" && interCept !== "false")) {
-    // If the value is not present or not a valid boolean value, set it to false
-    //  interCept = "false"
-    //  localStorage.setItem("interXHR", interCept);
-    //}
-
-    // sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept, transProcess: 'bulksave' });
-
+    
     // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
     if (is_pte) {
         document.querySelectorAll('.checkbox input').forEach(function (elem) {
@@ -6698,11 +6700,6 @@ async function bulkSave(noDiff, bulk_timer) {
                 let value = noDiff;
                 await setToonDiff({ toonDiff: value });
                 counter = saveLocal_2(bulk_timer);
-                //When performing bulk save the difference is shown in Meta #269
-                //value = true;
-                //chrome.storage.local.set({ toonDiff: value }).then((result) => {
-                //    console.log("Value toonDiff is set to true");
-                // });
             } else {
                 messageBox("info", "Bulk save cancelled");
             }
@@ -6732,7 +6729,8 @@ function second(milliseconds) {
 }
 
 // Function to wait for an element to be shown on the page
-function waitForMyElement(selector, timeout,line) {
+function waitForMyElement(selector, timeout, line) {
+    var waitTimeoutID
     //console.debug("selector:",selector,line)
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
@@ -6745,17 +6743,19 @@ function waitForMyElement(selector, timeout,line) {
                 resolve(element);
             } else if (Date.now() - startTime >= timeout) {
                 // Timeout reached, reject the promise
+                clearTimeout(waitTimeoutID)
                 resolve("Time-out reached")
                 //reject(new Error(`Timeout (${timeout} ms) exceeded while waiting for element with selector "${selector}"`));
             } else {
                 // Element not found, check again after a short delay
-                setTimeout(checkElement, 300); // Check again after 150 milliseconds
+               waitTimeoutID = setTimeout(checkElement, 300); // Check again after 150 milliseconds
             }
         }
 
         // Initial check
         checkElement();
     });
+
 }
 
 function _waitForElement(selector, delay = 5, tries = 50) {
@@ -6790,13 +6790,15 @@ function elementReady(selector) {
     var el;
     var timeout = 100;
     var findsel;
+    var eleReadyID;
     return new Promise((resolve, reject) => {
         //console.debug("within elementReady",selector)
         // PSS issue #203 improvement
         setTimeout(() => {
-            el = document.querySelector(selector);
+            eleReadyID = document.querySelector(selector);
             //console.debug("el:",el)
         }, timeout);
+        clearTimeout(eleReadyID)
         //console.debug("eltype:", typeof el);
         if (typeof el != null && typeof el != 'undefined') {
             resolve(el);
@@ -7020,7 +7022,8 @@ async function processTransl (original, translatedText, language, record, rowId,
         }
         let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
         result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false, DefGlossary);
-        await mark_original(preview, result.toolTip, textareaElem.textContent, myRowId, false)
+        //console.debug(" before mark_original:",result)
+        await mark_preview(preview, result.toolTip, textareaElem.textContent, myRowId, false)
         //console.debug("translateEntry:",result)
         
     }
@@ -7043,7 +7046,7 @@ async function processTransl (original, translatedText, language, record, rowId,
             if (typeof newrow == "undefined") {
                 if (transtype != "single") {
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
-                    console.debug('not single:',rowId,plural_line)
+                   // console.debug('not single:',rowId,plural_line)
                     if (previewElem == null) {
                         check_span_missing(myRowId, plural_line);
                     }
@@ -7064,13 +7067,13 @@ async function processTransl (original, translatedText, language, record, rowId,
                     }
                     result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record, true, DefGlossary);
                     if (textareaElem2 != null) {
-                        await mark_original(preview, result.toolTip, textareaElem2.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem2.textContent, myRowId, false)
                     }
                     else if (textareaElem3 != null) {
-                        await mark_original(preview, result.toolTip, textareaElem3.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem3.textContent, myRowId, false)
                     }
                     else if (textareaElem4 != null) {
-                        await mark_original(preview, result.toolTip, textareaElem4.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem4.textContent, myRowId, false)
                     }
                 }
                 if (plural_line == 2) {
@@ -7102,13 +7105,13 @@ async function processTransl (original, translatedText, language, record, rowId,
                     }
                     result = await validateEntry(language, textareaElem2, "", "", myRowId, locale, record, true, DefGlossary);
                     if (textareaElem2 != null) {
-                        await mark_original(preview, result.toolTip, textareaElem2.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem2.textContent, myRowId, false)
                     }
                     else if (textareaElem3 != null) {
-                        await mark_original(preview, result.toolTip, textareaElem3.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem3.textContent, myRowId, false)
                     }
                     else if (textareaElem4 != null) {
-                        await mark_original(preview, result.toolTip, textareaElem4.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem4.textContent, myRowId, false)
                     }
                 }
                
@@ -7146,7 +7149,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                 }
                 else {
                     //populate plural line if  already translated
-                    console.debug("it is plural!!")
+                    //console.debug("it is plural!!")
                     let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
                     textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_1");
                     // console.debug('newrow = not undefined!', row + "_1");

@@ -1,4 +1,18 @@
 ﻿// This file contains functions used within various files
+
+function whoCalledMe() {
+    const err = new Error();
+    const stackLines = err.stack.split('\n');
+
+    // stackLines[0] is "Error"
+    // stackLines[1] is this function (whoCalledMe)
+    // stackLines[2] is the caller
+    const callerLine = stackLines[2] || '';
+    console.log("Caller line:", callerLine);
+
+    const match = callerLine.match(/at (\w+)/);
+    return match ? match[1] : 'unknown';
+}
 function setupTooltipHandler() {
     document.addEventListener("mouseover", (event) => {
         const tooltip = document.querySelector(".ui-tooltip");
@@ -562,7 +576,7 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
                     dutchText = translation;
 
                     if (isPlural == false) {
-                        await remove_all_gloss(markleftPanel, false);
+                       // await remove_all_gloss(markleftPanel, false);
                         missingTranslations = [];
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
                         //missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
@@ -571,13 +585,13 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
                             missingTranslations.forEach(({ word, glossIndex }) => {
                                 spansArray[glossIndex].classList.add('highlight');
                             });
-                        } else {
-                            await remove_all_gloss(markleftPanel, false);
+                       // } else {
+                        //    await remove_all_gloss(markleftPanel, false);
                         }
                     }
 
                     if (isPlural == true) {
-                        await remove_all_gloss(markleftPanel, true);
+                        //await remove_all_gloss(markleftPanel, true);
                         missingTranslations = [];
                         missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
 
@@ -585,8 +599,8 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
                             missingTranslations.forEach(({ word, glossIndex }) => {
                                 spansArray[glossIndex].classList.add('highlight');
                             });
-                        } else {
-                            await remove_all_gloss(markleftPanel, true);
+                      //  } else {
+                      //      await remove_all_gloss(markleftPanel, true);
                         }
                     }
                 }
@@ -599,136 +613,6 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
     }
 }
 
-
-
-//# mark missing glossary words in original 
-async function mark_original(preview, toolTip, translation, rowId, isPlural){
-   
-    var missingTranslations = [];
-    let FoundURL = isOnlyURL(translation);
-    //console.debug("in mark original:", FoundURL)
-    // We do not want to mark text in an URL
-    if (!FoundURL) {
-        if (translation != "") {
-            let myleftPanel = await document.querySelector(`#preview-${rowId} .original-text`)
-            if (DefGlossary == true) {
-                myglossary = glossary
-            }
-            else {
-                myglossary = glossary1
-            }
-            newGloss = createNewGlossArray(myglossary)
-            let markleftPanel = myleftPanel
-            //let markleftPanel = document.querySelector(`#editor-${rowId} .editor-panel`)
-            //console.debug("leftpanel:",markleftPanel,rowId)
-            if (markleftPanel != null) {
-                singlepresent = markleftPanel.innerText;
-                singularText = markleftPanel.innerText;
-                // we do not need to collect info for plural if it is not a plural
-                if (isPlural == true) {
-                    pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
-                    pluralText = pluralpresent.getElementsByClassName('original')[0]
-                    if (pluralpresent != null) {
-                        spansPlural = pluralpresent.getElementsByClassName("glossary-word")
-                    }
-                }
-                if (singlepresent != null) {
-                    spansSingular = markleftPanel.getElementsByClassName("glossary-word")
-                }
-
-                if (isPlural == true) {
-                    spans = spansPlural
-                }
-                else {
-                    spans = spansSingular
-                }
-                if (spans.length > 0) {
-                    //console.debug("houston we have a glossary")
-                    //console.debug("we have to mark the original", preview)
-                    //console.debug("spans:", spansSingular)
-                    wordCount = spans.length
-                    //console.debug("span length:", spans.length)
-                    var spansArray = Array.from(spans)
-                    // console.debug("array:", spansArray)
-                    for (spancnt = 1; spancnt < (spansArray.length); spancnt++) {
-                        spansArray[spancnt].setAttribute('gloss-index', spancnt);
-                    }
-                    var glossWords = createGlossArray(spansArray, newGloss)
-                    //glossWords= newGloss
-                    //console.debug("glossWords:", glossWords)
-                    dutchText = translation
-                    if (isPlural == false) {
-                        //    await remove_all_gloss(markleftPanel, false)
-                        missingTranslations = [];
-                        // Run the function
-                        //console.debug("Translation:",translation)
-                        missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
-                        //missingTranslations = await findMissingTranslations(glossWords, singularText, dutchText, newGloss, "nl");
-
-                        // Output the result
-                        if (missingTranslations.length > 0) {
-                            //console.debug("single missing:",missingTranslations)
-                            //console.debug("single translation:",dutchText)
-                            document.addEventListener("mouseover", (event) => {
-                                const tooltip = document.querySelector(".ui-tooltip");
-
-                                if (tooltip) {
-                                    tooltip.style.display = "block"; // Ensure it appears first
-                                    setTimeout(() => {
-                                        if (!tooltip.matches(":hover")) {
-                                            tooltip.style.display = "none"; // Hide only if not hovered
-                                        }
-                                    }, 2000); // Adjust timing as needed
-                                }
-                            });
-
-
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                spansArray[glossIndex].classList.add('highlight')
-                                // spansArray[glossIndex].style.textDecorationColor = 'red'; 
-                                // spansArray[glossIndex].style.color = 'red'; 
-                                // console.log(`Missing translation for word: "${Array.isArray(word) ? word.join(', ') : word}" with gloss-index: ${glossIndex}`);
-                            });
-                        }
-                        else {
-                            //  await remove_all_gloss(markleftPanel, false)
-                            //console.log("plural All glossary words are translated.");
-                        }
-                    }
-
-                    if (isPlural == true) {
-                        await remove_all_gloss(markleftPanel, true)
-                        // console.debug("it is a plural")
-                        // console.debug("pluralText:",pluralText)
-                        // console.debug("plural translation:",dutchText)
-                        // console.debug("spansPlural:",spansArray)
-
-                        missingTranslations = [];
-                        // Run the function
-                        missingTranslations = await f(glossWords, dutchText);
-                        //console.debug(missingTranslations)
-                        if (missingTranslations.length > 0) {
-                            //console.debug("missing:",missingTranslations)
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                //onsole.debug(`Missing translation for word: "${word}" with gloss-index: ${glossIndex}`);
-                                //nsole.debug("span with missing translation:",spansArray[glossIndex])
-                                spansArray[glossIndex].classList.add('highlight')
-                            });
-                        }
-                        else {
-                            //await remove_all_gloss(markleftPanel, true)
-                            //console.log("All glossary words are translated.");
-                        }
-                    }
-                }
-            }
-        }
-        else {
-            //console.debug("We do not have a translation!!!")
-        }
-    }
-
-}
 
 async function validatePage(language, showHistory, locale,showDiff, DefGlossary) {
     // This function checks the quality of the current translations
@@ -916,7 +800,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
                 // PSS this is the one with orange
                  await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
 
-                 await mark_original(preview, result.toolTip, textareaElem.textContent, rowId, false)
+                 await mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
                 //}, waiting);
            if (rowcount == 1){
                //console.debug(" we are starting observer")

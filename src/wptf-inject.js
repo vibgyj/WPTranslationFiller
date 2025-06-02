@@ -1,4 +1,5 @@
 ﻿// Injected script
+
 function checkLocale() {
     // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
