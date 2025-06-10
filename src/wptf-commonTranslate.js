@@ -262,7 +262,8 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     else if (translator == "deepl") {
         const placeHolderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
         const matches = [...original.matchAll(placeHolderRegex)];
-       // const matches = original.matchAll(placeHolderRegex);
+        //console.debug("matches:",matches)
+        //const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
             index = 0;
             for (const match of matches) {
@@ -5750,8 +5751,11 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     if (textareaElem != null && typeof textareaElem != "undefined") {
         textareaElem.innerText = translatedText;
         textareaElem.value = translatedText;
-        textareaElem.style.height = "auto";
-        textareaElem.style.height = textareaElem.scrollHeight + "px";
+        requestAnimationFrame(() => {
+            textareaElem.style.height = "auto";
+            textareaElem.style.height = textareaElem.scrollHeight + "px";
+        });
+        
     }
     // We need to get the original of the plural
     plural = await editor.querySelector(`#editor-${rowId} .source-string__plural span.original-raw`);
@@ -5783,7 +5787,10 @@ async function setLowerCase(rowId, spellCheckIgnore) {
         translatedText = convert_lower(text, spellCheckIgnore);
         textareaElem.innerText = translatedText;
         textareaElem.value = translatedText;
-        textareaElem.style.height = "auto";
+        requestAnimationFrame(() => {
+            textareaElem.style.height = "auto";
+        });
+        
         //textareaElem.style.height = textareaElem.scrollHeight + "px";
         // We need to get the original of the plural
         plural = await editor.querySelector(`#editor-${rowId} .source-string__plural span.original-raw`);
@@ -5890,7 +5897,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
             textareaElem = e.querySelector("textarea.foreign-text");
             textareaElem.innerText = "";
             textareaElem.value = "";
-            textareaElem.style.height = "auto"
+            requestAnimationFrame(() => {
+                textareaElem.style.height = "auto"
+            });
+            
             if (toTranslate) {
                 // console.debug("we need to translate");
                 let pretrans = await findTransline(original, destlang);
@@ -6127,7 +6137,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
                         textareaElem2 = f.querySelector("textarea#translation_" + row + "_2");
-                        if (textareaElem2 != 'undefined') { 
+                        if (textareaElem2 != 'undefined' && textareaElem2 !=null) { 
                             textareaElem2.innerText = translatedText;
                             textareaElem2.value = translatedText;
                         }
@@ -6139,7 +6149,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                         textareaElem1.innerText = translatedText;
                         textareaElem1.value = translatedText;
                         textareaElem2 = f.querySelector("textarea#translation_" + row + "_2");
-                        if (textareaElem2 != 'undefined') {
+                        if (textareaElem2 != 'undefined' && textareaElem2 != null) {
                             textareaElem2.innerText = translatedText;
                             textareaElem2.value = translatedText;
                         }
@@ -6500,6 +6510,7 @@ function saveLocal_2(bulk_timer) {
                 line_read++
                 if (!myNewRow.includes("old")) {
                     Edopen = document.querySelector(`#editor-${myNewRow}`)
+                    
                     //console.debug("Edopen:", Edopen)
                     //delay(100)
                     if (Edopen != null && Edopen != "Time-out reached") {
@@ -6511,6 +6522,7 @@ function saveLocal_2(bulk_timer) {
                         // let preview = document.querySelector(`#preview-${myNewRow}`)
                         if (preview != null && current.innerText == 'waiting' || current.innerText == 'transFill' && checkset.checked == true && !myNewRow.includes("old")) {
                             let glotpress_suggest = Edopen.querySelector(".translation-actions__save");
+                            let glotpress_close = Edopen.querySelector(".panel-header-actions__cancel with-tooltip")
                             let preview_Unprocessed = preview
                             glotpress_suggest.classList.remove("disabled")
                             
@@ -6520,13 +6532,13 @@ function saveLocal_2(bulk_timer) {
                             autoCopyClipBoard = false;
                             new Promise(resolve => setTimeout(async () => {                          
                                  try {
-                                   preview.querySelector("td.actions .edit").click();
+                                   preview.querySelector("td.actions a.action.edit").click();
                                   //  waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 8000, "6523");
                                     //console.debug("Editor open!", editorOpen, preview);
 
                                      // try {
-                                        glotpress_suggest.click();
-                                        counter++;
+                                     glotpress_suggest.click();
+                                     counter++;
                                       
                                        // const fullRowId =  waitForFullRowId(myNewRow);
                                       //  const preview = document.querySelector(`#preview-${fullRowId}`);
@@ -6545,13 +6557,15 @@ function saveLocal_2(bulk_timer) {
                                         // console.debug("Row ID could not be resolved:", err.message);
                                       //  counter--
                                    // }
-                               } catch (err) {
+                                } catch (err) {
                                    // counter--
                                     console.debug("Could not open editor:", err.message);
                                 }
+                                
                                 resolve();
                             }));
 
+                            //console.debug("")
                         }
                         else {
                             //console.debug("checkbox present but not set or not in waiting mode or old record")
@@ -6627,7 +6641,6 @@ function saveLocal_2(bulk_timer) {
                 }
             }
         }
-
     }, bulk_timer)
         .then(() => {
             // pss 18-04
@@ -6963,8 +6976,11 @@ async function processTransl (original, translatedText, language, record, rowId,
         // PSS 29-03-2021 Added populating the value of the property to retranslate            
         textareaElem.value = translatedText;
         //PSS 25-03-2021 Fixed problem with description box issue #13
-        textareaElem1.style.height = "auto"
-        textareaElem.style.height = textareaElem.scrollHeight + "px";
+        requestAnimationFrame(() => {
+            textareaElem.style.height = "auto"
+            textareaElem.style.height = textareaElem.scrollHeight + "px";
+        });
+        
         // We need to activate the cursor again obviously
         let inputId = `translation_${myRowId}_0`
         const inputElement = document.getElementById(inputId);
@@ -7058,7 +7074,10 @@ async function processTransl (original, translatedText, language, record, rowId,
                     textareaElem1.innerText = translatedText;
                     textareaElem1.value = translatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
-                    textareaElem1.style.height = "auto";
+                    requestAnimationFrame(() => {
+                        textareaElem1.style.height = "auto"
+                    });
+
                     // textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
                     // Select the first li
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
@@ -7082,7 +7101,10 @@ async function processTransl (original, translatedText, language, record, rowId,
                     textareaElem2.innerText = translatedText;
                     textareaElem2.value = translatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
-                    textareaElem2.style.height = "auto";
+                    requestAnimationFrame(() => {
+                        textareaElem2.style.height = "auto"
+                    });
+
                     // Select the second li within the preview
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(2) .translation-text");
                     //console.debug("preview in line2:",previewElem)

@@ -100,6 +100,7 @@
   "This function populates the table with translations from the local database": "Эта функция заполняет таблицу переводами из локальной БД.",
   "This is the function to save all suggestions selected in bulk": "Это функция для сохранения всех предложений, выбранных массово.",
   "This is the function to populate the local database with selected items": "Эта функция заполняет локальную БД выбранными элементами",
+  "This function translates the table with translations from the API": "This function translates the table with translations from the API",
   "TM is stopped!": "ТМ остановлен!",
   "Translate": "Перевести",
   "Translated": "Переведено",

@@ -127,20 +127,9 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     //console.debug("deeplGlossary:",deeplGlossary)
     language = language.toUpperCase();
-    //console.debug("lang:",language)
-   // if (language == 'NL') {
-   //     wordCount = originalPreProcessed.trim().split(/\s+/).length;
-    //    console.debug("wordcount:",wordCount)
-     //   if (wordCount <= 5) {
-     //       originalPreProcessed = originalPreProcessed[0] + originalPreProcessed.slice(1).toLowerCase();
-      //      console.debug("count kleiner:",originalPreProcessed)
-    //    }
-   // }
-    //console.debug("prepro:",originalPreProcessed)
+   
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     var deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
-    // console.debug("DeepLcurrent:",deepLcurrent)
-    //deepLcurrent = 'transFill'
     prevstate = 'untranslated';
     //console.debug("fetchin!")
     //console.debug('preprosessed:', typeof originalPreProcessed)
@@ -206,11 +195,6 @@ async function processData(data, original, record, row, originalPreProcessed, re
                         translatedText = restoreCase(original, translatedText, locale, spellCheckIgnore, false);
                     }
                     translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
-                   // console.debug("deepl na postprocess:", translatedText, deepLcurrent,convertToLower)
-                    //  console.debug("deepl preprocessed:",originalPreProcessed,record)
-                    //console.debug("current in deepl:", deepLcurrent)
-                    
-                    
                     deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);
                 }
                 // Example processing: add a processed field

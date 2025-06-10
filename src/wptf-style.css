@@ -2,6 +2,11 @@ mymarker {
     background-color: lightgreen;
 }
 
+/* .gp-js-message { */
+/*    color: blue !important; */
+/*    display:none !important */
+/* } */
+
 /* make ui smaller as it is unreadable with the new larg mask*/
 /*.gp-content {
     max-width:1300px !important;
@@ -1183,9 +1188,9 @@ table.translations td.priority {
 }
 
 /* This setting is necessary to move the row down due to the header that is no longer fixed */
-table.translations tr.preview {
-    scroll-margin-top: 62px;
-}  
+/* table.translations tr.preview { */
+/*  scroll-margin-top: 62px; */
+/* }  */
 
 /*table.translations tr.preview.has-glotdict th.checkbox {
     position: relative !important;
@@ -1212,9 +1217,9 @@ table.translations tr.preview {
     max-width: 1400px !important;
 }
 
-tr.editor {
-    scroll-margin-top: 90px !important;
-}
+/* tr.editor { */
+ /*  scroll-margin-top: 90px !important; */
+/* } */
 
 /*The below line is to prevent untranslated originals to show up when bulk saving*/
 tr.preview.status-hidden {

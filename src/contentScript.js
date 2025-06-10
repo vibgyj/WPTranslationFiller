@@ -1,5 +1,5 @@
 // This is the starting script for the addon
-//console.debug("We start content script")
+
 var glossary = [];
 var glossary1 = [];
 var db;
@@ -34,24 +34,10 @@ function savePage() {
 }
 savePage()
 
-function triggerGarbageCollection() {
-    let tempArray = new Array(1000000).fill(0);
-    tempArray = null; // Clear the reference
-    console.debug("we are garbage collecting")
-}
-
-//triggerGarbageCollection();
-
 if (typeof addon_translations == 'undefined') {
     //console.debug("we are setting up langvar")
     var addon_translations = {}
     //console.debug("length:",addon_translations.length)
-}
-
-function addname_to_checkbox() {
-    header_check = document.querySelector("th input")
-    //console.debug("header checkbox:", header_check)
-    header_check.setAttribute("name", "checkbox")
 }
 
 async function loadTranslations(language) {
@@ -136,41 +122,6 @@ function waitForEditableTextarea(container) {
 }
 
 
-//const dropdown = document.querySelector('#your-dropdown-id'); // or use class
-//if (dropdown && dropdown.parentElement) {
-  //  const debugObserver = new MutationObserver((mutationsList) => {
-    //    for (let mutation of mutationsList) {
-       //     if (mutation.type === 'childList') {
-         //       console.warn('Dropdown mutation detected:', mutation);
-         //       console.trace(); // shows the stack of the code that triggered this
-         //   }
-       // }
-   // });
-  //  Activate this if you need to find what starts the dropdown
-    //debugObserver.observe(dropdown.parentElement, { childList: true, subtree: true });
-//}
-
-//const originalFocus = HTMLElement.prototype.focus;
-//HTMLElement.prototype.focus = function () {
-//    console.debug("[FOCUS] called on:", this);
- //   console.trace(); // shows the call stack
- //   originalFocus.call(this);
-//};
-
-//function waitForTextareaAndStart(retries = 30) {
-//    const textarea = document.getElementsByClassName("textareas active");
-
-//  if (textarea.length > 0 && textarea[0].firstChild && textarea[0].firstChild.nextElementSibling) {
-//      console.debug("Textarea found, continuing...");
-//      startFullScript(textarea);
-//  } else if (retries > 0) {
-// Try again in the next frame
-//      requestAnimationFrame(() => waitForTextareaAndStart(retries - 1));
-// } else {
-//     console.warn("Textarea not found after retries");
-//     messageBox("error", "Page is not fully loaded — textarea not found.");
-// }
-//}
 initTextareaDetection();
 function setupTooltipHandler() {
     //console.debug("tooltiphandler started")
@@ -220,7 +171,7 @@ function findEditorRow(textareaElem) {
 }
 
 async function startFullScript(textarea) {
-    console.debug("Full script started:",textarea)
+    //console.debug("Full script started:",textarea)
     currWindow = window.self;
     initTranslations();
     mytextarea = textarea[0].firstChild.nextElementSibling;
@@ -233,10 +184,10 @@ async function startFullScript(textarea) {
     //pluralpresent = document.querySelector(`#editor-${rowId} .editor-panel__left .source-string__plural`);
    // console.debug("startscript plural:", pluralpresent)
     pluralpresent = document.querySelector(`#editor-${rowId} div.textareas[data-plural-index="1"]`)
-    console.debug("startscript plural:", pluralpresent)
+    //console.debug("startscript plural:", pluralpresent)
     if (pluralpresent != null) {
         let pluralTextarea = pluralpresent.querySelector('textarea')
-        console.debug("pluralTextarea:",pluralTextarea)
+        //console.debug("pluralTextarea:",pluralTextarea)
         start_editor_mutation_server2(pluralTextarea, "Details", "");
     } 
     mytextarea.style.display = 'block';
@@ -260,7 +211,7 @@ async function startFullScript(textarea) {
     });
 
     let is_loaded = await loadGlossaries(myCustomEvent);
-    console.debug("glossary loaded:", is_loaded);
+    //console.debug("glossary loaded:", is_loaded);
 
     if (is_loaded === "success") {
         doValidation();
@@ -1083,12 +1034,21 @@ document.addEventListener('click', function (event) {
 
 async function translatedButton() {
     //Add translate button - start
+    let transContainer = document.createElement("div")
+    transContainer.className = 'button-tooltip'
+    classToolTip = document.createElement("span")
+    classToolTip.className = 'tooltiptext'
+    classToolTip.innerText = __("This function translates the table with translations from the API")
     let translateButton = document.createElement("a");
     translateButton.href = "#";
+    translateButton.style.visibility = 'hidden'
     //translateButton.ID = 'Translate'
     translateButton.className = "translation-filler-button";
     translateButton.onclick = translatePageClicked;
     translateButton.innerText = __('Translate');
+    transContainer.appendChild(translateButton)
+    transContainer.appendChild(classToolTip)
+
     let divPaging = document.querySelector("div.paging");
     // 1-05-2021 PSS fix for issue #75 do not show the buttons on project page
     let divProjects = document.querySelector("div.projects");
@@ -1102,6 +1062,7 @@ async function translatedButton() {
 
     let localtransButton = document.createElement("a");
     localtransButton.href = "#";
+    localtransButton.style.visible= 'hidden'
     localtransButton.className = "local-trans-button";
     localtransButton.onclick = localTransClicked;
     localtransButton.innerText = __("Local");
@@ -1117,7 +1078,7 @@ async function translatedButton() {
     //let TM = localStorage.getItem(['switchTM']);
     let tmtransButton = document.createElement("a");
     tmtransButton.href = "#";
-
+    tmtransButton.style.visible = 'hidden'
     //if (TM == "false") {
     tmtransButton.className = "tm-trans-button";
     //}
@@ -1171,7 +1132,6 @@ async function translatedButton() {
         }
     }
     tmDisableButton.onclick = tmDisableClicked;
-
     tmDisableButton.innerText = __("Disable machine");
     TmDisableContainer.appendChild(tmDisableButton)
     TmDisableContainer.appendChild(classToolTip)
@@ -1185,11 +1145,13 @@ async function translatedButton() {
 
     let checkButton = document.createElement("a");
     checkButton.href = "#";
+    checkButton.style.visibility= 'hidden'
     checkButton.className = "check_translation-button";
     checkButton.onclick = checkPageClicked;
     checkButton.innerText = __("CheckPage");
     checkContainer.appendChild(checkButton)
     checkContainer.appendChild(classToolTip)
+
 
     //23-03-2021 PSS added a new button on first page
     let implocContainer = document.createElement("div")
@@ -1199,6 +1161,7 @@ async function translatedButton() {
     classToolTip.innerText = __("This button starts the import of a local po file containing translations into the current table")
     let impLocButton = document.createElement("a");
     impLocButton.href = "#";
+    impLocButton.style = 'hidden'
     impLocButton.className = "impLoc-button";
     impLocButton.onclick = impFileClicked;
     impLocButton.innerText = __("Imp localfile");
@@ -1214,6 +1177,7 @@ async function translatedButton() {
     classToolTip.innerText = __("This button converts po and inserts to local database")
     let impDatabaseButton = document.createElement("a");
     impDatabaseButton.href = "#";
+    impDatabaseButton.style.visibility = 'hidden'
     impDatabaseButton.className = "convLoc-button";
     impDatabaseButton.onclick = impLocDataseClicked;
     impDatabaseButton.innerText = __("Conv po DB");
@@ -1228,12 +1192,13 @@ async function translatedButton() {
     classToolTip.innerText = __("This button selects all records")
     let checkAllButton = document.createElement("a");
     checkAllButton.href = "#";
+    checkAllButton.style.visible = 'hidden'
     checkAllButton.className = "selectAll-button";
     checkAllButton.onclick = setmyCheckBox;
     checkAllButton.innerText = __("Select all");
     checkAllContainer.appendChild(checkAllButton)
     checkAllContainer.appendChild(classToolTip)
-
+   
     //07-05-2021 PSS added a export button on first page
     let exportContainer = document.createElement("div")
     exportContainer.className = 'button-tooltip'
@@ -1243,11 +1208,12 @@ async function translatedButton() {
 
     let exportButton = document.createElement("a");
     exportButton.href = "#";
+    exportButton.style.visibility = 'hidden'
     exportButton.className = "export_translation-button";
     exportButton.onclick = exportPageClicked;
     exportButton.innerText = __("Export");
     exportContainer.appendChild(exportButton)
-    exportContainer.appendChild(classToolTip)
+    exportContainer.appendChild(classToolTip)    
 
 
     let exportPoContainer = document.createElement("div")
@@ -1258,6 +1224,7 @@ async function translatedButton() {
 
     let exportPoButton = document.createElement("a");
     exportPoButton.href = "#";
+    exportPoButton.style.visible = 'hidden'
     exportPoButton.className = "export_translation-po-button";
     exportPoButton.onclick = exportPoClicked;
     exportPoButton.innerText = __("ExportPo");
@@ -1273,6 +1240,7 @@ async function translatedButton() {
     classToolTip.innerText = __("This button starts the import of a local file into the local database")
     let importButton = document.createElement("a");
     importButton.href = "#";
+    importButton.style.visible = 'hidden'
     importButton.id = "ImportDb";
     //importButton.type = "file";
     //importButton.style="display: none";
@@ -1281,6 +1249,8 @@ async function translatedButton() {
     importButton.innerText = __("Import");
     importContainer.appendChild(importButton)
     importContainer.appendChild(classToolTip)
+
+
 
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     if (is_pte) {
@@ -1310,6 +1280,7 @@ async function translatedButton() {
 
     let bulktolocalButton = document.createElement("a");
     bulktolocalButton.href = "#";
+    bulktolocalButton.style.visible = 'hidden'
     bulktolocalButton.id = "BulkSave";
     bulktolocalButton.className = "save_tolocal-button";
     bulktolocalButton.onclick = savetolocalClicked;
@@ -1318,6 +1289,7 @@ async function translatedButton() {
     bulktolocContainer.appendChild(classToolTip)
     let statsContainer = document.createElement("div")
     // add stats button if handleStats function is defined
+
     if (typeof handleStats === "function") {
 
         statsContainer.className = 'button-tooltip'
@@ -1333,6 +1305,21 @@ async function translatedButton() {
         statsContainer.appendChild(statsButton)
         statsContainer.appendChild(classToolTip)
     }
+
+    // here we add all buttons at once and make them viv
+    requestAnimationFrame(() => {
+        checkButton.style.visibility = 'visible'
+        impLocButton.style = 'visible'
+        impDatabaseButton.style.visibility = 'visible'
+        checkAllButton.style.visible = 'visible'
+        exportButton.style.visibility = 'visible'
+        exportPoButton.style.visible = 'visible'
+        importButton.style.visible = 'visible'
+        bulktolocalButton.style.visible = 'visible'
+        tmtransButton.style.visible = 'visible'
+        localtransButton.style.visible = 'visible'
+        translateButton.style.visibility = 'visible'
+    });
 
     let divGpActions = document.querySelector("div.paging");
     let wptfNavBar = document.createElement("div");
@@ -1370,7 +1357,7 @@ async function translatedButton() {
         divNavBar.appendChild(TmContainer);
         divNavBar.appendChild(localtransContainer);
         //divNavBar.appendChild(localtransButton);
-        divNavBar.appendChild(translateButton);
+        divNavBar.appendChild(transContainer);
     }
 
     //12-05-2022 PSS added a new buttons specials
@@ -1381,6 +1368,7 @@ async function translatedButton() {
 
     let SwitchGlossButton = document.createElement("a");
     SwitchGlossButton.href = "#";
+    SwitchGlossButton.style.visibility = 'hidden'
     SwitchGlossButton.onclick = SwitchGlossClicked;
     SwitchGlossButton.className = "Switch-Gloss-button";
 
@@ -1395,9 +1383,10 @@ async function translatedButton() {
             SwitchGlossButton.style.background = "orange"
         }
     });
-
+    
     let SwitchTMButton = document.createElement("a");
     SwitchTMButton.href = "#";
+    SwitchTMButton.style.visibility = 'hidden'
     SwitchTMButton.className = "Switch-TM-button";
     SwitchTMButton.onclick = SwitchTMClicked;
     SwitchTMButton.innerText = __("SwitchTM");
@@ -1421,12 +1410,14 @@ async function translatedButton() {
 
     let DispGloss = document.createElement("a");
     DispGloss.href = "#";
+    DispGloss.style.visibility = 'hidden'
     DispGloss.className = "DispGloss-button";
     DispGloss.onclick = DispGlossClicked;
     DispGloss.innerText = __("DispGloss");
-
+    
     let DispClipboard = document.createElement("a");
     DispClipboard.href = "#";
+    DispClipboard.style.visibility = 'hidden'
     DispClipboard.className = "DispClipboard-button";
     DispClipboard.onclick = DispClipboardClicked;
     DispClipboard.innerText = __("ClipBoard");
@@ -1441,11 +1432,6 @@ async function translatedButton() {
         }
     });
 
-
-
-    //DispCount = document.createElement("a");
-    //DispCount.href = "#";
-    //DispCount.className = "DispCount-button";
 
     let WikiLink = document.createElement("a");
     WikiLink.href = 'https://github.com/vibgyj/WPTranslationFiller/wiki'
@@ -1564,6 +1550,12 @@ async function translatedButton() {
             UpperCaseButton.className = "UpperCase-button uppercase"
         }
     }
+    requestAnimationFrame(() => {
+        SwitchGlossButton.style.visibility = 'visible'
+        SwitchTMButton.style.visibility = 'visible'
+        DispGloss.style.visibility = 'visible'
+        DispClipboard.style.visibility = 'visible'
+    })
 }
 
 
@@ -2592,7 +2584,7 @@ async function checkbuttonClick(event) {
     var textarea;
     var detail_preview;
     var detail_glossary;
-    var pluralTextarea;
+    var pluralTextarea = ""
     var FireFoxAction = ""
     var leftPanel;
     //var DefGlossary=true;
@@ -2640,9 +2632,19 @@ async function checkbuttonClick(event) {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
                     //console.debug("myrec:",myrec)
-                    mytextarea = myrec.getElementsByClassName('foreign-text')
-                    mytextarea[0].style.height = "auto"
-                    mytextarea[0].style.height = mytextarea[0].scrollHeight + "px";
+                   // mytextarea = myrec.getElementsByClassName('foreign-text')
+                   // mytextarea[0].style.height = "auto"
+                   // mytextarea[0].style.height = mytextarea[0].scrollHeight + "px";
+
+                    mytextarea = myrec.getElementsByClassName('foreign-text');
+                
+                    mytextarea[0].style.height = "auto"; // Initial reset
+
+                    const newHeight = mytextarea[0].scrollHeight; // Layout read
+
+                    requestAnimationFrame(() => {
+                        mytextarea[0].style.height = newHeight + "px"; // Layout write
+                    });
 
 
                     //    setTimeout(() => {
@@ -2650,7 +2652,7 @@ async function checkbuttonClick(event) {
 
                     // if (textarea) {
                     mytextarea[0].addEventListener("click", (e) => {
-                        console.debug("Textarea clicked");
+                        //console.debug("Textarea clicked");
                         if (detail_glossary) {
                             //console.debug("We are starting the observer:", mytextarea)
                             // We need to start the mutation server, if the textarea is clicked on
@@ -2663,12 +2665,8 @@ async function checkbuttonClick(event) {
                         const cursorPos = mytextarea[0].selectionStart;
                         //console.debug("Cursor position:", cursorPos);
                         StartObserver = true;
-                        // Your logic here: maybe toggle a flag, or activate a mode
+                       
                     });
-                    //  } else {
-                    //     console.warn("Textarea not found");
-                    // }
-                    //   }, 100); 
 
                     //console.debug("mytext in open:",mytextarea)
                     if (typeof mytextarea != 'undefined') {
@@ -2686,7 +2684,7 @@ async function checkbuttonClick(event) {
                     }
                     else {
                         mytextarea = document.querySelector(`#editor-${rowId} .foreign-text autosize`);
-                        console.debug("mytext2:", mytextarea)
+                       // console.debug("mytext2:", mytextarea)
                     }
                 }
                 else { console.debug("editor not found:", res) }
@@ -2698,14 +2696,16 @@ async function checkbuttonClick(event) {
                 // console.debug("mytext:",mytextarea,myrec)
                 if (typeof textarea != 'undefined') {
                     textarea = mytextarea[0]
-                    // Ensure the textarea is visible and enabled
-                    textarea.style.display = 'block'; // Ensure it's visible
-                    textarea.style.visibility = 'visible'; // Ensure it's visible
-                    textarea.disabled = false; // Ensure it's enabled
-                    // Scroll to the textarea if necessary
-                    textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Focus on the textarea to make it active
-                    textarea.focus();
+                    requestAnimationFrame(() => {
+                        // Ensure the textarea is visible and enabled
+                        textarea.style.display = 'block'; // Ensure it's visible
+                        textarea.style.visibility = 'visible'; // Ensure it's visible
+                        textarea.disabled = false; // Ensure it's enabled
+                        // Scroll to the textarea if necessary
+                        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Focus on the textarea to make it active
+                        textarea.focus();
+                    });
                 }
 
                 // we need to select the second element in the form
@@ -2717,12 +2717,12 @@ async function checkbuttonClick(event) {
                     copyToClipBoard(detailRow)
                 }
 
-                if (pluralTextarea != null) {
+                if (pluralTextarea != "") {
                     if (detail_glossary) {
                         // This one is started to detect changes in plural
                         leftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                         pluralTextarea= leftPanel.querySelector("textareas.active")
-                        console.debug("before mutation plural:", pluralTextarea)
+                        //console.debug("before mutation plural:", pluralTextarea)
                         start_editor_mutation_server2(pluralTextarea, action, leftPanel)
                     }
                 }
@@ -2791,20 +2791,28 @@ async function checkbuttonClick(event) {
                             }
                             if (pluralpresent != null) {
                                 // we do have a plural
-
-                                result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent, locale, "", rowId, true, DefGlossary);
+                                //console.debug("pluralpresent in line 2806:", pluralpresent)
+                                //console.debug("pluralpresent in line 2807:", pluralTextarea)
+                                //console.debug("pluralpresent in line 2808:", translation)
+                                if (pluralTextarea != "" && pluralTextarea !=null && pluralTextarea.textContent != null) {
+                                    result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent, locale, "", rowId, true, DefGlossary);
+                                }
                                 //console.debug("validate contentscript line 2228 resultplural:", result)
                                 // plural is record with "_1"
                                 newRowId = rowId.split("-")[0] + "_1"
                                 const textarea = myrec.querySelector(`#translation_${newRowId}`);
                                 // Ensure the textarea is visible and enabled
-                                textarea.style.display = 'block'; // Ensure it's visible
-                                textarea.style.visibility = 'visible'; // Ensure it's visible
-                                textarea.disabled = false; // Ensure it's enabled
-                                // Scroll to the textarea if necessary
-                                textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                // Focus on the textarea to make it active
-                                textarea.focus();
+                                
+                                requestAnimationFrame(() => {
+                                    textarea.style.display = 'block'; // Ensure it's visible
+                                    textarea.style.visibility = 'visible'; // Ensure it's visible
+                                    textarea.disabled = false; // Ensure it's enabled
+                                    // Scroll to the textarea if necessary
+                                    textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    // Focus on the textarea to make it active
+                                    textarea.focus();
+                                });
+                                
                                 mark_glossary(leftPanel, result.toolTip, pluralpresent.textContent, rowId, true)
                             }
                         });
@@ -2828,7 +2836,9 @@ async function checkbuttonClick(event) {
             }
             if (myrec != null) {
                 // we are not in listmode
-                myrec.scrollIntoView(true);
+                requestAnimationFrame(() => {
+                    myrec.scrollIntoView(true);
+                });
             }
 
             //translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
@@ -6228,13 +6238,13 @@ function start_editor_mutation_server(textarea, action, leftPanel) {
 }
 
 function start_editor_mutation_server2(pluralTextarea, action, leftPanel) {
-    console.debug("start mutserver:", pluralTextarea, action, "myLeftPanel:", leftPanel);
+    //console.debug("start mutserver:", pluralTextarea, action, "myLeftPanel:", leftPanel);
 
     let targetNode = pluralTextarea instanceof Node ? pluralTextarea :
         pluralTextarea instanceof Node ? textarea : null;
 
     if (!targetNode) {
-        console.debug("start_editor_mutation_server2: textarea is not valid");
+        //console.debug("start_editor_mutation_server2: textarea is not valid");
         return;
     }
 
@@ -6291,7 +6301,7 @@ function decodeHTML(html) {
 }
 // Function to handle DOM mutations
 async function handleMutation(mutationsList, observer) {
-    console.debug("We handle mutations:", mutationsList);
+    //console.debug("We handle mutations:", mutationsList);
     var spansArry=[]
     const mutation = mutationsList[0];
     if (!mutation || !mutation.target) return;

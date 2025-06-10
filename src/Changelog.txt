@@ -63,4 +63,5 @@ Version changes as of version 3.3
 61. Version 3.9.61 Glossary now recognizes "website" as wrong translation
 62. Version 3.9.62 Missing entry in manifest for Firefox
 63. Version 3.9.63 Improved memory behavior
-63. Version 3.9.64 Improved plural marking
+64. Version 3.9.64 Improved plural marking
+65. Version 3.9.65 Improved CSS behavior 

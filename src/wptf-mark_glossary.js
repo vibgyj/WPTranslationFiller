@@ -282,7 +282,7 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
     }
 
     if (missingTranslations.length > 0) {
-        console.debug("[DEBUG] Missing glossary entries:", missingTranslations);
+        //console.debug("[DEBUG] Missing glossary entries:", missingTranslations);
     }
 
     return missingTranslations;
@@ -518,8 +518,6 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
             
                 if (spans.length > 0) {
                     //console.debug("houston we have a glossary")
-                    //console.debug("we have to mark the original", preview)
-                    //console.debug("spans:", spansSingular)
                     wordCount = spans.length
                     spansArray = Array.from(spans)
                     for (spancnt = 1; spancnt < (spansArray.length); spancnt++) {
@@ -529,13 +527,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                     //console.debug("glossWords:",glossWords,singularText,isPlural)
                     dutchText = translation
                     if (isPlural == false) {
-                        //missingTranslations = [];
-                        // Run the function
-                        console.debug("Translation:", translation)
-
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
-                        console.debug("mark_original:",missingTranslations)
-                        // Output the result
                         if (missingTranslations.length > 0) {
                             document.addEventListener("mouseover", (event) => {
                                 const tooltip = document.querySelector(".ui-tooltip");
@@ -550,12 +542,12 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                                 }
                             });
 
-                            console.debug("spansArray:",spansArray)
+                           // console.debug("spansArray:",spansArray)
                             missingTranslations.forEach(({ word, glossIndex }) => {
-                                console.debug("preview:",preview)
-                               // console.debug("classList:", spansArray[glossIndex].classList)
-                                console.debug('Span content:', spansArray[glossIndex]?.textContent);
-                               // console.debug(getComputedStyle(spansArray[glossIndex]), spansArray[glossIndex]?.textContent);
+                                //console.debug("preview:",preview)
+                                //console.debug("classList:", spansArray[glossIndex].classList)
+                                //console.debug('Span content:', spansArray[glossIndex]?.textContent);
+                                //console.debug(getComputedStyle(spansArray[glossIndex]), spansArray[glossIndex]?.textContent);
                                 spansArray[glossIndex].classList.add('highlight');
                                 //console.debug('classList after add:', spansArray[glossIndex].classList.value);
                             });

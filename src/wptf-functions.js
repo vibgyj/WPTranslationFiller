@@ -1022,7 +1022,7 @@ function exportGlossaryForOpenAi(locale = "nl") {
                     .join(", ");
 
                 chrome.storage.local.set({ OpenAiGloss: lines }, () => {
-                    console.log("OpenAiGloss stored");
+                    //console.log("OpenAiGloss stored");
                 });
             }
         };
