@@ -106,7 +106,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
            // console.debug("header:", data1);
             console.debug("browser lang:", lang)
             console.debug("temp:", OpenAItemp)
-            console.debug("tone:",OpenAITone)
+            console.debug("tone:", OpenAITone)
+            console.debug(`[${new Date().toISOString()}] started`)
         }
         const response = fetch(link, {
             method: "POST",
@@ -153,10 +154,12 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                             text = original + " no translation received"
                             translatedText = original + " No translation received"
                         }
+                       // console.debug(`[${new Date().toISOString()}] translation recieved:`,text)
                         translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         //console.debug("translation raw:",original,translatedText)
                         //console.debug("plural_line:",plural_line)
                         await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
+                       // console.debug(`[${new Date().toISOString()}] translation processed:`,translatedText)
                         return Promise.resolve(errorstate)
                     }
                     else {

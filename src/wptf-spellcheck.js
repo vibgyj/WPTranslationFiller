@@ -1,6 +1,7 @@
 // JavaScript source code
 
 async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) {
+   // console.debug("spellcheckpage:",spellcheckIgnore)
     var replaced = false;
     var row;
     var newrowId;
@@ -35,12 +36,12 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     else {
         // console.debug("checkbutton2:", typeof checkButton)
         if (typeof checkbutton != null) {
-            checkButton.classList.remove("check_translation-button", "started", "translated");
-            checkButton.classList.remove("check_translation-button", "restarted", "translated");
-            checkButton.className = "check_translation-button restarted";
+          //  checkButton.classList.remove("check_translation-button", "started", "translated");
+          //  checkButton.classList.remove("check_translation-button", "restarted", "translated");
+          //  checkButton.className = "check_translation-button restarted";
         }
         else {
-            checkButton.className = "check_translation-button started"
+           // checkButton.className = "check_translation-button started"
         }
     }
     // We need to know the amount of rows to show the finished message at the end of the process
@@ -110,6 +111,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                             }
 
                             if (transtype == "single") {
+                                replaced = false
                                 // Fetch the translations
                                 let element = e.querySelector(".source-details__comment");
                                 let textareaElem = e.querySelector("textarea.foreign-text");
@@ -164,10 +166,10 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
             if (countrows == tableRecords ) {
                 // Translation replacement completed
                 checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-                checkButton.classList.remove("started");
-                checkButton.className += " translated";
+                //checkButton.classList.remove("started");
+                checkButton.className = "check_translation-button ready";
                 checkButton.innerText = "Checked";
-                checkButton.className += " ready";
+               // checkButton.className += " ready";
                 if (errorstate != "OK") {
                     messageBox("error", "Check spelling done<br> " + errorstate + "<br> on one of the records")
                     errorstate = "OK"
@@ -190,6 +192,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
 
 //# this handles the entry to check
 async function spellcheck_entry(translation, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) {
+    //console.debug("spellcheckIgnore:", spellcheckIgnore)
     var spellcheck_verb = [];
     found_verbs = [];
     var response;
@@ -296,7 +299,8 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                         }   
                     }
                     // PSS result only needs to be processed if all verb in sentence have been found
-                    //console.debug("found verbs:",found_verbs)
+                   // console.debug("found verbs:", found_verbs)
+                   // console.debug("ignore:", spellcheckIgnore)
                     entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, spellcheckIgnore)
                     if (typeof data.translations != 'undefined') {
                         translatedText = data.translations[0].text;

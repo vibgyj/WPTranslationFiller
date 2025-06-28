@@ -1200,7 +1200,7 @@ function checkFormalPage(dataFormal) {
 }
 
 async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt, spellcheckIgnore, showHistory) {
-    console.debug("checkpage started")
+    //console.debug("checkpage started")
     var timeout = 10;
     var countrows = 0;
     var tableRecords = 0;
@@ -1271,7 +1271,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
         }
         else {
             // console.debug("checkbutton2:", typeof checkButton)
-            if (typeof checkbutton != null) {
+            if (typeof checkButton != null) {
                 checkButton.classList.remove("check_translation-button", "started", "translated");
                 checkButton.classList.remove("check_translation-button", "restarted", "translated");
                 checkButton.className = "check_translation-button restarted";
@@ -1286,7 +1286,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
             var translatedText = "";
             tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
             for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-
+                //console.debug("e:",e)
                 countrows++;
                 replaced = false;
                 let original = e.querySelector("span.original-raw").innerText;
@@ -1301,10 +1301,13 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
                     row = rowfound.split("_")[1];
                 }
-                let spanmissing = document.querySelector(`#preview-${row} span.missing`);
-               // console.debug("spanmissing:", spanmissing)
+                mypreview = document.querySelector("#preview-" + newrowId);
+                if (mypreview == null) {
+                    mypreview = document.querySelector("#preview-" + row);
+                }
+                //console.debug("preview:",mypreview.classList.contains("no-translations"))
                 // If the page does not contain translations, we do not need to handle them, if the span is not present, then it means there are translations
-                if (spanmissing == null) {
+                if (!mypreview.classList.contains('no-translations')) {
                     // 30-08-2021 PSS fix for issue # 125
                     let precomment = e.querySelector(".source-details__comment p");
                     if (precomment != null) {
@@ -1325,10 +1328,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         else {
                             transtype = "single";
                         }
-                        mypreview = document.querySelector("#preview-" + newrowId);
-                        if (mypreview == null) {
-                            mypreview = document.querySelector("#preview-" + row);
-                        }
+                        
                         if (transtype == "single") {
                             // Fetch the translations
                             let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
@@ -1384,6 +1384,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                                 // let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
                                 result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
+                                //console.debug("result 1387:",result)
                                 previewNewText = result.previewNewText;
                                 translatedText = result.translatedText;
                                 // countreplaced += result.countreplaced;
@@ -1395,6 +1396,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                 if (preview == null) {
                                     preview = document.querySelector("#preview-" + myrow + " td.translation");
                                 }
+                                //console.debug("replaced:",replaced)
                                 if (replaced) {
                                     if (currec != null) {
                                         var current = currec.querySelector("span.panel-header__bubble");
@@ -1475,7 +1477,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     // if current translation we need to split the rownumber
                                     let newrowId = row.split("-")[0];
                                     textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
-                                    let editor_text = result.previeNewText.replace("S")
+                                   // let editor_text = result.previewNewText.replace("S")
                                     textareaElem1.innerText = result.previewNewText;
                                     textareaElem1.value = result.previewNewText;
                                     // PSS this needs to be improved
@@ -1484,7 +1486,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     repl.push(rec.split(","))
                                     //rec = ' , '
                                     // repl.push(rec.split(","))
-
+                                    //console.debug("translatedText:",translatedText,repl_array)
                                     await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
                                     // 09-09-2022 PSS fix for issue #244
                                     if (currec != null) {
@@ -1614,29 +1616,41 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         showNameLabel(originalElem,row)
                     }
 
-                    //console.debug("rows done:", countrows, original)
+                    //console.debug("rows done:", countrows, tableRecords, countrows == tableRecords,original)
+                    if (countrows == tableRecords) {
+                        let repldone = __("Replace verbs done: ")
+                        let repltext = __(" replaced words<br>")
+                        messageBox("info", repldone + recWordCount + repltext + repl_verb);
+                        // Translation replacement completed
+                        let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button"); 
+                        checkButton.innerText = "Checked";     
+                        checkButton.className = "check_translation-button ready";
+                        progressbar = document.querySelector(".indeterminate-progress-bar");
+                        progressbar.style.display = "none";
+                    }
+                }
+                else {
+                    
+                    //console.debug("rows done:", countrows, tableRecords, countrows == tableRecords, original)
+                    //continue
+                    //console.debug("we have a record within the table that is not translated")
                     if (countrows == tableRecords) {
                         let repldone = __("Replace verbs done: ")
                         let repltext = __(" replaced words<br>")
                         messageBox("info", repldone + recWordCount + repltext + repl_verb);
                         // Translation replacement completed
                         let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-                        checkButton.classList.remove("started");
-                        //checkButton.className += " translated";
                         checkButton.innerText = "Checked";
-                        checkButton.className += " ready";
+                        checkButton.className = "check_translation-button ready";
                         progressbar = document.querySelector(".indeterminate-progress-bar");
                         progressbar.style.display = "none";
                     }
-                }
-                else {
-                    console.debug("we have a record within the table without text")
                 }
             }
         }
         else {
             messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
-        }  
+    }     
 }
 
 async function reviewTrans() {
@@ -1868,6 +1882,7 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 }
 
 function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow) {
+    // console.debug("translatedText:",translatedText)
     repl_array = [];
     var mark;
     let debug = false;
@@ -2260,6 +2275,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 }
                 else {
                     transtype = "single"
+                    
                     //console.debug("trans:", myTranslated, "orig:", original)
                     // We need to set the preview here as processTransl does not populate it, as it thinks it is in editor
                     // we have no plural, so the translation can be written directly into the previw
@@ -2329,8 +2345,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 break;
             
             case 'plural':
-                counter++;
-                console.log('Handling a plural type...');
+                //counter++;
+                // console.log('Handling a plural type...');
                 // preview = document.querySelector(`#preview-${row}`);
                 spanmissing = preview.querySelector(" span.missing");
                 if (spanmissing != null) {
@@ -2387,6 +2403,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     }
     // Translation completed  
     translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
+    //translateButton.className.remove("started");
+    translateButton.classList.remove("started")
     translateButton.className += " translated";
     translateButton.innerText = __("Translated");
     parrotActive = 'false';
@@ -3686,6 +3704,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
         if (counter == myrecCount.length) {
             // Translation completed  
             translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+            translateButton.classList.remove("started")
             translateButton.className += " translated";
             translateButton.innerText = __("Translated");
             progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -4268,7 +4287,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             //await mark_preview(preview, result.toolTip, textareaElem[0].textContent, row, false)
             break;
         case 'plural':
-            console.log('Handling a plural type...');
+            //console.log('Handling a plural type...');
             // preview = document.querySelector(`#preview-${row}`);
             spanmissing = preview.querySelector(" span.missing");
             if (spanmissing != null) {
@@ -4440,14 +4459,16 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
 
             // Populate the second line in preview Plural
             if (prevstate != "current") {
+              //  console.debug("we are doing nothing with pretranslate")
                 let preview = document.querySelector("#preview-" + rowId + " td.translation");
                 if (preview != null) {
-                    preview.innerText = myTranslatedText;
-                    preview.value = myTranslatedText;
+                   // preview.innerText = myTranslatedText;
+                   // preview.value = myTranslatedText;
                     var element1 = document.createElement("div");
                     element1.setAttribute("class", "trans_local_div");
                     element1.setAttribute("id", "trans_local_div");
-                    element1.appendChild(document.createTextNode("Local"));
+                    //PSS
+                    element1.appendChild(document.createTextNode(__("Local")));
                     preview.appendChild(element1);
                 }
             }
@@ -4493,11 +4514,13 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
             if (previewElem != null) {
                 previewElem.innerText = myTranslatedText;
                 previewElem.value = myTranslatedText;
-                var element1 = document.createElement("div");
+                let myLi = document.querySelector("#preview-" + row + " .translation li:nth-of-type(1)");
+                element1 = document.createElement("div");
                 element1.setAttribute("class", "trans_local_div");
                 element1.setAttribute("id", "trans_local_div");
-                element1.appendChild(document.createTextNode("Local"));
-                previewElem.appendChild(element1);
+                //PSS
+                element1.appendChild(document.createTextNode(__("Local")));
+                myLi.appendChild(element1);
             }
         }
         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
@@ -4654,11 +4677,13 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
                 if (preview != null) {
                     preview.innerText = translatedText;
                     preview.value = translatedText;
+                    let myLi = document.querySelector("#preview-" + row + " .translation li:nth-of-type(2)");
                     var element1 = document.createElement("div");
                     element1.setAttribute("class", "trans_local_div");
                     element1.setAttribute("id", "trans_local_div");
-                    element1.appendChild(document.createTextNode("Local"));
-                    preview.appendChild(element1);
+                    //PSS
+                    element1.appendChild(document.createTextNode(__("Local")));
+                    myLi.appendChild(element1);
                 }
             }
         }
@@ -4700,10 +4725,12 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
                 previewElem.innerText = translatedText;
                 previewElem.value = translatedText;
                 var element1 = document.createElement("div");
+                let myLi = document.querySelector("#preview-" + row + " .translation li:nth-of-type(2)");
                 element1.setAttribute("class", "trans_local_div");
                 element1.setAttribute("id", "trans_local_div");
-                element1.appendChild(document.createTextNode("Local"));
-                previewElem.appendChild(element1);
+                //PSS
+                element1.appendChild(document.createTextNode(__("Local")));
+                myLi.appendChild(element1);
             }
         }
     }
@@ -5238,7 +5265,8 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                                         let element1 = document.createElement("div");
                                         element1.setAttribute("class", "trans_local_div");
                                         element1.setAttribute("id", "trans_local_div");
-                                        element1.appendChild(document.createTextNode("Local"));
+                                        //PSS
+                                        element1.appendChild(document.createTextNode(__("Local")));
                                         preview.appendChild(element1);
                                     }
                                     preview = document.querySelector(`#preview-${row}`);
@@ -5288,7 +5316,8 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                                     let element1 = document.createElement("div");
                                     element1.setAttribute("class", "trans_local_div");
                                     element1.setAttribute("id", "trans_local_div");
-                                    element1.appendChild(document.createTextNode("Local"));
+                                    //PSS
+                                    element1.appendChild(document.createTextNode(__("Local")));
                                     preview.appendChild(element1);
                                 }
                                 // we need to set the checkbox as marked
@@ -5471,7 +5500,8 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                                             var element1 = document.createElement("div");
                                             element1.setAttribute("class", "trans_local_div");
                                             element1.setAttribute("id", "trans_local_div");
-                                            element1.appendChild(document.createTextNode("Local"));
+                                            //PSS
+                                            element1.appendChild(document.createTextNode(__("Local")));
                                             preview.appendChild(element1);
                                         }
                                     }
@@ -5521,7 +5551,8 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                                         var element1 = document.createElement("div");
                                         element1.setAttribute("class", "trans_local_div");
                                         element1.setAttribute("id", "trans_local_div");
-                                        element1.appendChild(document.createTextNode("Local"));
+                                        //PSS
+                                        element1.appendChild(document.createTextNode(__("Local")));
                                         previewElem.appendChild(element1);
                                     }
                                     // current.innerText = "transFill";
@@ -6962,12 +6993,13 @@ async function processTransl (original, translatedText, language, record, rowId,
         else {
             console.debug("processTransl plural_line:", plural_line)
         }
-        console.debug("processTransl current:", current)
-        console.debug("processTransl transtype:", transtype)
+      //  console.debug("processTransl current:", current)
+      //  console.debug("processTransl transtype:", transtype)
 
     }
     //translatedText = restoreCase(original, translatedText);
     if (transtype == "single") {
+        let isPlural = false
         //console.debug("processTransl:",record)
         textareaElem = await record.querySelector("textarea.foreign-text");
         textareaElem.innerText = translatedText;
@@ -7036,10 +7068,15 @@ async function processTransl (original, translatedText, language, record, rowId,
         else {
             prevcurrentClass.classList.replace("untranslated", "status-nosuggestions");
         }
+
         let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
         result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false, DefGlossary);
+        
+        remove_all_gloss(leftPanel, preview, isPlural, rowId)
+        mark_glossary(leftPanel, result.toolTip, translatedText, rowId, false)
+        await mark_preview(preview, result.toolTip, translatedText, rowId, false)
         //console.debug(" before mark_original:",result)
-        await mark_preview(preview, result.toolTip, textareaElem.textContent, myRowId, false)
+       // await mark_preview(preview, result.toolTip, textareaElem.textContent, myRowId, false)
         //console.debug("translateEntry:",result)
         
     }
@@ -7047,7 +7084,8 @@ async function processTransl (original, translatedText, language, record, rowId,
         // PSS 09-04-2021 added populating plural text
         // PSS 09-07-2021 additional fix for issue #102 plural not updated
        // console.debug("current innertext", current.innerText)
-       // console.debug("We have a plural")
+        // console.debug("We have a plural")
+        let isPlural = true
         if (current != "null" && current.innerText == "current" && current.innerText == "waiting" && current.innerText == "transFill" && current.innerText == "untranslated") {
             plural_row = myRowId.split("-")[0];
            // console.debug('rowId plural:', row)

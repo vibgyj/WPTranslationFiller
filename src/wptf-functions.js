@@ -1,4 +1,8 @@
 ﻿// This file contains functions used within various files
+function buildTooltipFromGlossaryArray(missingEntries) {
+    const words = missingEntries.map(entry => entry.word[0]); // get first word from each entry
+    return words.join(', ');
+}
 
 function whoCalledMe() {
     const err = new Error();
