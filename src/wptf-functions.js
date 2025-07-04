@@ -695,8 +695,8 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
     var increaseWith = 0
     var timeout = 0;
       if (myGlotDictStat) {
-        timeout = 250;
-        increaseWith = 150
+        timeout = 100;
+        increaseWith = 50
        }
        
      
@@ -863,7 +863,7 @@ function countWordsinTable() {
 async function set_glotdict_style() {
     // this function sets the color of the box for glossary words present within a single line
     return new Promise(function (resolve) {
-        let myTimeout = 120;
+        let myTimeout = 100;
         setTimeout(() => {
             chrome.storage.local.get(["glotDictGlos"],
                 function (data) {

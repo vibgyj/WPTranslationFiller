@@ -3858,7 +3858,7 @@ function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundC
     }
 }
 
-async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff) {
+async function updateElementStyle(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff,translatorName) {
     var SavelocalButton;
     var separator1;
     var newtitle = '';
@@ -4254,7 +4254,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
-            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff);
+            showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff,translatorName);
         }
     }
     else {
@@ -4323,7 +4323,7 @@ function showNameLabel(originalElem,row) {
     }
 }
 
-function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current, myHistory, my_check, repl_array, prev_trans, old_status, rowId, called_from, showDiff) {
+function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, current, myHistory, my_check, repl_array, prev_trans, old_status, rowId, called_from, showDiff, translatorName) {
     // 05-07-2021 this function is needed to set the flag back for noOldTrans at pageload
     // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
     var old_current;
@@ -4359,14 +4359,16 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
     if (debug == true) {
         console.debug("called from:", called_from)
         console.debug("current:", old_current)
-        console.debug("old:", old_status) // is opject string containing the actual status
+        console.debug("old:", old_status) // is opject string containing the actual status.
+        console.debug("old recNo:", old_status.getAttribute('row'))
         console.debug("current:", current);
         console.debug("currstring:", currstring)
         console.debug("prev_trans:", prev_trans)
         console.debug("showDiff:", showDiff)
+        console.debug("translatorName:",translatorName)
 
     }
-
+    
     if (originalElem != undefined) {
         // 19-09-2021 PSS fixed issue #141 duplicate label creation
 
@@ -4434,8 +4436,13 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                                     .createTextNode(part.value));
                                 fragment.appendChild(span);
                                 span.part.value.fontWeight = '900'
+
                             });
+                            // Here we add the original translator of the current record
                             element1.appendChild(fragment);
+                            const br = document.createElement('br');
+                            element1.appendChild(br);
+                            element1.appendChild(document.createTextNode(" Current translator: " + translatorName));
                         }
                     }
                 }
@@ -5832,6 +5839,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
     var wait = ""
     var curr = ""
     var rejec = ""
+    var translatorName = ""
     // console.debug("fetchold:",mycurrent,url)
     // 30-06-2021 PSS added fetch status from local storage
     //chrome.storage.sync
@@ -5890,6 +5898,21 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         currcount = " Current:" + curr.length;
                         //console.debug("table:",table)
                         currstring = table.querySelector("tr.preview.status-current");
+                        curreditor = table.querySelector("tr.editor.status-current");
+                        panelRight = curreditor.querySelector('.editor-panel__right .meta')
+                        const dlElements = panelRight.querySelectorAll('dl');
+                        let targetIndex = 1; // normally we want the third <dl>
+
+                        // Check if any <dl> contains "UTC"
+                        dlElements.forEach(dl => {
+                            if (dl.textContent.includes('UTC')) {
+                                targetIndex += 1; // shift up by one
+                            }
+                        });
+
+                        // Now get the corrected <dl> and extract the <dd> value
+                        const targetDl = dlElements[targetIndex];
+                        translatorName = targetDl?.querySelector('dd')?.textContent.trim();
                         currstring = currstring.querySelector(".translation-text")
                         if (currstring.innerText == null) {
                             currstring = "";
@@ -5924,6 +5947,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     if (old.length != 0 && waiting.length == 0) {
                         //console.debug("old:", old[0])
                         prev_trans = old[0]
+                       // console.debug("old1:",old[0])
                         prev_trans = prev_trans.querySelector("td.translation.foreign-text")
                         //console.debug("old:", prev_trans)
                         old = " Old:" + old.length;
@@ -5941,14 +5965,14 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                         repl_array = [];
                         // showDiff = 'true';
                         //(checkElem, headerElem, result, oldstring, originalElem, wait, rejec, fuz, old, rowId, showName, nameDiff, currcount, currstring, current, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff) {
-                        showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, mycurrent, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff);
+                        showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, currstring, mycurrent, myHistory, my_checkpage, repl_array, prev_trans, old_status, rowId, "UpdateElementStyle", showDiff, translatorName);
                         //console.debug("result before updateelementstyle:",result)
                         let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
                         // 12-04-PSS We do not need to update the style when we find an old one!!
                         // updateElementStyle(checkElem, headerElem, result, "True", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount, currstring, mycurrent, "", false, false, [], prev_trans, old_status, showDiff);
                     }
                     else if (tbodyRowCount > 2 && single == "True") {
-                        updateElementStyle(checkElem, headerElem, result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount, currstring, mycurrent, "", true, false, [], prev_trans, current);
+                        updateElementStyle(checkElem, headerElem, result, "False", originalElem, wait, rejec, fuz, old, rowId, showName, "", currcount, currstring, mycurrent, "", true, false, [], prev_trans, current,translatorName);
                         //var windowFeatures = "menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes,width=800,height=650,left=600,top=0";
                         //window.open(url, "_blank", windowFeatures);
                     }
@@ -6142,7 +6166,7 @@ chrome.storage.local.get(["glotDictGlos"],
             else {
                 //console.debug("GlotDict show glossary word false!", showGlosLine)
             }
-        }, 10)
+        }, 20)
     });
 
 
