@@ -687,21 +687,36 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
             }
         }
     }
-    await set_glotdict_style().then(function (myGlotDictStat) {
+   // await set_glotdict_style().then(function (myGlotDictStat) {
     //console.debug("glotdict:", myGlotDictStat)
     // Use the retrieved data here or export it as needed
     // increase the timeout if buttons from GlotDict are not shown
     // this set when the checkbox show GlotDict is set
-    var increaseWith = 0
-    var timeout = 0;
-      if (myGlotDictStat) {
-        timeout = 100;
-        increaseWith = 50
-       }
-       
+   // var increaseWith = 0
+   // var timeout = 0;
+     // if (myGlotDictStat) {
+      //  timeout = 100;
+       // increaseWith = 50
+      // }
+    myGlotDictStat = await set_glotdict_style();
+
+    // 2. Determine timeout based on result
+    let timeout = 0;
+    if (myGlotDictStat) {
+        timeout = 1000; // or 50, 200, etc.
+    }
+    else {
+        timeout = 0
+    }
+
+    // 3. Wait for that timeout
+    await sleep(timeout);
+
+    // 4. Now run your loop
+    
      
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-            setTimeout(async function() {
+           // setTimeout(async function() {
                 rowcount++
                 let original = e.querySelector("span.original-raw").innerText;
                 let textareaElem = e.querySelector("textarea.foreign-text");
@@ -802,9 +817,9 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
               //  }
                // setTimeout(async function () {
                 // PSS this is the one with orange
-                 await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+                  updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
 
-                 await mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
+                  mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
                 //}, waiting);
            if (rowcount == 1){
                //console.debug(" we are starting observer")
@@ -815,8 +830,8 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
              // start_editor_mutation_server(mytextarea, "Details") 
               //}
            }
-            }, timeout);
-            timeout += increaseWith;
+          //}, timeout);
+           //  timeout += increaseWith;
         }
         
         // 30-06-2021 PSS set fetch status from local storage
@@ -826,7 +841,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
         });
 
         
-    });
+   // });
 }
 function countWordsinTable() {
     var counter = 0;
