@@ -5894,7 +5894,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
                     //console.debug("curr:",curr.length,tbodyRowCount)
                     old = table.querySelectorAll("tr.preview.status-old");
                     //console.debug("waiting:", curr)
-                    if (curr != "" && curr.length != 0 && curr.length != tbodyRowCount / 2) {
+                    if (curr != "" && curr.length != 0) {
                         currcount = " Current:" + curr.length;
                         //console.debug("table:",table)
                         currstring = table.querySelector("tr.preview.status-current");
