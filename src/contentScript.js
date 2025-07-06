@@ -5879,9 +5879,7 @@ async function fetchOld(checkElem, result, url, single, originalElem, row, rowId
             if (currURL.includes("&historypage") == false) {
                 var parser = new DOMParser();
                 var doc = parser.parseFromString(data, "text/html");
-                //console.log("html:", doc);
                 var table = await doc.getElementById("translations");
-                //console.debug("table:",table)
                 if (table != null) {
                     let tr = table.rows;
                     let currstring = "";
