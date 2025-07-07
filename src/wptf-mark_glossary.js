@@ -176,7 +176,28 @@ function matchesWithLocaleVerbSystem(locale, base, word) {
     return false;
 }
 
+function extractUrlLikeSegments(translation, tldPattern) {
+    if (!translation) return [];
+
+    const fullURLRegex = /\b(?:https?|ftp):\/\/[^\s"'<>]+/gi;
+    const domainRegex = new RegExp(`\\b[\\w.-]+\\.(${tldPattern})(\\/\\S*)?\\b`, 'gi');
+    const partialPathRegex = /\bwp-content\/plugins(?:\/[^\s"'<>]*)?/gi;
+
+    const textWithoutTags = translation.replace(/<[^>]*>/g, '');
+
+    const matches = new Set([
+        ...(translation.match(fullURLRegex) || []),
+        ...(translation.match(partialPathRegex) || []),
+        ...(translation.match(domainRegex) || []),
+        ...(textWithoutTags.match(partialPathRegex) || [])
+    ]);
+
+    return Array.from(matches).map(s => s.toLowerCase());
+}
+
+
 function findAllMissingWords(translationText, glossWords, locale = 'nl') {
+    var is_in_URL = false
     const translation = translationText.toLowerCase();
     const wordsInTranslation = translation.split(/\W+/);
 
@@ -186,12 +207,28 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
 
     const knownTLDs = ['com', 'nl', 'be', 'de', 'fr', 'es', 'it', 'eu', 'uk', 'us', 'net', 'org', 'co', 'biz', 'info', 'io', 'gov', 'edu'];
     const tldPattern = knownTLDs.join('|');
-    const urlLikeSegments = (translation.match(new RegExp(`\\b[\\w.-]+\\.(${tldPattern})(\\/\\S*)?\\b`, 'gi')) || []).map(s => s.toLowerCase());
-
+    let urlLikeSegments = extractUrlLikeSegments(translation, 'com|org|net|nl|io|dev');
+    
+    //urlLikeSegments = (translation.match(new RegExp(`\\b[\\w.-]+\\.(${tldPattern})(\\/\\S*)?\\b`, 'gi')) || []).map(s => s.toLowerCase());
+    
     function isWordInUrl(word) {
-        return urlLikeSegments.some(segment => segment.includes(word));
-    }
+        console.debug("isWordInUrl:", word)
+        is_in_URL = wptf_check_for_URL(word, translation)
+        console.debug("is in URL:", is_in_URL)
+        if (is_in_URL == true) {
+            return true
+        }
+        if (!word || !urlLikeSegments || !Array.isArray(urlLikeSegments)) return false;
 
+        const lowerWord = word.toLowerCase();
+
+        return urlLikeSegments.some(segment => {
+            // Strip HTML tags like <code>...</code> if present
+            const cleaned = segment.replace(/<[^>]*>/g, '').toLowerCase();
+            return cleaned.includes(lowerWord);
+        });
+    }
+    
     // Gather a flat list of glossary translation words
     const allGlossaryWords = new Set();
     glossWords.forEach(entry => entry.word.forEach(w => allGlossaryWords.add(w.toLowerCase())));
@@ -222,12 +259,9 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
             const lowerOriginal = entry.originalWord?.toLowerCase();
 
             const specialCaseCartMatched = entry.originalWord === 'cart' && translation.includes('winkelwagen');
-
-            const originalAppearsUntranslated = lowerOriginal &&
-                translation.includes(lowerOriginal) &&
-                !entry.word.some(tw => tw.toLowerCase() === lowerOriginal) &&
-                !isWordInUrl(lowerOriginal);
-
+            is_in_URL = isWordInUrl(lowerOriginal)
+            //const originalAppearsUntranslated = lowerOriginal && translation.includes(lowerOriginal) && !entry.word.some(tw => tw.toLowerCase() === lowerOriginal) && !isWordInUrl(lowerOriginal);
+            const originalAppearsUntranslated = lowerOriginal && translation.includes(lowerOriginal) && !entry.word.some(tw => tw.toLowerCase() === lowerOriginal) && is_in_URL;
             const shortMatches = wordsInTranslation.filter(w => w === lowerVariant).length;
             const inflectedForms = getInflectedFormsForLocale(locale, lowerVariant);
             const inflectedMatches = wordsInTranslation.filter(w => inflectedForms.includes(w)).length;
@@ -264,8 +298,11 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
             const originalWordFoundUntranslated = entries.some(entry => {
                 if (!entry.originalWord) return false;
                 const lowerOriginal = entry.originalWord.toLowerCase();
-                const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);
-                return translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal);
+                const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);         
+                is_in_URL = isWordInUrl(lowerOriginal)
+                return translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL;
+            
+                //return translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal);
             });
 
             if (!originalWordFoundUntranslated) {
@@ -280,13 +317,18 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
                 entries.forEach((entry) => {
                     const lowerOriginal = entry.originalWord?.toLowerCase();
                     const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);
-                    if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal)) {
-                        missingTranslations.push({
-                            glossIndex: glossWords.indexOf(entry),
-                            word: entry.word,
-                            missingCount
-                        });
+                    is_in_URL = isWordInUrl(lowerOriginal)
+                    console.debug(lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL)
+                    if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL) {
+                        if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL) {
+                            missingTranslations.push({
+                                glossIndex: glossWords.indexOf(entry),
+                                word: entry.word,
+                                missingCount
+                            });
+                        }
                     }
+                    
                 });
             }
         }
