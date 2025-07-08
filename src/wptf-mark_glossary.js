@@ -197,39 +197,14 @@ function extractUrlLikeSegments(translation, tldPattern) {
 
 
 function findAllMissingWords(translationText, glossWords, locale = 'nl') {
-    var is_in_URL = false
     const translation = translationText.toLowerCase();
     const wordsInTranslation = translation.split(/\W+/);
+    const missingTranslations = [];
 
     const matchPool = {}; // key: stringified word array, value: total matches
     const entriesByKey = {}; // key: stringified word array, value: array of entries
-    const missingTranslations = [];
 
-    const knownTLDs = ['com', 'nl', 'be', 'de', 'fr', 'es', 'it', 'eu', 'uk', 'us', 'net', 'org', 'co', 'biz', 'info', 'io', 'gov', 'edu'];
-    const tldPattern = knownTLDs.join('|');
-    let urlLikeSegments = extractUrlLikeSegments(translation, 'com|org|net|nl|io|dev');
-    
-    //urlLikeSegments = (translation.match(new RegExp(`\\b[\\w.-]+\\.(${tldPattern})(\\/\\S*)?\\b`, 'gi')) || []).map(s => s.toLowerCase());
-    
-    function isWordInUrl(word) {
-        console.debug("isWordInUrl:", word)
-        is_in_URL = wptf_check_for_URL(word, translation)
-        console.debug("is in URL:", is_in_URL)
-        if (is_in_URL == true) {
-            return true
-        }
-        if (!word || !urlLikeSegments || !Array.isArray(urlLikeSegments)) return false;
-
-        const lowerWord = word.toLowerCase();
-
-        return urlLikeSegments.some(segment => {
-            // Strip HTML tags like <code>...</code> if present
-            const cleaned = segment.replace(/<[^>]*>/g, '').toLowerCase();
-            return cleaned.includes(lowerWord);
-        });
-    }
-    
-    // Gather a flat list of glossary translation words
+    // Build a glossary word lookup for compound match support
     const allGlossaryWords = new Set();
     glossWords.forEach(entry => entry.word.forEach(w => allGlossaryWords.add(w.toLowerCase())));
 
@@ -245,28 +220,24 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
         return matches;
     }
 
-    // First pass: accumulate total matches per word group
-    glossWords.forEach((entry) => {
+    // === First pass: Count matches ===
+    glossWords.forEach(entry => {
         const wordKey = JSON.stringify(entry.word);
         if (!entriesByKey[wordKey]) entriesByKey[wordKey] = [];
         entriesByKey[wordKey].push(entry);
         if (matchPool[wordKey] !== undefined) return;
 
         let matchCount = 0;
+
         for (const variant of entry.word) {
             const lowerVariant = variant.toLowerCase();
             const isShort = lowerVariant.length <= 2;
-            const lowerOriginal = entry.originalWord?.toLowerCase();
 
-            const specialCaseCartMatched = entry.originalWord === 'cart' && translation.includes('winkelwagen');
-            is_in_URL = isWordInUrl(lowerOriginal)
-            //const originalAppearsUntranslated = lowerOriginal && translation.includes(lowerOriginal) && !entry.word.some(tw => tw.toLowerCase() === lowerOriginal) && !isWordInUrl(lowerOriginal);
-            const originalAppearsUntranslated = lowerOriginal && translation.includes(lowerOriginal) && !entry.word.some(tw => tw.toLowerCase() === lowerOriginal) && is_in_URL;
             const shortMatches = wordsInTranslation.filter(w => w === lowerVariant).length;
             const inflectedForms = getInflectedFormsForLocale(locale, lowerVariant);
             const inflectedMatches = wordsInTranslation.filter(w => inflectedForms.includes(w)).length;
 
-            const combinedMatches = (!originalAppearsUntranslated && !isShort)
+            const combinedMatches = (!isShort)
                 ? (translation.match(new RegExp(`\\b\\w*${lowerVariant}\\w*\\b`, 'g')) || []).length
                 : 0;
 
@@ -278,66 +249,63 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
                 }
             }
 
-            const totalMatches = shortMatches + inflectedMatches + combinedMatches + compoundMatches +
-                (specialCaseCartMatched ? 1 : 0);
-
-            matchCount += totalMatches;
+            matchCount += shortMatches + inflectedMatches + combinedMatches + compoundMatches;
         }
 
         matchPool[wordKey] = matchCount;
     });
 
-    // Second pass: check for missing entries
+    // === Second pass: Detect missing ===
     for (const wordKey in entriesByKey) {
         const entries = entriesByKey[wordKey];
-        const expectedCount = entries.length;
         const foundMatches = matchPool[wordKey] || 0;
+        const expectedCount = entries.length;
         const missingCount = expectedCount - foundMatches;
 
-        if (missingCount > 0) {
-            const originalWordFoundUntranslated = entries.some(entry => {
-                if (!entry.originalWord) return false;
-                const lowerOriginal = entry.originalWord.toLowerCase();
-                const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);         
-                is_in_URL = isWordInUrl(lowerOriginal)
-                return translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL;
-            
-                //return translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal);
-            });
+        if (missingCount <= 0) continue;
 
-            if (!originalWordFoundUntranslated) {
-                entries.forEach((entry) => {
+        entries.forEach(entry => {
+            const lowerOriginal = entry.originalWord?.toLowerCase();
+            const lowerVariants = entry.word.map(w => w.toLowerCase());
+
+            // STEP 1 – if untranslated word is in a URL, skip completely
+            if (lowerOriginal && translation.includes(lowerOriginal)) {
+                const originalInUrl = wptf_check_for_URL(lowerOriginal, translation);
+                if (originalInUrl) return; // skip
+            }
+
+            // STEP 2 – if untranslated word is in text but not translated
+            if (lowerOriginal && translation.includes(lowerOriginal)) {
+                const originalIsTranslation = lowerVariants.includes(lowerOriginal);
+                if (!originalIsTranslation) {
                     missingTranslations.push({
                         glossIndex: glossWords.indexOf(entry),
                         word: entry.word,
                         missingCount
                     });
-                });
-            } else {
-                entries.forEach((entry) => {
-                    const lowerOriginal = entry.originalWord?.toLowerCase();
-                    const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);
-                    is_in_URL = isWordInUrl(lowerOriginal)
-                    console.debug(lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL)
-                    if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL) {
-                        if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && is_in_URL) {
-                            missingTranslations.push({
-                                glossIndex: glossWords.indexOf(entry),
-                                word: entry.word,
-                                missingCount
-                            });
-                        }
-                    }
-                    
-                });
+                    return;
+                }
             }
-        }
+
+            // STEP 3 – check for translated variants
+            const anyVariantInText = lowerVariants.some(variant => translation.includes(variant));
+            if (anyVariantInText) return; // at least one translation is present — OK
+
+            // STEP 4 – are the variants only inside URLs?
+            const allInUrls = lowerVariants.every(variant => wptf_check_for_URL(variant, translation));
+            if (allInUrls) return; // avoid reporting
+
+            // STEP 5 – variants not in text or URL → truly missing
+            missingTranslations.push({
+                glossIndex: glossWords.indexOf(entry),
+                word: entry.word,
+                missingCount
+            });
+        });
     }
 
     return missingTranslations;
 }
-
-
 
 function working_findAllMissingWords(translationText, glossWords, locale = 'nl') {
     
@@ -650,6 +618,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                     dutchText = translation
                     if (isPlural == false) {
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
+                        //console.debug("missing:",missingTranslations)
                         if (missingTranslations.length > 0) {
                             document.addEventListener("mouseover", (event) => {
                                 const tooltip = document.querySelector(".ui-tooltip");
@@ -691,7 +660,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
-                                spansArray[glossIndex].classList.add('highlight')
+                                //spansArray[glossIndex].classList.add('highlight')
                             });
                         }
                     }

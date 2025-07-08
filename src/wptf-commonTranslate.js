@@ -3517,9 +3517,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
         else {
             rowchecked = preview.querySelector("td input");
         }
-        //let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
         pretrans = await findTransline(original, destlang);
-        //console.debug("pretrans:", pretrans, original)
         if (pretrans != "notFound" && transtype != "plural") {
             let previewName = preview.querySelector("td.translation");
             if (previewName != null) {
@@ -3543,8 +3541,8 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                     previewName.appendChild(element1);
                 }
                 mark_as_translated(row, current, translated, preview)
-                result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
+                result = await validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                await mark_preview(preview, result.toolTip, pretrans, row, false)
                 foundTM++
             }
         }
@@ -3632,9 +3630,6 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                         }
 
                         await waitForMyneElement(searchFor, editor, FetchLiDelay).then(res => {
-                           // console.debug("result", res)
-                            //result = await waitForMyneElement('suggestions__translation-memory initialized', editor, FetchLiDelay).then(res => {
-                            // console.debug("sugg:", res)
                             return new Promise((resolve, reject) => {
                                 //console.debug("We seem to have found a li")
                                 resolve(res)
@@ -3650,9 +3645,9 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     preview.style.removeProperty("display");
                                     //console.debug("processed:",processed)
                                     if (processed != "No suggestions") {
-                                        textareaElem = record.querySelector("textarea.foreign-text");
-                                        result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                                        await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
+                                        textareaElem = await record.querySelector("textarea.foreign-text");
+                                        result = await validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                                        await mark_preview(preview, result.toolTip, textareaElem.innerText, row, false)
                                        foundTM++
                                     }
                                 }

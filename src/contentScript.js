@@ -172,22 +172,19 @@ function findEditorRow(textareaElem) {
 
 async function startFullScript(textarea) {
     //console.debug("Full script started:",textarea)
+    var rowId = 0
+    var myEditor = ""
     currWindow = window.self;
     initTranslations();
+    //console.debug("textarea:",textarea)
     mytextarea = textarea[0].firstChild.nextElementSibling;
     myEditor = findEditorRow(mytextarea)
-    const rowId = myEditor ? myEditor.getAttribute('row') : null;
-    //console.log(rowId); // "20551907-130842338"
-    //rowId = extractIdPart(rowToFind.i)
-    //console.debug("row:",rowId)
+    rowId = await myEditor ? myEditor.getAttribute('row') : null;
+    
     start_editor_mutation_server(textarea, "Details", "");
-    //pluralpresent = document.querySelector(`#editor-${rowId} .editor-panel__left .source-string__plural`);
-   // console.debug("startscript plural:", pluralpresent)
     pluralpresent = document.querySelector(`#editor-${rowId} div.textareas[data-plural-index="1"]`)
-    //console.debug("startscript plural:", pluralpresent)
     if (pluralpresent != null) {
         let pluralTextarea = pluralpresent.querySelector('textarea')
-        //console.debug("pluralTextarea:",pluralTextarea)
         start_editor_mutation_server2(pluralTextarea, "Details", "");
     } 
     mytextarea.style.display = 'block';

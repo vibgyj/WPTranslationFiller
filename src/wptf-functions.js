@@ -1065,30 +1065,51 @@ function isURL(text) {
     return urlRegex.test(text.trim());
 }
 
+async function isWordInUrl(word) {
+        console.debug("isWordInUrl:", word)
+        is_in_URL = wptf_check_for_URL(word, translation)
+        console.debug("is in URL changed:", is_in_URL)
+        if (is_in_URL == true) {
+            return true
+        }
+        else {
+            return false
+       }
+
+        if (!word || !urlLikeSegments || !Array.isArray(urlLikeSegments)) return false;
+
+        const lowerWord = word.toLowerCase();
+
+        return urlLikeSegments.some(segment => {
+            // Strip HTML tags like <code>...</code> if present
+            const cleaned = segment.replace(/<[^>]*>/g, '').toLowerCase();
+            return cleaned.includes(lowerWord);
+        });
+    }
 function wptf_check_for_URL(word, translatedText) {
     if (!word || !translatedText) return false;
 
     const lowerWord = word.toLowerCase();
 
-    // Step 1: Remove HTML tags to expose inner text
+    // Step 1: Remove HTML tags (like <code>) to expose inner content
     const textWithoutTags = translatedText.replace(/<[^>]*>/g, '');
 
     // Step 2: Match full URLs
     const fullURLRegex = /\b(?:https?|ftp):\/\/[^\s"'<>]+/gi;
 
-    // Step 3: Match common plugin paths
-    const partialPathRegex = /\b[a-zA-Z0-9\-_.\/]*wp-content\/plugins\/[^\s"'<>]*/gi;
+    // Step 3: Match common plugin paths (also match plugins or plugin-name)
+    const partialPathRegex = /\b(?:[\w./-]*wp-content\/plugins?\/[^\s"'<>]*)/gi;
 
-    // Step 4: Extract matches from cleaned text
     const matches = [
         ...(textWithoutTags.match(fullURLRegex) || []),
         ...(textWithoutTags.match(partialPathRegex) || []),
-        textWithoutTags // Also search the whole cleaned text
     ];
 
-    // Step 5: Return true if the word appears in any relevant part
-    return matches.some(entry => entry.toLowerCase().includes(lowerWord));
+    return matches.some(url => url.toLowerCase().includes(lowerWord));
 }
+
+
+
 
 //# this function determines if a text is equal for capitals or text
 function isExactlyEqual(text1, text2) {
