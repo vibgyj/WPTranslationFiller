@@ -3,7 +3,7 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent) {
+async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent,DeepLWait) {
     destlang = destlang.toUpperCase()
     //console.debug("current in deepl:",deepLcurrent)
     // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
@@ -45,12 +45,12 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
         DeeplURL: url
     };
     // changed function to send the request via the background script, otherwise a CORS error is generated
-    chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, response => {
+    
+    await chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, response => {
         if (chrome.runtime.lastError) {
             console.error("Error:", chrome.runtime.lastError.message);
             return;
         }
-        //console.debug("response:", response.translations[0]);
         translated = response;
 
         if (translated && translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
@@ -123,7 +123,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
 }
 
 
-async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry) {
+async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, DeepLWait) {
     var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
     //console.debug("deeplGlossary:",deeplGlossary)
     language = language.toUpperCase();
@@ -139,7 +139,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
     }
     try {
         //console.debug("before translateText:",DeeplFree)
-        await translateText(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,deepLcurrent)
+        await translateText(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,deepLcurrent,DeepLWait)
     }
     catch (error) {
         // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
@@ -166,7 +166,7 @@ async function processData(data, original, record, row, originalPreProcessed, re
             setTimeout(() => {
                 //console.log('Processing array data...');
                 resolve(data.map(item => ({ ...item, processed: true }))); // Example processing
-            }, 1000);
+            }, 500);
         });
     } else if (typeof data === 'object' && data !== null) {
         // Process data if it's an object

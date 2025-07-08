@@ -1,4 +1,10 @@
 ﻿// This file contains functions used within various files
+
+function convertToNumber(text) {
+    const num = Number(text);
+    return (!isNaN(num) && text !== null && text !== '') ? num : 0;
+}
+
 function buildTooltipFromGlossaryArray(missingEntries) {
     const words = missingEntries.map(entry => entry.word[0]); // get first word from each entry
     return words.join(', ');

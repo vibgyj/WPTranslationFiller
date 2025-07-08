@@ -70,3 +70,4 @@ Version changes as of version 3.3
 68. Version 3.9.68 the spellcheckIgnore table was not provided to the spellchecker, also the local label was not put properly into the preview
 69. Version 3.9.69 Retranslation of an existing translation did not remove the marking if glossary words were corrected
 70. Version 3.9.70 When translating records the preview was not marked.
+71. Version 3.9.71 The check for URL improved, and the timeout in translatePage function inproved, and the timeout in bulk save improved. And marking glossary improved

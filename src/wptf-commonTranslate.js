@@ -4208,7 +4208,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             }
             else if (transsel == "deepl") {
                 // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-                result = deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false);
+                result = deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false,DeepLWait);
                 if (result == "Error 403") {
                     messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -4759,9 +4759,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var preview = "";
     var previewElem;
     var pretrans;
-    var timeout = 100;
+    var timeout = 1000;
     var mytimeout = 1000;
-    var vartime = 500;
+    var vartime = 400;
     var stop = false;
     var editor = false;
     var counter = 0;
@@ -4770,6 +4770,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var localRow;
     var mytransType = "none"
     var myheader = document.querySelector('header');
+    
     //console.debug("transType at start:",mytransType)
     const template = `
     <div class="indeterminate-progress-bar">
@@ -4791,11 +4792,13 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     }
     //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
     if (transsel == 'OpenAI') {
-        vartime = openAIWait;
+        vartime = convertToNumber(openAIWait);
     }
     //console.debug("DeepL:",transsel,DeepLWait)
     if (transsel == 'deepl') {
-        vartime = DeepLWait
+         console.debug("we have deepl")
+        timeout=0
+        vartime = convertToNumber(DeepLWait)
     }
     locale = checkLocale();
     // We need to fetch the setting for mocking
@@ -4839,35 +4842,37 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
             for (let record of myrecCount) {
                // console.debug("TranslatePage record:",record)
-                //setTimeout(async function () {
-                counter++;
-                mytransType="none"
-                // 16-08-2021 PSS fixed retranslation issue #118
-                rowfound = record.id
-                // console.debug("rowfound:", rowfound)
-                const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
+                setTimeout(async function () {
+                    counter++;
+                    mytransType = "none"
+                    // 16-08-2021 PSS fixed retranslation issue #118
+                    rowfound = record.id
+                    // console.debug("rowfound:", rowfound)
+                    const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
 
-                if (match) {
-                    row = match[1];
-                    //console.log("Extracted value:", row);
-                } else {
-                    console.log("No match found");
-                }
-               // console.debug("transType before:", mytransType)
+                    if (match) {
+                        row = match[1];
+                        //console.log("Extracted value:", row);
+                    } else {
+                        console.log("No match found");
+                    }
+                    // console.debug("transType before:", mytransType)
 
-                 mytransType = await handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter);
-                //console.debug("transtype:", mytransType)
-                if (counter == myrecCount.length) {
-                    // Translation completed we need to stop spinning the translate button
-                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-                    translateButton.className += " translated";
-                    translateButton.innerText = __("Translated");
-                    progressbar = document.querySelector(".indeterminate-progress-bar");
-                    progressbar.style.display = "none";
-                    messageBox("info", __("Translation is ready"));
-                } 
-                // We need to wait a bit before fetching the net record
-                await delay(vartime * counter)
+                    mytransType = await handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter);
+                    //console.debug("transtype:", mytransType)
+                    if (counter == myrecCount.length) {
+                        // Translation completed we need to stop spinning the translate button
+                        let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                        translateButton.className += " translated";
+                        translateButton.innerText = __("Translated");
+                        progressbar = document.querySelector(".indeterminate-progress-bar");
+                        progressbar.style.display = "none";
+                        messageBox("info", __("Translation is ready"));
+                    }
+                    // We need to wait a bit before fetching the next record
+                   // await delay(vartime * counter)
+                }, timeout)
+                timeout+= vartime
             }
         }
         else {
@@ -6484,9 +6489,10 @@ function hideIncompletePreviewRows() {
 
 function saveLocal_2(bulk_timer) {
     // console.debug("bulk save started")
+    console.debug("timer:",bulk_timer)
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var preview;
-    var time_out = 1;
+    var timeout = 2000;
     var checkset;
     var checkcount = 0;
     var counter = 0;
@@ -6669,6 +6675,7 @@ function saveLocal_2(bulk_timer) {
         }
     }, bulk_timer)
         .then(() => {
+            timeout +=bulk_timer
             // pss 18-04
             hideIncompletePreviewRows();
             progressbar = document.querySelector(".indeterminate-progress-bar");
