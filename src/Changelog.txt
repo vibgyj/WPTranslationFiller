@@ -59,3 +59,16 @@ Version changes as of version 3.3
 57. Version 3.9.57 Fixed a problem whith retranslation fuzzy with local
 58. Version 3.9.58 Improved plural checking for glossary words for Dutch, and removed the new function for handling the casing for Russia and Ukrain
 59. Version 3.9.59 Improved glossary behavior
+60. Version 3.9.60 Glossary now recognizes plurals and combined glossary words
+61. Version 3.9.61 Glossary now recognizes "website" as wrong translation
+62. Version 3.9.62 Missing entry in manifest for Firefox
+63. Version 3.9.63 Improved memory behavior
+64. Version 3.9.64 Improved plural marking
+65. Version 3.9.65 Improved CSS behavior
+66. Version 3.9.66 Improved calculation and indication of translation quality
+67. Version 3.9.67 Fixed a typo in commontranslate.js
+68. Version 3.9.68 the spellcheckIgnore table was not provided to the spellchecker, also the local label was not put properly into the preview
+69. Version 3.9.69 Retranslation of an existing translation did not remove the marking if glossary words were corrected
+70. Version 3.9.70 When translating records the preview was not marked.
+71. Version 3.9.71 The check for URL improved, and the timeout in translatePage function inproved, and the timeout in bulk save improved. And marking glossary improved
+72. Version 3.9.72 When performing checktranslation within the editor, the changed line was not within the editor. No the translation will be improved if a copy is done within the editor with the copy button

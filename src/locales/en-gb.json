@@ -101,6 +101,7 @@
   "This function populates the table with translations from the local database": "This function populates the table with translations from the local database",
   "This is the function to save all suggestions selected in bulk": "This is the function to save all suggestions selected in bulk",
   "This is the function to populate the local database with selected items": "This is the function to populate the local database with selected items",
+  "This function translates the table with translations from the API": "This function translates the table with translations from the API",
   "TM is stopped!": "TM is stopped!",
   "Translate": "Translate",
   "Translated": "Translated",

@@ -148,6 +148,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             body: urlEncodedBody  // Use the URL-encoded string
         })
             .then(response => {
+                console.debug("response in background:",response)
                 if (!response.ok) {
                     // Handle non-JSON errors (e.g., invalid API key, quota exceeded)
                     return response.text().then(text => {

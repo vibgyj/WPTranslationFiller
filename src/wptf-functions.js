@@ -1,4 +1,28 @@
 ﻿// This file contains functions used within various files
+
+function convertToNumber(text) {
+    const num = Number(text);
+    return (!isNaN(num) && text !== null && text !== '') ? num : 0;
+}
+
+function buildTooltipFromGlossaryArray(missingEntries) {
+    const words = missingEntries.map(entry => entry.word[0]); // get first word from each entry
+    return words.join(', ');
+}
+
+function whoCalledMe() {
+    const err = new Error();
+    const stackLines = err.stack.split('\n');
+
+    // stackLines[0] is "Error"
+    // stackLines[1] is this function (whoCalledMe)
+    // stackLines[2] is the caller
+    const callerLine = stackLines[2] || '';
+    console.log("Caller line:", callerLine);
+
+    const match = callerLine.match(/at (\w+)/);
+    return match ? match[1] : 'unknown';
+}
 function setupTooltipHandler() {
     document.addEventListener("mouseover", (event) => {
         const tooltip = document.querySelector(".ui-tooltip");
@@ -37,7 +61,7 @@ function setupTooltipHandler() {
     });
 }
 
-function countOccurrences(text, term) {
+function oldcountOccurrences(text, term) {
     // Handle contractions and count occurrences correctly
     const pattern = new RegExp(`(?:\\b|')${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
     const matches = text.match(pattern);
@@ -487,23 +511,37 @@ function oldmatchesWithDutchVerbPrefix(baseWord, tokens, locale = 'nl') {
         return false;
     });
 }
-
 function normalizeText(text) {
-    return text.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    return (typeof text === 'string' ? text : '')
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/<[^>]*>/g, '')         // Remove HTML tags
+        .replace(/%[\d\$]*[a-z]/gi, '')  // Remove placeholder tokens like %s, %1$s
+        .replace(/[^\w\s]/g, ' ')        // Replace non-word chars with space
+        .replace(/\s+/g, ' ')            // Collapse spaces
+        .trim();
 }
 
-function countOccurrences(words) {
-    const counts = new Map();
-    for (const word of words) {
-        counts.set(word, (counts.get(word) || 0) + 1);
-    }
-    return counts;
+function oldnormalizeText(text) {
+    return (typeof text === 'string' ? text : '')
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/<[^>]*>/g, '')   // Remove HTML tags
+        .replace(/%[\d\$]*[a-z]/gi, '')  // Remove placeholder tokens like %s, %1$s
+        .replace(/[^\w\s]/g, ' ') // Replace non-word chars with space
+        .replace(/\s+/g, ' ')     // Collapse spaces
+        .trim();
 }
+
+
 
 //------------------------------------------------------------------------------
 
-async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
+async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
     // If already processing, exit early
+    var dutchText=""
     if (isProcessing) return;
 
     isProcessing = true;  // Set the flag to indicate processing is in progress
@@ -545,33 +583,34 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                         spansArray[spancnt].setAttribute('gloss-index', spancnt);
                     }
                     let glossWords = createGlossArray(spansArray, newGloss);
-                    let dutchText = translation;
+                    dutchText = translation;
 
                     if (isPlural == false) {
-                        await remove_all_gloss(markleftPanel, false);
+                       // await remove_all_gloss(markleftPanel, false);
                         missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
+                        missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
+                        //missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
 
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
                                 spansArray[glossIndex].classList.add('highlight');
                             });
-                        } else {
-                            await remove_all_gloss(markleftPanel, false);
+                       // } else {
+                        //    await remove_all_gloss(markleftPanel, false);
                         }
                     }
 
                     if (isPlural == true) {
-                        await remove_all_gloss(markleftPanel, true);
+                        //await remove_all_gloss(markleftPanel, true);
                         missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
+                        missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
 
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex }) => {
                                 spansArray[glossIndex].classList.add('highlight');
                             });
-                        } else {
-                            await remove_all_gloss(markleftPanel, true);
+                      //  } else {
+                      //      await remove_all_gloss(markleftPanel, true);
                         }
                     }
                 }
@@ -584,158 +623,6 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
     }
 }
 
-
-
-function matchesWithLocalePrefix(baseWord, tokens, locale = "nl") {
-    const localePrefixes = {
-        nl: ['ge', 'her', 'ver', 'be', 'ont', 'op'],
-        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
-        // future locales can be added here
-    };
-
-    const prefixes = localePrefixes[locale] || [];
-
-    return tokens.some(token => {
-        for (const prefix of prefixes) {
-            if (
-                token.startsWith(prefix) &&
-                token.endsWith(baseWord) &&
-                token.length > baseWord.length + 1
-            ) {
-                return true;
-            }
-        }
-        return false;
-    });
-}
-
-//# mark missing glossary words in original 
-async function mark_original(preview, toolTip, translation, rowId, isPlural){
-   
-    var missingTranslations = [];
-    let FoundURL = isOnlyURL(translation);
-    //console.debug("in mark original:", FoundURL)
-    // We do not want to mark text in an URL
-    if (!FoundURL) {
-        if (translation != "") {
-            let myleftPanel = await document.querySelector(`#preview-${rowId} .original-text`)
-            if (DefGlossary == true) {
-                myglossary = glossary
-            }
-            else {
-                myglossary = glossary1
-            }
-            newGloss = createNewGlossArray(myglossary)
-            let markleftPanel = myleftPanel
-            //let markleftPanel = document.querySelector(`#editor-${rowId} .editor-panel`)
-            //console.debug("leftpanel:",markleftPanel,rowId)
-            if (markleftPanel != null) {
-                singlepresent = markleftPanel.innerText;
-                singularText = markleftPanel.innerText;
-                // we do not need to collect info for plural if it is not a plural
-                if (isPlural == true) {
-                    pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
-                    pluralText = pluralpresent.getElementsByClassName('original')[0]
-                    if (pluralpresent != null) {
-                        spansPlural = pluralpresent.getElementsByClassName("glossary-word")
-                    }
-                }
-                if (singlepresent != null) {
-                    spansSingular = markleftPanel.getElementsByClassName("glossary-word")
-                }
-
-                if (isPlural == true) {
-                    spans = spansPlural
-                }
-                else {
-                    spans = spansSingular
-                }
-                if (spans.length > 0) {
-                    //console.debug("houston we have a glossary")
-                    //console.debug("we have to mark the original", preview)
-                    //console.debug("spans:", spansSingular)
-                    wordCount = spans.length
-                    //console.debug("span length:", spans.length)
-                    var spansArray = Array.from(spans)
-                    // console.debug("array:", spansArray)
-                    for (spancnt = 1; spancnt < (spansArray.length); spancnt++) {
-                        spansArray[spancnt].setAttribute('gloss-index', spancnt);
-                    }
-                    var glossWords = createGlossArray(spansArray, newGloss)
-                    //glossWords= newGloss
-                    //console.debug("glossWords:", glossWords)
-                    dutchText = translation
-                    if (isPlural == false) {
-                        //    await remove_all_gloss(markleftPanel, false)
-                        missingTranslations = [];
-                        // Run the function
-                        //console.debug("Translation:",translation)
-                        missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
-
-                        // Output the result
-                        if (missingTranslations.length > 0) {
-                            //console.debug("single missing:",missingTranslations)
-                            //console.debug("single translation:",dutchText)
-                            document.addEventListener("mouseover", (event) => {
-                                const tooltip = document.querySelector(".ui-tooltip");
-
-                                if (tooltip) {
-                                    tooltip.style.display = "block"; // Ensure it appears first
-                                    setTimeout(() => {
-                                        if (!tooltip.matches(":hover")) {
-                                            tooltip.style.display = "none"; // Hide only if not hovered
-                                        }
-                                    }, 2000); // Adjust timing as needed
-                                }
-                            });
-
-
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                spansArray[glossIndex].classList.add('highlight')
-                                // spansArray[glossIndex].style.textDecorationColor = 'red'; 
-                                // spansArray[glossIndex].style.color = 'red'; 
-                                // console.log(`Missing translation for word: "${Array.isArray(word) ? word.join(', ') : word}" with gloss-index: ${glossIndex}`);
-                            });
-                        }
-                        else {
-                            //  await remove_all_gloss(markleftPanel, false)
-                            //console.log("plural All glossary words are translated.");
-                        }
-                    }
-
-                    if (isPlural == true) {
-                        await remove_all_gloss(markleftPanel, true)
-                        // console.debug("it is a plural")
-                        // console.debug("pluralText:",pluralText)
-                        // console.debug("plural translation:",dutchText)
-                        // console.debug("spansPlural:",spansArray)
-
-                        missingTranslations = [];
-                        // Run the function
-                        missingTranslations = await f(glossWords, dutchText);
-                        //console.debug(missingTranslations)
-                        if (missingTranslations.length > 0) {
-                            //console.debug("missing:",missingTranslations)
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                //onsole.debug(`Missing translation for word: "${word}" with gloss-index: ${glossIndex}`);
-                                //nsole.debug("span with missing translation:",spansArray[glossIndex])
-                                spansArray[glossIndex].classList.add('highlight')
-                            });
-                        }
-                        else {
-                            //await remove_all_gloss(markleftPanel, true)
-                            //console.log("All glossary words are translated.");
-                        }
-                    }
-                }
-            }
-        }
-        else {
-            //console.debug("We do not have a translation!!!")
-        }
-    }
-
-}
 
 async function validatePage(language, showHistory, locale,showDiff, DefGlossary) {
     // This function checks the quality of the current translations
@@ -806,21 +693,36 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
             }
         }
     }
-    await set_glotdict_style().then(function (myGlotDictStat) {
+   // await set_glotdict_style().then(function (myGlotDictStat) {
     //console.debug("glotdict:", myGlotDictStat)
     // Use the retrieved data here or export it as needed
     // increase the timeout if buttons from GlotDict are not shown
     // this set when the checkbox show GlotDict is set
-    var increaseWith = 0
-    var timeout = 0;
-      if (myGlotDictStat) {
-        timeout = 250;
-        increaseWith = 150
-       }
-       
+   // var increaseWith = 0
+   // var timeout = 0;
+     // if (myGlotDictStat) {
+      //  timeout = 100;
+       // increaseWith = 50
+      // }
+    myGlotDictStat = await set_glotdict_style();
+
+    // 2. Determine timeout based on result
+    let timeout = 0;
+    if (myGlotDictStat) {
+        timeout = 1000; // or 50, 200, etc.
+    }
+    else {
+        timeout = 0
+    }
+
+    // 3. Wait for that timeout
+    await sleep(timeout);
+
+    // 4. Now run your loop
+    
      
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-            setTimeout(async function() {
+           // setTimeout(async function() {
                 rowcount++
                 let original = e.querySelector("span.original-raw").innerText;
                 let textareaElem = e.querySelector("textarea.foreign-text");
@@ -921,9 +823,9 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
               //  }
                // setTimeout(async function () {
                 // PSS this is the one with orange
-                 await updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+                  updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
 
-                 await mark_original(preview, result.toolTip, textareaElem.textContent, rowId, false)
+                  mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
                 //}, waiting);
            if (rowcount == 1){
                //console.debug(" we are starting observer")
@@ -934,8 +836,8 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
              // start_editor_mutation_server(mytextarea, "Details") 
               //}
            }
-            }, timeout);
-            timeout += increaseWith;
+          //}, timeout);
+           //  timeout += increaseWith;
         }
         
         // 30-06-2021 PSS set fetch status from local storage
@@ -945,7 +847,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
         });
 
         
-    });
+   // });
 }
 function countWordsinTable() {
     var counter = 0;
@@ -982,7 +884,7 @@ function countWordsinTable() {
 async function set_glotdict_style() {
     // this function sets the color of the box for glossary words present within a single line
     return new Promise(function (resolve) {
-        let myTimeout = 120;
+        let myTimeout = 100;
         setTimeout(() => {
             chrome.storage.local.get(["glotDictGlos"],
                 function (data) {
@@ -1145,7 +1047,7 @@ function exportGlossaryForOpenAi(locale = "nl") {
                     .join(", ");
 
                 chrome.storage.local.set({ OpenAiGloss: lines }, () => {
-                    console.log("OpenAiGloss stored");
+                    //console.log("OpenAiGloss stored");
                 });
             }
         };
@@ -1168,6 +1070,53 @@ function isURL(text) {
     const urlRegex = /(https?|ftp|file):\/\/[^\s<>"]+/gi;
     return urlRegex.test(text.trim());
 }
+
+async function isWordInUrl(word) {
+        console.debug("isWordInUrl:", word)
+        is_in_URL = wptf_check_for_URL(word, translation)
+        console.debug("is in URL changed:", is_in_URL)
+        if (is_in_URL == true) {
+            return true
+        }
+        else {
+            return false
+       }
+
+        if (!word || !urlLikeSegments || !Array.isArray(urlLikeSegments)) return false;
+
+        const lowerWord = word.toLowerCase();
+
+        return urlLikeSegments.some(segment => {
+            // Strip HTML tags like <code>...</code> if present
+            const cleaned = segment.replace(/<[^>]*>/g, '').toLowerCase();
+            return cleaned.includes(lowerWord);
+        });
+    }
+function wptf_check_for_URL(word, translatedText) {
+    if (!word || !translatedText) return false;
+
+    const lowerWord = word.toLowerCase();
+
+    // Step 1: Remove HTML tags (like <code>) to expose inner content
+    const textWithoutTags = translatedText.replace(/<[^>]*>/g, '');
+
+    // Step 2: Match full URLs
+    const fullURLRegex = /\b(?:https?|ftp):\/\/[^\s"'<>]+/gi;
+
+    // Step 3: Match common plugin paths (also match plugins or plugin-name)
+    const partialPathRegex = /\b(?:[\w./-]*wp-content\/plugins?\/[^\s"'<>]*)/gi;
+
+    const matches = [
+        ...(textWithoutTags.match(fullURLRegex) || []),
+        ...(textWithoutTags.match(partialPathRegex) || []),
+    ];
+
+    return matches.some(url => url.toLowerCase().includes(lowerWord));
+}
+
+
+
+
 //# this function determines if a text is equal for capitals or text
 function isExactlyEqual(text1, text2) {
     return text1 === text2;

@@ -102,6 +102,7 @@
   "This function populates the table with translations from the local database": "Deze functie vult de tabel met vertalingen uit de lokale database",
   "This is the function to save all suggestions selected in bulk": "Deze functie slaat alle suggesties in bulk op",
   "This is the function to populate the local database with selected items": "Deze functie vult de lokale database met geselecteerde items",
+  "This function translates the table with translations from the API": "Deze functie vult de tabel met vertalingen via de API",
   "TM is stopped!": "TM is gestopt!",
   "Translate": "Vertalen",
   "Translated": "Vertaald",

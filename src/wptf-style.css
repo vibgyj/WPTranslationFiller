@@ -2,6 +2,11 @@ mymarker {
     background-color: lightgreen;
 }
 
+/* .gp-js-message { */
+/*    color: blue !important; */
+/*    display:none !important */
+/* } */
+
 /* make ui smaller as it is unreadable with the new larg mask*/
 /*.gp-content {
     max-width:1300px !important;
@@ -244,25 +249,50 @@ mymarker {
       background: darkgray !important;
 }
 
-.wptfNavBarCont .translation-filler-button.started {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      animation: button-loading-spinner 1s ease infinite;
+    .wptfNavBarCont .translation-filler-button.start {
+        content: "";
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-top-color: #ffffff;
+        border-radius: 5px !important;
+        animation: blink-background 1s ease-in-out infinite;
+    }
+
+    .wptfNavBarCont .translation-filler-button.started {
+        content: "";
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-radius: 5px !important;
+        animation: blink-background 1s ease-in-out infinite;
+    }
+
+/* Blinking background color */
+@keyframes blink-background {
+    50% {
+        background-color: green;
+    }
+}
+
+/* Define blinking animation */
+@keyframes button-blink {
+    50% {
+        opacity: 0;
+    }
 }
 
 .wptfNavBarCont .translation-filler-button.restarted {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      background-color: blue;
-      animation: button-loading-spinner 1s ease infinite;
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 2px solid !important;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    background-color: blue;
+    animation: blink-background 1s ease-in-out infinite;
 }
 
 .wptfNavBarCont .translation-filler-button.after_error {
@@ -271,14 +301,14 @@ mymarker {
 }
 
 .wptfNavBarCont .translation-filler-button.translated {
-      animation: none !important;
-      background: green;
-      border-radius: 0%;
-      border: 0px solid transparent;
-      display: inline-block;
-      padding-top: 0.1em !important;
-      padding-bottom: 0.1em !important;
-      margin: 5px !important;
+    animation: none !important;
+    background: green;
+    padding: 5px 5px 5px 5px !important;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .translation-filler-button.translated {
@@ -315,33 +345,44 @@ mymarker {
       vertical-align: middle;
       width: 28px;
 }
-.wptfNavBarCont .local-trans-button.translated {
-      background: green;
-}
+
+    .wptfNavBarCont .local-trans-button.translated {
+        content: "";
+        animation: none !important;
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-radius: 5px !important;
+        border-color: grey !important;
+        background: green;
+    }
 
 .wptfNavBarCont .local-trans-button:hover {
       background: darkgray !important;
 }
 
 .wptfNavBarCont .local-trans-button.started {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-top-color: #ffffff;
+        border-radius: 5px !important;
+        animation: blink-background 1s ease-in-out infinite;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 .wptfNavBarCont .local-trans-button.restarted {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      background-color: blue;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 .wptfNavBarCont .local-trans-button.after_error {
@@ -349,16 +390,6 @@ mymarker {
       background: red;
 }
 
-.wptfNavBarCont .local-trans-button.translated {
-      animation: none !important;
-      background: green;
-      border-radius: 0%;
-      border: 0px solid transparent;
-      display: inline-block;
-      padding-top: 0.1em !important;
-      padding-bottom: 0.1em !important;
-      margin: 5px !important;
-}
 
 .wptfNavBarCont .check_translation-button {
     background: blue;
@@ -370,6 +401,7 @@ mymarker {
     border-color: grey !important;
     border-radius: 5px !important;
 }
+
 .wptfNavBarCont .check_translation-button.ready {
       background: green;
 }
@@ -388,25 +420,25 @@ mymarker {
 }
 
 .wptfNavBarCont .check_translation-button.started {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 
 .wptfNavBarCont .check_translation-button.restarted {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      background-color: blue;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 .wptfNavBarCont .check_translation-button.after_error {
@@ -415,25 +447,25 @@ mymarker {
 }
 
 .wptfNavBarCont .check_translation-button.ready {
-      animation: none !important;
-      background: green;
-      border-radius: 0%;
-      border: 0px solid transparent;
-      display: inline-block;
-      padding-top: 0.1em !important;
-      padding-bottom: 0.1em !important;
-      margin: 5px !important;
+        animation: none !important;
+        color: white !important;
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
 }
 
 .wptfNavBarCont .tm-trans-button {
-      background: blue;
-      color: white !important;
-      padding: 5px 5px 5px 5px;
-      margin-left: 2px;
-      margin-right: 2px;
-      border: 2px solid !important;
-      border-color: grey !important;
-      border-radius: 5px !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
 }
 
 .wptfNavBarCont .tm-trans-button.translated {
@@ -454,25 +486,25 @@ mymarker {
 }
 
 .wptfNavBarCont .tm-trans-button.started {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 
 .wptfNavBarCont .tm-trans-button.restarted {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      background-color: blue;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 .wptfNavBarCont .tm-trans-button.after_error {
@@ -481,14 +513,14 @@ mymarker {
 }
 
 .wptfNavBarCont .tm-trans-button.translated {
-      animation: none !important;
-      background: green;
-      border-radius: 0%;
-      border: 0px solid transparent;
-      display: inline-block;
-      padding-top: 0.1em !important;
-      padding-bottom: 0.1em !important;
-      margin: 5px !important;
+        animation: none !important;
+        color: white !important;
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
 }
 
 .wptfNavBarCont .impLoc-button {
@@ -518,26 +550,27 @@ mymarker {
 .wptfNavBarCont .impLoc-button:hover {
       background: darkgray !important;
 }
+
 .wptfNavBarCont .impLoc-button.started {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 
 .wptfNavBarCont .impLoc-button.restarted {
-      content: "";
-      display: inline-block;
-      margin: auto;
-      border: 4px solid transparent;
-      border-top-color: #ffffff;
-      border-radius: 50%;
-      background-color: blue;
-      animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 .wptfNavBarCont .impLoc-button.after_error {
@@ -702,7 +735,7 @@ mymarker {
     font-size: 0.875em !important;
 }
 
-    .paging .UpperCase-button.uppercase {
+.paging .UpperCase-button.uppercase {
         background: green;
         color: white !important;
         margin-left: 2px;
@@ -711,9 +744,9 @@ mymarker {
         border-color: grey !important;
         border-radius: 5px !important;
         /*z-index :0 !important;*/
-    }
+}
 
-    .paging .UpperCase-button {
+.paging .UpperCase-button {
         background: white;
         color: black !important;
         margin-left: 2px;
@@ -722,7 +755,7 @@ mymarker {
         border-color: grey !important;
         border-radius: 5px !important;
         /*z-index :0 !important;*/
-    }
+}
 
 .paging .UpperCase-button:hover {
     z-index:0;
@@ -839,11 +872,11 @@ mymarker {
 }
 
 .translation-entry-my-button.started {
-    display: inline-block;
-    border: 4px solid transparent;
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: button-loading-spinner 1s ease infinite;
+        display: inline-block;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 .translation-entry-my-button.translated {
@@ -861,22 +894,22 @@ mymarker {
     height: 32px !important;
 }
 
-    .translation-entry-my-button.translated_error {
+.translation-entry-my-button.translated_error {
         animation: none;
         background-color: red;
         width: auto;
         height: 32px !important;
-    }
+}
 
 .translation-entry-my-button.restarted {
-    content: "";
-    display: inline-block;
-    margin: auto;
-    border: 4px solid transparent;
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    background-color: blue;
-    animation: button-loading-spinner 1s ease infinite;
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: blink-background 1s ease-in-out infinite;
 }
 
 .translation-entry-my-button.restarted.translated {
@@ -1183,9 +1216,9 @@ table.translations td.priority {
 }
 
 /* This setting is necessary to move the row down due to the header that is no longer fixed */
-table.translations tr.preview {
-    scroll-margin-top: 62px;
-}  
+/* table.translations tr.preview { */
+/*  scroll-margin-top: 62px; */
+/* }  */
 
 /*table.translations tr.preview.has-glotdict th.checkbox {
     position: relative !important;
@@ -1212,9 +1245,9 @@ table.translations tr.preview {
     max-width: 1400px !important;
 }
 
-tr.editor {
-    scroll-margin-top: 90px !important;
-}
+/* tr.editor { */
+ /*  scroll-margin-top: 90px !important; */
+/* } */
 
 /*The below line is to prevent untranslated originals to show up when bulk saving*/
 tr.preview.status-hidden {
