@@ -71,3 +71,4 @@ Version changes as of version 3.3
 69. Version 3.9.69 Retranslation of an existing translation did not remove the marking if glossary words were corrected
 70. Version 3.9.70 When translating records the preview was not marked.
 71. Version 3.9.71 The check for URL improved, and the timeout in translatePage function inproved, and the timeout in bulk save improved. And marking glossary improved
+72. Version 3.9.72 When performing checktranslation within the editor, the changed line was not within the editor. No the translation will be improved if a copy is done within the editor with the copy button

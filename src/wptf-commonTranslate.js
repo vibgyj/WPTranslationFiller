@@ -217,14 +217,26 @@ function startsWithCapital(word) {
  * @returns {string} - The modified string with the target word replaced.
  */
 function replaceWord(str, target, replacement) {
-    // Escape special characters in the target word to prevent regex issues
-    const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+   
+    if (typeof replacement != 'undefined') {
+        // Escape special characters in the target word to prevent regex issues
+        const escapedTarget = target.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 
-    // Adjusted regex to match even when the target has no spaces around it
-    const regex = new RegExp(`\\b${escapedTarget}\\b|${escapedTarget}`, 'g');
+        // Adjusted regex to match even when the target has no spaces around it
+        const regex = new RegExp(`\\b${escapedTarget}\\b|${escapedTarget}`, 'g');
 
-    // Replace occurrences with the replacement word
-    return str.replace(regex, replacement);
+        // Replace occurrences with the replacement word
+
+        if (replacement.length != 0) {
+            return str.replace(regex, replacement);
+        }
+        else {
+            return str
+        }
+    }
+    else {
+        return str
+    }
 }
 //# this function processes the translation after it has been received
 function postProcessTranslation (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale) {
@@ -393,7 +405,10 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
             let toreplace = "{replacevar" + i+"}"
             translatedText = translatedText.replaceAll(toreplace,"")
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-               // console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
+                //console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
+                if (typeof replaceVerb[i][1] == 'undefined') {
+                    replaceVerb[i][1] = ""
+                }
                 translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]); 
                 // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
             }
@@ -5782,6 +5797,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     if (textareaElem != null && typeof textareaElem != "undefined") {
         textareaElem.innerText = translatedText;
         textareaElem.value = translatedText;
+        textareaElem.textContent =translatedText
         requestAnimationFrame(() => {
             textareaElem.style.height = "auto";
             textareaElem.style.height = textareaElem.scrollHeight + "px";
@@ -7572,4 +7588,38 @@ async function saveToLocal() {
     });
     RecCount = counter
     return counter;
+}
+
+async function onCopySuggestionClicked(target,rowId) {
+    chrome.storage.local.get(["postTranslationReplace", "convertToLower", "spellCheckIgnore", "ForceFormal"], async function (data) {
+        var translatedText = ""
+        var textareaElem
+        locale = checkLocale();
+        var formal = checkFormal(false);
+        var editor =""
+       
+        let convertToLower = data.convertToLower
+        let spellCheckIgnore = data.spellCheckIgnore
+        // Tiny sleep to make sure the text is copied
+        sleep(50)
+        let myEditor = document.querySelector(`#${rowId}`)
+        editor = myEditor.getElementsByClassName("editor-panel__left")
+        textareaElem = editor[0].querySelector("textarea.foreign-text");
+        editor = editor[0].querySelector(".panel-content")
+        let original = editor.querySelector("span.original-raw").innerText;
+        let text = editor.querySelector("textarea.foreign-text").value;
+       
+        setPostTranslationReplace(data.postTranslationReplace, formal);
+        translatedText = await  postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
+       
+       if (textareaElem != null && typeof textareaElem != "undefined") {
+          textareaElem.innerText = translatedText;
+          textareaElem.value = translatedText;
+          textareaElem.textContent =translatedText
+          requestAnimationFrame(() => {
+            textareaElem.style.height = "auto";
+            textareaElem.style.height = textareaElem.scrollHeight + "px";
+           });
+       }
+    })
 }

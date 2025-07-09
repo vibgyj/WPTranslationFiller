@@ -2539,6 +2539,19 @@ async function checkbuttonClick(event) {
     var leftPanel;
     //var DefGlossary=true;
     //console.debug("event",event.target.firstChild.data)
+     const target = event.target;
+
+    // Check if the clicked element is the copy-suggestion button
+    if (target.classList.contains('copy-suggestion') ||target.classList.contains('translation-suggestion__translation-meta')) {
+         const row = target.closest('tr');
+         const rowId = row?.id;
+         if (rowId) {
+             onCopySuggestionClicked(target,rowId);
+        } else {
+            console.warn('No row found for the clicked copy button.');
+        }
+    }
+
     if (event != undefined) {
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         let action = event.target.textContent;
@@ -2557,7 +2570,7 @@ async function checkbuttonClick(event) {
             mytarget = event.target;
         }
 
-        // console.debug("action:",action)
+        //console.debug("action:",action)
         // we do need to make sure that we are in the editor, not meta or discussion
         if (action == "Details" || action == "✓Details" || FireFoxAction == "Details") {
             mytarget = event.target.parentElement.parentElement;
