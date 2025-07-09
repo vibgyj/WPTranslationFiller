@@ -2640,7 +2640,7 @@ async function checkbuttonClick(event) {
                     mytextarea[0].addEventListener("click", (e) => {
                         //console.debug("Textarea clicked");
                         if (detail_glossary) {
-                            // console.debug("We are starting the observer:", mytextarea)
+                            //console.debug("We are starting the observer:", mytextarea)
                             // We need to start the mutation server, if the textarea is clicked on
                             let leftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
                             //console.debug("before mutation:", leftPanel)
@@ -3446,7 +3446,8 @@ let isProcessing = false; // Flag to prevent multiple calls
 let currentTranslation = ""; // To track the current state of the translation
 
 
-async function findMissingTranslations(glossWords, translatedText) {
+async function old_findMissingTranslations(glossWords, translatedText) {
+    console.debug("we start findmissing")
     const stack = new Error().stack;
     const caller = stack.split('\n')[2]?.trim();
     //console.debug("findMissingTranslations called by:", caller);
@@ -3480,6 +3481,90 @@ async function findMissingTranslations(glossWords, translatedText) {
     return missingTranslations;
 }
 
+function matchesWithDutchVerbPrefix(baseWord, tokens, locale = 'nl') {
+    const localePrefixes = {
+        'nl': ['ge', 'her', 'ver', 'be', 'ont', 'op'],
+        'nl-be': ['ge', 'her', 'ver', 'be', 'ont', 'op']
+    };
+
+    const prefixes = localePrefixes[locale] || [];
+
+    return tokens.some(token => {
+        for (const prefix of prefixes) {
+            if (
+                token.startsWith(prefix) &&
+                token.endsWith(baseWord) &&
+                token.length > baseWord.length + 1
+            ) {
+                return true;
+            }
+        }
+        return false;
+    });
+}
+
+function normalizeText(text) {
+    return text.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
+function countOccurrences(text, term) {
+    if (typeof term !== 'string' || !term) {
+        console.warn('Invalid input to countOccurrences:', { text, term });
+        return 0;
+    }
+    const normalizedText = text.toLowerCase();
+    const normalizedTerm = term.toLowerCase();
+    const regex = new RegExp(`\\b${normalizedTerm}\\b`, 'g');
+    const matches = normalizedText.match(regex);
+    return matches ? matches.length : 0;
+}
+
+function findMissingTranslations(glossWords, translatedText, glossary, locale="nl") {
+    // Normalize translated text
+    const normalizedTranslatedText = translatedText.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    const normalizedTranslatedTokens = normalizedTranslatedText.split(/\s+/);
+
+    // Track how often each term is used in translation
+    const tokenUsage = new Map();
+
+    const missingWords = [];
+
+    for (const item of glossWords) {
+        const rawWords = Array.isArray(item.word) ? item.word : [item.word];
+        const glossIndex = item.glossIndex;
+        let found = false;
+
+        for (let raw of rawWords) {
+            const variants = raw.split('/').map(v =>
+                v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")
+            );
+
+            for (let variant of variants) {
+                // Count occurrences in translation
+                const usedCount = tokenUsage.has(variant) ? tokenUsage.get(variant) : 0;
+                const availableCount = countOccurrences(normalizedTranslatedText, variant);
+
+                // Check if translation contains the variant (with prefix handling)
+                if (
+                    availableCount > usedCount ||
+                    matchesWithDutchVerbPrefix(variant, normalizedTranslatedTokens, locale)
+                ) {
+                    tokenUsage.set(variant, usedCount + 1);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) break;
+        }
+
+        if (!found) {
+            missingWords.push({ word: rawWords, glossIndex });
+        }
+    }
+    console.debug("missing:",missingWords)
+    return missingWords;
+}
 function updateRowButton(current, SavelocalButton, checkElem, GlossCount, foundCount, rowId, lineNo) {
     if (typeof rowId != "undefined" && SavelocalButton != null) {
         switch (current) {
@@ -3920,9 +4005,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 checkElem.setAttribute("title", result.toolTip);
             }
         }
-        // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author																										  																																	
-        if (showName == true) {
-            showNameLabel(originalElem)
+        // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author	
+        //console.debug("rowId before show:", rowId)
+        if (showName == true) {  
+            showNameLabel(originalElem,rowId)
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
@@ -3934,12 +4020,13 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     }
 }
 
-function showNameLabel(originalElem) {
+function showNameLabel(originalElem,row) {
     var namelabelExist;
     var debug = false
     if (debug == true) {
         console.debug("ShowNameLabel originalElem:",originalElem)
         console.debug("ShowNameLabel nameDiff:", nameDiff)
+        console.debug("Row:",row)
     }
     if (typeof originalElem != 'undefined') {
         namelabelExist = originalElem.querySelector(".trans_name_div, .trans_name_div_true");
@@ -3989,9 +4076,7 @@ function showNameLabel(originalElem) {
             else {
                 console.debug("there is no label at all")
             }
-        }
-       
-       
+        }      
     }
 }
 
@@ -4433,7 +4518,44 @@ function escapeRegExp(string) {
 }
 
 //-------------
-function createGlossArray(spansArray, map) {
+function createGlossArray(spansArray) {
+    const glossaryWords = [];
+
+    for (let spancnt = 0; spancnt < spansArray.length; spancnt++) {
+        const span = spansArray[spancnt];
+        const dataTranslations = span.getAttribute('data-translations');
+
+        if (dataTranslations) {
+            try {
+                const parsedTranslations = JSON.parse(dataTranslations.replace(/&quot;/g, '"'));
+
+                // Extract all translations per entry, split on '/'
+                const words = parsedTranslations.flatMap(entry =>
+                    entry.translation.split('/').map(w => w.toLowerCase().trim())
+                );
+
+                glossaryWords.push({
+                    word: words,
+                    glossIndex: spancnt,
+                });
+            } catch (e) {
+                console.error("Failed to parse data-translations for span", e);
+                // fallback to textContent as array with one word
+                glossaryWords.push({
+                    word: [span.textContent.toLowerCase().trim()],
+                    glossIndex: spancnt,
+                });
+            }
+        } else {
+            glossaryWords.push({
+                word: [span.textContent.toLowerCase().trim()],
+                glossIndex: spancnt,
+            });
+        }
+    }
+    return glossaryWords;
+}
+function oldcreateGlossArray(spansArray, map) {
     var glossaryWord = []
     //console.debug("map:",map)
     for (spancnt = 0; spancnt < (spansArray.length); spancnt++) {
@@ -4506,7 +4628,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
             myglossary = glossary1;
         }
         newGloss = createNewGlossArray(myglossary);
-
+        console.debug("glossary:",newGloss)
         let markleftPanel = myleftPanel;
         if (markleftPanel != null) {
             singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
@@ -4534,14 +4656,15 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                 for (let spancnt = 1; spancnt < spansArray.length; spancnt++) {
                     spansArray[spancnt].setAttribute('gloss-index', spancnt);
                 }
+                console.debug("spansarray:",spansArray)
                 let glossWords = createGlossArray(spansArray, newGloss);
                 let dutchText = translation;
 
                 if (isPlural == false) {
                     await remove_all_gloss(markleftPanel, false);
                     missingTranslations = [];
-                    missingTranslations = await findMissingTranslations(glossWords, dutchText);
-
+                    missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss,"nl");
+                    console.debug("missingtranslations:",missingTranslations,missingTranslations.length)
                     if (missingTranslations.length > 0) {
                         missingTranslations.forEach(({ word, glossIndex }) => {
                             spansArray[glossIndex].classList.add('highlight');
@@ -4554,7 +4677,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                 if (isPlural == true) {
                     await remove_all_gloss(markleftPanel, true);
                     missingTranslations = [];
-                    missingTranslations = await findMissingTranslations(glossWords, dutchText);
+                    missingTranslations = await findMissingTranslations(glossWords, dutchText, newGloss, "nl");
 
                     if (missingTranslations.length > 0) {
                         missingTranslations.forEach(({ word, glossIndex }) => {
@@ -5264,12 +5387,13 @@ async function fetchOldRec(url, rowId, showDiff) {
     var status;
     var tbodyRowCount = 0;
     var fetchOld_status = "";
+    var OldRec_status
     var diff;
     var diffType = "diffWords"; // this is to determine the differenct between lines
     let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
     if (e != null) {
         let curr_trans = e.querySelector("#editor-" + rowId + " .foreign-text").textContent;
-        let OldRec_status = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerHTML;
+        OldRec_status = document.querySelector(`#editor-${rowId} span.panel-header__bubble`).innerHTML;
         switch (OldRec_status) {
             case "current":
                 newurl = url.replace("mystat", "waiting");
@@ -6058,8 +6182,8 @@ async function handleMutation(mutationsList, observer) {
     }
 
     const glossWords = createGlossArray(spansArray, newGloss);
-    const missingTranslations = await findMissingTranslations(glossWords, translation);
-
+    const missingTranslations = await findMissingTranslations(glossWords, translation, newGloss, "nl");
+    //console.debug("missing:",missingTranslations)
     const toolTipLines = [];
     missingTranslations.forEach(({ word, glossIndex }) => {
         spansArray[glossIndex].classList.add('highlight');

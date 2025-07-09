@@ -93,8 +93,10 @@ async function openDeeplModal(DeepLdb) {
         }
      // console.debug("pad:",DownloadPath)
         const modalHTML = `
-<div id="DeepLmodal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
-  <div style="background:white; padding:20px; margin:auto; width:60%;">
+<div id="DeepLmodal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+  <div style="background:white; padding:20px; margin:auto; width:60%; position:relative; top:-20vh;">
+   
+
     <h2>${title}</h2>
     <button onclick="closeModalClicked()">${DeepLClose}</button>
     

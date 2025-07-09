@@ -19,7 +19,7 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
                     cuteAlert({
                         type: "question",
                         title: "Glossary Id",
-                        message: "Do you want to store the glossary ID?<br>" + result,
+                        message: __("Do you want to store the glossary ID?<br>") + result,
                         confirmText: "Confirm",
                         cancelText: "Cancel",
                         myWindow: currWindow
@@ -38,11 +38,11 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
                                     loadGlossButton.classList.remove("LoadGloss-button-red");
                                     loadGlossButton.classList.add("LoadGloss-button-green");
                                 }
-                                messageBox("info", "Glossary ID: <br>" + glossId + "<br>saved ");
+                                messageBox("info", "Glossary ID: <br>" + glossId + __("<br>saved "));
                             }
 
                         } else {
-                            messageBox("info", "Glossary ID: <br>" + result + "<br>not saved ");
+                            messageBox("info", "Glossary ID: <br>" + result + __("<br>not saved "));
                         }
                         return "OK";
                     })

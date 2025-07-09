@@ -52,3 +52,10 @@ Version changes as of version 3.3
 50. Version 3.9.50 Various fixes
 51. Version 3.9.51 Completely overhauled the translatePage function, also corrected several wrong functions
 52. Version 3.9.52 Improved DeepL behavior with capitals
+53. Version 3.9.53 Rewritten populateWithLocal function
+54. Version 3.9.54 Fixed a problem with translation function "undefined editor"
+55. Version 3.9.55 Fixed a typo in the plural handling function
+56. Version 3.9.56 Fixed another typo in the plural handling function
+57. Version 3.9.57 Fixed a problem whith retranslation fuzzy with local
+58. Version 3.9.58 Improved plural checking for glossary words for Dutch, and removed the new function for handling the casing for Russia and Ukrain
+59. Version 3.9.59 Improved glossary behavior

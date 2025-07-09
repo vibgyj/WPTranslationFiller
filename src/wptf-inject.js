@@ -439,33 +439,40 @@ async function exportDeepLCSV(DownloadPath) {
 
 
 function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, recordNotFound, message) {
-    console.debug("deleteText:", deleteText)
-    console.debug("not found:", recordNotFound)
     const tableBody = document.getElementById("recordsTableBody");
     const rows = tableBody.getElementsByTagName("tr");
     let found = false;
+
+    // First, clear any existing highlights
+    for (let row of rows) {
+        row.style.backgroundColor = ""; // reset to default
+    }
 
     for (let row of rows) {
         const localeCell = row.cells[0].textContent.trim();
         const originalCell = row.cells[1].textContent.trim();
 
-        if (localeCell === locale && originalCell === original) {
-            // Highlight the found row
+        if (localeCell.toLowerCase() === locale.toLowerCase() &&
+            originalCell.toLowerCase() === original.toLowerCase()) {
+
             row.style.backgroundColor = "yellow";
             row.scrollIntoView({ behavior: "smooth", block: "center" });
 
-            // Get translation cell
             const translationCell = row.cells[2];
-            const currentTranslation = translationCell.textContent.trim();
+            let currentTranslation = '';
 
-            // Replace translation with an editable input field
+            const input = translationCell.querySelector('input');
+            if (input) {
+                currentTranslation = input.value;
+            } else {
+                currentTranslation = translationCell.textContent.trim();
+            }
+
             translationCell.innerHTML = `<input type="text" value="${currentTranslation}" id="editTranslation">`;
 
-            // Add save button in 4th column
             const saveCell = row.cells[3];
             saveCell.innerHTML = `<button onclick="saveTranslation('${locale}', '${original}', '${deleteText}','${message}')">${saveText}</button>
                                   <button onclick="deleteRecord('${locale}', '${original}', '${deleteText}', '${myRecordDeleted}')">${deleteText}</button>`;
-
 
             found = true;
             break;
@@ -476,6 +483,7 @@ function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, r
         alert(recordNotFound);
     }
 }
+
 
 function loadGlossaryFromDB(apiKey, DeeplFree,language) {
     // Ensure gloss is properly initialized as an array

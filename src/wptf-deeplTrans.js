@@ -25,8 +25,8 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
     }
     //console.debug("formal in Deepl:", formal, formal_value)
     //console.debug("targetlang:",destlang,deeplGlossary)
-        let url = DeeplFree == true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
-      
+    let url = DeeplFree == true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
+    //  console.debug("url:",url,DeeplFree)
    // console.debug("deeplGlossary:",deeplGlossary)
     const requestBody = {
         auth_key: apikeyDeepl,
@@ -40,7 +40,9 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
         split_sentences: 'nonewlines',
         outline_detection: '0',
         context: [mycontext],
-        glossary_id: deeplGlossary
+        glossary_id: deeplGlossary,
+        DeepLFreePar: DeeplFree,
+        DeeplURL: url
     };
     // changed function to send the request via the background script, otherwise a CORS error is generated
     chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, response => {
@@ -48,7 +50,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
             console.error("Error:", chrome.runtime.lastError.message);
             return;
         }
-        console.debug("response:", response.translations[0]);
+        //console.debug("response:", response.translations[0]);
         translated = response;
 
         if (translated && translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
@@ -147,6 +149,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
         originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!"
     }
     try {
+        //console.debug("before translateText:",DeeplFree)
         await translateText(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,deepLcurrent)
     }
     catch (error) {
@@ -198,8 +201,10 @@ async function processData(data, original, record, row, originalPreProcessed, re
                    // console.debug("deepl result complete:",data.translations)
                     translatedText = data.translations[0].text;
                     // console.debug("deepl result", translatedText)
-                   // to activate logging of the restoreCase set the last position to 'true'
-                    translatedText = restoreCase(original, translatedText, locale, spellCheckIgnore,true);
+                    // to activate logging of the restoreCase set the last position to 'true'
+                    if (locale != "ru" && locale != "uk") {
+                        translatedText = restoreCase(original, translatedText, locale, spellCheckIgnore, false);
+                    }
                     translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
                    // console.debug("deepl na postprocess:", translatedText, deepLcurrent,convertToLower)
                     //  console.debug("deepl preprocessed:",originalPreProcessed,record)
@@ -282,3 +287,4 @@ async function fetchWithRetry(url, options = {}, retries = 3, timeout = 5000) {
         }
     }
 }
+
