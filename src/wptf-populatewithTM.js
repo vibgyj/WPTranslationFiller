@@ -1,0 +1,385 @@
+﻿// Helper: Wait for TM suggestion or "no-suggestions" element scoped to rowId's editor
+function waitforTM(rowId, TMwait) {
+  const timeout = 10000; // max 10 seconds wait
+  return new Promise((resolve) => {
+    let elapsed = 0;
+
+    const interval = setInterval(() => {
+      const editor = document.querySelector(`#editor-${rowId}`);
+      if (!editor) return;
+
+      const suggestion = editor.querySelector(".translation-suggestion.with-tooltip.translation");
+      
+        if (suggestion) {
+          
+        if (suggestion.hasAttribute("no-suggestions")) {
+          clearInterval(interval);
+          resolve("nosuggestions");
+        } else {
+          clearInterval(interval);
+         
+          resolve(suggestion);
+        }
+      } else {
+        const noSuggestions = editor.querySelector("[no-suggestions]");
+        if (noSuggestions) {
+          clearInterval(interval);
+          resolve("nosuggestions");
+        } else {
+          elapsed += TMwait;
+          if (elapsed >= timeout) {
+            clearInterval(interval);
+            resolve("notfound");
+          }
+        }
+      }
+    }, TMwait);
+  });
+}
+
+// Main function: handle intercept and start TM processing
+async function populateWithTM(
+    apikey,
+    apikeyDeepl,
+    apikeyMicrosoft,
+    transsel,
+    destlang,
+    postTranslationReplace,
+    preTranslationReplace,
+    formal,
+    convertToLower,
+    DeeplFree,
+    TMwait,
+    postTranslationReplace,
+    preTranslationReplace,
+    convertToLower,
+    spellCheckIgnore,
+    TMtreshold,
+    interCept
+) {
+
+    console.debug("Starting Translation Memory process...");
+
+    setPostTranslationReplace(postTranslationReplace);
+    setPreTranslationReplace(preTranslationReplace);
+    const myrecCount = document.querySelectorAll("tr.preview").length;
+    if (myrecCount === 0) {
+        console.debug("No records found to process.");
+        return;
+    }
+    var GlotPressBulkButton = document.getElementById("bulk-actions-toolbar-bottom")
+    // 19-06-2021 PSS added animated button for translation at translatePage
+    let translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+    translateButton.innerText = __("Translate");
+    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
+    if (translateButton.className == "tm-trans-button") {
+        translateButton.className += " started";
+    }
+    else {
+        translateButton.classList.remove("tm-trans-button", "started", "translated");
+        translateButton.classList.remove("tm-trans-button", "restarted", "translated");
+        translateButton.className = "tm-trans-button restarted";
+    }
+    interCept = localStorage.getItem("interXHR");
+    const currWindow = window.self;
+
+    if (interCept === "false") {
+        const answer = await cuteAlert({
+            type: "question",
+            title: __("Auto translate"),
+            message: __("Auto translate is on, do you want to continue?"),
+            confirmText: "Confirm",
+            cancelText: "Cancel",
+            myWindow: currWindow
+        });
+
+        if (answer === "cancel") {
+            const translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+            if (translateButton) {
+                translateButton.className += " translated";
+                translateButton.innerText = __("Translated");
+            }
+            messageBox("info", __("TM is stopped!"));
+            StartObserver = true;
+            return;
+        }
+
+        await processTM(
+            myrecCount,
+            destlang,
+            TMwait,
+            postTranslationReplace,
+            preTranslationReplace,
+            convertToLower,
+            formal,
+            spellCheckIgnore,
+            TMtreshold,
+            transsel,
+            GlotPressBulkButton,
+            100,
+            interCept
+        );
+    } else {
+        await processTM(
+            myrecCount,
+            destlang,
+            TMwait,
+            postTranslationReplace,
+            preTranslationReplace,
+            convertToLower,
+            formal,
+            spellCheckIgnore,
+            TMtreshold,
+            transsel,
+            GlotPressBulkButton,
+            100,
+            interCept
+        );
+    }
+}
+
+//console.debug("TM run completed for", myrecCount, "records.");
+
+
+// Process each record sequentially with proper awaits
+async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationReplace,  preTranslationReplace,  convertToLower,  formal,  spellCheckIgnore,  TMtreshold, transsel, GlotPressBulkButton, FetchLiDelay,  interCept) {
+    var copyClip = false
+    if (autoCopyClipBoard) {
+        copyClip = false;
+        autoCopyClipBoard = false;
+    }
+    else {
+        copyClip = false;
+        autoCopyClipBoard = false;
+    }
+    const previewRows = document.querySelectorAll("tr.preview");
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    var myheader = document.querySelector('header');
+    var TMswitch = localStorage.getItem('switchTM')
+    var editor
+    var counter = 0
+    var foundTM = 0
+    var plural_line
+    var original
+    var pluralpresent
+    var prevstate
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>
+    `;
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
+    //console.debug("processTM")
+    if (progressbar == null) {
+        myheader.insertAdjacentHTML('beforebegin', template);
+        // progressbar = document.querySelector(".indeterminate-progress-bar");
+        //progressbar.style.display = 'block;';
+    }
+    else {
+        // we need to remove the style of inprogress to see the animation again
+        inprogressbar.style = ""
+        progressbar.style.display = 'block';
+    }
+    
+   for (let i = 0; i < myrecCount; i++) {
+    const previewRow = previewRows[i];
+    if (!previewRow) continue;
+       counter++
+    transtype = "single";
+    plural_line = "0";
+    const rowId = previewRow.id.replace("preview-", "");
+    const preview = document.querySelector(`#preview-${rowId}`);
+    const editoropen = preview?.querySelector("td.actions .edit");
+    editor = document.querySelector(`#editor-${rowId}`)
+    editorClose = editor.querySelector(".panel-header-actions")
+    let previewName = preview.querySelector("td.translation");
+    original = editor.querySelector("span.original-raw").innerText;
+    let currec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
+        // We need to determine the current state of the record
+    if (currec != null) {
+        current = currec.querySelector("span.panel-header__bubble");
+        prevstate = current.innerText;
+       }
+    pluralpresent = document.querySelector(`#preview-${rowId} .original li:nth-of-type(1) .original-text`);
+    //console.debug("plural:",pluralpresent)
+    if (pluralpresent != null) {
+       // currently we do not process plural within TM, as it will only give one result
+       // original = pluralpresent.innerText
+       transtype = "plural";
+       plural_line = "1";
+       }
+    let toTranslate = true
+    let element = editor.querySelector(".source-details__comment");
+    
+    if (element != null) {
+        let comment = editor.querySelector(".source-details__comment p").innerText;
+        comment = comment.replace(/(\r\n|\n|\r)/gm, "");
+        toTranslate = checkComments(comment.trim());
+    }
+       if (transtype == "single") {
+           if (!toTranslate) {
+               if (autoCopyClipBoard) {
+                   copyClip = false;
+                   autoCopyClipBoard = false;
+               }
+               //console.debug("Whe have an URL or project name", original)
+               // here we add a copy of the original as it is a name!
+               let translatedText = original;
+               textareaElem = editor.querySelector("textarea.foreign-text");
+               textareaElem.innerText = translatedText;
+               textareaElem.innerHTML = translatedText;
+               textareaElem.value = translatedText;
+               let previewName = preview.querySelector("td.translation");
+               if (previewName != null) {
+                   previewName.innerText = translatedText;
+                   previewName.value = translatedText;
+                   pretrans = "FoundName";
+
+                   //10-05-2022 PSS added poulation of status
+                   select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content .meta`);
+                   var status = select.querySelector("dd");
+                   status.innerText = "transFill";
+                   status.value = "transFill";
+                   if (toTranslate == false) {
+                       showName = true;
+                   }
+                   else {
+                       showName = false;
+                   }
+                   if (showName == true) {
+                       let originalElem = document.querySelector("#preview-" + rowId + " .original");
+                       showNameLabel(originalElem, rowId)
+                   }
+               }
+               let transname = document.querySelector(`#preview-${rowId} .original div.trans_name_div_true`);
+               if (transname != null) {
+                   transname.className = "trans_name_div";
+                   transname.innerText = __("URL, name of theme or plugin or author!");
+                   // In case of a plugin/theme name we need to set the button to blue
+                   translated = true
+                   //mark_as_translated(row, current, translated, preview)
+               }
+               translated = true
+               foundTM++
+               mark_as_translated(rowId, current, translated, preview)
+               // result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+               // await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
+
+           }
+           else {
+               if (editoropen) {
+                   editoropen.click();
+
+                   let suggestionResult = await waitforTM(rowId, TMwait);
+
+                   if (suggestionResult === "notfound") {
+                       console.debug("Timed out waiting for TM suggestion element for record:", rowId);
+
+                       //console.debug("preview:", previewName)
+                       if (previewName != null) {
+                           previewName.innerText = "No suggestions"
+                           previewName.value = "No suggestions"
+                       }
+                       // Treat timeout as no suggestions for further processing
+                       // (replace suggestionResult value)
+                       //suggestionResult = "nosuggestions";
+                   }
+
+                   if (suggestionResult === "nosuggestions") {
+                       console.info("Editor loaded, but no TM suggestions available for record:", rowId);
+                   }
+                   else if (suggestionResult instanceof Element) {
+                      const scoreText = suggestionResult.querySelector(".translation-suggestion__score")?.textContent.trim();
+                      const score = scoreText ? parseInt(scoreText.replace("%", ""), 10) : 0;
+                      
+                      if (score >= TMtreshold) {
+                         console.debug(`✅ TM suggestion accepted (score: ${score}%) for record: ${rowId}`);
+                       
+                       foundTM++
+                       const cleanTranslation = suggestionResult.querySelector(".translation-suggestion__translation")?.textContent.trim();
+                       const rawTranslation = suggestionResult.querySelector(".translation-suggestion__translation-raw")?.textContent.trim();
+                       if (previewName != null) {
+                           previewName.innerText = rawTranslation
+                           previewName.value = rawTranslation
+                       }
+                       let textareaElem = editor.querySelector("textarea.foreign-text");
+                       //console.debug("texarea:", textareaElem)
+                       if (textareaElem != null) {
+                           textareaElem.innerText = rawTranslation;
+                           textareaElem.innerHTML = rawTranslation;
+                           textareaElem.textContent = rawTranslation;
+                          }
+                          let debug = true
+                          if (debug == true) {
+                              console.debug("✅ Found TM suggestion element for record:", rowId);
+                              console.debug("Clean translation:", cleanTranslation);
+                              console.debug("Raw translation:", rawTranslation);
+                              console.debug("Outer HTML:", suggestionResult.outerHTML);
+                          }
+                       mark_as_translated(rowId, current, cleanTranslation, preview);
+                   }
+                   else {
+                       console.debug("Unexpected result from waitforTM:", suggestionResult);
+                   }
+                   editor.style.removeProperty("display");
+                   }
+                } else {
+                        console.debug(`⛔ TM suggestion rejected (score: ${score}%) below threshold (${TMtreshold}%) for record: ${rowId}`);
+                           // optionally skip applying it
+                      }
+
+               if (counter == myrecCount) {
+                   // Translation completed  
+                   translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+                   translateButton.classList.remove("started")
+                   translateButton.className += " translated";
+                   translateButton.innerText = __("Translated");
+                   progressbar = document.querySelector(".indeterminate-progress-bar");
+                   progressbar.style.display = "none";
+                   toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
+                   if (counter > 0) {
+                       if (GlotPressBulkButton != null && typeof GlotPressBulkButton != "undefined") {
+                           let button = GlotPressBulkButton.getElementsByClassName("button")
+                           button[0].disabled = true;
+                       }
+                   }
+                   // We need to enable autoCopyClipBoard if it was active
+                   if (copyClip) {
+                       autoCopyClipBoard = true;
+                   }
+                   // This one is closing the last editor!!
+                   // We need to enable the preview again, as it is set to none at this point
+                   editor.style.removeProperty("display");
+                   //preview.style.removeProperty("display");
+
+
+               }
+           }
+       }
+       else {
+           console.debug("We have a plural")
+       }
+       if (foundTM == 0 && counter == myrecCount) {
+           // Translation completed  
+           translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+           translateButton.classList.remove("started")
+           translateButton.className += " translated";
+           translateButton.innerText = __("Translated");
+           progressbar = document.querySelector(".indeterminate-progress-bar");
+           progressbar.style.display = "none";
+           toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
+           if (counter > 0) {
+               if (GlotPressBulkButton != null && typeof GlotPressBulkButton != "undefined") {
+                   let button = GlotPressBulkButton.getElementsByClassName("button")
+                   button[0].disabled = true;
+               }
+           }
+           // We need to enable autoCopyClipBoard if it was active
+           if (copyClip) {
+               autoCopyClipBoard = true;
+           }
+       }
+   }
+}
+

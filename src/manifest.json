@@ -91,6 +91,7 @@
         "jsdiff.js",
         "wptf-importfile.js",
         "wptf-database-maintenance.js",
+        "wptf-populatewithTM.js",
         "contentScript.js"
       ],
       "css": [

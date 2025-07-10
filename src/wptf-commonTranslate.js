@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
@@ -3461,7 +3461,7 @@ async function waitForSuggestions(rowNo, TMswitch, timeout = 5000, retryInterval
 
 
 
-async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, GlotPressBulkButton, FetchLiDelay, interCept) {
+async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, GlotPressBulkButton, FetchLiDelay, interCept) {
     var timeout = 0;
     var current;
     var editor;
@@ -3787,7 +3787,8 @@ function sortRowsArrayByRowAttribute() {
     return rowsArray;
 }
 
-async function populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, spellCheckIgnore, TMtreshold, interCept) {
+
+async function old_populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, spellCheckIgnore, TMtreshold, interCept) {
   //  const sortedRows = sortRowsArrayByRowAttribute();
    // myrecCount = sortedRows
     if (transsel == "OpenAI" && interCept == 'false') {
