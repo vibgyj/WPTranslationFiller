@@ -1,6 +1,7 @@
 ﻿// Helper: Wait for TM suggestion or "no-suggestions" element scoped to rowId's editor
 function waitforTM(rowId, TMwait) {
-  const timeout = 10000; // max 10 seconds wait
+  const timeout = 10000; // max 10 seconds
+  var suggestion
   return new Promise((resolve) => {
     let elapsed = 0;
 
@@ -8,34 +9,67 @@ function waitforTM(rowId, TMwait) {
       const editor = document.querySelector(`#editor-${rowId}`);
       if (!editor) return;
 
-      const suggestion = editor.querySelector(".translation-suggestion.with-tooltip.translation");
-      
-        if (suggestion) {
-          
-        if (suggestion.hasAttribute("no-suggestions")) {
-          clearInterval(interval);
-          resolve("nosuggestions");
-        } else {
-          clearInterval(interval);
-         
-          resolve(suggestion);
-        }
-      } else {
-        const noSuggestions = editor.querySelector("[no-suggestions]");
-        if (noSuggestions) {
-          clearInterval(interval);
-          resolve("nosuggestions");
-        } else {
+      const TMswitch = localStorage.getItem("switchTM");
+      let tmContainer;
+
+      if (TMswitch === "false") {
+        // Standard TM
+        tmContainer = editor.querySelector("details.suggestions__translation-memory.initialized");
+        if (!tmContainer) {
           elapsed += TMwait;
           if (elapsed >= timeout) {
             clearInterval(interval);
             resolve("notfound");
           }
+          return;
         }
+
+        const noSuggestions = tmContainer.querySelector(".no-suggestions");
+        if (noSuggestions) {
+          clearInterval(interval);
+          resolve("nosuggestions");
+          return;
+        }
+      } else {
+        // Other languages TM
+         tmContainer = editor.querySelector(".suggestions__other-languages.initialized");
+         if (!tmContainer) {
+          elapsed += TMwait;
+          if (elapsed >= timeout) {
+            clearInterval(interval);
+            resolve("notfound");
+          }
+          return;
+        }
+		const noSuggestions = tmContainer.querySelector(".no-suggestions");
+        if (noSuggestions) {
+          clearInterval(interval);
+          resolve("nosuggestions");
+          return;
+        }
+        
+      }
+        if (TMswitch != "true") {
+            suggestion = tmContainer.querySelector(".translation-suggestion.with-tooltip.translation");
+        }
+        else {
+            suggestion = tmContainer.querySelector(".translation-suggestion.with-tooltip");
+        }
+      if (suggestion) {
+        clearInterval(interval);
+        resolve(suggestion);
+        return;
+      }
+
+      elapsed += TMwait;
+      if (elapsed >= timeout) {
+        clearInterval(interval);
+        resolve("notfound");
       }
     }, TMwait);
   });
 }
+
 
 // Main function: handle intercept and start TM processing
 async function populateWithTM(
@@ -58,7 +92,7 @@ async function populateWithTM(
     interCept
 ) {
 
-    console.debug("Starting Translation Memory process...");
+    //console.debug("Starting Translation Memory process...");
 
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
@@ -163,6 +197,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
     var original
     var pluralpresent
     var prevstate
+    var textFound
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
@@ -185,7 +220,8 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
    for (let i = 0; i < myrecCount; i++) {
     const previewRow = previewRows[i];
     if (!previewRow) continue;
-       counter++
+
+    counter++
     transtype = "single";
     plural_line = "0";
     const rowId = previewRow.id.replace("preview-", "");
@@ -274,12 +310,14 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                    let suggestionResult = await waitforTM(rowId, TMwait);
 
                    if (suggestionResult === "notfound") {
-                       console.debug("Timed out waiting for TM suggestion element for record:", rowId);
+                       //console.debug("Timed out waiting for TM suggestion element for record:", rowId);
 
                        //console.debug("preview:", previewName)
                        if (previewName != null) {
                            previewName.innerText = "No suggestions"
                            previewName.value = "No suggestions"
+                           textFound = "No suggestions"
+                           updateStyle(textareaElem, result, "", showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false) 
                        }
                        // Treat timeout as no suggestions for further processing
                        // (replace suggestionResult value)
@@ -287,47 +325,128 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                    }
 
                    if (suggestionResult === "nosuggestions") {
-                       console.info("Editor loaded, but no TM suggestions available for record:", rowId);
+                       if (previewName != null) {
+                           previewName.innerText = "No suggestions"
+                           previewName.value = "No suggestions"
+                           textFound = "No suggestions"
+                       }
+                       //console.info("Editor loaded, but no TM suggestions available for record:", rowId);
+                       updateStyle(textareaElem, result, "", showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false) 
                    }
                    else if (suggestionResult instanceof Element) {
                       const scoreText = suggestionResult.querySelector(".translation-suggestion__score")?.textContent.trim();
-                      const score = scoreText ? parseInt(scoreText.replace("%", ""), 10) : 0;
-                      
-                      if (score >= TMtreshold) {
-                         console.debug(`✅ TM suggestion accepted (score: ${score}%) for record: ${rowId}`);
-                       
-                       foundTM++
-                       const cleanTranslation = suggestionResult.querySelector(".translation-suggestion__translation")?.textContent.trim();
-                       const rawTranslation = suggestionResult.querySelector(".translation-suggestion__translation-raw")?.textContent.trim();
-                       if (previewName != null) {
-                           previewName.innerText = rawTranslation
-                           previewName.value = rawTranslation
+                       let score = scoreText ? parseInt(scoreText.replace("%", ""), 10) : 0;
+                       //console.debug("score:",score)
+                       if (TMswitch != "true") {
+                           if (score >= TMtreshold) {
+                               //console.debug(`✅ TM suggestion accepted (score: ${score}%) for record: ${rowId}`);
+
+                               foundTM++
+                               const cleanTranslation = suggestionResult.querySelector(".translation-suggestion__translation")?.textContent.trim();
+                               const rawTranslation = suggestionResult.querySelector(".translation-suggestion__translation-raw")?.textContent.trim();
+
+                               if (convertToLower == true) {
+                                   textFound = convert_lower(rawTranslation, spellCheckIgnore)
+                               }
+                               else {
+                                   textFound = check_hyphen(rawTranslation, spellCheckIgnore);
+                               }
+
+
+                               if (previewName != null) {
+                                   previewName.innerText = textFound
+                                   previewName.value = textFound
+                               }
+                               let textareaElem = editor.querySelector("textarea.foreign-text");
+                               //console.debug("texarea:", textareaElem)
+                               if (textareaElem != null) {
+                                   textareaElem.innerText = textFound;
+                                   textareaElem.innerHTML = textFound;
+                                   textareaElem.textContent = textFound;
+                                   checkEntry(rowId, postTranslationReplace, formal, convertToLower, true, spellCheckIgnore);
+                               }
+                               let debug = false
+                               if (debug == true) {
+                                   console.debug("✅ Found TM suggestion element for record:", rowId);
+                                   console.debug("Clean translation:", cleanTranslation);
+                                   console.debug("Raw translation:", rawTranslation);
+                                   console.debug("Outer HTML:", suggestionResult.outerHTML);
+                               }
+
+                               result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
+                               let showDiff = false
+                               let old_status = "current"
+                               let showHistory = false
+                               let newurl = ""
+                               //10-05-2022 PSS added poulation of status
+                               let select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content .meta`);
+                               let status = select.querySelector("dd");
+                               status.innerText = "transFill";
+                               status.value = "transFill";
+                               current.innerText = 'transFill'
+                               await mark_preview(preview, result.toolTip, textareaElem.innerText, rowId, false)
+                               mark_as_translated(rowId, current, cleanTranslation, preview);
+                               updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                           }
+                           else {
+                               //console.debug(`⛔ TM suggestion rejected (score: ${score}%) below threshold (${TMtreshold}%) for record: ${rowId}`);
+                               if (previewName != null) {
+                                   previewName.innerText = "Below threshold: " + score
+                                   previewName.value = "Below threshold: " + score
+                                   let newurl = ""
+                                   updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                               }
+                           }
                        }
-                       let textareaElem = editor.querySelector("textarea.foreign-text");
-                       //console.debug("texarea:", textareaElem)
-                       if (textareaElem != null) {
-                           textareaElem.innerText = rawTranslation;
-                           textareaElem.innerHTML = rawTranslation;
-                           textareaElem.textContent = rawTranslation;
-                          }
-                          let debug = true
-                          if (debug == true) {
-                              console.debug("✅ Found TM suggestion element for record:", rowId);
-                              console.debug("Clean translation:", cleanTranslation);
-                              console.debug("Raw translation:", rawTranslation);
-                              console.debug("Outer HTML:", suggestionResult.outerHTML);
-                          }
-                       mark_as_translated(rowId, current, cleanTranslation, preview);
+                       else {
+                           //console.debug("we have switched TM:")
+                           foundTM++
+                           const cleanTranslation = suggestionResult.querySelector(".translation-suggestion__translation")?.textContent.trim();
+                           const rawTranslation = suggestionResult.querySelector(".translation-suggestion__translation-raw")?.textContent.trim();
+                           let select = document.querySelector(`#editor-${rowId} div.editor-panel__right div.panel-content .meta`);
+                            let status = select.querySelector("dd");
+                               status.innerText = "transFill";
+                               status.value = "transFill";
+                           if (convertToLower == true) {
+                                   textFound = convert_lower(rawTranslation, spellCheckIgnore)
+                               }
+                               else {
+                                   textFound = check_hyphen(rawTranslation, spellCheckIgnore);
+                           }
+                           debug = false
+                           if (debug == true) {
+                               console.debug("Clean translation:", cleanTranslation);
+                               console.debug("Raw translation:", rawTranslation);
+                               console.debug("textFound:", textFound)
+                           }
+                           
+                           let textareaElem = editor.querySelector("textarea.foreign-text");
+                                //console.debug("texarea:", textareaElem)
+                                if (textareaElem != null) {
+                                   textareaElem.innerText = textFound;
+                                   textareaElem.innerHTML = textFound;
+                                   textareaElem.textContent = textFound;
+                                   checkEntry(rowId, postTranslationReplace, formal, convertToLower, true, spellCheckIgnore);
+                                }
+                                previewName.innerText = textFound
+                                previewName.value = textFound
+                                current.innerText = 'transFill'
+                                let newurl = ""
+                                result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
+                                await mark_as_translated(rowId, current, textFound, preview)
+                                updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                                
+                                
+                              
+
+                       }
                    }
                    else {
-                       console.debug("Unexpected result from waitforTM:", suggestionResult);
+                       //console.debug("Unexpected result from waitforTM:", suggestionResult);
                    }
                    editor.style.removeProperty("display");
                    }
-                } else {
-                        console.debug(`⛔ TM suggestion rejected (score: ${score}%) below threshold (${TMtreshold}%) for record: ${rowId}`);
-                           // optionally skip applying it
-                      }
+                
 
                if (counter == myrecCount) {
                    // Translation completed  
@@ -352,16 +471,36 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                    // We need to enable the preview again, as it is set to none at this point
                    editor.style.removeProperty("display");
                    //preview.style.removeProperty("display");
-
-
                }
            }
        }
        else {
            console.debug("We have a plural")
        }
+
        if (foundTM == 0 && counter == myrecCount) {
            // Translation completed  
+           translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
+           translateButton.classList.remove("started")
+           translateButton.className += " translated";
+           translateButton.innerText = __("Translated");
+           progressbar = document.querySelector(".indeterminate-progress-bar");
+           progressbar.style.display = "none";
+           toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
+           if (counter > 0) {
+               if (GlotPressBulkButton != null && typeof GlotPressBulkButton != "undefined") {
+                   let button = GlotPressBulkButton.getElementsByClassName("button")
+                   button[0].disabled = true;
+               }
+           }
+           // We need to enable autoCopyClipBoard if it was active
+           if (copyClip) {
+               autoCopyClipBoard = true;
+           }
+       }
+       else if(foundTM != 0 && counter == myrecCount)
+       {
+            // Translation completed  
            translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
            translateButton.classList.remove("started")
            translateButton.className += " translated";

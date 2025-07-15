@@ -225,7 +225,7 @@ async function startFullScript(textarea) {
                 doValidation();
             } else {
                 messageBox("info", __("Validate page aborted"));
-                doValidation();
+                //doValidation();
             }
         });
     }
@@ -1695,32 +1695,27 @@ function SwitchGlossClicked(event) {
 }
 
 function SwitchTMClicked(event) {
-    event.preventDefault(event);
-    var formal = checkFormal(false);
-    int = localStorage.getItem(['switchTM']);
-    if (int == "false") {
-        if (formal == false) {
-            toastbox("info", __("Switching TM to foreign"), "4500", "TM switch");
-        }
-        else {
-            toastbox("info", __("Switching TM to local"), "4500", "TM switch");
-        }
-        localStorage.setItem('switchTM', 'true');
-    }
-    else {
-        if (formal == true) {
-            toastbox("info", __("Switching TM to foreign"), "4500", "TM switch");
+    event.preventDefault();
 
-        }
-        else {
-            toastbox("info", __("Switching TM to local"), "4500", "TM switch");
-        }
-        localStorage.setItem('switchTM', 'false');
+    const formal = checkFormal(false);
+    const currentSwitch = localStorage.getItem("switchTM") === "true";
 
-    }
+    // Debug logging
+    console.debug("formal:", formal, "currentSwitch:", currentSwitch);
+
+    // Flip the switch
+    const newSwitch = !currentSwitch;
+    localStorage.setItem("switchTM", newSwitch.toString());
+
+    // Set message based on the state you're switching TO
+    const message = newSwitch
+        ? __("Switching TM to foreign")
+        : __("Switching TM to local");
+
+    toastbox("info", message, "4500", "TM switch");
     location.reload();
-
 }
+
 
 function tmDisableClicked(event) {
     event.preventDefault(event);
@@ -2537,12 +2532,10 @@ async function checkbuttonClick(event) {
     var pluralTextarea = ""
     var FireFoxAction = ""
     var leftPanel;
-    //var DefGlossary=true;
-    //console.debug("event",event.target.firstChild.data)
      const target = event.target;
 
     // Check if the clicked element is the copy-suggestion button
-    if (target.classList.contains('copy-suggestion') ||target.classList.contains('translation-suggestion__translation-meta')) {
+    if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta')) {
          const row = target.closest('tr');
          const rowId = row?.id;
          if (rowId) {
@@ -2591,6 +2584,8 @@ async function checkbuttonClick(event) {
                 });
             }
             addTranslateButtons(rowId);
+            let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
+            checkTranslateButton.className = "checktranslation-entry-my-button"
             await waitForMyElement(`#editor-${rowId}`, 500, "2630").then((res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
@@ -2719,7 +2714,9 @@ async function checkbuttonClick(event) {
                                 translation = textareaElem.textContent
                             }
                             let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
-                            result = await validateEntry(locale, textareaElem, "", "", rowId, locale, "", false, DefGlossary);
+                            let showName = false
+                            let showDiff = false
+                            result = await validateEntry(locale, textareaElem, showName, showDiff, rowId, locale, "", false, DefGlossary);
                             //console.debug("validate entry in content line 2192", result)
                             //20-04
                            // console.debug("Called by:", whoCalledMe());
@@ -2757,8 +2754,10 @@ async function checkbuttonClick(event) {
                                 //console.debug("pluralpresent in line 2806:", pluralpresent)
                                 //console.debug("pluralpresent in line 2807:", pluralTextarea)
                                 //console.debug("pluralpresent in line 2808:", translation)
-                                if (pluralTextarea != "" && pluralTextarea !=null && pluralTextarea.textContent != null) {
-                                    result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent, locale, "", rowId, true, DefGlossary);
+                                if (pluralTextarea != "" && pluralTextarea != null && pluralTextarea.textContent != null) {
+                                    //PSS 12-07
+                                                                                  
+                                    result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent,locale, false, rowId, true, DefGlossary);
                                 }
                                 //console.debug("validate contentscript line 2228 resultplural:", result)
                                 // plural is record with "_1"
@@ -3037,11 +3036,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     current = await document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
-    //console.debug("before:", current.value)
+    
     //console.debug("before:", current.innerText)
     if (current != null) {
         currText = current.innerText
-        //console.debug("current:", current,currText)
+    }
+    else {
+        currText = "transFill"
     }
     let originalElem = document.querySelector("#preview-" + rowId + " .original");
     if (originalElem != null) {
@@ -3154,7 +3155,6 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     let row = rowId.split("-")[0];
-    //console.debug("currText:",currText,currstring,rowId)
     if (currText != 'untranslated') { 
         updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff);
     }
@@ -3245,8 +3245,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
                 originalText = originalRaw.textContent;
                 if (hasGlossary) {
                     //We have a glossary word
-                    //language, original, translation, locale, showDiff,rowId,isPlural
-                    result = await validate(language, originalText, translation, locale, "", rowId, false, DefGlossary);
+                    result = await validate(language, originalText, translation, locale, false, rowId, false, DefGlossary);
                     //console.debug("validate in content line 3287",result)
                     if (result.percent == 100) {
                         missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
@@ -3271,7 +3270,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
             old_status = document.querySelector("#preview-" + rowId);
             //console.debug("validateEntry:",translation)
-            updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+            //console.debug("nameDiff1:",nameDiff)
+            let showName = false
+            updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
             //}
         }
         else {
@@ -3299,7 +3300,8 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             result = { wordCount, foundCount, percent, toolTip, newText }
             old_status = document.querySelector("#preview-" + rowId);
             //console.debug("before updateStyle:", textareaElem, rowId, translation)
-            updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+            console.debug("nameDiff2:",nameDiff)
+            updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
         }
     }
     else {
@@ -3326,10 +3328,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
         toolTip = ""
         newText = "";
         result = { wordCount, foundCount, percent, toolTip, newText }
-       // console.debug("result:",result)
         old_status = document.querySelector("#preview-" + rowId);
         showDiff = false
-        updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+        updateStyle(textareaElem, result, newurl, showHistory, false, nameDiff, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
 
     }
     return result;
@@ -4258,9 +4259,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             }
         }
         // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author	
-        //console.debug("rowId before show:", rowId)
         if (showName == true) {  
-            showNameLabel(originalElem,rowId)
+            // PSS 12-07 added await and showName, nameDiff because the label did not changed color when a difference in the name
+            await showNameLabel(originalElem,rowId,showName,nameDiff)
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
@@ -4272,11 +4273,12 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     }
 }
 
-function showNameLabel(originalElem,row) {
+function showNameLabel(originalElem,row,showName,nameDiff) {
     var namelabelExist;
     var debug = false
     if (debug == true) {
-        console.debug("ShowNameLabel originalElem:",originalElem)
+        console.debug("ShowNameLabel originalElem:", originalElem.innerText)
+        console.debug("ShowNameLabel showName:", showName)
         console.debug("ShowNameLabel nameDiff:", nameDiff)
         console.debug("Row:",row)
     }
@@ -4285,7 +4287,7 @@ function showNameLabel(originalElem,row) {
         //console.debug("namelabelexist:", namelabelExist)
         // do not add the label twice
         if (namelabelExist == null) {
-            //console.debug("We need to add the label")
+            //console.debug("We need to add the label",nameDiff)
             var element1 = document.createElement("div");
             originalElem.appendChild(element1);
             if (nameDiff == true) {
@@ -4305,7 +4307,7 @@ function showNameLabel(originalElem,row) {
         }
         else {
            // console.debug("originalElem:",originalElem)
-            namelabelexist = originalElem.querySelector(".trans_name_div_true");
+            namelabelexist = originalElem.querySelector(".trans_name_div");
            // console.debug("we do have alreay a label with namediff", namelabelexist)
             if (namelabelexist != null) {
                 //console.debug("we have a div for difference")
@@ -4322,8 +4324,11 @@ function showNameLabel(originalElem,row) {
                     namelabelexist.setAttribute("class", "trans_name_div");
                 }
                 else {
-                    console.debug("we still have a difference")
+                    namelabelexist.setAttribute("class", "trans_name_div_true");
+                    namelabelexist.setAttribute("id", "trans_name_div_true");
+                    namelabelexist.textContent = __("Difference in URL, name of theme or plugin or author!")
                 }
+                
             }
             else {
                 console.debug("there is no label at all:", row)
@@ -4903,6 +4908,8 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
         console.debug("translation:", translation)
         console.debug("Devglossary:", DefGlossary)
         console.debug("Glossary:", glossary)
+        // console.debug("showName:", showName)
+        console.debug("showDiff:", showDiff)
     }
     //DefGlossary = true
     if (DefGlossary == true) {
@@ -6504,7 +6511,7 @@ function MutationsPlural(mutationsList, observer) {
                 mutation.target.focus()
                 myGlossArray = await Array.from(myglossary)
                 map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
-                MyResult = await validate(locale, pluralOriginal.textContent, translation, "", false, rowId, true)
+                MyResult = await validate(locale, pluralOriginal.textContent, translation, locale, false, rowId, true, DefGlossary)
                 mark_glossary(leftPanel, "", translation, rowId, true)
                 missingTranslations = await findAllMissingWords(translation, glossWords, locale)
                 const toolTipLines = [];
@@ -6597,8 +6604,7 @@ function MutationsPlural(mutationsList, observer) {
                         // pluralOriginal = mypluralOriginal[0].querySelector(".original-raw")
                         textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
                         // console.debug("detailEditor:",detailEditor)
-
-                        MutResult = await validate(locale, pluralOriginal.textContent, translation, locale, false, rowId, true)
+                        MutResult = await validate(locale, pluralOriginal.textContent, translation, locale, false, rowId, true, DefGlossary)
                         if (MutResult.percent == 100) {
                             let markerpresent = leftPanel.getElementsByClassName("marker");
                             if (typeof markerpresent[0] != 'undefined') {

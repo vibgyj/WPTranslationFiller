@@ -1616,7 +1616,9 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             result = { wordCount, percent, toolTip };
                             old_status = document.querySelector("#preview-" + newrowId);
                             //console.debug("checkpage:",old_status)
-                            updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+                            // console.debug("checkpage nameDiff:",nameDiff)
+                           let showName = false 
+                            updateStyle(textareaElem, result, "", 'True', showName, nameDiff, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
                         }
                     }
                     if (toTranslate == false) {
@@ -1628,7 +1630,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     }
                     if (showName == true) {
                         let originalElem = document.querySelector("#preview-" + row + " .original");
-                        showNameLabel(originalElem,row)
+                        nameDiff = isExactlyEqual(translatedText, originalElem.innerText)
+                        showNameLabel(originalElem,row,nameDiff)
                     }
 
                     //console.debug("rows done:", countrows, tableRecords, countrows == tableRecords,original)
@@ -2232,7 +2235,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 //console.debug("original:", originalElem.innerText)
                 nameDiff = isExactlyEqual(currentTrans, originalElem.innerText)
                 //nameDiff = false
-                showNameLabel(originalElem,row)
+                showNameLabel(originalElem,row,nameDiff)
                 // We need to set the checkbox here, as processTransl thinks we are in editor
                 if (is_pte) {
                     rowchecked = rawPreview.querySelector(".checkbox input");
@@ -2286,7 +2289,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                     //console.debug("select 4224:",select)
                     var status = select.querySelector("dd");
                     //console.debug("status:", status,status.value,status.innerText)
-                    await validateEntry(destlang, editorElement, "", false, row, locale, record, false, DefGlossary);
+                    await validateEntry(destlang, editorElement, false, false, row, locale, record, false, DefGlossary);
                 }
                 else {
                     transtype = "single"
@@ -2833,7 +2836,8 @@ async function old_populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, trans
                 }
                 if (showName == true) {
                     let originalElem = document.querySelector("#preview-" + row + " .original");
-                    showNameLabel(originalElem,row)
+                    nameDiff = isExactlyEqual(translatedText, originalElem.innerText)
+                    showNameLabel(originalElem,row,nameDiff)
                 }
                // console.debug("local:", textareaElem)
                 validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
@@ -3033,10 +3037,6 @@ function fetchli(result, editor, row, postTranslationReplace, preTranslationRepl
         //setTimeout(async function () {
         original = editor.querySelector(`#editor-${row} div.editor-panel__left`);
         original = original.querySelector("span.original-raw").innerText;
-
-        //console.debug("editor in li:",editor)
-        //console.debug("result in li:",result)
-        //console.debug("result in li:",result.children)
 
         //result = result.children
         collection = result
@@ -3333,7 +3333,7 @@ async function processResult (result, editor, row, TMwait, postTranslationReplac
                 textareaElem.innerHTML = myResult;
 
                 translated = true;
-                result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary)
                 mark_as_translated(row, current, translated, preview);
             }
         } else {
@@ -3556,7 +3556,7 @@ async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplac
                     previewName.appendChild(element1);
                 }
                 mark_as_translated(row, current, translated, preview)
-                result = await validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                result = await validateEntry(destlang, textareaElem, "", "", row, locale, record, false,DefGlossary);
                 await mark_preview(preview, result.toolTip, pretrans, row, false)
                 foundTM++
             }
@@ -3604,7 +3604,8 @@ async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplac
                     }
                     if (showName == true) {
                         let originalElem = document.querySelector("#preview-" + row + " .original");
-                        showNameLabel(originalElem,row)
+                        nameDiff = isExactlyEqual(translatedText, originalElem.innerText)
+                        showNameLabel(originalElem,row,nameDiff)
                     }
                 }
                 let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
@@ -3661,7 +3662,7 @@ async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplac
                                     //console.debug("processed:",processed)
                                     if (processed != "No suggestions") {
                                         textareaElem = await record.querySelector("textarea.foreign-text");
-                                        result = await validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                                        result = await validateEntry(destlang, textareaElem, "", "", row, locale, record, false, DefGlossary);
                                         await mark_preview(preview, result.toolTip, textareaElem.innerText, row, false)
                                        foundTM++
                                     }
@@ -4079,9 +4080,9 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             let originalTrans = originalElem
             //console.debug("trans:", currentTrans)
            // console.debug("original:", originalElem.innerText)
-            nameDiff= isExactlyEqual(currentTrans, originalElem.innerText)
+            nameDiff= isExactlyEqual(translatedText, originalElem.innerText)
             //nameDiff = false
-            showNameLabel(originalElem,row)
+            showNameLabel(originalElem,row,nameDiff)
             // We need to set the checkbox here, as processTransl thinks we are in editor
             if (is_pte) {
                 rowchecked = rawPreview.querySelector(".checkbox input");
@@ -5639,7 +5640,8 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                     }
                     if (showName == true) {
                         let originalElem = document.querySelector("#preview-" + row + " .original");
-                        showNameLabel(originalElem,row)
+                        nameDiff = isExactlyEqual(translatedText, originalElem.innerText)
+                        showNameLabel(originalElem,row,nameDiff)
                     }
                     preview = document.querySelector(`#preview-${row}`);
                     // we need to set the button to "save"
@@ -5785,12 +5787,20 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     var formal = checkFormal(false);
     var editor;
     var plural;
+    var preview;
+    var preview_textElem;
+    
     setPostTranslationReplace(postTranslationReplace, formal);
     editor = await document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
+
+    // We need to populate the corrected preview as well
+    preview = getPreview(rowId);
+    preview_textElem = preview.getElementsByClassName("translation foreign-text");
+
     let original = editor.querySelector("span.original-raw").innerText;
     let text = editor.querySelector("textarea.foreign-text").value;
     let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
-    //console.debug("check:",checkTranslateButton)
+    checkTranslateButton.className = "checktranslation-entry-my-button"
     // posprocess the translation
     translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
     //console.debug("translatedtext:",translatedText)
@@ -5805,6 +5815,9 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
         });
         
     }
+    preview_textElem[0].innerHTML = translatedText
+    preview_textElem[0].innerText = translatedText
+    preview_textElem[0].value = translatedText
     // We need to get the original of the plural
     plural = await editor.querySelector(`#editor-${rowId} .source-string__plural span.original-raw`);
     if (plural != null) {
@@ -6506,7 +6519,7 @@ function hideIncompletePreviewRows() {
 
 function saveLocal_2(bulk_timer) {
     // console.debug("bulk save started")
-    console.debug("timer:",bulk_timer)
+    //console.debug("timer:",bulk_timer)
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var preview;
     var timeout = 2000;

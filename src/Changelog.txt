@@ -72,3 +72,13 @@ Version changes as of version 3.3
 70. Version 3.9.70 When translating records the preview was not marked.
 71. Version 3.9.71 The check for URL improved, and the timeout in translatePage function inproved, and the timeout in bulk save improved. And marking glossary improved
 72. Version 3.9.72 When performing checktranslation within the editor, the changed line was not within the editor. No the translation will be improved if a copy is done within the editor with the copy button
+73. Version 3.9.73 Completely overhauled populatewithTM function
+74. Version 3.9.74 Added validation to the new populatewithTM function
+75. Version 3.9.75 Fixed labeling names when different
+76. Version 3.9.76 With toggle Switch TM an error is created, now fixed var was not present
+77. Version 3.9.77 With populatewithTM, in Firefox the boolean is handled differently, causing the programm to loop
+78. Version 3.9.78 Still issues witht populatewithTM, so changed the code
+89. Version 3.9.79 Added check of "no-suggestions"
+90. Version 3.9.80 When foreign translations are found, no marking of the quality
+91. Version 3.9.81 If a plural was the last in the last, then the programm did not give a total
+92. Version 3.9.82 If a suggestion contains a name, and checkpage is performed an error is thrown "currentTrans"

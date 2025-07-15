@@ -624,7 +624,7 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
 }
 
 
-async function validatePage(language, showHistory, locale,showDiff, DefGlossary) {
+async function validatePage(language, showHistory, locale, showDiff, DefGlossary) {
     // This function checks the quality of the current translations
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
@@ -645,9 +645,9 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
         myglossary = glossary1
     }
     else {
-         DefGlossary == false
-         myglossary = glossary
-        }
+        DefGlossary == false
+        myglossary = glossary
+    }
     //console.debug("validatePage glossary:",myglossary)
     // html code for counter in checkbox
     const line_counter = `
@@ -655,7 +655,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
         <span class="text-line-counter"></span>
     </div>
     `;
-   
+
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
     //console.debug("breadcrumb:",f)
@@ -671,7 +671,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
     }
     else {
         let url = ""
-        newurl=""
+        newurl = ""
     }
     var divProjects = document.querySelector("div.projects");
     // We need to set the priority column only to visible if we are in the project 
@@ -693,17 +693,17 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
             }
         }
     }
-   // await set_glotdict_style().then(function (myGlotDictStat) {
+    // await set_glotdict_style().then(function (myGlotDictStat) {
     //console.debug("glotdict:", myGlotDictStat)
     // Use the retrieved data here or export it as needed
     // increase the timeout if buttons from GlotDict are not shown
     // this set when the checkbox show GlotDict is set
-   // var increaseWith = 0
-   // var timeout = 0;
-     // if (myGlotDictStat) {
-      //  timeout = 100;
-       // increaseWith = 50
-      // }
+    // var increaseWith = 0
+    // var timeout = 0;
+    // if (myGlotDictStat) {
+    //  timeout = 100;
+    // increaseWith = 50
+    // }
     myGlotDictStat = await set_glotdict_style();
 
     // 2. Determine timeout based on result
@@ -719,136 +719,124 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
     await sleep(timeout);
 
     // 4. Now run your loop
-    
-     
+
+
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-           // setTimeout(async function() {
-                rowcount++
-                let original = e.querySelector("span.original-raw").innerText;
-                let textareaElem = e.querySelector("textarea.foreign-text");
-                let rowId = textareaElem.parentElement.parentElement.parentElement
-                    .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+        // setTimeout(async function() {
+        rowcount++
+        let original = e.querySelector("span.original-raw").innerText;
+        let textareaElem = e.querySelector("textarea.foreign-text");
+        let rowId = textareaElem.parentElement.parentElement.parentElement
+            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
 
-                // we need to fetch the status of the record to pass on
-                let  preview = document.querySelector("#preview-" + rowId)
-                old_status = document.querySelector("#preview-" + rowId);
-                /// checkbox = old_status.querySelector('input[type="checkbox"]'
-                if (old_status != null) {
-                    checkbox = old_status.getElementsByClassName("checkbox")
-                    glossary_word = old_status.getElementsByClassName("glossary-word")
-                }
-                if (checkbox[0] != null) {
-                    my_line_counter = checkbox[0].querySelector("div.line-counter")
-                    // mark lines with glossary word into checkbox
-                    if (glossary_word.length != 0) {
-                        checkbox[0].style.background = "LightSteelBlue"
-                        checkbox[0].title = "Has glossary word"
-                    }
-                    // add counter to checkbox, but do not add it twice      
-                    if (my_line_counter == null) {
-                        checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
-                        let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
-                        this_line_counter.innerText = rowcount
-                    }
-
-                }
-                else {
-                    // if not a PTE it must be put in a different checkbox
-                    //console.debug("we are not a PTE")
-                    if (old_status != null) {
-                        let mycheckbox = old_status.getElementsByClassName("myCheckBox")
-                        mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
-                        let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
-                        this_line_counter.innerText = rowcount
-                        if (glossary_word.length != 0) {
-                            mycheckbox[0].style.background = "LightSteelBlue"
-                            mycheckbox[0].title = "Has glossary word"
-                        }
-                    }
-                    // mycheckbox[0].textContent = rowcount
-                }
-                let element = e.querySelector(".source-details__comment");
-                let toTranslate = false;
-                let showName = false;
-                if (element != null) {
-                    // Fetch the comment with name
-                    let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
-                    if (comment != null) {
-                        toTranslate = checkComments(comment.trim());
-                    }
-                    else {
-                        toTranslate = true;
-                    }
-                }
-                else {
-                    toTranslate = true;
-                }
-                if (toTranslate == false) {
-                    showName = true;
-                }
-                else {
-                    showName = false;
-                }
-                if (textareaElem.innerText !=""){
-                translation = textareaElem.innerText;
-               // console.debug("we do have a innerText")
-                }
-                else {
-                    translation = textareaElem.textContent
-                }
-                if (showName == true) {
-                    // We need to check if the translation is exactly the same as the original
-                    nameDiff = isExactlyEqual(original, translation)
-                    if (nameDiff == true) {
-                        nameDiff = false;
-                    }
-                    else {
-                        nameDiff = true
-                    }
-                }
-                else {
-                    nameDiff = false;
-                }
-
-                var result = validate(language, original, translation, locale, false, rowId, false, DefGlossary);
-               // console.debug("validate in validatepage line 853:",original,result)
-                let record = e.previousSibling.previousSibling.previousSibling
-                // this is the start of validation, so no prev_trans is present      
-                prev_trans = translation
-              //  if (showHistory === 'false') {
-               //     waiting = 0;
-              //  }
-              //  else {
-              //      waiting = 100;
-              //  }
-               // setTimeout(async function () {
-                // PSS this is the one with orange
-                  updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
-
-                  mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
-                //}, waiting);
-           if (rowcount == 1){
-               //console.debug(" we are starting observer")
-             // console.debug("e:",e)
-              mytextarea = e.getElementsByClassName('foreign-text')
-              //console.debug("after start textarea:",mytextarea)
-             //if (StartObserver) {
-             // start_editor_mutation_server(mytextarea, "Details") 
-              //}
-           }
-          //}, timeout);
-           //  timeout += increaseWith;
+        // we need to fetch the status of the record to pass on
+        let preview = document.querySelector("#preview-" + rowId)
+        old_status = document.querySelector("#preview-" + rowId);
+        /// checkbox = old_status.querySelector('input[type="checkbox"]'
+        if (old_status != null) {
+            checkbox = old_status.getElementsByClassName("checkbox")
+            glossary_word = old_status.getElementsByClassName("glossary-word")
         }
-        
-        // 30-06-2021 PSS set fetch status from local storage
-        chrome.storage.local.set({ "noOldTrans": "False" }, function () {
-            // Notify that we saved.
-            // alert("Settings saved");
-        });
+        if (checkbox[0] != null) {
+            my_line_counter = checkbox[0].querySelector("div.line-counter")
+            // mark lines with glossary word into checkbox
+            if (glossary_word.length != 0) {
+                checkbox[0].style.background = "LightSteelBlue"
+                checkbox[0].title = "Has glossary word"
+            }
+            // add counter to checkbox, but do not add it twice      
+            if (my_line_counter == null) {
+                checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
+                let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
+                this_line_counter.innerText = rowcount
+            }
 
-        
-   // });
+        }
+        else {
+            // if not a PTE it must be put in a different checkbox
+            //console.debug("we are not a PTE")
+            if (old_status != null) {
+                let mycheckbox = old_status.getElementsByClassName("myCheckBox")
+                mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
+                let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
+                this_line_counter.innerText = rowcount
+                if (glossary_word.length != 0) {
+                    mycheckbox[0].style.background = "LightSteelBlue"
+                    mycheckbox[0].title = "Has glossary word"
+                }
+            }
+            // mycheckbox[0].textContent = rowcount
+        }
+        let element = e.querySelector(".source-details__comment");
+        let toTranslate = false;
+        let showName = false;
+        if (element != null) {
+            // Fetch the comment with name
+            let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
+            if (comment != null) {
+                toTranslate = checkComments(comment.trim());
+            }
+            else {
+                toTranslate = true;
+            }
+        }
+        else {
+            toTranslate = true;
+        }
+        if (toTranslate == false) {
+            showName = true;
+        }
+        else {
+            showName = false;
+        }
+        if (textareaElem.innerText != "") {
+            translation = textareaElem.innerText;
+            // console.debug("we do have a innerText")
+        }
+        else {
+            translation = textareaElem.textContent
+        }
+        //console.debug("showname:",showName)
+        if (showName == true) {
+            // We need to check if the translation is exactly the same as the original
+            nameDiff = isExactlyEqual(original, translation)
+            if (nameDiff == true) {
+                // we are equal
+                nameDiff = false;
+            }
+            else {
+                nameDiff = true
+            }
+        }
+        else {
+            // it is not a name, so we do not show the label
+            nameDiff = false;
+        }
+        //console.debug("ValidatePage nameDiff:", nameDiff+" "+rowId)
+        // console.debug("ValidatePage showName:",showName)
+        var result = validate(language, original, translation, locale, false, rowId, false, DefGlossary);
+        // console.debug("validate in validatepage line 853:",original,result)
+        let record = e.previousSibling.previousSibling.previousSibling
+        // this is the start of validation, so no prev_trans is present      
+        prev_trans = translation
+        // PSS this is the one with orange
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+        mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
+        //}, waiting);
+        if (rowcount == 1) {
+            //console.debug(" we are starting observer")
+            // console.debug("e:",e)
+            mytextarea = e.getElementsByClassName('foreign-text')
+
+            // 30-06-2021 PSS set fetch status from local storage
+            chrome.storage.local.set({ "noOldTrans": "False" }, function () {
+                // Notify that we saved.
+                // alert("Settings saved");
+            });
+        }
+    }
 }
+
 function countWordsinTable() {
     var counter = 0;
     var wordCount = 0;
