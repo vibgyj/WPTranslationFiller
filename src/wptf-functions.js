@@ -1233,4 +1233,29 @@ function restorePlaceholdersAfterTranslation(text, originalText) {
         return placeholders[counter++] || '';
     });
 }
+async function showChangelog() {
+  try {
+    const response = await fetch(chrome.runtime.getURL('Changelog.txt'));
+    const text = await response.text();
+
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = 'Changelog';
+    details.appendChild(summary);
+
+    const pre = document.createElement('pre');
+    pre.textContent = text;
+    details.appendChild(pre);
+
+    // Optional: style it a bit
+    details.style.marginTop = '1em';
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.fontFamily = 'monospace';
+
+    const container = document.querySelector('#settings') || document.body;
+    container.appendChild(details);
+  } catch (error) {
+    console.error('Failed to load changelog:', error);
+  }
+}
 

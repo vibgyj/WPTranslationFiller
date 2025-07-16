@@ -216,7 +216,8 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
         inprogressbar.style = ""
         progressbar.style.display = 'block';
     }
-    
+     setPostTranslationReplace(postTranslationReplace);
+     //setPreTranslationReplace(preTranslationReplace);
     for (let i = 0; i < myrecCount; i++) {
         const previewRow = previewRows[i];
         if (!previewRow) continue;
@@ -437,17 +438,13 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                 await mark_as_translated(rowId, current, textFound, preview)
                                 updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
 
-
-
-
                             }
                         }
                         else {
                             //console.debug("Unexpected result from waitforTM:", suggestionResult);
                         }
-                        editor.style.removeProperty("display");
+                        //editor.style.removeProperty("display");
                     }
-
 
                     if (counter == myrecCount) {
                         // Translation completed  
@@ -457,7 +454,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                         translateButton.innerText = __("Translated");
                         progressbar = document.querySelector(".indeterminate-progress-bar");
                         progressbar.style.display = "none";
-                        toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
+                       // toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
                         if (counter > 0) {
                             if (GlotPressBulkButton != null && typeof GlotPressBulkButton != "undefined") {
                                 let button = GlotPressBulkButton.getElementsByClassName("button")
@@ -470,8 +467,10 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                         }
                         // This one is closing the last editor!!
                         // We need to enable the preview again, as it is set to none at this point
+                        //editor.style.display = 'none'
                         editor.style.removeProperty("display");
-                        //preview.style.removeProperty("display");
+                        preview.style.display = 'table-row' 
+
                     }
                 }
             }
@@ -487,7 +486,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                 translateButton.innerText = __("Translated");
                 progressbar = document.querySelector(".indeterminate-progress-bar");
                 progressbar.style.display = "none";
-                toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
+               // toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
                 if (counter > 0) {
                     if (GlotPressBulkButton != null && typeof GlotPressBulkButton != "undefined") {
                         let button = GlotPressBulkButton.getElementsByClassName("button")
@@ -501,12 +500,6 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
             }
             else if (foundTM != 0 && counter == myrecCount) {
                 // Translation completed  
-                toastBox = document.getElementsByClassName("toast-container")
-        
-                if (toastBox.length > 1) {
-                   console.debug("toastbox:", toastBox)
-                   toastBox[0].remove()
-                }
                 translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
                 translateButton.classList.remove("started")
                 translateButton.className += " translated";
@@ -531,5 +524,6 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
         }
         
     }
+     toastbox("info", __("We have found: ") + parseInt(foundTM), "3000", " TM records");
 }
 

@@ -243,6 +243,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     var pos;
     var index = 0;
     var foundIgnore;
+     var formal = checkFormal(false);
     //console.debug("before posrepl: '"+ translatedText +"'")
     let debug = false;
     if (debug == true) {
@@ -409,10 +410,55 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 if (typeof replaceVerb[i][1] == 'undefined') {
                     replaceVerb[i][1] = ""
                 }
-                translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]); 
-                // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                //console.debug("replace word:", replaceVerb[i][0])
+               // Below is necessary to replace words properly when we have a Formal locale
+               if (/\byou're\b/.test(original)) {
+                   if (formal) {
+                       // handle special case for "you're"
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]); // example slot for you're
+                   }
+                   else {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
+                   }
+               }
+               else if (/\byou've\b/.test(original)) {
+                   if (formal) {
+                       // handle special case for "you've"
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]); // example slot for you're
+                   }
+                   else {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
+                   }
+                  }
+               else if (/\byou\b/.test(original)) {
+                   if (formal) {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]);
+                   }
+                   else {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
+                   }
+                  }
+               else if (/\byour\b/.test(original)) {
+                   if (formal) {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]);
+                   }
+                   else {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
+                   }
+                  }
+               else if (/\bYour\b/.test(original)) {
+                   if (formal) {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]);
+                   }
+                   else {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
+                   }
+               }
+               else {
+                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]);
+                  }
+
             }
-            //console.debug("translated after replace post:",translatedText)
         }
         else {
             // PSS solution for issue #291
@@ -6515,12 +6561,29 @@ function hideIncompletePreviewRows() {
         // Hide the row if it doesn't have the second number
         if (match && !match[2]) {
             row.style.display = "none";
+            //row.style.removeProperty("display");
            // console.debug("Hiding row with incomplete ID:", id);
         }
     });
 }
 
-function saveLocal_2(bulk_timer) {
+function hideUntranslatedPreviewRows() {
+    const timer = setTimeout(() => {
+        const rows = document.querySelectorAll('tr.untranslated[id^="preview-"]');
+        rows.forEach(row => {
+            const id = row.id;
+            const match = id.match(/^preview-(\d+)(?:-(\d+))?$/);
+            // Hide the row if it doesn't have the second number
+            if (match && !match[2]) {
+               row.style.removeProperty("display");
+                row.style.display = "none";
+                row.style.display = "hidden";
+            }
+        });
+    },100)
+}
+
+async function saveLocal_2(bulk_timer) {
     // console.debug("bulk save started")
     //console.debug("timer:",bulk_timer)
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -6575,7 +6638,7 @@ function saveLocal_2(bulk_timer) {
                 line_read++
                 if (!myNewRow.includes("old")) {
                     Edopen = document.querySelector(`#editor-${myNewRow}`)
-                    
+
                     //console.debug("Edopen:", Edopen)
                     //delay(100)
                     if (Edopen != null && Edopen != "Time-out reached") {
@@ -6590,45 +6653,28 @@ function saveLocal_2(bulk_timer) {
                             let glotpress_close = Edopen.querySelector(".panel-header-actions__cancel with-tooltip")
                             let preview_Unprocessed = preview
                             glotpress_suggest.classList.remove("disabled")
-                            
+
                             if (autoCopyClipBoard) {
                                 My1copyClip = true;
                             }
                             autoCopyClipBoard = false;
-                            new Promise(resolve => setTimeout(async () => {                          
-                                 try {
-                                   preview.querySelector("td.actions a.action.edit").click();
-                                  //  waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 8000, "6523");
+                            new Promise(resolve => setTimeout(async () => {
+                                try {
+                                    preview.querySelector("td.actions a.action.edit").click();
+                                    //  waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 8000, "6523");
                                     //console.debug("Editor open!", editorOpen, preview);
 
-                                     // try {
-                                     glotpress_suggest.click();
-                                     counter++;
-                                      
-                                       // const fullRowId =  waitForFullRowId(myNewRow);
-                                      //  const preview = document.querySelector(`#preview-${fullRowId}`);
-                                        // console.debug("two numbers:", hasTwoNumbers(fullRowId), preview);
-                                        // console.debug("unprocessed:",preview_Unprocessed)
-                                       // preview_Unprocessed.style.display = "none"
+                                    // try {
+                                    glotpress_suggest.click();
+                                    counter++;
 
-                                      //  if (!hasTwoNumbers(fullRowId)) {
-                                          //  console.debug("no two numbers:", hasTwoNumbers(fullRowId), preview);
-                                       // }
-
-                                   // } catch (err) {
-                                        // console.debug("myNewRow:", myNewRow);
-                                     //   const preview = document.querySelector(`#preview-${myNewRow}`);
-                                      //  console.debug("preview with error:", preview);
-                                        // console.debug("Row ID could not be resolved:", err.message);
-                                      //  counter--
-                                   // }
                                 } catch (err) {
-                                   // counter--
+                                    // counter--
                                     console.debug("Could not open editor:", err.message);
                                 }
-                                
+
                                 resolve();
-                            }));
+                            }),50);
 
                             //console.debug("")
                         }
@@ -6645,7 +6691,8 @@ function saveLocal_2(bulk_timer) {
                             }
                             else {
                                 //console.debug("houston we have an old")
-                                myNewRow.style = "none"
+                                myNewRow.style.removeProperty("display");
+                                //myNewRow.style = "none"
                             }
                         }
                     }
@@ -6702,22 +6749,29 @@ function saveLocal_2(bulk_timer) {
                 }
                 else {
                     // console.debug("We seem to have an old record:", preview)
+                    preview.style.removeProperty("display");
                     preview.style.display = "hidden"
                 }
             }
+        }
+        else {
+            preview.style.removeProperty("display");
         }
     }, bulk_timer)
         .then(() => {
             timeout +=bulk_timer
             // pss 18-04
-            //hideIncompletePreviewRows();
+            hideIncompletePreviewRows();
+            hideUntranslatedPreviewRows()
             progressbar = document.querySelector(".indeterminate-progress-bar");
             if (progressbar != null) {
+               
                 progressbar.style.display = "none";
                 StartObserver = true;
                 let read = __("We have read:")
                 let saved = __(" records and saved:")
                 messageBox("info", read + line_read + saved + counter);
+
                 if (My1copyClip) {
                     autoCopyClipBoard = true;
                 }
@@ -6728,7 +6782,8 @@ function saveLocal_2(bulk_timer) {
         .catch(error => {
             console.error('Error:', error);
         });
-        clearTimeout(procRecId)
+    clearTimeout(procRecId)
+    
 
 }
 
