@@ -381,16 +381,13 @@ async function validateOld(showDiff) {
     if ((records.length) > 1) {
         let progressbar = document.querySelector(".indeterminate-progress-bar");
         if (progressbar == null) {
-            myheader.insertAdjacentHTML('beforebegin', template);
-            // progressbar = document.querySelector(".indeterminate-progress-bar");
-            // progressbar.style.display = 'block';
+            myheader.insertAdjacentHTML('afterend', template);
         }
         else {
             console.debug("we start the bar")
             progressbar.style.display = 'block';
         }
-
-
+        
         // 12 - 06 - 2021 PSS added project to url so the proper project is used for finding old translations
         let f = document.getElementsByClassName("breadcrumb");
 
@@ -410,7 +407,7 @@ async function validateOld(showDiff) {
         }
         // console.debug("newurl:", newurl)
         let single = "False";
-
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         const processRecordWithDelay = async (record, delay,processed) => {
             try {
                 const startTime = Date.now(); // Record the start time
@@ -467,7 +464,9 @@ async function validateOld(showDiff) {
                     else {
                         if ((records.length) > 1) {
                             let check=__("Check old is ready")
-                                messageBox("info", check)
+                            toastbox("info", check, "2500", "Checked");
+                          //  let check=__("Check old is ready")
+                          //      messageBox("info", check)
                             }
                     // checking old records done
                         progressbar = document.querySelector(".indeterminate-progress-bar");

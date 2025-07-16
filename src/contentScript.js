@@ -16,7 +16,7 @@ var DispCount;
 var is_pte;
 var classToolTip;
 var is_entry = false;
-is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 
 
 chrome.storage.local.get(null, function (items) {
@@ -3085,7 +3085,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
 
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
-    checkElem = document.querySelector("#preview-" + rowId + " .priority");
+    checkElem = await document.querySelector("#preview-" + rowId + " .priority");
+   // console.debug("checkElem:",checkElem,rowId)
     SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
     if (SavelocalButton == null) {
         SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");

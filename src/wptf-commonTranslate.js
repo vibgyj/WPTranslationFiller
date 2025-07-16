@@ -1246,7 +1246,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     progressbar = document.querySelector(".indeterminate-progress-bar");
 
     if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
+        myheader.insertAdjacentHTML('afterend', template);
         progressbar = document.querySelector(".indeterminate-progress-bar");
         if (progressbar.style != null) {
             progressbar.style.display = 'block';
@@ -1638,6 +1638,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     if (countrows == tableRecords) {
                         let repldone = __("Replace verbs done: ")
                         let repltext = __(" replaced words<br>")
+                        //toastbox("info", __("Replace verbs done:") + recWordCount + __("l replaced words<br>" +repl_verb, "3500"));
                         messageBox("info", repldone + recWordCount + repltext + repl_verb);
                         // Translation replacement completed
                         let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button"); 
@@ -1655,6 +1656,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                     if (countrows == tableRecords) {
                         let repldone = __("Replace verbs done: ")
                         let repltext = __(" replaced words<br>")
+                        //toastbox("info", __("Replace verbs done:") + recWordCount + __("l replaced words<br>" +repl_verb, "3500"));
+
                         messageBox("info", repldone + recWordCount + repltext + repl_verb);
                         // Translation replacement completed
                         let checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
@@ -3487,7 +3490,7 @@ async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplac
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
     //console.debug("processTM")
     if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
+        myheader.insertAdjacentHTML('afterend', template);
         // progressbar = document.querySelector(".indeterminate-progress-bar");
         //progressbar.style.display = 'block;';
     }
@@ -4798,7 +4801,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
     //console.debug("glos:", openAiGloss)
     if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
+        myheader.insertAdjacentHTML('afterend', template);
         // progressbar = document.querySelector(".indeterminate-progress-bar");
         //progressbar.style.display = 'block;';
     }
@@ -4939,7 +4942,7 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
     //console.debug("glos:", openAiGloss)
     if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
+        myheader.insertAdjacentHTML('afterend', template);
         // progressbar = document.querySelector(".indeterminate-progress-bar");
         //progressbar.style.display = 'block;';
     }
@@ -6541,7 +6544,7 @@ function saveLocal_2(bulk_timer) {
     var myheader = document.querySelector('#wpadminbar');
     var progressbar = document.querySelector(".indeterminate-progress-bar");
     if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
+        myheader.insertAdjacentHTML('afterend', template);
     }
     else {
         progressbar.style.display = 'block';
@@ -6707,7 +6710,7 @@ function saveLocal_2(bulk_timer) {
         .then(() => {
             timeout +=bulk_timer
             // pss 18-04
-            hideIncompletePreviewRows();
+            //hideIncompletePreviewRows();
             progressbar = document.querySelector(".indeterminate-progress-bar");
             if (progressbar != null) {
                 progressbar.style.display = "none";
