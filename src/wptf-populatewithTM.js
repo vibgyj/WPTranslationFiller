@@ -393,7 +393,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                 else {
                                     //console.debug(`⛔ TM suggestion rejected (score: ${score}%) below threshold (${TMtreshold}%) for record: ${rowId}`);
                                     if (previewName != null) {
-                                        previewName.innerText = "Below threshold: " + score
+                                        previewName.innerText = __("Below threshold: ") + score
                                         previewName.value = "Below threshold: " + score
                                         let newurl = ""
                                         updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)

@@ -11,6 +11,7 @@
   "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!": "Ключ API недействителен. Введите действительный ключ API.<br> Проверьте лицензию в параметрах!!!",
   "Auto translate is on, do you want to continue?": "Автоперевод включен. Продолжить?",
   "Auto translate": "Автоперевод",
+  "Below threshold: ": "Below threshold: ",
   "Bulk local": "Доб в БД",
   "Bulksave": "Сохранить",
   "Bulk save cancelled": "Массовое сохранение отменено",

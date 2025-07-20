@@ -1,4 +1,4 @@
-// Load the version from maniscript
+﻿// Load the version from maniscript
 var version = chrome.runtime.getManifest().version;
 var scriptElm = document.createElement("script");
 scriptElm.src = chrome.runtime.getURL("wptf-cute-alert.js");
@@ -1052,3 +1052,59 @@ function messageBox(type, message) {
         closeStyle: "alert-close",
     });
 }
+
+async function showChangelog() {
+  console.debug("We are showing it");
+
+  try {
+    const response = await fetch(chrome.runtime.getURL('/Changelog.txt'));
+    const text = await response.text();
+
+    const changelogTab = window.open("", "_blank");
+
+    if (!changelogTab) {
+      throw new Error("Popup or tab blocked by browser settings.");
+    }
+
+    changelogTab.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Changelog</title>
+        <style>
+          body {
+            font-family: system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 2em;
+            background-color: #f9f9f9;
+            color: #333;
+          }
+          pre {
+            white-space: pre-wrap;
+            font-size: 1.0em;
+            font-family: monospace;
+            background-color: #fff;
+            padding: 1em;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>📄 Changelog</h2>
+        <pre>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+      </body>
+      </html>
+    `);
+
+    changelogTab.document.close();
+
+  } catch (error) {
+    console.error("Failed to load changelog:", error);
+  }
+}
+
+

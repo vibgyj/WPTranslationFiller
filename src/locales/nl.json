@@ -11,6 +11,7 @@
   "API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!": "API-sleutel niet geldig. Voer een geldige API-sleutel in.<br>Controleer je licentie in de opties!!!",
   "Auto translate is on, do you want to continue?": "Automatsich vertalen staat aan, wil je doorgaan?",
   "Auto translate": "Automatisch vertalen",
+  "Below threshold: ": "Onder de drempel: ",
   "Bulksave": "Bulk opslaan",
   "Bulk save cancelled": "Bulk opslaan geannuleerd",
   "Bulk save to local": "Bulk opslaan in lokale database",

@@ -394,80 +394,99 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     if (pos != -1) {
         translatedText = translatedText.replace("> .", ">");
     }
-    // replaceVerb contains the verbs to replace
-    for (let i = 0; i < replaceVerb.length; i++) {
-        // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
-        if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
-            // PSS solution for issue #291
-            //console.debug("repl:", "'"+replaceVerb[i][0]+"'")
-            replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
-            //console.debug("match in URL:", CheckUrl(translatedText, replaceVerb[i][0]), translatedText,replaceVerb[i][0])
-            // if we have a value "{replacevar[index]}" left in the translation we need to remove that 
-            let toreplace = "{replacevar" + i+"}"
-            translatedText = translatedText.replaceAll(toreplace,"")
-            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                //console.debug("replaceverb:", replaceVerb[i][0], " ", replaceVerb[i][1])
-                if (typeof replaceVerb[i][1] == 'undefined') {
-                    replaceVerb[i][1] = ""
-                }
-                //console.debug("replace word:", replaceVerb[i][0])
-               // Below is necessary to replace words properly when we have a Formal locale
-               if (/\byou're\b/.test(original)) {
-                   if (formal) {
-                       // handle special case for "you're"
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]); // example slot for you're
-                   }
-                   else {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
-                   }
-               }
-               else if (/\byou've\b/.test(original)) {
-                   if (formal) {
-                       // handle special case for "you've"
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]); // example slot for you're
-                   }
-                   else {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
-                   }
-                  }
-               else if (/\byou\b/.test(original)) {
-                   if (formal) {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]);
-                   }
-                   else {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
-                   }
-                  }
-               else if (/\byour\b/.test(original)) {
-                   if (formal) {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]);
-                   }
-                   else {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
-                   }
-                  }
-               else if (/\bYour\b/.test(original)) {
-                   if (formal) {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][2]);
-                   }
-                   else {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1])
-                   }
-               }
-               else {
-                       translatedText = replaceWord(translatedText, replaceVerb[i][0], replaceVerb[i][1]);
-                  }
 
-            }
-        }
-        else {
-            // PSS solution for issue #291
-            replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
-            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-            }
+
+let replacementStats = [];
+
+for (let i = 0; i < replaceVerb.length; i++) {
+    const entry = replaceVerb[i];
+
+    if (!Array.isArray(entry) || entry.length < 2) continue;
+
+    const from = entry[0].replaceAll("&#44;", ",");
+    const toYou = entry[1];              // → Translation for "you"
+    const toYour = entry[2] || null;     // → Translation for "your"
+
+    // Clean up placeholder from text
+    translatedText = translatedText.replaceAll(`{replacevar${i}}`, "");
+
+    // Skip if source word is only in URLs
+    if (CheckUrl(translatedText, from)) continue;
+
+    // Count "your" and "you" in original
+    const yourCount = (original.match(/\byour\b/gi) || []).length;
+    const youCount = (original.match(/\byou(?!r|'re|'ve)\b/gi) || []).length;
+
+    // "your" → use entry[2]
+    if (yourCount && toYour) {
+        const regex = new RegExp(`\\b${escapeRegExp(from)}\\b`, 'g');
+        const matches = translatedText.match(regex);
+        if (matches) {
+            translatedText = translatedText.replace(regex, toYour);
+            replacementStats.push({
+                glossIndex: i,
+                type: "your",
+                count: matches.length,
+                replacedWith: toYour
+            });
         }
     }
+
+    // "you" → use entry[1]
+    if (youCount && toYou) {
+        const regex = new RegExp(`\\b${escapeRegExp(from)}\\b`, 'g');
+        const matches = translatedText.match(regex);
+        if (matches) {
+            translatedText = translatedText.replace(regex, toYou);
+            replacementStats.push({
+                glossIndex: i,
+                type: "you",
+                count: matches.length,
+                replacedWith: toYou
+            });
+        }
+    }
+
+    // Fallback: general replace if it's a basic pair (not "you"/"your")
+    if (
+        typeof entry[0] === "string" &&
+        typeof entry[1] === "string" &&
+        !/you(?!r)|your/i.test(entry[0])
+    ) {
+        translatedText = translatedText.replaceAll(entry[0], entry[1]);
+    }
+}
+
+// Fix leftover "je" (Dutch only)
+if (locale === "nl" || locale === "nl-be") {
+    translatedText = fixLeftoverJe(original, translatedText, replaceVerb);
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function fixLeftoverJe(original, translatedText, replaceVerb) {
+    const matchingEntries = replaceVerb.filter(entry =>
+        typeof entry[0] === "string" &&
+        translatedText.includes("je") &&
+        /\bje\b/.test(entry[0]) &&
+        entry[1] && entry[1] !== "je"
+    );
+
+    if (/\bje\b/.test(translatedText) && matchingEntries.length > 0) {
+        const replacement = matchingEntries[0][1].trim();
+        console.debug("fixLeftoverJe replacement:", replacement);
+        translatedText = translatedText.replace(/\bje\b/g, replacement);
+    }
+
+    return translatedText;
+}
+
+   //We still need to replace other entries 
+   //translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+
+  
     //console.debug("after replace verb:",translatedText)
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     if (convertToLower == true) {
@@ -6664,17 +6683,16 @@ async function saveLocal_2(bulk_timer) {
                                     //  waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 8000, "6523");
                                     //console.debug("Editor open!", editorOpen, preview);
 
-                                    // try {
                                     glotpress_suggest.click();
                                     counter++;
-
+                                    resolve();
                                 } catch (err) {
                                     // counter--
                                     console.debug("Could not open editor:", err.message);
                                 }
 
-                                resolve();
-                            }),50);
+                                //resolve();
+                            }),10);
 
                             //console.debug("")
                         }

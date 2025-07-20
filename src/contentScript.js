@@ -2535,7 +2535,7 @@ async function checkbuttonClick(event) {
      const target = event.target;
 
     // Check if the clicked element is the copy-suggestion button
-    if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta')) {
+    if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta') || target.classList.contains('translation-suggestion__translation')){
          const row = target.closest('tr');
          const rowId = row?.id;
          if (rowId) {
@@ -6377,7 +6377,6 @@ async function handleMutation(mutationsList, observer) {
 
     if (pluralPresent != null) {
         spansPlural = pluralPresent.getElementsByClassName("glossary-word");
-        console.debug("spansPlural single:", spansPlural)
         spans = spansPlural
         // Add gloss-index attribute and remove previous highlights
         spansArray = Array.from(spans);

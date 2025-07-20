@@ -1,5 +1,20 @@
 ﻿// This file contains functions used within various files
+function replaceOneByOne(text, from, to, maxCount) {
+    if (!to || maxCount <= 0) return { text, count: 0 };
 
+    const pattern = new RegExp(`\\b${from}\\b`);
+    let count = 0;
+
+    const newText = text.replace(pattern, (match) => {
+        if (count < maxCount) {
+            count++;
+            return to;
+        }
+        return match;
+    });
+
+    return { text: newText, count };
+}
 function convertToNumber(text) {
     const num = Number(text);
     return (!isNaN(num) && text !== null && text !== '') ? num : 0;
@@ -1232,30 +1247,5 @@ function restorePlaceholdersAfterTranslation(text, originalText) {
     return text.replace(/__PH_(\d+)__/g, () => {
         return placeholders[counter++] || '';
     });
-}
-async function showChangelog() {
-  try {
-    const response = await fetch(chrome.runtime.getURL('Changelog.txt'));
-    const text = await response.text();
-
-    const details = document.createElement('details');
-    const summary = document.createElement('summary');
-    summary.textContent = 'Changelog';
-    details.appendChild(summary);
-
-    const pre = document.createElement('pre');
-    pre.textContent = text;
-    details.appendChild(pre);
-
-    // Optional: style it a bit
-    details.style.marginTop = '1em';
-    pre.style.whiteSpace = 'pre-wrap';
-    pre.style.fontFamily = 'monospace';
-
-    const container = document.querySelector('#settings') || document.body;
-    container.appendChild(details);
-  } catch (error) {
-    console.error('Failed to load changelog:', error);
-  }
 }
 

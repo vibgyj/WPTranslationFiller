@@ -194,7 +194,8 @@ async function processData(data, original, record, row, originalPreProcessed, re
                     if (locale != "ru" && locale != "uk") {
                         translatedText = restoreCase(original, translatedText, locale, spellCheckIgnore, false);
                     }
-                    translatedText =  postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
+                    translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
+                    //console.debug("translated in DeepL:",translatedText)
                     deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);
                 }
                 // Example processing: add a processed field
