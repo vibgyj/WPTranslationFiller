@@ -1,4 +1,201 @@
-﻿// This file contains functions used within various files
+﻿function escapeRegExpForPronouns(word) {
+  return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function replaceVerbInTranslation(originalText, translatedText, replaceVerbs) {
+  let debug = false;
+  if (debug) {
+    console.debug("==== replaceVerbInTranslation ====");
+    console.debug("Original English text:", originalText);
+    console.debug("Original Translated Dutch text:", translatedText);
+    console.debug("replaceVerbs:", replaceVerbs);
+  }
+
+  const wordsInOriginal = originalText.match(/\b(?:Your|your|You|you)\b/g);
+
+  if (!wordsInOriginal) return translatedText;
+
+  const firstWord = originalText.trim().split(/\s+/)[0];
+
+  for (const word of wordsInOriginal) {
+    let lookupWord = word;
+
+    if (word === "Your" && firstWord !== "Your") {
+      lookupWord = "your";
+      if (debug) {
+        console.debug(`Converting 'Your' to lowercase 'your' because it's not first word`);
+      }
+    }
+
+    const replacementGroup = replaceVerbs.find(group => group[0] === lookupWord);
+    if (debug) {
+      console.debug("Checking word:", word, "| Using lookup:", lookupWord);
+      console.debug("Matched group from replaceVerbs:", replacementGroup);
+    }
+
+    if (!replacementGroup) {
+      if (debug) {
+        console.debug("No replacement group found, skipping...");
+      }
+      continue;
+    }
+
+    const dutchFrom = replacementGroup[1];
+    const dutchTo = replacementGroup[2];
+
+    if (!dutchFrom || !dutchTo) continue; // prevent charAt error
+
+    const regex = new RegExp(`\\b${dutchFrom}\\b`, 'g');
+    if (debug) {
+      console.debug("Regex used:", regex);
+    }
+
+    const match = translatedText.match(regex);
+    if (debug) {
+      console.debug("Match result:", match);
+    }
+
+    if (match) {
+      translatedText = translatedText.replace(regex, dutchTo);
+      if (debug) {
+        console.debug("After replacement:", translatedText);
+      }
+    } else {
+      if (debug) {
+        console.debug(`No match for '${dutchFrom}' in:`, translatedText);
+      }
+    }
+  }
+
+  const leftoverRegex = /\b(Je|je)\b/g;
+  const leftoverMatches = translatedText.match(leftoverRegex);
+  if (debug) {
+    console.debug("Leftover 'Je' or 'je' found:", leftoverMatches);
+  }
+
+  if (leftoverMatches) {
+    for (const leftover of leftoverMatches) {
+      const replacementGroup = replaceVerbs.find(group => group[1] === leftover);
+      if (!replacementGroup || !replacementGroup[2]) {
+        if (debug) {
+          console.debug(`No replacement group found for leftover '${leftover}', skipping...`);
+        }
+        continue;
+      }
+
+      const replacement =
+        leftover[0] === leftover[0].toUpperCase()
+          ? replacementGroup[2].charAt(0).toUpperCase() + replacementGroup[2].slice(1)
+          : replacementGroup[2].charAt(0).toLowerCase() + replacementGroup[2].slice(1);
+
+      const regex = new RegExp(`\\b${leftover}\\b`, 'g');
+      translatedText = translatedText.replace(regex, replacement);
+      if (debug) {
+        console.debug(`Replaced leftover '${leftover}' with '${replacement}'`);
+      }
+    }
+  }
+
+  if (debug) {
+    console.debug("==== Final Result ====");
+    console.debug("Returned translatedText:", translatedText);
+  }
+
+  return translatedText;
+}
+
+
+// This file contains functions used within various files
+
+function preTranslateReplaceTags(originalText) {
+  let indexYou = 0;
+  let indexYour = 0;
+
+  function isAtSentenceStart(text, matchIndex) {
+    return /^\s*$/.test(text.slice(0, matchIndex));
+  }
+
+  // Replace You (capitalized)
+  originalText = originalText.replace(/\bYou\b/g, (match, offset) => {
+    const tag = isAtSentenceStart(originalText, offset)
+      ? `<x id="p_${indexYou}">X_${indexYou}</x>`
+      : `<x id="p_${indexYou}">x_${indexYou}</x>`;
+    indexYou++;
+    return tag;
+  });
+
+  // Replace you (lowercase)
+  originalText = originalText.replace(/\byou\b/g, () => {
+    const tag = `<x id="p_${indexYou}">x_${indexYou}</x>`;
+    indexYou++;
+    return tag;
+  });
+
+  // Replace Your (capitalized)
+  originalText = originalText.replace(/\bYour\b/g, (match, offset) => {
+    const tag = isAtSentenceStart(originalText, offset)
+      ? `<x id="p_${indexYour + 1000}">X_${indexYour}</x>`
+      : `<x id="p_${indexYour + 1000}">x_${indexYour}</x>`;
+    indexYour++;
+    return tag;
+  });
+
+  // Replace your (lowercase)
+  originalText = originalText.replace(/\byour\b/g, () => {
+    const tag = `<x id="p_${indexYour + 1000}">x_${indexYour}</x>`;
+    indexYour++;
+    return tag;
+  });
+
+  return originalText;
+}
+
+function postTranslateReplaceTags(translatedText, replaceVerbs) {
+  return translatedText.replace(/<x id="p_(\d+)">(x|X)_\d+<\/x>/g, (match, num, caseIndicator) => {
+    const indexNum = parseInt(num, 10);
+
+    let replacement = "";
+
+    if (indexNum < 1000) {
+      // "you" placeholders
+      const verbEntry = replaceVerbs.find(arr => arr[0].toLowerCase() === "you");
+      if (!verbEntry) return match;
+
+      replacement = caseIndicator === "X" ? verbEntry[1] : verbEntry[1].toLowerCase();
+
+    } else {
+      // "your" placeholders
+      const verbEntry = replaceVerbs.find(arr => arr[0].toLowerCase() === "your");
+      if (!verbEntry) return match;
+
+      replacement = caseIndicator === "X"
+        ? (verbEntry[2] || verbEntry[1])
+        : (verbEntry[2] || verbEntry[1]).toLowerCase();
+    }
+
+    return replacement;
+  });
+}
+
+
+
+
+
+function preparePlaceholdersForTranslation(input, replaceVerbs) {
+  const placeholderTagMap = {};
+  let output = input;
+
+  output = output.replace(/<x id="([^_]+)_(\d+)">(.+?)<\/x>/g, (match, baseWord, indexStr, innerText) => {
+    const index = Number(indexStr);
+    const isUpper = /^[A-Z]/.test(innerText);
+    const token = (isUpper ? "X_" : "x_") + index;
+    placeholderTagMap[token] = baseWord;
+    return `<x id="${baseWord}_${index}">${token}</x>`;
+  });
+
+  return { cleanedText: output, placeholderTagMap };
+}
+
 function replaceOneByOne(text, from, to, maxCount) {
     if (!to || maxCount <= 0) return { text, count: 0 };
 

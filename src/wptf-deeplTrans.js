@@ -10,11 +10,11 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
     //console.debug("original:",originalPreProcessed)
     if (formal === true) {
         formal_value = "prefer_more"
-        mycontext = "This text is a legal message"
+        mycontext = "This text is a legal message, do not add words that are not within the text provided"
     }
     else {
         formal_value = "prefer_less"
-        mycontext = "This text is a casual conversation with a friend."
+        mycontext = "This text is a casual conversation with a friend, do not add words that are not in the text provided"
     }
 
     if (destlang == "RO") {
@@ -23,11 +23,9 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
     else {
         myformat = '1'
     }
-    //console.debug("formal in Deepl:", formal, formal_value)
-    //console.debug("targetlang:",destlang,deeplGlossary)
+    
     let url = DeeplFree == true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
-    //  console.debug("url:",url,DeeplFree)
-   // console.debug("deeplGlossary:",deeplGlossary)
+    
     const requestBody = {
         auth_key: apikeyDeepl,
         text: [originalPreProcessed],  // You have text as an array
@@ -54,7 +52,6 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
         translated = response;
 
         if (translated && translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
-          
             processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang)
                 .then(processedData => {
                    // console.debug("ProcessedData",processedData)
@@ -65,7 +62,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
                     console.error("Error in processData:", err);
                 });
         } else {
-            console.log("The result does not contain 'translations' :", translated,translated.error);
+            
             if (translated && translated.error) {
                let error = translated.error
                 switch (true) {

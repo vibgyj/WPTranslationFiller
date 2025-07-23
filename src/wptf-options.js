@@ -961,83 +961,88 @@ function pushToGlossary(glossary, key, value) {
 }
 
 function export_verbs_csv() {
-    // 13-03-2021 PSS added locale to export filename
-    var destlang = destLangTextbox.value;
-    let export_file = "export_verbs_" + destlang + ".csv";
+    const destlang = destLangTextbox.value;
+
+    // Add today's date in YYYY-MM-DD format
+    const now = new Date();
+    const dateStr = now.toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+    const export_file = `export_verbs_${destlang}_${dateStr}.csv`;
+
+    // Parse input into replaceVerb array
     setPostTranslationReplace(verbsTextbox.value);
-    let arrayData = [];
-    for (let i = 0; i < replaceVerb.length; i++) {
-          arrayData[i] = { original: replaceVerb[i][0], replacement:  replaceVerb[i][1] };
-         }
-   // let header ="original,replace");
-    let delimiter = ",";
-    let arrayHeader = ["original", "translation", "country"];
-    let header = arrayHeader.join(delimiter) + "\n";
-       let csv = header;
-       arrayData.forEach(obj => {
-           let row = [];
-           for (var key in obj) {
-               if (obj.hasOwnProperty(key)) {
-                   row.push(obj[key]);
-               }
-           }
-           csv += row.join(delimiter) + "\n";
-       });
 
-       let csvData = new Blob([csv], { type: "text/csv" });
-       let csvUrl = URL.createObjectURL(csvData);
+    // CSV header
+    const delimiter = ",";
+    const arrayHeader = ["original", "translation", "country"];
+    const header = arrayHeader.join(delimiter) + "\n";
+    let csv = header;
 
-       let hiddenElement = document.createElement("a");
-       hiddenElement.href = csvUrl;
-       hiddenElement.target = "_blank";
-       hiddenElement.download = export_file;
-       hiddenElement.click();
-       messageBox("info", "Export verbs ready <br>Wait until explorer is shown to save the file");
+    // Build CSV content
+    replaceVerb.forEach(entry => {
+        const original = entry[0] || "";
+        const translation = entry[1] || "";
+        const country = entry[2] || "";
 
-   }
-// PSS 08-03-2021 added this to prepare data for export to csv   
+        // Only add 'country' column if present
+        const row = country ? [original, translation, country].join(delimiter)
+                            : [original, translation].join(delimiter);
+        csv += row + "\n";
+    });
+
+    // Export as CSV
+    const csvData = new Blob([csv], { type: "text/csv" });
+    const csvUrl = URL.createObjectURL(csvData);
+
+    const hiddenElement = document.createElement("a");
+    hiddenElement.href = csvUrl;
+    hiddenElement.target = "_blank";
+    hiddenElement.download = export_file;
+    hiddenElement.click();
+
+    messageBox("info", "Export verbs ready <br>Wait until explorer is shown to save the file");
+}
+
 function setPostTranslationReplace(postTranslationReplace) {
-     replaceVerb = [];
-     let lines = postTranslationReplace.split("\n");
-     lines.forEach(function (item) {
-     // Handle blank lines
-     if (item != "") {
-       replaceVerb.push(item.split(","));
-       }
+    replaceVerb = [];
+    const lines = postTranslationReplace.trim().split("\n");
+    lines.forEach(line => {
+        if (line.trim() !== "") {
+            const parts = line.split(",");
+            // Keep up to 3 parts: original, translation, country (optional)
+            replaceVerb.push([parts[0], parts[1] || "", parts[2] || ""]);
+        }
     });
 }
+
 
 var obj_csv = {
     size:0,
     dataFile:[]
     };
 
-let input = document.getElementById("importPost");
-input.addEventListener("change", function () {   
-if (input.files && input.files[0]) {
-    let reader = new FileReader();
-        // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
-        reader.readAsText(input.files[0]);
-        reader.onload = function (e) {
-        obj_csv.size = e.total;
-        obj_csv.dataFile = e.target.result;
-        document.getElementById("text_verbs").value = "";
-        parseData(obj_csv.dataFile);
-    };
-   }
-});
-     
 function parseData(data) {
-    let csvData = [];
     let lbreak = data.split("\n");
-    let counter = 0;
-    lbreak.forEach(res => {
-        csvData.push(res.split(","));
-        if (counter >0) {
-            verbsTextbox.value += res.split(",") + "\n";
-        }
-        ++counter;
-    });
+    let verbsText = "";
+
+    // Skip header
+    for (let i = 1; i < lbreak.length; i++) {
+        const line = lbreak[i];
+
+        // Skip truly empty lines (do NOT trim valid ones)
+        if (line === "" || line === "\r") continue;
+
+        const parts = line.split(",");
+
+        const original = parts[0] ?? "";
+        const translation = parts[1] ?? "";
+        const country = parts[2] ?? "";
+
+        const newLine = country !== "" ? `${original},${translation},${country}` : `${original},${translation}`;
+        verbsText += newLine + "\n";
+    }
+
+    verbsTextbox.value = verbsText;
     messageBox("info", "Import ready");
 }
 

@@ -19,6 +19,7 @@ var is_entry = false;
 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 
 
+
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
     //chrome.storage.local.remove(keysToRemove, function () {
@@ -2538,8 +2539,16 @@ async function checkbuttonClick(event) {
     if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta') || target.classList.contains('translation-suggestion__translation')){
          const row = target.closest('tr');
          const rowId = row?.id;
-         if (rowId) {
-             onCopySuggestionClicked(target,rowId);
+        if (rowId) {
+             chrome.storage.local.get(["postTranslationReplace", "formal"], function (data) {
+                                        replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                                        onCopySuggestionClicked(target,rowId,replaceVerbs);
+                                    });
+
+
+
+
+            
         } else {
             console.warn('No row found for the clicked copy button.');
         }

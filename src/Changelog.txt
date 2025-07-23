@@ -8,4 +8,10 @@ Version 3.9.86 Added threshold text, and added check for locale in postprocess f
 Version 3.9.87 Postreplacement did not work annymore as it supposed to do
 Version 3.9.88 Clicking on the text suggestion below the editor did not use postreplace function
 Version 3.9.88 Fixed another problem with replacing in formal mode
+Version 3.9.89 Added You'll to the match for proper replacement
 Version 3.9.89 Another improvement of the "you" and "your" relacement
+Version 3.9.89 Fixed the problem with setting the "a" within <a href to uppercase
+Version 3.9.90 Now when populating with local in Formal, "je" is converted into "u"
+Version 3.9.91 Fixed problem where <br> was replaced by <Br>
+Version 3.9.91 Fixed wrong replacement of %1$s and %2$s
+Version 3.9.92 Completely overhauled the replacement for formal language

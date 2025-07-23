@@ -11,6 +11,10 @@ let replaceVerb = [];
 // This is done by replacing the formal word for a informal word
 let replacePreVerb = [];
 // 06-05-2021 PSS These vars can probably removed after testing
+//let youPlaceholderMap = {}; // Will store mapping like { __YOU_0__: "you", __YOUR_0__: "your" }
+const placeholderTagMap = {};  
+let originalReplaceCounter = 0;
+let placeholderMap = {}
 
 function getCallerDetails() {
     const error = new Error();
@@ -137,16 +141,23 @@ function preProcessOriginal(original, preverbs, translator) {
       //  original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
         // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
         // The above replacements are put into the specialchar regex for all api's
-        const myplaceHolderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-        const matches = [...original.matchAll(myplaceHolderRegex)];
-        if (matches != null) {
-            index = 0;
-            for (const match of matches) {
-                original = original.replace(match[0], `{replacevar${index}}`);
-                index++;
-            }
-        }
-        //console.debug("deepl replaced:",original)
+      // 1) Define your regex for all the placeholders you care about:
+     // Match placeholders (like %1$s, &#123;, %placeholder%, etc.)
+     const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+
+      // Store placeholder mappings for post-replacement
+
+     index = 0;
+
+     // Replace each match with a unique token and store original
+     const matches = [...original.matchAll(placeholderRegex)];
+     for (const match of matches) {
+        const token = `{replac_var${index}}`;
+        original = original.replace(match[0], token); // directly modify original
+        placeholderMap[token] = match[0];
+        index++;
+    }
+    
         // We need to remove markup that contains & and ; otherwise translation will fail
         let markupmatches = original.match(markupRegex)
         if (markupmatches != null) {
@@ -157,7 +168,7 @@ function preProcessOriginal(original, preverbs, translator) {
                 index++;
             }
         }
-        // console.debug("original:",original)
+        
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
         const linkmatches = original.match(linkRegex);
         if (linkmatches != null) {
@@ -201,7 +212,6 @@ function preProcessOriginal(original, preverbs, translator) {
         }
        
     }
-    //console.debug("original:", original)
     return original;
 }
 
@@ -209,13 +219,7 @@ function startsWithCapital(word) {
     return /[A-Z]/.test(word.charAt(0))
 }
 
-/**
- * Replace a specific word (which may include brackets or curly braces) in a string with a given replacement.
- * @param {string} str - The input string containing the word to be replaced.
- * @param {string} target - The target word to be replaced, which may include brackets or curly braces.
- * @param {string} replacement - The word to replace the target word with.
- * @returns {string} - The modified string with the target word replaced.
- */
+
 function replaceWord(str, target, replacement) {
    
     if (typeof replacement != 'undefined') {
@@ -244,7 +248,6 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     var index = 0;
     var foundIgnore;
      var formal = checkFormal(false);
-    //console.debug("before posrepl: '"+ translatedText +"'")
     let debug = false;
     if (debug == true) {
         console.debug("original: ", original);
@@ -273,18 +276,17 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         translatedText = restorePlaceholdersAfterTranslation(translatedText,original)
     }
     else if (translator == "deepl") {
-        const placeHolderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-        const matches = [...original.matchAll(placeHolderRegex)];
-        //console.debug("matches:",matches)
-        //const matches = original.matchAll(placeHolderRegex);
-        if (matches != null) {
-            index = 0;
-            for (const match of matches) {
-                translatedText = translatedText.replace(`{replacevar${index}}`, match[0]);
-                index++;
-            }
+        
+        for (const token in placeholderMap) {
+            const originalValue = placeholderMap[token];
+
+            // Make token safe for regex use
+            const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // Replace all occurrences in translatedText
+            translatedText = translatedText.replace(new RegExp(escapedToken, 'g'), originalValue);
         }
-       // console.debug("after Deepl replace:",translatedText)
+
         // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
         const markupmatches = original.match(markupRegex);
         index = 1;
@@ -395,100 +397,9 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         translatedText = translatedText.replace("> .", ">");
     }
 
-
-let replacementStats = [];
-
-for (let i = 0; i < replaceVerb.length; i++) {
-    const entry = replaceVerb[i];
-
-    if (!Array.isArray(entry) || entry.length < 2) continue;
-
-    const from = entry[0].replaceAll("&#44;", ",");
-    const toYou = entry[1];              // → Translation for "you"
-    const toYour = entry[2] || null;     // → Translation for "your"
-
-    // Clean up placeholder from text
-    translatedText = translatedText.replaceAll(`{replacevar${i}}`, "");
-
-    // Skip if source word is only in URLs
-    if (CheckUrl(translatedText, from)) continue;
-
-    // Count "your" and "you" in original
-    const yourCount = (original.match(/\byour\b/gi) || []).length;
-    const youCount = (original.match(/\byou(?!r|'re|'ve)\b/gi) || []).length;
-
-    // "your" → use entry[2]
-    if (yourCount && toYour) {
-        const regex = new RegExp(`\\b${escapeRegExp(from)}\\b`, 'g');
-        const matches = translatedText.match(regex);
-        if (matches) {
-            translatedText = translatedText.replace(regex, toYour);
-            replacementStats.push({
-                glossIndex: i,
-                type: "your",
-                count: matches.length,
-                replacedWith: toYour
-            });
-        }
-    }
-
-    // "you" → use entry[1]
-    if (youCount && toYou) {
-        const regex = new RegExp(`\\b${escapeRegExp(from)}\\b`, 'g');
-        const matches = translatedText.match(regex);
-        if (matches) {
-            translatedText = translatedText.replace(regex, toYou);
-            replacementStats.push({
-                glossIndex: i,
-                type: "you",
-                count: matches.length,
-                replacedWith: toYou
-            });
-        }
-    }
-
-    // Fallback: general replace if it's a basic pair (not "you"/"your")
-    if (
-        typeof entry[0] === "string" &&
-        typeof entry[1] === "string" &&
-        !/you(?!r)|your/i.test(entry[0])
-    ) {
-        translatedText = translatedText.replaceAll(entry[0], entry[1]);
-    }
-}
-
-// Fix leftover "je" (Dutch only)
-if (locale === "nl" || locale === "nl-be") {
-    translatedText = fixLeftoverJe(original, translatedText, replaceVerb);
-}
-
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function fixLeftoverJe(original, translatedText, replaceVerb) {
-    const matchingEntries = replaceVerb.filter(entry =>
-        typeof entry[0] === "string" &&
-        translatedText.includes("je") &&
-        /\bje\b/.test(entry[0]) &&
-        entry[1] && entry[1] !== "je"
-    );
-
-    if (/\bje\b/.test(translatedText) && matchingEntries.length > 0) {
-        const replacement = matchingEntries[0][1].trim();
-        console.debug("fixLeftoverJe replacement:", replacement);
-        translatedText = translatedText.replace(/\bje\b/g, replacement);
-    }
-
-    return translatedText;
-}
-
-   //We still need to replace other entries 
-   //translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-
-  
-    //console.debug("after replace verb:",translatedText)
+ 
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
+     //console.debug("befor convert to lower:", translatedText)
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
         // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
@@ -513,13 +424,19 @@ function fixLeftoverJe(original, translatedText, replaceVerb) {
         }
     }
     else {
-        //console.debug(translatedText)
+       
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-
-        translatedText = correctSentence(translatedText, spellCheckIgnore);
-        //console.debug(translatedText); // Output: "this is an example with Apple and Microsoft."
+        for (let i = 0; i < replaceVerb.length; i++) {
+             //console.debug("not convertTolower:",translatedText,replaceVerb[i][0])
+            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                //console.debug("we are replacing:",replaceVerb[i][1])
+                translatedText = correctSentence(translatedText, spellCheckIgnore);
+            }
+        }
     }
+  
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -615,49 +532,64 @@ function removeWord(sentence, searchWord) {
 }
 // # We do not want to replace anything if it is a URL
 function correctSentence(translatedText, ignoreList) {
-    // Ensure ignoreList is always an array, even if undefined or invalid
+    // Check if text is only URL (your existing function)
     let myURL = isOnlyURL(translatedText);
-    if (!myURL) {
-        if (!ignoreList || typeof ignoreList !== "string") {
-            ignoreList = "";
-        }
+    if (myURL) {
+        return translatedText;  // Return early if only URL
+    }
 
-        // Convert ignore list into an array, handling different line endings
-        let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
+    if (!ignoreList || typeof ignoreList !== "string") {
+        ignoreList = "";
+    }
 
-        // Convert ignore list to a map for fast lookup (case-insensitive)
-        let ignoreMap = new Map();
-        ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
+    // Convert ignore list into an array and map for fast case-insensitive lookup
+    let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
+    let ignoreMap = new Map();
+    ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
 
-        // Split sentence into words (preserving punctuation)
-        let words = translatedText.split(/\b/);
+    // Split text into text parts and tags
+    let tagRegex = /<[^>]*>/g;
+    let textParts = translatedText.split(tagRegex);
+    let tags = translatedText.match(tagRegex) || [];
 
-        // Process each word
+    let correctedParts = [];
+
+    textParts.forEach((part, idx) => {
+        // Split text part by word boundaries preserving punctuation
+        let words = part.split(/\b/);
+
         let correctedWords = words.map((word, index) => {
             let lowerWord = word.toLowerCase();
-            // Check for words after "?" or "!" to capitalize them
+
+            // Capitalize word if previous word ends with ? or !, and if word not in ignore list or URL
             if (index > 0 && /[?!]/.test(words[index - 1])) {
-                // Capitalize if it's not in the ignore list
-                if (!ignoreMap.has(lowerWord)) {
+                if (!CheckUrl(translatedText, lowerWord) && !ignoreMap.has(lowerWord)) {
                     word = word.charAt(0).toUpperCase() + word.slice(1);
                 }
             }
-            // Return word from ignore list or modified word
+
+            // Replace with ignoreMap value if it exists
             return ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word;
         });
 
-        // Reconstruct and return the corrected sentence
-        return correctedWords.join('');
-    } else {
-        return translatedText;
-    }
+        correctedParts.push(correctedWords.join(''));
+
+        // Reinsert HTML tag if present at this position
+        if (idx < tags.length) {
+            correctedParts.push(tags[idx]);
+        }
+    });
+
+    // Join all corrected parts (text + tags) and return
+    return correctedParts.join('');
 }
+
 
 // Helper function to detect URLs
 function isOnlyURL(text) {
     return /^(https?|ftp|file):\/\/[^\s<>"]+$/.test(text);
 }
-function correctSentence(translatedText, ignoreList) {
+function wrong_correctSentence(translatedText, ignoreList) {
     // Function to check if a word is a URL
     function isOnlyURL(text) {
         return /https?:\/\/[^\s]+/.test(text);
@@ -2167,7 +2099,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced, repl_array }
 }
 
-async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree) {
+async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree,) {
     
     //console.time("translation")
     var translate;
@@ -2191,8 +2123,11 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
     //destlang = "nl"
     parrotActive = 'true';
     locale = checkLocale();
+    //console.debug("replaceVerbs:",postTranslationReplace)
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
+    //console.debug("replaceVerbs:", replaceVerb)
+    //console.debug("formal:",formal)
     // 19-06-2021 PSS added animated button for translation at translatePage
     let translateButton = document.querySelector(".wptfNavBarCont a.local-trans-button");
     let GlotPressBulkButton = document.getElementById("bulk-actions-toolbar-bottom")
@@ -2299,8 +2234,6 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
                 let originalElem = document.querySelector("#preview-" + row + " .original");
                 let currentTrans = document.querySelector("#preview-" + row + " td.translation.foreign-text");
                 let originalTrans = originalElem
-                //console.debug("trans:", currentTrans)
-                //console.debug("original:", originalElem.innerText)
                 nameDiff = isExactlyEqual(currentTrans, originalElem.innerText)
                 //nameDiff = false
                 showNameLabel(originalElem,row,nameDiff)
@@ -2371,13 +2304,25 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyMicrosoft, transsel,
 
                     // check if the returned translation does have the same start/ending as the original
                     if (myTranslated != "No suggestions") {
-                        result = check_start_end(myTranslated, "", 0, "", original, "", 0);
+                        translatedText = check_start_end(myTranslated, "", 0, "", original, "", 0).translatedText;
+                    }
+                    else {
+                        translatedText = "No suggestions"
                     }
 
-                    record = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                    await processTransl(original, myTranslated, locale, record, row, transtype, plural_line, locale, false, current)
+                    spellCheckIgnore = ""
+                    
+                    // We need to replace non formal with formal verbs if populating formal with local records
+                    if (formal) {
+                        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb)
+                    }
+                    else {
+                        mytranslatedText = translatedText
+                    }
+                    let myTranslate = await  postProcessTranslation(original, mytranslatedText, replaceVerb, mytranslatedText, "checkEntry", convertToLower, spellCheckIgnore, locale);
+                    await processTransl(original, myTranslate, locale, record, row, transtype, plural_line, locale, false, current)
                     editorElem = editor.querySelector("textarea.foreign-text");
-
+                    
                     //await validateEntry(destlang, editorElement, "", false, row, locale, record, false, DefGlossary);
 
                     // Here we add the "local" text into the preview
@@ -3972,7 +3917,7 @@ async function mark_as_translated(row, current, translated, preview) {
     currentClass.classList.replace("no-translations", "has-translations");
     currentClass.classList.replace("untranslated", "status-waiting");
     currentClass.classList.add("wptf-translated");
-
+    
     //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
     prevcurrentClass.classList.replace("no-translations", "has-translations");
     prevcurrentClass.classList.replace("untranslated", "status-waiting");
@@ -4205,18 +4150,26 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 transtype = "single"
                 //console.debug("trans:", myTranslated, "orig:", original)
                 // We need to set the preview here as processTransl does not populate it, as it thinks it is in editor
-                // we have no plural, so the translation can be written directly into the previw
+                // we have no plural, so the translation can be written directly into the preview
+                if (formal) {
+                    translated = replaceVerbInTranslation(original, myTranslated, replaceVerb)
+                }
+                else {
+                    console.debug("we are not converting")
+                    translated = myTranslated
+                }
                 rawPreview = document.querySelector(`#preview-${row}`)
                 textareaElem = rawPreview.getElementsByClassName("translation foreign-text");
-                textareaElem[0].innerText = myTranslated
-               
+                textareaElem[0].innerText = translated
+                textareaElem[0].value = translated
+                textareaElem[0].textContent = translated
                 // check if the returned translation does have the same start/ending as the original
-                if (myTranslated != "No suggestions") {
-                    result = check_start_end(myTranslated, "", 0, "", original, "", 0);
+                if (translated != "No suggestions") {
+                    result = check_start_end(translated, "", 0, "", original, "", 0);
                 }
 
                 record = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                await processTransl(original, myTranslated, locale, record, row, transtype, plural_line, locale, false, current)
+                await processTransl(original, translated, locale, record, row, transtype, plural_line, locale, false, current)
                 editorElem = editor.querySelector("textarea.foreign-text");
 
                 //await validateEntry(destlang, editorElement, "", false, row, locale, record, false, DefGlossary);
@@ -4881,7 +4834,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     }
     //console.debug("DeepL:",transsel,DeepLWait)
     if (transsel == 'deepl') {
-         console.debug("we have deepl")
+        // console.debug("we have deepl")
         timeout=0
         vartime = convertToNumber(DeepLWait)
     }
@@ -7090,6 +7043,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     var textareaElem2;
     var textareaElem3;
     var textareaElem4;
+    var formal = checkFormal(false);
     if (debug == true) {
         console.debug("processTransl translatedText:", translatedText)
         console.debug("processTransl record:", record)
@@ -7101,20 +7055,25 @@ async function processTransl (original, translatedText, language, record, rowId,
         else {
             console.debug("processTransl plural_line:", plural_line)
         }
-      //  console.debug("processTransl current:", current)
-      //  console.debug("processTransl transtype:", transtype)
 
     }
+    if (formal) {
+        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb)
+    }
+    else {
+        mytranslatedText = translatedText
+    }
+    
     //translatedText = restoreCase(original, translatedText);
     if (transtype == "single") {
         let isPlural = false
         //console.debug("processTransl:",record)
         textareaElem = await record.querySelector("textarea.foreign-text");
-        textareaElem.innerText = translatedText;
-        textareaElem.innerHTML = translatedText;
+        textareaElem.innerText = mytranslatedText;
+        textareaElem.innerHTML = mytranslatedText;
         textareaElem1 = textareaElem
         // PSS 29-03-2021 Added populating the value of the property to retranslate            
-        textareaElem.value = translatedText;
+        textareaElem.value = mytranslatedText;
         //PSS 25-03-2021 Fixed problem with description box issue #13
         requestAnimationFrame(() => {
             textareaElem.style.height = "auto"
@@ -7127,7 +7086,7 @@ async function processTransl (original, translatedText, language, record, rowId,
         if (inputElement) {
             inputElement.focus();    // Focus the input to show the cursor
         }
-        //console.debug("currr:",current)
+        
         if (current.innerText != "waiting" && current.innerText != "fuzzy") {
             preview = await record.previousElementSibling
         }
@@ -7135,20 +7094,18 @@ async function processTransl (original, translatedText, language, record, rowId,
             preview = await getPreview(rowId)
             //preview = await document.querySelector("#preview-" + myRowId)
         }
-        //current.innerText = "transFill";
-      //  current.value = "transFill";
-        // console.debug("in process:",preview)
+      
         if (typeof preview != "undefined" && preview != null) {
             td_preview = preview.querySelector("td.translation");
         }
         else {
             console.debug("problem with preview:", preview, myRowId)
         }
-       // console.debug("td preview:",td_preview)
+        
         // if we are in a single editor without preview, then no need to set the preview text
         if (td_preview != null) {
-            td_preview.innerText = translatedText;
-            td_preview.innerValue = translatedText;
+            td_preview.innerText = mytranslatedText;
+            td_preview.innerValue = mytranslatedText;
         }
         myRowId = record.getAttribute("row");
         if (myRowId == null) {
@@ -7161,12 +7118,8 @@ async function processTransl (original, translatedText, language, record, rowId,
             process_current.value = "transFill"
 
         }
-        // preview = document.querySelector(`#preview-${myRowId}`);
-        //console.debug("my preview:",preview)
+        
         let prevcurrentClass = preview;
-        //prevcurrentClass.classList.remove("untranslated", "no-translations", "priority-normal", "no-warnings");
-        //console.debug("previouscurrentClass:", typeof prevcurrentClass)
-        //console.debug("current:",typeof current)
         prevcurrentClass.classList.replace("no-translations", "has-translations");
         if (translatedText != "No suggestions") {
             prevcurrentClass.classList.replace("untranslated", "status-waiting");
@@ -7181,11 +7134,8 @@ async function processTransl (original, translatedText, language, record, rowId,
         result = await validateEntry(language, textareaElem, "", false, myRowId, locale, record, false, DefGlossary);
         
         remove_all_gloss(leftPanel, preview, isPlural, rowId)
-        mark_glossary(leftPanel, result.toolTip, translatedText, rowId, false)
-        await mark_preview(preview, result.toolTip, translatedText, rowId, false)
-        //console.debug(" before mark_original:",result)
-       // await mark_preview(preview, result.toolTip, textareaElem.textContent, myRowId, false)
-        //console.debug("translateEntry:",result)
+        mark_glossary(leftPanel, result.toolTip, mytranslatedText, rowId, false)
+        await mark_preview(preview, result.toolTip, mytranslatedText, rowId, false)
         
     }
     else {
@@ -7217,8 +7167,8 @@ async function processTransl (original, translatedText, language, record, rowId,
                    // console.debug("we update first line in plural:",translatedText)
                     //populate plural line if not already translated, so we can take original rowId
                     textareaElem1 = document.querySelector("textarea#translation_" + myRowId + "_0");
-                    textareaElem1.innerText = translatedText;
-                    textareaElem1.value = translatedText;
+                    textareaElem1.innerText = mytranslatedText;
+                    textareaElem1.value = mytranslatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
                     requestAnimationFrame(() => {
                         textareaElem1.style.height = "auto"
@@ -7228,7 +7178,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                     // Select the first li
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
                     if (previewElem != null) {
-                       previewElem.innerText = translatedText;
+                       previewElem.innerText = mytranslatedText;
                     }
                     result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record, true, DefGlossary);
                     if (textareaElem2 != null) {
@@ -7244,8 +7194,8 @@ async function processTransl (original, translatedText, language, record, rowId,
                 if (plural_line == 2) {
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_1");
                     //console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
-                    textareaElem2.innerText = translatedText;
-                    textareaElem2.value = translatedText;
+                    textareaElem2.innerText = mytranslatedText;
+                    textareaElem2.value = mytranslatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
                     requestAnimationFrame(() => {
                         textareaElem2.style.height = "auto"
@@ -7256,20 +7206,20 @@ async function processTransl (original, translatedText, language, record, rowId,
                     //console.debug("preview in line2:",previewElem)
                     //console.debug("we are updating the second line in preview:")
                     if (previewElem != null) {
-                        previewElem.innerText = translatedText;
+                        previewElem.innerText = mytranslatedText;
                     }
                     // the below code is for Russion plural handling
                     textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_2");
                     if (textareaElem3 != null) {
                         textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_2");
-                        textareaElem3.innerText = translatedText;
-                        textareaElem3.value = translatedText;
+                        textareaElem3.innerText = mytranslatedText;
+                        textareaElem3.value = mytranslatedText;
                     }
                     textareaElem4 = document.querySelector("textarea#translation_" + myRowId + "_3");
                     if (textareaElem4 != null) {
                         textareaElem4 = document.querySelector("textarea#translation_" + myRowId + "_3");
-                        textareaElem4.innerText = translatedText;
-                        textareaElem4.value = translatedText;
+                        textareaElem4.innerText = mytranslatedText;
+                        textareaElem4.value = mytranslatedText;
                     }
                     result = await validateEntry(language, textareaElem2, "", "", myRowId, locale, record, true, DefGlossary);
                     if (textareaElem2 != null) {
@@ -7294,25 +7244,25 @@ async function processTransl (original, translatedText, language, record, rowId,
                     //console.debug("f:",f)
                     textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_0");
                     //console.debug("textareaElem1:",textareaElem1)
-                    textareaElem1.innerText = translatedText;
-                    textareaElem1.value = translatedText;
+                    textareaElem1.innerText = mytranslatedText;
+                    textareaElem1.value = mytranslatedText;
                     // the below code is for Russion plural handling
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
                     if (textareaElem2 != null) {
                         textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
-                        textareaElem2.innerText = translatedText;
-                        textareaElem2.value = translatedText;
+                        textareaElem2.innerText = mytranslatedText;
+                        textareaElem2.value = mytranslatedText;
                     }
                     textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
                     if (textareaElem3 != null) {
                         textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
-                        textareaElem3.innerText = translatedText;
-                        textareaElem3.value = translatedText;
+                        textareaElem3.innerText = mytranslatedText;
+                        textareaElem3.value = mytranslatedText;
                     }
 
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
                     if (previewElem != null) {
-                        previewElem.innerText = translatedText;
+                        previewElem.innerText = mytranslatedText;
                     }
                 }
                 else {
@@ -7321,25 +7271,25 @@ async function processTransl (original, translatedText, language, record, rowId,
                     let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
                     textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_1");
                     // console.debug('newrow = not undefined!', row + "_1");
-                    textareaElem1.innerText = translatedText;
-                    textareaElem1.value = translatedText;
+                    textareaElem1.innerText = mytranslatedText;
+                    textareaElem1.value = mytranslatedText;
                     // the below code is for Russion plural handling
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
                     if (textareaElem2 != null) {
                         textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
-                        textareaElem2.innerText = translatedText;
-                        textareaElem2.value = translatedText;
+                        textareaElem2.innerText = mytranslatedText;
+                        textareaElem2.value = mytranslatedText;
                     }
                     textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
                     if (textareaElem3 != null) {
                         textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
-                        textareaElem3.innerText = translatedText;
-                        textareaElem3.value = translatedText;
+                        textareaElem3.innerText = mytranslatedText;
+                        textareaElem3.value = mytranslatedText;
                     }
 
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(2) .translation-text");
                     if (previewElem != null) {
-                        previewElem.innerText = translatedText;
+                        previewElem.innerText = mytranslatedText;
                     }
                 }
             }
@@ -7698,11 +7648,16 @@ async function onCopySuggestionClicked(target,rowId) {
         editor = editor[0].querySelector(".panel-content")
         let original = editor.querySelector("span.original-raw").innerText;
         let text = editor.querySelector("textarea.foreign-text").value;
-       
-        setPostTranslationReplace(data.postTranslationReplace, formal);
-        translatedText = await  postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
-       
-       if (textareaElem != null && typeof textareaElem != "undefined") {
+        setPostTranslationReplace(data.postTranslationReplace, formal)
+        if (formal) {
+            translatedText = await replaceVerbInTranslation(original, text, replaceVerb)
+        }
+        else {
+            translatedText = text
+        }
+        translatedText = await  postProcessTranslation(original, translatedText, replaceVerb, translatedText, "checkEntry", convertToLower, spellCheckIgnore, locale);
+
+        if (textareaElem != null && typeof textareaElem != "undefined") {
           textareaElem.innerText = translatedText;
           textareaElem.value = translatedText;
           textareaElem.textContent =translatedText

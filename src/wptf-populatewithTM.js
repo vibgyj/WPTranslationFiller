@@ -216,7 +216,8 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
         inprogressbar.style = ""
         progressbar.style.display = 'block';
     }
-     setPostTranslationReplace(postTranslationReplace);
+    setPostTranslationReplace(postTranslationReplace,formal);
+     console.debug()
      //setPreTranslationReplace(preTranslationReplace);
     for (let i = 0; i < myrecCount; i++) {
         const previewRow = previewRows[i];
@@ -353,8 +354,10 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                     else {
                                         textFound = check_hyphen(rawTranslation, spellCheckIgnore);
                                     }
-
-
+                                    if (formal) {
+                                        textFound = await replaceVerbInTranslation(original, textFound, replaceVerb)
+                                    }
+                                  
                                     if (previewName != null) {
                                         previewName.innerText = textFound
                                         previewName.value = textFound
@@ -415,6 +418,12 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                 else {
                                     textFound = check_hyphen(rawTranslation, spellCheckIgnore);
                                 }
+                                editor = document.querySelector(`#editor-${rowId}`)
+            
+                                original = editor.querySelector("span.original-raw").innerText;
+                                if (formal) {
+                                    textFound = await replaceVerbInTranslation(original, textFound, replaceVerb)
+                                }
                                 debug = false
                                 if (debug == true) {
                                     console.debug("Clean translation:", cleanTranslation);
@@ -435,6 +444,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                 current.innerText = 'transFill'
                                 let newurl = ""
                                 result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
+
                                 await mark_as_translated(rowId, current, textFound, preview)
                                 updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
 
