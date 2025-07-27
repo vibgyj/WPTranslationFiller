@@ -1,17 +1,39 @@
-Version 3.9.84 Added properly replace words when switching between Formal and Default
-Version 3.9.84 added link to changelog in options HTML
-Version 3.9.84 Improved the progress bar behavior
-Version 3.9.84 Improved populatewithTM, so it only shows one time the toastbox
-Version 3.9.84 Improved the bulk save behavior, lines are now properly hidden
-Version 3.9.85 Improved the handling of Formal "u" and "uw"
-Version 3.9.86 Added threshold text, and added check for locale in postprocess for Formal handling
-Version 3.9.87 Postreplacement did not work annymore as it supposed to do
-Version 3.9.88 Clicking on the text suggestion below the editor did not use postreplace function
-Version 3.9.88 Fixed another problem with replacing in formal mode
-Version 3.9.89 Added You'll to the match for proper replacement
-Version 3.9.89 Another improvement of the "you" and "your" relacement
-Version 3.9.89 Fixed the problem with setting the "a" within <a href to uppercase
 Version 3.9.90 Now when populating with local in Formal, "je" is converted into "u"
 Version 3.9.91 Fixed problem where <br> was replaced by <Br>
 Version 3.9.91 Fixed wrong replacement of %1$s and %2$s
 Version 3.9.92 Completely overhauled the replacement for formal language
+Version 3.9.93 Fixed two problems 1. ":" was incorrectly added 2. Sometimes not the complete translation text was returned, due to a missing translation text
+Version 3.9.94 Fixed another replacement error with "You'l"
+Version 3.9.95 Improved replacing formal translations
+Version 3.9.95 put the below contents in your posttranslation replace at the top
+##form:You,Je,U
+##form:you,je,u
+##form:Your,Je,Uw
+##form:your,je,uw
+##form:You've,Je,U
+##form:you've,je,u
+##form:You're,Je,U
+##form:You’re,Je,U
+##form:you’re,je,u
+##form:you're,je,u
+##form:You'd,Je,U
+##form:you'd,je,u
+##form:You'll,Je,U
+##form:you'll,je,u
+##form: aan u , aan uw 
+##form:kan u ,kunt u 
+##form:kun uw ,kunt u 
+##form:kun u,kunt u
+##form:om je ,om uw 
+##form:van u ,van uw 
+##form:uw uw,u uw
+##form: u u , u uw 
+##form:voordat uw ,voordat u 
+##form:voor u ,voor uw 
+##form:want uw kunt ,want u kunt 
+##form:wil u,wilt u
+##form:Wil u,Wilt u
+##form:zullen u ,zullen uw 
+Version 3.9.95 the list above is necessary to convert standard translation to formal
+Version 3.9.96 When a sentence has a comma, then the conversion fo rformal is not working properly
+Version 3.9.97 When using local, and there is a plural, then the first line was populated with "notFound"

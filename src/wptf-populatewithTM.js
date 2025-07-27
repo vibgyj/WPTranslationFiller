@@ -311,7 +311,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                         editoropen.click();
 
                         let suggestionResult = await waitforTM(rowId, TMwait);
-
+                        //console.debug("suggestion:",suggestionResult)
                         if (suggestionResult === "notfound") {
                             //console.debug("Timed out waiting for TM suggestion element for record:", rowId);
 
@@ -357,7 +357,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                     if (formal) {
                                         textFound = await replaceVerbInTranslation(original, textFound, replaceVerb)
                                     }
-                                  
+                                   // console.debug("text:",textFound)
                                     if (previewName != null) {
                                         previewName.innerText = textFound
                                         previewName.value = textFound
@@ -530,7 +530,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
             }
         }
         else {
-        console.debug("rowId is null!!")
+        //console.debug("rowId is null!!")
         }
         
     }

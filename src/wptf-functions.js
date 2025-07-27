@@ -2,153 +2,133 @@
   return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function replaceVerbInTranslation(originalText, translatedText, replaceVerbs) {
-  let debug = false;
-  if (debug) {
-    console.debug("==== replaceVerbInTranslation ====");
-    console.debug("Original English text:", originalText);
-    console.debug("Original Translated Dutch text:", translatedText);
-    console.debug("replaceVerbs:", replaceVerbs);
-  }
-
-  const wordsInOriginal = originalText.match(/\b(?:Your|your|You|you)\b/g);
-
-  if (!wordsInOriginal) return translatedText;
-
-  const firstWord = originalText.trim().split(/\s+/)[0];
-
-  for (const word of wordsInOriginal) {
-    let lookupWord = word;
-
-    if (word === "Your" && firstWord !== "Your") {
-      lookupWord = "your";
-      if (debug) {
-        console.debug(`Converting 'Your' to lowercase 'your' because it's not first word`);
-      }
-    }
-
-    const replacementGroup = replaceVerbs.find(group => group[0] === lookupWord);
+function replaceVerbInTranslation(english, dutch, replaceVerbs) {
+    let debug = false;
     if (debug) {
-      console.debug("Checking word:", word, "| Using lookup:", lookupWord);
-      console.debug("Matched group from replaceVerbs:", replacementGroup);
+        console.log("=== Starting replaceVerbInTranslation ===");
     }
 
-    if (!replacementGroup) {
-      if (debug) {
-        console.debug("No replacement group found, skipping...");
-      }
-      continue;
-    }
+    const sentenceSplitRegex = /[^.!?]+(?:['’][^.!?]+)*[.!?]+|[^.!?]+$/g;
+    // split sentences on period and comma!
+    const englishSentences = english.split(/(?<=[.?!,;:])\s+/);
+    const dutchSentences = dutch.split(/(?<=[.?!,;:])\s+/);
 
-    const dutchFrom = replacementGroup[1];
-    const dutchTo = replacementGroup[2];
-
-    if (!dutchFrom || !dutchTo) continue; // prevent charAt error
-
-    const regex = new RegExp(`\\b${dutchFrom}\\b`, 'g');
-    if (debug) {
-      console.debug("Regex used:", regex);
-    }
-
-    const match = translatedText.match(regex);
-    if (debug) {
-      console.debug("Match result:", match);
-    }
-
-    if (match) {
-      translatedText = translatedText.replace(regex, dutchTo);
-      if (debug) {
-        console.debug("After replacement:", translatedText);
-      }
-    } else {
-      if (debug) {
-        console.debug(`No match for '${dutchFrom}' in:`, translatedText);
-      }
-    }
-  }
-
-  const leftoverRegex = /\b(Je|je)\b/g;
-  const leftoverMatches = translatedText.match(leftoverRegex);
-  if (debug) {
-    console.debug("Leftover 'Je' or 'je' found:", leftoverMatches);
-  }
-
-  if (leftoverMatches) {
-    for (const leftover of leftoverMatches) {
-      const replacementGroup = replaceVerbs.find(group => group[1] === leftover);
-      if (!replacementGroup || !replacementGroup[2]) {
+    if (englishSentences.length !== dutchSentences.length) {
         if (debug) {
-          console.debug(`No replacement group found for leftover '${leftover}', skipping...`);
+            console.warn("⚠️ English and Dutch sentence count mismatch!");
         }
-        continue;
-      }
-
-      const replacement =
-        leftover[0] === leftover[0].toUpperCase()
-          ? replacementGroup[2].charAt(0).toUpperCase() + replacementGroup[2].slice(1)
-          : replacementGroup[2].charAt(0).toLowerCase() + replacementGroup[2].slice(1);
-
-      const regex = new RegExp(`\\b${leftover}\\b`, 'g');
-      translatedText = translatedText.replace(regex, replacement);
-      if (debug) {
-        console.debug(`Replaced leftover '${leftover}' with '${replacement}'`);
-      }
     }
-  }
 
-  if (debug) {
-    console.debug("==== Final Result ====");
-    console.debug("Returned translatedText:", translatedText);
-  }
+    const updatedSentences = [];
 
-  return translatedText;
+    for (let i = 0; i < englishSentences.length; i++) {
+        const eng = (englishSentences[i] || "").trim();
+        const dut = (dutchSentences[i] || "").trim();
+        if (debug) {
+            console.log(`\n--- Sentence ${i + 1} ---`);
+            console.log("English:", eng);
+            console.log("Dutch:", dut);
+        }
+
+        const words = eng.split(/\s+/);
+        const normalizedWords = words.map((word, idx) =>
+            idx === 0 ? word : word.toLowerCase()
+        );
+        if (debug) {
+            console.log("Normalized English words:", normalizedWords);
+        }
+
+        const replacementsToApply = [];
+
+        normalizedWords.forEach(engWord => {
+            replaceVerbs.forEach(entry => {
+                // ✅ Skip if not a valid [eng, informal, formal] triplet
+                if (!Array.isArray(entry) || entry.length !== 3) return;
+
+                const [engRef, dutchInformal, dutchFormal] = entry;
+                if (engRef.toLowerCase() === engWord.toLowerCase()) {
+                    replacementsToApply.push({ informal: dutchInformal, formal: dutchFormal });
+                    if (debug) {
+                        console.log(`Queue replacement: "${dutchInformal}" → "${dutchFormal}"`);
+                    }
+                }
+            });
+        });
+
+        let updatedDutch = dut;
+        const markers = [];
+
+        // Replacement with indexed markers
+        replacementsToApply.forEach(({ informal, formal }, index) => {
+            const regex = new RegExp(`(?<!\\w)${informal}([.,!?\\s]|$)`, "g");
+
+            let count = 0;
+            updatedDutch = updatedDutch.replace(regex, (match, punc, offset) => {
+                // Check if already inside marker
+                for (const m of markers) {
+                    if (offset >= m.start && offset < m.end) {
+                        return match;
+                    }
+                }
+
+                const marker = `__REPLACE_${index}_${count}__`;
+                markers.push({
+                    marker,
+                    formal,
+                    start: offset,
+                    end: offset + marker.length
+                });
+                if (debug) {
+                    console.log(`Replacing "${match}" at pos ${offset} with marker "${marker}"`);
+                }
+
+                count++;
+                return marker + punc;
+            });
+        });
+
+        if (debug) {
+            console.log("Dutch after marker insertion:", updatedDutch);
+        }
+
+        // Replace all markers correctly
+        markers.forEach(({ marker, formal }) => {
+            updatedDutch = updatedDutch.replace(marker, formal);
+            if (debug) {
+                console.log(`Marker "${marker}" replaced with "${formal}"`);
+            }
+        });
+
+        if (debug) {
+            console.log("Updated Dutch sentence:", updatedDutch);
+        }
+
+        updatedSentences.push(updatedDutch);
+    }
+
+    let finalResult = updatedSentences.join(" ");
+    const leftoverInformals = ['je', 'Je', 'jouw', 'Jouw'];
+    let hasLeftovers = leftoverInformals.some(word => finalResult.includes(word));
+
+    if (hasLeftovers) {
+        leftoverInformals.forEach(pronoun => {
+            const formal = (pronoun[0] === 'J') ? (pronoun === 'Jouw' ? 'Uw' : 'U') : (pronoun === 'jouw' ? 'uw' : 'u');
+            const regex = new RegExp(`\\b${pronoun}\\b`, 'g');
+            finalResult = finalResult.replace(regex, formal);
+            if (debug) {
+                console.warn(`🔁 Replaced leftover "${pronoun}" with "${formal}"`);
+            }
+        });
+    }
+
+    if (debug) {
+        console.debug("\n=== Final replaced Dutch text ===");
+        console.debug(finalResult);
+    }
+
+    return finalResult;
 }
 
-
-// This file contains functions used within various files
-
-function preTranslateReplaceTags(originalText) {
-  let indexYou = 0;
-  let indexYour = 0;
-
-  function isAtSentenceStart(text, matchIndex) {
-    return /^\s*$/.test(text.slice(0, matchIndex));
-  }
-
-  // Replace You (capitalized)
-  originalText = originalText.replace(/\bYou\b/g, (match, offset) => {
-    const tag = isAtSentenceStart(originalText, offset)
-      ? `<x id="p_${indexYou}">X_${indexYou}</x>`
-      : `<x id="p_${indexYou}">x_${indexYou}</x>`;
-    indexYou++;
-    return tag;
-  });
-
-  // Replace you (lowercase)
-  originalText = originalText.replace(/\byou\b/g, () => {
-    const tag = `<x id="p_${indexYou}">x_${indexYou}</x>`;
-    indexYou++;
-    return tag;
-  });
-
-  // Replace Your (capitalized)
-  originalText = originalText.replace(/\bYour\b/g, (match, offset) => {
-    const tag = isAtSentenceStart(originalText, offset)
-      ? `<x id="p_${indexYour + 1000}">X_${indexYour}</x>`
-      : `<x id="p_${indexYour + 1000}">x_${indexYour}</x>`;
-    indexYour++;
-    return tag;
-  });
-
-  // Replace your (lowercase)
-  originalText = originalText.replace(/\byour\b/g, () => {
-    const tag = `<x id="p_${indexYour + 1000}">x_${indexYour}</x>`;
-    indexYour++;
-    return tag;
-  });
-
-  return originalText;
-}
 
 function postTranslateReplaceTags(translatedText, replaceVerbs) {
   return translatedText.replace(/<x id="p_(\d+)">(x|X)_\d+<\/x>/g, (match, num, caseIndicator) => {

@@ -149,7 +149,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                             let token = data.usage.total_tokens
                         }
                         //text = text.trim('\n');
-                        //console.debug("text:", text,original)
+                        console.debug("text:", text,original)
                         if (text == '""') {
                             text = original + " no translation received"
                             translatedText = original + " No translation received"
