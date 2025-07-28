@@ -65,12 +65,32 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     //console.debug("OpenAiGloss:", openAiGloss)
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
+    destlang = language
     language = language.toUpperCase();
     let tempPrompt = OpenAIPrompt + '\n';
    // myprompt = myprompt.replace("informal", OpenAITone);
     // We need to replace the tone within the prompt
-    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+    //console.debug("lang:",language)
+    if (OpenAiTone = 'formal') {
+        if (destlang == 'nl') {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
+        }
+        else if (destlang == 'de') {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
+        }
+        else if (destlang == 'fr') {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
+        }
+        else {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone)
+        }
+    }
+    else {
+        myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone)
+    }
+    
     myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss)
+   
     //console.debug("prompt:",myprompt)
     //var prompt = encodeURIComponent(prompt);
     //console.debug("counter:", counter, myprompt)
@@ -149,7 +169,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                             let token = data.usage.total_tokens
                         }
                         //text = text.trim('\n');
-                        console.debug("text:", text,original)
+                        //console.debug("text:", text,original)
                         if (text == '""') {
                             text = original + " no translation received"
                             translatedText = original + " No translation received"
@@ -181,7 +201,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 else {
                     let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                 }
-                console.debug("translateButton:",translateButton)
+                //console.debug("translateButton:",translateButton)
                 translateButton.className += " translated";
                 translateButton.innerText = "Translated";
                 if (error[2] == "400") {

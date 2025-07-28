@@ -1961,7 +1961,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         }
 
         if (previewNewText.endsWith(" ")) {
-            console.debug("preview:","[",previewNewText,"]")
+           // console.debug("preview:","[",previewNewText,"]")
             if (!original.endsWith(" ")) {
                 console.debug("Original does not end with blanc!", '"' + original + '"');
                 previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
