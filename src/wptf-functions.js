@@ -2,132 +2,132 @@
   return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function replaceVerbInTranslation(english, dutch, replaceVerbs) {
-    let debug = false;
-    if (debug) {
-        console.log("=== Starting replaceVerbInTranslation ===");
-    }
+function insertAlstublieftIfPlease(original, dutch) {
+    // Split into sentences (keeping punctuation)
+    const engSentences = original.split(/(?<=[.?!])\s+/);
+    const dutchSentences = dutch.split(/(?<=[.?!])\s+/);
 
-    const sentenceSplitRegex = /[^.!?]+(?:['’][^.!?]+)*[.!?]+|[^.!?]+$/g;
-    // split sentences on period and comma!
-    const englishSentences = english.split(/(?<=[.?!,;:])\s+/);
-    const dutchSentences = dutch.split(/(?<=[.?!,;:])\s+/);
+    for (let i = 0; i < engSentences.length; i++) {
+        if (/please/i.test(engSentences[i])) {
+            let words = dutchSentences[i].split(/\s+/);
 
-    if (englishSentences.length !== dutchSentences.length) {
-        if (debug) {
-            console.warn("⚠️ English and Dutch sentence count mismatch!");
+            if (words.length >= 1 && !/\balstublieft\b/i.test(dutchSentences[i])) {
+                // Insert AFTER the first word (index 0)
+                words.splice(1, 0, "alstublieft");
+                dutchSentences[i] = words.join(" ");
+            }
         }
+    }
+    return dutchSentences.join(" ");
+}
+
+
+function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
+    const markerBase = "__REPLACE_";
+    let markerIndex = 0;
+
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Sentence splitter (keeps punctuation + newlines)
+    const sentenceSplitRegex = /(.*?)([.?!,;:](?:\s+|\r\n|\r|\n)|\r\n|\r|\n|$)/gs;
+
+    const engMatches = [...english.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+    const dutMatches = [...dutch.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+
+    const engSentences = engMatches.map(m => m[1] + m[2]);
+    const dutSentences = dutMatches.map(m => m[1] + m[2]);
+
+    if (debug) {
+        console.log("English split:", engSentences);
+        console.log("Dutch split:", dutSentences);
     }
 
     const updatedSentences = [];
+    const markerReplacements = [];
 
-    for (let i = 0; i < englishSentences.length; i++) {
-        const eng = (englishSentences[i] || "").trim();
-        const dut = (dutchSentences[i] || "").trim();
-        if (debug) {
-            console.log(`\n--- Sentence ${i + 1} ---`);
-            console.log("English:", eng);
-            console.log("Dutch:", dut);
-        }
+    const validReplacements = replaceVerbs.filter(entry => Array.isArray(entry) && entry.length === 3);
 
-        const words = eng.split(/\s+/);
-        const normalizedWords = words.map((word, idx) =>
-            idx === 0 ? word : word.toLowerCase()
-        );
-        if (debug) {
-            console.log("Normalized English words:", normalizedWords);
-        }
+    // === Step 1: Pronoun replacement ===
+    for (let i = 0; i < dutSentences.length; i++) {
+        const eng = engSentences[i] || "";
+        let dut = dutSentences[i] || "";
 
-        const replacementsToApply = [];
+        const words = eng.trim().split(/\s+/);
+        const firstWord = words[0] || "";
+        const rest = words.slice(1).map(w => w.toLowerCase());
+        const normalizedEnglish = [firstWord, ...rest];
 
-        normalizedWords.forEach(engWord => {
-            replaceVerbs.forEach(entry => {
-                // ✅ Skip if not a valid [eng, informal, formal] triplet
-                if (!Array.isArray(entry) || entry.length !== 3) return;
+        let replacementsThisSentence = [];
 
-                const [engRef, dutchInformal, dutchFormal] = entry;
-                if (engRef.toLowerCase() === engWord.toLowerCase()) {
-                    replacementsToApply.push({ informal: dutchInformal, formal: dutchFormal });
-                    if (debug) {
-                        console.log(`Queue replacement: "${dutchInformal}" → "${dutchFormal}"`);
-                    }
+        validReplacements.forEach(([en, informal, formal]) => {
+            const count = normalizedEnglish.filter(word => word === en).length;
+            if (count === 0) return;
+
+            let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'g');
+            let replaced = 0;
+
+            dut = dut.replace(matchRegex, (match, punct, space) => {
+                if (replaced < count) {
+                    const marker = `${markerBase}${markerIndex}_${replaced}__`;
+                    replacementsThisSentence.push({ marker, replacement: formal + (punct || '') });
+                    replaced++;
+                    return marker + (space || '');
                 }
+                return match;
             });
+
+            markerIndex++;
         });
 
-        let updatedDutch = dut;
-        const markers = [];
-
-        // Replacement with indexed markers
-        replacementsToApply.forEach(({ informal, formal }, index) => {
-            const regex = new RegExp(`(?<!\\w)${informal}([.,!?\\s]|$)`, "g");
-
-            let count = 0;
-            updatedDutch = updatedDutch.replace(regex, (match, punc, offset) => {
-                // Check if already inside marker
-                for (const m of markers) {
-                    if (offset >= m.start && offset < m.end) {
-                        return match;
-                    }
-                }
-
-                const marker = `__REPLACE_${index}_${count}__`;
-                markers.push({
-                    marker,
-                    formal,
-                    start: offset,
-                    end: offset + marker.length
-                });
-                if (debug) {
-                    console.log(`Replacing "${match}" at pos ${offset} with marker "${marker}"`);
-                }
-
-                count++;
-                return marker + punc;
-            });
-        });
-
-        if (debug) {
-            console.log("Dutch after marker insertion:", updatedDutch);
-        }
-
-        // Replace all markers correctly
-        markers.forEach(({ marker, formal }) => {
-            updatedDutch = updatedDutch.replace(marker, formal);
-            if (debug) {
-                console.log(`Marker "${marker}" replaced with "${formal}"`);
-            }
-        });
-
-        if (debug) {
-            console.log("Updated Dutch sentence:", updatedDutch);
-        }
-
-        updatedSentences.push(updatedDutch);
+        markerReplacements.push(...replacementsThisSentence);
+        updatedSentences.push(dut);
     }
 
-    let finalResult = updatedSentences.join(" ");
-    const leftoverInformals = ['je', 'Je', 'jouw', 'Jouw'];
-    let hasLeftovers = leftoverInformals.some(word => finalResult.includes(word));
+    // === Step 2: Apply all marker replacements ===
+    let finalResult = updatedSentences.join("");
+    markerReplacements.forEach(({ marker, replacement }) => {
+        finalResult = finalResult.replace(marker, replacement);
+    });
 
-    if (hasLeftovers) {
-        leftoverInformals.forEach(pronoun => {
-            const formal = (pronoun[0] === 'J') ? (pronoun === 'Jouw' ? 'Uw' : 'U') : (pronoun === 'jouw' ? 'uw' : 'u');
-            const regex = new RegExp(`\\b${pronoun}\\b`, 'g');
-            finalResult = finalResult.replace(regex, formal);
-            if (debug) {
-                console.warn(`🔁 Replaced leftover "${pronoun}" with "${formal}"`);
+    // === Step 3: Final cleanup of any remaining informal forms ===
+    validReplacements.forEach(([_, informal, formal]) => {
+        let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'g');
+        finalResult = finalResult.replace(matchRegex, `${formal}$1$2`);
+    });
+
+    // === Step 4: International polite word insertion ===
+    const politeEntry = replaceVerbs.find(entry =>
+        Array.isArray(entry) && entry.length === 2 && /please/i.test(entry[0])
+    );
+    
+    if (politeEntry) {
+        const politeEnglish = politeEntry[0];
+        const politeTarget = politeEntry[1];
+
+        const finalEngSentences = engSentences;
+        const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
+            .filter(m => m[1].trim() || m[2].trim())
+            .map(m => m[1] + m[2]);
+
+        for (let i = 0; i < finalEngSentences.length; i++) {
+            if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
+                let words = finalDutchSentences[i].trim().split(/\s+/);
+                if (words.length >= 1 && !new RegExp(`\\b${escapeRegex(politeTarget)}\\b`, 'i').test(finalDutchSentences[i])) {
+                    words.splice(1, 0, politeTarget); // insert after first word
+                    finalDutchSentences[i] = words.join(" ");
+                    if (debug) console.log(`Inserted "${politeTarget}" in sentence ${i + 1}:`, finalDutchSentences[i]);
+                }
             }
-        });
-    }
+        }
 
-    if (debug) {
-        console.debug("\n=== Final replaced Dutch text ===");
-        console.debug(finalResult);
+        finalResult = finalDutchSentences.join("");
+    } else {
+        if (debug) console.log("No polite word mapping found in replaceVerbs, skipping polite insertion.");
     }
 
     return finalResult;
 }
+
 
 
 function postTranslateReplaceTags(translatedText, replaceVerbs) {

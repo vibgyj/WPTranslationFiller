@@ -1,11 +1,11 @@
-Version 3.9.90 Now when populating with local in Formal, "je" is converted into "u"
-Version 3.9.91 Fixed problem where <br> was replaced by <Br>
-Version 3.9.91 Fixed wrong replacement of %1$s and %2$s
-Version 3.9.92 Completely overhauled the replacement for formal language
-Version 3.9.93 Fixed two problems 1. ":" was incorrectly added 2. Sometimes not the complete translation text was returned, due to a missing translation text
-Version 3.9.94 Fixed another replacement error with "You'l"
-Version 3.9.95 Improved replacing formal translations
-Version 3.9.95 put the below contents in your posttranslation replace at the top
+Version 3.3.90 Now when populating with local in Formal, "je" is converted into "u"
+Version 3.3.91 Fixed problem where <br> was replaced by <Br>
+Version 3.3.91 Fixed wrong replacement of %1$s and %2$s
+Version 3.3.92 Completely overhauled the replacement for formal language
+Version 3.3.93 Fixed two problems 1. ":" was incorrectly added 2. Sometimes not the complete translation text was returned, due to a missing translation text
+Version 3.3.94 Fixed another replacement error with "You'l"
+Version 3.3.95 Improved replacing formal translations
+Version 3.3.95 put the below contents in your posttranslation replace at the top
 ##form:You,Je,U
 ##form:you,je,u
 ##form:Your,Je,Uw
@@ -34,6 +34,11 @@ Version 3.9.95 put the below contents in your posttranslation replace at the top
 ##form:wil u,wilt u
 ##form:Wil u,Wilt u
 ##form:zullen u ,zullen uw 
-Version 3.9.95 the list above is necessary to convert standard translation to formal
-Version 3.9.96 When a sentence has a comma, then the conversion fo rformal is not working properly
-Version 3.9.97 When using local, and there is a plural, then the first line was populated with "notFound"
+Version 3.3.95 the list above is necessary to convert standard translation to formal
+Version 3.3.96 When a sentence has a comma, then the conversion fo rformal is not working properly
+Version 3.3.97 When using local, and there is a plural, then the first line was populated with "notFound"
+Version 3.3.98 Fixed a problem when the original contains a crlf, the second part was no longer present in Formal
+Version 3.3.98 Fixed a problem with adding a blank after translation and replacing "je" in formal
+Version 3.3.98 Fixed a problem with wrong replacements of "%1$s", "%2$s" when there were more then one present
+Version 3.3.99 Added auto insert "Please"  -> "alstulieft" for formal if the original contains "Please" Add "##form:Please,alstublieft" to your postreplace list. or different translation if not nl_NL locale
+Version 3.4.01 Refactored bulk save, so now it does not skip records, unless it is already translated equally

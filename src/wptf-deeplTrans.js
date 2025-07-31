@@ -3,32 +3,26 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent,DeepLWait) {
-    destlang = destlang.toUpperCase()
-    //console.debug("current in deepl:",deepLcurrent)
-    // 17-02-2023 PSS fixed issue #284 by removing the / at the end of "https:ap.deepl.com
-    //console.debug("original:",originalPreProcessed)
+async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent, DeepLWait) {
+    destlang = destlang.toUpperCase();
+
+    let formal_value, mycontext;
     if (formal === true) {
-        formal_value = "prefer_more"
-        mycontext = "This text is a legal message, do not add words that are not within the text provided"
-    }
-    else {
-        formal_value = "prefer_less"
-        mycontext = "This text is a casual conversation with a friend, do not add words that are not in the text provided"
+        formal_value = "prefer_more";
+        mycontext = "This text is a legal message, do not add words that are not within the text provided";
+    } else {
+        formal_value = "prefer_less";
+        mycontext = "This text is a casual conversation with a friend, do not add words that are not in the text provided";
     }
 
-    if (destlang == "RO") {
-        myformat = '0'
-    }
-    else {
-        myformat = '1'
-    }
-    
-    let url = DeeplFree == true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
-    
+    const myformat = destlang === "RO" ? '0' : '1';
+    //console.debug("DeepLFree:",DeeplFree)
+   const isFree = DeeplFree === true || DeeplFree === "true";  // make it a true boolean
+   const url = isFree ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
+
     const requestBody = {
         auth_key: apikeyDeepl,
-        text: [originalPreProcessed],  // You have text as an array
+        text: [originalPreProcessed],
         source_lang: 'EN',
         target_lang: destlang,
         formality: formal_value,
@@ -39,89 +33,63 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
         outline_detection: '0',
         context: [mycontext],
         glossary_id: deeplGlossary,
-        DeepLFreePar: DeeplFree,
-        DeeplURL: url
+        DeeplURL: url,
+        DeepLFreePar:DeeplFree
     };
-    // changed function to send the request via the background script, otherwise a CORS error is generated
-    
-    await chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, response => {
-        if (chrome.runtime.lastError) {
-            console.error("Error:", chrome.runtime.lastError.message);
-            return;
-        }
-        translated = response;
 
-        if (translated && translated.hasOwnProperty('translations') && Array.isArray(translated.translations)) {
-            processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang)
-                .then(processedData => {
-                   // console.debug("ProcessedData",processedData)
-                    errorstate = (processedData === "OK") ? "OK" : processedData;
-                    return errorstate;
-                })
-                .catch(err => {
-                    console.error("Error in processData:", err);
-                });
+    try {
+        const translated = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, response => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+
+        if (translated?.translations && Array.isArray(translated.translations)) {
+            const processedData = await processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang);
+            return processedData === "OK" ? "OK" : processedData;
         } else {
-            
-            if (translated && translated.error) {
-               let error = translated.error
+            const error = translated?.error || translated?.message;
+            if (error) {
                 switch (true) {
                     case error.startsWith('HTTP 400:'):
                         const match400 = error.match(/HTTP 400: \{"message":"([^"]+)"\}/);
-                        if (match400) {
-                            // Extract the message from the match and use it
-                            const errorMessage = match400[1]; // This will hold the error message from DeepL
-                            console.error("DeepL Error 400:", errorMessage);
-                            messageBox("warning", `Request forbidden: ${errorMessage}`);
-                            errorstate = `Request forbidden: ${errorMessage}`;
-                        } else {
-                            // If no specific message is found, handle as a generic 403 error
-                            messageBox("warning", "Request forbidden<br>Please check your license, or your glossary");
-                            errorstate = "Request forbidden<br>Please check your license, or glossary";
-                        }
-                        break;
+                        const msg400 = match400 ? match400[1] : "Request forbidden";
+                        messageBox("warning", `Request forbidden: ${msg400}`);
+                        return `Request forbidden: ${msg400}`;
                     case error.startsWith('HTTP 403:'):
                         const match403 = error.match(/HTTP 403: \{"message":"([^"]+)"\}/);
-                        if (match403) {
-                            // Extract the message from the match and use it
-                            const errorMessage = match403[1]; // This will hold the error message from DeepL
-                            console.error("DeepL Error 403:", errorMessage);
-                            messageBox("warning", `Request forbidden: ${errorMessage}<br>Please check your license!`);
-                            errorstate = `Request forbidden: ${errorMessage}<br>Please check your license!`;
-                        } else {
-                            // If no specific message is found, handle as a generic 403 error
-                            messageBox("warning", "Request forbidden<br>Please check your license!");
-                            errorstate = "Request forbidden<br>Please check your license!";
-                        }
-                        break;
-
+                        const msg403 = match403 ? match403[1] : "Request forbidden";
+                        messageBox("warning", `Request forbidden: ${msg403}<br>Please check your license!`);
+                        return `Request forbidden: ${msg403}<br>Please check your license!`;
                     case error.startsWith('HTTP 404:'):
                         messageBox("warning", "Page not found<br>Please check your DeepL glossary!<br>Or load a new glossary");
-                        errorstate = "Page not found<br>Please check your DeepL glossary!<br>Or load a new glossary";
-                        break;
-
+                        return "Page not found<br>Please check your DeepL glossary!<br>Or load a new glossary";
                     case error.startsWith('HTTP 456:'):
-                        errorstate = "456 Quota exceeded.<br> The character limit has been reached";
-                        messageBox("warning", "You have exeeded your quota!<br>Please wait for a day or purchase a new licence");
-                        break;
-
+                        messageBox("warning", "You have exceeded your quota!<br>Please wait for a day or purchase a new licence");
+                        return "456 Quota exceeded.<br> The character limit has been reached";
                     default:
                         console.debug("Unknown error:", error);
-                        errorstate = `Unknown error: ${error}`;
+                        return `Unknown error: ${error}`;
                 }
-
-            } else if (translated && translated.message === "Quota Exceeded") {
-                messageBox("warning", "You have exceeded your translation quota!");
             } else {
                 console.debug("We have an unknown error:", translated ? translated.message : "No response received");
+                return "Unknown error";
             }
         }
-    });
+    } catch (err) {
+        console.error("Error during DeepL translation:", err);
+        return `DeepL request failed: ${err.message}`;
+    }
 }
 
 
+
 async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, DeepLWait) {
-    var originalPreProcessed = preProcessOriginal(original, preverbs, "deepl");
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "deepl");
     //console.debug("deeplGlossary:",deeplGlossary)
     language = language.toUpperCase();
    
@@ -157,56 +125,69 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
 async function processData(data, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, language) {
     //console.debug("current in deepl:", deepLcurrent)
     //console.debug("data in deepl:", data)
-    if (Array.isArray(data)) {
-        // Process data if it's an array
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                //console.log('Processing array data...');
-                resolve(data.map(item => ({ ...item, processed: true }))); // Example processing
-            }, 500);
-        });
-    } else if (typeof data === 'object' && data !== null) {
-        // Process data if it's an object
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                //console.log('Processing object data...');
-                if (data.status === 403){
-                    errorstate="403 check licence"
-                    resolve(errorstate)
-                }
-                else if (data.status === 404){
-                    errorstate= "404 The requested resource could not be found.<br>Maybe the glossary number is wrong!<br>Try loading a new glossary"
-                    resolve(errorstate)
-                }
-                else if (data.status === 456) {
-                    errorstate="456 Quota exceeded.<br> The character limit has been reached"
-                    resolve(errorstate)
-                }
 
-                if (typeof data.translations != 'undefined') {
-                   // console.debug("deepl result complete:",data.translations)
-                    translatedText = data.translations[0].text;
-                    // console.debug("deepl result", translatedText)
-                    // to activate logging of the restoreCase set the last position to 'true'
-                    if (locale != "ru" && locale != "uk") {
-                        translatedText = restoreCase(original, translatedText, locale, spellCheckIgnore, false);
-                    }
-                    translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
-                    //console.debug("translated in DeepL:",translatedText)
-                    deepLresul = processTransl(original, translatedText, language, record, row, transtype, plural_line, locale, convertToLower, deepLcurrent);
-                }
-                // Example processing: add a processed field
-                errorstate = "OK"
-                resolve(errorstate)
-                //resolve({ ...data, processed: true });
-            }, 100);
-        });
-    } else {
-        // Handle other data types if necessary
-       // errorstate ="NOK"
-        return errorstate
+    if (Array.isArray(data)) {
+        // Simulate async delay for array processing if needed
+        await new Promise(resolve => setTimeout(resolve, 0));
+        // Example processing - mark each item processed
+        return data.map(item => ({ ...item, processed: true }));
+    } 
+    
+    if (typeof data === 'object' && data !== null) {
+        // Simulate async delay before processing
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (data.status === 403) {
+            return "403 check licence";
+        }
+        if (data.status === 404) {
+            return "404 The requested resource could not be found.<br>Maybe the glossary number is wrong!<br>Try loading a new glossary";
+        }
+        if (data.status === 456) {
+            return "456 Quota exceeded.<br> The character limit has been reached";
+        }
+
+        if (typeof data.translations !== 'undefined') {
+            let translatedText = data.translations[0].text;
+
+            if (locale !== "ru" && locale !== "uk") {
+                translatedText = await restoreCase(original, translatedText, locale, spellCheckIgnore, false);
+            }
+
+            translatedText = await postProcessTranslation(
+                original,
+                translatedText,
+                replaceVerb,
+                originalPreProcessed,
+                "deepl",
+                convertToLower,
+                spellCheckIgnore,
+                locale
+            );
+
+            //console.debug("translated in DeepL:", translatedText);
+
+            await processTransl(
+                original,
+                translatedText,
+                language,
+                record,
+                row,
+                transtype,
+                plural_line,
+                locale,
+                convertToLower,
+                deepLcurrent
+            );
+        }
+
+        return "OK";
     }
+
+    // For other data types, just return error state or handle accordingly
+    return "NOK";
 }
+
    
 async function fetchWithRetry(url, options = {}, retries = 3, timeout = 5000) {
     const fetchWithTimeout = (resource, options) => {

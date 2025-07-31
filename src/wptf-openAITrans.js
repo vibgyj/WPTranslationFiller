@@ -5,6 +5,7 @@
 async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor,openAiGloss) {
     var timeout = 100;
     errorstate = "OK"
+    //console.debug("openaitone:",OpenAITone)
     //console.debug("gloss:", openAiGloss)
     //console.debug("row in AI:",rowId)
     // First we have to preprocess the original to remove unwanted chars
@@ -71,7 +72,8 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
    // myprompt = myprompt.replace("informal", OpenAITone);
     // We need to replace the tone within the prompt
     //console.debug("lang:",language)
-    if (OpenAiTone = 'formal') {
+    //console.debug("formal:",OpenAITone)
+    if (OpenAITone == 'formal') {
         if (destlang == 'nl') {
             myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
         }
@@ -90,8 +92,21 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
     }
     
     myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss)
-   
-    //console.debug("prompt:",myprompt)
+    //console.debug("destlang:",destlang)
+    if (destlang == 'nl') {
+        myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
+    }
+    else if (destlang == 'de') {
+        myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
+    }
+    else if (destlanf == de - CH) {
+        myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
+    }
+    else if (destlang == 'fr') {
+         myprompt = tempprompt.replaceAll("{{toLanguage}}", 'French');
+    }
+
+   // console.debug("prompt:",myprompt)
     //var prompt = encodeURIComponent(prompt);
     //console.debug("counter:", counter, myprompt)
     if (originalPreProcessed == '') {
@@ -174,10 +189,9 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                             text = original + " no translation received"
                             translatedText = original + " No translation received"
                         }
-                       // console.debug(`[${new Date().toISOString()}] translation recieved:`,text)
+                        // console.debug(`[${new Date().toISOString()}] translation recieved:`,text)
+                        // console.debug("endswith blank before:",text.endsWith(" "))
                         translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
-                        //console.debug("translation raw:",original,translatedText)
-                        //console.debug("plural_line:",plural_line)
                         await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                        // console.debug(`[${new Date().toISOString()}] translation processed:`,translatedText)
                         return Promise.resolve(errorstate)
@@ -194,16 +208,18 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                 }
             })
             .catch(error => {
-                console.debug("error:", error)
+               // console.debug("error:", error)
                 if (editor) {
-                    let translateButton = document.querySelector("translation-entry-mybutton");
+                    translateButton = document.querySelector("translation-entry-mybutton");
                 }
                 else {
-                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                    translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                 }
                 //console.debug("translateButton:",translateButton)
-                translateButton.className += " translated";
-                translateButton.innerText = "Translated";
+                if (translateButton != null) {
+                    translateButton.className += " translated";
+                    translateButton.innerText = "Translated";
+                }
                 if (error[2] == "400") {
                     errorstate = "Error 400";
                     if (editor) {
