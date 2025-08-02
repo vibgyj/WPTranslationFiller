@@ -140,6 +140,68 @@ function setupTooltipHandler() {
         }
     });
 
+
+  document.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() === "r" && event.ctrlKey && event.shiftKey) {
+    event.preventDefault();
+    console.log("Starting tests (Ctrl + Shift + R)...");
+
+    // Create and style the button
+    const btn = document.createElement("button");
+    btn.textContent = "Click to select test file";
+
+    btn.style.position = "fixed";
+    btn.style.top = "50%";
+    btn.style.left = "50%";
+    btn.style.transform = "translate(-50%, -50%)";
+    btn.style.padding = "1rem 2rem";
+    btn.style.fontSize = "1.2rem";
+    btn.style.zIndex = "10000";
+    btn.style.cursor = "pointer";
+    btn.style.borderRadius = "8px";
+    btn.style.border = "1px solid #333";
+    btn.style.backgroundColor = "#eee";
+    btn.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+
+    // Add a close "X" button on top right corner of the button
+    const closeBtn = document.createElement("span");
+    closeBtn.textContent = "×";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "2px";
+    closeBtn.style.right = "6px";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.fontSize = "1.2rem";
+    closeBtn.style.userSelect = "none";
+    closeBtn.title = "Close";
+
+    // Wrapper for button and close btn to position closeBtn properly
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.top = "50%";
+    wrapper.style.left = "50%";
+    wrapper.style.transform = "translate(-50%, -50%)";
+    wrapper.style.zIndex = "10000";
+    wrapper.style.display = "inline-block";
+
+    btn.style.position = "relative"; // so closeBtn positions inside btn
+
+    closeBtn.onclick = () => {
+      wrapper.remove();
+    };
+
+    btn.onclick = () => {
+      loadTestsFromFile();
+      wrapper.remove();
+    };
+
+    wrapper.appendChild(btn);
+    btn.appendChild(closeBtn);
+    document.body.appendChild(wrapper);
+  }
+});
+
+
+
     document.addEventListener("mouseout", (event) => {
         const tooltip = document.querySelector(".ui-tooltip");
 

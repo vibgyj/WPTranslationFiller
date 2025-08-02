@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.01",
+  "version": "3.4.02",
   "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -28,6 +28,10 @@
         "wptf-cute-alert.js",
         "wptf-glossary.csv",
         "locales/*.json",
+        "wptf-tests.json",
+        "wptf-testResults.js",
+        "wptf-testResults.html",
+        "wptf-testRunner.js",
         "Changelog.txt"
       ],
       "matches": [
@@ -93,6 +97,8 @@
         "wptf-importfile.js",
         "wptf-database-maintenance.js",
         "wptf-populatewithTM.js",
+        "wptf-testResults.js",
+        "wptf-testRunner.js",
         "contentScript.js"
       ],
       "css": [

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.01",
+  "version": "3.4.2",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -49,6 +49,18 @@
     },
     {
       "resources": [ "wptf-purify.min.js" ],
+      "matches": [ "<all_urls>" ]
+    },
+    {
+      "resources": [ "wptf-tests.json" ],
+      "matches": [ "<all_urls>" ]
+    },
+    {
+      "resources": [ "wptf-testResults.js" ],
+      "matches": [ "<all_urls>" ]
+    },
+    {
+      "resources": [ "wptf-testResults.html" ],
       "matches": [ "<all_urls>" ]
     },
     {
@@ -113,7 +125,8 @@
         "jsdiff.js",
         "wptf-importfile.js",
         "wptf-database-maintenance.js",
-		"wptf-populatewithTM.js",
+        "wptf-populatewithTM.js",
+        "wptf-testRunner.js",
         "contentScript.js"
       ],
       "css": [ "wptf-style.css" ]

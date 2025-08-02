@@ -6694,7 +6694,7 @@ async function saveLocal_2(bulk_timer) {
                 if (debug) {
                     console.debug(`[${new Date().toISOString()}] Waiting for editor...`);
                 }
-                const editorOpen = await waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 12000, "6688");
+                const editorOpen = await waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 10000, "6688");
                 if (!editorOpen) throw new Error("Editor did not open");
 
                 // Step 3: Click suggest
@@ -6704,7 +6704,7 @@ async function saveLocal_2(bulk_timer) {
                 }
                 // First dismiss (start save message)
                 let t_dismiss1_start = perfNow();
-                let recordDismiss = await waitForMyElement(`.gp-js-message-dismiss`, 20000, "6698");
+                let recordDismiss = await waitForMyElement(`.gp-js-message-dismiss`, 15000, "6698");
                 let t_dismiss1_end = perfNow();
                 if (debug) {
                     console.debug(`Dismiss1 found in ${(t_dismiss1_end - t_dismiss1_start).toFixed(1)} ms`);
@@ -6745,7 +6745,7 @@ async function saveLocal_2(bulk_timer) {
                 }
 
             } catch (err) {
-                console.debug("Sequence failed:", err.message);
+                console.debug("Saving failed: ", err.message);
             }
 
         } else {
