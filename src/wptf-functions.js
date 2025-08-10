@@ -2,6 +2,14 @@
   return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function enableInterceptSuggestions() {
+    localStorage.setItem('interSuggestions', 'true');
+}
+
+function disableInterceptSuggestions() {
+    localStorage.setItem('interSuggestions', 'false');
+}
+
 function insertAlstublieftIfPlease(original, dutch) {
     // Split into sentences (keeping punctuation)
     const engSentences = original.split(/(?<=[.?!])\s+/);
@@ -31,18 +39,50 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
     // Sentence splitter (keeps punctuation + newlines)
     const sentenceSplitRegex = /(.*?)([.?!,;:](?:\s+|\r\n|\r|\n)|\s–\s|\r\n|\r|\n|$)/gs;
 
-   // const sentenceSplitRegex = /(.*?)([.?!,;:](?:\s+|\r\n|\r|\n)|\r\n|\r|\n|$)/gs;
+    // Initial splitting
+    let engMatches = [...english.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+    let dutMatches = [...dutch.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
 
-    const engMatches = [...english.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
-    const dutMatches = [...dutch.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
-
-    const engSentences = engMatches.map(m => m[1] + m[2]);
-    const dutSentences = dutMatches.map(m => m[1] + m[2]);
+    let engSentences = engMatches.map(m => m[1] + m[2]);
+    let dutSentences = dutMatches.map(m => m[1] + m[2]);
 
     if (debug) {
         console.log("English split:", engSentences);
         console.log("Dutch split:", dutSentences);
     }
+
+    // --- NEW STEP: Adjust English commas if sentence counts differ ---
+    if (engSentences.length !== dutSentences.length) {
+        let engCommaCount = (english.match(/,/g) || []).length;
+        const dutCommaCount = (dutch.match(/,/g) || []).length;
+
+        let adjustedEnglish = english;
+        let adjustedEngMatches = engMatches;
+        let adjustedEngSentences = engSentences;
+
+        while (adjustedEngSentences.length !== dutSentences.length && engCommaCount > dutCommaCount) {
+            // Remove the first comma in the string (replace only the first)
+            adjustedEnglish = adjustedEnglish.replace(',', '');
+
+            // Re-split adjusted English text
+            adjustedEngMatches = [...adjustedEnglish.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+            adjustedEngSentences = adjustedEngMatches.map(m => m[1] + m[2]);
+
+            let newEngCommaCount = (adjustedEnglish.match(/,/g) || []).length;
+
+            if (newEngCommaCount === engCommaCount) break; // No comma removed, avoid infinite loop
+            engCommaCount = newEngCommaCount;
+        }
+
+        engSentences = adjustedEngSentences;
+        english = adjustedEnglish;
+
+        if (debug) {
+            console.log("Adjusted English split:", engSentences);
+            console.log("Adjusted English text:", english);
+        }
+    }
+    // --- End of new comma adjustment step ---
 
     const updatedSentences = [];
     const markerReplacements = [];
@@ -82,7 +122,9 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
             let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'i');
             if (matchRegex.test(dut)) {
                 dut = dut.replace(matchRegex, (match, punct, space) => {
-                    console.log("Matched informal:", match);
+                    if (debug) {
+                        console.log("Matched informal:", match);
+                    }
 
                     const marker = `${markerBase}${markerIndex}_0__`;
 
@@ -123,63 +165,42 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
         finalResult = finalResult.replace(marker, replacement);
     });
 
-   
     // === Step 3: Final cleanup of any remaining informal forms ===
-const foundEnglishPronouns = new Set(
-    engSentences.join(" ").toLowerCase().match(/\b(you|your|yours)\b/g) || []
-);
+    const foundEnglishPronouns = new Set(
+        engSentences.join(" ").toLowerCase().match(/\b(you|your|yours)\b/g) || []
+    );
 
-validReplacements.forEach(([en, informal, formal]) => {
-    if (!foundEnglishPronouns.has(en.toLowerCase())) return; // skip if not in original English
-    let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'gi');
-    finalResult = finalResult.replace(matchRegex, (match, punct, space, offset) => {
+    validReplacements.forEach(([en, informal, formal]) => {
+        if (!foundEnglishPronouns.has(en.toLowerCase())) return; // skip if not in original English
+        let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'gi');
+        finalResult = finalResult.replace(matchRegex, (match, punct, space, offset) => {
+            const before = finalResult.slice(0, offset);
+            const isSentenceStart = /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
+            const replacementFinal = isSentenceStart
+                ? formal.charAt(0).toUpperCase() + formal.slice(1)
+                : formal.toLowerCase();
+            return replacementFinal + (punct || '') + (space || '');
+        });
+    });
+
+    // === Step 3b: Extra pass to replace any leftover informal pronouns in Dutch unconditionally ===
+    const leftoverInformals = validReplacements.map(([, informal]) => informal).join("|");
+    const leftoverRegex = new RegExp(`\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`, "gi");
+
+    finalResult = finalResult.replace(leftoverRegex, (match, informal, punct, space, offset) => {
+        // Find formal replacement for this informal pronoun
+        const replacementPair = validReplacements.find(([ , inf]) => inf.toLowerCase() === informal.toLowerCase());
+        if (!replacementPair) return match; // safety check
+
+        const formal = replacementPair[2];
         const before = finalResult.slice(0, offset);
         const isSentenceStart = /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
         const replacementFinal = isSentenceStart
             ? formal.charAt(0).toUpperCase() + formal.slice(1)
             : formal.toLowerCase();
+
         return replacementFinal + (punct || '') + (space || '');
     });
-});
-
-// === Step 3b: Extra pass to replace any leftover informal pronouns in Dutch unconditionally ===
-const leftoverInformals = validReplacements.map(([, informal]) => informal).join("|");
-const leftoverRegex = new RegExp(`\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`, "gi");
-
-finalResult = finalResult.replace(leftoverRegex, (match, informal, punct, space, offset) => {
-    // Find formal replacement for this informal pronoun
-    const replacementPair = validReplacements.find(([ , inf]) => inf.toLowerCase() === informal.toLowerCase());
-    if (!replacementPair) return match; // safety check
-
-    const formal = replacementPair[2];
-    const before = finalResult.slice(0, offset);
-    const isSentenceStart = /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
-    const replacementFinal = isSentenceStart
-        ? formal.charAt(0).toUpperCase() + formal.slice(1)
-        : formal.toLowerCase();
-
-    return replacementFinal + (punct || '') + (space || '');
-});
-F
-
-    validReplacements.forEach(([en, informal, formal]) => {
-    if (!foundEnglishPronouns.has(en.toLowerCase())) return; // skip if not in original English
-    // Step 3 keeps 'g' to clean all leftovers
-    let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'gi');
-    finalResult = finalResult.replace(matchRegex, (match, punct, space, offset) => {
-        // Text before the match
-        const before = finalResult.slice(0, offset);
-        // Check if start of string or after sentence-ending punctuation
-        const isSentenceStart =
-            /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
-        // Capitalize only if start of sentence, else lowercase
-        const replacementFinal = isSentenceStart
-            ? formal.charAt(0).toUpperCase() + formal.slice(1)
-            : formal.toLowerCase();
-        return replacementFinal + (punct || '') + (space || '');
-    });
-  });
-
 
     // === Step 4: International polite word insertion (HTML-safe) ===
     const politeEntry = replaceVerbs.find(entry =>
@@ -238,6 +259,7 @@ F
 
     return finalResult;
 }
+
 
 function preparePlaceholdersForTranslation(input, replaceVerbs) {
   const placeholderTagMap = {};
@@ -1328,14 +1350,16 @@ function isURL(text) {
     return urlRegex.test(text.trim());
 }
 
-async function isWordInUrl(word) {
-        console.debug("isWordInUrl:", word)
+async function isWordInUrl(word,translation) {
+       // console.debug("isWordInUrl:", word)
         is_in_URL = wptf_check_for_URL(word, translation)
-        console.debug("is in URL changed:", is_in_URL)
-        if (is_in_URL == true) {
+       // console.debug("is in URL changed:", is_in_URL)
+    if (is_in_URL == true) {
+           // console.debug("1336 is in url",word)
             return true
         }
-        else {
+    else {
+       // console.debug("1336 is in url",word)
             return false
        }
 
@@ -1349,13 +1373,13 @@ async function isWordInUrl(word) {
             return cleaned.includes(lowerWord);
         });
     }
-function wptf_check_for_URL(word, translatedText) {
-    if (!word || !translatedText) return false;
+function wptf_check_for_URL(word, translation) {
+    if (!word || !translation) return false;
 
     const lowerWord = word.toLowerCase();
 
     // Step 1: Remove HTML tags (like <code>) to expose inner content
-    const textWithoutTags = translatedText.replace(/<[^>]*>/g, '');
+    const textWithoutTags = translation.replace(/<[^>]*>/g, '');
 
     // Step 2: Match full URLs
     const fullURLRegex = /\b(?:https?|ftp):\/\/[^\s"'<>]+/gi;
@@ -1367,7 +1391,7 @@ function wptf_check_for_URL(word, translatedText) {
         ...(textWithoutTags.match(fullURLRegex) || []),
         ...(textWithoutTags.match(partialPathRegex) || []),
     ];
-
+    console.debug()
     return matches.some(url => url.toLowerCase().includes(lowerWord));
 }
 

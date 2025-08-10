@@ -191,6 +191,7 @@ function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, orig
                         }
                         // console.debug(`[${new Date().toISOString()}] translation recieved:`,text)
                         // console.debug("endswith blank before:",text.endsWith(" "))
+                        //console.debug("OpenAI translation:",text)
                         translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
                         await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                        // console.debug(`[${new Date().toISOString()}] translation processed:`,translatedText)

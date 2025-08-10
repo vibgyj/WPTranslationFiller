@@ -122,8 +122,16 @@ function waitForEditableTextarea(container) {
     }
 }
 
+if (document.body) {
+  initTextareaDetection();
+} else {
+  window.addEventListener('DOMContentLoaded', () => {
+    initTextareaDetection();
+  });
+}
 
-initTextareaDetection();
+
+//initTextareaDetection();
 function setupTooltipHandler() {
     //console.debug("tooltiphandler started")
     document.addEventListener("mouseover", (event) => {
@@ -258,13 +266,15 @@ async function startFullScript(textarea) {
     adjustLayoutScreen();
     setupTooltipHandler();
     // This needs to be called to get buttons in the first record when directly opened from the table
-    addTranslateButtons(rowId)
+     addTranslateButtons(rowId)
     const clickEvent = new MouseEvent('click', {
         bubbles: true,
         cancelable: true,
         button: 0
     });
+   
     mytextarea.dispatchEvent(clickEvent);
+    
 
     const myCustomEvent = new CustomEvent('myCustomEvent', {
         detail: { message: 'This is a custom event!' }
@@ -463,7 +473,17 @@ var errorstate = "OK";
 var locale;
 var showGlosLine;
 
-gd_wait_table_alter();
+
+//chrome.storage.local.get(["DisableAutoClose"], function (data) {
+//    const disable = String(data.DisableAutoClose) === "true"; // normalize to boolean
+    // Run gd_wait_table_alter if toggle is NOT explicitly true
+//    if (!disable) {
+        gd_wait_table_alter();
+//    }
+//});
+
+
+
 addCheckBox();
 exportGlossaryForOpenAi()
 
@@ -1032,7 +1052,9 @@ const el = document.getElementById("translations");
 if (el != null) {
     el.addEventListener("click", (event) => {
         //console.debug("event:",event)
+        // console.debug("before clickEvent")
         checkbuttonClick(event);
+        // console.debug("after clickEvent")
     });
 }
 
@@ -2595,27 +2617,34 @@ async function checkbuttonClick(event) {
     var pluralTextarea = ""
     var FireFoxAction = ""
     var leftPanel;
-     const target = event.target;
-
+    var target = event.target;
+     // console.debug("buttonclick")
     // Check if the clicked element is the copy-suggestion button
-    if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta') || target.classList.contains('translation-suggestion__translation')){
-         const row = target.closest('tr');
-         const rowId = row?.id;
+    if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta') || target.classList.contains('translation-suggestion__translation')) {
+        const row = target.closest('tr');
+        const rowId = row?.id;
         if (rowId) {
-             chrome.storage.local.get(["postTranslationReplace", "formal"], function (data) {
-                                        replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, data.formal);
-                                        onCopySuggestionClicked(target,rowId,replaceVerbs);
-                                    });
+            chrome.storage.local.get(["postTranslationReplace", "formal"], function (data) {
+                replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                onCopySuggestionClicked(target, rowId, replaceVerbs);
+            });
 
 
 
 
-            
+
         } else {
             console.warn('No row found for the clicked copy button.');
         }
     }
-
+    else {
+        if (target.classList.contains('textareas active')) {
+        console.debug("we are in editor")
+    }
+       // addTranslateButtons(rowId)
+    }
+   
+   // console.debug("after check copy")
     if (event != undefined) {
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         let action = event.target.textContent;
@@ -2666,12 +2695,9 @@ async function checkbuttonClick(event) {
                    // mytextarea[0].style.height = mytextarea[0].scrollHeight + "px";
 
                     mytextarea = myrec.getElementsByClassName('foreign-text');
-                
-                    mytextarea[0].style.height = "auto"; // Initial reset
-
-                    const newHeight = mytextarea[0].scrollHeight; // Layout read
-
                     requestAnimationFrame(() => {
+                        mytextarea[0].style.height = "auto"; // Initial reset
+                        const newHeight = mytextarea[0].scrollHeight; // Layout read
                         mytextarea[0].style.height = newHeight + "px"; // Layout write
                     });
 
@@ -2846,7 +2872,7 @@ async function checkbuttonClick(event) {
                                     textarea.focus();
                                 });
                                 
-                                mark_glossary(leftPanel, result.toolTip, pluralpresent.textContent, rowId, true)
+                                await mark_glossary(leftPanel, result.toolTip, pluralpresent.textContent, rowId, true)
                             }
                         });
                     }
@@ -2936,7 +2962,7 @@ async function checkbuttonClick(event) {
 
             if (liscore != 100) {
                 if (translator == 'OpenAI') {
-                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 5000)
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 4000)
                         .then(async (element) => {
                             // We seem to have suggesttions, so now define them further
                             OpenAIres = editor.getElementsByClassName("translation-suggestion with-tooltip openai");
@@ -2964,7 +2990,7 @@ async function checkbuttonClick(event) {
                 }
                 else {
                     // we do not have OpenAI so try DeepL
-                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 5000)
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 4000)
                         .then(async (element) => {
                             DeepLres = editor.getElementsByClassName("translation-suggestion with-tooltip deepl");
                             if (DeepLres.length > 0) {
@@ -3273,11 +3299,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
        // console.log('It is something else');
         translation = textareaElem.innerText;
     }
-
+    // do not remove the below call, otherwise an error is generated
     addTranslateButtons(rowId);
-    //preview_raw = getPreview(rowId)
-    // console.debug("preview_raw:", preview_raw.querySelector('.original-text'))
-    //console.debug("row after AI:",rowId)
+    
     preview_raw = document.querySelector(`#preview-${rowId}`)
     if (preview_raw != null) {
         hasGlossary = await preview_raw.querySelector('.glossary-word')
@@ -4677,21 +4701,15 @@ function addCheckButton(rowId, checkElem, lineNo) {
 }
 
 
-function savetranslateEntryClicked(event) {
+async function savetranslateEntryClicked(event) {
+    var debug = true
     var myWindow;
     var autoCopySwitchedOff = false;
-
+    const perfNow = () => performance.now();
     event.preventDefault(event);
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
-    //chrome.storage.local.get(["bulkWait"], function (data) {
-    //   let bulkWait = data.bulkWait
-    //   if (bulkWait != null && typeof bulkWait != 'undefined') {
-    //       bulk_timer = bulkWait
-    //   }
-    //  else {
-    //      bulk_timer = 1500;
-    //  }
+    
     var bulk_timer = 200
     // Determine status of record
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -4707,7 +4725,7 @@ function savetranslateEntryClicked(event) {
             var status = select.querySelector("dt").nextElementSibling;
             status.innerText = "waiting"
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
-            setTimeout(() => {
+            //setTimeout(async() => {
                 if (autoCopyClipBoard) {
                     autoCopySwitchedOff = true
                     autoCopyClipBoard = false
@@ -4715,32 +4733,35 @@ function savetranslateEntryClicked(event) {
                 //toastbox("info", "" , "600", "Saving suggestion", myWindow);
                 let preview = getPreview(rowId)
                 //let preview = document.querySelector(`#preview-${rowId}`);
-                if (preview != null) {
+            if (preview != null) {
+                    requestAnimationFrame(async() => {
                     preview.querySelector("td.actions .edit").click();
                     const editor = preview.nextElementSibling;
                     if (editor != null) {
-                        editor.style.display = "none";
-                        editor.querySelector(".translation-actions__save").click();
+                        // editor.style.display = "none";
+                       // we do not need to hide the editor, saving is doing that automatically
+                        await editor.querySelector(".translation-actions__save").click();
                     }
-                    // PSS confirm the message for dismissal
-                    foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                        let dismiss = document.querySelector('.gp-js-message-dismiss')
-                        if (dismiss != null) {
-                            // if (confirm == '.gp-js-message-dismiss') {
-                            //  if (typeof confirm === 'function') {
-                            // confirm.click();
-                            dismiss.click()
-                            // close_toast();
-                            // }
+                   
+                        // PSS confirm the message for dismissal
+                        //let t_start = perfNow();
+                        let t_dismiss1_start = perfNow();
+                        let recordDismiss = await waitForMyElement(`.gp-js-message-dismiss`, 1000, "4733");
+                        let t_dismiss1_end = perfNow();
+                        if (debug) {
+                            console.debug(`Dismiss1 found in ${(t_dismiss1_end - t_dismiss1_start).toFixed(1)} ms`);
                         }
-                    });
-                }
-                if (autoCopySwitchedOff) {
+                        if (recordDismiss !== "Time-out reached") recordDismiss.click();
+                   
+                   });    
+            }
+            if (autoCopySwitchedOff) {
                     autoCopyClipBoard = true
                     autoCopySwitchedOff = false
-                }
+            }
+                 
 
-            }, bulk_timer);
+          //  }, bulk_timer);
             // timeout += bulk_timer;
         }
         if (current.innerText == "waiting") {
@@ -4800,9 +4821,9 @@ function savetranslateEntryClicked(event) {
             SavelocalButton.disabled = true;
             SavelocalButton.display = "none";
         }
-
     }
     //  });
+   
 }
 
 function countExactWordOccurrences(text, word) {
@@ -5850,37 +5871,39 @@ async function fetchOldRec(url, rowId, showDiff) {
                                 diff = JsDiff[diffType](newStr, oldStr);
                             }
                             fragment = document.createDocumentFragment();
-                            diff.forEach((part) => {
-                                // 03-03-2025 PSS changed the name "status" to "OldRec_status" as it generated a visual error, it was also nowhere defined
-                                // green for additions, red for deletions
-                                // dark grey for common parts
-                                if (OldRec_status == "current") {
-                                    const color = part.added ? "green" :
-                                        part.removed ? "red" : "dark-grey";
-                                    const background_color = part.added ? "white" :
-                                        part.removed ? "white" : "dark-grey";
-                                    span = document.createElement("span");
-                                    span.style.color = color;
-                                    span.style.backgroundColor = background_color;
-                                    span.appendChild(document
-                                        .createTextNode(part.value));
-                                    fragment.appendChild(span);
-                                }
-                                else if (OldRec_status = "waiting") {
-                                    const color = part.added ? "green" :
-                                        part.removed ? "red" : "dark-grey";
-                                    const background_color = part.added ? "white" :
-                                        part.removed ? "white" : "dark-grey";
-                                    span = document.createElement("span");
-                                    span.style.color = color;
-                                    span.style.backgroundColor = background_color;
-                                    span.appendChild(document
-                                        .createTextNode(part.value));
-                                    fragment.appendChild(span);
-                                }
-                            });
-                            element5.appendChild(fragment);
-                            metaElem.style.fontWeight = "900";
+                            if (typeof fragment != "undefined") {
+                                diff.forEach((part) => {
+                                    // 03-03-2025 PSS changed the name "status" to "OldRec_status" as it generated a visual error, it was also nowhere defined
+                                    // green for additions, red for deletions
+                                    // dark grey for common parts
+                                    if (OldRec_status == "current") {
+                                        const color = part.added ? "green" :
+                                            part.removed ? "red" : "dark-grey";
+                                        const background_color = part.added ? "white" :
+                                            part.removed ? "white" : "dark-grey";
+                                        span = document.createElement("span");
+                                        span.style.color = color;
+                                        span.style.backgroundColor = background_color;
+                                        span.appendChild(document
+                                            .createTextNode(part.value));
+                                        fragment.appendChild(span);
+                                    }
+                                    else if (OldRec_status = "waiting") {
+                                        const color = part.added ? "green" :
+                                            part.removed ? "red" : "dark-grey";
+                                        const background_color = part.added ? "white" :
+                                            part.removed ? "white" : "dark-grey";
+                                        span = document.createElement("span");
+                                        span.style.color = color;
+                                        span.style.backgroundColor = background_color;
+                                        span.appendChild(document
+                                            .createTextNode(part.value));
+                                        fragment.appendChild(span);
+                                    }
+                                });
+                                element5.appendChild(fragment);
+                                metaElem.style.fontWeight = "900";
+                            }
                         }
                     }
                 }).catch(error => console.debug(error));
@@ -6168,18 +6191,22 @@ function gd_wait_table_alter() {
                         status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
                         status_has_changed = status_before !== status_after;
                     }
-                    // console.debug("before hide editor");
-                    // if (user_is_pte && row_is_editor ) {
-                    //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
-
-                    gd_auto_hide_next_editor(addedNode);
-                    // }
-                    // if (user_is_pte && row_is_preview) {
-                    //    gd_add_column_buttons(addedNode);
-                    // }
-                    //if (row_is_preview) {
-                    // addedNode.querySelectorAll(".glossary-word").forEach(gd_add_glossary_links);
-                    // }
+                   
+                    chrome.storage.local.get(["DisableAutoClose"], function (data) {
+                        const disable = String(data.DisableAutoClose) === "true"; // normalize to boolean
+                        // Run gd_wait_table_alter if toggle is NOT explicitly true
+                        if (!disable) {
+                            gd_auto_hide_next_editor(addedNode);
+                        }
+                        else {
+                            // we need to determine the row to add the buttons
+                            //If a new editor is opened we need the buttons for translation
+                            const preview = addedNode.nextElementSibling;
+                            const next_editor = preview.nextElementSibling;
+                            let myrow = next_editor.getAttribute('row')
+                            addTranslateButtons(myrow);
+                        }
+                     });
                 });
             });
         });

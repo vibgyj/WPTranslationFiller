@@ -428,14 +428,26 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
        
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
+        //console.debug("checkurl:",translatedText)
         for (let i = 0; i < replaceVerb.length; i++) {
-             //console.debug("not convertTolower:",translatedText,replaceVerb[i][0])
-            if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-                //console.debug("we are replacing:",replaceVerb[i][1])
-                translatedText = correctSentence(translatedText, spellCheckIgnore);
+            //console.debug("not convertTolower:",translatedText,replaceVerb[i][0])
+            
+            if (isWordInUrl(replaceVerb[i][0], translatedText) != true) {
+                //console.debug("check url false")
+                if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                   // console.debug("we are replacing 439:", replaceVerb[i][1])
+                    translatedText = correctSentence(translatedText, spellCheckIgnore);
+                }
+                else {
+                    // console.debug("we do not replacing 437:", replaceVerb[i][1])
+                }
+            }
+            else {
+                //console.debug("the word is in url:",replaceVerb[i][0])
             }
         }
+       // console.debug("checkurl:",translatedText)
     }
   
     // check if a sentence has ": " and check if next letter is uppercase
@@ -561,16 +573,21 @@ function correctSentence(translatedText, ignoreList) {
 
         let correctedWords = words.map((word, index) => {
             let lowerWord = word.toLowerCase();
+            let inUrl = isWordInUrl(lowerWord, translatedText); // ✅ Check only once
 
-            // Capitalize word if previous word ends with ? or !, and if word not in ignore list or URL
+            // Capitalize if previous word ends with ? or !, and word not in ignore list or URL
             if (index > 0 && /[?!]/.test(words[index - 1])) {
-                if (!CheckUrl(translatedText, lowerWord) && !ignoreMap.has(lowerWord)) {
+                if (!inUrl && !ignoreMap.has(lowerWord)) {
                     word = word.charAt(0).toUpperCase() + word.slice(1);
                 }
             }
 
-            // Replace with ignoreMap value if it exists
-            return ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word;
+            // Replace with ignoreMap value if it exists and is not inside a URL
+            if (ignoreMap.has(lowerWord) && !inUrl) {
+                return ignoreMap.get(lowerWord);
+            }
+
+            return word;
         });
 
         correctedParts.push(correctedWords.join(''));
@@ -3984,7 +4001,8 @@ async function determineType(row, record) {
     //console.debug("myType:",myType)
 
     if (myType == 'none') {
-       // let original = record.querySelector("div.editor-panel__left div.panel-content span.original-raw").innerText;
+        // let original = record.querySelector("div.editor-panel__left div.panel-content span.original-raw").innerText;
+      // console.debug("locale:",destlang)
         pretrans = await findTransline(original, destlang);
         //console.debug("pretrans found:",pretrans)
         if (pretrans != "notFound") {
@@ -6601,7 +6619,7 @@ async function saveLocal_2(bulk_timer) {
     var Edopen;
     let debug = false;
     StartObserver = false;
-    
+    enableInterceptSuggestions()
     const perfNow = () => performance.now(); // High resolution timer in ms
 
     const template = `
@@ -6640,6 +6658,7 @@ async function saveLocal_2(bulk_timer) {
     timeout += bulk_timer;
     hideIncompletePreviewRows();
     hideUntranslatedPreviewRows();
+    disableInterceptSuggestions();
     progressbar = document.querySelector(".indeterminate-progress-bar");
     if (progressbar) {
         progressbar.style.display = "none";
@@ -6655,7 +6674,7 @@ async function saveLocal_2(bulk_timer) {
     async function processRow(preview) {
         var checkset = preview.querySelector('input[type="checkbox"]');
         if (!checkset || !checkset.checked) return;
-
+        var debug = false
         var myPreviewRow = preview.id;
         var myNewRow = myPreviewRow.split("-")[1];
         var rowfound = myPreviewRow;

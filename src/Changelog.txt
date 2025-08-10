@@ -43,3 +43,8 @@ Version 3.3.98 Fixed a problem with wrong replacements of "%1$s", "%2$s" when th
 Version 3.3.99 Added auto insert "Please"  -> "alstulieft" for formal if the original contains "Please" Add "##form:Please,alstublieft" to your postreplace list. or different translation if not nl_NL locale
 Version 3.4.1 Refactored bulk save, so now it does not skip records, unless it is already translated equally
 Version 3.4.2 Added a test runner for testing the conversion to formal
+Version 3.4.3 Fixed replacing ignore words into url
+Version 3.4.3 Added suppressing calls to fetch suggestions when performing bulk save
+Version 3.4.3 Improved formal conversion, when a sentence is shorter then English
+Version 3.4.4 Added a toggle to prevent closing the next editor
+Version 3.4.5 Buttons were not added when the next editor was opened

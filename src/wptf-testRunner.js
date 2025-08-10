@@ -22,27 +22,60 @@
 
 function replaceFormalVerbInTranslation(english, dutch, testReplaceVerbs, debug = false) {
   
-    const markerBase = "__REPLACE_";
-    let markerIndex = 0;
+   const markerBase = "__REPLACE_";
+let markerIndex = 0;
 
-    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    // Sentence splitter (keeps punctuation + newlines)
-     
-      const sentenceSplitRegex = /(.*?)([.?!,;:](?:\s+|\r\n|\r|\n)|\s–\s|\r\n|\r|\n|$)/gs;
+// Your original sentence splitter regex including " – " with spaces around dash
+const sentenceSplitRegex = /(.*?)([.?!,;:](?:\s+|\r\n|\r|\n)|\s–\s|\r\n|\r|\n|$)/gs;
 
-    //const sentenceSplitRegex = /(.*?)([.?!,;:](?:\s+|\r\n|\r|\n)|\r\n|\r|\n|$)/gs;
+// Initial splitting
+let engMatches = [...english.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+let dutMatches = [...dutch.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
 
-    const engMatches = [...english.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
-    const dutMatches = [...dutch.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+let engSentences = engMatches.map(m => m[1] + m[2]);
+let dutSentences = dutMatches.map(m => m[1] + m[2]);
 
-    const engSentences = engMatches.map(m => m[1] + m[2]);
-    const dutSentences = dutMatches.map(m => m[1] + m[2]);
+if (debug) {
+    console.log("English split:", engSentences);
+    console.log("Dutch split:", dutSentences);
+}
+
+// Check if sentence counts differ, try removing commas from English to match
+if (engSentences.length !== dutSentences.length) {
+    let engCommaCount = (english.match(/,/g) || []).length;
+    const dutCommaCount = (dutch.match(/,/g) || []).length;
+
+    let adjustedEnglish = english;
+    let adjustedEngMatches = engMatches;
+    let adjustedEngSentences = engSentences;
+
+    while (adjustedEngSentences.length !== dutSentences.length && engCommaCount > dutCommaCount) {
+        // Remove the first comma in the string (replace only the first)
+        adjustedEnglish = adjustedEnglish.replace(',', '');
+        
+        // Re-split adjusted English text
+        adjustedEngMatches = [...adjustedEnglish.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+        adjustedEngSentences = adjustedEngMatches.map(m => m[1] + m[2]);
+        
+        let newEngCommaCount = (adjustedEnglish.match(/,/g) || []).length;
+
+        if (newEngCommaCount === engCommaCount) break; // No comma removed, avoid infinite loop
+        engCommaCount = newEngCommaCount;
+    }
+
+    engSentences = adjustedEngSentences;
+    english = adjustedEnglish;
 
     if (debug) {
-        console.log("English split:", engSentences);
-        console.log("Dutch split:", dutSentences);
+        console.log("Adjusted English split:", engSentences);
+        console.log("Adjusted English text:", english);
     }
+}
+
+// Continue with Step 1 using engSentences and dutSentences arrays
+
 
     const updatedSentences = [];
     const markerReplacements = [];

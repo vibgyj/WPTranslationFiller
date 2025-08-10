@@ -603,7 +603,7 @@ async function findTransline(orig,cntry){
             sourceCountry: [orig,cntry]
         }
     }).then((value) => {
-       // console.debug("value of search:",value)
+       
         if (value !=""){
             trans = convPromise(value);
         }

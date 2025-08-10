@@ -37,12 +37,12 @@
   {
     "english": "Upload additional files or resources that will be available for your lesson. Click on the \\\"Plus\\\" icon to upload the files. Please, note that the attached files will be visible on the front end. It will be displayed at the bottom section of the lesson content.",
     "dutch": "Upload extra bestanden of bronnen die beschikbaar zullen zijn voor je les. Klik op het \\\"plus\\\" icoon om de bestanden te uploaden. Let op dat de bijgevoegde bestanden zichtbaar zijn op de front-end. Ze worden weergegeven onderaan de lesinhoud.",
-    "expected": "Upload extra bestanden of bronnen die beschikbaar zullen zijn voor uw les. Klik op het \\\"plus\\\" icoon om de bestanden te uploaden. Let op dat de bijgevoegde bestanden zichtbaar zijn op de front-end. Ze worden weergegeven onderaan de lesinhoud."
+    "expected": "Upload extra bestanden of bronnen die beschikbaar zullen zijn voor uw les. Klik op het \\\"plus\\\" icoon om de bestanden te uploaden. Let alstublieft op dat de bijgevoegde bestanden zichtbaar zijn op de front-end. Ze worden weergegeven onderaan de lesinhoud."
   },
   {
     "english": "Sorry, but nothing matched your search terms. Please try again with some different keywords.",
     "dutch": "Er kwam niets overeen met je zoekopdracht termen. Probeer het nog eens met wat andere keywords.",
-    "expected": "Er kwam niets overeen met uw zoekopdracht termen. Probeer het nog eens met wat andere keywords."
+    "expected": "Er kwam niets overeen met uw zoekopdracht termen. Probeer alstublieft het nog eens met wat andere keywords."
   },
   {
     "english": "Select how you want your paragraphs to appear.",
@@ -73,5 +73,10 @@
     "english": "AI credit validity: Lifetime – use anytime.",
     "dutch": "AI tegoed geldigheid: levenslang – gebruik wanneer je wilt.",
     "expected": "AI tegoed geldigheid: levenslang – gebruik wanneer u wilt."
+  },
+  {
+    "english": "Using this plugin, an ALT text will be generated for your WordPress media library image(s) with just one click or automatically when the images are uploaded. You can also generate the ALT texts in bulk for all your images.",
+    "dutch": "Met deze plugin wordt er een ALT-tekst gegenereerd voor je WordPress mediabibliotheek afbeelding(en) met slechts \u00e9\u00e9n klik of automatisch wanneer de afbeeldingen worden ge\u00fcpload. Je kunt de ALT-teksten ook in bulk genereren voor al je afbeeldingen.",
+    "expected": "Met deze plugin wordt er een ALT-tekst gegenereerd voor uw WordPress mediabibliotheek afbeelding(en) met slechts \u00e9\u00e9n klik of automatisch wanneer de afbeeldingen worden ge\u00fcpload. U kunt de ALT-teksten ook in bulk genereren voor al uw afbeeldingen."
   }
 ]

@@ -325,7 +325,7 @@ function working_findAllMissingWords(translationText, glossWords, locale = 'nl')
 
     const urlLikeSegments = (translation.match(new RegExp(`\\b[\\w.-]+\\.(${tldPattern})(\\/\\S*)?\\b`, 'gi')) || []).map(s => s.toLowerCase());
 
-    function isWordInUrl(word) {
+    function isWordInUrl(word,translation) {
         return urlLikeSegments.some(segment => segment.includes(word));
     }
 
@@ -384,7 +384,7 @@ function working_findAllMissingWords(translationText, glossWords, locale = 'nl')
                 if (!entry.originalWord) return false;
                 const lowerOriginal = entry.originalWord.toLowerCase();
                 const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);
-                return translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal);
+                return translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal,translation);
             });
 
             if (!originalWordFoundUntranslated) {
@@ -400,7 +400,7 @@ function working_findAllMissingWords(translationText, glossWords, locale = 'nl')
                     const lowerOriginal = entry.originalWord?.toLowerCase();
                     const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);
 
-                    if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal)) {
+                    if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal,translation)) {
                         missingTranslations.push({
                             glossIndex: glossWords.indexOf(entry),
                             word: entry.word,
