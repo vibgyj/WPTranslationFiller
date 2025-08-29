@@ -382,83 +382,120 @@ function parseCSV(content) {
 }
 
 async function importDeepLCSV(myDelete, myRecordDeleted) {
-    // 09-05-2021 PSS added file selector for silent selection of file
-    var fileSelector = document.createElement("input");
-    fileSelector.setAttribute("type", "file");
-    fileSelector.setAttribute("accept", "csv");
+    const fileSelector = document.createElement("input");
+    fileSelector.type = "file";
+    fileSelector.accept = ".csv";
     fileSelector.addEventListener("change", handleFileImport);
     fileSelector.click();
+
     function handleFileImport(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        let mylocale = checkLocale() || 'en';
-        mylocale = mylocale.toUpperCase();
-
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = async function (e) {
             const content = e.target.result;
-            const records = parseCSV(content);
+            const rows = content.split(/\r?\n/).filter(r => r.trim() !== "");
 
-            // Strip blanks and convert to UTF-8 for each record
-            const processedRecords = records.map(({ original, translation }) => {
-                return {
-                    original: (original || '').trim(),        // Strip leading/trailing blanks
-                    translation: (translation || '').trim()   // Strip leading/trailing blanks
-                };
-            });
+            if (rows.length === 0) {
+                alert("No data found in CSV!");
+                return;
+            }
 
-            openDeepLDatabase().then(dbDeepL => {
-                const transaction = dbDeepL.transaction("glossary", "readwrite");
-                const store = transaction.objectStore("glossary");
-                const index = store.index("locale_original");
+            // Detect if first row is a header
+            const firstRowCols = rows[0].split(",").map(c => c.trim().toLowerCase());
+            const hasHeader = firstRowCols.includes("original") && firstRowCols.includes("translation");
 
-                processedRecords.forEach(({ original, translation }) => {
-                    const keyRange = IDBKeyRange.only([mylocale, original]);
+            const dataRows = hasHeader ? rows.slice(1) : rows;
 
-                    const request = index.get(keyRange);
-                    request.onsuccess = function (event) {
-                        const existingRecord = event.target.result;
-                        if (existingRecord) {
-                            existingRecord.translation = translation;
-                            store.put(existingRecord);
-                        } else {
-                            store.add({ locale: mylocale, original, translation });
-                        }
-                    };
+            const records = dataRows.map(line => {
+                const cols = line.split(",");
+                let locale, original, translation;
+
+                if (cols.length === 2) {
+                    // Old CSV: Original, Translation
+                    locale = (checkLocale() || 'EN').toUpperCase();
+                    original = cols[0].trim();
+                    translation = cols[1].trim();
+                } else {
+                    // New CSV: Locale, Original, Translation
+                    locale = (cols[0] ? cols[0].trim().toUpperCase() : (checkLocale() || 'EN').toUpperCase());
+                    original = (cols[1] || '').trim();
+                    translation = (cols[2] || '').trim();
+                }
+
+                if (!original || !translation) return null;
+                return { locale, original, translation };
+            }).filter(r => r); // remove invalid
+
+            if (records.length === 0) {
+                alert("No valid CSV data found!");
+                return;
+            }
+
+            const dbDeepL = await openDeepLDatabase();
+            const store = dbDeepL.transaction("glossary", "readwrite").objectStore("glossary");
+            const index = store.index("locale_original");
+
+            for (let { locale, original, translation } of records) {
+                const existingRecord = await new Promise((resolve, reject) => {
+                    const req = index.get([locale, original]);
+                    req.onsuccess = e => resolve(e.target.result);
+                    req.onerror = e => reject(e.target.error);
                 });
 
-                transaction.oncomplete = function () {
-                    let importReady = "Import completed successfully!"
-                    alert(importReady);
-                    listAllRecords(mylocale,myDelete, myRecordDeleted); // Refresh table
-                };
-            });
+                if (existingRecord) {
+                    existingRecord.translation = translation;
+                    await new Promise((resolve, reject) => {
+                        const req = store.put(existingRecord);
+                        req.onsuccess = () => resolve();
+                        req.onerror = e => reject(e.target.error);
+                    });
+                } else {
+                    await new Promise((resolve, reject) => {
+                        const req = store.add({ locale, original, translation });
+                        req.onsuccess = () => resolve();
+                        req.onerror = e => reject(e.target.error);
+                    });
+                }
+            }
+
+            alert("Import completed successfully!");
+            listAllRecords(checkLocale().toUpperCase(), myDelete, myRecordDeleted);
         };
 
         reader.readAsText(file);
     }
 }
 
+
 async function exportDeepLCSV(DownloadPath) {
-    //console.debug("Export started:", DownloadPath)
     const db = await openDeepLDatabase();
     const transaction = db.transaction("glossary", "readonly");
     const store = transaction.objectStore("glossary");
     const request = store.getAll();
-    let download = "wptf-glossary.csv"
-    //console.debug("Download path:", DownloadPath)
-        request.onsuccess = () => {
-            const records = request.result;
-            const csvContent = records.map(r => `${r.original},${r.translation}`).join("\n");
-            const blob = new Blob([csvContent], { type: "text/csv" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = download
-            a.click();
-            URL.revokeObjectURL(a.href);
+    const download = "wptf-glossary.csv";
+
+    request.onsuccess = () => {
+        const records = request.result;
+        const csvContent = [
+            "Locale,Original,Translation", // header
+            ...records.map(r => `${r.locale},${r.original},${r.translation}`)
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = download;
+        document.body.appendChild(a); // append for Firefox
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
     };
+
+    request.onerror = (err) => console.error("Export failed:", err);
 }
+
 
 
 function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, recordNotFound, message) {

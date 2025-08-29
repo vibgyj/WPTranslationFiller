@@ -152,9 +152,10 @@ async function preProcessOriginal(original, preverbs, translator) {
      // Replace each match with a unique token and store original
      const matches = [...original.matchAll(placeholderRegex)];
      for (const match of matches) {
-        const token = `{replac_var${index}}`;
-        original = original.replace(match[0], token); // directly modify original
-        placeholderMap[token] = match[0];
+       const token = `<x id="var${index}"/>`;
+       original = original.replace(match[0], token);
+       placeholderMap[token] = match[0]; // keep mapping to restore later
+
         index++;
         }
     
@@ -2114,6 +2115,9 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
             }
         }
     }
+     if (translatedText.endsWith(" .")) {
+                    translatedText = translatedText.replace(' .','.');
+                }
     // console.debug("After improvements:", translatedText, previewNewText + " countreplaced: " + countReplaced, repl_verb, replaced)
     if (previewNewText == null) {
         previewNewText = translatedText
@@ -4038,7 +4042,7 @@ async function determineType(row, record) {
     if (myType == "none") {
         myType = "single"
     }
-   //console.debug("myDetermine return:",myType,myTranslated)
+  // console.debug("myDetermine return:",myType,myTranslated)
     return [myType, myTranslated];
 }
 
@@ -4065,13 +4069,14 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
     var plural_line;
     var pluralpresent
     var myURL;
+    var transtype
     var myCurr = record.querySelector("div.editor-panel__left div.panel-header");
     if (myCurr != null) {
         var current = await myCurr.querySelector("span.panel-header__bubble");
         var prevstate = current.innerText;
     }
     var debug = false
-    if (debug== true) {
+    if (debug === true) {
         console.debug("HandleType destlang:", destlang)
         console.debug("HandleType preview:", preview)
         console.debug("HAndleType rawPreview:",rawPreview)
@@ -4079,6 +4084,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
         console.debug("HandleType editor:", editor)
         console.debug("HandleType type:", type)
         console.debug("HandleType transsel:", transsel)
+        console.debug("HandleType translatedText:", myTranslated)
     }
     switch (type) {
 
@@ -4165,8 +4171,9 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 //console.debug("status:", status,status.value,status.innerText)
                 await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
             }
+            
             else {
-                transtype = "single"
+               transtype = 'single'
                 //console.debug("trans:", myTranslated, "orig:", original)
                 // We need to set the preview here as processTransl does not populate it, as it thinks it is in editor
                 // we have no plural, so the translation can be written directly into the preview
@@ -4174,6 +4181,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     translated = await replaceVerbInTranslation(original, myTranslated, replaceVerb)
                 }
                 else {
+                   console.debug("single:",myTranslated)
                     translated = myTranslated
                 }
                 rawPreview = document.querySelector(`#preview-${row}`)
@@ -4333,7 +4341,22 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     }
                 }
             }
-            
+            await  mark_as_translated(row, current, true, rawPreview);
+            if (is_pte) {
+                rowchecked = rawPreview.querySelector(".checkbox input");
+            }
+            else {
+                rowchecked = rawPreview.querySelector(".myCheckBox input");
+            }
+
+            if (rowchecked != null) {
+                if (!rowchecked.checked) {
+                    rowchecked.checked = true;
+                }
+            } 
+            editorElem = editor.querySelector("textarea.foreign-text");
+            await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
+
             //await mark_preview(preview, result.toolTip, textareaElem[0].textContent, row, false)
             break;
         case 'plural':
@@ -4818,7 +4841,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var pretrans;
     var timeout = 1000;
     var mytimeout = 1000;
-    var vartime = 300;
+    var vartime = 100;
     var stop = false;
     var editor = false;
     var counter = 0;
@@ -4902,11 +4925,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
 
             let counter = 0;
   //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-  //const progressbar = document.querySelector(".indeterminate-progress-bar");
-
+            //const progressbar = document.querySelector(".indeterminate-progress-bar");
+  await delay(vartime); // Wait the delay before starting this iteration
   for (const record of myrecCount) {
-    await delay(vartime); // Wait the delay before starting this iteration
-
+   
     counter++;
     let mytransType = "none";
     const rowfound = record.id;
@@ -4946,7 +4968,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         DeepLWait,
         openAiGloss,
         counter
-      );
+        );
+        console.debug(`[${new Date().toISOString()}] text processed by handletype`)
     } catch (err) {
       console.error(`Translation failed for row ${row}:`, err);
     }
@@ -4961,7 +4984,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
       if (progressbar) {
         progressbar.style.display = "none";
       }
-
       messageBox("info", __("Translation is ready"));
     }
   }
@@ -7675,7 +7697,8 @@ async function onCopySuggestionClicked(target,rowId) {
             translatedText = text
         }
         translatedText = await  postProcessTranslation(original, translatedText, replaceVerb, translatedText, "checkEntry", convertToLower, spellCheckIgnore, locale);
-
+        result = await check_start_end(translatedText, translatedText, 0, "", original, "", 0);
+        translatedText = result.translatedText
         if (textareaElem != null && typeof textareaElem != "undefined") {
           textareaElem.innerText = translatedText;
           textareaElem.value = translatedText;

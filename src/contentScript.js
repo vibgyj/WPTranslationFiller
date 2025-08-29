@@ -22,13 +22,9 @@ var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
-    //chrome.storage.local.remove(keysToRemove, function () {
-    //  console.log("Removed keys:", keysToRemove);
-    // });
 });
 function savePage() {
     var currentUrl = window.location.href
-    //console.debug("curr:", currentUrl)
     chrome.storage.local.set({
         lastPageVisited: currentUrl
     });
@@ -36,9 +32,7 @@ function savePage() {
 savePage()
 
 if (typeof addon_translations == 'undefined') {
-    //console.debug("we are setting up langvar")
     var addon_translations = {}
-    //console.debug("length:",addon_translations.length)
 }
 
 async function loadTranslations(language) {
@@ -58,18 +52,14 @@ async function loadTranslations(language) {
 
 // Function to get the translated string
 function __(key) {
-    //console.debug("key:",key,translations[key])
     return addon_translations[key] || key; // Return the translation or the key if not found
 }
 
 
 async function initTranslations(event) {
     let userLang = checkLocale() || 'en-gb';
-    // console.debug("userlanguage:",userLang)
     if (typeof addon_translations.length == 'undefined') {
-        //console.debug("Language will be loaded")
         await loadTranslations(userLang); // Load Dutch translations (or any other language)
-        // console.debug("Language loaded")
     }
     else {
         console.debug("Language is already present")
@@ -77,16 +67,13 @@ async function initTranslations(event) {
     await translatedButton()
 }
 
-//console.debug("before listener")
 // The below is necessary to get the focus into the editor if it is opened straight from the menu
 function initTextareaDetection() {
     const observerConfig = { childList: true, subtree: true };
 
     const initialObserver = new MutationObserver((mutationsList, observer) => {
         const activeTextarea = document.querySelector(".textareas.active");
-        //console.debug("initTextareaDetection:",activeTextarea)
         if (activeTextarea) {
-           // console.debug("Initial textarea container found");
             observer.disconnect();
             waitForEditableTextarea(activeTextarea);
         }
@@ -101,12 +88,8 @@ function waitForEditableTextarea(container) {
     const textareaObserver = new MutationObserver((mutations, observer) => {
         // Wait for the content-editable element or specific textarea element to appear inside
         const contentEditable = container.querySelector('[contenteditable="true"], textarea');
-        console,debug("contentEditable:",contentEditable)
         if (contentEditable) {
-           // console.debug("Editable part of textarea ready:", contentEditable);
             observer.disconnect();
-
-            // Now your script can safely continue
             startFullScript([container]);
         }
     });
@@ -116,7 +99,6 @@ function waitForEditableTextarea(container) {
     // Fallback: just in case it’s already ready
     const fallback = container.querySelector('[contenteditable="true"], textarea');
     if (fallback) {
-       // console.debug("Editable part already present, skipping observer");
         textareaObserver.disconnect();
         startFullScript([container]);
     }
@@ -133,7 +115,6 @@ if (document.body) {
 
 //initTextareaDetection();
 function setupTooltipHandler() {
-    //console.debug("tooltiphandler started")
     document.addEventListener("mouseover", (event) => {
         const tooltip = document.querySelector(".ui-tooltip");
 
@@ -242,12 +223,10 @@ function findEditorRow(textareaElem) {
 }
 
 async function startFullScript(textarea) {
-    //console.debug("Full script started:",textarea)
     var rowId = 0
     var myEditor = ""
     currWindow = window.self;
     initTranslations();
-    //console.debug("textarea:",textarea)
     mytextarea = textarea[0].firstChild.nextElementSibling;
     myEditor = findEditorRow(mytextarea)
     rowId = await myEditor ? myEditor.getAttribute('row') : null;
@@ -281,7 +260,6 @@ async function startFullScript(textarea) {
     });
 
     let is_loaded = await loadGlossaries(myCustomEvent);
-    //console.debug("glossary loaded:", is_loaded);
 
     if (is_loaded === "success") {
         doValidation();
@@ -298,7 +276,6 @@ async function startFullScript(textarea) {
                 doValidation();
             } else {
                 messageBox("info", __("Validate page aborted"));
-                //doValidation();
             }
         });
     }
@@ -320,15 +297,9 @@ function doValidation() {
 
 // Function to send a message to the injected script
 function sendMessageToInjectedScript(message) {
-    // console.debug("message:",message)
     window.postMessage(message, '*');
 }
 
-//let event = "start"
-//const myCustomEvent = new CustomEvent('myCustomEvent', {
-//   detail: { message: 'This is a custom event!' }
-//});
-//loadGlossary(CustomEvent);
 
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
@@ -338,9 +309,6 @@ else {
     // PSS added jsStore to be able to store and retrieve default translations
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
-    //console.debug("db:",db)
-    //dbDeepL = myDeepLDB();
-    //  console.debug("in content:",dbDeepL)
 }
 
 var translator; // Declare the global variable
@@ -354,7 +322,6 @@ if (typeof (Storage) !== "undefined") {
 }
 else {
     interCept = false;
-    //console.debug("Cannot read localstorage, set intercept to false");
 }
 
 // Check if the value exists and is either "true" or "false"
@@ -438,7 +405,6 @@ async function sampleUse() {
         'toonDiff': false
     };
     await setToonDiff(sampleObject1);
-    // console.log(await getToonDiff('toonDiff'));
 }
 
 //When performing bulk save the difference is shown in Meta #269
@@ -473,15 +439,7 @@ var errorstate = "OK";
 var locale;
 var showGlosLine;
 
-
-//chrome.storage.local.get(["DisableAutoClose"], function (data) {
-//    const disable = String(data.DisableAutoClose) === "true"; // normalize to boolean
-    // Run gd_wait_table_alter if toggle is NOT explicitly true
-//    if (!disable) {
-        gd_wait_table_alter();
-//    }
-//});
-
+gd_wait_table_alter();
 
 
 addCheckBox();
@@ -524,7 +482,6 @@ document.addEventListener("keydown", async function (event) {
                     else {
                         wrong_verb = "Wrong verb";
                     }
-                    //console.debug("checking:",data.destlang,org_verb,wrong_verb)
                     scrapeconsistency(data.destlang, org_verb, wrong_verb);
                 }
                 else {
@@ -558,7 +515,6 @@ document.addEventListener("keydown", async function (event) {
                 // Set this based on your condition
                 sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
                 bulk_timer = bulkWait
-                //console.debug("bulk_timer")
                 bulkSave("false", bulk_timer);
             }
         });
@@ -671,7 +627,6 @@ document.addEventListener("keydown", async function (event) {
                     if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                         if (data.transsel != "undefined") {
                             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-                            //var locale = checkLocale();
                             convertToLow = data.convertToLower;
                             var DeeplFree = data.DeeplFree;
 
@@ -741,7 +696,6 @@ document.addEventListener("keydown", async function (event) {
             }
         };
         resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
-        //console.debug("blockres:"), resblock;
     }
 
     if (event.altKey && event.shiftKey && (event.key === "F7")) {
@@ -782,7 +736,6 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
-        //  console.debug("F8")
         // Use chrome.local.get to retrieve the value
         interCept = localStorage.getItem("interXHR");
 
@@ -792,20 +745,17 @@ document.addEventListener("keydown", async function (event) {
             interCept = false;
             localStorage.setItem("interXHR", interCept);
         }
-        //   console.debug("interXHR after F8:",interCept)
         if (interCept === "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', true);
             interCept = true
             sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-            //   console.debug("after:", localStorage.getItem(['interXHR']))
         }
         else {
             toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', false);
             interCept = false
             sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-            // console.debug("after:", localStorage.getItem(['interXHR']))
         }
         location.reload();
     };
@@ -819,15 +769,12 @@ document.addEventListener("keydown", async function (event) {
         event.preventDefault();
         //$(document).ready(function () {
         var mysimple = window['wpgpt_load_history_status'];
-        // console.log(mysimple);
-        //  console.log($gp_editor_options['can_approve'])
         alert("Editor options:" + mysimple)
         // })
 
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F11")) {
-        // console.debug("F11")
         event.preventDefault();
         toastbox("info", "checkFormal is started wait for the result!!", "2000", "CheckFormal");
         var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\nmet je,met uw\n';
@@ -846,8 +793,6 @@ document.addEventListener("keydown", async function (event) {
         }).then((e) => {
             countWordsinTable();
         });
-
-        //let wordCount = countWordsinTable();
 
     };
 
@@ -885,31 +830,23 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "L" || event.key === "l")) {
         //event.preventDefault();
-        // console.debug("Glossary loading started")
         var file;
         var arrayFiles;
         fileSelector.click();
-        // console.debug("after fileSelector")
         fileSelector.addEventListener("change", (event) => {
             fileList = event.target.files;
             arrayFiles = Array.from(event.target.files)
             file = fileList[0];
-            // console.debug("before checking file:",file)
             if (file.type == 'text/csv' || "application/vnd.ms-excel") {
-                //console.debug("after file selection")
                 if (fileList[0]) {
                     var reader = new FileReader();
                     reader.onload = function (e) {
                         var contents = e.target.result;
-                        // console.debug("contents:", contents)
                         var ld_glossary = csvParser(contents)
-                        //console.debug("glossary:", glossary)
-                        // glossary = Array.from(glossary);
                         chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
                             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
                             var formal = checkFormal(false);
                             var DeeplFree = data.DeeplFree;
-                            // console.debug("before load_glossary")
                             load_glossary(ld_glossary, data.apikeyDeepl, DeeplFree, data.destlang)
                             file = ""
                         });
@@ -934,7 +871,6 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "D" || event.key === "d")) {
         //event.preventDefault();
-        // console.debug("Glossary showing started")
 
         chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
             var formal = checkFormal(false);
@@ -945,13 +881,8 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "A" || event.key === "a")) {
         event.preventDefault();
 
-        // console.debug("Translate started")
         let rowId = document.querySelector("#editor");
-        // let myEditor = document.querySelector("source-string__singular");
-        // console.debug("Translate started",rowId)
-        //let rowId = myEditor.getAttribute("row");
-        // rowId = event.target.id.split("-")[1];
-        //let myrowId = event.target.id.split("-")[2];
+        
         //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
         // So that needs to be added to the base rowId to find it
         if (typeof myrowId != "undefined" && myrowId != "translation") {
@@ -1048,13 +979,9 @@ document.addEventListener("keydown", async function (event) {
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
-//console.debug("check for:",el)
 if (el != null) {
     el.addEventListener("click", (event) => {
-        //console.debug("event:",event)
-        // console.debug("before clickEvent")
         checkbuttonClick(event);
-        // console.debug("after clickEvent")
     });
 }
 
@@ -1416,12 +1343,10 @@ async function translatedButton() {
         if (is_pte) {
             divNavBar.appendChild(bulksaveContainer);
         }
-        // console.debug("stats:",statsContainer)
         if (statsContainer != null) {
             divNavBar.appendChild(statsContainer);
         }
         if (!is_pte) {
-            //console.debug("we are not pte")
             divNavBar.appendChild(checkAllContainer);
         }
         divNavBar.appendChild(importContainer);
@@ -1544,7 +1469,6 @@ async function translatedButton() {
     function handleSelectionChange(event) {
         let selectedIndex = event.target.selectedIndex; // Get the index
         if (selectedIndex > 0) { // Ignore default option (index 0)
-            // console.log("Selected Index:", selectedIndex);
             myFunction(selectedIndex);
         }
 
@@ -1580,9 +1504,7 @@ async function translatedButton() {
             DispGlossClicked()
         }
         else if (index == 2) {
-            //glossloaded = checkGlossary(LoadGloss)
             LoadGlossClicked(index)
-            //glossloaded = checkGlossary(LoadGloss)
         }
         else if (index == 3) {
             openModalDeepL()
@@ -1804,7 +1726,6 @@ function SwitchTMClicked(event) {
 
 function tmDisableClicked(event) {
     event.preventDefault(event);
-    // console.debug("F8")
     let interCept = localStorage.getItem(['interXHR']);
     if (interCept === "false") {
         toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
@@ -1849,7 +1770,6 @@ async function myOpenDB(db) {
 
 async function myDeepLDB(dbDeepL) {
     dbDeepLOpen = await openDeepLDatabase(dbDeepL)
-    //console.debug("myDeepLDB:",dbDeepLOpen)
     return dbDeepLOpen
 }
 
@@ -1973,7 +1893,6 @@ function localTransClicked(event) {
         }
     );
 }
-
 
 
 function impLocDataseClicked(event) {

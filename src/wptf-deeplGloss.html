@@ -175,20 +175,38 @@
 
         // Export Data to JSON
         function exportData() {
+            console.debug("export started")
             let transaction = db.transaction(storeName, "readonly");
             let store = transaction.objectStore(storeName);
             let request = store.getAll();
 
             request.onsuccess = function () {
                 let data = request.result;
+
+                // Optional: filter or sort if needed
+                // data = data.filter(...);
+
+                console.debug('Preview first 10 records:', data.slice(0, 10)); // see locale, original, translation
+
+                // Create JSON blob
                 let dataBlob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
                 let url = URL.createObjectURL(dataBlob);
+
+                // Create a hidden link and click it to trigger download
                 let a = document.createElement("a");
                 a.href = url;
                 a.download = "translations_data.json";
+                document.body.appendChild(a); // needed for Firefox
                 a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            request.onerror = function (err) {
+                console.error("Failed to export data:", err);
             };
         }
+
 
         // Import Data from JSON
         function importData(event) {
