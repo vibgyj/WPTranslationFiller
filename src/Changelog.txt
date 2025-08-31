@@ -43,3 +43,4 @@ Version 3.4.4 Added a toggle to prevent closing the next editor
 Version 3.4.5 Buttons were not added when the next editor was opened
 Version 3.4.6 Deepl still did translate placeholders, so now converted to xml tags
 Version 3.4.7 Import and export of DeepL glossary now includes the locale
+Version 3.4.8 Removed wrong label from preview in plural record
