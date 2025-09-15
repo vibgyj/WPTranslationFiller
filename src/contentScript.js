@@ -2536,6 +2536,8 @@ async function checkbuttonClick(event) {
     var pluralTextarea = ""
     var FireFoxAction = ""
     var leftPanel;
+    let locale = checkLocale() || 'en';
+    var myLocale = locale
     var target = event.target;
      // console.debug("buttonclick")
     // Check if the clicked element is the copy-suggestion button
@@ -2605,15 +2607,22 @@ async function checkbuttonClick(event) {
             addTranslateButtons(rowId);
             let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
             checkTranslateButton.className = "checktranslation-entry-my-button"
-            await waitForMyElement(`#editor-${rowId}`, 500, "2630").then((res) => {
+            await waitForMyElement(`#editor-${rowId}`, 500, "2630").then(async(res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
-                    //console.debug("myrec:",myrec)
-                   // mytextarea = myrec.getElementsByClassName('foreign-text')
-                   // mytextarea[0].style.height = "auto"
-                   // mytextarea[0].style.height = mytextarea[0].scrollHeight + "px";
+                    mytextarea = myrec.getElementsByClassName('foreign-text autosize');
+                    let mytranslation = mytextarea[0].innerHTML
+                    if (mytranslation == "") {
+                        let myoriginal = myrec.getElementsByClassName("original")[0].textContent
+                        let pretrans = await findTransline(myoriginal, myLocale);
+                        if (pretrans != "notFound") {
+                           mytextarea[0].innerHTML = pretrans
+                            mytextarea[0].innerText = pretrans
+                           // activate the Local label
+                           document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
 
-                    mytextarea = myrec.getElementsByClassName('foreign-text');
+                        }
+                    }
                     requestAnimationFrame(() => {
                         mytextarea[0].style.height = "auto"; // Initial reset
                         const newHeight = mytextarea[0].scrollHeight; // Layout read
@@ -2634,7 +2643,8 @@ async function checkbuttonClick(event) {
                             //console.debug("before mutation:", leftPanel)
                             start_editor_mutation_server(mytextarea, action, leftPanel)
                         }
-                        //mytextarea = textarea.getElementsByClassName('foreign-text')
+                       // mytextarea = textarea.getElementsByClassName('foreign-text')
+                       // console.debug("tet:",mytextarea)
                         // Optional: get cursor position
                         const cursorPos = mytextarea[0].selectionStart;
                         //console.debug("Cursor position:", cursorPos);
@@ -6380,8 +6390,11 @@ async function handleMutation(mutationsList, observer) {
     const textareaElem = textareaActiveElem.querySelector("textarea.foreign-text");
     const translation = textareaElem.value;
     textareaElem?.focus();
-
-    if (!translation) return;
+    //console.debug("translation:",translation)
+    if (!translation) {
+        console.debug("we have no translation!")
+        return;
+    }
 
     const glossaryToUse = DefGlossary ? glossary : glossary1;
     const newGloss = createNewGlossArray(glossaryToUse);

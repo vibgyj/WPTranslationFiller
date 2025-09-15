@@ -58,14 +58,14 @@ async function getTransAI(
   var show_debug = true
   let translatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-  let prevstate = current ? current.innerText : "";
+    let prevstate = current ? current.innerText : "";
+  const maxTokens = estimateMaxTokens(originalPreProcessed);
   let destlang = language;
     language = language.toUpperCase();
     var messages;
 
-  let tempPrompt = OpenAIPrompt + '\n';
+  let tempPrompt = OpenAIPrompt + '\n'
     let myprompt = "";
-    var reasoning = {}
 
   // Handle tone and language in prompt
   if (OpenAITone === 'formal') {
@@ -94,7 +94,7 @@ async function getTransAI(
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
   originalPreProcessed = `"${originalPreProcessed}"`;
-
+  //console.debug("originalPreProcessed:",originalPreProcessed)
   messages = [
     { role: 'system', content: myprompt },
     { role: 'user', content: `translate this: ${originalPreProcessed}` }
@@ -112,13 +112,12 @@ async function getTransAI(
     dataNew = {
       model: mymodel,
       messages,
-      max_completion_tokens: 1000,
+      max_completion_tokens: maxTokens,
       top_p: 1,
       frequency_penalty: 0,
       presence_penalty: 0,
       reasoning_effort: 'minimal',
-      verbosity: 'low',
-      stop: null  
+      verbosity: 'low'
     };
   }
   else {
@@ -137,7 +136,8 @@ async function getTransAI(
   //const link = "https://api.openai.com/v1/chat/responses";
   const link = "https://api.openai.com/v1/chat/completions";
 
-  try {
+    try {
+      const start = Date.now();
     if (show_debug) console.debug(`[${new Date().toISOString()}] Sending request to OpenAI with model ${mymodel}`);
 
     const response = await fetch(link, {
@@ -153,7 +153,7 @@ async function getTransAI(
     const contentType = response.headers.get('content-type') || "";
     const isJson = contentType.includes('application/json');
     const data = isJson ? await response.json() : null;
-
+    //console.debug("data:",data)
     if (!response.ok) {
       // error object from OpenAI might be in data.error.message
       const errorMsg = data?.error?.message || `HTTP error ${response.status}`;
@@ -168,16 +168,18 @@ async function getTransAI(
       if (text === '""' || text === "") {
         text = original + " No translation received";
       }
-      
-            if (show_debug) console.debug(`[${new Date().toISOString()}] text recieved`)
+            const duration = ((Date.now() - start) / 1000).toFixed(2);
+            if (show_debug) console.debug(`[${new Date().toISOString()}] text recieved ${duration}`)
      
 
         translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
         
-            if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postprocess`)
+        if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postprocess`)
        
         await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-       if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by processTransl`)
+        if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by processTransl`)
+       const durationSec = ((Date.now() - start) / 1000).toFixed(2);
+        if(show_debug) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
 
       return "OK";
     } else {
@@ -556,3 +558,15 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
     }
     return errorstate
 }
+
+function estimateMaxTokens(inputText) {
+  // Rough estimate: ~4 characters ≈ 1 token in English/Dutch
+  const inputTokens = Math.ceil(inputText.length / 4);
+
+  // Translation output is usually a bit longer → use 1.5x multiplier
+  const estimatedOutput = Math.ceil(inputTokens * 1.5);
+
+  // Add a small safety margin
+  return estimatedOutput + 20;
+}
+

@@ -44,3 +44,8 @@ Version 3.4.5 Buttons were not added when the next editor was opened
 Version 3.4.6 Deepl still did translate placeholders, so now converted to xml tags
 Version 3.4.7 Import and export of DeepL glossary now includes the locale
 Version 3.4.8 Removed wrong label from preview in plural record
+Version 3.4.9 Added population of the editor field with local DB record if no translation is present
+Version 3.4.10 Fixed word replacing regardless of it being present in an url
+Version 3.4.11 Replace function did not replace vars with chars like { }
+Version 3.4.12 Import postreplace file did no longer work
+Version 3.4.12 Moved the function to replace links

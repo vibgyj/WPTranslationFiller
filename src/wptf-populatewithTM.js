@@ -217,7 +217,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
         progressbar.style.display = 'block';
     }
     setPostTranslationReplace(postTranslationReplace,formal);
-     console.debug()
+     //console.debug()
      //setPreTranslationReplace(preTranslationReplace);
     for (let i = 0; i < myrecCount; i++) {
         const previewRow = previewRows[i];

@@ -1039,6 +1039,20 @@ var obj_csv = {
     dataFile:[]
     };
 
+let input = document.getElementById("importPost");
+input.addEventListener("change", function () {   
+if (input.files && input.files[0]) {
+    let reader = new FileReader();
+        // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
+        reader.readAsText(input.files[0]);
+        reader.onload = function (e) {
+        obj_csv.size = e.total;
+        obj_csv.dataFile = e.target.result;
+        document.getElementById("text_verbs").value = "";
+        parseData(obj_csv.dataFile);
+    };
+   }
+});
 function parseData(data) {
     let lbreak = data.split("\n");
     let verbsText = "";

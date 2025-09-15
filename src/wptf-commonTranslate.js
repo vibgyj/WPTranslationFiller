@@ -107,6 +107,16 @@ async function preProcessOriginal(original, preverbs, translator) {
             index++;
         }
     }
+     // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
+    const linkmatches = original.match(linkRegex);
+        if (linkmatches != null) {
+            index = 1;
+            for (const linkmatch of linkmatches) {
+                original = original.replace(linkmatch, `{linkvar${index}}`);
+                original = original.replace('.{', '. {');
+                index++;
+            }
+     }
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         if (!CheckUrl(original, preverbs[i][0])) {
@@ -170,16 +180,6 @@ async function preProcessOriginal(original, preverbs, translator) {
             }
         }
         
-        // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-        const linkmatches = original.match(linkRegex);
-        if (linkmatches != null) {
-            index = 1;
-            for (const linkmatch of linkmatches) {
-                original = original.replace(linkmatch, `{linkvar${index}}`);
-                original = original.replace('.{', '. {');
-                index++;
-            }
-        }
     }
     else if (translator == "microsoft") {
         // const matches = original.matchAll(placeHolderRegex);
@@ -202,15 +202,16 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
         //console.debug("Original:",original)
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-        const linkmatches = original.match(linkRegex);
-        if (linkmatches != null) {
-            index = 1;
-            for (const linkmatch of linkmatches) {
-                original = original.replace(linkmatch, `{linkvar ${index}}`);
+       // const linkmatches = original.match(linkRegex);
+      //  if (linkmatches != null) {
+        //    index = 1;
+        //   for (const linkmatch of linkmatches) {
+           //     original = original.replace(linkmatch, `{linkvar${index}}`);
                 //original = original.replace('.{', '. {');
-                index++;
-            }
-        }
+            //    index++;
+            //}
+        //}
+        //console.debug("pre link matches:",linkmatches)
        
     }
     return original;
@@ -244,11 +245,18 @@ function replaceWord(str, target, replacement) {
     }
 }
 //# this function processes the translation after it has been received
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // escapes all regex metacharacters
+}
+
 function postProcessTranslation (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale) {
     var pos;
     var index = 0;
     var foundIgnore;
-     var formal = checkFormal(false);
+    var formal = checkFormal(false);
+    const verbMap = Object.fromEntries(replaceVerb.map(v => [v[0], v[1]]));
+    const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
+    //console.debug("verbRegex:",verbRegex)
     let debug = false;
     if (debug == true) {
         console.debug("original: ", original);
@@ -261,7 +269,17 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     if (originalPreProcessed != "") {
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
-
+    const charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            index = 1;
+            for (const charmatch of charmatches) {
+                //console.debug("char:", charmatch)
+                translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+                translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+                index++;
+            }
+        }
+        //console.debug("after replacing special_var:",translatedText)
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
@@ -315,36 +333,28 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 index++;
             }
         }
-        const charmatches = original.matchAll(specialChar);
-        if (charmatches != null) {
-            index = 1;
-            for (const charmatch of charmatches) {
+       // const charmatches = original.matchAll(specialChar);
+       // if (charmatches != null) {
+         //   index = 1;
+         //   for (const charmatch of charmatches) {
                 //console.debug("char:", charmatch)
-                translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
-                translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
-                index++;
-            }
-        }
+           //    translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+           //     translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+           //     index++;
+           // }
+       // }
 
     }
     else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
         index = 1;
         //console.debug("translated in OpenAI:",translatedText)
-        for (const match of matches) {
+        //for (const match of matches) {
             //  translatedText = translatedText.replace(`{var ${index}}`, match);
-            index++;
-        }
+         //   index++;
+       // }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-        const linkmatches = original.match(linkRegex);
-        //console.debug("linkmatches2:", linkmatches)
-        if (linkmatches != null) {
-            index = 1;
-            for (const match of linkmatches) {
-                translatedText = translatedText.replace(`{linkvar ${index}}`, match);
-                index++;
-            }
-        }
+        
         if (translatedText.endsWith(".") == true) {
             if (original.endsWith(".") != true) {
                 translatedText = translatedText.substring(0, translatedText.length - 1)
@@ -401,7 +411,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
 
  
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
-     //console.debug("befor convert to lower:", translatedText)
+    // console.debug("befor convert to lower:", translatedText)
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
         // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
@@ -412,7 +422,8 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
                 //console.debug(CheckUrl(translatedText, replaceVerb[i][0]))
                 if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                   // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                    translatedText = translatedText.replace(verbRegex, match => verbMap[match]);
                 }
             }
             else {
@@ -420,37 +431,42 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
                // console.debug(CheckUrl(translatedText, replaceVerb[i][0]))
                 if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                    //translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+                    translatedText = translatedText.replace(verbRegex, match => verbMap[match]);
                 }
             }
         }
     }
     else {
-       
+       // console.debug("conversion lowercase is off")
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-        //console.debug("checkurl:",translatedText)
-        for (let i = 0; i < replaceVerb.length; i++) {
-            //console.debug("not convertTolower:",translatedText,replaceVerb[i][0])
-            
-            if (isWordInUrl(replaceVerb[i][0], translatedText) != true) {
-                //console.debug("check url false")
-                if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                    translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-                   // console.debug("we are replacing 439:", replaceVerb[i][1])
-                    translatedText = correctSentence(translatedText, spellCheckIgnore);
-                }
-                else {
-                    // console.debug("we do not replacing 437:", replaceVerb[i][1])
-                }
-            }
-            else {
-                //console.debug("the word is in url:",replaceVerb[i][0])
-            }
-        }
-       // console.debug("checkurl:",translatedText)
+       //console.debug("checkurl before:",translatedText)
+      for (let i = 0; i < replaceVerb.length; i++) {
+         const searchWord = replaceVerb[i][0];
+        const replacement = replaceVerb[i][1];
+
+        // Skip if inside URL
+       let inUrl = CheckUrl(translatedText, searchWord);
+       if (!inUrl) {
+        // Escape regex special chars in search word
+        const safeWord = escapeRegex(searchWord);
+
+        // Build regex WITHOUT word boundaries, so tokens like {aap} will match
+        const wordRegex = new RegExp(safeWord, 'g');
+
+        translatedText = translatedText.replace(wordRegex, replacement);
+        translatedText = correctSentence(translatedText, spellCheckIgnore);
+
+        //console.debug("replacing:", searchWord, "->", replacement);
+    } else {
+        //console.debug("skipping replacement, word in URL:", searchWord);
     }
-  
+}
+      // console.debug("final translation:", translatedText);
+
+    }
+    //console.debug("checkurl after:",translatedText)
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -493,6 +509,15 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
             translatedText = translatedText.substring(0, pos + 2) + mychar.toLowerCase() + translatedText.substring(pos + 3);
         }
     }
+    // We need to put back the links present within the original
+    const linkmatches = original.match(linkRegex);
+        //console.debug("linkmatches2:", linkmatches)
+        if (linkmatches != null) {
+            translatedText = translatedText.replace(/\{linkvar(\d+)\}/g, (_, n) => {
+                            return linkmatches[parseInt(n)-1] || _;
+            });
+        }
+
 
     // check if the returned translation does have the same start/ending as the original
     let previewNewText = translatedText
@@ -501,16 +526,16 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     translatedText = result.translatedText;
     // console.debug("end of post:",translatedText)
     // put special chars back
-    const charmatches = original.matchAll(specialChar);
-    if (charmatches != null) {
-        index = 1;
-        for (const charmatch of charmatches) {
+    //const charmatches = original.matchAll(specialChar);
+    //if (charmatches != null) {
+      //  index = 1;
+      //  for (const charmatch of charmatches) {
             //console.debug("char:", charmatch)
-            translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
-            translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
-            index++;
-        }
-    }
+         //   translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+         //   translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+         //   index++;
+       // }
+   // }
     //console.debug("after post: ",translatedText)
     return translatedText;
 }
@@ -923,27 +948,35 @@ function applySentenceCase(str) {
     return str
 }
 //# This function checks if a text contains an URL
+/**
+ * Returns true if `searchword` occurs inside any href/src/class attribute or any raw URL
+ * inside the provided HTML/text `translated`.
+ */
 function CheckUrl(translated, searchword) {
-    // check if the text contains an URL
-    // not only check http strings but also links starting with <a and starting with <span
-    // also check for class= to prevent replaments in class name
-    const mymatches = translated.match(/\b((https?|http?|ftp|file):\/\/|(www|ftp)\.)[-A-Z0-9+&@#\/%?=~_|$!:,.;]*[A-Z0-9+&@#\/%=~_|$]|<a[^>]*>|class=\"[^\"]*\"|<span[^>]*>/ig);
-    if (mymatches != null) {
-        for (const match of mymatches) {
-            foundmysearch = match.includes(searchword);
-            if (foundmysearch) {
-                foundmysearch = true
-                // console.debug("found an url!:",translated)
-                break;
-            }
+    if (!translated || !searchword) return false;
+
+    const lowerWord = searchword.toLowerCase();
+    const lowerText = translated.toLowerCase();
+
+    // Match URLs, href/src, class attributes, and span tags
+    const urlRegex = /\b((https?|ftp|file):\/\/|(www|ftp)\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]|<a[^>]*>|class="[^"]*"|<span[^>]*>/ig;
+    const mymatches = lowerText.match(urlRegex);
+
+    if (!mymatches) return false;
+
+    for (const match of mymatches) {
+        // Only normalize dashes/underscores in the URL part for detection, **do not modify the original text**
+        const normalized = match.replace(/[-_]/g, ' ');  
+        if (normalized.includes(lowerWord)) {
+            //console.debug("found word in URL!", match);
+            return true;
         }
     }
-    else {
-        //console.debug("did not find an url:",translated)
-        foundmysearch = false;
-    }
-    return foundmysearch;
+
+    return false;
 }
+
+
 
 // Function to check if start of line is capital
 function isStartsWithUpperCase(str) {
@@ -4463,9 +4496,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             let counter = 0;
   //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
             //const progressbar = document.querySelector(".indeterminate-progress-bar");
-  await delay(vartime); // Wait the delay before starting this iteration
+  //await delay(vartime); // Wait the delay before starting this iteration
   for (const record of myrecCount) {
-   
+     await delay(vartime); // Wait the delay before starting next iteration
     counter++;
     let mytransType = "none";
     const rowfound = record.id;
@@ -5569,6 +5602,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
     var transtype = "";
     var plural_line = "";
     var checkplural = "";
+    var myWindow = window.self
     // To check if a plural is present we need to select the plural line!!
     var checkplural = document.querySelector(`#editor-${rowId} .source-string__plural span.original`);
     if (checkplural == null) {
@@ -5715,7 +5749,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                 }
                 else {
                     let translatedText = pretrans;
-                   
+                    toastbox("info", "Local translation found", "1000", "Saving");
+
                       if (formal) {
                          translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb)
                       }
