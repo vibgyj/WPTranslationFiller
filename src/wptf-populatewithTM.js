@@ -1,5 +1,7 @@
 ﻿// Helper: Wait for TM suggestion or "no-suggestions" element scoped to rowId's editor
 function waitforTM(rowId, TMwait) {
+  // console.debug("TMwait in waitforTM:", TMwait)
+   
   const timeout = 10000; // max 10 seconds
   var suggestion
   return new Promise((resolve) => {
@@ -55,10 +57,11 @@ function waitforTM(rowId, TMwait) {
         else {
             suggestion = tmContainer.querySelector(".translation-suggestion.with-tooltip");
         }
-      if (suggestion) {
-        clearInterval(interval);
-        resolve(suggestion);
-        return;
+        if (suggestion) {
+          //console.debug("suggestion found:",suggestion)
+          clearInterval(interval);
+          resolve(suggestion);
+          return;
       }
 
       elapsed += TMwait;
@@ -93,7 +96,7 @@ async function populateWithTM(
 ) {
 
     //console.debug("Starting Translation Memory process...");
-
+    //console.debug("TMtreshold:",TMtreshold)
     setPostTranslationReplace(postTranslationReplace);
     setPreTranslationReplace(preTranslationReplace);
     const myrecCount = document.querySelectorAll("tr.preview").length;
@@ -176,7 +179,8 @@ async function populateWithTM(
 
 
 // Process each record sequentially with proper awaits
-async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationReplace,  preTranslationReplace,  convertToLower,  formal,  spellCheckIgnore,  TMtreshold, transsel, GlotPressBulkButton, FetchLiDelay,  interCept) {
+async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, transsel, GlotPressBulkButton, FetchLiDelay, interCept) {
+    await sleep(1000); // wait a bit for populating the table
     var copyClip = false
     if (autoCopyClipBoard) {
         copyClip = false;
@@ -198,6 +202,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
     var pluralpresent
     var prevstate
     var textFound
+    var debug = false
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
@@ -222,7 +227,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
     for (let i = 0; i < myrecCount; i++) {
         const previewRow = previewRows[i];
         if (!previewRow) continue;
-
+        //console.debug("we are processing:",counter)
         counter++
         transtype = "single";
         plural_line = "0";
@@ -256,6 +261,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                 comment = comment.replace(/(\r\n|\n|\r)/gm, "");
                 toTranslate = checkComments(comment.trim());
             }
+            //console.debug("transtype:",transtype)
             if (transtype == "single") {
                 if (!toTranslate) {
                     if (autoCopyClipBoard) {
@@ -302,8 +308,8 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                     translated = true
                     foundTM++
                     mark_as_translated(rowId, current, translated, preview)
-                    // result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                    // await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
+                    result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
+                    await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
 
                 }
                 else {
@@ -370,7 +376,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                         textareaElem.textContent = textFound;
                                         checkEntry(rowId, postTranslationReplace, formal, convertToLower, true, spellCheckIgnore);
                                     }
-                                    let debug = false
+                                    
                                     if (debug == true) {
                                         console.debug("✅ Found TM suggestion element for record:", rowId);
                                         console.debug("Clean translation:", cleanTranslation);
@@ -378,7 +384,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                                         console.debug("Outer HTML:", suggestionResult.outerHTML);
                                     }
 
-                                    result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
+                                  //  result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
                                     let showDiff = false
                                     let old_status = "current"
                                     let showHistory = false
@@ -451,7 +457,7 @@ async function processTM(  myrecCount,  destlang,  TMwait,  postTranslationRepla
                             }
                         }
                         else {
-                            //console.debug("Unexpected result from waitforTM:", suggestionResult);
+                            console.debug("Unexpected result from waitforTM:", suggestionResult);
                         }
                         //editor.style.removeProperty("display");
                     }

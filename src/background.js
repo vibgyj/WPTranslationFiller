@@ -2,7 +2,7 @@
 console.debug("background loaded")
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.debug("request;",request)
+    console.debug("request;", request)
     if (request.action === "load_deepl_glossary") {
         // console.debug(request.isFree)
         //   console.debug(request.apiKey)
@@ -120,77 +120,163 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
     else if (request.action === "translate") {
-         //console.debug("Received translation request", request.body);
+        //console.debug("Received translation request", request.body);
 
         // Destructure DeepL endpoint + control params
         //console.debug("requestbody:", request.body)
         let { DeeplURL, DeepLFreePar, ...deeplParams } = request.body;
-    
+
         // ✅ Build request body with only allowed DeepL params
         const allowedKeys = [
-           "auth_key",
-           "text",
-           "source_lang",
-           "target_lang",
-           "formality",
-           "preserve_formatting",
-           "tag_handling",
-           "ignore_tags",
-           "split_sentences",
-           "outline_detection",
-           "context",
-           "glossary_id"
+            "auth_key",
+            "text",
+            "source_lang",
+            "target_lang",
+            "formality",
+            "preserve_formatting",
+            "tag_handling",
+            "ignore_tags",
+            "split_sentences",
+            "outline_detection",
+            "context",
+            "glossary_id"
         ];
 
-    const formData = new URLSearchParams();
-    for (const key of allowedKeys) {
-        const value = deeplParams[key];
-        if (value !== undefined && value !== null && value !== '') {
-            if (Array.isArray(value)) {
-                for (const entry of value) {
-                    formData.append(key, entry);
+        const formData = new URLSearchParams();
+        for (const key of allowedKeys) {
+            const value = deeplParams[key];
+            if (value !== undefined && value !== null && value !== '') {
+                if (Array.isArray(value)) {
+                    for (const entry of value) {
+                        formData.append(key, entry);
+                    }
+                } else {
+                    formData.append(key, value);
                 }
-            } else {
-                formData.append(key, value);
             }
         }
+
+        //console.debug("✅ Final URL:", DeeplURL);
+        //console.debug("✅ Final body:", formData.toString());
+
+        fetch(DeeplURL, {
+            method: "POST",
+            headers: {
+                "Authorization": "DeepL-Auth-Key " + deeplParams.auth_key,
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: formData.toString()
+        })
+            .then(async (response) => {
+                const raw = await response.text();
+
+                if (!response.ok) {
+                    console.error("❌ DeepL error", response.status, raw);
+                    sendResponse({ error: `HTTP ${response.status}: ${raw}` });
+                    return;
+                }
+
+                try {
+                    const json = JSON.parse(raw);
+                    // console.debug("✅ DeepL response:", json);
+                    sendResponse(json);
+                } catch (err) {
+                    console.error("❌ JSON parse error", err);
+                    sendResponse({ error: "Invalid JSON response" });
+                }
+            })
+            .catch((err) => {
+                console.error("❌ Fetch error", err);
+                sendResponse({ error: err.message });
+            });
+
+        return true;
     }
+    else if (request.action === "translateio") {
+        
+            // Extract values safely
+            const { text, source_lang, target_lang, apiKey, trans_url } = request.body || {};
+       
+            (async () => {
+                try {
+                    console.debug("target:", trans_url)
+                     console.debug("source:", source_lang);
+                    const data = await doTranslate(
+                        text || "Hello. How may I help you?",
+                        source_lang || "en-us",
+                        target_lang || "nl-nl",
+                        apiKey || "noKey",
+                        trans_url || "No url",
 
-    //console.debug("✅ Final URL:", DeeplURL);
-    //console.debug("✅ Final body:", formData.toString());
+                    );
 
-    fetch(DeeplURL, {
-        method: "POST",
-        headers: {
-            "Authorization": "DeepL-Auth-Key " + deeplParams.auth_key,
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: formData.toString()
-    })
-    .then(async (response) => {
-        const raw = await response.text();
+                    // Look for translation in multiple possible API response fields
+                    const translated =
+                        data?.translatedText ??
+                        data?.translations?.[0]?.targetContent ??
+                        data?.responseObjects?.[0]?.targetContent ??
+                        data?.translation ??
+                        null;
 
-        if (!response.ok) {
-            console.error("❌ DeepL error", response.status, raw);
-            sendResponse({ error: `HTTP ${response.status}: ${raw}` });
-            return;
+                    if (!translated) {
+                        sendResponse({
+                            success: false,
+                            error: "No translation found in API response",
+                            raw: data
+                        });
+                    } else {
+                        sendResponse({
+                            success: true,
+                            translation: translated
+                        });
+                    }
+                } catch (err) {
+                    sendResponse({ success: false, error: err.message });
+                }
+            })();
+
+            // keep the channel open
+            return true;
+        };
+
+        async function doTranslate(text, sourceLocale, targetLocale,apiKey, trans_url) {
+           
+            const url = trans_url
+            const body = {
+                rnResponseProjectId: null,
+                sourceContent: text,
+                sourceLocale,
+                targetLocale,
+                contentTypeName: "api",
+                translationType: "machine",
+                textType: "html",
+                evaluateQuality: "true"
+            };
+
+
+            console.debug("Sending request body:", body);
+            console.debug("url:", url)
+            console.debug("key:",apiKey)
+            const resp = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": apiKey
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!resp.ok) {
+                const errText = await resp.text().catch(() => "");
+                console.error("Raw response:", errText);
+                throw new Error(`API error ${resp.status}: ${errText}`);
+            }
+
+            return resp.json();
         }
-
-        try {
-            const json = JSON.parse(raw);
-           // console.debug("✅ DeepL response:", json);
-            sendResponse(json);
-        } catch (err) {
-            console.error("❌ JSON parse error", err);
-            sendResponse({ error: "Invalid JSON response" });
-        }
     })
-    .catch((err) => {
-        console.error("❌ Fetch error", err);
-        sendResponse({ error: err.message });
-    });
 
-    return true;
-}
 
-});
+
+
+

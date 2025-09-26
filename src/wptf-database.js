@@ -157,20 +157,24 @@ function createAndOpenModal() {
 
     const OriginalDiv = document.createElement('div');
     OriginalDiv.classList.add('modal-original');
-    const inputField = document.createElement('input');
-    inputField.type = 'text';
+    const inputField = document.createElement('textarea');
     inputField.id = 'modal-inputOriginal';
-    inputField.placeholder = "Enter original text"
+    inputField.placeholder = "Enter original text";
+    // give it some default size
+    inputField.rows = 4;
+    inputField.cols = 60;
+
     OriginalDiv.appendChild(inputField);
     const modalTd = document.createElement('td');
     modalTd.classList.add('modal-td');
    
     const TranslationDiv = document.createElement('div');
     TranslationDiv.classList.add('modal-translation');
-    const inputFieldTrans = document.createElement('input');
-    inputFieldTrans.type = 'text';
+    const inputFieldTrans = document.createElement('textarea');
     inputFieldTrans.id = 'modal-inputTranslation';
     inputFieldTrans.placeholder = "Enter translation text when translating"
+    inputFieldTrans.rows = 4;
+    inputFieldTrans.cols = 60;
     TranslationDiv.appendChild(inputFieldTrans)
 
     const retrieveButton = document.createElement('button');
@@ -221,13 +225,14 @@ function createAndOpenModal() {
         const input = inputField.value;
         // Call a function to retrieve data from indexedDB
         const dataFromIndexedDB = await retrieveDataFromIndexedDB(input);
-        console.debug("returned:", dataFromIndexedDB)
+        //console.debug("returned:", dataFromIndexedDB)
         // Display data in the modal
         if (dataFromIndexedDB == "notFound") {
             outputDiv.textContent = "Original not found!"
         }
         else {
             outputDiv.textContent = dataFromIndexedDB;
+            outputDiv.style.whiteSpace = "pre-wrap";
         }
     });
 
@@ -245,6 +250,7 @@ function createAndOpenModal() {
         if (input1 != "" && inputFieldTrans.value != "") {
             let res = await addTransDb(input1, inputFieldTrans.value, locale)
             outputDiv.textContent = res
+            outputDiv.style.whiteSpace = "pre-wrap";
         }
         
     });
@@ -265,8 +271,9 @@ function createAndOpenModal() {
             else {
                 
                 let result = await deleteTransDb(input1,locale)
-                console.debug("result of delete:", result)
+               // console.debug("result of delete:", result)
                 outputDiv.textContent = result
+                outputDiv.style.whiteSpace = "pre-wrap";
             }
         }
 
@@ -279,19 +286,10 @@ function createAndOpenModal() {
 async function retrieveDataFromIndexedDB(input) {
     // Perform operations to retrieve data from indexedDB based on the input
     // Replace this with your indexedDB retrieval logic
+    //console.debug("input:",input)
     let result = await findTransline(input, locale)
     return result; 
 }
-
-//async function initDb() {
- ///   var isDbCreated = await jsstoreCon.initDb(getDbSchema());
-  //  if (isDbCreated) {
-   //     console.log('db created');
-   // }
-   // else {
-    //    console.log('db opened');
-   // }
-//}
 
 // Part of the solution issue #204
 async function getTM(myLi, row, record, destlang, original, replaceVerb, transtype, convertToLower, spellIgnore, locale, current, isOpenAI) {
@@ -594,7 +592,10 @@ async function countTransline(orig,cntry){
 }
 
 
-async function findTransline(orig,cntry){
+async function findTransline(orig, cntry) {
+    
+    // cntry = cntry.toUpperCase()
+    //console.debug("country:", cntry," ",orig)
     var trans = "notFound";
     //console.debug("searching:",orig,cntry)
     const results = await jsstoreCon.select({

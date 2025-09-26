@@ -49,7 +49,7 @@ async function translateText(original, destlang, record, apikeyDeepl, originalPr
         });
 
         if (translated?.translations && Array.isArray(translated.translations)) {
-            //console.debug("translated:",translated.translations[0])
+            console.debug("translated:",translated.translations[0])
             const processedData = await processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang);
             return processedData === "OK" ? "OK" : processedData;
         } else {

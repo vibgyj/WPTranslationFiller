@@ -208,49 +208,62 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
     );
 
     if (politeEntry) {
-        if (engSentences.length !== dutSentences.length) {
-            if (debug) console.log("Skipping polite word insertion because sentence counts differ.");
-        } else {
-            const politeEnglish = politeEntry[0];
-            const politeTarget = politeEntry[1];
+    if (engSentences.length !== dutSentences.length) {
+        if (debug) console.log("Skipping polite word insertion because sentence counts differ.");
+    } else {
+        const politeEnglish = politeEntry[0];
+        const politeTarget = politeEntry[1];
 
-            const finalEngSentences = engSentences;
-            const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
-                .filter(m => m[1].trim() || m[2].trim())
-                .map(m => m[1] + m[2]);
+        const finalEngSentences = engSentences;
+        const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
+            .filter(m => m[1].trim() || m[2].trim())
+            .map(m => m[1] + m[2]);
 
-            for (let i = 0; i < finalEngSentences.length; i++) {
-                if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
-                    let sentence = finalDutchSentences[i];
+        for (let i = 0; i < finalEngSentences.length; i++) {
+            if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
+                let sentence = finalDutchSentences[i];
 
-                    // Skip if polite word already exists
-                    if (new RegExp(`\\b${escapeRegex(politeTarget)}\\b`, 'i').test(sentence)) continue;
+                // Skip if polite word already exists
+                if (new RegExp(`\\b${escapeRegex(politeTarget)}\\b`, 'i').test(sentence)) continue;
 
-                    // HTML-safe insertion: find first real text word
-                    const htmlTagPattern = /^(\s*<[^>]+>\s*)+/; // leading HTML tags
-                    const match = sentence.match(htmlTagPattern);
+                // Preserve any leading HTML tags
+                const htmlTagPattern = /^(\s*<[^>]+>\s*)+/;
+                const match = sentence.match(htmlTagPattern);
+                const insertPos = match ? match[0].length : 0;
 
-                    let insertPos = match ? match[0].length : 0;
+                // Work only on the text part (after HTML tags)
+                const leadingTags = sentence.slice(0, insertPos);
+                const textPart = sentence.slice(insertPos).trim();
 
-                    // Find the first space after the first real word
-                    const firstSpaceIndex = sentence.indexOf(" ", insertPos);
-                    if (firstSpaceIndex > -1) {
-                        sentence =
-                            sentence.slice(0, firstSpaceIndex) +
-                            " " + politeTarget +
-                            sentence.slice(firstSpaceIndex);
+                // Split into words
+                const words = textPart.split(/\s+/);
+
+                if (words.length > 0) {
+                    let insertAfterIndex = 0; // default: after first word
+
+                    // If the second word is "het" (case-insensitive), insert after that instead
+                    if (words.length > 1 && words[1].toLowerCase() === "het") {
+                        insertAfterIndex = 1;
                     }
 
-                    finalDutchSentences[i] = sentence;
-                    if (debug) console.log(`Inserted "${politeTarget}" in sentence ${i + 1}:`, sentence);
-                }
-            }
+                    // Insert polite word
+                    words.splice(insertAfterIndex + 1, 0, politeTarget);
 
-            finalResult = finalDutchSentences.join("");
+                    // Rebuild sentence
+                    sentence = leadingTags + words.join(" ");
+                }
+
+                finalDutchSentences[i] = sentence;
+                if (debug) console.log(`Inserted "${politeTarget}" in sentence ${i + 1}:`, sentence);
+            }
         }
-    } else {
-        if (debug) console.log("No polite word mapping found in replaceVerbs, skipping polite insertion.");
+
+        finalResult = finalDutchSentences.join("");
     }
+} else {
+    if (debug) console.log("No polite word mapping found in replaceVerbs, skipping polite insertion.");
+}
+
 
     if (debug) {
         console.log("\n=== FINAL RESULT ===");

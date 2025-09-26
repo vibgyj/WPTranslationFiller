@@ -48,6 +48,13 @@
             width: 350px;
         }
 
+        #deepseek_api_key {
+            width: 350px;
+        }
+        #Translateio_api_key {
+            width: 350px;
+        }
+
         #microsoft_api_key {
             width: 350px;
         }
@@ -273,11 +280,32 @@
             </tr>
             <tr>
                 <td>
+                    <label for="deepseek_api_key">DeepSeek API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="deepseek_api_key" type="text" value="DeepSeek-api key->" placeholder="DeepSeek API key" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="OpenAI_api_key">OpenAI API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
                         <input id="OpenAI_api_key" type="text" value="OpenAI-api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+            <tr>
+                <td>
+                    <label for="Translateio_api_key">translateio API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Translateio_api_key" type="text" value="Translateio api key->" />
                     </div>
                 </td>
             </tr>
@@ -289,9 +317,11 @@
                     <div class="form-select">
                         <select title="Select a translator" name="transsel" id="transselect">
                             <option value="deepl">Deepl</option>
+                            <option value="deepseek">DeepSeek</option>
                             <option value="google">Google</option>
                             <option value="microsoft">Microsoft</option>
                             <option value="OpenAI">OpenAI</option>
+                            <option value="translation_io">translationio</option>
                         </select>
                     </div>
                 </td>

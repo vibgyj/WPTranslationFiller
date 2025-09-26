@@ -35,6 +35,8 @@ let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
+let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
+let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
@@ -78,7 +80,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
   //  if (data.DownloadPath != null) {
@@ -163,6 +165,9 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
+    apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
+    apikeyTranslateioTextbox.value = data.apikeyTranslateio
+
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -352,7 +357,9 @@ button.addEventListener("click", function () {
     }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
-
+    let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
+    let apikeyTranslationio= apikeyTranslateioTextbox.value;
+    
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
     }
@@ -495,6 +502,8 @@ button.addEventListener("click", function () {
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
             apikeyMicrosoft: apikeyMicrosoft,
+            apikeyDeepSeek: apikeyDeepSeek,
+            apikeyTranslateio: apikeyTranslationio,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,

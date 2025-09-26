@@ -49,3 +49,8 @@ Version 3.4.10 Fixed word replacing regardless of it being present in an url
 Version 3.4.11 Replace function did not replace vars with chars like { }
 Version 3.4.12 Import postreplace file did no longer work
 Version 3.4.12 Moved the function to replace links
+Version 3.4.13 DeepL did not handle replacement vars like {special_var} properly
+Version 3.4.14 The database modal did not find texts containing cr/lf
+Version 3.4.15 Moved inserting "alstublieft" to third position if "het" is present in the Dutch translation
+Version 3.4.16 Added DeepSeek translation
+Version 3.4.17 Added languageio golinguist.com
