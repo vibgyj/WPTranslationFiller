@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.17",
+  "version": "3.4.23",
   "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -61,6 +61,7 @@
     "*://translate.wordpress.org/*",
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",
+    "*://api.deepseek.com/*",
     "*://api.languagetool.com/v2/*",
     "*://api.languagetoolplus.com/v2/*",
     "*://analytics.languagetoolplus.com/*",

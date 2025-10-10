@@ -111,17 +111,17 @@ async function preProcessOriginal(original, preverbs, translator) {
             index++;
         }
     }
-    console.debug("original:",original)
+    //console.debug("original:",original)
      // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-    const linkmatches = original.match(linkRegex);
-        if (linkmatches != null) {
-            index = 1;
-            for (const linkmatch of linkmatches) {
-                original = original.replace(linkmatch, `{linkvar${index}}`);
-                original = original.replace('.{', '. {');
-                index++;
-            }
-     }
+   // const linkmatches = original.match(linkRegex);
+     //   if (linkmatches != null) {
+     //       index = 1;
+     //       for (const linkmatch of linkmatches) {
+        //        original = original.replace(linkmatch, `{linkvar${index}}`);
+        //        original = original.replace('.{', '. {');
+         //       index++;
+         //   }
+    // }
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         if (!CheckUrl(original, preverbs[i][0])) {
@@ -1980,9 +1980,21 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                 countReplaced++;
             }
         }
+        if (original.endsWith("  ")) {
+             console.debug("Original end with blanc!" + original);
+            // console.debug("Preview:",previewNewText);
+            if (!previewNewText.endsWith("  ")) {
+                //  console.debug("Preview does not end with blanc!", previewNewText);
+                previewNewText = previewNewText + " ";
+                translatedText = translatedText + " ";
+                repl_verb += myrow + ": blanc after added" + "<br>";
+                countReplaced++;
+                replaced = true;
+            }
+        }
 
         if (original.endsWith(" ")) {
-            // console.debug("Original end with blanc!" + original);
+             console.debug("Original end with blanc!" + original);
             // console.debug("Preview:",previewNewText);
             if (!previewNewText.endsWith(" ")) {
                 //  console.debug("Preview does not end with blanc!", previewNewText);
@@ -2173,6 +2185,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
     var editorElement
     var current
     var myCurr
+    var apikeyTranslateio =""
     
     //destlang = "nl"
     parrotActive = 'true';
@@ -2235,9 +2248,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
         preview = document.querySelector("#preview-" + row + " td.translation");
         rawPreview = document.querySelector(`#preview-${row}`)
         
-        const [type, myTranslated] = await determineType(row, record);
-
-       // console.debug("transtype:", type,myCurr)
+       
         let original = record.querySelector("div.editor-panel__left div.panel-content span.original-raw").innerText;
         pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
         if (pluralpresent != null) {
@@ -2249,6 +2260,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
             transtype = "single";
             plural_line = "0";
         }
+        const [type, myTranslated] = await determineType(row, record);
+        //console.debug("type:",type,row)
         switch (type) {
 
             case 'name':
@@ -2333,7 +2346,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                         deeplGlossary = []
                         spellCheckIgnore = ""
                         //console.debug("before handle_plural:",row)
-                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current, editor)
+                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI,apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current, editor)
                         editorElem = editor.querySelector("textarea.foreign-text");
                         // console.debug("pretranslated before validate:")
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
@@ -3515,7 +3528,7 @@ async function mark_as_translated(row, current, translated, preview) {
     let curbut = prevcurrentClass.querySelector(`.tf-save-button`);
     if (curbut != null) {
         curbut.style.backgroundColor = "#0085ba";
-        curbut.innerText = "Save";
+        curbut.innerText = __("Save");
         // We should not overwrite the title as it is missing the toolTip data
        // curbut.title = __("Save the string");
     }
@@ -3524,7 +3537,7 @@ async function mark_as_translated(row, current, translated, preview) {
         res = await addCheckButton(row, checkElem, 3924)
         let curbut = prevcurrentClass.querySelector(`.tf-save-button`);
         curbut.style.backgroundColor = "#0085ba";
-        curbut.innerText = "Save";
+        curbut.innerText = __("Save");
        // curbut.title = __("Save the string");
     }
 }
@@ -3585,16 +3598,12 @@ async function determineType(row, record) {
         let original = record.querySelector("div.editor-panel__left div.panel-content span.original-raw").innerText;
        // console.debug("URL in original:",original)
         let FoundURL = isOnlyURL(original);
-       // console.debug("FoundURL:",FoundURL)
-        if (FoundURL) {
-            if (!urlSeen) {
+        //console.debug("FoundURL:",FoundURL,original)
+        if (FoundURL) {  
                 myType = "URL";
                 myTranslated = original;
                 urlSeen = true;
-                //console.debug("URL Detected and marked:", original);
-            }
         }
-
     }
     if (myType == "none") {
         let pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
@@ -3746,7 +3755,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     translated = await replaceVerbInTranslation(original, myTranslated, replaceVerb)
                 }
                 else {
-                   console.debug("single:",myTranslated)
+                   //console.debug("single:",myTranslated)
                     translated = myTranslated
                 }
                 rawPreview = document.querySelector(`#preview-${row}`)
@@ -3818,7 +3827,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             //console.log('Handling a single type...');
             transtype = 'single'
             plural_line = 0
-            if (transsel = "translation_io") {
+            if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", record, row, apikeyTranslateio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
@@ -3975,7 +3984,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 plural_line = "0";
             }
             transtype = "plural"
-            console.debug("we start handling the plural:", plural)
+            //console.debug("we start handling the plural:", plural)
             plural_line = "1"
             await check_span_missing(row, plural_line);
             //console.debug("pretrans 4351:",pretrans)
@@ -4003,7 +4012,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     let pretrans = await findTransline(plural, destlang);
     //console.debug("pretrans:",pretrans)
     if (pretrans == "notFound") {
-         if (transsel = "translation_io") {
+         if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
@@ -4184,8 +4193,8 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             //console.debug("It is not a current so we need to add it")
             // 30-10-2021 PSS added a fix for issue #154
             // console.debug("previewtext 4415:", myTranslatedText)
-            //console.debug("record:",record,rowId)
-            textareaElem1 = record.querySelector("#translation_" + rowId + "_0");
+            //console.debug("record:",record,rowId,row)
+            textareaElem1 = record.querySelector("#translation_" + row + "_0");
             textareaElem1.innerText = myTranslatedText;
             textareaElem1.value = myTranslatedText;
             textareaElem1 = record.querySelector("#translation_" + rowId + "_1");
@@ -4255,9 +4264,9 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     pretrans = await findTransline(plural, destlang);
     //console.debug("pretrans:",pretrans)
     if (pretrans == "notFound") {
-         if (transsel = "translation_io") {
+         if (transsel == "translation_io") {
                         is_entry = true
-                        result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
+                        result = await translateWithGolinguist(original, "nl-nl", record, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
                     }
         else if (transsel == "google") {
@@ -5745,12 +5754,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             });
             
             if (toTranslate) {
-                
                 // console.debug("we need to translate");
                 let pretrans = await findTransline(original, destlang);
                 //console.debug("original",original," ",destlang)
                 if (pretrans == "notFound") {
-                    if (transsel = "translation_io") {
+                    if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
@@ -5934,7 +5942,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 let pretrans = await findTransline(original, destlang);
                 plural_line = "2";
                 if (pretrans == "notFound") {
-                    if (transsel = "translation_io") {
+                    if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
@@ -6920,7 +6928,7 @@ async function processTransl (original, translatedText, language, record, rowId,
         // PSS 09-04-2021 added populating plural text
         // PSS 09-07-2021 additional fix for issue #102 plural not updated
        // console.debug("current innertext", current.innerText)
-         console.debug("We have a plural 6738")
+        // console.debug("We have a plural 6923")
         let isPlural = true
         if (current != "null" && current.innerText == "current" && current.innerText == "waiting" && current.innerText == "transFill" && current.innerText == "untranslated") {
             plural_row = myRowId.split("-")[0];
@@ -6972,7 +6980,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                 }
                 if (plural_line == 2) {
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_1");
-                    //console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
+                    console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
                     textareaElem2.innerText = mytranslatedText;
                     textareaElem2.value = mytranslatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
@@ -7014,7 +7022,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                
             }
             else {
-               console.debug("myRowId:",myRowId,record)
+               //console.debug("myRowId:",myRowId,record)
                 plural_row = myRowId.split("-")[0];
                 if (plural_line == 1) {
                     //populate first line of plural line if already translated
@@ -7040,35 +7048,38 @@ async function processTransl (original, translatedText, language, record, rowId,
                     }
 
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
-                    console.debug("previewElem 6858:",previewElem)
+                    //console.debug("previewElem 7043:",previewElem)
                     if (previewElem != null) {
                         previewElem.innerText = mytranslatedText;
                     }
                 }
                 else {
                     //populate plural line if  already translated
-                    console.debug("it is plural!!")
+                    //console.debug("it is plural!!",plural_row)
                     let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
                     textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_1");
+                    //console.debug("plural _1",textareaElem1)
                     // console.debug('newrow = not undefined!', row + "_1");
                     textareaElem1.innerText = mytranslatedText;
                     textareaElem1.value = mytranslatedText;
                     // the below code is for Russion plural handling
-                    textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                    textareaElem2 = f.querySelector("textarea#translation_" + plural_row + "_2");
+                    //console.debug("plural _2",textareaElem2)
                     if (textareaElem2 != null) {
-                        textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
+                       // textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_2");
                         textareaElem2.innerText = mytranslatedText;
                         textareaElem2.value = mytranslatedText;
                     }
-                    textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                    textareaElem3 = f.querySelector("textarea#translation_" + plural_row + "_3");
+                    //console.debug("plural _3",textareaElem3)
                     if (textareaElem3 != null) {
-                        textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
+                       // textareaElem3 = document.querySelector("textarea#translation_" + myRowId + "_3");
                         textareaElem3.innerText = mytranslatedText;
                         textareaElem3.value = mytranslatedText;
                     }
 
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(2) .translation-text");
-                    console.debug("previewElem 6886:",previewElem)
+                    //console.debug("previewElem 7074:",previewElem)
                     if (previewElem != null) {
                         previewElem.innerText = mytranslatedText;
                     }
@@ -7447,6 +7458,83 @@ async function onCopySuggestionClicked(target,rowId) {
             textareaElem.style.height = "auto";
             textareaElem.style.height = textareaElem.scrollHeight + "px";
            });
-       }
+        }
+       
+        DefGlossary = true
+        current = "untranslated"
+        rowId = rowId.replace("editor-", "")
+        result = await validate(locale, original, translatedText, locale, false, rowId, false, DefGlossary);
+        var leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
+        await mark_glossary(leftPanel, result.toolTip, translatedText, rowId, false)
     })
+}
+
+async function copyOrgRecords() {
+    var counter = 0;
+    var row;
+    RecCount = 0;
+    currWindow = window.self;
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    document.querySelectorAll("tr.preview").forEach((preview) => {
+        if (is_pte) {
+            checkset = preview.querySelector(".checkbox input");
+        }
+        else {
+            checkset = preview.querySelector(".myCheckBox input");
+        }
+        if (typeof checkset != 'undefined') {
+            if (checkset != null) {
+                if (checkset.checked) {
+                   let rowfound = preview.id;
+                   row = rowfound.split("-")[1];
+                   let newrow = rowfound.split("-")[2];
+                   if (typeof newrow != "undefined") {
+                            newrowId = row.concat("-", newrow);
+                            row = newrowId;
+                    }
+                    let original = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .original`).textContent;
+                    let originalForeighn = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content .translation-wrapper .foreign-text`);
+                    let previewText = preview.querySelector(".foreign-text")
+                    originalForeighn.textContent = original
+                    originalForeighn.innerHTML = original
+                    previewText.textContent = original
+                    // we need to set the status to "transfill to be able to save it"
+                    let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
+                    if (currec != null) {
+                       var current = currec.querySelector("span.panel-header__bubble");
+                       current.innerText = "transFill";
+                    }
+                    // Set the preview to waiting
+                    mark_as_translated(row, current, true, preview);
+                    counter++;
+                       
+                }
+            }
+        }
+    });
+    RecCount = counter
+    if (RecCount != 0) {
+        let errMessage = __("Records are processed: ")
+        let infoMessage = __("Bulk copy originals")
+        cuteAlert({
+            type: "info",
+            title: infoMessage,
+            message: errMessage + RecCount,
+            confirmText: "Confirm",
+            cancelText: "Cancel",
+            myWindow: currWindow
+        })
+    }
+    else {
+        let errMessage = __("No records are processed, as you did not select them! ")
+        let infoMessage = __("Bulk copy originals")
+        cuteAlert({
+            type: "error",
+            title: infoMessage,
+            message: errMessage + RecCount,
+            confirmText: "Confirm",
+            cancelText: "Cancel",
+            myWindow: currWindow
+        })
+    }
 }

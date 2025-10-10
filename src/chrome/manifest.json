@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.17",
+  "version": "3.4.23",
   "description": "Automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -57,9 +57,11 @@
   },
   "host_permissions": [
     "<all_urls>",
+    "*://agw.golinguist.com/*",
     "*://translate.wordpress.org/*",
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",
+    "*://api.deepseek.com/*",
     "*://api.languagetool.com/v2/*",
     "*://api.languagetoolplus.com/v2/*",
     "*://analytics.languagetoolplus.com/*",
@@ -76,6 +78,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-translatio_io.js",
         "wptf-buildstats.js",
         "wptf-database.js",
         "wptf-inject.js",
@@ -88,12 +91,12 @@
         "wptf-consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
-        "wptf-commonTranslate.js",
         "wptf-openAITrans.js",
         "wptf-deeplTrans.js",
         "wptf-DeepSeekTrans.js",
         "wptf-googleTrans.js",
         "wptf-microsoftTrans.js",
+        "wptf-commonTranslate.js",
         "jsdiff.js",
         "wptf-importfile.js",
         "wptf-database-maintenance.js",
@@ -105,13 +108,6 @@
       "css": [
         "wptf-cute-alert.css",
         "wptf-style.css"
-      ],
-      "json": [
-        "wptf-block_rules.json",
-        "locales/*.json"
-      ],
-      "csv": [
-        "wptf-glossary.csv"
       ]
     }
   ]

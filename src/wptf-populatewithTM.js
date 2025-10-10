@@ -236,6 +236,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
         if (rowId != null && rowId !="") {
             const preview = document.querySelector(`#preview-${rowId}`);
             const editoropen = preview?.querySelector("td.actions .edit");
+            let record = document.querySelector(`#editor-${rowId}`)
             editor = document.querySelector(`#editor-${rowId}`)
             editorClose = editor.querySelector(".panel-header-actions")
             let previewName = preview.querySelector("td.translation");
@@ -261,6 +262,11 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                 comment = comment.replace(/(\r\n|\n|\r)/gm, "");
                 toTranslate = checkComments(comment.trim());
             }
+            // if it is only an URL we do not need to fetch TM
+            if (await isOnlyURL(original) == true) {
+                toTranslate = false
+            }
+            
             //console.debug("transtype:",transtype)
             if (transtype == "single") {
                 if (!toTranslate) {
@@ -307,9 +313,12 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                     }
                     translated = true
                     foundTM++
-                    mark_as_translated(rowId, current, translated, preview)
-                    result = validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                    await mark_preview(preview, result.toolTip, textareaElem.textContent, row, false)
+                   // await mark_as_translated(rowId, current, translated, preview)
+                  
+                    result = await validateEntry(destlang, textareaElem, false, false, rowId, locale, record, false, DefGlossary);
+                   // await processTransl(original, translatedText, locale, record, row, transtype, plural_line, locale, false, current)
+                    await mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
+                    await mark_as_translated(rowId, current, translated, preview)
 
                 }
                 else {
@@ -318,7 +327,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
 
                         let suggestionResult = await waitforTM(rowId, TMwait);
                         //console.debug("suggestion:",suggestionResult)
-                        if (suggestionResult === "notfound") {
+                        if (suggestionResult == "notfound" && suggestionResult == "nosuggestions") {
                             //console.debug("Timed out waiting for TM suggestion element for record:", rowId);
 
                             //console.debug("preview:", previewName)
@@ -333,15 +342,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                             //suggestionResult = "nosuggestions";
                         }
 
-                        if (suggestionResult === "nosuggestions") {
-                            if (previewName != null) {
-                                previewName.innerText = "No suggestions"
-                                previewName.value = "No suggestions"
-                                textFound = "No suggestions"
-                            }
-                            //console.info("Editor loaded, but no TM suggestions available for record:", rowId);
-                            updateStyle(textareaElem, result, "", showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
-                        }
+                        
                         else if (suggestionResult instanceof Element) {
                             const scoreText = suggestionResult.querySelector(".translation-suggestion__score")?.textContent.trim();
                             let score = scoreText ? parseInt(scoreText.replace("%", ""), 10) : 0;
@@ -395,9 +396,9 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     status.innerText = "transFill";
                                     status.value = "transFill";
                                     current.innerText = 'transFill'
-                                    await mark_preview(preview, result.toolTip, textareaElem.innerText, rowId, false)
-                                    mark_as_translated(rowId, current, cleanTranslation, preview);
-                                    updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                                     record = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
+                                     await processTransl(original, cleanTranslation, locale, record, rowId, transtype, plural_line, locale, false, current)
+
                                 }
                                 else {
                                     //console.debug(`⛔ TM suggestion rejected (score: ${score}%) below threshold (${TMtreshold}%) for record: ${rowId}`);
@@ -455,10 +456,25 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                 updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
 
                             }
+                            if (score >= TMtreshold) {
+                                // We need to set the checkbox here, as processTransl thinks we are in editor
+                                if (is_pte) {
+                                    rowchecked = preview.querySelector(".checkbox input");
+                                }
+                                else {
+                                    rowchecked = preview.querySelector(".myCheckBox input");
+                                }
+
+                                if (rowchecked != null) {
+                                    if (!rowchecked.checked) {
+                                        rowchecked.checked = true;
+                                    }
+                                }
+                            }
                         }
-                        else {
-                            console.debug("Unexpected result from waitforTM:", suggestionResult);
-                        }
+                       // else {
+                        //    console.debug("Unexpected result from waitforTM:", suggestionResult);
+                      //  }
                         //editor.style.removeProperty("display");
                     }
 
@@ -491,7 +507,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                 }
             }
             else {
-                console.debug("We have a plural")
+               // console.debug("We have a plural")
             }
 
             if (foundTM == 0 && counter == myrecCount) {

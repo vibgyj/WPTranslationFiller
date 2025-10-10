@@ -169,7 +169,7 @@ async function getTransAI(
         text = original + " No translation received";
       }
             const duration = ((Date.now() - start) / 1000).toFixed(2);
-            if (show_debug) console.debug(`[${new Date().toISOString()}] text recieved ${duration}`)
+            if (show_debug) console.debug(`[${new Date().toISOString()}] text recieved ${duration}`,text)
      
 
         translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);

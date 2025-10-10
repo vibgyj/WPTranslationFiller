@@ -54,3 +54,10 @@ Version 3.4.14 The database modal did not find texts containing cr/lf
 Version 3.4.15 Moved inserting "alstublieft" to third position if "het" is present in the Dutch translation
 Version 3.4.16 Added DeepSeek translation
 Version 3.4.17 Added languageio golinguist.com
+Version 3.4.18 Fixed several issues in populatewithTM
+Version 3.4.19 Fixed wrong API selection
+Version 3.4.20 Added marking found TM records
+Version 3.4.20 Added marking missing glossary words in editor when performing a copy from suggestions
+Version 3.4.21 Fixed a problem with populating plurals, wrong compaire and wrong second plural lookup
+Version 3.4.22 When a text contains two links the first link is duplicated
+Version 3.4.23 Added function to copy originals into the translation

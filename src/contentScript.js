@@ -1296,6 +1296,25 @@ async function translatedButton() {
     bulktolocalButton.innerText = __("Bulk local");
     bulktolocContainer.appendChild(bulktolocalButton)
     bulktolocContainer.appendChild(classToolTip)
+
+
+     //07-05-2021 PSS added a copy original button
+    let copyOrgContainer = document.createElement("div")
+    copyOrgContainer.className = 'button-tooltip'
+    classToolTip = document.createElement("span")
+    classToolTip.className = 'tooltiptext'
+    classToolTip.innerText = __("This is the function to copy originals  with selected items")
+
+    let copyOrgButton = document.createElement("a");
+    copyOrgButton.href = "#";
+    copyOrgButton.style.visible = 'hidden'
+    copyOrgButton.id = "CopyOrig";
+    copyOrgButton.className = "copy_org-button";
+    copyOrgButton.onclick = copyOrgClicked;
+    copyOrgButton.innerText = __("Copy orig");
+    copyOrgContainer.appendChild(copyOrgButton)
+    copyOrgContainer.appendChild(classToolTip)
+
     let statsContainer = document.createElement("div")
     // add stats button if handleStats function is defined
 
@@ -1328,6 +1347,8 @@ async function translatedButton() {
         tmtransButton.style.visible = 'visible'
         localtransButton.style.visible = 'visible'
         translateButton.style.visibility = 'visible'
+        copyOrgButton.style.visibility = 'visible'
+
     });
 
     let divGpActions = document.querySelector("div.paging");
@@ -1340,9 +1361,11 @@ async function translatedButton() {
     if (divPaging != null && divProjects == null) {
         divGpActions.parentNode.insertBefore(wptfNavBar, divGpActions);
         let divNavBar = document.querySelector("div.wptfNavBarCont")
+        
         if (is_pte) {
             divNavBar.appendChild(bulksaveContainer);
         }
+        divNavBar.appendChild(copyOrgContainer);
         if (statsContainer != null) {
             divNavBar.appendChild(statsContainer);
         }
@@ -1365,6 +1388,7 @@ async function translatedButton() {
         divNavBar.appendChild(localtransContainer);
         //divNavBar.appendChild(localtransButton);
         divNavBar.appendChild(transContainer);
+
     }
 
     //12-05-2022 PSS added a new buttons specials
@@ -1821,6 +1845,10 @@ async function startBulkSave(event) {
 
 async function savetolocalClicked(event) {
     await bulkSaveToLocal();
+}
+
+async function copyOrgClicked(event) {
+    await copyOrgRecords()
 }
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
@@ -2606,10 +2634,12 @@ async function checkbuttonClick(event) {
             addTranslateButtons(rowId);
             let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
             checkTranslateButton.className = "checktranslation-entry-my-button"
-            await waitForMyElement(`#editor-${rowId}`, 500, "2630").then(async(res) => {
+            await waitForMyElement(`#editor-${rowId}`, 3000, "2630").then(async(res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
-                    mytextarea = myrec.getElementsByClassName('foreign-text autosize');
+                    //console.debug("myrec:",myrec)
+                    mytextarea = myrec.getElementsByClassName('foreign-text autosize'); 
+                    
                     let mytranslation = mytextarea[0].innerHTML
                     if (mytranslation == "") {
                         let myoriginal = myrec.getElementsByClassName("original")[0].textContent
@@ -4927,6 +4957,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
     if (debug == true) {
         console.debug("original:", original)
         console.debug("translation:", translation)
+        console.debug("Row:",rowId)
         console.debug("Devglossary:", DefGlossary)
         console.debug("Glossary:", glossary)
         // console.debug("showName:", showName)
@@ -4956,8 +4987,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
             map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
             //console.debug("map :", map)
             //if (glossary_word.length != 0) {
-            let markleftPanel = document.querySelector(`#editor-${rowId} .editor-panel`)
-            //console.debug("leftpanel:",markleftPanel,rowId)
+             let markleftPanel =  document.querySelector(`#editor-${rowId} .editor-panel__left`)
             newText = ""
             if (markleftPanel != null) {
                 pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
@@ -4965,7 +4995,6 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                 singularText = singlepresent.getElementsByClassName('original')[0]
 
                 if (pluralpresent != null) {
-                    //console.debug("plural text:",pluralpresent.innerText.trim())
                     spansPlural = pluralpresent.getElementsByClassName("glossary-word")
                 }
                 spansSingular = singlepresent.getElementsByClassName("glossary-word")
@@ -4979,9 +5008,6 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                 if (spans.length > 0) {
                     spansArray = Array.from(spans)
                     glossWords = createGlossArray(spansArray, newGloss)
-                    //console.debug("We have glossary words:",spans.length)
-
-                    //console.debug("We have this translation:",translation)
                     missingTranslations =  findAllMissingWords(translation, glossWords, locale)
                     //console.debug("We have missing words:",missingTranslations,missingTranslations.length)
                     if (missingTranslations.length != 0) {
@@ -5242,20 +5268,13 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                                         }
                                     }
                                 }
-
                                 //console.debug("translation + foundCount + count:",searchTerm, foundCount, count, toolTip)
                             }
                             else if (thisresult != null && thisresult.length > 1) {
                                 // if the glossary word does contain more words, we need to check the other words as well
                                 // but start with the first one
-                                // console.debug("we found more then one:", wordToFind, thisresult)
-                                // if (thisresult!=null){
-                                // console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
-
                                 isFound = false
                                 for (let cnt = 0; cnt < thisresult.length; cnt++) {
-                                    //console.debug("counter:",cnt)
-                                    //if (found == false) {
                                     NewsearchTerm = thisresult[cnt]
                                     // console.debug("NewSearchTerm:", NewsearchTerm)
                                     wordsCount = NewsearchTerm.trim().split(/\s+/).filter(Boolean).length;
@@ -5277,28 +5296,23 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                                         else if (orgwords.some(word => word === NewsearchTerm.trim())) {
                                             foundCount += 1
                                             isFound = true
-
                                         }
                                         else if (lowertranslation.includes(" " + NewsearchTerm.trim().toLowerCase() + " ")) {
-                                            // console.debug("Search for  multi")
                                             foundCount += 1
                                             isFound = true
                                         }
                                         else if (lowertranslation.includes(" " + NewsearchTerm)) {
                                             if (strictValidation == false) {
                                                 foundCount += 1
-                                                //console.debug('We found combined word')
                                                 isFound = true
                                             }
                                         }
                                         else if (lowertranslation.includes(NewsearchTerm + " ")) {
                                             if (strictValidation == false) {
                                                 foundCount += 1
-                                                // console.debug('We found combined word')
                                                 isFound = true
                                             }
                                         }
-
 
                                         // we did not find one of the words
                                     }
@@ -5312,7 +5326,6 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                                     }
                                 }
 
-                                //console.debug("at the end:", foundCount, isFound)
                                 if (foundCount == 0 && isFound != true) {
                                     //console.debug("we did not have a result")
                                     toolTip += wordToFind + " - " + "wrong translation" + "\n"
@@ -5337,7 +5350,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                     }
                 }
                 else {
-                    //console.debug("no glossary")
+                   //console.debug("no glossary words")
                     wordCount = 0;
                     toolTip = ""
                     foundcount = 0;
