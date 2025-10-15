@@ -26,7 +26,7 @@ async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPromp
     await delay(timeout);
     
     // Await the translation call
-    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     
     // You can handle errorstate or result here if needed
     return result;
@@ -117,7 +117,8 @@ async function getTransAI(
       frequency_penalty: 0,
       presence_penalty: 0,
       reasoning_effort: 'minimal',
-      verbosity: 'low'
+      verbosity: 'low',
+      apiKey: apikeyOpenAI,
     };
   }
   else {
@@ -129,68 +130,108 @@ async function getTransAI(
       temperature: OpenAItemp,
       frequency_penalty: 0,
       presence_penalty: 0,
-      top_p: 0.5
+      top_p: 0.5,
+     apiKey: apikeyOpenAI,
+
     };
   }
-    //console.debug("datanew:", dataNew);
-  //const link = "https://api.openai.com/v1/chat/responses";
-  const link = "https://api.openai.com/v1/chat/completions";
+  
+  const start = Date.now()
+   try {
+        const result = await new Promise((resolve) => {
+            chrome.runtime.sendMessage(
+                { action: "OpenAI", data: dataNew }, // send only the data
+                (res) => resolve(res)
+            );
+        });
 
-    try {
-      const start = Date.now();
-    if (show_debug) console.debug(`[${new Date().toISOString()}] Sending request to OpenAI with model ${mymodel}`);
+       if (!result) {
+        console.debug("OpenAI proxy returned undefined");
+        return "NOK";
+    }
 
-    const response = await fetch(link, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "Cache-Control": "no-cache",
-        Authorization: "Bearer " + apikeyOpenAI,
-      },
-      body: JSON.stringify(dataNew),
-    });
+       if (result.error) {
+        const duration = ((Date.now() - start) / 1000).toFixed(2);
+           if (show_debug) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
+            // Example of result.error: "Request failed (401): <some text>"
+    const match = result.error.match(/Request failed \((\d+)\)/);
+           const statusCode = match ? match[1] : "unknown";
+    console.debug("editor:",editor)
+           if (editor) {
+               messageBox(
+                   "warning",
+                   `Request failed with status ${statusCode}. Please check your license!`
+               );
+           }
 
-    const contentType = response.headers.get('content-type') || "";
-    const isJson = contentType.includes('application/json');
-    const data = isJson ? await response.json() : null;
-    //console.debug("data:",data)
-    if (!response.ok) {
+    return `Request failed with status ${statusCode}. Please check your license!`;
+    }
+
+    if (show_debug) console.debug("OpenAI proxy response (raw):", result.result);
+
+   const data = result.result; // raw proxy response
+   let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
+   if (text === '""' || text === "") {
+       text = "No suggestions";
+   }
+
+    // Post-processing after successful result
+    const duration = ((Date.now() - start) / 1000).toFixed(2);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] text received ${duration}s`, text);
+
+    const translatedText = await postProcessTranslation(
+        original,
+        text,
+        replaceVerb,
+        originalPreProcessed,
+        "OpenAI",
+        convertToLower,
+        spellCheckIgnore,
+        locale
+    );
+
+    if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
+
+    await processTransl(
+        original,
+        translatedText,
+        language,
+        record,
+        rowId,
+        transtype,
+        plural_line,
+        locale,
+        convertToLower,
+        current
+    );
+
+    if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by processTransl`);
+
+    const durationSec = ((Date.now() - start) / 1000).toFixed(2);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
+
+    return "OK";
+
+    } catch (err) {
+        console.error("Fetch OpenAI failed:", err);
+        return null;
+    }
+
+    console.debug("result:")
+  //  if (!OpenAiResponse.ok) {
       // error object from OpenAI might be in data.error.message
-      const errorMsg = data?.error?.message || `HTTP error ${response.status}`;
-      if (editor) messageBox("error", `OpenAI API Error: ${errorMsg}`);
-      if (show_debug) console.error("OpenAI API error:", errorMsg);
-      return "NOK";
-    }
+   //   const errorMsg = data?.error?.message || `HTTP error ${response.status}`;
+  //    if (editor) messageBox("error", `OpenAI API Error: ${errorMsg}`);
+  //    if (show_debug) console.error("OpenAI API error:", errorMsg);
+  //    return "NOK";
+  //  }
 
-    const open_ai_response = data.choices?.[0];
-    if (open_ai_response?.message?.content) {
-      let text = open_ai_response.message.content.trim();
-      if (text === '""' || text === "") {
-        text = original + " No translation received";
-      }
-            const duration = ((Date.now() - start) / 1000).toFixed(2);
-            if (show_debug) console.debug(`[${new Date().toISOString()}] text recieved ${duration}`,text)
-     
-
-        translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
-        
-        if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postprocess`)
-       
-        await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-        if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by processTransl`)
-       const durationSec = ((Date.now() - start) / 1000).toFixed(2);
-        if(show_debug) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
-
-      return "OK";
-    } else {
-      if (show_debug) console.warn("OpenAI API response missing expected content");
-      return "NOK";
-    }
-  } catch (error) {
-    if (editor) messageBox("error", "OpenAI API fetch error: " + error.message);
-    if (show_debug) console.error("OpenAI fetch error:", error);
-    return "NOK";
-  }
+  
+ // } catch (error) {
+ //   if (editor) messageBox("error", "OpenAI API fetch error: " + error.message);
+ //   if (show_debug) console.error("OpenAI fetch error:", error);
+ //   return "NOK";
+ // }
 }
 
 

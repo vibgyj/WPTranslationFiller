@@ -496,29 +496,26 @@ async function checkIndex(event) {
     };
 }
 
-async function deleteTransDb(orig, cntry){
-    var transl = { orig, cntry };
+async function deleteTransDb(orig, cntry) {
     try {
-        var noOfDataDeleted = await jsstoreCon.remove({
+        const res = await jsstoreCon.remove({
             from: 'Translation',
-            where: {
-                source: orig
-            }
-        }).then((res,noOfDataDeleted) => {
-            console.debug("res:",res)
-            if (res == 1) {
-                reslt = "Deleted";
-            } else if (res != 1) {
-                // messageBox("error", "Record not added!!");
-                reslt = "Record not deleted";
-            }
-            console.debug("return value:",reslt)
-        })
-        return reslt;
+            where: { source: orig }
+        });
+
+        console.debug("Deleted rows:", res);
+
+        if (res > 0) {
+            return `Deleted ${res} record${res > 1 ? 's' : ''}`;
+        } else {
+            return "Record not deleted";
+        }
     } catch (ex) {
         messageBox("error", "Error: " + ex.message);
+        return "Error";
     }
 }
+
 
 async function addTransDb(orig, trans, cntry) {
     var transl = { source: orig, translation: trans, country: cntry };

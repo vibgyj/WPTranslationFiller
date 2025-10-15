@@ -1994,7 +1994,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         }
 
         if (original.endsWith(" ")) {
-             console.debug("Original end with blanc!" + original);
+            //console.debug("Original end with blanc!" + original);
             // console.debug("Preview:",previewNewText);
             if (!previewNewText.endsWith(" ")) {
                 //  console.debug("Preview does not end with blanc!", previewNewText);
@@ -3622,7 +3622,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -3921,7 +3921,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 }
             }
             else if (transsel == "OpenAI") {
-                result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
+                result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss,is_entry);
 
                 if (result == "Error 401") {
                     messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4000,7 +4000,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
     }
 }
                              
-async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor) {
+async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current) {
     let debug = false
     var myTranslatedText;
     if (debug == true) {
@@ -4105,7 +4105,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                 }
             }
         else if (transsel == "OpenAI") {
-            result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
+            result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss,is_entry);
 
             if (result == "Error 401") {
                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4642,7 +4642,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         OpenAITone,
         DeepLWait,
         openAiGloss,
-        counter
+        counter,
+        editor
         );
         //console.debug(`[${new Date().toISOString()}] text processed by handletype`)
     } catch (err) {

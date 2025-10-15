@@ -2461,43 +2461,44 @@ function importPageClicked(event) {
 }
 
 async function parseDataBase(data) {
-    let csvData = [];
-    let lbreak = data.split("\n");
-    let counter = 0;
-    // To make sure we can manipulate the data store it into an array
-    lbreak.forEach(res => {
-        // 09-07-2021 PSS altered the separator issue #104
-        csvData.push(res.split("|"));
-        ++counter;
-    });
-    // 24-08-2022 PSS fixes enhancement #237
-    toastbox("info", "Import of: " + (counter - 1) + " records is started wait for the result!!", "1500", "Import database");
-    let importButton = document.querySelector("a.import_translation-button");
-    importButton.innerText = "Started"
-    if (counter > 1) {
-        var arrayLength = csvData.length;
-        for (var i = 0; i < arrayLength; i++) {
-            if (i > 1) {
-                importButton.innerText = i;
-                // Store it into the database
-                //Prevent adding empty line
-                if (csvData[i][0] != "") {
-                    if (i == 250 || i == 500 || i == 750 || i == 1000 || i == 1250 || i == 1500 || i == 1750 || i == 2000 || i == 2250 || i == 2500 || i == 2750 || i == 3000 || i == 3250 || i == 3500 || i == 3750) {
-                        toastbox("info", "Adding is running <br>Records added:" + i, "500", "Import database");
-                    }
-                    let cntry = checkLocale()
-                    if (csvData[i][2] === cntry) {
-                        res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
-                    }
-                }
-            }
-        }
-        close_toast();
-        let errMessage = __("Import is ready records imported: ")
-        messageBox("info", errMessage + (i - 1));
+    const csvData = data.split("\n").map(line => line.split("|"));
+    const importButton = document.querySelector("a.import_translation-button");
+    const cntry = checkLocale();
+    const total = csvData.length - 1;
+
+    toastbox("info", `Import of ${total} records started. Please wait...`, "1500", "Import database");
+    importButton.innerText = "Started";
+
+    if (total < 1) {
+        messageBox("error", "No records found in the CSV file.");
+        return;
     }
-    importButton.className += " ready";
+
+    let importedCount = 0;
+
+    for (let i = 1; i < csvData.length; i++) {
+        const [orig, trans, country] = csvData[i];
+        if (!orig || !country || country !== cntry) continue;
+
+        // Sequential insert/update — fastest for JsStore
+        await addTransDb(orig, trans, country);
+
+        importedCount++;
+
+        // Update UI every 50 records (adjust as needed)
+        if (importedCount % 50 === 0 || importedCount === total) {
+            importButton.innerText = `${importedCount}/${total}`;
+            toastbox("info", `Imported ${importedCount} of ${total}...`, "1000", "Import database");
+            // Yield to UI
+            await new Promise(r => setTimeout(r, 0));
+        }
+    }
+
+    close_toast();
+    messageBox("info", `Import complete. Records processed: ${importedCount}`);
+    importButton.classList.add("ready");
 }
+
 
 function addtoClipBoardClicked(event) {
     if (event != undefined) {

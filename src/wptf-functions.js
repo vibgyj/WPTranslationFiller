@@ -1540,4 +1540,3 @@ function restorePlaceholdersAfterTranslation(text, originalText) {
         return placeholders[counter++] || '';
     });
 }
-

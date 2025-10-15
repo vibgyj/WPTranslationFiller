@@ -192,6 +192,48 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true;
     }
+  
+    if (request.action === "OpenAI") {
+        (async () => {
+            try {
+                const dataToSend = { ...request.data }; // copy newData
+                const apiKey = dataToSend.apiKey;       // extract the key
+                delete dataToSend.apiKey;               // remove it from the body
+
+                const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + apiKey
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+                if (!resp.ok) {
+                    // Return error message instead of raw response
+                    const msg = await resp.text();
+                    sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
+                    return;
+                }
+
+                let data;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    data = await resp.json();
+                } else {
+                    data = await resp.text();
+                }
+
+                sendResponse({ result: data });
+            } catch (err) {
+                sendResponse({ error: err.toString() });
+            }
+        })();
+
+        return true; // keep sendResponse alive for async
+    }
+
+
+
     else if (request.action === "translateio") {
         
             // Extract values safely
@@ -276,7 +318,83 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     })
 
+//* - Automatically backs up storage on extension update
+// * - Restores from backup if storage is empty
+// * - Safe: does not overwrite existing user data
+// */
 
+/**
+ * Robust chrome.storage.local wrapper
+ * - Automatically backs up storage on extension update (only if version changes)
+ * - Restores from backup if storage is empty
+ * - Safe: does not overwrite existing user data
+ */
 
+const StorageWrapper = (() => {
+    const BACKUP_KEY = "__backup__";
 
+    /** Backup all storage under BACKUP_KEY */
+    function backupStorage() {
+        chrome.storage.local.get(null, (allData) => {
+            console.log("Backing up local storage:", allData);
+            chrome.storage.local.set({ [BACKUP_KEY]: allData });
+        });
+    }
 
+    /** Restore storage from backup if main storage is empty */
+    function restoreIfEmpty() {
+        chrome.storage.local.get(null, (currentData) => {
+            const keys = Object.keys(currentData).filter(k => k !== BACKUP_KEY);
+            if (keys.length === 0 && currentData[BACKUP_KEY]) {
+                console.log("Restoring local storage from backup");
+                chrome.storage.local.set(currentData[BACKUP_KEY], () => {
+                    chrome.storage.local.remove(BACKUP_KEY, () => {
+                        console.log("Backup removed after restore");
+                    });
+                });
+            }
+        });
+    }
+
+    /** Normal get wrapper */
+    function get(keys, callback) {
+        chrome.storage.local.get(keys, callback);
+    }
+
+    /** Normal set wrapper */
+    function set(items, callback) {
+        chrome.storage.local.set(items, callback);
+    }
+
+    /** Normal remove wrapper */
+    function remove(keys, callback) {
+        chrome.storage.local.remove(keys, callback);
+    }
+
+    /** Initialize wrapper: setup update detection + restore check */
+    function init() {
+        // Restore immediately on startup if storage is empty
+        restoreIfEmpty();
+
+        // Backup on extension update, only if version actually changed
+        chrome.runtime.onInstalled.addListener((details) => {
+            const currentVersion = chrome.runtime.getManifest().version;
+            if (details.reason === "update" && details.previousVersion !== currentVersion) {
+                console.log(`Extension updated from ${details.previousVersion} → ${currentVersion}`);
+                backupStorage();
+            }
+        });
+    }
+
+    return {
+        init,
+        get,
+        set,
+        remove,
+        backupStorage,
+        restoreIfEmpty
+    };
+})();
+
+// Initialize wrapper
+StorageWrapper.init();
