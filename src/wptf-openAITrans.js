@@ -56,7 +56,7 @@ async function getTransAI(
   OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
 ) {
   var show_debug = true
-  let translatedText = "";
+  var myTtranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     let prevstate = current ? current.innerText : "";
   const maxTokens = estimateMaxTokens(originalPreProcessed);
@@ -136,14 +136,16 @@ async function getTransAI(
     };
   }
   
-  const start = Date.now()
-   try {
+  
+    try {
+        const start = Date.now()
+        //console.debug("We start call at :",start)
         const result = await new Promise((resolve) => {
             chrome.runtime.sendMessage(
                 { action: "OpenAI", data: dataNew }, // send only the data
                 (res) => resolve(res)
             );
-        });
+       });
 
        if (!result) {
         console.debug("OpenAI proxy returned undefined");
@@ -154,20 +156,59 @@ async function getTransAI(
         const duration = ((Date.now() - start) / 1000).toFixed(2);
            if (show_debug) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
             // Example of result.error: "Request failed (401): <some text>"
-    const match = result.error.match(/Request failed \((\d+)\)/);
+           const match = result.error.match(/Request failed \((\d+)\)/);
            const statusCode = match ? match[1] : "unknown";
-    console.debug("editor:",editor)
-           if (editor) {
-               messageBox(
-                   "warning",
-                   `Request failed with status ${statusCode}. Please check your license!`
-               );
+           //console.debug("Editor:",editor)
+           if (statusCode == '401') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Please check your license!`
+                   );
+               }
+               else {
+                   return `Error 401`;
+               }
            }
-
-    return `Request failed with status ${statusCode}. Please check your license!`;
+           else if (statusCode == '403') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Country not supported!`
+                   );
+               }
+               else {
+                   return `Request failed with status ${statusCode}. Country not supported!`;
+               }
+           }
+           else if (statusCode == '429') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Rate limit reached!`
+                   );
+               }
+               else {
+                   return `Request failed with status ${statusCode}. Rate limit reached!`;
+               }
+           }
+           else if (statusCode == '500') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Server issue!`
+                   );
+               }
+               else {
+                   return `Request failed with status ${statusCode}. Server issue!`;
+               }
+           }
+           else {
+               return `Request failed with status ${statusCode}. Some undefined error happened!`;
+           }
     }
-
-    if (show_debug) console.debug("OpenAI proxy response (raw):", result.result);
+    const duration = ((Date.now() - start) / 1000).toFixed(2);
+    if (show_debug) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
 
    const data = result.result; // raw proxy response
    let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
@@ -176,10 +217,9 @@ async function getTransAI(
    }
 
     // Post-processing after successful result
-    const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (show_debug) console.debug(`[${new Date().toISOString()}] text received ${duration}s`, text);
+    const start1 = Date.now()
 
-    const translatedText = await postProcessTranslation(
+    myTranslatedText = await postProcessTranslation(
         original,
         text,
         replaceVerb,
@@ -188,13 +228,15 @@ async function getTransAI(
         convertToLower,
         spellCheckIgnore,
         locale
-    );
+       );
+    const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] text postprocessed ${duration2}s`, text);
 
-    if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
-
+    //if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
+    const start2 = Date.now()
     await processTransl(
         original,
-        translatedText,
+        myTranslatedText,
         language,
         record,
         rowId,
@@ -205,8 +247,8 @@ async function getTransAI(
         current
     );
 
-    if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by processTransl`);
-
+     const duration3 = ((Date.now() - start2) / 1000).toFixed(2);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
     const durationSec = ((Date.now() - start) / 1000).toFixed(2);
     if (show_debug) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
 

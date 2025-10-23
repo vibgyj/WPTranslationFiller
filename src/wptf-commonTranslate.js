@@ -3922,12 +3922,13 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             }
             else if (transsel == "OpenAI") {
                 result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss,is_entry);
-
+                //console.debug("result:",result)
                 if (result == "Error 401") {
                     messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                     // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
                     // break;
                     stop = true;
+                    return "stop"
                 }
                 else if (result == "Error 403") {
                     messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
@@ -3937,14 +3938,17 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     //messageBox("error", "Error in translation received status 429 :" + errorstate);
                     //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                     stop = true;
+                    return "stop"
                 }
                 else {
                     if (errorstate != "OK") {
                         stop = true;
                         messageBox("error", "There has been some uncatched error: " + errorstate);
+                        return "stop"
                         // break;
                         //alert("There has been some uncatched error: " + errorstate);
                     }
+                    
                 }
             }
             await  mark_as_translated(row, current, true, rawPreview);
@@ -3964,7 +3968,8 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
 
             //await mark_preview(preview, result.toolTip, textareaElem[0].textContent, row, false)
-            break;
+            return "OK"
+            //break;
         case 'plural':
             //console.log('Handling a plural type...');
             // preview = document.querySelector(`#preview-${row}`);
@@ -4601,7 +4606,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             //const progressbar = document.querySelector(".indeterminate-progress-bar");
   //await delay(vartime); // Wait the delay before starting this iteration
   for (const record of myrecCount) {
-     await delay(vartime); // Wait the delay before starting next iteration
+   //  await delay(vartime); // Wait the delay before starting next iteration
     counter++;
     let mytransType = "none";
     const rowfound = record.id;
@@ -4644,12 +4649,23 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         openAiGloss,
         counter,
         editor
-        );
-        //console.debug(`[${new Date().toISOString()}] text processed by handletype`)
+       );
+        
     } catch (err) {
       console.error(`Translation failed for row ${row}:`, err);
     }
+      
+      if (mytransType == "stop") {
+          if (translateButton) {
+        translateButton.classList.add("translated");
+        translateButton.innerText = __("Translated");
+      }
 
+      if (progressbar) {
+        progressbar.style.display = "none";
+      }
+          break
+      }
     // When all rows are translated
     if (counter === myrecCount.length) {
       if (translateButton) {
@@ -6433,8 +6449,9 @@ async function saveLocal_2(bulk_timer) {
         StartObserver = true;
         let read = __("We have read:");
         let saved = __(" records and saved:");
-        messageBox("info", read + line_read + saved + counter);
+        await messageBox_reload("info", read + line_read + saved + counter);
         if (My1copyClip) autoCopyClipBoard = true;
+       
     } else {
         console.debug("no progressbar!");
     }

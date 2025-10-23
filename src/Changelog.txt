@@ -64,3 +64,4 @@ Version 3.4.23 Added function to copy originals into the translation
 Version 3.4.24 Prevent local storage to disappear when updating
 Version 3.4.24 OpenAI translation caused CORS errors
 Version 3.4.24 Page translation with a wrong OpenAI key generated errors during each original
+Version 3.4.25 Modified stats function, it now shows a table and exports to CSV

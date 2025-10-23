@@ -1254,7 +1254,7 @@ async function set_glotdict_style() {
     });
 }
 
-function toastbox(type, message, time, titel, currWindow) {
+async function toastbox(type, message, time, titel, currWindow) {
     playSound = null;
         return new Promise((resolve) => {
             cuteToast({
@@ -1274,15 +1274,21 @@ function toastbox(type, message, time, titel, currWindow) {
 }
 
 function close_toast() {
-    const toastContainer = document.querySelector(".toast-container");
-    if (toastContainer != null) {
-        toastContainer.remove();
-    }
+  // Close all individual toast messages
+  const toasts = document.querySelectorAll('.toast-content');
+  toasts.forEach(t => t.remove());
+
+  // Remove the container if empty
+  const container = document.querySelector('.toast-container');
+  if (container) {
+    container.remove();
+  }
 }
 
-function messageBox(type, message) {
+
+async function messageBox(type, message) {
     currWindow = window.self;
-    cuteAlert({
+    await cuteAlert({
         type: type,
         title: "Message",
         message: message,
@@ -1291,7 +1297,18 @@ function messageBox(type, message) {
         closeStyle: "alert-close",
     });
 }
-
+async function messageBox_reload(type, message) {
+    currWindow = window.self;
+    await cuteAlert({
+        type: type,
+        title: "Message",
+        message: message,
+        buttonText: "OK",
+        myWindow: currWindow,
+        closeStyle: "alert-close",
+    });
+    window.location.href = window.location.href;
+}
 function sleep(milliseconds) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
