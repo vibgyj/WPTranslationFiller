@@ -6835,6 +6835,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     var myRowId = rowId;
     var previousCurrent = current
     let debug = false;
+    var show_debug = true
     var preview;
     var select;
     var td_preview;
@@ -6844,6 +6845,8 @@ async function processTransl (original, translatedText, language, record, rowId,
     var textareaElem3;
     var textareaElem4;
     var formal = checkFormal(false);
+    const start = Date.now()
+
     if (debug == true) {
         console.debug("processTransl translatedText:", translatedText)
         console.debug("processTransl ends with blank:",translatedText.endsWith(" "))
@@ -7169,6 +7172,8 @@ async function processTransl (original, translatedText, language, record, rowId,
     // The line below is necessary to update the save button on the left in the panel
     previousCurrent.innerText = "transFill";
     previousCurrent.value = "transFill";
+    const duration = ((Date.now() - start) / 1000).toFixed(2);
+    if (show_debug) console.debug("processtransl is finished: ",duration);
     return "OK";
 }
 

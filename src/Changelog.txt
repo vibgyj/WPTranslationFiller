@@ -65,3 +65,5 @@ Version 3.4.24 Prevent local storage to disappear when updating
 Version 3.4.24 OpenAI translation caused CORS errors
 Version 3.4.24 Page translation with a wrong OpenAI key generated errors during each original
 Version 3.4.25 Modified stats function, it now shows a table and exports to CSV
+Version 3.4.26 In Firefox the stats window did not work
+Version 3.4.27 Added option to show only projects the user is PTE for within the Stats function

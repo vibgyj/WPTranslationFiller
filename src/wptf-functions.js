@@ -1254,23 +1254,56 @@ async function set_glotdict_style() {
     });
 }
 
-async function toastbox(type, message, time, titel, currWindow) {
-    playSound = null;
-        return new Promise((resolve) => {
-            cuteToast({
-                type: type, // or 'info', 'error', 'warning'
-                message: message,
-                timer: time,
-                playSound,
-                img: "/img",
-                title: titel,
-                myWindow: currWindow,
-            })
-            resolve("toast");
-        }).catch((err) => {
-            console.debug("error:", err)
-        });
-        // resolve("toast ready");
+
+function getToastContainer() {
+    let container = document.getElementById("toastContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "toastContainer";
+        container.style.position = "fixed";
+        container.style.top = "20px";
+        container.style.left = "50%";
+        container.style.transform = "translateX(-50%)";
+        container.style.zIndex = "99999";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.alignItems = "center";
+        container.style.pointerEvents = "none"; // clicks pass through
+        document.body.appendChild(container);
+    }
+    return container;
+}
+async function toastbox(type = "info", title = "", duration = 2000, message = "") {
+    const container = getToastContainer();
+
+    const toast = document.createElement("div");
+    toast.style.background = type === "error" ? "#f56260" : "#88cef7"; // red for error, green otherwise
+    toast.style.color = "#fff";
+    toast.style.padding = "10px 20px";
+    toast.style.marginTop = "5px";
+    toast.style.borderRadius = "5px";
+    toast.style.minWidth = "200px";
+    toast.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    toast.style.pointerEvents = "auto"; // allow hover if needed
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(-10px)";
+    toast.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+
+    toast.innerHTML = `<strong>${title}</strong> ${message}`;
+    container.appendChild(toast);
+
+    // Fade in
+    requestAnimationFrame(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateY(0)";
+    });
+
+    // Auto-remove after duration
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-10px)";
+        setTimeout(() => container.removeChild(toast), 300);
+    }, duration);
 }
 
 function close_toast() {
