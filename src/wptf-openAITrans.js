@@ -119,6 +119,7 @@ async function getTransAI(
       reasoning_effort: 'minimal',
       verbosity: 'low',
       apiKey: apikeyOpenAI,
+      prompt_cache_key: 'WPTF translation',
     };
   }
   else {

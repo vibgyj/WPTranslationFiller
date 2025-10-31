@@ -2377,7 +2377,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                     
                     // We need to replace non formal with formal verbs if populating formal with local records
                     if (formal) {
-                        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb)
+                        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
                     }
                     else {
                         mytranslatedText = translatedText
@@ -3752,8 +3752,8 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 // We need to set the preview here as processTransl does not populate it, as it thinks it is in editor
                 // we have no plural, so the translation can be written directly into the preview
                 if (formal) {
-                    translated = await replaceVerbInTranslation(original, myTranslated, replaceVerb)
-                }
+                   mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+                 }              
                 else {
                    //console.debug("single:",myTranslated)
                     translated = myTranslated
@@ -5595,7 +5595,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     var plural;
     var preview;
     var preview_textElem;
-    
+    //console.debug("checkentry started")
     setPostTranslationReplace(postTranslationReplace, formal);
     editor = await document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`)
 
@@ -5607,8 +5607,10 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     let text = editor.querySelector("textarea.foreign-text").value;
     let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
     checkTranslateButton.className = "checktranslation-entry-my-button"
+    translatedText = replaceVerbInTranslation(original, text, replaceVerb, debug = false)
     // posprocess the translation
-    translatedText = postProcessTranslation(original, text, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
+    translatedText = postProcessTranslation(original, translatedText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
+    
     //console.debug("translatedtext:",translatedText)
     textareaElem = editor.querySelector("textarea.foreign-text");
     if (textareaElem != null && typeof textareaElem != "undefined") {
@@ -5633,6 +5635,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
             textareaElem1 = editor.querySelector("textarea#translation_" + newrowId + "_1");
             let pluralText = textareaElem1.value;
             translatedText = postProcessTranslation(original, pluralText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
+            translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
             textareaElem1.value = translatedText
         }
     }
@@ -5900,7 +5903,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     toastbox("info", "Local translation found", "1000", "Saving");
 
                       if (formal) {
-                         translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb)
+                         translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
                       }
                     translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, "", locale);
 
@@ -5933,7 +5936,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 //let textareaElem = e.querySelector("textarea.foreign-text");
                
                 if (formal) {
-                    translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb)
+                    translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
                 }
                 textareaElem.innerText = translatedText;
                 textareaElem.value = translatedText;
@@ -6862,7 +6865,7 @@ async function processTransl (original, translatedText, language, record, rowId,
 
     }
     if (formal) {
-        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb)
+        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
     }
     else {
         mytranslatedText = translatedText
@@ -7465,7 +7468,7 @@ async function onCopySuggestionClicked(target,rowId) {
         let text = editor.querySelector("textarea.foreign-text").value;
         setPostTranslationReplace(data.postTranslationReplace, formal)
         if (formal) {
-            translatedText = await replaceVerbInTranslation(original, text, replaceVerb)
+            translatedText = await replaceVerbInTranslation(original, text, replaceVerb, debug = false)
         }
         else {
             translatedText = text

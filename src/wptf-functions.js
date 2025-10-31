@@ -30,7 +30,7 @@ function insertAlstublieftIfPlease(original, dutch) {
 }
 
 
-function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
+function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
     const markerBase = "__REPLACE_";
     let markerIndex = 0;
 
@@ -44,15 +44,15 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
     let dutMatches = [...dutch.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
 
     let engSentences = engMatches.map(m => m[1] + m[2]);
-    let dutSentences = dutMatches.map(m => m[1] + m[2]);
+    let dutchSentences = dutMatches.map(m => m[1] + m[2]);
 
     if (debug) {
-        console.log("English split:", engSentences);
-        console.log("Dutch split:", dutSentences);
+        console.debug("English split:", engSentences);
+        console.debug("Dutch split:", dutchSentences);
     }
 
     // --- NEW STEP: Adjust English commas if sentence counts differ ---
-    if (engSentences.length !== dutSentences.length) {
+    if (engSentences.length !== dutchSentences.length) {
         let engCommaCount = (english.match(/,/g) || []).length;
         const dutCommaCount = (dutch.match(/,/g) || []).length;
 
@@ -60,7 +60,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
         let adjustedEngMatches = engMatches;
         let adjustedEngSentences = engSentences;
 
-        while (adjustedEngSentences.length !== dutSentences.length && engCommaCount > dutCommaCount) {
+        while (adjustedEngSentences.length !== dutchSentences.length && engCommaCount > dutCommaCount) {
             // Remove the first comma in the string (replace only the first)
             adjustedEnglish = adjustedEnglish.replace(',', '');
 
@@ -78,8 +78,8 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
         english = adjustedEnglish;
 
         if (debug) {
-            console.log("Adjusted English split:", engSentences);
-            console.log("Adjusted English text:", english);
+            console.debug("Adjusted English split:", engSentences);
+            console.debug("Adjusted English text:", english);
         }
     }
     // --- End of new comma adjustment step ---
@@ -87,12 +87,15 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
     const updatedSentences = [];
     const markerReplacements = [];
 
-    const validReplacements = replaceVerbs.filter(entry => Array.isArray(entry) && entry.length === 3);
+    // Keep only valid 3-item entries, then normalize (trim) each part to avoid stray-space bugs.
+    const validReplacements = replaceVerbs
+      .filter(entry => Array.isArray(entry) && entry.length === 3)
+      .map(([en, inf, form]) => [typeof en === 'string' ? en.trim() : en, typeof inf === 'string' ? inf.trim() : inf, typeof form === 'string' ? form.trim() : form]);
 
     // === Step 1: Pronoun replacement (per English match, preserves mapping) ===
-    for (let i = 0; i < dutSentences.length; i++) {
+    for (let i = 0; i < dutchSentences.length; i++) {
         const eng = engSentences[i] || "";
-        let dut = dutSentences[i] || "";
+        let dut = dutchSentences[i] || "";
 
         const words = eng.trim().split(/\s+/);
         const firstWord = words[0] || "";
@@ -100,30 +103,31 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
         const normalizedEnglish = [firstWord, ...rest];
 
         if (debug) {
-            console.log(`\n--- Sentence ${i + 1} ---`);
-            console.log("English words (normalized):", normalizedEnglish);
-            console.log("Dutch before replacement:", dut);
+            console.debug(`\n--- Sentence ${i + 1} ---`);
+            console.debug("English words (normalized):", normalizedEnglish);
+            console.debug("Dutch before replacement:", dut);
         }
 
         let replacementsThisSentence = [];
 
         // Process in English word order
         normalizedEnglish.forEach((word) => {
-            const matchEntry = validReplacements.find(([en]) => en === word);
+            // Match against trimmed english mapping key
+            const matchEntry = validReplacements.find(([en]) => typeof en === 'string' && en === word);
             if (!matchEntry) return;
 
             const [, informal, formal] = matchEntry;
 
             if (debug) {
-                console.log(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formal}"`);
+                console.debug(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formal}"`);
             }
 
-            // FIX: Step 1 regex uses only 'i', no 'g'
+            // Use trimmed informal in regex (case-insensitive), no global flag here (replace first occurrence per English match)
             let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'i');
             if (matchRegex.test(dut)) {
                 dut = dut.replace(matchRegex, (match, punct, space) => {
                     if (debug) {
-                        console.log("Matched informal:", match);
+                        console.debug("Matched informal:", match);
                     }
 
                     const marker = `${markerBase}${markerIndex}_0__`;
@@ -146,13 +150,13 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
                 });
             } else {
                 if (debug) {
-                    console.log(`No occurrence of "${informal}" found in Dutch sentence for "${word}"`);
+                    console.debug(`No occurrence of "${informal}" found in Dutch sentence for "${word}"`);
                 }
             }
         });
 
         if (debug) {
-            console.log("Dutch after marker insertion:", dut);
+            console.debug("Dutch after marker insertion:", dut);
         }
 
         markerReplacements.push(...replacementsThisSentence);
@@ -208,70 +212,70 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = false) {
     );
 
     if (politeEntry) {
-    if (engSentences.length !== dutSentences.length) {
-        if (debug) console.log("Skipping polite word insertion because sentence counts differ.");
-    } else {
-        const politeEnglish = politeEntry[0];
-        const politeTarget = politeEntry[1];
+        if (engSentences.length !== dutchSentences.length) {
+            if (debug) console.debug("Skipping polite word insertion because sentence counts differ.");
+        } else {
+            const politeEnglish = politeEntry[0].trim();
+            const politeTarget = politeEntry[1].trim();
 
-        const finalEngSentences = engSentences;
-        const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
-            .filter(m => m[1].trim() || m[2].trim())
-            .map(m => m[1] + m[2]);
+            const finalEngSentences = engSentences;
+            const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
+                .filter(m => m[1].trim() || m[2].trim())
+                .map(m => m[1] + m[2]);
 
-        for (let i = 0; i < finalEngSentences.length; i++) {
-            if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
-                let sentence = finalDutchSentences[i];
+            for (let i = 0; i < finalEngSentences.length; i++) {
+                if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
+                    let sentence = finalDutchSentences[i];
 
-                // Skip if polite word already exists
-                if (new RegExp(`\\b${escapeRegex(politeTarget)}\\b`, 'i').test(sentence)) continue;
+                    // Skip if polite word already exists
+                    if (new RegExp(`\\b${escapeRegex(politeTarget)}\\b`, 'i').test(sentence)) continue;
 
-                // Preserve any leading HTML tags
-                const htmlTagPattern = /^(\s*<[^>]+>\s*)+/;
-                const match = sentence.match(htmlTagPattern);
-                const insertPos = match ? match[0].length : 0;
+                    // Preserve any leading HTML tags
+                    const htmlTagPattern = /^(\s*<[^>]+>\s*)+/;
+                    const match = sentence.match(htmlTagPattern);
+                    const insertPos = match ? match[0].length : 0;
 
-                // Work only on the text part (after HTML tags)
-                const leadingTags = sentence.slice(0, insertPos);
-                const textPart = sentence.slice(insertPos).trim();
+                    // Work only on the text part (after HTML tags)
+                    const leadingTags = sentence.slice(0, insertPos);
+                    const textPart = sentence.slice(insertPos).trim();
 
-                // Split into words
-                const words = textPart.split(/\s+/);
+                    // Split into words
+                    const words = textPart.split(/\s+/);
 
-                if (words.length > 0) {
-                    let insertAfterIndex = 0; // default: after first word
+                    if (words.length > 0) {
+                        let insertAfterIndex = 0; // default: after first word
 
-                    // If the second word is "het" (case-insensitive), insert after that instead
-                    if (words.length > 1 && words[1].toLowerCase() === "het") {
-                        insertAfterIndex = 1;
+                        // If the second word is "het" (case-insensitive), insert after that instead
+                        if (words.length > 1 && words[1].toLowerCase() === "het") {
+                            insertAfterIndex = 1;
+                        }
+
+                        // Insert polite word
+                        words.splice(insertAfterIndex + 1, 0, politeTarget);
+
+                        // Rebuild sentence
+                        sentence = leadingTags + words.join(" ");
                     }
 
-                    // Insert polite word
-                    words.splice(insertAfterIndex + 1, 0, politeTarget);
-
-                    // Rebuild sentence
-                    sentence = leadingTags + words.join(" ");
+                    finalDutchSentences[i] = sentence;
+                    if (debug) console.debug(`Inserted "${politeTarget}" in sentence ${i + 1}:`, sentence);
                 }
-
-                finalDutchSentences[i] = sentence;
-                if (debug) console.log(`Inserted "${politeTarget}" in sentence ${i + 1}:`, sentence);
             }
+
+            finalResult = finalDutchSentences.join("");
         }
-
-        finalResult = finalDutchSentences.join("");
+    } else {
+        if (debug) console.debug("No polite word mapping found in replaceVerbs, skipping polite insertion.");
     }
-} else {
-    if (debug) console.log("No polite word mapping found in replaceVerbs, skipping polite insertion.");
-}
-
 
     if (debug) {
-        console.log("\n=== FINAL RESULT ===");
-        console.log(finalResult);
+        console.debug("\n=== FINAL RESULT ===");
+        console.debug(finalResult);
     }
 
     return finalResult;
 }
+
 
 
 function preparePlaceholdersForTranslation(input, replaceVerbs) {

@@ -67,3 +67,6 @@ Version 3.4.24 Page translation with a wrong OpenAI key generated errors during 
 Version 3.4.25 Modified stats function, it now shows a table and exports to CSV
 Version 3.4.26 In Firefox the stats window did not work
 Version 3.4.27 Added option to show only projects the user is PTE for within the Stats function
+Version 3.4.28 Improved DeepL translation, it now catches 429 to many requests error
+Version 3.4.28 Improved formal conversion
+Version 3.4.28 added formal conversion into checkentry

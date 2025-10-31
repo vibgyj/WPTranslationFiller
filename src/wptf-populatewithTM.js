@@ -362,7 +362,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                         textFound = check_hyphen(rawTranslation, spellCheckIgnore);
                                     }
                                     if (formal) {
-                                        textFound = await replaceVerbInTranslation(original, textFound, replaceVerb)
+                                        textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false)
                                     }
                                    // console.debug("text:",textFound)
                                     if (previewName != null) {
@@ -429,7 +429,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
             
                                 original = editor.querySelector("span.original-raw").innerText;
                                 if (formal) {
-                                    textFound = await replaceVerbInTranslation(original, textFound, replaceVerb)
+                                    textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false)
                                 }
                                 debug = false
                                 if (debug == true) {

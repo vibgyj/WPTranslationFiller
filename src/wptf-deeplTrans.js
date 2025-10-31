@@ -3,90 +3,127 @@
  * It depends on commonTranslate for additional translation functions
  */
 
-async function translateText(original, destlang, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, deepLcurrent, DeepLWait) {
+async function translateText(
+    original, destlang, record, apikeyDeepl, originalPreProcessed, row,
+    transtype, plural_line, formal, locale, convertToLower,
+    DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,
+    deepLcurrent, DeepLWait = 0
+) {
     destlang = destlang.toUpperCase();
 
-    let formal_value, mycontext;
-    if (formal === true) {
-        formal_value = "prefer_more";
-        mycontext = "This text is a legal message, do not add words that are not within the text provided";
-    } else {
-        formal_value = "prefer_less";
-        mycontext = "This text is a casual conversation with a friend, do not add words that are not in the text provided";
-    }
+    const formal_value = formal ? "prefer_more" : "prefer_less";
+    const mycontext = formal
+        ? "This text is a legal message"
+        : "This text is a casual conversation with a friend.";
 
-    const myformat = destlang === "RO" ? '0' : '1';
-    //console.debug("DeepLFree:",DeeplFree)
-   const isFree = DeeplFree === true || DeeplFree === "true";  // make it a true boolean
-   const url = isFree ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
+    const myformat = destlang === "RO" ? "0" : "1";
+    const url = DeeplFree === true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
 
     const requestBody = {
         auth_key: apikeyDeepl,
         text: [originalPreProcessed],
-        source_lang: 'EN',
+        source_lang: "EN",
         target_lang: destlang,
         formality: formal_value,
         preserve_formatting: myformat,
-        tag_handling: 'xml',
-        ignore_tags: 'x',
-        split_sentences: 'nonewlines',
-        outline_detection: '0',
-        context: [mycontext],
-        glossary_id: deeplGlossary,
-        DeeplURL: url,
-        DeepLFreePar:DeeplFree
+        tag_handling: "xml",
+        ignore_tags: "x",
+        split_sentences: "nonewlines",
+        outline_detection: "0"
     };
 
-    try {
-        const translated = await new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, response => {
+    if (mycontext) requestBody.context = [mycontext];
+    if (deeplGlossary) requestBody.glossary_id = deeplGlossary;
+    requestBody.DeepLFreePar = DeeplFree;
+    requestBody.DeeplURL = url;
+
+    const maxRetries = 5;
+    let attempt = 0;
+    let delay = DeepLWait || 1500; // start with TMWait / DeepLWait or default 1.5s
+
+    return new Promise((resolve) => {
+
+        function sendRequest() {
+            chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, (translated) => {
                 if (chrome.runtime.lastError) {
-                    reject(new Error(chrome.runtime.lastError.message));
+                    console.error("Chrome runtime error:", chrome.runtime.lastError.message);
+                    resolve(`DeepL request failed: ${chrome.runtime.lastError.message}`);
+                    return;
+                }
+
+                // Success
+                if (translated && Array.isArray(translated.translations)) {
+                    processData(
+                        translated, original, record, row, originalPreProcessed,
+                        replaceVerb, spellCheckIgnore, transtype, plural_line,
+                        locale, convertToLower, deepLcurrent, destlang
+                    ).then(processedData => {
+                        resolve(processedData === "OK" ? "OK" : processedData);
+                    }).catch(err => {
+                        console.error("Error in processData:", err);
+                        resolve(`Processing error: ${err.message}`);
+                    });
+                    return;
+                }
+
+                // Handle 429 (rate limit) with retry/backoff
+                if (translated && translated.error && translated.error.includes("429")) {
+                    attempt++;
+                    if (attempt <= maxRetries) {
+                        console.warn(`DeepL 429 rate limit - retry ${attempt}/${maxRetries} in ${delay}ms`);
+                        setTimeout(sendRequest, delay);
+                        delay *= 2; // exponential backoff
+                        return;
+                    } else {
+                        resolve("DeepL rate limit exceeded (429) after multiple retries");
+                        return;
+                    }
+                }
+
+                // Other DeepL errors
+                let errorstate = "";
+                if (translated && translated.error) {
+                    const error = translated.error;
+                    switch (true) {
+                        case error.startsWith("HTTP 400:"):
+                            const match400 = error.match(/HTTP 400: \{"message":"([^"]+)"\}/);
+                            errorstate = match400 ? `Request forbidden: ${match400[1]}` : "Request forbidden";
+                            messageBox("warning", errorstate);
+                            break;
+                        case error.startsWith("HTTP 403:"):
+                            const match403 = error.match(/HTTP 403: \{"message":"([^"]+)"\}/);
+                            errorstate = match403 ? `Request forbidden: ${match403[1]}<br>Please check your license!` : "Request forbidden<br>Please check your license!";
+                            messageBox("warning", errorstate);
+                            break;
+                        case error.startsWith("HTTP 404:"):
+                            errorstate = "Page not found<br>Please check your DeepL glossary or load a new glossary";
+                            messageBox("warning", errorstate);
+                            break;
+                        case error.startsWith("HTTP 456:"):
+                            errorstate = "456 Quota exceeded.<br>The character limit has been reached";
+                            messageBox("warning", "You have exceeded your quota! Please wait or purchase a new licence");
+                            break;
+                        default:
+                            console.debug("Unknown error:", error);
+                            errorstate = `Unknown error: ${error}`;
+                    }
+                    resolve(errorstate);
+                    return;
+                } else if (translated && translated.message === "Quota Exceeded") {
+                    messageBox("warning", "You have exceeded your translation quota!");
+                    resolve("Quota exceeded");
+                    return;
                 } else {
-                    resolve(response);
+                    console.debug("Unknown DeepL error:", translated ? translated.message : "No response received");
+                    resolve("Unknown DeepL error");
+                    return;
                 }
             });
-        });
-
-        if (translated?.translations && Array.isArray(translated.translations)) {
-            console.debug("translated:",translated.translations[0])
-            const processedData = await processData(translated, original, record, row, originalPreProcessed, replaceVerb, spellCheckIgnore, transtype, plural_line, locale, convertToLower, deepLcurrent, destlang);
-            return processedData === "OK" ? "OK" : processedData;
-        } else {
-            const error = translated?.error || translated?.message;
-            if (error) {
-                switch (true) {
-                    case error.startsWith('HTTP 400:'):
-                        const match400 = error.match(/HTTP 400: \{"message":"([^"]+)"\}/);
-                        const msg400 = match400 ? match400[1] : "Request forbidden";
-                        messageBox("warning", `Request forbidden: ${msg400}`);
-                        return `Request forbidden: ${msg400}`;
-                    case error.startsWith('HTTP 403:'):
-                        const match403 = error.match(/HTTP 403: \{"message":"([^"]+)"\}/);
-                        const msg403 = match403 ? match403[1] : "Request forbidden";
-                        messageBox("warning", `Request forbidden: ${msg403}<br>Please check your license!`);
-                        return `Request forbidden: ${msg403}<br>Please check your license!`;
-                    case error.startsWith('HTTP 404:'):
-                        messageBox("warning", "Page not found<br>Please check your DeepL glossary!<br>Or load a new glossary");
-                        return "Page not found<br>Please check your DeepL glossary!<br>Or load a new glossary";
-                    case error.startsWith('HTTP 456:'):
-                        messageBox("warning", "You have exceeded your quota!<br>Please wait for a day or purchase a new licence");
-                        return "456 Quota exceeded.<br> The character limit has been reached";
-                    default:
-                        console.debug("Unknown error:", error);
-                        return `Unknown error: ${error}`;
-                }
-            } else {
-                console.debug("We have an unknown error:", translated ? translated.message : "No response received");
-                return "Unknown error";
-            }
         }
-    } catch (err) {
-        console.error("Error during DeepL translation:", err);
-        return `DeepL request failed: ${err.message}`;
-    }
-}
 
+        sendRequest();
+    });
+}
 
 
 async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, DeepLWait) {
