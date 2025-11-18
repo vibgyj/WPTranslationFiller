@@ -647,23 +647,28 @@ function setmyCheckBox(event) {
 
 }
 
-function deselectCheckBox(event) {
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    // if the translator is a PTE than we do not need to add the extra checkboxes
-    if (!is_pte) {
-        //document.getElementsByClassName("myCheckBox").checked = true;
-        document.querySelectorAll("tr.preview").forEach((preview, i) => {
-            if (!is_pte) {
-                rowchecked = preview.querySelector("td input");
-                if (rowchecked != null) {
-                    if (rowchecked.checked) {
-                        preview.querySelector("td input").checked = false;
-                    }
-                }
-            }
-        });
-    }
+function deselectCheckBox() {
+    const is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+
+    // Loop through all preview rows
+    document.querySelectorAll("tr.preview").forEach((preview) => {
+        let rowchecked = null;
+
+        if (is_pte) {
+            // PTE users: checkbox inside .checkbox td
+            rowchecked = preview.querySelector(".checkbox input[type='checkbox']");
+        } else {
+            // Non-PTE users: checkbox inside .myCheckBox td
+            rowchecked = preview.querySelector(".myCheckBox input[type='checkbox']");
+        }
+
+        // Uncheck if it exists and is checked
+        if (rowchecked && rowchecked.checked) {
+            rowchecked.checked = false;
+        }
+    });
 }
+
 
 async function validateOld(showDiff) {
     var counter = 0;

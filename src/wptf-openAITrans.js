@@ -105,22 +105,37 @@ async function getTransAI(
     return "NOK";
   }
  // reasoning={"effort": "minimal"}
-  const mymodel = OpenAISelect.toLowerCase();
+    const mymodel = OpenAISelect.toLowerCase();
+   if (show_debug) console.debug("Model selected:",mymodel);
   let dataNew = {};
 
-  if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
-    dataNew = {
-      model: mymodel,
-      messages,
-      max_completion_tokens: maxTokens,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      reasoning_effort: 'minimal',
-      verbosity: 'low',
-      apiKey: apikeyOpenAI,
-      prompt_cache_key: 'WPTF translation',
-    };
+    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
+        dataNew = {
+            model: mymodel,
+            messages,
+            max_completion_tokens: maxTokens,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            reasoning_effort: 'minimal',
+            verbosity: 'low',
+            apiKey: apikeyOpenAI,
+            prompt_cache_key: 'WPTF translation',
+        };
+    }
+    else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano") { 
+         dataNew = {
+            model: mymodel,
+            messages,
+            max_completion_tokens: maxTokens,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            reasoning_effort: 'none',
+            verbosity: 'low',
+            apiKey: apikeyOpenAI,
+            prompt_cache_key: 'WPTF translation',
+        };
   }
   else {
     dataNew = {

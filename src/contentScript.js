@@ -1315,7 +1315,28 @@ async function translatedButton() {
     copyOrgContainer.appendChild(copyOrgButton)
     copyOrgContainer.appendChild(classToolTip)
 
+
+   
+
+    let compairContainer = document.createElement("div")
+    compairContainer.className = 'button-tooltip'
+    classToolTip = document.createElement("span")
+    classToolTip.className = 'tooltiptext'
+    classToolTip.innerText = __("This is the function to compair the suggestion with the local entry")
+
+    let compairButton = document.createElement("a");
+    compairButton.href = "#";
+    compairButton.style.visible = 'hidden'
+    compairButton.id = "Compair";
+    compairButton.className = "compair-button";
+    compairButton.onclick = compairClicked;
+    compairButton.innerText = __("Compair");
+    compairContainer.appendChild(compairButton)
+    compairContainer.appendChild(classToolTip)
+
+
     let statsContainer = document.createElement("div")
+
     // add stats button if handleStats function is defined
 
     if (typeof handleStats === "function") {
@@ -1348,6 +1369,7 @@ async function translatedButton() {
         localtransButton.style.visible = 'visible'
         translateButton.style.visibility = 'visible'
         copyOrgButton.style.visibility = 'visible'
+        compairButton.style.visibility = 'visible'
 
     });
 
@@ -1383,6 +1405,7 @@ async function translatedButton() {
         // divNavBar.appendChild(impLocButton);
         // divNavBar.appendChild(checkButton);
         divNavBar.appendChild(checkContainer);
+        divNavBar.appendChild(compairContainer);
         // divNavBar.appendChild(tmtransButton);
         divNavBar.appendChild(TmContainer);
         divNavBar.appendChild(localtransContainer);
@@ -1430,6 +1453,14 @@ async function translatedButton() {
         SwitchTMButton.style.background = "green"
         SwitchTMButton.style.color = "white"
     }
+
+    let FindDupButton = document.createElement("a");
+    FindDupButton.href = "#";
+    FindDupButton.style.visibility = 'hidden'
+    FindDupButton.className = "Find-Dup-button";
+    FindDupButton.onclick = FindDupClicked;
+    FindDupButton.innerText = __("FindDup");
+    
 
     // We need to check if we have a glossary ID
 
@@ -1569,6 +1600,7 @@ async function translatedButton() {
             }
         });
         // divPaging.insertBefore(dropdown,divPaging.childNodes[0])
+        divPaging.insertBefore(FindDupButton, divPaging.childNodes[0]);
         divPaging.insertBefore(DispClipboard, divPaging.childNodes[0]);
         UpperCase = localStorage.getItem(['switchUpper'])
         if (UpperCase == 'false') {
@@ -1583,6 +1615,7 @@ async function translatedButton() {
         SwitchTMButton.style.visibility = 'visible'
         DispGloss.style.visibility = 'visible'
         DispClipboard.style.visibility = 'visible'
+        FindDupButton.style.visibility = 'visible'
     })
 }
 
@@ -1610,7 +1643,10 @@ function DispGlossClicked(event) {
         show_glossary(data.apikeyDeepl, DeeplFree, data.destlang)
     });
 }
-
+async function FindDupClicked(event) {
+    await findDuplicates()
+     await hideNonDuplicates();
+}
 function DispClipboardClicked(event) {
     // function to show glossary
     chrome.storage.local.get('autoCopyClip', async function (result) {
@@ -1770,6 +1806,8 @@ async function startSpellCheck(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     await spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
 }
 
+
+
 function createElementWithId(type, id) {
     let element = document.createElement(type);
     element.id = id;
@@ -1845,6 +1883,16 @@ async function startBulkSave(event) {
 
 async function savetolocalClicked(event) {
     await bulkSaveToLocal();
+}
+
+
+async function compairClicked(event) {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    var formal = checkFormal(false);
+    chrome.storage.local.get(["convertToLower", "spellCheckIgnore", "formal","destlang"], function (data) {
+
+        compairWithSuggestion(is_pte, data.convertToLower, data.spellCheckIgnore, data.destlang)
+    });
 }
 
 async function copyOrgClicked(event) {
@@ -2855,7 +2903,11 @@ async function checkbuttonClick(event) {
             if (myrec != null) {
                 // we are not in listmode
                 requestAnimationFrame(() => {
-                    myrec.scrollIntoView(true);
+                    const yOffset = -100; // adjust for your header height
+                   const y = myrec.getBoundingClientRect().top + window.scrollY + yOffset;
+                   window.scrollTo({ top: y, behavior: 'smooth' });
+
+                    //myrec.scrollIntoView(true);
                 });
             }
 
@@ -4370,11 +4422,11 @@ function showNameLabel(originalElem,row,showName,nameDiff) {
                 let originalElem = document.querySelector("#preview-" + row + " .original");
                 let currentTrans = document.querySelector("#preview-" + row + " td.translation.foreign-text");
                 let originalTrans = originalElem
-                console.debug("trans:", currentTrans)
-                console.debug("original:", originalElem.innerText)
+                //console.debug("trans:", currentTrans)
+                //console.debug("original:", originalElem.innerText)
                 nameDiff = isExactlyEqual(currentTrans, originalElem.innerText)
                 if (nameDiff != true) {
-                    console.debug("We have no difference!")
+                   // console.debug("We have no difference!")
                    // namelabelexist.innerText = __("URL, name of theme or plugin or author!")
                     namelabelexist.setAttribute("class", "trans_name_div");
                 }
@@ -4469,7 +4521,14 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     waittrans_text = wait_trans[0].innerText
                     const result = waittrans_text === currstring
                     if (result) {
-                        console.debug('The strings are similar.');
+                        const br = document.createElement('br');
+                        element1.appendChild(br);
+                        const span = document.createElement("span");
+                        span.style.color = "yellow";
+                        span.textContent = __("Current string is the same!");
+                        element1.appendChild(span);
+
+
                     } else {
                         diffType = "diffWords"
                         if (showDiff == true) {
@@ -4519,6 +4578,12 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 else if (typeof prev_trans == 'string') {
                     if (result) {
                         console.debug('The strings are similar.');
+                        const br = document.createElement('br');
+                        element1.appendChild(br);
+                        const span = document.createElement("span");
+                        span.style.color = "yellow";
+                        span.textContent = __("Current string is the same!");
+                        element1.appendChild(span);
                     } else {
                         // console.debug('The strings are not similar.');
                         if (typeof prev_trans == 'object') {
@@ -5691,6 +5756,7 @@ async function fetchOldRec(url, rowId, showDiff) {
                     var doc = parser.parseFromString(data, "text/html");
                     //console.log("html:", doc);
                     var table = doc.getElementById("translations");
+                    //console.debug("table:",table)
                     // if there is no table with results, then we do need to set the value to 0
                     if (typeof table != 'undefined' && table != null) {
                         //let tr = table.rows;
@@ -5712,8 +5778,10 @@ async function fetchOldRec(url, rowId, showDiff) {
                             document.getElementById("translator_div4").remove();
                             document.getElementById("translator_div5").remove();
                         }
-                        rowContent = table.rows[tbodyRowCount - 1];
+                        rowContent = table.rows[tbodyRowCount -1];
+                       // console.debug("rowcontent:",rowContent)
                         orig = rowContent.getElementsByClassName("original-text");
+                       // console.debug("orig:",orig)
                         trans = rowContent.getElementsByClassName("translation-text");
 
                         var separator1 = createElementWithId("div", "translator_sep1");
@@ -5737,8 +5805,10 @@ async function fetchOldRec(url, rowId, showDiff) {
                         element1.appendChild(document.createTextNode("Existing translation ->" + fetchOld_status));
 
                         var element2 = createElementWithId("div", "translator_div2");
+                       
                         element2.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
                         if (OldRec_status = 'current') {
+                            console.debug("orig[0]:",orig[0])
                             element2.appendChild(document.createTextNode(orig[0].innerText));
                         }
                         else {

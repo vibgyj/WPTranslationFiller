@@ -69,4 +69,12 @@ Version 3.4.26 In Firefox the stats window did not work
 Version 3.4.27 Added option to show only projects the user is PTE for within the Stats function
 Version 3.4.28 Improved DeepL translation, it now catches 429 to many requests error
 Version 3.4.28 Improved formal conversion
-Version 3.4.28 added formal conversion into checkentry
+Version 3.4.28 Added formal conversion into checkentry
+Version 3.4.29 Added new function to compair suggestions agains the local database
+Version 3.4.29 Added new function to find duplicates within the current translations
+Version 3.4.30 Improved indicating wrong plurals
+Version 3.4.31 Indicating duplicate records used a fixed locale, which is wrong
+Version 3.4.32 Single records not in the database but with duplicates where not marked RED
+Version 3.4.33 Moved the editor a bit so you can see the result of populateWithTM
+Version 3.4.33 Added label if there is a waiting for a current string which is the same
+Version 3.4.33 Added new OpenAI model 5.1

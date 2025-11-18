@@ -63,6 +63,7 @@ function setPreTranslationReplace(preTranslationReplace) {
 
 function setPostTranslationReplace(postTranslationReplace, formal) {
     // PSS 21-07-2022 Currently when using formal, the translation is still default #225
+    //console.debug("in setpost:",postTranslationReplace)
     replaceVerb = [];
     if (postTranslationReplace != undefined) {
         let lines = postTranslationReplace.split("\n");
@@ -80,6 +81,7 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
                 }
             }
         });
+        //console.debug("set:",replaceVerb)
     }
 }
                        //new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
@@ -1257,6 +1259,385 @@ function checkFormalPage(dataFormal) {
         messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
     }
 }
+
+// Helper function: highlights only differing words with red background
+function highlightWordDifferences(translated, local) {
+    const tokenize = str =>
+        (str || "")
+            .replace(/>/g, "> ")   // ensure tags break into separate tokens
+            .replace(/</g, " <")   // prevent merging with words
+            .split(/\s+/)
+            .filter(Boolean);
+
+    const tWords = tokenize(translated);
+    const lWords = tokenize(local);
+    const maxLen = Math.max(tWords.length, lWords.length);
+    let result = [];
+
+    for (let i = 0; i < maxLen; i++) {
+        if (tWords[i] !== lWords[i]) {
+            result.push(`<span style="background-color:#f8d7da;">${tWords[i] || ""}</span>`);
+        } else {
+            result.push(tWords[i] || "");
+        }
+    }
+
+    return result.join(" ");
+}
+
+
+// Optional normalizer: collapse whitespace and trim to avoid false positives
+function normalizeTextForCompare(s) {
+    if (!s && s !== "") return "";
+    return s.replace(/\s+/g, " ").trim();
+}
+
+async function compairWithSuggestion(is_pte, convertToLower, spellCheckIgnore, locale) {
+    await deselectCheckBox();
+
+    // --- START progress bar setup ---
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>`;
+    const myheader = document.querySelector('header');
+    let progressbar = document.querySelector(".indeterminate-progress-bar");
+
+    if (!progressbar) {
+        myheader.insertAdjacentHTML('afterend', template);
+        progressbar = document.querySelector(".indeterminate-progress-bar");
+    }
+    if (progressbar) progressbar.style.display = 'block';
+    // --- END progress bar setup ---
+
+    const data = await new Promise(resolve => {
+        chrome.storage.local.get(["postTranslationReplace"], resolve);
+    });
+
+    const tableRows = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content");
+    console.debug("Total records found:", tableRows.length);
+
+    let matchCount = 0;
+
+    // Build a map of all original texts to detect duplicates
+    const allOriginals = Array.from(tableRows).map(e => e.querySelector("span.original-raw").innerText);
+    const duplicateMap = {};
+    allOriginals.forEach(txt => {
+        duplicateMap[txt] = (duplicateMap[txt] || 0) + 1;
+    });
+
+    for (let e of tableRows) {
+        const original = e.querySelector("span.original-raw").innerText;
+
+        let rowfound = e.closest("tr.editor").id;
+        let row = rowfound.split("-")[1];
+        const newrow = rowfound.split("-")[2];
+        const newrowId = newrow ? `${row}-${newrow}` : row;
+
+        let mypreview = document.querySelector(`#preview-${newrowId}`) || document.querySelector(`#preview-${row}`);
+        if (!mypreview || mypreview.classList.contains('no-translations')) continue;
+
+        // Detect plural
+        const pluralpresent = document.querySelector(
+            `#preview-${newrowId} .original li:nth-of-type(1) .original-text`
+        );
+
+        let singularOriginal = original;
+        let pluralOriginal = null;
+
+        let singularTranslatedText = "";
+        let pluralTranslatedText = "";
+
+        let singularTextElem, pluralTextElem;
+
+        if (pluralpresent == null) {
+            singularTextElem = mypreview.querySelector(".translation.foreign-text");
+            singularTranslatedText = singularTextElem ? singularTextElem.innerText : "";
+        } else {
+            const myrowId = newrowId.split("-")[0];
+
+            singularTextElem = e.querySelector("textarea#translation_" + myrowId + "_0");
+            pluralTextElem = e.querySelector("textarea#translation_" + myrowId + "_1");
+
+            singularTranslatedText = singularTextElem ? singularTextElem.innerText : "";
+            pluralTranslatedText = pluralTextElem ? pluralTextElem.innerText : "";
+
+            pluralOriginal = e.querySelector(".source-string__plural .original-raw").innerText;
+        }
+
+        // -------------------------------
+        // 1. FETCH LOCAL SINGULAR
+        // -------------------------------
+        //console.debug("We look for:", singularOriginal);
+        let singularLocal = await findTransline(singularOriginal, locale);
+        if (singularLocal !== "notFound") {
+            const formal = checkFormal(false);
+            setPostTranslationReplace(data.postTranslationReplace, formal);
+            singularLocal = replaceVerbInTranslation(singularOriginal, singularLocal, replaceVerb, false);
+            singularLocal = await postProcessTranslation(
+                singularOriginal,
+                singularLocal,
+                replaceVerb,
+                singularLocal,
+                "CompairLocal",
+                convertToLower,
+                spellCheckIgnore,
+                locale
+            );
+        }
+
+        // -------------------------------
+        // 2. FETCH LOCAL PLURAL (if exists)
+        // -------------------------------
+        let pluralLocal = "notFound";
+        if (pluralOriginal) {
+            pluralLocal = await findTransline(pluralOriginal, locale);
+            if (pluralLocal !== "notFound") {
+                const formal = checkFormal(false);
+                setPostTranslationReplace(data.postTranslationReplace, formal);
+                pluralLocal = replaceVerbInTranslation(pluralOriginal, pluralLocal, replaceVerb, false);
+                pluralLocal = await postProcessTranslation(
+                    pluralOriginal,
+                    pluralLocal,
+                    replaceVerb,
+                    pluralLocal,
+                    "CompairLocal",
+                    convertToLower,
+                    spellCheckIgnore,
+                    locale
+                );
+            }
+        }
+
+        const previewOriginals = mypreview.querySelectorAll("span.original-text");
+        const previewTranslations = mypreview.querySelectorAll(".translation.foreign-text");
+        const rowchecked = mypreview.querySelector('input[type="checkbox"][name="selected-row[]"]');
+
+        // -------------------------------
+        // ✅ Determine block result for plural/local
+        // -------------------------------
+        const singularMatch = singularLocal !== "notFound" && singularTranslatedText.trim() === singularLocal.trim();
+        const pluralMatch = pluralOriginal ? (pluralLocal !== "notFound" && pluralTranslatedText.trim() === pluralLocal.trim()) : true;
+
+        const blockGreen = singularMatch && pluralMatch && singularLocal !== "notFound";
+        const blockRed = singularLocal !== "notFound" && ((pluralOriginal && (!singularMatch || !pluralMatch)) || (!pluralOriginal && !singularMatch));
+
+        // -------------------------------
+        // 🔹 Non-local duplicate handling
+        // -------------------------------
+        let nonLocalDuplicateRed = false;
+        if (singularLocal === "notFound") {
+            const isDuplicate = duplicateMap[singularOriginal] > 1;
+            if (isDuplicate) {
+                if (singularTranslatedText.trim() !== singularOriginal.trim() ||
+                    (pluralOriginal && pluralTranslatedText.trim() !== pluralOriginal.trim())) {
+                    nonLocalDuplicateRed = true;
+                }
+            }
+        }
+
+        // -------------------------------
+        // 3. Apply colors and checkbox
+        // -------------------------------
+        if (blockGreen) {
+            if (previewOriginals[0]) previewOriginals[0].style.backgroundColor = "#d4edda";
+            if (previewTranslations[0]) previewTranslations[0].style.backgroundColor = "#d4edda";
+
+            if (pluralOriginal) {
+                if (previewOriginals[1]) previewOriginals[1].style.backgroundColor = "#d4edda";
+                if (previewTranslations[1]) previewTranslations[1].style.backgroundColor = "#d4edda";
+            }
+
+            if (rowchecked && !rowchecked.checked) rowchecked.checked = true;
+            matchCount++;
+        } else if (blockRed) {
+            if (previewOriginals[0]) {
+                previewOriginals[0].style.backgroundColor = "#f8d7da";
+                previewOriginals[0].style.color = "#000000";
+                previewOriginals[0].innerHTML = singularLocal;
+            }
+            if (previewTranslations[0]) previewTranslations[0].style.backgroundColor = "#f8d7da";
+
+            if (pluralOriginal) {
+                if (previewOriginals[1]) previewOriginals[1].style.backgroundColor = "#f8d7da";
+                if (previewTranslations[1]) previewTranslations[1].style.backgroundColor = "#f8d7da";
+            }
+        } else if (nonLocalDuplicateRed) {
+            // Mark RED only for non-local duplicates with differing translations
+            if (previewOriginals[0]) previewOriginals[0].style.backgroundColor = "#f8d7da";
+            if (previewTranslations[0]) previewTranslations[0].style.backgroundColor = "#f8d7da";
+
+            if (pluralOriginal) {
+                if (previewOriginals[1]) previewOriginals[1].style.backgroundColor = "#f8d7da";
+                if (previewTranslations[1]) previewTranslations[1].style.backgroundColor = "#f8d7da";
+            }
+        } else {
+            // Neutral for non-local entries without duplicates
+            if (previewOriginals[0]) previewOriginals[0].style.backgroundColor = "";
+            if (previewTranslations[0]) previewTranslations[0].style.backgroundColor = "";
+            if (pluralOriginal) {
+                if (previewOriginals[1]) previewOriginals[1].style.backgroundColor = "";
+                if (previewTranslations[1]) previewTranslations[1].style.backgroundColor = "";
+            }
+        }
+    }
+
+    if (progressbar) progressbar.style.display = 'none';
+    messageBox("info", __("Number of translations matching local database: ") + `${matchCount}`);
+}
+
+
+async function findDuplicates() {
+    await deselectCheckBox();
+
+    // --- START: progress-bar setup ---
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>`;
+    const myheader = document.querySelector('header');
+    let progressbar = document.querySelector(".indeterminate-progress-bar");
+
+    if (!progressbar) {
+        myheader.insertAdjacentHTML('afterend', template);
+        progressbar = document.querySelector(".indeterminate-progress-bar");
+        if (progressbar.style) progressbar.style.display = 'block';
+    } else {
+        progressbar.style.display = 'block';
+    }
+    // --- END progress-bar setup ---
+
+    const tableRows = document.querySelectorAll(
+        "tr.editor div.editor-panel__left div.panel-content"
+    );
+    console.debug("Total records found:", tableRows.length);
+
+    const seen = new Map();
+    let duplicateCount = 0;
+
+    for (let e of tableRows) {
+        const originalRaw = e.querySelector("span.original-raw")?.innerText?.trim();
+        if (!originalRaw) continue;
+
+        // ✅ Extract context from DOM
+        let contextText = "";
+        const myContext = e.getElementsByClassName("source-details__context")[0];
+        if (myContext != null && myContext != 'undefined') {
+            const realContext = myContext.getElementsByClassName("context bubble");
+            if (realContext.length > 0) {
+                contextText = realContext[0].innerText.trim();
+            }
+        }
+        //console.debug("original:", originalRaw, "context:", contextText);
+
+        let rowfound = e.closest("tr.editor").id;
+        let row = rowfound.split("-")[1];
+        let newrow = rowfound.split("-")[2];
+        let rowId = newrow ? `${row}-${newrow}` : row;
+
+        let mypreview =
+            document.querySelector(`#preview-${rowId}`) ||
+            document.querySelector(`#preview-${row}`);
+
+        if (!mypreview || mypreview.classList.contains("no-translations"))
+            continue;
+
+        const previewOriginal = mypreview.querySelector("span.original-text");
+        if (!previewOriginal) continue;
+
+        // ✅ PLURAL CHECK
+        const pluralpresent = document.querySelector(
+            `#preview-${rowId} .original li:nth-of-type(1) .original-text`
+        );
+
+        // ✅ Only check duplicates if not plural
+        if (!pluralpresent) {
+            // Combine original + context as key
+            const key = originalRaw + "||" + contextText;
+
+            // Checkbox for this row
+            const dupCheckbox = mypreview.querySelector(
+                'input[type="checkbox"][name="selected-row[]"]'
+            );
+
+            if (seen.has(key)) {
+                // Duplicate found
+                const first = seen.get(key);
+
+                // Highlight first occurrence and duplicate
+                first.element.style.backgroundColor = "#f8d7da"; // red for first
+                first.element.title = "Duplicate original found";
+
+                previewOriginal.style.backgroundColor = "#d4edda"; // green for duplicate
+                previewOriginal.title = "Duplicate original found";
+
+                // ✅ Mark both checkboxes only now
+                if (first.checkbox && !first.checkbox.checked) first.checkbox.checked = true;
+                if (dupCheckbox && !dupCheckbox.checked) dupCheckbox.checked = true;
+
+                duplicateCount++;
+            } else {
+                // First occurrence → store element + checkbox
+                seen.set(key, { element: previewOriginal, checkbox: dupCheckbox });
+                // ✅ Do NOT mark checkbox yet
+            }
+        }
+    }
+
+    // ✅ Hide progress bar
+    if (progressbar) progressbar.style.display = "none";
+
+    // ✅ Show message with actual duplicates
+    messageBox(
+        "info",
+        __("Number of duplicate originals: ") + `${duplicateCount}`
+    );
+
+    // ----------------------
+    // Scroll to first selected row
+    // ----------------------
+    const firstCheckedRow = document.querySelector(
+        'input[type="checkbox"][name="selected-row[]"]:checked'
+    );
+
+    if (firstCheckedRow) {
+        const rowElement = firstCheckedRow.closest("tr.editor") || firstCheckedRow;
+        if (rowElement) {
+            const rect = rowElement.getBoundingClientRect();
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+
+            // Scroll the window so the row is roughly centered
+            window.scrollTo({
+                top: scrollTop + rect.top - window.innerHeight / 2 + rect.height / 2,
+                behavior: "smooth"
+            });
+
+            // Focus the checkbox
+            //firstCheckedRow.focus({ preventScroll: true });
+           
+        }
+    }
+}
+
+// After findDuplicates() has run and checkboxes are set
+function hideNonDuplicates() {
+    // 1. Select all preview rows currently shown
+    const previewRows = document.querySelectorAll("tr.preview");
+
+    // 2. Loop through each preview row
+    previewRows.forEach(preview => {
+        // 3. Find the corresponding checkbox in the same row
+        const checkbox = preview.querySelector('input[type="checkbox"][name="selected-row[]"]');
+        // 4. If checkbox not set, hide the preview row
+        if (!checkbox || !checkbox.checked) {
+            preview.style.display = "none";
+        } else {
+            // Make sure duplicates remain visible
+            preview.style.display = "";
+        }
+    });
+}
+
 
 async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI, OpenAIPrompt, spellcheckIgnore, showHistory) {
     //console.debug("checkpage started")
@@ -3751,13 +4132,15 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 //console.debug("trans:", myTranslated, "orig:", original)
                 // We need to set the preview here as processTransl does not populate it, as it thinks it is in editor
                 // we have no plural, so the translation can be written directly into the preview
+                console.debug("my:",myTranslated)
                 if (formal) {
-                   mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+                   translated = await replaceVerbInTranslation(original, myTranslated, replaceVerb, debug = false)
                  }              
                 else {
                    //console.debug("single:",myTranslated)
                     translated = myTranslated
                 }
+                 translated = postProcessTranslation(original, translated, replaceVerb, translated, "tranlatepage", convertToLower, spellCheckIgnore, locale);
                 rawPreview = document.querySelector(`#preview-${row}`)
                 textareaElem = rawPreview.getElementsByClassName("translation foreign-text");
                 textareaElem[0].innerText = translated
@@ -4199,7 +4582,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             // 30-10-2021 PSS added a fix for issue #154
             // console.debug("previewtext 4415:", myTranslatedText)
             //console.debug("record:",record,rowId,row)
-            textareaElem1 = record.querySelector("#translation_" + row + "_0");
+            textareaElem1 = record.querySelector("#translation_" + rowId + "_0");
             textareaElem1.innerText = myTranslatedText;
             textareaElem1.value = myTranslatedText;
             textareaElem1 = record.querySelector("#translation_" + rowId + "_1");
@@ -6485,7 +6868,10 @@ async function saveLocal_2(bulk_timer) {
 
         if ((current.innerText === 'waiting' || current.innerText === 'transFill') && checkset.checked) {
             let glotpress_suggest = Edopen.querySelector(".translation-actions__save");
+            let glotpress_approve = Edopen.getElementsByClassName("button  is-primary approve")
+            
             glotpress_suggest.classList.remove("disabled");
+
             if (autoCopyClipBoard) My1copyClip = true;
             autoCopyClipBoard = false;
 
@@ -6529,6 +6915,7 @@ async function saveLocal_2(bulk_timer) {
 
                 if (recordError !== "Time-out reached") {
                     recordError.click();
+                    glotpress_approve[0].click()
                     if (debug) {
                         console.debug("We have an existing record");
                     }
@@ -6552,7 +6939,9 @@ async function saveLocal_2(bulk_timer) {
                 }
 
             } catch (err) {
-                console.debug("Saving failed: ", err.message);
+                if (debug) {
+                    console.debug("Saving failed: ", err.message);
+                }
             }
 
         } else {
@@ -6838,7 +7227,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     var myRowId = rowId;
     var previousCurrent = current
     let debug = false;
-    var show_debug = true
+    var show_debug = false
     var preview;
     var select;
     var td_preview;
