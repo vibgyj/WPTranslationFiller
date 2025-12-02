@@ -78,3 +78,4 @@ Version 3.4.32 Single records not in the database but with duplicates where not 
 Version 3.4.33 Moved the editor a bit so you can see the result of populateWithTM
 Version 3.4.33 Added label if there is a waiting for a current string which is the same
 Version 3.4.33 Added new OpenAI model 5.1
+Version 3.4.33 Added new API Claude for translation

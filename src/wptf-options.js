@@ -37,6 +37,7 @@ let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
 let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
+let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
@@ -59,6 +60,7 @@ let TMtresholdValue = document.getElementById("TMtreshold");
 let myScreenWidthValue = document.getElementById("screenWidth");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
+let ClaudePromptTextbox = document.getElementById("text_claude_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let spellcheckTextbox = document.getElementById("text_ignore_verbs");
@@ -80,9 +82,8 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
-    apikeyTextbox.value = data.apikey;
-    apikeydeeplTextbox.value = data.apikeyDeepl;
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
+    
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
   //  }
@@ -163,10 +164,13 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         OpenAITone = data.OpenAITone
     }
     apikeydeeplCheckbox = data.DeeplFree;
+    apikeyTextbox.value = data.apikey;
+    apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
     apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
     apikeyTranslateioTextbox.value = data.apikeyTranslateio
+    apikeyClaudeTextbox.value = data.apikeyClaude;
 
     if (data.transsel == "") {
         transselectBox.value = "google";
@@ -195,6 +199,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     }
     else {
         promptTextbox.value = data.OpenAIPrompt;
+    }
+    if (typeof data.ClaudePrompt == 'undefined') {
+        ClaudePromptTextbox.value = 'Enter prompt'
+    }
+    else {
+        ClaudePromptTextbox.value = data.ClaudePrompt;
     }
     if (typeof data.reviewPrompt == 'undefined') {
         reviewTextbox.value = 'Enter prompt'
@@ -358,7 +368,8 @@ button.addEventListener("click", function () {
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
     let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
-    let apikeyTranslationio= apikeyTranslateioTextbox.value;
+    let apikeyTranslationio = apikeyTranslateioTextbox.value;
+    let apikeyClaude = apikeyClaudeTextbox.value;
     
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -393,6 +404,7 @@ button.addEventListener("click", function () {
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
+    let ClaudePrompt = ClaudePromptTextbox.value
     let reviewText = reviewTextbox.value;
     let preTranslation = preverbsTextbox.value;
     let spellIgnoreverbs = spellcheckTextbox.value;
@@ -504,6 +516,7 @@ button.addEventListener("click", function () {
             apikeyMicrosoft: apikeyMicrosoft,
             apikeyDeepSeek: apikeyDeepSeek,
             apikeyTranslateio: apikeyTranslationio,
+            apikeyClaude: apikeyClaude,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
@@ -514,6 +527,7 @@ button.addEventListener("click", function () {
             postTranslationReplace: postTranslation,
             preTranslationReplace: preTranslation,
             OpenAIPrompt: promptText,
+            ClaudePrompt: ClaudePrompt,
             reviewPrompt: reviewText,
             spellCheckIgnore: spellIgnoreverbs,
             showHistory: showHist,

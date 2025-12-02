@@ -234,7 +234,7 @@ async function getTransAI(
 
     // Post-processing after successful result
     const start1 = Date.now()
-
+    //console.debug("text received:",text)
     myTranslatedText = await postProcessTranslation(
         original,
         text,

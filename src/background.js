@@ -192,7 +192,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true;
     }
-  
+
     if (request.action === "OpenAI") {
         (async () => {
             try {
@@ -232,6 +232,91 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // keep sendResponse alive for async
     }
 
+    // In your background script (service worker or background.js)
+
+    // background.js
+
+    if (request.action == "ClaudeAI") {
+
+    (async () => {
+        try {
+            // expecting { apiKey, apiVersion, model, text, systemPrompt, max_tokens }
+            const { apiKey, apiVersion = "2023-06-01", model, text, systemPrompt, max_tokens } = request.data || {};
+
+            if (!apiKey) {
+                sendResponse({ success: false, error: "API key is missing" });
+                return;
+            }
+            if (!model || !text || !systemPrompt || !max_tokens) {
+                sendResponse({ success: false, error: "Required field missing (model/text/systemPrompt/max_tokens)" });
+                return;
+            }
+
+            // Claude requires top-level `system`, messages only user content
+            const bodyToSend = {
+                model,
+                system: systemPrompt,
+                messages: [
+                    { role: "user", content: text }
+                ],
+                max_tokens
+            };
+
+            const resp = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": apiKey,
+                    "anthropic-version": apiVersion,
+                    "anthropic-dangerous-direct-browser-access": "true"
+                },
+                body: JSON.stringify(bodyToSend)
+            });
+
+            const respText = await resp.text().catch(() => '');
+            // debug raw response if you need
+            console.debug("Claude raw response:", respText);
+
+            if (!resp.ok) {
+                // try to parse structured error, otherwise return text
+                try {
+                    const json = JSON.parse(respText);
+                    sendResponse({ success: false, error: json.error?.message || JSON.stringify(json) });
+                } catch {
+                    sendResponse({ success: false, error: respText || `HTTP ${resp.status}` });
+                }
+                return;
+            }
+
+            // parse JSON
+            let respData;
+            try {
+                respData = JSON.parse(respText);
+            } catch (e) {
+                sendResponse({ success: false, error: "Cannot parse JSON from Claude", raw: respText });
+                return;
+            }
+
+            // extract content text (handles multiple content items if needed)
+            if (!respData?.content || !Array.isArray(respData.content) || respData.content.length === 0) {
+                sendResponse({ success: false, error: "No content returned from Claude", raw: respData });
+                return;
+            }
+
+            // join text blocks (usually one)
+            const translation = respData.content.map(c => c?.text || "").filter(Boolean).join("\n");
+
+            // optionally surface usage if available
+            const usage = respData?.usage || null;
+
+            sendResponse({ success: true, translation, usage });
+        } catch (err) {
+            sendResponse({ success: false, error: err?.message || String(err) });
+        }
+    })();
+
+    return true; // keep response channel open
+}
 
 
     else if (request.action === "translateio") {

@@ -19,7 +19,6 @@ var is_entry = false;
 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 
 
-
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
 });
@@ -436,14 +435,14 @@ var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
 var errorstate = "OK";
-var locale;
+var locale = checkLocale()
 var showGlosLine;
 
 gd_wait_table_alter();
 
 
 addCheckBox();
-exportGlossaryForOpenAi()
+exportGlossaryForOpenAi(locale)
 
 var parrotActive;
 const script = document.createElement('script');
@@ -889,7 +888,7 @@ document.addEventListener("keydown", async function (event) {
             newrowId = rowId.concat("-", myrowId);
             rowId = newrowId;
         }
-        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
+        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyClaude", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
             var formal = checkFormal(false);
             var DeeplFree = data.DeeplFree;
@@ -2087,8 +2086,9 @@ function translatePageClicked(event) {
                         var OpenAItemp = parseFloat(data.OpenAItemp);
                         var deeplGlossary = localStorage.getItem('deeplGlossary');
                         var OpenAITone = data.OpenAITone;
+                        // OpenAiGloss is populated from the DeepL glossary within indexedDB
                         OpenAiGloss = data.OpenAiGloss;
-                        // console.debug("AiGloss:", data.OpenAiGloss)
+    
                         translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyDeepSeek, data.apikeyTranslateio, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss);
                     }
                     else {
@@ -3104,7 +3104,7 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         if (data.ForceFormal != true) {
             formal = checkFormal(false);
@@ -3118,7 +3118,7 @@ function translateEntryClicked(event) {
         var OpenAITone = data.OpenAITone
         var myOpenAiGloss = data.OpenAiGloss
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss);
         }
         else {
             messageBox("error", "You need to set the parameter for Destination language");

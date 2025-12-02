@@ -68,6 +68,7 @@
     "*://api.cognitive.microsofttranslator.com/*",
     "*://127.0.0.1/*",
     "*://api.openai.com/*",
+    "*://api.anthropic.com/*",
     "http://*/*",
     "https://*/*"
   ],
@@ -91,6 +92,7 @@
         "wptf-consistency.js",
         "jsstore.js",
         "jsstore.worker.js",
+        "wptf-ClaudeTrans.js",
         "wptf-openAITrans.js",
         "wptf-deeplTrans.js",
         "wptf-DeepSeekTrans.js",

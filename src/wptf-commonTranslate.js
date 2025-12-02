@@ -6061,7 +6061,7 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss) {
     var translateButton;
     var result;
     errorstate = "OK"
@@ -6155,18 +6155,18 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             requestAnimationFrame(() => {
                 textareaElem.style.height = "auto"
             });
-            
             if (toTranslate) {
                 // console.debug("we need to translate");
                 let pretrans = await findTransline(original, destlang);
                 //console.debug("original",original," ",destlang)
+                
                 if (pretrans == "notFound") {
                     if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
-                        
+
                     }
-                   else if (transsel == "google") {
+                    else if (transsel == "google") {
                         result = await googleTranslate(original, destlang, e, apikey, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore, deeplGlossary, is_entry);
                         if (errorstate == "Error 400") {
                             messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
@@ -6229,7 +6229,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     }
                     else if (transsel == "deepseek") {
                         let editor = true;
-                       result = await translateWithDeepSeek(original, destlang, e, apikeyDeepSeek, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        result = await translateWithDeepSeek(original, destlang, e, apikeyDeepSeek, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -6264,6 +6264,24 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                                 //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
+                    }
+                    else if (transsel == "Claude") {
+                        let editor = true
+                       
+                        // Translate
+                        let originals = [original]
+                      //  let myGlossary = openAiGloss.replaceAll("->", ":")  
+                        //myGlossary = `{${myGlossary}}`;
+                       // let Glossary = JSON.parse(`{${myGlossary}}`);
+                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt);
+                    
+                       if (results.success) {
+                       // Use result.translation
+                       console.debug(results.translation);
+                      } else {
+                      // Handle error
+                     // console.error(results);
+                      }
                     }
                     showButton = document.getElementById("translate-" + rowId + "-translocal-entry-local-button")
                     // we need to hide the button if it is visible
@@ -6345,6 +6363,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 let pretrans = await findTransline(original, destlang);
                 plural_line = "2";
                 if (pretrans == "notFound") {
+
                     if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
@@ -6436,6 +6455,24 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                                 //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
+                    }
+                    else if (transsel == "Claude") {
+                        let editor = true
+
+                        // Translate
+                       // let myGlossary = openAiGloss.replaceAll("->", ":")  
+                       // myGlossary = `{${myGlossary}}`;
+                      //  let Glossary = JSON.parse(`{${myGlossary}}`);
+                      //  console.debug("glossary:",Glossary)
+                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss, destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt);
+                     
+                       if (results.success) {
+                       // Use result.translation
+                       console.debug(results.translation);
+                      } else {
+                      // Handle error
+                      console.error(results);
+                      }
                     }
                 }
                 else {
