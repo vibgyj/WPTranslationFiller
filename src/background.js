@@ -237,12 +237,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // background.js
 
     if (request.action == "ClaudeAI") {
-
     (async () => {
         try {
-            // expecting { apiKey, apiVersion, model, text, systemPrompt, max_tokens }
-            const { apiKey, apiVersion = "2023-06-01", model, text, systemPrompt, max_tokens } = request.data || {};
-
+            // expecting { apiKey, apiVersion, model, text, systemPrompt, max_tokens, temperature }
+            const { 
+                apiKey, 
+                apiVersion = "2023-06-01", 
+                model, 
+                text, 
+                systemPrompt, 
+                max_tokens,
+                temperature = 0.3  // Default to 0.3 if not provided
+            } = request.data || {};
+            
             if (!apiKey) {
                 sendResponse({ success: false, error: "API key is missing" });
                 return;
@@ -251,7 +258,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 sendResponse({ success: false, error: "Required field missing (model/text/systemPrompt/max_tokens)" });
                 return;
             }
-
+            
             // Claude requires top-level `system`, messages only user content
             const bodyToSend = {
                 model,
@@ -259,9 +266,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 messages: [
                     { role: "user", content: text }
                 ],
-                max_tokens
+                max_tokens,
+                temperature  // Add temperature parameter
             };
-
+            
             const resp = await fetch("https://api.anthropic.com/v1/messages", {
                 method: "POST",
                 headers: {
@@ -272,11 +280,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 },
                 body: JSON.stringify(bodyToSend)
             });
-
+            
             const respText = await resp.text().catch(() => '');
             // debug raw response if you need
             console.debug("Claude raw response:", respText);
-
+            
             if (!resp.ok) {
                 // try to parse structured error, otherwise return text
                 try {
@@ -287,7 +295,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
                 return;
             }
-
+            
             // parse JSON
             let respData;
             try {
@@ -296,28 +304,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 sendResponse({ success: false, error: "Cannot parse JSON from Claude", raw: respText });
                 return;
             }
-
+            
             // extract content text (handles multiple content items if needed)
             if (!respData?.content || !Array.isArray(respData.content) || respData.content.length === 0) {
                 sendResponse({ success: false, error: "No content returned from Claude", raw: respData });
                 return;
             }
-
+            
             // join text blocks (usually one)
             const translation = respData.content.map(c => c?.text || "").filter(Boolean).join("\n");
-
+            
             // optionally surface usage if available
             const usage = respData?.usage || null;
-
+            
             sendResponse({ success: true, translation, usage });
         } catch (err) {
             sendResponse({ success: false, error: err?.message || String(err) });
         }
     })();
-
     return true; // keep response channel open
 }
-
 
     else if (request.action === "translateio") {
         

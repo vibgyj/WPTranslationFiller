@@ -181,6 +181,7 @@ async function populateWithTM(
 // Process each record sequentially with proper awaits
 async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, transsel, GlotPressBulkButton, FetchLiDelay, interCept) {
     await sleep(1000); // wait a bit for populating the table
+    //console.debug("Threshold:",TMtreshold)
     var copyClip = false
     if (autoCopyClipBoard) {
         copyClip = false;

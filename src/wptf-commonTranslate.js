@@ -409,33 +409,64 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
  
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     // console.debug("befor convert to lower:", translatedText)
+   // console.debug("before:", translatedText)
+    
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
+        console.debug("convert:",convertToLower)
         // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
         for (let i = 0; i < replaceVerb.length; i++) {
             // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
+            
             if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
                 // PSS solution for issue #291
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
                 //console.debug(CheckUrl(translatedText, replaceVerb[i][0]))
-                if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                   // translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-                    translatedText = translatedText.replace(verbRegex, match => verbMap[match]);
-                }
+                const searchWord = replaceVerb[i][0];
+                const replacement = replaceVerb[i][1];
+
+               // Skip if inside URL
+               let inUrl = CheckUrl(translatedText, searchWord);
+               if (!inUrl) {
+                   // Escape regex special chars in search word
+                  const safeWord = escapeRegex(searchWord);
+
+                  // Build regex WITHOUT word boundaries, so tokens like {aap} will match
+                  const wordRegex = new RegExp(safeWord, 'g');
+                  translatedText = translatedText.replace(wordRegex, replacement);
+                  translatedText = correctSentence(translatedText, spellCheckIgnore);
+       
+                  //console.debug("replacing:", searchWord, "->", replacement);
+               }
+                
             }
             else {
                 // PSS solution for issue #291
-                replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
-               // console.debug(CheckUrl(translatedText, replaceVerb[i][0]))
-                if (!CheckUrl(translatedText, replaceVerb[i][0])) {
-                    //translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
-                    translatedText = translatedText.replace(verbRegex, match => verbMap[match]);
-                }
+                 const searchWord = replaceVerb[i][0];
+                const replacement = replaceVerb[i][1];
+
+               // Skip if inside URL
+               let inUrl = CheckUrl(translatedText, searchWord);
+               if (!inUrl) {
+                  // Escape regex special chars in search word
+                  const safeWord = escapeRegex(searchWord);
+
+                   // Build regex WITHOUT word boundaries, so tokens like {aap} will match
+                   const wordRegex = new RegExp(safeWord, 'g');
+
+                   translatedText = translatedText.replace(wordRegex, replacement);
+                   translatedText = correctSentence(translatedText, spellCheckIgnore);
+       
+                   //console.debug("replacing:", searchWord, "->", replacement);
+               }
+                console.debug("checkurl after2:",translatedText)
             }
         }
+         
     }
     else {
-       // console.debug("conversion lowercase is off")
+        //console.debug("convert off:",convertToLower)
+        //console.debug("conversion lowercase is off")
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
        //console.debug("checkurl before:",translatedText)
@@ -454,11 +485,13 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
 
         translatedText = translatedText.replace(wordRegex, replacement);
         translatedText = correctSentence(translatedText, spellCheckIgnore);
-
+       
         //console.debug("replacing:", searchWord, "->", replacement);
-    } else {
+       }
+       else {
         //console.debug("skipping replacement, word in URL:", searchWord);
-    }
+          }
+   
 }
       // console.debug("final translation:", translatedText);
 
@@ -3988,6 +4021,7 @@ async function determineType(row, record) {
     }
     if (myType == "none") {
         let pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
+        //console.debug("type in dertermine:",pluralpresent)
         if (pluralpresent != null) {
             myType = "plural"
             myTranslated = "Plural"
@@ -4003,7 +4037,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -4211,10 +4245,10 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             transtype = 'single'
             plural_line = 0
             if (transsel == "translation_io") {
-                        is_entry = true
-                        result = await translateWithGolinguist(original, "nl-nl", record, row, apikeyTranslateio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
-                        
-                    }
+                is_entry = true
+                result = await translateWithGolinguist(original, "nl-nl", record, row, apikeyTranslateio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
+
+            }
             else if (transsel == "google") {
                 //console.debug("before google:",spellCheckIgnore)
                 result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore, false);
@@ -4233,7 +4267,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             }
             else if (transsel == "deepl") {
                 // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false,DeepLWait);
+                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false, DeepLWait);
                 if (result == "Error 403") {
                     messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -4304,7 +4338,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 }
             }
             else if (transsel == "OpenAI") {
-                result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss,is_entry);
+                result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
                 //console.debug("result:",result)
                 if (result == "Error 401") {
                     messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4331,7 +4365,25 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                         // break;
                         //alert("There has been some uncatched error: " + errorstate);
                     }
-                    
+
+                }
+            }
+            else if (transsel == "Claude") {
+                let editor = true
+
+                // Translate
+                if (original != "") {
+                    let originals = [original]
+                   
+                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp);
+
+                    if (results.success) {
+                        // Use result.translation
+                        console.debug(results.translation);
+                    } else {
+                        // Handle error
+                        // console.error(results);
+                    }
                 }
             }
             await  mark_as_translated(row, current, true, rawPreview);
@@ -4376,7 +4428,8 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             plural_line = "1"
             await check_span_missing(row, plural_line);
             //console.debug("pretrans 4351:",pretrans)
-            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor)
+            //console.debug("plur:",plural)
+            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt)
             editorElem = editor.querySelector("textarea.foreign-text");
 
             await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
@@ -4388,7 +4441,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
     }
 }
                              
-async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current) {
+async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt) {
     let debug = false
     var myTranslatedText;
     if (debug == true) {
@@ -4402,7 +4455,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     if (pretrans == "notFound") {
          if (transsel == "translation_io") {
                         is_entry = true
-                        result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
+                        result = await translateWithGolinguist(original, "nl-nl", record, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
                     }
         else if (transsel == "google") {
@@ -4519,6 +4572,24 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                 }
             }
         }
+        else if (transsel == "Claude") {
+                let editor = true
+
+                // Translate
+             if (plural != "") {
+                    let originals = [plural]
+                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale,OpenAItemp);
+
+
+                   // if (results.success) {
+                        // Use result.translation
+                      //  console.debug(results.translation);
+                 //   } else {
+                        // Handle error
+                  //      // console.error(results);
+                  //  }
+                }
+            }
     }
     else {
         //console.debug("we are in plural and have a pretranslation")
@@ -4771,6 +4842,16 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                 }
             }
         }
+        else if (transsel == "Claude") {
+                let editor = true
+
+                // Translate
+             if (plural != "") {
+                    let originals = [plural]
+                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale,OpenAItemp);
+                
+             }
+        }
         
     }
     else {
@@ -4887,7 +4968,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt) {
     //console.debug("We started translatePage")
     var translate;
     var transtype = "";
@@ -5012,6 +5093,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         apikeyDeepSeek,
         apikeyMicrosoft,
         apikeyOpenAI,
+        apikeyClaude,
         apikeyTranslateio,
         OpenAIPrompt,
         transsel,
@@ -5031,7 +5113,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         DeepLWait,
         openAiGloss,
         counter,
-        editor
+        editor,
+        ClaudePrompt
        );
         
     } catch (err) {
@@ -6270,15 +6353,16 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                        
                         // Translate
                         let originals = [original]
-                      //  let myGlossary = openAiGloss.replaceAll("->", ":")  
+                      //  let myGlossary = openAiGloss.replaceAll("->", ":")
                         //myGlossary = `{${myGlossary}}`;
-                       // let Glossary = JSON.parse(`{${myGlossary}}`);
-                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt);
+                        // let Glossary = JSON.parse(`{${myGlossary}}`);
+                        //console.debug("OpenAiGloss:",openAiGloss)
+                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp);
                     
                        if (results.success) {
                        // Use result.translation
                        console.debug(results.translation);
-                      } else {
+                       } else {
                       // Handle error
                      // console.error(results);
                       }
@@ -6460,19 +6544,13 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         let editor = true
 
                         // Translate
-                       // let myGlossary = openAiGloss.replaceAll("->", ":")  
+                       // let myGlossary = openAiGloss.replaceAll("->", ":")
                        // myGlossary = `{${myGlossary}}`;
                       //  let Glossary = JSON.parse(`{${myGlossary}}`);
-                      //  console.debug("glossary:",Glossary)
-                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss, destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt);
+                        //  console.debug("glossary:",Glossary)
+                       let originals = [original]
+                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower,locale,OpenAItemp);
                      
-                       if (results.success) {
-                       // Use result.translation
-                       console.debug(results.translation);
-                      } else {
-                      // Handle error
-                      console.error(results);
-                      }
                     }
                 }
                 else {
@@ -7413,7 +7491,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                     // textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
                     // Select the first li
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
-                    console.debug("previewElem:",previewElem)
+                    //console.debug("previewElem:",previewElem)
                     if (previewElem != null) {
                        previewElem.innerText = mytranslatedText;
                     }
@@ -7430,7 +7508,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                 }
                 if (plural_line == 2) {
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_1");
-                    console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
+                    //console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
                     textareaElem2.innerText = mytranslatedText;
                     textareaElem2.value = mytranslatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13

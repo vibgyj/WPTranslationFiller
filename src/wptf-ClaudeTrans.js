@@ -11,85 +11,83 @@ async function callClaude(data) {
     });
 }
 
-
 class ClaudeTranslator {
     constructor(apiKey, options = {}) {
         this.apiKey = apiKey;
-        this.model = options.model || 'claude-sonnet-4-5-20250929';
+        this.model = options.model || 'claude-haiku-4-5-20251001';
         this.apiVersion = '2023-06-01';
+        this.maxRetries = options.maxRetries || 3;
+        this.retryDelay = options.retryDelay || 1000;
     }
 
+    // Helper to sleep/wait
+    async sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Build the base prompt with glossary and formal/informal tone
     buildSystemPrompt(glossary = {}, formal = false, destinationLanguage = 'Dutch') {
         const glossaryEntries = Object.entries(glossary)
-            .map(([key, value]) => `"${key}": "${value}"`)
+            .map(([key, value]) => `${key}=${value}`)
             .join(', ');
 
-        const formalityNote = formal
-            ? 'Use formal tone (u/uw instead of je/jouw)'
-            : 'Use informal tone (je/jouw instead of u/uw)';
+        const tone = formal ? 'u/uw' : 'je/jij';
 
-        return `**Translation Task: English to ${destinationLanguage}**
-You are a professional translator specializing in English to ${destinationLanguage}, while following these strict requirements:
-${formalityNote}
+        return `You are a translation machine. Your ONLY job is to translate text from English to ${destinationLanguage}.
 
-Glossary: ${glossaryEntries || '(No custom glossary provided)'}
+**Rules:**
+1. Use ${tone} (${formal ? 'formal' : 'informal'} tone)
+2. Glossary: ${glossaryEntries || 'none'}
+3. Follow ${destinationLanguage} grammar (word order, conjugations, capitalization)
+4. Keep HTML tags unchanged
+5. Remove __ (underscores) from text
+6. Preserve CAPS exactly
+7. Preserve singular/plural exactly (Section → Sectie, NOT Secties)
+8. Don't translate: URLs, Branch names, variables (%1$s, {var}, etc.), Latin text
+9. Dates: DD-MM-YYYY with ${destinationLanguage} month/day names, 24-hour time
 
-Grammar and Style Requirements:
-Follow all standard Dutch grammar rules (de/het articles, word order, verb conjugations, etc.)
-Maintain natural, idiomatic Dutch language
-Use appropriate formal or informal tone based on context
-Use the Dutch grammar rules for capitalisation
+**OUTPUT RULES - ABSOLUTE:**
+- ALWAYS translate whatever text is provided, no matter how short or simple
+- NEVER refuse to translate
+- NEVER ask for context
+- NEVER provide explanations or comments
+- NEVER add characters not in the original (#, *, -, quotes, etc.)
+- DO NOT change singular to plural or vice versa
+- Output ONLY the translation, nothing else
 
-Date and Time Formatting:
-Convert dates to Dutch format: DD-MM-YYYY
-Use Dutch month and day names
-Use 24-hour time format
-
-Formatting Requirements:
-Preserve HTML
-Do NOT translate Branch names
-Do NOT add hyphens
-Preserve whitespace
-Remove underscores from URLs
-Preserve uppercase formatting
-
-What to Translate:
-Only translate text content between HTML tags
-Translate alt text, title attributes, and other user-facing text
-Convert dates/times to Dutch format
-Always use glossary terms
-
-What NOT to Translate:
-HTML tags/attributes (except values)
-Branch names
-Words within URLs
-Code snippets
-Variable names
-Sentences completely in Latin
-
-Return only the translated text without comments or explanations.`;
+Examples:
+"Add content" → Inhoud toevoegen
+"Section" → Sectie
+"Sections" → Secties
+"Background Type" → Achtergrond Type
+"Highlight Section" → Sectie markeren`;
     }
 
-    async translate(text, options = {}) {
+    // Helper to apply external prompt and replace ${destinationLanguage} placeholders
+    applyCustomPrompt(basePrompt, userPrompt, destinationLanguage) {
+        if (!userPrompt || typeof userPrompt !== "string") return basePrompt;
+
+        const placeholderRegex = /\$\{\s*destinationLanguage\s*\}|\$destinationLanguage/gi;
+        const processedUserPrompt = userPrompt.replace(placeholderRegex, destinationLanguage);
+        const safeBasePrompt = basePrompt.replace(placeholderRegex, destinationLanguage);
+
+        return safeBasePrompt + "\n\n**Additional Instructions:**\n" + processedUserPrompt;
+    }
+
+    async translate(text, options = {}, attempt = 1) {
         const {
             glossary = {},
             formal = false,
             destinationLanguage = 'Dutch',
             systemPrompt = null,
-            max_tokens = 1024
+            max_tokens = 1024,
+            temperature = 0.3
         } = options;
 
-        // Merge external glossary into prompt
-        let finalSystemPrompt;
-        if (systemPrompt) {
-            const glossaryEntries = Object.entries(glossary)
-                .map(([k, v]) => `"${k}": "${v}"`)
-                .join(', ');
-
-            finalSystemPrompt = systemPrompt + (glossaryEntries ? `\n\nExternal Glossary: ${glossaryEntries}` : '');
-        } else {
-            finalSystemPrompt = this.buildSystemPrompt(glossary, formal, destinationLanguage);
-        }
+        // Build base prompt
+        const basePrompt = this.buildSystemPrompt(glossary, formal, destinationLanguage);
+        // Combine with external prompt if provided, replacing ${destinationLanguage}
+        const finalSystemPrompt = this.applyCustomPrompt(basePrompt, systemPrompt, destinationLanguage);
 
         //console.debug("=== Final prompt sent to Claude ===\n", finalSystemPrompt);
 
@@ -99,30 +97,50 @@ Return only the translated text without comments or explanations.`;
             model: this.model,
             text,
             systemPrompt: finalSystemPrompt,
-            max_tokens
+            max_tokens,
+            temperature
         };
 
         const result = await callClaude(dataToSend);
+
+        // Handle rate limiting / overloaded errors with retry
+        if (result.error && result.error.includes("Overloaded") && attempt < this.maxRetries) {
+            const delay = this.retryDelay * attempt; // Exponential backoff
+            console.warn(`API Overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
+            await this.sleep(delay);
+            return this.translate(text, options, attempt + 1);
+        }
 
         if (!result || result.error) {
             return { success: false, error: result?.error || "Unknown error" };
         }
 
+        // Clean any unwanted formatting Claude might add
+        let translation = result.translation;
+        if (translation) {
+            translation = translation
+                .replace(/^#{1,6}\s+/gm, '')                    // Remove headers
+                .replace(/^[\*\-\+]\s+/gm, '')                  // Remove bullets
+                .replace(/^>\s*/gm, '')                         // Remove blockquotes
+                .replace(/^(Translation|Output|Result):\s*/i, '') // Remove prefixes
+                .replace(/^["'](.+)["']$/s, '$1')              // Remove wrapping quotes
+                .trim();
+        }
+
         return {
             success: true,
-            translation: result.translation,
+            translation,
             usage: result.usage
         };
     }
 }
-
 
 // Line-by-line translation
 async function translateLineByLine(
     apiKey,
     originals,
     myglossary,
-    language,
+    destlang,
     record,
     rowId,
     transtype,
@@ -131,33 +149,68 @@ async function translateLineByLine(
     convertToLower,
     current,
     editor,
-    ClaudePrompt
+    ClaudePrompt,
+    OpenAITone,
+    preverbs,
+    spellCheckIgnore,
+    convertToLower,
+    locale,
+    OpenAiTemp
 ) {
     const results = [];
+    const show_debug = true;
     const translator = new ClaudeTranslator(apiKey, {
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024
+        max_tokens: 1024,
+        maxRetries: 3,      // Retry up to 3 times on overload
+        retryDelay: 500    // Start with 1 second, then 2s, then 3s
     });
-   
-    let Glossary = myglossary.replaceAll("->", ":")  
-     // console.debug("gloss:",Glossary)
-                        //myGlossary = `{${myGlossary}}`;
-     let glossary = JSON.parse(`{${Glossary}}`);
-     
-   //  console.debug("transgloss:",glossary)
+
+    // Convert glossary string to object
+    let Glossary = myglossary.replaceAll("->", ":");  
+    let glossary = JSON.parse(`{${Glossary}}`);
+
+    // Map destination language code to full name
+    let language;
+    switch (destlang) {
+        case 'nl': language = 'Dutch'; break;
+        case 'fr': language = 'French'; break;
+        case 'nl-be': language = 'Belgian Dutch'; break;
+        case 'de': language = 'German'; break;
+        case 'ru': language = 'Russian'; break;
+        case 'uk': language = 'Ukrainian'; break;
+        case 'ja': language = 'Japanese'; break;
+        case 'es-ES': language = 'Spanish'; break;
+        default: language = 'Dutch'; break;
+    }
+
+    let myFormal = (OpenAITone == "informal") ? false : true;
+
+    // Ensure temperature is a valid number
+    const temp = typeof OpenAiTemp === 'number' ? OpenAiTemp : 0.0;
+
     for (let i = 0; i < originals.length; i++) {
         const original = originals[i];
-        const originalText = typeof original === "string" ? original : original.text;
+        let originalText = typeof original === "string" ? original : original.text;
+
+        // Preprocess original
+        let originalPreProcessed = await preProcessOriginal(originalText, preverbs, "OpenAI");
+        originalText = originalPreProcessed;
+        const start = Date.now();
+        console.debug("Using temperature:", temp);
 
         const result = await translator.translate(originalText, {
             glossary: glossary,
-            formal: false,
-            destinationLanguage: 'Dutch',
-            systemPrompt: ClaudePrompt,   // ✅ include your prompt
-            max_tokens: 1024
+            formal: myFormal,
+            destinationLanguage: language,
+            systemPrompt: ClaudePrompt,   // Appends and replaces ${destinationLanguage}
+            max_tokens: 1024,
+            temperature: temp
         });
 
         if (result.success) {
+            const duration = ((Date.now() - start) / 1000).toFixed(2);
+            if (show_debug) console.debug("Claude proxy response (raw):", result.translation," ",duration);
             results.push({
                 id: original.id,
                 original: originalText,
@@ -165,9 +218,20 @@ async function translateLineByLine(
                 success: true
             });
 
-            await processTransl(
+            let myTranslatedText = await postProcessTranslation(
                 original,
                 result.translation,
+                replaceVerb,
+                originalPreProcessed,
+                "OpenAI",
+                convertToLower,
+                spellCheckIgnore,
+                locale
+            );
+
+            await processTransl(
+                original,
+                myTranslatedText,
                 language,
                 record,
                 rowId,
@@ -186,6 +250,11 @@ async function translateLineByLine(
                 error: errMsg,
                 success: false
             });
+        }
+
+        // Add delay between requests to avoid rate limiting (except last item)
+        if (i < originals.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
         }
     }
 
