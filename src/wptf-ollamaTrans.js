@@ -4,16 +4,57 @@
  * Ollama provides a local LLM API compatible with OpenAI's chat format
  */
 
+// Extract relevant glossary terms based on words in the source text
+// This keeps context smaller by only including terms that might be needed
+async function getRelevantGlossaryTerms(sourceText) {
+    return new Promise((resolve) => {
+        // Get all glossary arrays from storage
+        const glossaryKeys = [
+            'glossary', 'glossaryA', 'glossaryB', 'glossaryC', 'glossaryD',
+            'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI',
+            'glossaryJ', 'glossaryK', 'glossaryL', 'glossaryM', 'glossaryN',
+            'glossaryO', 'glossaryP', 'glossaryQ', 'glossaryR', 'glossaryS',
+            'glossaryT', 'glossaryU', 'glossaryV', 'glossaryW', 'glossaryX',
+            'glossaryY', 'glossaryZ'
+        ];
+
+        chrome.storage.local.get(glossaryKeys, function(data) {
+            const relevantTerms = [];
+            const sourceTextLower = sourceText.toLowerCase();
+
+            // Check each glossary array
+            for (const key of glossaryKeys) {
+                const glossaryArray = data[key];
+                if (Array.isArray(glossaryArray)) {
+                    for (const entry of glossaryArray) {
+                        // Check if the glossary term appears in the source text
+                        if (entry && entry.key && sourceTextLower.includes(entry.key.toLowerCase())) {
+                            relevantTerms.push(`"${entry.key}" -> "${entry.value}"`);
+                        }
+                    }
+                }
+            }
+
+            const result = relevantTerms.join(', ');
+            console.debug("Ollama relevant glossary terms found:", relevantTerms.length, result);
+            resolve(result);
+        });
+    });
+}
+
 // Wrapper function that reads Ollama settings from storage
 // This simplifies integration by not requiring all function signatures to be modified
 async function ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+        // Get relevant glossary terms based on source text
+        const relevantGlossary = await getRelevantGlossaryTerms(original);
+
         chrome.storage.local.get(["ollamaUrl", "ollamaKey", "ollamaModel", "OpenAiGloss"], async function(data) {
             let ollamaUrl = data.ollamaUrl || 'http://localhost:11434';
             let ollamaKey = data.ollamaKey || '';
             let ollamaModel = data.ollamaModel || 'llama3.2';
-            // Use glossary from parameter or storage
-            let glossary = openAiGloss || data.OpenAiGloss || '';
+            // Use relevant glossary terms extracted from source text, fall back to passed glossary or storage
+            let glossary = relevantGlossary || openAiGloss || data.OpenAiGloss || '';
 
             // Use OpenAI prompt and settings as they are compatible
             let result = await ollamaTranslate(
@@ -60,7 +101,7 @@ function getTransOllama(original, language, record, ollamaUrl, ollamaKey, ollama
     var data;
     var link;
     var lang = window.navigator.language;
-    var show_debug = false;
+    var show_debug = true;
     var myprompt;
 
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
@@ -71,6 +112,11 @@ function getTransOllama(original, language, record, ollamaUrl, ollamaKey, ollama
     // Replace tone placeholder in the prompt
     myprompt = tempPrompt.replaceAll("{{tone}}", ollamaTone);
     // Replace glossary placeholder in the prompt
+    if (show_debug) {
+        console.debug("Ollama openAiGloss received:", openAiGloss);
+        console.debug("Ollama openAiGloss type:", typeof openAiGloss);
+        console.debug("Ollama openAiGloss length:", openAiGloss ? openAiGloss.length : 0);
+    }
     myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss || '');
 
     if (originalPreProcessed == '') {
