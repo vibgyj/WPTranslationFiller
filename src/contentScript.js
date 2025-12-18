@@ -16,18 +16,14 @@ var DispCount;
 var is_pte;
 var classToolTip;
 var is_entry = false;
-is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
-    //chrome.storage.local.remove(keysToRemove, function () {
-    //  console.log("Removed keys:", keysToRemove);
-    // });
 });
 function savePage() {
     var currentUrl = window.location.href
-    //console.debug("curr:", currentUrl)
     chrome.storage.local.set({
         lastPageVisited: currentUrl
     });
@@ -35,9 +31,7 @@ function savePage() {
 savePage()
 
 if (typeof addon_translations == 'undefined') {
-    //console.debug("we are setting up langvar")
     var addon_translations = {}
-    //console.debug("length:",addon_translations.length)
 }
 
 async function loadTranslations(language) {
@@ -57,18 +51,14 @@ async function loadTranslations(language) {
 
 // Function to get the translated string
 function __(key) {
-    //console.debug("key:",key,translations[key])
     return addon_translations[key] || key; // Return the translation or the key if not found
 }
 
 
 async function initTranslations(event) {
     let userLang = checkLocale() || 'en-gb';
-    // console.debug("userlanguage:",userLang)
     if (typeof addon_translations.length == 'undefined') {
-        //console.debug("Language will be loaded")
         await loadTranslations(userLang); // Load Dutch translations (or any other language)
-        // console.debug("Language loaded")
     }
     else {
         console.debug("Language is already present")
@@ -76,16 +66,13 @@ async function initTranslations(event) {
     await translatedButton()
 }
 
-//console.debug("before listener")
 // The below is necessary to get the focus into the editor if it is opened straight from the menu
 function initTextareaDetection() {
     const observerConfig = { childList: true, subtree: true };
 
     const initialObserver = new MutationObserver((mutationsList, observer) => {
         const activeTextarea = document.querySelector(".textareas.active");
-        //console.debug("initTextareaDetection:",activeTextarea)
         if (activeTextarea) {
-           // console.debug("Initial textarea container found");
             observer.disconnect();
             waitForEditableTextarea(activeTextarea);
         }
@@ -100,12 +87,8 @@ function waitForEditableTextarea(container) {
     const textareaObserver = new MutationObserver((mutations, observer) => {
         // Wait for the content-editable element or specific textarea element to appear inside
         const contentEditable = container.querySelector('[contenteditable="true"], textarea');
-        console,debug("contentEditable:",contentEditable)
         if (contentEditable) {
-           // console.debug("Editable part of textarea ready:", contentEditable);
             observer.disconnect();
-
-            // Now your script can safely continue
             startFullScript([container]);
         }
     });
@@ -115,16 +98,22 @@ function waitForEditableTextarea(container) {
     // Fallback: just in case it’s already ready
     const fallback = container.querySelector('[contenteditable="true"], textarea');
     if (fallback) {
-       // console.debug("Editable part already present, skipping observer");
         textareaObserver.disconnect();
         startFullScript([container]);
     }
 }
 
+if (document.body) {
+  initTextareaDetection();
+} else {
+  window.addEventListener('DOMContentLoaded', () => {
+    initTextareaDetection();
+  });
+}
 
-initTextareaDetection();
+
+//initTextareaDetection();
 function setupTooltipHandler() {
-    //console.debug("tooltiphandler started")
     document.addEventListener("mouseover", (event) => {
         const tooltip = document.querySelector(".ui-tooltip");
 
@@ -138,6 +127,68 @@ function setupTooltipHandler() {
             }, 2000);
         }
     });
+
+
+  document.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() === "r" && event.ctrlKey && event.shiftKey) {
+    event.preventDefault();
+    console.log("Starting tests (Ctrl + Shift + R)...");
+
+    // Create and style the button
+    const btn = document.createElement("button");
+    btn.textContent = "Click to select test file";
+
+    btn.style.position = "fixed";
+    btn.style.top = "50%";
+    btn.style.left = "50%";
+    btn.style.transform = "translate(-50%, -50%)";
+    btn.style.padding = "1rem 2rem";
+    btn.style.fontSize = "1.2rem";
+    btn.style.zIndex = "10000";
+    btn.style.cursor = "pointer";
+    btn.style.borderRadius = "8px";
+    btn.style.border = "1px solid #333";
+    btn.style.backgroundColor = "#eee";
+    btn.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+
+    // Add a close "X" button on top right corner of the button
+    const closeBtn = document.createElement("span");
+    closeBtn.textContent = "×";
+    closeBtn.style.position = "absolute";
+    closeBtn.style.top = "2px";
+    closeBtn.style.right = "6px";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.fontSize = "1.2rem";
+    closeBtn.style.userSelect = "none";
+    closeBtn.title = "Close";
+
+    // Wrapper for button and close btn to position closeBtn properly
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.top = "50%";
+    wrapper.style.left = "50%";
+    wrapper.style.transform = "translate(-50%, -50%)";
+    wrapper.style.zIndex = "10000";
+    wrapper.style.display = "inline-block";
+
+    btn.style.position = "relative"; // so closeBtn positions inside btn
+
+    closeBtn.onclick = () => {
+      wrapper.remove();
+    };
+
+    btn.onclick = () => {
+      loadTestsFromFile();
+      wrapper.remove();
+    };
+
+    wrapper.appendChild(btn);
+    btn.appendChild(closeBtn);
+    document.body.appendChild(wrapper);
+  }
+});
+
+
 
     document.addEventListener("mouseout", (event) => {
         const tooltip = document.querySelector(".ui-tooltip");
@@ -171,12 +222,10 @@ function findEditorRow(textareaElem) {
 }
 
 async function startFullScript(textarea) {
-    //console.debug("Full script started:",textarea)
     var rowId = 0
     var myEditor = ""
     currWindow = window.self;
     initTranslations();
-    //console.debug("textarea:",textarea)
     mytextarea = textarea[0].firstChild.nextElementSibling;
     myEditor = findEditorRow(mytextarea)
     rowId = await myEditor ? myEditor.getAttribute('row') : null;
@@ -195,20 +244,21 @@ async function startFullScript(textarea) {
     adjustLayoutScreen();
     setupTooltipHandler();
     // This needs to be called to get buttons in the first record when directly opened from the table
-    addTranslateButtons(rowId)
+     addTranslateButtons(rowId)
     const clickEvent = new MouseEvent('click', {
         bubbles: true,
         cancelable: true,
         button: 0
     });
+   
     mytextarea.dispatchEvent(clickEvent);
+    
 
     const myCustomEvent = new CustomEvent('myCustomEvent', {
         detail: { message: 'This is a custom event!' }
     });
 
     let is_loaded = await loadGlossaries(myCustomEvent);
-    //console.debug("glossary loaded:", is_loaded);
 
     if (is_loaded === "success") {
         doValidation();
@@ -225,7 +275,6 @@ async function startFullScript(textarea) {
                 doValidation();
             } else {
                 messageBox("info", __("Validate page aborted"));
-                doValidation();
             }
         });
     }
@@ -247,15 +296,9 @@ function doValidation() {
 
 // Function to send a message to the injected script
 function sendMessageToInjectedScript(message) {
-    // console.debug("message:",message)
     window.postMessage(message, '*');
 }
 
-//let event = "start"
-//const myCustomEvent = new CustomEvent('myCustomEvent', {
-//   detail: { message: 'This is a custom event!' }
-//});
-//loadGlossary(CustomEvent);
 
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
@@ -265,9 +308,6 @@ else {
     // PSS added jsStore to be able to store and retrieve default translations
     jsstoreCon = new JsStore.Connection();
     db = myOpenDB(db);
-    //console.debug("db:",db)
-    //dbDeepL = myDeepLDB();
-    //  console.debug("in content:",dbDeepL)
 }
 
 var translator; // Declare the global variable
@@ -281,7 +321,6 @@ if (typeof (Storage) !== "undefined") {
 }
 else {
     interCept = false;
-    //console.debug("Cannot read localstorage, set intercept to false");
 }
 
 // Check if the value exists and is either "true" or "false"
@@ -365,7 +404,6 @@ async function sampleUse() {
         'toonDiff': false
     };
     await setToonDiff(sampleObject1);
-    // console.log(await getToonDiff('toonDiff'));
 }
 
 //When performing bulk save the difference is shown in Meta #269
@@ -397,12 +435,14 @@ var glob_row = 0;
 var convertToLow = true;
 var detailRow = 0;
 var errorstate = "OK";
-var locale;
+var locale = checkLocale()
 var showGlosLine;
 
 gd_wait_table_alter();
+
+
 addCheckBox();
-exportGlossaryForOpenAi()
+exportGlossaryForOpenAi(locale)
 
 var parrotActive;
 const script = document.createElement('script');
@@ -441,7 +481,6 @@ document.addEventListener("keydown", async function (event) {
                     else {
                         wrong_verb = "Wrong verb";
                     }
-                    //console.debug("checking:",data.destlang,org_verb,wrong_verb)
                     scrapeconsistency(data.destlang, org_verb, wrong_verb);
                 }
                 else {
@@ -475,7 +514,6 @@ document.addEventListener("keydown", async function (event) {
                 // Set this based on your condition
                 sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
                 bulk_timer = bulkWait
-                //console.debug("bulk_timer")
                 bulkSave("false", bulk_timer);
             }
         });
@@ -581,18 +619,16 @@ document.addEventListener("keydown", async function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "F3")) {
         event.preventDefault();
-        chrome.storage.local.get(
-            ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
-            function (data) {
-                if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft") {
+            chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
+
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
                     if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                         if (data.transsel != "undefined") {
                             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-                            //var locale = checkLocale();
                             convertToLow = data.convertToLower;
                             var DeeplFree = data.DeeplFree;
 
-                            result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
+                            result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
                         }
                         else {
                             messageBox("error", "You need to set the translator API");
@@ -658,7 +694,6 @@ document.addEventListener("keydown", async function (event) {
             }
         };
         resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
-        //console.debug("blockres:"), resblock;
     }
 
     if (event.altKey && event.shiftKey && (event.key === "F7")) {
@@ -699,7 +734,6 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         event.preventDefault();
-        //  console.debug("F8")
         // Use chrome.local.get to retrieve the value
         interCept = localStorage.getItem("interXHR");
 
@@ -709,20 +743,17 @@ document.addEventListener("keydown", async function (event) {
             interCept = false;
             localStorage.setItem("interXHR", interCept);
         }
-        //   console.debug("interXHR after F8:",interCept)
         if (interCept === "false") {
             toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', true);
             interCept = true
             sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-            //   console.debug("after:", localStorage.getItem(['interXHR']))
         }
         else {
             toastbox("info", "Switching interceptXHR to off", "1200", "InterceptXHR");
             localStorage.setItem('interXHR', false);
             interCept = false
             sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-            // console.debug("after:", localStorage.getItem(['interXHR']))
         }
         location.reload();
     };
@@ -736,15 +767,12 @@ document.addEventListener("keydown", async function (event) {
         event.preventDefault();
         //$(document).ready(function () {
         var mysimple = window['wpgpt_load_history_status'];
-        // console.log(mysimple);
-        //  console.log($gp_editor_options['can_approve'])
         alert("Editor options:" + mysimple)
         // })
 
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F11")) {
-        // console.debug("F11")
         event.preventDefault();
         toastbox("info", "checkFormal is started wait for the result!!", "2000", "CheckFormal");
         var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\nmet je,met uw\n';
@@ -763,8 +791,6 @@ document.addEventListener("keydown", async function (event) {
         }).then((e) => {
             countWordsinTable();
         });
-
-        //let wordCount = countWordsinTable();
 
     };
 
@@ -802,31 +828,23 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "L" || event.key === "l")) {
         //event.preventDefault();
-        // console.debug("Glossary loading started")
         var file;
         var arrayFiles;
         fileSelector.click();
-        // console.debug("after fileSelector")
         fileSelector.addEventListener("change", (event) => {
             fileList = event.target.files;
             arrayFiles = Array.from(event.target.files)
             file = fileList[0];
-            // console.debug("before checking file:",file)
             if (file.type == 'text/csv' || "application/vnd.ms-excel") {
-                //console.debug("after file selection")
                 if (fileList[0]) {
                     var reader = new FileReader();
                     reader.onload = function (e) {
                         var contents = e.target.result;
-                        // console.debug("contents:", contents)
                         var ld_glossary = csvParser(contents)
-                        //console.debug("glossary:", glossary)
-                        // glossary = Array.from(glossary);
                         chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
                             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
                             var formal = checkFormal(false);
                             var DeeplFree = data.DeeplFree;
-                            // console.debug("before load_glossary")
                             load_glossary(ld_glossary, data.apikeyDeepl, DeeplFree, data.destlang)
                             file = ""
                         });
@@ -851,7 +869,6 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && event.shiftKey && (event.key === "D" || event.key === "d")) {
         //event.preventDefault();
-        // console.debug("Glossary showing started")
 
         chrome.storage.local.get(["apikeyDeepl", "DeeplFree", "destlang"], function (data) {
             var formal = checkFormal(false);
@@ -862,20 +879,15 @@ document.addEventListener("keydown", async function (event) {
     if (event.altKey && event.shiftKey && (event.key === "A" || event.key === "a")) {
         event.preventDefault();
 
-        // console.debug("Translate started")
         let rowId = document.querySelector("#editor");
-        // let myEditor = document.querySelector("source-string__singular");
-        // console.debug("Translate started",rowId)
-        //let rowId = myEditor.getAttribute("row");
-        // rowId = event.target.id.split("-")[1];
-        //let myrowId = event.target.id.split("-")[2];
+        
         //PSS 08-03-2021 if a line has been translated it gets a extra number behind the original rowId
         // So that needs to be added to the base rowId to find it
         if (typeof myrowId != "undefined" && myrowId != "translation") {
             newrowId = rowId.concat("-", myrowId);
             rowId = newrowId;
         }
-        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
+        chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyClaude", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
             //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
             var formal = checkFormal(false);
             var DeeplFree = data.DeeplFree;
@@ -965,10 +977,8 @@ document.addEventListener("keydown", async function (event) {
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
-//console.debug("check for:",el)
 if (el != null) {
     el.addEventListener("click", (event) => {
-        //console.debug("event:",event)
         checkbuttonClick(event);
     });
 }
@@ -1284,7 +1294,47 @@ async function translatedButton() {
     bulktolocalButton.innerText = __("Bulk local");
     bulktolocContainer.appendChild(bulktolocalButton)
     bulktolocContainer.appendChild(classToolTip)
+
+
+     //07-05-2021 PSS added a copy original button
+    let copyOrgContainer = document.createElement("div")
+    copyOrgContainer.className = 'button-tooltip'
+    classToolTip = document.createElement("span")
+    classToolTip.className = 'tooltiptext'
+    classToolTip.innerText = __("This is the function to copy originals  with selected items")
+
+    let copyOrgButton = document.createElement("a");
+    copyOrgButton.href = "#";
+    copyOrgButton.style.visible = 'hidden'
+    copyOrgButton.id = "CopyOrig";
+    copyOrgButton.className = "copy_org-button";
+    copyOrgButton.onclick = copyOrgClicked;
+    copyOrgButton.innerText = __("Copy orig");
+    copyOrgContainer.appendChild(copyOrgButton)
+    copyOrgContainer.appendChild(classToolTip)
+
+
+   
+
+    let compairContainer = document.createElement("div")
+    compairContainer.className = 'button-tooltip'
+    classToolTip = document.createElement("span")
+    classToolTip.className = 'tooltiptext'
+    classToolTip.innerText = __("This is the function to compair the suggestion with the local entry")
+
+    let compairButton = document.createElement("a");
+    compairButton.href = "#";
+    compairButton.style.visible = 'hidden'
+    compairButton.id = "Compair";
+    compairButton.className = "compair-button";
+    compairButton.onclick = compairClicked;
+    compairButton.innerText = __("Compair");
+    compairContainer.appendChild(compairButton)
+    compairContainer.appendChild(classToolTip)
+
+
     let statsContainer = document.createElement("div")
+
     // add stats button if handleStats function is defined
 
     if (typeof handleStats === "function") {
@@ -1316,6 +1366,9 @@ async function translatedButton() {
         tmtransButton.style.visible = 'visible'
         localtransButton.style.visible = 'visible'
         translateButton.style.visibility = 'visible'
+        copyOrgButton.style.visibility = 'visible'
+        compairButton.style.visibility = 'visible'
+
     });
 
     let divGpActions = document.querySelector("div.paging");
@@ -1328,15 +1381,15 @@ async function translatedButton() {
     if (divPaging != null && divProjects == null) {
         divGpActions.parentNode.insertBefore(wptfNavBar, divGpActions);
         let divNavBar = document.querySelector("div.wptfNavBarCont")
+        
         if (is_pte) {
             divNavBar.appendChild(bulksaveContainer);
         }
-        // console.debug("stats:",statsContainer)
+        divNavBar.appendChild(copyOrgContainer);
         if (statsContainer != null) {
             divNavBar.appendChild(statsContainer);
         }
         if (!is_pte) {
-            //console.debug("we are not pte")
             divNavBar.appendChild(checkAllContainer);
         }
         divNavBar.appendChild(importContainer);
@@ -1350,11 +1403,13 @@ async function translatedButton() {
         // divNavBar.appendChild(impLocButton);
         // divNavBar.appendChild(checkButton);
         divNavBar.appendChild(checkContainer);
+        divNavBar.appendChild(compairContainer);
         // divNavBar.appendChild(tmtransButton);
         divNavBar.appendChild(TmContainer);
         divNavBar.appendChild(localtransContainer);
         //divNavBar.appendChild(localtransButton);
         divNavBar.appendChild(transContainer);
+
     }
 
     //12-05-2022 PSS added a new buttons specials
@@ -1396,6 +1451,14 @@ async function translatedButton() {
         SwitchTMButton.style.background = "green"
         SwitchTMButton.style.color = "white"
     }
+
+    let FindDupButton = document.createElement("a");
+    FindDupButton.href = "#";
+    FindDupButton.style.visibility = 'hidden'
+    FindDupButton.className = "Find-Dup-button";
+    FindDupButton.onclick = FindDupClicked;
+    FindDupButton.innerText = __("FindDup");
+    
 
     // We need to check if we have a glossary ID
 
@@ -1459,7 +1522,6 @@ async function translatedButton() {
     function handleSelectionChange(event) {
         let selectedIndex = event.target.selectedIndex; // Get the index
         if (selectedIndex > 0) { // Ignore default option (index 0)
-            // console.log("Selected Index:", selectedIndex);
             myFunction(selectedIndex);
         }
 
@@ -1495,9 +1557,7 @@ async function translatedButton() {
             DispGlossClicked()
         }
         else if (index == 2) {
-            //glossloaded = checkGlossary(LoadGloss)
             LoadGlossClicked(index)
-            //glossloaded = checkGlossary(LoadGloss)
         }
         else if (index == 3) {
             openModalDeepL()
@@ -1538,6 +1598,7 @@ async function translatedButton() {
             }
         });
         // divPaging.insertBefore(dropdown,divPaging.childNodes[0])
+        divPaging.insertBefore(FindDupButton, divPaging.childNodes[0]);
         divPaging.insertBefore(DispClipboard, divPaging.childNodes[0]);
         UpperCase = localStorage.getItem(['switchUpper'])
         if (UpperCase == 'false') {
@@ -1552,6 +1613,7 @@ async function translatedButton() {
         SwitchTMButton.style.visibility = 'visible'
         DispGloss.style.visibility = 'visible'
         DispClipboard.style.visibility = 'visible'
+        FindDupButton.style.visibility = 'visible'
     })
 }
 
@@ -1579,7 +1641,10 @@ function DispGlossClicked(event) {
         show_glossary(data.apikeyDeepl, DeeplFree, data.destlang)
     });
 }
-
+async function FindDupClicked(event) {
+    await findDuplicates()
+     await hideNonDuplicates();
+}
 function DispClipboardClicked(event) {
     // function to show glossary
     chrome.storage.local.get('autoCopyClip', async function (result) {
@@ -1695,36 +1760,30 @@ function SwitchGlossClicked(event) {
 }
 
 function SwitchTMClicked(event) {
-    event.preventDefault(event);
-    var formal = checkFormal(false);
-    int = localStorage.getItem(['switchTM']);
-    if (int == "false") {
-        if (formal == false) {
-            toastbox("info", __("Switching TM to foreign"), "4500", "TM switch");
-        }
-        else {
-            toastbox("info", __("Switching TM to local"), "4500", "TM switch");
-        }
-        localStorage.setItem('switchTM', 'true');
-    }
-    else {
-        if (formal == true) {
-            toastbox("info", __("Switching TM to foreign"), "4500", "TM switch");
+    event.preventDefault();
 
-        }
-        else {
-            toastbox("info", __("Switching TM to local"), "4500", "TM switch");
-        }
-        localStorage.setItem('switchTM', 'false');
+    const formal = checkFormal(false);
+    const currentSwitch = localStorage.getItem("switchTM") === "true";
 
-    }
+    // Debug logging
+    console.debug("formal:", formal, "currentSwitch:", currentSwitch);
+
+    // Flip the switch
+    const newSwitch = !currentSwitch;
+    localStorage.setItem("switchTM", newSwitch.toString());
+
+    // Set message based on the state you're switching TO
+    const message = newSwitch
+        ? __("Switching TM to foreign")
+        : __("Switching TM to local");
+
+    toastbox("info", message, "4500", "TM switch");
     location.reload();
-
 }
+
 
 function tmDisableClicked(event) {
     event.preventDefault(event);
-    // console.debug("F8")
     let interCept = localStorage.getItem(['interXHR']);
     if (interCept === "false") {
         toastbox("info", "Switching interceptXHR to on", "1200", "InterceptXHR");
@@ -1744,6 +1803,8 @@ function tmDisableClicked(event) {
 async function startSpellCheck(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) {
     await spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
 }
+
+
 
 function createElementWithId(type, id) {
     let element = document.createElement(type);
@@ -1769,7 +1830,6 @@ async function myOpenDB(db) {
 
 async function myDeepLDB(dbDeepL) {
     dbDeepLOpen = await openDeepLDatabase(dbDeepL)
-    //console.debug("myDeepLDB:",dbDeepLOpen)
     return dbDeepLOpen
 }
 
@@ -1823,13 +1883,27 @@ async function savetolocalClicked(event) {
     await bulkSaveToLocal();
 }
 
+
+async function compairClicked(event) {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    var formal = checkFormal(false);
+    chrome.storage.local.get(["convertToLower", "spellCheckIgnore", "formal","destlang"], function (data) {
+
+        compairWithSuggestion(is_pte, data.convertToLower, data.spellCheckIgnore, data.destlang)
+    });
+}
+
+async function copyOrgClicked(event) {
+    await copyOrgRecords()
+}
+
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
     event.preventDefault();
-    chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "postTranslationReplace", "preTranslationReplace", "convertToLower", "spellCheckIgnore", "TMtreshold"],
-        function (data) {
-            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "TMtreshold","ClaudModel"], function (data) {
+       
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
+
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                     if (data.transsel != "undefined") {
                         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
@@ -1864,10 +1938,9 @@ function tmTransClicked(event) {
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
     event.preventDefault();
-    chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree"],
-        function (data) {
-            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI") {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"], function (data) {
+       
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
 
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                     if (data.transsel != "undefined") {
@@ -1876,8 +1949,10 @@ function localTransClicked(event) {
                         //var locale = checkLocale();
                         convertToLow = data.convertToLower;
                         var DeeplFree = data.DeeplFree;
-                        
-                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree);
+                        let OpenAItemp = parseFloat(data.OpenAItemp);
+                        //console.debug("localTrans:", data.OpenAiGloss)
+                        myGlossary = data.OpenAiGloss
+                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, data.apikeyOpenAI, data.OpenAIPrompt, data.OpenAISelect, data.OpenAITone, OpenAItemp, data.apikeyClaude, data.ClaudePrompt, myGlossary, data.ClaudModel);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -1893,7 +1968,6 @@ function localTransClicked(event) {
         }
     );
 }
-
 
 
 function impLocDataseClicked(event) {
@@ -1995,9 +2069,9 @@ function translatePageClicked(event) {
     event.preventDefault();
     var formal;
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"],
+        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyTranslateio", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"],
         function (data) {
-            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined') {
+            if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                     if (data.transsel != "undefined") {
                         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
@@ -2013,9 +2087,10 @@ function translatePageClicked(event) {
                         var OpenAItemp = parseFloat(data.OpenAItemp);
                         var deeplGlossary = localStorage.getItem('deeplGlossary');
                         var OpenAITone = data.OpenAITone;
+                        // OpenAiGloss is populated from the DeepL glossary within indexedDB
                         OpenAiGloss = data.OpenAiGloss;
-                        // console.debug("AiGloss:", data.OpenAiGloss)
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss);
+    
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2435,43 +2510,44 @@ function importPageClicked(event) {
 }
 
 async function parseDataBase(data) {
-    let csvData = [];
-    let lbreak = data.split("\n");
-    let counter = 0;
-    // To make sure we can manipulate the data store it into an array
-    lbreak.forEach(res => {
-        // 09-07-2021 PSS altered the separator issue #104
-        csvData.push(res.split("|"));
-        ++counter;
-    });
-    // 24-08-2022 PSS fixes enhancement #237
-    toastbox("info", "Import of: " + (counter - 1) + " records is started wait for the result!!", "1500", "Import database");
-    let importButton = document.querySelector("a.import_translation-button");
-    importButton.innerText = "Started"
-    if (counter > 1) {
-        var arrayLength = csvData.length;
-        for (var i = 0; i < arrayLength; i++) {
-            if (i > 1) {
-                importButton.innerText = i;
-                // Store it into the database
-                //Prevent adding empty line
-                if (csvData[i][0] != "") {
-                    if (i == 250 || i == 500 || i == 750 || i == 1000 || i == 1250 || i == 1500 || i == 1750 || i == 2000 || i == 2250 || i == 2500 || i == 2750 || i == 3000 || i == 3250 || i == 3500 || i == 3750) {
-                        toastbox("info", "Adding is running <br>Records added:" + i, "500", "Import database");
-                    }
-                    let cntry = checkLocale()
-                    if (csvData[i][2] === cntry) {
-                        res = await addTransDb(csvData[i][0], csvData[i][1], csvData[i][2]);
-                    }
-                }
-            }
-        }
-        close_toast();
-        let errMessage = __("Import is ready records imported: ")
-        messageBox("info", errMessage + (i - 1));
+    const csvData = data.split("\n").map(line => line.split("|"));
+    const importButton = document.querySelector("a.import_translation-button");
+    const cntry = checkLocale();
+    const total = csvData.length - 1;
+
+    toastbox("info", `Import of ${total} records started. Please wait...`, "1500", "Import database");
+    importButton.innerText = "Started";
+
+    if (total < 1) {
+        messageBox("error", "No records found in the CSV file.");
+        return;
     }
-    importButton.className += " ready";
+
+    let importedCount = 0;
+
+    for (let i = 1; i < csvData.length; i++) {
+        const [orig, trans, country] = csvData[i];
+        if (!orig || !country || country !== cntry) continue;
+
+        // Sequential insert/update — fastest for JsStore
+        await addTransDb(orig, trans, country);
+
+        importedCount++;
+
+        // Update UI every 50 records (adjust as needed)
+        if (importedCount % 50 === 0 || importedCount === total) {
+            importButton.innerText = `${importedCount}/${total}`;
+            toastbox("info", `Imported ${importedCount} of ${total}...`, "1000", "Import database");
+            // Yield to UI
+            await new Promise(r => setTimeout(r, 0));
+        }
+    }
+
+    close_toast();
+    messageBox("info", `Import complete. Records processed: ${importedCount}`);
+    importButton.classList.add("ready");
 }
+
 
 function addtoClipBoardClicked(event) {
     if (event != undefined) {
@@ -2537,21 +2613,36 @@ async function checkbuttonClick(event) {
     var pluralTextarea = ""
     var FireFoxAction = ""
     var leftPanel;
-    //var DefGlossary=true;
-    //console.debug("event",event.target.firstChild.data)
-     const target = event.target;
-
+    let locale = checkLocale() || 'en';
+    var myLocale = locale
+    var target = event.target;
+     // console.debug("buttonclick")
     // Check if the clicked element is the copy-suggestion button
-    if (target.classList.contains('copy-suggestion') ||target.classList.contains('translation-suggestion__translation-meta')) {
-         const row = target.closest('tr');
-         const rowId = row?.id;
-         if (rowId) {
-             onCopySuggestionClicked(target,rowId);
+    if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta') || target.classList.contains('translation-suggestion__translation')) {
+        const row = target.closest('tr');
+        const rowId = row?.id;
+        if (rowId) {
+            chrome.storage.local.get(["postTranslationReplace", "formal"], function (data) {
+                replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                onCopySuggestionClicked(target, rowId, replaceVerbs);
+            });
+
+
+
+
+
         } else {
             console.warn('No row found for the clicked copy button.');
         }
     }
-
+    else {
+        if (target.classList.contains('textareas active')) {
+        console.debug("we are in editor")
+    }
+       // addTranslateButtons(rowId)
+    }
+   
+   // console.debug("after check copy")
     if (event != undefined) {
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         let action = event.target.textContent;
@@ -2591,21 +2682,29 @@ async function checkbuttonClick(event) {
                 });
             }
             addTranslateButtons(rowId);
-            await waitForMyElement(`#editor-${rowId}`, 500, "2630").then((res) => {
+            let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
+            checkTranslateButton.className = "checktranslation-entry-my-button"
+            await waitForMyElement(`#editor-${rowId}`, 3000, "2685").then(async(res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
                     //console.debug("myrec:",myrec)
-                   // mytextarea = myrec.getElementsByClassName('foreign-text')
-                   // mytextarea[0].style.height = "auto"
-                   // mytextarea[0].style.height = mytextarea[0].scrollHeight + "px";
+                    mytextarea = myrec.getElementsByClassName('foreign-text'); 
+                    //console.debug("textarea:",mytextarea)
+                    let mytranslation = mytextarea[0].innerHTML
+                    if (mytranslation == "") {
+                        let myoriginal = myrec.getElementsByClassName("original")[0].textContent
+                        let pretrans = await findTransline(myoriginal, myLocale);
+                        if (pretrans != "notFound") {
+                           mytextarea[0].innerHTML = pretrans
+                            mytextarea[0].innerText = pretrans
+                           // activate the Local label
+                           document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
 
-                    mytextarea = myrec.getElementsByClassName('foreign-text');
-                
-                    mytextarea[0].style.height = "auto"; // Initial reset
-
-                    const newHeight = mytextarea[0].scrollHeight; // Layout read
-
+                        }
+                    }
                     requestAnimationFrame(() => {
+                        mytextarea[0].style.height = "auto"; // Initial reset
+                        const newHeight = mytextarea[0].scrollHeight; // Layout read
                         mytextarea[0].style.height = newHeight + "px"; // Layout write
                     });
 
@@ -2623,7 +2722,8 @@ async function checkbuttonClick(event) {
                             //console.debug("before mutation:", leftPanel)
                             start_editor_mutation_server(mytextarea, action, leftPanel)
                         }
-                        //mytextarea = textarea.getElementsByClassName('foreign-text')
+                       // mytextarea = textarea.getElementsByClassName('foreign-text')
+                       // console.debug("tet:",mytextarea)
                         // Optional: get cursor position
                         const cursorPos = mytextarea[0].selectionStart;
                         //console.debug("Cursor position:", cursorPos);
@@ -2719,7 +2819,9 @@ async function checkbuttonClick(event) {
                                 translation = textareaElem.textContent
                             }
                             let leftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
-                            result = await validateEntry(locale, textareaElem, "", "", rowId, locale, "", false, DefGlossary);
+                            let showName = false
+                            let showDiff = false
+                            result = await validateEntry(locale, textareaElem, showName, showDiff, rowId, locale, "", false, DefGlossary);
                             //console.debug("validate entry in content line 2192", result)
                             //20-04
                            // console.debug("Called by:", whoCalledMe());
@@ -2757,8 +2859,10 @@ async function checkbuttonClick(event) {
                                 //console.debug("pluralpresent in line 2806:", pluralpresent)
                                 //console.debug("pluralpresent in line 2807:", pluralTextarea)
                                 //console.debug("pluralpresent in line 2808:", translation)
-                                if (pluralTextarea != "" && pluralTextarea !=null && pluralTextarea.textContent != null) {
-                                    result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent, locale, "", rowId, true, DefGlossary);
+                                if (pluralTextarea != "" && pluralTextarea != null && pluralTextarea.textContent != null) {
+                                    //PSS 12-07
+                                                                                  
+                                    result = await validate(locale, pluralpresent.textContent, pluralTextarea.textContent,locale, false, rowId, true, DefGlossary);
                                 }
                                 //console.debug("validate contentscript line 2228 resultplural:", result)
                                 // plural is record with "_1"
@@ -2776,7 +2880,7 @@ async function checkbuttonClick(event) {
                                     textarea.focus();
                                 });
                                 
-                                mark_glossary(leftPanel, result.toolTip, pluralpresent.textContent, rowId, true)
+                                await mark_glossary(leftPanel, result.toolTip, pluralpresent.textContent, rowId, true)
                             }
                         });
                     }
@@ -2800,7 +2904,11 @@ async function checkbuttonClick(event) {
             if (myrec != null) {
                 // we are not in listmode
                 requestAnimationFrame(() => {
-                    myrec.scrollIntoView(true);
+                    const yOffset = -100; // adjust for your header height
+                   const y = myrec.getBoundingClientRect().top + window.scrollY + yOffset;
+                   window.scrollTo({ top: y, behavior: 'smooth' });
+
+                    //myrec.scrollIntoView(true);
                 });
             }
 
@@ -2866,7 +2974,7 @@ async function checkbuttonClick(event) {
 
             if (liscore != 100) {
                 if (translator == 'OpenAI') {
-                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 5000)
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.openai', 4000)
                         .then(async (element) => {
                             // We seem to have suggesttions, so now define them further
                             OpenAIres = editor.getElementsByClassName("translation-suggestion with-tooltip openai");
@@ -2894,7 +3002,7 @@ async function checkbuttonClick(event) {
                 }
                 else {
                     // we do not have OpenAI so try DeepL
-                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 5000)
+                    res = await waitForElementInRow(`#editor-${rowId}`, '.translation-suggestion.with-tooltip.deepl', 4000)
                         .then(async (element) => {
                             DeepLres = editor.getElementsByClassName("translation-suggestion with-tooltip deepl");
                             if (DeepLres.length > 0) {
@@ -2997,8 +3105,10 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
+    
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"], function (data) {
         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
+        
         if (data.ForceFormal != true) {
             formal = checkFormal(false);
         }
@@ -3010,8 +3120,10 @@ function translateEntryClicked(event) {
         var deeplGlossary = localStorage.getItem('deeplGlossary');
         var OpenAITone = data.OpenAITone
         var myOpenAiGloss = data.OpenAiGloss
+        //console.debug("before transl 3122:",myOpenAiGloss)
+        //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel);
         }
         else {
             messageBox("error", "You need to set the parameter for Destination language");
@@ -3037,11 +3149,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     imgsrc = chrome.runtime.getURL('/');
     imgsrc = imgsrc.substring(0, imgsrc.lastIndexOf('/'));
     current = await document.querySelector("#editor-" + rowId + " div.editor-panel__left div.panel-header span.panel-header__bubble");
-    //console.debug("before:", current.value)
+    
     //console.debug("before:", current.innerText)
     if (current != null) {
         currText = current.innerText
-        //console.debug("current:", current,currText)
+    }
+    else {
+        currText = "transFill"
     }
     let originalElem = document.querySelector("#preview-" + rowId + " .original");
     if (originalElem != null) {
@@ -3084,7 +3198,8 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
 
     // 22-06-2021 PSS altered the position of the colors to the checkbox issue #89
-    checkElem = document.querySelector("#preview-" + rowId + " .priority");
+    checkElem = await document.querySelector("#preview-" + rowId + " .priority");
+   // console.debug("checkElem:",checkElem,rowId)
     SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
     if (SavelocalButton == null) {
         SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
@@ -3154,7 +3269,6 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     }
     let headerElem = document.querySelector(`#editor-${rowId} .panel-header`);
     let row = rowId.split("-")[0];
-    //console.debug("currText:",currText,currstring,rowId)
     if (currText != 'untranslated') { 
         updateElementStyle(checkElem, headerElem, result, showHistory, originalElem, "", "", "", "", rowId, showName, nameDiff, currcount, currstring, currText, record, myHistory, my_checkpage, repl_array, prev_trans, old_status, showDiff);
     }
@@ -3201,11 +3315,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
        // console.log('It is something else');
         translation = textareaElem.innerText;
     }
-
+    // do not remove the below call, otherwise an error is generated
     addTranslateButtons(rowId);
-    //preview_raw = getPreview(rowId)
-    // console.debug("preview_raw:", preview_raw.querySelector('.original-text'))
-    //console.debug("row after AI:",rowId)
+    
     preview_raw = document.querySelector(`#preview-${rowId}`)
     if (preview_raw != null) {
         hasGlossary = await preview_raw.querySelector('.glossary-word')
@@ -3245,8 +3357,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
                 originalText = originalRaw.textContent;
                 if (hasGlossary) {
                     //We have a glossary word
-                    //language, original, translation, locale, showDiff,rowId,isPlural
-                    result = await validate(language, originalText, translation, locale, "", rowId, false, DefGlossary);
+                    result = await validate(language, originalText, translation, locale, false, rowId, false, DefGlossary);
                     //console.debug("validate in content line 3287",result)
                     if (result.percent == 100) {
                         missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
@@ -3271,7 +3382,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             //textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, myHistory, my_checkpage, currstring, repl_array, prev_trans, old_status
             old_status = document.querySelector("#preview-" + rowId);
             //console.debug("validateEntry:",translation)
-            updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+            //console.debug("nameDiff1:",nameDiff)
+            let showName = false
+            updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
             //}
         }
         else {
@@ -3299,7 +3412,8 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             result = { wordCount, foundCount, percent, toolTip, newText }
             old_status = document.querySelector("#preview-" + rowId);
             //console.debug("before updateStyle:", textareaElem, rowId, translation)
-            updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+            console.debug("nameDiff2:",nameDiff)
+            updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
         }
     }
     else {
@@ -3326,10 +3440,9 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
         toolTip = ""
         newText = "";
         result = { wordCount, foundCount, percent, toolTip, newText }
-       // console.debug("result:",result)
         old_status = document.querySelector("#preview-" + rowId);
         showDiff = false
-        updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
+        updateStyle(textareaElem, result, newurl, showHistory, false, nameDiff, rowId, record, false, false, translation, [], translation, record, old_status, showDiff);
 
     }
     return result;
@@ -4258,9 +4371,9 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             }
         }
         // 13-08-2021 PSS added a notification line when it concerns a translation of a name for the theme/plugin/url/author	
-        //console.debug("rowId before show:", rowId)
         if (showName == true) {  
-            showNameLabel(originalElem,rowId)
+            // PSS 12-07 added await and showName, nameDiff because the label did not changed color when a difference in the name
+            await showNameLabel(originalElem,rowId,showName,nameDiff)
         }
         if (oldstring == "True") {
             // 22-06-2021 PSS added tekst for previous existing translations into the original element issue #89
@@ -4272,11 +4385,12 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     }
 }
 
-function showNameLabel(originalElem,row) {
+function showNameLabel(originalElem,row,showName,nameDiff) {
     var namelabelExist;
     var debug = false
     if (debug == true) {
-        console.debug("ShowNameLabel originalElem:",originalElem)
+        console.debug("ShowNameLabel originalElem:", originalElem.innerText)
+        console.debug("ShowNameLabel showName:", showName)
         console.debug("ShowNameLabel nameDiff:", nameDiff)
         console.debug("Row:",row)
     }
@@ -4285,7 +4399,7 @@ function showNameLabel(originalElem,row) {
         //console.debug("namelabelexist:", namelabelExist)
         // do not add the label twice
         if (namelabelExist == null) {
-            //console.debug("We need to add the label")
+            //console.debug("We need to add the label",nameDiff)
             var element1 = document.createElement("div");
             originalElem.appendChild(element1);
             if (nameDiff == true) {
@@ -4305,7 +4419,7 @@ function showNameLabel(originalElem,row) {
         }
         else {
            // console.debug("originalElem:",originalElem)
-            namelabelexist = originalElem.querySelector(".trans_name_div_true");
+            namelabelexist = originalElem.querySelector(".trans_name_div");
            // console.debug("we do have alreay a label with namediff", namelabelexist)
             if (namelabelexist != null) {
                 //console.debug("we have a div for difference")
@@ -4313,17 +4427,20 @@ function showNameLabel(originalElem,row) {
                 let originalElem = document.querySelector("#preview-" + row + " .original");
                 let currentTrans = document.querySelector("#preview-" + row + " td.translation.foreign-text");
                 let originalTrans = originalElem
-                console.debug("trans:", currentTrans)
-                console.debug("original:", originalElem.innerText)
+                //console.debug("trans:", currentTrans)
+                //console.debug("original:", originalElem.innerText)
                 nameDiff = isExactlyEqual(currentTrans, originalElem.innerText)
                 if (nameDiff != true) {
-                    console.debug("We have no difference!")
+                   // console.debug("We have no difference!")
                    // namelabelexist.innerText = __("URL, name of theme or plugin or author!")
                     namelabelexist.setAttribute("class", "trans_name_div");
                 }
                 else {
-                    console.debug("we still have a difference")
+                    namelabelexist.setAttribute("class", "trans_name_div_true");
+                    namelabelexist.setAttribute("id", "trans_name_div_true");
+                    namelabelexist.textContent = __("Difference in URL, name of theme or plugin or author!")
                 }
+                
             }
             else {
                 console.debug("there is no label at all:", row)
@@ -4409,7 +4526,14 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                     waittrans_text = wait_trans[0].innerText
                     const result = waittrans_text === currstring
                     if (result) {
-                        console.debug('The strings are similar.');
+                        const br = document.createElement('br');
+                        element1.appendChild(br);
+                        const span = document.createElement("span");
+                        span.style.color = "yellow";
+                        span.textContent = __("Current string is the same!");
+                        element1.appendChild(span);
+
+
                     } else {
                         diffType = "diffWords"
                         if (showDiff == true) {
@@ -4459,6 +4583,12 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
                 else if (typeof prev_trans == 'string') {
                     if (result) {
                         console.debug('The strings are similar.');
+                        const br = document.createElement('br');
+                        element1.appendChild(br);
+                        const span = document.createElement("span");
+                        span.style.color = "yellow";
+                        span.textContent = __("Current string is the same!");
+                        element1.appendChild(span);
                     } else {
                         // console.debug('The strings are not similar.');
                         if (typeof prev_trans == 'object') {
@@ -4600,21 +4730,15 @@ function addCheckButton(rowId, checkElem, lineNo) {
 }
 
 
-function savetranslateEntryClicked(event) {
+async function savetranslateEntryClicked(event) {
+    var debug = true
     var myWindow;
     var autoCopySwitchedOff = false;
-
+    const perfNow = () => performance.now();
     event.preventDefault(event);
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
-    //chrome.storage.local.get(["bulkWait"], function (data) {
-    //   let bulkWait = data.bulkWait
-    //   if (bulkWait != null && typeof bulkWait != 'undefined') {
-    //       bulk_timer = bulkWait
-    //   }
-    //  else {
-    //      bulk_timer = 1500;
-    //  }
+    
     var bulk_timer = 200
     // Determine status of record
     let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
@@ -4630,7 +4754,7 @@ function savetranslateEntryClicked(event) {
             var status = select.querySelector("dt").nextElementSibling;
             status.innerText = "waiting"
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
-            setTimeout(() => {
+            //setTimeout(async() => {
                 if (autoCopyClipBoard) {
                     autoCopySwitchedOff = true
                     autoCopyClipBoard = false
@@ -4638,32 +4762,35 @@ function savetranslateEntryClicked(event) {
                 //toastbox("info", "" , "600", "Saving suggestion", myWindow);
                 let preview = getPreview(rowId)
                 //let preview = document.querySelector(`#preview-${rowId}`);
-                if (preview != null) {
+            if (preview != null) {
+                    requestAnimationFrame(async() => {
                     preview.querySelector("td.actions .edit").click();
                     const editor = preview.nextElementSibling;
                     if (editor != null) {
-                        editor.style.display = "none";
-                        editor.querySelector(".translation-actions__save").click();
+                        // editor.style.display = "none";
+                       // we do not need to hide the editor, saving is doing that automatically
+                        await editor.querySelector(".translation-actions__save").click();
                     }
-                    // PSS confirm the message for dismissal
-                    foundlabel = elementReady(".gp-js-message-dismiss").then(confirm => {
-                        let dismiss = document.querySelector('.gp-js-message-dismiss')
-                        if (dismiss != null) {
-                            // if (confirm == '.gp-js-message-dismiss') {
-                            //  if (typeof confirm === 'function') {
-                            // confirm.click();
-                            dismiss.click()
-                            // close_toast();
-                            // }
+                   
+                        // PSS confirm the message for dismissal
+                        //let t_start = perfNow();
+                        let t_dismiss1_start = perfNow();
+                        let recordDismiss = await waitForMyElement(`.gp-js-message-dismiss`, 1000, "4733");
+                        let t_dismiss1_end = perfNow();
+                        if (debug) {
+                            console.debug(`Dismiss1 found in ${(t_dismiss1_end - t_dismiss1_start).toFixed(1)} ms`);
                         }
-                    });
-                }
-                if (autoCopySwitchedOff) {
+                        if (recordDismiss !== "Time-out reached") recordDismiss.click();
+                   
+                   });    
+            }
+            if (autoCopySwitchedOff) {
                     autoCopyClipBoard = true
                     autoCopySwitchedOff = false
-                }
+            }
+                 
 
-            }, bulk_timer);
+          //  }, bulk_timer);
             // timeout += bulk_timer;
         }
         if (current.innerText == "waiting") {
@@ -4723,9 +4850,9 @@ function savetranslateEntryClicked(event) {
             SavelocalButton.disabled = true;
             SavelocalButton.display = "none";
         }
-
     }
     //  });
+   
 }
 
 function countExactWordOccurrences(text, word) {
@@ -4901,8 +5028,11 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
     if (debug == true) {
         console.debug("original:", original)
         console.debug("translation:", translation)
+        console.debug("Row:",rowId)
         console.debug("Devglossary:", DefGlossary)
         console.debug("Glossary:", glossary)
+        // console.debug("showName:", showName)
+        console.debug("showDiff:", showDiff)
     }
     //DefGlossary = true
     if (DefGlossary == true) {
@@ -4928,8 +5058,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
             map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
             //console.debug("map :", map)
             //if (glossary_word.length != 0) {
-            let markleftPanel = document.querySelector(`#editor-${rowId} .editor-panel`)
-            //console.debug("leftpanel:",markleftPanel,rowId)
+             let markleftPanel =  document.querySelector(`#editor-${rowId} .editor-panel__left`)
             newText = ""
             if (markleftPanel != null) {
                 pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
@@ -4937,7 +5066,6 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                 singularText = singlepresent.getElementsByClassName('original')[0]
 
                 if (pluralpresent != null) {
-                    //console.debug("plural text:",pluralpresent.innerText.trim())
                     spansPlural = pluralpresent.getElementsByClassName("glossary-word")
                 }
                 spansSingular = singlepresent.getElementsByClassName("glossary-word")
@@ -4951,9 +5079,6 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                 if (spans.length > 0) {
                     spansArray = Array.from(spans)
                     glossWords = createGlossArray(spansArray, newGloss)
-                    //console.debug("We have glossary words:",spans.length)
-
-                    //console.debug("We have this translation:",translation)
                     missingTranslations =  findAllMissingWords(translation, glossWords, locale)
                     //console.debug("We have missing words:",missingTranslations,missingTranslations.length)
                     if (missingTranslations.length != 0) {
@@ -5214,20 +5339,13 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                                         }
                                     }
                                 }
-
                                 //console.debug("translation + foundCount + count:",searchTerm, foundCount, count, toolTip)
                             }
                             else if (thisresult != null && thisresult.length > 1) {
                                 // if the glossary word does contain more words, we need to check the other words as well
                                 // but start with the first one
-                                // console.debug("we found more then one:", wordToFind, thisresult)
-                                // if (thisresult!=null){
-                                // console.debug("lengte thisresult:",thisresult,thisresult.length,translation)
-
                                 isFound = false
                                 for (let cnt = 0; cnt < thisresult.length; cnt++) {
-                                    //console.debug("counter:",cnt)
-                                    //if (found == false) {
                                     NewsearchTerm = thisresult[cnt]
                                     // console.debug("NewSearchTerm:", NewsearchTerm)
                                     wordsCount = NewsearchTerm.trim().split(/\s+/).filter(Boolean).length;
@@ -5249,28 +5367,23 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                                         else if (orgwords.some(word => word === NewsearchTerm.trim())) {
                                             foundCount += 1
                                             isFound = true
-
                                         }
                                         else if (lowertranslation.includes(" " + NewsearchTerm.trim().toLowerCase() + " ")) {
-                                            // console.debug("Search for  multi")
                                             foundCount += 1
                                             isFound = true
                                         }
                                         else if (lowertranslation.includes(" " + NewsearchTerm)) {
                                             if (strictValidation == false) {
                                                 foundCount += 1
-                                                //console.debug('We found combined word')
                                                 isFound = true
                                             }
                                         }
                                         else if (lowertranslation.includes(NewsearchTerm + " ")) {
                                             if (strictValidation == false) {
                                                 foundCount += 1
-                                                // console.debug('We found combined word')
                                                 isFound = true
                                             }
                                         }
-
 
                                         // we did not find one of the words
                                     }
@@ -5284,7 +5397,6 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                                     }
                                 }
 
-                                //console.debug("at the end:", foundCount, isFound)
                                 if (foundCount == 0 && isFound != true) {
                                     //console.debug("we did not have a result")
                                     toolTip += wordToFind + " - " + "wrong translation" + "\n"
@@ -5309,7 +5421,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                     }
                 }
                 else {
-                    //console.debug("no glossary")
+                   //console.debug("no glossary words")
                     wordCount = 0;
                     toolTip = ""
                     foundcount = 0;
@@ -5649,6 +5761,7 @@ async function fetchOldRec(url, rowId, showDiff) {
                     var doc = parser.parseFromString(data, "text/html");
                     //console.log("html:", doc);
                     var table = doc.getElementById("translations");
+                    //console.debug("table:",table)
                     // if there is no table with results, then we do need to set the value to 0
                     if (typeof table != 'undefined' && table != null) {
                         //let tr = table.rows;
@@ -5670,8 +5783,10 @@ async function fetchOldRec(url, rowId, showDiff) {
                             document.getElementById("translator_div4").remove();
                             document.getElementById("translator_div5").remove();
                         }
-                        rowContent = table.rows[tbodyRowCount - 1];
+                        rowContent = table.rows[tbodyRowCount -1];
+                       // console.debug("rowcontent:",rowContent)
                         orig = rowContent.getElementsByClassName("original-text");
+                       // console.debug("orig:",orig)
                         trans = rowContent.getElementsByClassName("translation-text");
 
                         var separator1 = createElementWithId("div", "translator_sep1");
@@ -5695,8 +5810,10 @@ async function fetchOldRec(url, rowId, showDiff) {
                         element1.appendChild(document.createTextNode("Existing translation ->" + fetchOld_status));
 
                         var element2 = createElementWithId("div", "translator_div2");
+                       
                         element2.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
                         if (OldRec_status = 'current') {
+                            console.debug("orig[0]:",orig[0])
                             element2.appendChild(document.createTextNode(orig[0].innerText));
                         }
                         else {
@@ -5771,37 +5888,39 @@ async function fetchOldRec(url, rowId, showDiff) {
                                 diff = JsDiff[diffType](newStr, oldStr);
                             }
                             fragment = document.createDocumentFragment();
-                            diff.forEach((part) => {
-                                // 03-03-2025 PSS changed the name "status" to "OldRec_status" as it generated a visual error, it was also nowhere defined
-                                // green for additions, red for deletions
-                                // dark grey for common parts
-                                if (OldRec_status == "current") {
-                                    const color = part.added ? "green" :
-                                        part.removed ? "red" : "dark-grey";
-                                    const background_color = part.added ? "white" :
-                                        part.removed ? "white" : "dark-grey";
-                                    span = document.createElement("span");
-                                    span.style.color = color;
-                                    span.style.backgroundColor = background_color;
-                                    span.appendChild(document
-                                        .createTextNode(part.value));
-                                    fragment.appendChild(span);
-                                }
-                                else if (OldRec_status = "waiting") {
-                                    const color = part.added ? "green" :
-                                        part.removed ? "red" : "dark-grey";
-                                    const background_color = part.added ? "white" :
-                                        part.removed ? "white" : "dark-grey";
-                                    span = document.createElement("span");
-                                    span.style.color = color;
-                                    span.style.backgroundColor = background_color;
-                                    span.appendChild(document
-                                        .createTextNode(part.value));
-                                    fragment.appendChild(span);
-                                }
-                            });
-                            element5.appendChild(fragment);
-                            metaElem.style.fontWeight = "900";
+                            if (typeof fragment != "undefined") {
+                                diff.forEach((part) => {
+                                    // 03-03-2025 PSS changed the name "status" to "OldRec_status" as it generated a visual error, it was also nowhere defined
+                                    // green for additions, red for deletions
+                                    // dark grey for common parts
+                                    if (OldRec_status == "current") {
+                                        const color = part.added ? "green" :
+                                            part.removed ? "red" : "dark-grey";
+                                        const background_color = part.added ? "white" :
+                                            part.removed ? "white" : "dark-grey";
+                                        span = document.createElement("span");
+                                        span.style.color = color;
+                                        span.style.backgroundColor = background_color;
+                                        span.appendChild(document
+                                            .createTextNode(part.value));
+                                        fragment.appendChild(span);
+                                    }
+                                    else if (OldRec_status = "waiting") {
+                                        const color = part.added ? "green" :
+                                            part.removed ? "red" : "dark-grey";
+                                        const background_color = part.added ? "white" :
+                                            part.removed ? "white" : "dark-grey";
+                                        span = document.createElement("span");
+                                        span.style.color = color;
+                                        span.style.backgroundColor = background_color;
+                                        span.appendChild(document
+                                            .createTextNode(part.value));
+                                        fragment.appendChild(span);
+                                    }
+                                });
+                                element5.appendChild(fragment);
+                                metaElem.style.fontWeight = "900";
+                            }
                         }
                     }
                 }).catch(error => console.debug(error));
@@ -6089,18 +6208,22 @@ function gd_wait_table_alter() {
                         status_after = RegExp(/status-[a-z]*/).exec(addedNode.className)[0];
                         status_has_changed = status_before !== status_after;
                     }
-                    // console.debug("before hide editor");
-                    // if (user_is_pte && row_is_editor ) {
-                    //if (user_is_pte && row_is_editor && !is_new_translation && status_has_changed) {
-
-                    gd_auto_hide_next_editor(addedNode);
-                    // }
-                    // if (user_is_pte && row_is_preview) {
-                    //    gd_add_column_buttons(addedNode);
-                    // }
-                    //if (row_is_preview) {
-                    // addedNode.querySelectorAll(".glossary-word").forEach(gd_add_glossary_links);
-                    // }
+                   
+                    chrome.storage.local.get(["DisableAutoClose"], function (data) {
+                        const disable = String(data.DisableAutoClose) === "true"; // normalize to boolean
+                        // Run gd_wait_table_alter if toggle is NOT explicitly true
+                        if (!disable) {
+                            gd_auto_hide_next_editor(addedNode);
+                        }
+                        else {
+                            // we need to determine the row to add the buttons
+                            //If a new editor is opened we need the buttons for translation
+                            const preview = addedNode.nextElementSibling;
+                            const next_editor = preview.nextElementSibling;
+                            let myrow = next_editor.getAttribute('row')
+                            addTranslateButtons(myrow);
+                        }
+                     });
                 });
             });
         });
@@ -6355,8 +6478,11 @@ async function handleMutation(mutationsList, observer) {
     const textareaElem = textareaActiveElem.querySelector("textarea.foreign-text");
     const translation = textareaElem.value;
     textareaElem?.focus();
-
-    if (!translation) return;
+    //console.debug("translation:",translation)
+    if (!translation) {
+        console.debug("we have no translation!")
+        return;
+    }
 
     const glossaryToUse = DefGlossary ? glossary : glossary1;
     const newGloss = createNewGlossArray(glossaryToUse);
@@ -6369,7 +6495,6 @@ async function handleMutation(mutationsList, observer) {
 
     if (pluralPresent != null) {
         spansPlural = pluralPresent.getElementsByClassName("glossary-word");
-        console.debug("spansPlural single:", spansPlural)
         spans = spansPlural
         // Add gloss-index attribute and remove previous highlights
         spansArray = Array.from(spans);
@@ -6504,7 +6629,7 @@ function MutationsPlural(mutationsList, observer) {
                 mutation.target.focus()
                 myGlossArray = await Array.from(myglossary)
                 map = new Map(myGlossArray.map(obj => [obj.key, obj.value]))
-                MyResult = await validate(locale, pluralOriginal.textContent, translation, "", false, rowId, true)
+                MyResult = await validate(locale, pluralOriginal.textContent, translation, locale, false, rowId, true, DefGlossary)
                 mark_glossary(leftPanel, "", translation, rowId, true)
                 missingTranslations = await findAllMissingWords(translation, glossWords, locale)
                 const toolTipLines = [];
@@ -6597,8 +6722,7 @@ function MutationsPlural(mutationsList, observer) {
                         // pluralOriginal = mypluralOriginal[0].querySelector(".original-raw")
                         textareaElem = await leftPanel.querySelector(`textarea.foreign-text`);
                         // console.debug("detailEditor:",detailEditor)
-
-                        MutResult = await validate(locale, pluralOriginal.textContent, translation, locale, false, rowId, true)
+                        MutResult = await validate(locale, pluralOriginal.textContent, translation, locale, false, rowId, true, DefGlossary)
                         if (MutResult.percent == 100) {
                             let markerpresent = leftPanel.getElementsByClassName("marker");
                             if (typeof markerpresent[0] != 'undefined') {

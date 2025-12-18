@@ -102,52 +102,74 @@ function adjustLayoutScreen() {
 
 // Function to intercept XMLHttpRequests
 function interceptXHR(xhr) {
-    // Intercept the open method to store the URL
-    // Flag to track whether requests should be intercepted
-    //var interceptRequests = JSON.parse(localStorage.getItem('interXHR')) || true; // Retrieve value from localStorage
-    var interceptRequests = localStorage.getItem('interXHR') // Retrieve value from localStorage
+    var interceptRequests = localStorage.getItem('interXHR'); // string: "true" / "false"
+    var interceptSuggestions = localStorage.getItem('interSuggestions') ?? 'false';
+    localStorage.setItem('interSuggestions', interceptSuggestions);
+
+
+    // Force for testing, but keep type consistent with storage value
+    //interceptSuggestions = 'true'; // string so comparison works
+
     var originalOpen = xhr.open;
+    var condition = false; // use boolean instead of string
+
     xhr.open = function (method, url) {
-        // Store the URL for later use
-        xhr._interceptedURL = url;
-        // Call the original open method
+        xhr._interceptedURL = url; // store URL
         return originalOpen.apply(xhr, arguments);
     };
-    // Intercept the send method to handle the response
+
     var originalSend = xhr.send;
     xhr.send = function () {
-        let mydata = "<p class=\"translation-suggestion__translation\">API call blocked.</p>"
-        if ((interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-openai')) || (interceptRequests == 'true' && xhr._interceptedURL.includes('get-tm-deepl') || (interceptRequests == 'true' && xhr._interceptedURL.includes('get-translation-helpers')))) {
-            // Instead of sending the request, provide a mocked response immediately
-            var mockedResponse = {
-                success: true,
-                data: mydata
-            };
-            // Set responseText property to simulate the response
+        let mydata = `<p class="translation-suggestion__translation">API call blocked.</p>`;
+       // console.debug("interceptSuggestions:", interceptSuggestions);
+
+        if (interceptSuggestions === 'true') {
+            //console.debug("interceptSuggestions = true branch");
+            condition =
+                interceptRequests === 'true' &&
+                (
+                    xhr._interceptedURL.includes('get-tm-openai') ||
+                    xhr._interceptedURL.includes('get-tm-deepl') ||
+                    xhr._interceptedURL.includes('get-translation-helpers') ||
+                    xhr._interceptedURL.includes('get-tm-suggestions') ||
+                    xhr._interceptedURL.includes('get-other-language-suggestions')
+                );
+        } else {
+            //console.debug("interceptSuggestions false branch");
+            condition =
+                interceptRequests === 'true' &&
+                (
+                    xhr._interceptedURL.includes('get-tm-openai') ||
+                    xhr._interceptedURL.includes('get-tm-deepl') ||
+                    xhr._interceptedURL.includes('get-translation-helpers')
+                );
+        }
+
+        if (condition) {
+           // console.debug("Blocking request:", xhr._interceptedURL);
+            var mockedResponse = { success: true, data: mydata };
             Object.defineProperty(xhr, 'responseText', { value: JSON.stringify(mockedResponse), writable: true });
-            // Trigger the onload event to simulate the response
+
             if (typeof xhr.onload === 'function') {
                 xhr.onload();
             }
-            // Prevent the original request from being sent by overriding the send method
-            xhr.send = function () {
-                //console.debug("we are intercepting")
-            };
-            return; // Exit early without calling the original send method
+
+            xhr.send = function () {}; // block sending
+            return;
         }
-        // Call the original send method for non-intercepted requests
+
         try {
             return originalSend.apply(xhr, arguments);
+        } catch (error) {
+            console.log(`Error: ${error.message}`);
+        }
 
-         } catch (error) {
-        console.log(`Error: ${error.message}`);
-         }
-        //return originalSend.apply(xhr, arguments);
         originalSend.onerror = function () {
             console.error('Request failed due to a network error.');
         };
     };
 }
+
 
 // Function to toggle interception based on the flag value
 function toggleInterception(shouldIntercept,transProcess) {
@@ -360,83 +382,120 @@ function parseCSV(content) {
 }
 
 async function importDeepLCSV(myDelete, myRecordDeleted) {
-    // 09-05-2021 PSS added file selector for silent selection of file
-    var fileSelector = document.createElement("input");
-    fileSelector.setAttribute("type", "file");
-    fileSelector.setAttribute("accept", "csv");
+    const fileSelector = document.createElement("input");
+    fileSelector.type = "file";
+    fileSelector.accept = ".csv";
     fileSelector.addEventListener("change", handleFileImport);
     fileSelector.click();
+
     function handleFileImport(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        let mylocale = checkLocale() || 'en';
-        mylocale = mylocale.toUpperCase();
-
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = async function (e) {
             const content = e.target.result;
-            const records = parseCSV(content);
+            const rows = content.split(/\r?\n/).filter(r => r.trim() !== "");
 
-            // Strip blanks and convert to UTF-8 for each record
-            const processedRecords = records.map(({ original, translation }) => {
-                return {
-                    original: (original || '').trim(),        // Strip leading/trailing blanks
-                    translation: (translation || '').trim()   // Strip leading/trailing blanks
-                };
-            });
+            if (rows.length === 0) {
+                alert("No data found in CSV!");
+                return;
+            }
 
-            openDeepLDatabase().then(dbDeepL => {
-                const transaction = dbDeepL.transaction("glossary", "readwrite");
-                const store = transaction.objectStore("glossary");
-                const index = store.index("locale_original");
+            // Detect if first row is a header
+            const firstRowCols = rows[0].split(",").map(c => c.trim().toLowerCase());
+            const hasHeader = firstRowCols.includes("original") && firstRowCols.includes("translation");
 
-                processedRecords.forEach(({ original, translation }) => {
-                    const keyRange = IDBKeyRange.only([mylocale, original]);
+            const dataRows = hasHeader ? rows.slice(1) : rows;
 
-                    const request = index.get(keyRange);
-                    request.onsuccess = function (event) {
-                        const existingRecord = event.target.result;
-                        if (existingRecord) {
-                            existingRecord.translation = translation;
-                            store.put(existingRecord);
-                        } else {
-                            store.add({ locale: mylocale, original, translation });
-                        }
-                    };
+            const records = dataRows.map(line => {
+                const cols = line.split(",");
+                let locale, original, translation;
+
+                if (cols.length === 2) {
+                    // Old CSV: Original, Translation
+                    locale = (checkLocale() || 'EN').toUpperCase();
+                    original = cols[0].trim();
+                    translation = cols[1].trim();
+                } else {
+                    // New CSV: Locale, Original, Translation
+                    locale = (cols[0] ? cols[0].trim().toUpperCase() : (checkLocale() || 'EN').toUpperCase());
+                    original = (cols[1] || '').trim();
+                    translation = (cols[2] || '').trim();
+                }
+
+                if (!original || !translation) return null;
+                return { locale, original, translation };
+            }).filter(r => r); // remove invalid
+
+            if (records.length === 0) {
+                alert("No valid CSV data found!");
+                return;
+            }
+
+            const dbDeepL = await openDeepLDatabase();
+            const store = dbDeepL.transaction("glossary", "readwrite").objectStore("glossary");
+            const index = store.index("locale_original");
+
+            for (let { locale, original, translation } of records) {
+                const existingRecord = await new Promise((resolve, reject) => {
+                    const req = index.get([locale, original]);
+                    req.onsuccess = e => resolve(e.target.result);
+                    req.onerror = e => reject(e.target.error);
                 });
 
-                transaction.oncomplete = function () {
-                    let importReady = "Import completed successfully!"
-                    alert(importReady);
-                    listAllRecords(mylocale,myDelete, myRecordDeleted); // Refresh table
-                };
-            });
+                if (existingRecord) {
+                    existingRecord.translation = translation;
+                    await new Promise((resolve, reject) => {
+                        const req = store.put(existingRecord);
+                        req.onsuccess = () => resolve();
+                        req.onerror = e => reject(e.target.error);
+                    });
+                } else {
+                    await new Promise((resolve, reject) => {
+                        const req = store.add({ locale, original, translation });
+                        req.onsuccess = () => resolve();
+                        req.onerror = e => reject(e.target.error);
+                    });
+                }
+            }
+
+            alert("Import completed successfully!");
+            listAllRecords(checkLocale().toUpperCase(), myDelete, myRecordDeleted);
         };
 
         reader.readAsText(file);
     }
 }
 
+
 async function exportDeepLCSV(DownloadPath) {
-    //console.debug("Export started:", DownloadPath)
     const db = await openDeepLDatabase();
     const transaction = db.transaction("glossary", "readonly");
     const store = transaction.objectStore("glossary");
     const request = store.getAll();
-    let download = "wptf-glossary.csv"
-    //console.debug("Download path:", DownloadPath)
-        request.onsuccess = () => {
-            const records = request.result;
-            const csvContent = records.map(r => `${r.original},${r.translation}`).join("\n");
-            const blob = new Blob([csvContent], { type: "text/csv" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = download
-            a.click();
-            URL.revokeObjectURL(a.href);
+    const download = "wptf-glossary.csv";
+
+    request.onsuccess = () => {
+        const records = request.result;
+        const csvContent = [
+            "Locale,Original,Translation", // header
+            ...records.map(r => `${r.locale},${r.original},${r.translation}`)
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = download;
+        document.body.appendChild(a); // append for Firefox
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
     };
+
+    request.onerror = (err) => console.error("Export failed:", err);
 }
+
 
 
 function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, recordNotFound, message) {

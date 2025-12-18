@@ -391,6 +391,73 @@ mymarker {
 }
 
 
+.wptfNavBarCont .compair-button {
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
+
+    .wptfNavBarCont .compair-button.ready {
+        background: green;
+    }
+
+    .wptfNavBarCont .compair-button::before {
+        content: '\f326';
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font: normal 20px/1 'dashicons';
+        vertical-align: middle;
+        width: 28px;
+    }
+
+.wptfNavBarCont .compair-button:hover {
+    background: darkgray !important;
+}
+
+    .wptfNavBarCont .compair-button.started {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: blink-background 1s ease-in-out infinite;
+    }
+
+
+    .wptfNavBarCont .compair-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: blink-background 1s ease-in-out infinite;
+    }
+
+.wptfNavBarCont .compair-button.after_error {
+    animation: none;
+    background: red;
+}
+
+    .wptfNavBarCont .compair-button.ready {
+        animation: none !important;
+        color: white !important;
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+    }
+
+
 .wptfNavBarCont .check_translation-button {
     background: blue;
     color: white !important;
@@ -678,6 +745,17 @@ mymarker {
     border-radius: 5px !important;
 }
 
+.wptfNavBarCont .copy_org-button {
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
+
 .wptfNavBarCont .tm-trans-button.foreighn {
     background: grey;
     color: white !important;
@@ -718,7 +796,7 @@ mymarker {
       background: red;
     }
 
-    .wptfNavBarCont .stats-button.translated {
+ .wptfNavBarCont .stats-button.translated {
         animation: none !important;
         background: green;
         border-radius: 0%;
@@ -734,6 +812,25 @@ mymarker {
 .paging {
     font-size: 0.875em !important;
 }
+
+    .paging .Find-Dup-button {
+        background: blue;
+        color: white !important;
+        margin-left: 2px;
+        margin-right: 2px;
+        margin-right: 5px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+    }
+ 
+
+    .paging .Find-Dup-button:hover {
+            background: darkgray !important;
+        }
+
+   
+
 
 .paging .UpperCase-button.uppercase {
         background: green;

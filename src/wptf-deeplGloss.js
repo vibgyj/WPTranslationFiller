@@ -1,5 +1,6 @@
 function loadMyGlossary(apiKey, DeeplFree, gloss) {
     //console.debug("we start loading", apiKey, DeeplFree, gloss)
+    console.debug("DeeplFree:",DeeplFree)
     chrome.runtime.sendMessage({
         action: "load_deepl_glossary",
         apiKey: apiKey,
@@ -7,7 +8,7 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
         glossaryData: gloss,
     }, (response) => {
         //console.debug("Received response:", response); // Debugging step
-
+        console.debug("response:",response)
         if (response && response.success) {
             //console.debug("Glossary uploaded:", response.glossaries);
             let result = response.glossaries.glossary_id
@@ -250,10 +251,12 @@ async function oldload_glossary(glossary, apikeyDeepl, DeeplFree, language) {
 
 
 async function show_glossary(apikeyDeepl, DeeplFree, language) {
+    console.debug("show_glossary:",DeeplFree)
     currWindow = window.self;
     chrome.runtime.sendMessage({
         action: "fetch_deepl_glossaries",
-        apiKey: apikeyDeepl
+        apiKey: apikeyDeepl,
+        isFree: DeeplFree
     }, (response) => {
        //console.log("Received response:", response); // Debugging step
 
@@ -555,8 +558,10 @@ async function oldshow_glossary(apikeyDeepl, DeeplFree, language) {
         });
 }
 
-async function delete_all_glossary(apikeyDeepl, DeeplFree) {
-    var myKey=apikeyDeepl
+async function delete_all_glossary(apikeyDeepl,isFree) {
+    var myKey = apikeyDeepl
+    let DeeplFree = isFree === true || isFree === "true"; // handle boolean or string
+    console.debug("delete_all_glossary:",DeeplFree)
     currWindow = window.self;
     chrome.runtime.sendMessage({
         action: "fetch_deepl_glossaries",
@@ -600,70 +605,6 @@ async function delete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
     deleteGlossary(apikeyDeepl, true, glossary_id);
 }
 
-async function olddelete_glossary(apikeyDeepl, DeeplFree, language, glossary_id) {
-   // console.debug("We are deleting:",glossary_id)
-    //console.debug(apikeyDeepl, DeeplFree, language, glossary_id)
-
-    let formal = false
-    //let deeplServer = DeeplFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
-
-    let deeplServer = DeeplFree == true ? "https://cors-anywhere.herokuapp.com/https://api-free.deepl.com" : "https://cors-anywhere.herokuapp.com/https://api.deepl.com";
-    const url = deeplServer + "/v2/glossaries/" + glossary_id
-    //console.debug("url:", url)
-    let response = await fetch(url, {
-        method: "DELETE",
-        headers: {
-            'Access-Control-Allow-Headers': 'X-Requested-With',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Authorization': 'DeepL-Auth-Key ' + apikeyDeepl
-        }
-    }).then(async response => {
-        const isJson = response.headers.get('content-type')?.includes('application/json; charset=utf-8');
-        //const isJson = response.headers.get('content-type')
-        data = isJson && await response.json();
-        //console.debug("response:", data, response, response.text);
-        //check for error response
-        if (response.ok) {
-            let glossaryId = data
-            currWindow = window.self;
-            //console.debug("glossarie deleted:", glossary_id)
-            messageBox("info", "Glossary ID: <br>" + glossary_id + "<br>deleted ");
-            return Promise.resolve("OK");
-        }
-        else {
-            console.debug("wrong response:",response)
-        }
-    })
-        .catch(error => {
-           // console.debug("error:",error)
-            if (error[2] == "400") {
-                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
-                //          console.debug("glossary value is not supported")
-                errorstate = "Error 400";
-            }
-            if (error[2] == "403") {
-                //alert("Error 403 Authorization failed. Please supply a valid auth_key parameter.")
-                errorstate = "Error 403";
-            }
-            else if (error[2] == '404') {
-                //     alert("Error 404 The requested resource could not be found.")
-                errorstate = "Error 404";
-            }
-            //   else if (error[2] == '456') {
-            //alert("Error 456 Quota exceeded. The character limit has been reached")
-            //        errorstate = "Error 456";
-            //    }
-            // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243
-            else if (error == 'TypeError: Failed to fetch') {
-                errorstate = '<br>We did not get an answer from Deepl<br>Check your internet connection';
-            }
-            else {
-                //alert("Error message: " + error[1]);
-                console.debug("Error:", error)
-                errorstate = "Error " + error[1];
-            }
-        });
-}
 
 function toUtf8(text) {
     return new TextDecoder("utf-8").decode(new TextEncoder().encode(text))

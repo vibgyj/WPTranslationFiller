@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.3.72",
+  "version": "3.4.37",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -52,6 +52,18 @@
       "matches": [ "<all_urls>" ]
     },
     {
+      "resources": [ "wptf-tests.json" ],
+      "matches": [ "<all_urls>" ]
+    },
+    {
+      "resources": [ "wptf-testResults.js" ],
+      "matches": [ "<all_urls>" ]
+    },
+    {
+      "resources": [ "wptf-testResults.html" ],
+      "matches": [ "<all_urls>" ]
+    },
+    {
       "resources": [ "/_metadata" ],
       "matches": [ "<all_urls>" ]
     }
@@ -70,8 +82,10 @@
     "declarativeNetRequestFeedback"
   ],
   "host_permissions": [
+    "*://agw.golinguist.com/*",
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",
+    "*://api.deepseek.com/*",
     "*://translation.googleapis.com/*",
     "*://translate.wordpress.org/*",
     "*://api.languagetool.org/*",
@@ -79,6 +93,7 @@
     "*://analytics.languagetoolplus.com/*",
     "*://api.cognitive.microsofttranslator.com/*",
     "*://api.openai.com/*",
+    "*://api.anthropic.com/*",
     "*://cors-anywhere.herokuapp.com/*"
   ],
   "optional_host_permissions": [
@@ -93,6 +108,7 @@
     {
       "matches": [ "https://translate.wordpress.org/*" ],
       "js": [
+        "wptf-translatio_io.js",
         "wptf-buildstats.js",
         "wptf-database.js",
         "wptf-inject.js",
@@ -106,13 +122,17 @@
         "jsstore.js",
         "jsstore.worker.js",
         "wptf-commonTranslate.js",
+        "wptf-ClaudeTrans.js",
         "wptf-openAITrans.js",
         "wptf-deeplTrans.js",
+        "wptf-DeepSeekTrans.js",
         "wptf-googleTrans.js",
         "wptf-microsoftTrans.js",
         "jsdiff.js",
         "wptf-importfile.js",
         "wptf-database-maintenance.js",
+        "wptf-populatewithTM.js",
+        "wptf-testRunner.js",
         "contentScript.js"
       ],
       "css": [ "wptf-style.css" ]

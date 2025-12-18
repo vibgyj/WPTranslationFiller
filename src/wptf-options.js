@@ -1,4 +1,4 @@
-// Load the version from maniscript
+﻿// Load the version from maniscript
 var version = chrome.runtime.getManifest().version;
 var scriptElm = document.createElement("script");
 scriptElm.src = chrome.runtime.getURL("wptf-cute-alert.js");
@@ -35,8 +35,12 @@ let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
+let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
+let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
+let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
+let ClaudselectBox = document.getElementById("ClaudSelect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
 let OpenAIToneBox = document.getElementById("ToneSelect");
 let destLangTextbox = document.getElementById("destination_lang");
@@ -57,6 +61,7 @@ let TMtresholdValue = document.getElementById("TMtreshold");
 let myScreenWidthValue = document.getElementById("screenWidth");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
+let ClaudePromptTextbox = document.getElementById("text_claude_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let spellcheckTextbox = document.getElementById("text_ignore_verbs");
@@ -70,17 +75,23 @@ let showForceFormal = document.getElementById("Force-formal");
 let showDefGlossary = document.getElementById("use-default-glossary");
 let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
+let showDisableClose = document.getElementById("disable-auto-close");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath"], function (data) {
-    apikeyTextbox.value = data.apikey;
-    apikeydeeplTextbox.value = data.apikeyDeepl;
+document.getElementById('show-changelog-link').addEventListener('click', function (e) {
+    e.preventDefault(); // Prevent the default link behavior
+  //console.debug("we show it")
+  showChangelog();    // Call your function
+});
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
+    
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
   //  }
   //  else {
   //      DownloadTextbox.value = "C:\Temp"
-  //  }
+    //  }
+  //console.debug("DeeplFree:",DeeplFree)
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -155,8 +166,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         OpenAITone = data.OpenAITone
     }
     apikeydeeplCheckbox = data.DeeplFree;
+    apikeyTextbox.value = data.apikey;
+    apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
+    apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
+    apikeyTranslateioTextbox.value = data.apikeyTranslateio
+    apikeyClaudeTextbox.value = data.apikeyClaude;
+
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -172,7 +189,15 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         OpenAIselectBox.value = data.OpenAISelect;
     }
-    
+    if (typeof data.ClaudSelect == 'undefined') {
+        ClaudselectBox.value = "claude-3-5-haiku-latest";
+    }
+    else if (data.ClaudSelect == "") {
+        ClaudselectBox.value = "claude-3-5-haiku-latest";
+    }
+    else {
+        ClaudselectBox.value = data.ClaudSelect;
+    }
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `${data.glossaryFile}`;
     uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
@@ -184,6 +209,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     }
     else {
         promptTextbox.value = data.OpenAIPrompt;
+    }
+    if (typeof data.ClaudePrompt == 'undefined') {
+        ClaudePromptTextbox.value = 'Enter prompt'
+    }
+    else {
+        ClaudePromptTextbox.value = data.ClaudePrompt;
     }
     if (typeof data.reviewPrompt == 'undefined') {
         reviewTextbox.value = 'Enter prompt'
@@ -311,6 +342,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             showAutoClipboard.checked = false;
         }
     }
+    if (data.DisableAutoClose != "null") {
+        if (data.DisableAutoClose == true) {
+            showDisableClose.checked = true;
+        }
+        else {
+           showDisableClose.checked = false;
+        }
+    }
    
 });
 
@@ -327,18 +366,29 @@ let button = document.getElementById("save");
 button.addEventListener("click", function () {
     let apikey = apikeyTextbox.value;
     let apikeyDeepl = apikeydeeplTextbox.value;
-    
-    if (document.querySelector("#DeeplFree:checked") !== null) {
-        
-        let showDeeplFree = document.querySelector("#DeeplFree:checked");
-        showDeepl = showDeeplFree.checked;
-    }
-    else {
-        showDeepl = "false";
-    }
+
+    const check = document.getElementById('DeeplFree');
+    if (check.checked) {
+        console.log('Checkbox is checked');
+       showDeepl = true
+    } else {
+         showDeepl = "false";
+       console.log('Checkbox is not checked');
+   }
+    //if (document.querySelector("#DeeplFree:checked") !== null) {
+   //     console.debug("in save :", document.querySelector("#DeeplFree:checked"))
+    //    let showDeeplFree = document.querySelector("#DeeplFree:checked");
+    //    showDeepl = showDeeplFree.checked;
+   // }
+   // else {
+   //     showDeepl = "false";
+    //}
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
-
+    let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
+    let apikeyTranslationio = apikeyTranslateioTextbox.value;
+    let apikeyClaude = apikeyClaudeTextbox.value;
+    
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
     }
@@ -368,10 +418,19 @@ button.addEventListener("click", function () {
     else {
         OpenAIsel = OpenAIselectBox.value;
     }
-
+     if (typeof ClaudselectBox.value == "undefined") {
+        Claudsel = "claude-3-5-haiku-latest";
+    }
+    else if (ClaudselectBox.value == "") {
+        Claudsel = "claude-3-5-haiku-latest";
+    }
+    else {
+        Claudsel = ClaudselectBox.value;
+    }
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
+    let ClaudePrompt = ClaudePromptTextbox.value
     let reviewText = reviewTextbox.value;
     let preTranslation = preverbsTextbox.value;
     let spellIgnoreverbs = spellcheckTextbox.value;
@@ -468,12 +527,23 @@ button.addEventListener("click", function () {
     else {
         autoCopyClipBoard = "false";
     }
+    if (document.querySelector("#disable-auto-close:checked") !== null) {
+        let autoCopyClip_Set = document.querySelector("#disable-auto-close:checked");
+        showClose = autoCopyClip_Set.checked;
+    }
+    else {
+        showClose = "false";
+    }
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
             apikeyMicrosoft: apikeyMicrosoft,
+            apikeyDeepSeek: apikeyDeepSeek,
+            apikeyTranslateio: apikeyTranslationio,
+            apikeyClaude: apikeyClaude,
+            ClaudSelect: Claudsel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
@@ -484,6 +554,7 @@ button.addEventListener("click", function () {
             postTranslationReplace: postTranslation,
             preTranslationReplace: preTranslation,
             OpenAIPrompt: promptText,
+            ClaudePrompt: ClaudePrompt,
             reviewPrompt: reviewText,
             spellCheckIgnore: spellIgnoreverbs,
             showHistory: showHist,
@@ -506,7 +577,8 @@ button.addEventListener("click", function () {
             DefGlossary: Def_Glossary,
             WPTFscreenWidth: theScreenWidthValue,
             strictValidate: strictValidat,
-            autoCopyClip: autoCopyClipBoard
+            autoCopyClip: autoCopyClipBoard,
+            DisableAutoClose: showClose
 
         });
 
@@ -957,51 +1029,60 @@ function pushToGlossary(glossary, key, value) {
 }
 
 function export_verbs_csv() {
-    // 13-03-2021 PSS added locale to export filename
-    var destlang = destLangTextbox.value;
-    let export_file = "export_verbs_" + destlang + ".csv";
+    const destlang = destLangTextbox.value;
+
+    // Add today's date in YYYY-MM-DD format
+    const now = new Date();
+    const dateStr = now.toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+    const export_file = `export_verbs_${destlang}_${dateStr}.csv`;
+
+    // Parse input into replaceVerb array
     setPostTranslationReplace(verbsTextbox.value);
-    let arrayData = [];
-    for (let i = 0; i < replaceVerb.length; i++) {
-          arrayData[i] = { original: replaceVerb[i][0], replacement:  replaceVerb[i][1] };
-         }
-   // let header ="original,replace");
-    let delimiter = ",";
-    let arrayHeader = ["original", "translation", "country"];
-    let header = arrayHeader.join(delimiter) + "\n";
-       let csv = header;
-       arrayData.forEach(obj => {
-           let row = [];
-           for (var key in obj) {
-               if (obj.hasOwnProperty(key)) {
-                   row.push(obj[key]);
-               }
-           }
-           csv += row.join(delimiter) + "\n";
-       });
 
-       let csvData = new Blob([csv], { type: "text/csv" });
-       let csvUrl = URL.createObjectURL(csvData);
+    // CSV header
+    const delimiter = ",";
+    const arrayHeader = ["original", "translation", "country"];
+    const header = arrayHeader.join(delimiter) + "\n";
+    let csv = header;
 
-       let hiddenElement = document.createElement("a");
-       hiddenElement.href = csvUrl;
-       hiddenElement.target = "_blank";
-       hiddenElement.download = export_file;
-       hiddenElement.click();
-       messageBox("info", "Export verbs ready <br>Wait until explorer is shown to save the file");
+    // Build CSV content
+    replaceVerb.forEach(entry => {
+        const original = entry[0] || "";
+        const translation = entry[1] || "";
+        const country = entry[2] || "";
 
-   }
-// PSS 08-03-2021 added this to prepare data for export to csv   
+        // Only add 'country' column if present
+        const row = country ? [original, translation, country].join(delimiter)
+                            : [original, translation].join(delimiter);
+        csv += row + "\n";
+    });
+
+    // Export as CSV
+    const csvData = new Blob([csv], { type: "text/csv" });
+    const csvUrl = URL.createObjectURL(csvData);
+
+    const hiddenElement = document.createElement("a");
+    hiddenElement.href = csvUrl;
+    hiddenElement.target = "_blank";
+    hiddenElement.download = export_file;
+    hiddenElement.click();
+
+    messageBox("info", "Export verbs ready <br>Wait until explorer is shown to save the file");
+}
+
 function setPostTranslationReplace(postTranslationReplace) {
-     replaceVerb = [];
-     let lines = postTranslationReplace.split("\n");
-     lines.forEach(function (item) {
-     // Handle blank lines
-     if (item != "") {
-       replaceVerb.push(item.split(","));
-       }
+    replaceVerb = [];
+    const lines = postTranslationReplace.trim().split("\n");
+    lines.forEach(line => {
+        if (line.trim() !== "") {
+            const parts = line.split(",");
+            // Keep up to 3 parts: original, translation, country (optional)
+            replaceVerb.push([parts[0], parts[1] || "", parts[2] || ""]);
+        }
     });
 }
+
 
 var obj_csv = {
     size:0,
@@ -1022,18 +1103,28 @@ if (input.files && input.files[0]) {
     };
    }
 });
-     
 function parseData(data) {
-    let csvData = [];
     let lbreak = data.split("\n");
-    let counter = 0;
-    lbreak.forEach(res => {
-        csvData.push(res.split(","));
-        if (counter >0) {
-            verbsTextbox.value += res.split(",") + "\n";
-        }
-        ++counter;
-    });
+    let verbsText = "";
+
+    // Skip header
+    for (let i = 1; i < lbreak.length; i++) {
+        const line = lbreak[i];
+
+        // Skip truly empty lines (do NOT trim valid ones)
+        if (line === "" || line === "\r") continue;
+
+        const parts = line.split(",");
+
+        const original = parts[0] ?? "";
+        const translation = parts[1] ?? "";
+        const country = parts[2] ?? "";
+
+        const newLine = country !== "" ? `${original},${translation},${country}` : `${original},${translation}`;
+        verbsText += newLine + "\n";
+    }
+
+    verbsTextbox.value = verbsText;
     messageBox("info", "Import ready");
 }
 
@@ -1048,3 +1139,59 @@ function messageBox(type, message) {
         closeStyle: "alert-close",
     });
 }
+
+async function showChangelog() {
+  console.debug("We are showing it");
+
+  try {
+    const response = await fetch(chrome.runtime.getURL('/Changelog.txt'));
+    const text = await response.text();
+
+    const changelogTab = window.open("", "_blank");
+
+    if (!changelogTab) {
+      throw new Error("Popup or tab blocked by browser settings.");
+    }
+
+    changelogTab.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Changelog</title>
+        <style>
+          body {
+            font-family: system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            padding: 2em;
+            background-color: #f9f9f9;
+            color: #333;
+          }
+          pre {
+            white-space: pre-wrap;
+            font-size: 1.0em;
+            font-family: monospace;
+            background-color: #fff;
+            padding: 1em;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>📄 Changelog</h2>
+        <pre>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+      </body>
+      </html>
+    `);
+
+    changelogTab.document.close();
+
+  } catch (error) {
+    console.error("Failed to load changelog:", error);
+  }
+}
+
+

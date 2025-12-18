@@ -1,74 +1,88 @@
-Version changes as of version 3.3
-1. Altered the DeeplTranslate.js to meet new specs for DeepL
-2. Improved behavior of ToolTips within FireFox
-3. Added new timeout in configuration for translatePage
-4. Fixed a problem with showing the glossary words within the editor
-5. Created a general function to fetch preview lines
-6. Fixed a problem within checkpage, the progressbar not showing properly
-7. Added a textbox to show translation is ready
-8. Version 3.8.8 Minor fixes
-9. Version 3.8.9 Prevented StartObserver to start when running populateWithTM
-10. Reworked populatwithTM
-11. Version 3.8.10 Added sorting of Pre translate and SpellcheckIgnore\
-12. Version 3.8.11 Various fixes and overhaul of populate with TM
-13. Version 3.8.12 Within the editor the textarea is set to the length of the translation
-14. Version 3.8.13 Improved populate TM again, there where several problem places
-15. Version 3.8.14 TM was missing one last translation
-16. Version 3.8.15 TM flow corrected, as it still missed translations
-17. Version 3.8.16 Converted import of glossary DeepL to utf-8, fixed a problem not loading the same glossary file twice
-18. Version 3.8.18 Fixed several problems within TM function
-19. Version 3.8.19 Fixed a problem within checkpage, checking an empty suggestion
-20. Version 3.8.20 Fixed the problem of closing the last preview in the table with TM
-21. Version 3.8.21 When performing TM from Formal, the suggestions were not found
-22. Version 3.8.22 Sort of the Pre and Post textareas improved, Also improved the Firefox manifest to support the new manifest voor background script
-                   Also moved closing of the editor window to a later time, as reports came in that lines were not saved
-23. Version 3.8.23 Improved bulksave function, it left suggestions as waiting, but on the background they were saved
-24. Version 3.8.24 TM was missing records due to a fault in the li search method, also remove sorting from the TM function as it disturbed the progress
-25. Version 3.8.25 Added functionality to store the DeepL glossary in the indexedDB database, Export the data, import the data
-26. Version 3.8.26 Fixed a problem when adding a record to the glossary, also added translations
-27. Version 3.8.27 From the dropdown, the load glossary was not started
-28. Version 3.8.28 Deleting from the modal was not working due to a translation that was missing. Renamed the translation for English from "en" to "en-gb"
-29. Version 3.8.29 Added deleting glossary ID's at once, improved loading languages
-30. Version 3.8.30 Added missing translations to the menu's, ExportCSV was not working, ImportCSV translation error
-31. Version 3.8.31 Added selecting only the Locale records in the glossary modal, also added translation of delete and save button. Also rewrote DeepL translation to prevent CORS error
-32. Version 3.8.32 New function added to delete words from the original like "Sorry", "Please". Also improved the replacement function
-33. Version 3.8.33 Fixed a problem with translating multiple sentences when removing "Please". The first word in the second sentence was in lowercase
-34. Version 3.8.34 There was no messagebox shown when the quota has been acceeded
-35. Version 3.8.35 DeepL has changed their API causing a warning 'text' field is missing
-36. Version 3.8.36 Destination language was set fixed to "NL", which is incorrect
-37. Version 3.8.37 Altered the text indicating missing verbs, it can now be translated. Changed the way that switch to different locale is shown
-38. Version 3.8.38 There was un untranslated label when performing TM
-39. Version 3.8.39 The modal for DeepL did only show Dutch records, not other locales. Also an translation error was generated
-40. Version 3.9.40 Something went wrong with building the Chrome version
-41. Version 3.9.41 Screen with change did not work anymore
-42. Version 3.9.42 Added marking missing glossary words in preview. Completely overhauled glossary loading
-43. Version 3.9.43 Fixed a problem with validation. Fix a problem with replacing vars before DeepL translation
-44. Version 3.9.44 Firefox was no longer working due a statement for loading the window was not working
-45. Version 3.9.45 The DeepL modal was showing "undefined" instead of "Delete", The mutation server in the editor was not started
-46. Version 3.9.46 Modified behavior of bulksave to prevent skipping records, if skipped they are removed from the table
-47. Version 3.9.47 Removed code that was causing records to be set as "waiting"
-48. Version 3.9.48 Fixed a problem that caused the dropdown to be closed after opening
-49. Version 3.9.49 Overhauled finding missing glossary words, overhauled/renaming diverse observers
-50. Version 3.9.50 Various fixes
-51. Version 3.9.51 Completely overhauled the translatePage function, also corrected several wrong functions
-52. Version 3.9.52 Improved DeepL behavior with capitals
-53. Version 3.9.53 Rewritten populateWithLocal function
-54. Version 3.9.54 Fixed a problem with translation function "undefined editor"
-55. Version 3.9.55 Fixed a typo in the plural handling function
-56. Version 3.9.56 Fixed another typo in the plural handling function
-57. Version 3.9.57 Fixed a problem whith retranslation fuzzy with local
-58. Version 3.9.58 Improved plural checking for glossary words for Dutch, and removed the new function for handling the casing for Russia and Ukrain
-59. Version 3.9.59 Improved glossary behavior
-60. Version 3.9.60 Glossary now recognizes plurals and combined glossary words
-61. Version 3.9.61 Glossary now recognizes "website" as wrong translation
-62. Version 3.9.62 Missing entry in manifest for Firefox
-63. Version 3.9.63 Improved memory behavior
-64. Version 3.9.64 Improved plural marking
-65. Version 3.9.65 Improved CSS behavior
-66. Version 3.9.66 Improved calculation and indication of translation quality
-67. Version 3.9.67 Fixed a typo in commontranslate.js
-68. Version 3.9.68 the spellcheckIgnore table was not provided to the spellchecker, also the local label was not put properly into the preview
-69. Version 3.9.69 Retranslation of an existing translation did not remove the marking if glossary words were corrected
-70. Version 3.9.70 When translating records the preview was not marked.
-71. Version 3.9.71 The check for URL improved, and the timeout in translatePage function inproved, and the timeout in bulk save improved. And marking glossary improved
-72. Version 3.9.72 When performing checktranslation within the editor, the changed line was not within the editor. No the translation will be improved if a copy is done within the editor with the copy button
+Version 3.3.95 put the below contents in your posttranslation replace at the top
+##form:You,Je,U
+##form:you,je,u
+##form:Your,Je,Uw
+##form:your,je,uw
+##form:You've,Je,U
+##form:you've,je,u
+##form:You're,Je,U
+##form:You’re,Je,U
+##form:you’re,je,u
+##form:you're,je,u
+##form:You'd,Je,U
+##form:you'd,je,u
+##form:You'll,Je,U
+##form:you'll,je,u
+##form: aan u , aan uw 
+##form:kan u ,kunt u 
+##form:kun uw ,kunt u 
+##form:kun u,kunt u
+##form:om je ,om uw 
+##form:van u ,van uw 
+##form:uw uw,u uw
+##form: u u , u uw 
+##form:voordat uw ,voordat u 
+##form:voor u ,voor uw 
+##form:want uw kunt ,want u kunt 
+##form:wil u,wilt u
+##form:Wil u,Wilt u
+##form:zullen u ,zullen uw 
+Version 3.3.95 the list above is necessary to convert standard translation to formal
+Version 3.3.96 When a sentence has a comma, then the conversion fo rformal is not working properly
+Version 3.3.97 When using local, and there is a plural, then the first line was populated with "notFound"
+Version 3.3.98 Fixed a problem when the original contains a crlf, the second part was no longer present in Formal
+Version 3.3.98 Fixed a problem with adding a blank after translation and replacing "je" in formal
+Version 3.3.98 Fixed a problem with wrong replacements of "%1$s", "%2$s" when there were more then one present
+Version 3.3.99 Added auto insert "Please"  -> "alstulieft" for formal if the original contains "Please" Add "##form:Please,alstublieft" to your postreplace list. or different translation if not nl_NL locale
+Version 3.4.1 Refactored bulk save, so now it does not skip records, unless it is already translated equally
+Version 3.4.2 Added a test runner for testing the conversion to formal
+Version 3.4.3 Fixed replacing ignore words into url
+Version 3.4.3 Added suppressing calls to fetch suggestions when performing bulk save
+Version 3.4.3 Improved formal conversion, when a sentence is shorter then English
+Version 3.4.4 Added a toggle to prevent closing the next editor
+Version 3.4.5 Buttons were not added when the next editor was opened
+Version 3.4.6 Deepl still did translate placeholders, so now converted to xml tags
+Version 3.4.7 Import and export of DeepL glossary now includes the locale
+Version 3.4.8 Removed wrong label from preview in plural record
+Version 3.4.9 Added population of the editor field with local DB record if no translation is present
+Version 3.4.10 Fixed word replacing regardless of it being present in an url
+Version 3.4.11 Replace function did not replace vars with chars like { }
+Version 3.4.12 Import postreplace file did no longer work
+Version 3.4.12 Moved the function to replace links
+Version 3.4.13 DeepL did not handle replacement vars like {special_var} properly
+Version 3.4.14 The database modal did not find texts containing cr/lf
+Version 3.4.15 Moved inserting "alstublieft" to third position if "het" is present in the Dutch translation
+Version 3.4.16 Added DeepSeek translation
+Version 3.4.17 Added languageio golinguist.com
+Version 3.4.18 Fixed several issues in populatewithTM
+Version 3.4.19 Fixed wrong API selection
+Version 3.4.20 Added marking found TM records
+Version 3.4.20 Added marking missing glossary words in editor when performing a copy from suggestions
+Version 3.4.21 Fixed a problem with populating plurals, wrong compaire and wrong second plural lookup
+Version 3.4.22 When a text contains two links the first link is duplicated
+Version 3.4.23 Added function to copy originals into the translation
+Version 3.4.24 Prevent local storage to disappear when updating
+Version 3.4.24 OpenAI translation caused CORS errors
+Version 3.4.24 Page translation with a wrong OpenAI key generated errors during each original
+Version 3.4.25 Modified stats function, it now shows a table and exports to CSV
+Version 3.4.26 In Firefox the stats window did not work
+Version 3.4.27 Added option to show only projects the user is PTE for within the Stats function
+Version 3.4.28 Improved DeepL translation, it now catches 429 to many requests error
+Version 3.4.28 Improved formal conversion
+Version 3.4.28 Added formal conversion into checkentry
+Version 3.4.29 Added new function to compair suggestions agains the local database
+Version 3.4.29 Added new function to find duplicates within the current translations
+Version 3.4.30 Improved indicating wrong plurals
+Version 3.4.31 Indicating duplicate records used a fixed locale, which is wrong
+Version 3.4.32 Single records not in the database but with duplicates where not marked RED
+Version 3.4.33 Moved the editor a bit so you can see the result of populateWithTM
+Version 3.4.33 Added label if there is a waiting for a current string which is the same
+Version 3.4.33 Added new OpenAI model 5.1
+Version 3.4.33 Added new API Claude for translation
+Version 3.4.34 Improved Claude translation
+Version 3.4.34 fixed an error when opening the details of a record
+Version 3.4.35 Plurals where no longer populated when pretranslated
+Version 3.4.36 Plural error when no translation was in pretrans
+Version 3.4.37 Fixed a problem with copying from suggestions when the original contains quotes
+Version 3.4.37 Added Claud selection of models
+Version 3.4.37 Improved replacing words that are in <button>..</button>
