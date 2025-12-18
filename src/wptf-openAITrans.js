@@ -246,7 +246,7 @@ async function getTransAI(
         locale
        );
     const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
-    if (show_debug) console.debug(`[${new Date().toISOString()}] text postprocessed ${duration2}s`, text);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] myTranslatedText postprocessed ${duration2}s`, myTranslatedText);
 
     //if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
     const start2 = Date.now()
@@ -658,14 +658,4 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
     return errorstate
 }
 
-function estimateMaxTokens(inputText) {
-  // Rough estimate: ~4 characters ≈ 1 token in English/Dutch
-  const inputTokens = Math.ceil(inputText.length / 4);
-
-  // Translation output is usually a bit longer → use 1.5x multiplier
-  const estimatedOutput = Math.ceil(inputTokens * 1.5);
-
-  // Add a small safety margin
-  return estimatedOutput + 20;
-}
 

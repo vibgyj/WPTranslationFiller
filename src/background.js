@@ -4,10 +4,13 @@ console.debug("background loaded")
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.debug("request;", request)
     if (request.action === "load_deepl_glossary") {
-        // console.debug(request.isFree)
+        console.debug(request.isFree)
         //   console.debug(request.apiKey)
-        //   console.debug(request.glossaryData)
-        let deeplServer = request.isFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        //console.debug(request.glossaryData)
+        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
+        let deeplServer = isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        console.debug("deeplServer in upload:",deeplServer)
+        //let deeplServer = request.isFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
         let url = `${deeplServer}/v2/glossaries`;
         // console.debug("Url:",url)
         let response = fetch(url, {
@@ -40,7 +43,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keeps sendResponse alive for async operations
     }
     else if (request.action === "fetch_deepl_glossaries") {
-        fetch("https://api-free.deepl.com/v2/glossaries", {
+        console.debug("we have a request to show the glossary:", request.isFree)
+        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
+        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v2/glossaries";
+        console.debug("We fetch glossaries")
+        console.debug("isFree:",request.isFree)
+        console.debug("key:", request.apiKey)
+        console.debug("deeplServer:",deeplServer)
+        fetch(deeplServer, {
             method: "GET",
             headers: {
                 "Authorization": `DeepL-Auth-Key ${request.apiKey}`, // Replace with your actual API key
@@ -48,6 +58,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         })
             .then(response => {
+                console.debug("response:",response)
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
@@ -65,7 +76,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; //  Keeps sendResponse alive for async fetch()
     }
     else if (request.action === "delete_deepl_glossary") {
-        let deeplServer = request.isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
+        console.debug("isFree:",isFree)
+        let deeplServer = isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        // let deeplServer = request.isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+       console.debug("deeplserver:",deeplServer)
         let url = `${deeplServer}/v2/glossaries/${request.glossary_id}`;
 
         fetch(url, {
@@ -120,13 +135,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
     else if (request.action === "translate") {
-        //console.debug("Received translation request", request.body);
+        console.debug("Received translation request", request.body);
 
         // Destructure DeepL endpoint + control params
         //console.debug("requestbody:", request.body)
         let { DeeplURL, DeepLFreePar, ...deeplParams } = request.body;
 
         // ✅ Build request body with only allowed DeepL params
+        //console.debug("request:",request)
         const allowedKeys = [
             "auth_key",
             "text",
@@ -300,6 +316,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             let respData;
             try {
                 respData = JSON.parse(respText);
+                // 1️⃣ Normalize quotes: curly → straight
+           // translation = respText
+           //     .replace(/[“”„»«]/g, '"')  // double quotes
+            //    .replace(/[‘’‚‛]/g, "'");  // single quotes
+
+            // 2️⃣ Preserve literal backslashes before quotes
+            //    Replace any " that were output without backslash with \"
+            //    This keeps code/PO file examples intact
+            //    translation = translation.replace(/(?<!\\)"/g, '\\"');
+            //respText=translation
             } catch (e) {
                 sendResponse({ success: false, error: "Cannot parse JSON from Claude", raw: respText });
                 return;

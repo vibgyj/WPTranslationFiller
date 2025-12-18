@@ -1,4 +1,75 @@
-﻿function escapeRegExpForPronouns(word) {
+﻿//# This function checks if a text contains an URL
+/**
+ * Returns true if `searchword` occurs inside any href/src/class attribute or any raw URL
+ * inside the provided HTML/text `translated`.
+ */
+
+// Helper function to check if a word is inside <button> tags or URLs
+function isInsideButtonOrUrl(translatedText, searchWord) {
+    // Match <button> tags and URLs
+    const buttonRegex = /<button[^>]*>[\s\S]*?<\/button>/gi;
+    const urlRegex = /\b((https?|ftp|file):\/\/|(www|ftp)\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]/ig;
+
+    // Check if the word is inside a <button> tag
+    const buttonMatches = translatedText.match(buttonRegex);
+    if (buttonMatches) {
+        for (const match of buttonMatches) {
+            if (match.toLowerCase().includes(searchWord.toLowerCase())) {
+                return true;  // Found word inside <button>
+            }
+        }
+    }
+
+    // Check if the word is inside a URL
+    const urlMatches = translatedText.match(urlRegex);
+    if (urlMatches) {
+        for (const match of urlMatches) {
+            if (match.toLowerCase().includes(searchWord.toLowerCase())) {
+                return true;  // Found word inside URL
+            }
+        }
+    }
+
+    return false;  // Word is not inside button or URL
+}
+
+function CheckUrl(translated, searchword) {
+    if (!translated || !searchword) return false;
+
+    const lowerWord = searchword.toLowerCase();
+    const lowerText = translated.toLowerCase();
+
+    // Match URLs, href/src, class attributes, span, and exclude <button> tags
+    const urlRegex = /\b((https?|ftp|file):\/\/|(www|ftp)\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]|<a[^>]*>|class="[^"]*"|<span[^>]*>|<button[^>]*>/ig;
+    const mymatches = lowerText.match(urlRegex);
+
+    if (!mymatches) return false;
+
+    for (const match of mymatches) {
+        // Skip if the match is a <button> tag
+        if (match.toLowerCase().includes('<button')) {
+            continue;
+        }
+
+        // Only normalize dashes/underscores in the URL part for detection, **do not modify the original text**
+        const normalized = match.replace(/[-_]/g, ' ');  
+        if (normalized.includes(lowerWord)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+function estimateMaxTokens(text) {
+    const extraBuffer = 100; // safety buffer for full response
+    const estimated = Math.ceil(text.length / 4) + extraBuffer; // 1 token ≈ 4 chars
+   //console.debug("In function estimateMaxTokens - estimated tokens:", estimated)
+    return Math.max(estimated, 200); // minimum 200 to
+}
+
+function escapeRegExpForPronouns(word) {
   return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 

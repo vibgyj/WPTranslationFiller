@@ -17,8 +17,10 @@ async function translateText(
         : "This text is a casual conversation with a friend.";
 
     const myformat = destlang === "RO" ? "0" : "1";
-    const url = DeeplFree === true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
-
+     let isFree = DeeplFree === true || DeeplFree === "true"; // handle boolean or string
+    
+    const url = isFree === true ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
+    console.debug("url:",url)
     const requestBody = {
         auth_key: apikeyDeepl,
         text: [originalPreProcessed],

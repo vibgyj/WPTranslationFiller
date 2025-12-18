@@ -1,5 +1,6 @@
 function loadMyGlossary(apiKey, DeeplFree, gloss) {
     //console.debug("we start loading", apiKey, DeeplFree, gloss)
+    console.debug("DeeplFree:",DeeplFree)
     chrome.runtime.sendMessage({
         action: "load_deepl_glossary",
         apiKey: apiKey,
@@ -7,7 +8,7 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
         glossaryData: gloss,
     }, (response) => {
         //console.debug("Received response:", response); // Debugging step
-
+        console.debug("response:",response)
         if (response && response.success) {
             //console.debug("Glossary uploaded:", response.glossaries);
             let result = response.glossaries.glossary_id
@@ -250,10 +251,12 @@ async function oldload_glossary(glossary, apikeyDeepl, DeeplFree, language) {
 
 
 async function show_glossary(apikeyDeepl, DeeplFree, language) {
+    console.debug("show_glossary:",DeeplFree)
     currWindow = window.self;
     chrome.runtime.sendMessage({
         action: "fetch_deepl_glossaries",
-        apiKey: apikeyDeepl
+        apiKey: apikeyDeepl,
+        isFree: DeeplFree
     }, (response) => {
        //console.log("Received response:", response); // Debugging step
 
@@ -555,8 +558,10 @@ async function oldshow_glossary(apikeyDeepl, DeeplFree, language) {
         });
 }
 
-async function delete_all_glossary(apikeyDeepl, DeeplFree) {
-    var myKey=apikeyDeepl
+async function delete_all_glossary(apikeyDeepl,isFree) {
+    var myKey = apikeyDeepl
+    let DeeplFree = isFree === true || isFree === "true"; // handle boolean or string
+    console.debug("delete_all_glossary:",DeeplFree)
     currWindow = window.self;
     chrome.runtime.sendMessage({
         action: "fetch_deepl_glossaries",
