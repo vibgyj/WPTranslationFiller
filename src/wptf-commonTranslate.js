@@ -4946,9 +4946,23 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
                         translateButton.className += " translated";
                         translateButton.innerText = __("Translated");
-                        progressbar = document.querySelector(".indeterminate-progress-bar");
-                        progressbar.style.display = "none";
-                        messageBox("info", __("Translation is ready"));
+
+                        // Check if auto-paginate is enabled
+                        chrome.storage.local.get(["autoPaginate", "bulkWait"], function(paginateData) {
+                            if (paginateData.autoPaginate === true) {
+                                // Auto-paginate: save 100% quality translations then move to next page
+                                let bulk_timer = paginateData.bulkWait || 2000;
+                                messageBox("info", __("Translation complete. Starting auto-save for 100% quality rows..."));
+                                // Small delay to let translations settle before starting save
+                                setTimeout(() => {
+                                    autoPaginateSave(bulk_timer);
+                                }, 2000);
+                            } else {
+                                progressbar = document.querySelector(".indeterminate-progress-bar");
+                                progressbar.style.display = "none";
+                                messageBox("info", __("Translation is ready"));
+                            }
+                        });
                     }
                     // We need to wait a bit before fetching the next record
                    // await delay(vartime * counter)
@@ -6919,6 +6933,123 @@ async function bulkSave(noDiff, bulk_timer) {
         // counter = saveLocal();
         //counter = saveLocal_1();
         counter = saveLocal_2(bulk_timer);
+    }
+}
+
+// Auto-pagination save function - only saves rows with 100% quality then navigates to next page
+async function autoPaginateSave(bulk_timer) {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    var selectedCount = 0;
+
+    // First, select only rows with 100% quality
+    document.querySelectorAll("tr.preview.wptf-translated").forEach((preview) => {
+        const priorityElem = preview.querySelector(".priority");
+        const checkbox = is_pte ? preview.querySelector("th input") : preview.querySelector("td input");
+
+        if (priorityElem && checkbox) {
+            // Check if quality is 100%
+            const qualityText = priorityElem.innerText.trim();
+            if (qualityText === "100") {
+                checkbox.checked = true;
+                selectedCount++;
+            } else {
+                checkbox.checked = false;
+            }
+        }
+    });
+
+    console.debug("Auto-paginate: Selected", selectedCount, "rows with 100% quality");
+
+    if (selectedCount === 0) {
+        messageBox("info", __("No 100% quality translations to save. Moving to next page..."));
+        // Navigate to next page after short delay
+        setTimeout(() => {
+            navigateToNextPage();
+        }, 1500);
+        return;
+    }
+
+    // Show progress message
+    messageBox("info", __("Saving ") + selectedCount + __(" translations with 100% quality..."));
+
+    // Set toonDiff to false to avoid showing diff dialog
+    await setToonDiff({ toonDiff: "false" });
+
+    // Start the save process
+    saveLocal_2(bulk_timer);
+
+    // Monitor for save completion by watching for all saves to finish
+    // We'll check periodically if all selected rows have been processed
+    let checkInterval = setInterval(() => {
+        let pendingCount = 0;
+        document.querySelectorAll("tr.preview.wptf-translated").forEach((preview) => {
+            const checkbox = is_pte ? preview.querySelector("th input") : preview.querySelector("td input");
+            const bubble = document.querySelector(`#editor-${preview.id.split("-")[1]} span.panel-header__bubble`);
+
+            if (checkbox && checkbox.checked) {
+                // Check if still in waiting/transFill state
+                if (bubble && (bubble.innerText === "waiting" || bubble.innerText === "transFill")) {
+                    pendingCount++;
+                }
+            }
+        });
+
+        console.debug("Auto-paginate: Pending saves:", pendingCount);
+
+        if (pendingCount === 0) {
+            clearInterval(checkInterval);
+            // All saves complete, navigate to next page
+            messageBox("info", __("All saves complete. Moving to next page..."));
+            setTimeout(() => {
+                navigateToNextPage();
+            }, 2000);
+        }
+    }, 3000); // Check every 3 seconds
+
+    // Safety timeout - navigate after 2 minutes max
+    setTimeout(() => {
+        clearInterval(checkInterval);
+        console.debug("Auto-paginate: Safety timeout reached, navigating to next page");
+        navigateToNextPage();
+    }, 120000);
+}
+
+// Navigate to the next page for auto-pagination
+function navigateToNextPage() {
+    const pagingDiv = document.querySelector("div.paging");
+    if (pagingDiv) {
+        const pageLinks = pagingDiv.querySelectorAll("a");
+        let nextPageLink = null;
+
+        // Find the link with "→" or "Next"
+        for (const link of pageLinks) {
+            if (link.textContent.includes("→") || link.textContent.toLowerCase().includes("next")) {
+                nextPageLink = link;
+                break;
+            }
+        }
+
+        // Alternative: find current page number and get next
+        if (!nextPageLink) {
+            const currentPage = pagingDiv.querySelector("span.current, .page-numbers.current");
+            if (currentPage && currentPage.nextElementSibling && currentPage.nextElementSibling.tagName === "A") {
+                nextPageLink = currentPage.nextElementSibling;
+            }
+        }
+
+        if (nextPageLink && nextPageLink.href) {
+            console.debug("Auto-paginate: Navigating to next page:", nextPageLink.href);
+            window.location.href = nextPageLink.href + "&auto_translate=true";
+        } else {
+            messageBox("info", __("Translation complete - no more pages"));
+            // Hide progress bar
+            const progressbar = document.querySelector(".indeterminate-progress-bar");
+            if (progressbar) {
+                progressbar.style.display = "none";
+            }
+        }
+    } else {
+        messageBox("info", __("Translation complete - no pagination found"));
     }
 }
 

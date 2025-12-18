@@ -73,9 +73,10 @@ let showForceFormal = document.getElementById("Force-formal");
 let showDefGlossary = document.getElementById("use-default-glossary");
 let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
+let showAutoPaginate = document.getElementById("auto-paginate");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "ollamaUrl", "ollamaKey", "ollamaModel", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "ollamaUrl", "ollamaKey", "ollamaModel", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "autoPaginate", "TMtreshold", "DownloadPath"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
   //  if (data.DownloadPath != null) {
@@ -328,7 +329,15 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             showAutoClipboard.checked = false;
         }
     }
-   
+    if (data.autoPaginate != "null") {
+        if (data.autoPaginate == true) {
+            showAutoPaginate.checked = true;
+        }
+        else {
+            showAutoPaginate.checked = false;
+        }
+    }
+
 });
 
 let backbutton = document.getElementById("backbutton");
@@ -488,6 +497,13 @@ button.addEventListener("click", function () {
     else {
         autoCopyClipBoard = "false";
     }
+    if (document.querySelector("#auto-paginate:checked") !== null) {
+        let autoPaginate_Set = document.querySelector("#auto-paginate:checked");
+        autoPaginateVal = autoPaginate_Set.checked;
+    }
+    else {
+        autoPaginateVal = "false";
+    }
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -529,7 +545,8 @@ button.addEventListener("click", function () {
             DefGlossary: Def_Glossary,
             WPTFscreenWidth: theScreenWidthValue,
             strictValidate: strictValidat,
-            autoCopyClip: autoCopyClipBoard
+            autoCopyClip: autoCopyClipBoard,
+            autoPaginate: autoPaginateVal
 
         });
 

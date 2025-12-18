@@ -1552,6 +1552,24 @@ async function translatedButton() {
         SwitchTMButton.style.visibility = 'visible'
         DispGloss.style.visibility = 'visible'
         DispClipboard.style.visibility = 'visible'
+
+        // Check if auto_translate parameter is present (from auto-pagination)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auto_translate') === 'true') {
+            // Remove the parameter from URL to prevent re-triggering on refresh
+            urlParams.delete('auto_translate');
+            const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+            window.history.replaceState({}, '', newUrl);
+
+            // Auto-click the translate button after a short delay to ensure page is ready
+            setTimeout(() => {
+                const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                if (translateButton) {
+                    console.debug("Auto-paginate: Starting translation on new page");
+                    translateButton.click();
+                }
+            }, 2000);
+        }
     })
 }
 
