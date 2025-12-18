@@ -2,59 +2,31 @@
  * This file includes all functions for translating with the Ollama API
  * It depends on commonTranslate for additional translation functions
  * Ollama provides a local LLM API compatible with OpenAI's chat format
+ * Uses the AI Glossary database for rich translation context
  */
-
-// Extract relevant glossary terms based on words in the source text
-// This keeps context smaller by only including terms that might be needed
-async function getRelevantGlossaryTerms(sourceText) {
-    return new Promise((resolve) => {
-        // Get all glossary arrays from storage
-        const glossaryKeys = [
-            'glossary', 'glossaryA', 'glossaryB', 'glossaryC', 'glossaryD',
-            'glossaryE', 'glossaryF', 'glossaryG', 'glossaryH', 'glossaryI',
-            'glossaryJ', 'glossaryK', 'glossaryL', 'glossaryM', 'glossaryN',
-            'glossaryO', 'glossaryP', 'glossaryQ', 'glossaryR', 'glossaryS',
-            'glossaryT', 'glossaryU', 'glossaryV', 'glossaryW', 'glossaryX',
-            'glossaryY', 'glossaryZ'
-        ];
-
-        chrome.storage.local.get(glossaryKeys, function(data) {
-            const relevantTerms = [];
-            const sourceTextLower = sourceText.toLowerCase();
-
-            // Check each glossary array
-            for (const key of glossaryKeys) {
-                const glossaryArray = data[key];
-                if (Array.isArray(glossaryArray)) {
-                    for (const entry of glossaryArray) {
-                        // Check if the glossary term appears in the source text
-                        if (entry && entry.key && sourceTextLower.includes(entry.key.toLowerCase())) {
-                            relevantTerms.push(`"${entry.key}" -> "${entry.value}"`);
-                        }
-                    }
-                }
-            }
-
-            const result = relevantTerms.join(', ');
-            console.debug("Ollama relevant glossary terms found:", relevantTerms.length, result);
-            resolve(result);
-        });
-    });
-}
 
 // Wrapper function that reads Ollama settings from storage
 // This simplifies integration by not requiring all function signatures to be modified
 async function ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
     return new Promise(async (resolve) => {
-        // Get relevant glossary terms based on source text
-        const relevantGlossary = await getRelevantGlossaryTerms(original);
+        // Get relevant glossary terms from IndexedDB with full metadata (part of speech, comments)
+        let relevantGlossary = '';
+        try {
+            // Use the new AI glossary database with full context
+            relevantGlossary = await getFormattedAIGlossary(original, locale || destlang);
+            console.debug("Ollama: Got AI glossary with", relevantGlossary ? relevantGlossary.split('\n').length : 0, "terms");
+        } catch (err) {
+            console.debug("Ollama: Error getting AI glossary, falling back to legacy:", err);
+            // Fallback to legacy glossary if IndexedDB fails
+            relevantGlossary = openAiGloss || '';
+        }
 
-        chrome.storage.local.get(["ollamaUrl", "ollamaKey", "ollamaModel", "OpenAiGloss"], async function(data) {
+        chrome.storage.local.get(["ollamaUrl", "ollamaKey", "ollamaModel"], async function(data) {
             let ollamaUrl = data.ollamaUrl || 'http://localhost:11434';
             let ollamaKey = data.ollamaKey || '';
             let ollamaModel = data.ollamaModel || 'llama3.2';
-            // Use relevant glossary terms extracted from source text, fall back to passed glossary or storage
-            let glossary = relevantGlossary || openAiGloss || data.OpenAiGloss || '';
+            // Use AI glossary with full context, fall back to passed glossary
+            let glossary = relevantGlossary || openAiGloss || '';
 
             // Use OpenAI prompt and settings as they are compatible
             let result = await ollamaTranslate(

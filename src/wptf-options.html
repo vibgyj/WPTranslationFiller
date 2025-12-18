@@ -5,6 +5,7 @@
     <meta description="WP Translation Filler - Options">
     <meta name="viewport" content="width=device-width, initial-scale=1.2" content-type="image/svg+xml">
     <title>WP Translation Filler - Options</title>
+    <script type="text/javascript" src="wptf-aiGlossary.js"></script>
     <script type="text/javascript" src="wptf-options.js" defer></script>
     <style>
         .form-input {
@@ -419,6 +420,46 @@
                 <td colspan="1">
                     <div>
                         <span style="width:320px" id="glossary_file_second_uploaded"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-top: 20px;">
+                    <strong>AI Glossary (for Ollama/OpenAI with full context)</strong>
+                    <p style="font-size: 12px; color: #666; margin: 5px 0;">
+                        CSV format: source,translation,part_of_speech,comment<br>
+                        Part of speech and comments help AI understand context.
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="ai_glossary_file">AI Glossary CSV File</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="ai_glossary_file" type="file" accept=".csv" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="ai_glossary_locale">Target Locale</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input style="width:80px" id="ai_glossary_locale" type="text" placeholder="e.g., es, nl, de" />
+                        <button id="import_ai_glossary" type="button">Import to Database</button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>AI Glossary Status</label>
+                </td>
+                <td colspan="1">
+                    <div>
+                        <span style="width:320px" id="ai_glossary_status">Not imported</span>
                     </div>
                 </td>
             </tr>

@@ -47,6 +47,10 @@ let uploadedFile = document.getElementById("glossary_file_uploaded");
 let glossaryFile = document.getElementById("glossary_file");
 let uploadedSecondFile = document.getElementById("glossary_file_second_uploaded");
 let glossarySecondFile = document.getElementById("glossary_file_second");
+let aiGlossaryFile = document.getElementById("ai_glossary_file");
+let aiGlossaryLocale = document.getElementById("ai_glossary_locale");
+let aiGlossaryStatus = document.getElementById("ai_glossary_status");
+let importAIGlossaryBtn = document.getElementById("import_ai_glossary");
 let LtToolKeyTextbox = document.getElementById("languagetool_key");
 let LtToolUserTextbox = document.getElementById("languagetool_user");
 let LtToolLangTextbox = document.getElementById("languagetool_language");
@@ -1087,4 +1091,92 @@ function messageBox(type, message) {
         myWindow: myWindow,
         closeStyle: "alert-close",
     });
+}
+
+// AI Glossary import handler
+if (importAIGlossaryBtn) {
+    importAIGlossaryBtn.addEventListener("click", async function () {
+        const file = aiGlossaryFile.files[0];
+        const locale = aiGlossaryLocale.value.trim().toLowerCase();
+
+        if (!file) {
+            messageBox("error", "Please select a CSV file to import");
+            return;
+        }
+
+        if (!locale) {
+            messageBox("error", "Please enter the target locale (e.g., es, nl, de)");
+            return;
+        }
+
+        aiGlossaryStatus.innerText = "Importing...";
+
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+            try {
+                const csvContent = e.target.result;
+                const result = await importAIGlossaryFromCSV(csvContent, locale);
+
+                const thisdate = new Date();
+                let myYear = thisdate.getFullYear();
+                let mymonth = thisdate.getMonth() + 1;
+                let myday = thisdate.getDate();
+                let thisDay = myday + "-" + mymonth + "-" + myYear;
+
+                aiGlossaryStatus.innerText = `Imported ${result.imported} entries for '${locale}' on ${thisDay}`;
+
+                // Save the locale to storage for future reference
+                chrome.storage.local.set({ aiGlossaryLocale: locale });
+
+                messageBox("info", `AI Glossary import complete!<br>Imported: ${result.imported} entries<br>Errors: ${result.errors}`);
+            } catch (err) {
+                console.error("AI Glossary import error:", err);
+                aiGlossaryStatus.innerText = "Import failed: " + err.message;
+                messageBox("error", "AI Glossary import failed: " + err.message);
+            }
+        };
+
+        reader.onerror = function () {
+            aiGlossaryStatus.innerText = "Failed to read file";
+            messageBox("error", "Failed to read the CSV file");
+        };
+
+        reader.readAsText(file);
+    });
+}
+
+// Load AI Glossary status on page load
+async function loadAIGlossaryStatus() {
+    try {
+        chrome.storage.local.get(["aiGlossaryLocale", "destlang"], async function (data) {
+            const locale = data.aiGlossaryLocale || data.destlang || '';
+
+            if (locale && aiGlossaryLocale) {
+                aiGlossaryLocale.value = locale;
+            }
+
+            if (locale && aiGlossaryStatus) {
+                try {
+                    const count = await getAIGlossaryCount(locale);
+                    if (count > 0) {
+                        aiGlossaryStatus.innerText = `${count} entries loaded for '${locale}'`;
+                    } else {
+                        aiGlossaryStatus.innerText = `No entries for '${locale}'`;
+                    }
+                } catch (err) {
+                    console.debug("Could not get AI glossary count:", err);
+                    aiGlossaryStatus.innerText = "Database not initialized";
+                }
+            }
+        });
+    } catch (err) {
+        console.debug("Error loading AI glossary status:", err);
+    }
+}
+
+// Initialize AI glossary status after DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadAIGlossaryStatus);
+} else {
+    loadAIGlossaryStatus();
 }
