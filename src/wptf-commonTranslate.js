@@ -4294,7 +4294,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 }
             }
             else if (transsel == "ollama") {
-                result = await ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+                result = await ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
 
                 if (result == "Error 401") {
                     messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4450,7 +4450,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
             }
         }
         else if (transsel == "ollama") {
-            result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+            result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
 
             if (result == "Error 401") {
                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4688,7 +4688,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
             }
         }
         else if (transsel == "ollama") {
-            result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+            result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
 
             if (result == "Error 401") {
                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -5239,7 +5239,7 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                             }
                         }
                         else if (transsel == "ollama") {
-                            let result = await ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+                            let result = await ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
                             if (errorstate == "Error 401") {
                                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                                 stop = true;
@@ -5558,7 +5558,7 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                                     }
                                 }
                                 else if (transsel == "ollama") {
-                                    result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+                                    result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
 
                                     if (result == "Error 401") {
                                         messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -6143,7 +6143,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "ollama") {
                         let editor = true;
-                        result = await ollamaTranslateFromStorage(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAItemp, spellCheckIgnore, OpenAITone, "editor");
+                        result = await ollamaTranslateFromStorage(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         }
@@ -6301,7 +6301,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                     }
                     else if (transsel == "ollama") {
                         let editor = true;
-                        result = await ollamaTranslateFromStorage(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAItemp, spellCheckIgnore, OpenAITone, "editor");
+                        result = await ollamaTranslateFromStorage(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         }
