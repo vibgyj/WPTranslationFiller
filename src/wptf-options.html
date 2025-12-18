@@ -283,6 +283,39 @@
             </tr>
             <tr>
                 <td>
+                    <label for="ollama_url">Ollama URL</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="ollama_url" type="text" value="http://localhost:11434" placeholder="http://localhost:11434" style="width:350px" />
+                        <span class="tooltip" data-tooltip="Enter the URL of your Ollama server (e.g., http://localhost:11434)">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="ollama_api_key">Ollama API Key (optional)</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="ollama_api_key" type="text" value="" placeholder="Optional API key" style="width:350px" />
+                        <span class="tooltip" data-tooltip="Optional API key if your Ollama server requires authentication">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="ollama_model">Ollama Model</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="ollama_model" type="text" value="llama3.2" placeholder="llama3.2" style="width:200px" />
+                        <span class="tooltip" data-tooltip="Enter the model name to use (e.g., llama3.2, mistral, gemma2)">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="transselect">Select a translator:</label>
                 </td>
                 <td>
@@ -292,6 +325,7 @@
                             <option value="google">Google</option>
                             <option value="microsoft">Microsoft</option>
                             <option value="OpenAI">OpenAI</option>
+                            <option value="ollama">Ollama</option>
                         </select>
                     </div>
                 </td>

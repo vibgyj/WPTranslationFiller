@@ -107,6 +107,7 @@
         "jsstore.worker.js",
         "wptf-commonTranslate.js",
         "wptf-openAITrans.js",
+        "wptf-ollamaTrans.js",
         "wptf-deeplTrans.js",
         "wptf-googleTrans.js",
         "wptf-microsoftTrans.js",

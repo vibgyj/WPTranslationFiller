@@ -4293,7 +4293,29 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     }
                 }
             }
-            
+            else if (transsel == "ollama") {
+                result = await ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+
+                if (result == "Error 401") {
+                    messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                    stop = true;
+                }
+                else if (result == "Error 404") {
+                    messageBox("error", "Error 404: Ollama model not found or server not reachable.");
+                    stop = true;
+                }
+                else if (result == "Connection error") {
+                    messageBox("error", "Cannot connect to Ollama server. Check if Ollama is running.");
+                    stop = true;
+                }
+                else {
+                    if (errorstate != "OK") {
+                        stop = true;
+                        messageBox("error", "There has been some uncatched error: " + errorstate);
+                    }
+                }
+            }
+
             //await mark_preview(preview, result.toolTip, textareaElem[0].textContent, row, false)
             break;
         case 'plural':
@@ -4424,6 +4446,28 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
                     messageBox("error", "There has been some uncatched error: " + errorstate);
                     // break;
                     //alert("There has been some uncatched error: " + errorstate);
+                }
+            }
+        }
+        else if (transsel == "ollama") {
+            result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+
+            if (result == "Error 401") {
+                messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                stop = true;
+            }
+            else if (result == "Error 404") {
+                messageBox("error", "Error 404: Ollama model not found or server not reachable.");
+                stop = true;
+            }
+            else if (result == "Connection error") {
+                messageBox("error", "Cannot connect to Ollama server. Check if Ollama is running.");
+                stop = true;
+            }
+            else {
+                if (errorstate != "OK") {
+                    stop = true;
+                    messageBox("error", "There has been some uncatched error: " + errorstate);
                 }
             }
         }
@@ -4643,7 +4687,29 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl, apik
                 }
             }
         }
-        
+        else if (transsel == "ollama") {
+            result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+
+            if (result == "Error 401") {
+                messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                stop = true;
+            }
+            else if (result == "Error 404") {
+                messageBox("error", "Error 404: Ollama model not found or server not reachable.");
+                stop = true;
+            }
+            else if (result == "Connection error") {
+                messageBox("error", "Cannot connect to Ollama server. Check if Ollama is running.");
+                stop = true;
+            }
+            else {
+                if (errorstate != "OK") {
+                    stop = true;
+                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                }
+            }
+        }
+
     }
     else {
        // console.debug("we are in plural second line pretranslated")
@@ -5172,6 +5238,27 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                                 }
                             }
                         }
+                        else if (transsel == "ollama") {
+                            let result = await ollamaTranslateFromStorage(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+                            if (errorstate == "Error 401") {
+                                messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                                stop = true;
+                            }
+                            else if (result == "Error 404") {
+                                messageBox("error", "Error 404: Ollama model not found or server not reachable.");
+                                stop = true;
+                            }
+                            else if (result == "Connection error") {
+                                messageBox("error", "Cannot connect to Ollama server. Check if Ollama is running.");
+                                stop = true;
+                            }
+                            else {
+                                if (errorstate != "OK") {
+                                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                                    stop = 'true';
+                                }
+                            }
+                        }
                     } else {
                         // Pretranslation found!
                        // console.debug("we found a pretranslated!",pretrans,row,localRow)
@@ -5467,6 +5554,28 @@ async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpen
                                             messageBox("error", "There has been some uncatched error: " + errorstate);
                                             // break;
                                             //alert("There has been some uncatched error: " + errorstate);
+                                        }
+                                    }
+                                }
+                                else if (transsel == "ollama") {
+                                    result = await ollamaTranslateFromStorage(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAItemp, spellCheckIgnore, OpenAITone, false);
+
+                                    if (result == "Error 401") {
+                                        messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                                        stop = true;
+                                    }
+                                    else if (result == "Error 404") {
+                                        messageBox("error", "Error 404: Ollama model not found or server not reachable.");
+                                        stop = true;
+                                    }
+                                    else if (result == "Connection error") {
+                                        messageBox("error", "Cannot connect to Ollama server. Check if Ollama is running.");
+                                        stop = true;
+                                    }
+                                    else {
+                                        if (errorstate != "OK") {
+                                            stop = true;
+                                            messageBox("error", "There has been some uncatched error: " + errorstate);
                                         }
                                     }
                                 }
@@ -6032,6 +6141,24 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                             }
                         }
                     }
+                    else if (transsel == "ollama") {
+                        let editor = true;
+                        result = await ollamaTranslateFromStorage(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAItemp, spellCheckIgnore, OpenAITone, "editor");
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                        }
+                        else if (result == "Error 404") {
+                            messageBox("error", "Error 404: Ollama model not found or server not reachable.");
+                        }
+                        else if (result == "Connection error") {
+                            messageBox("error", "Cannot connect to Ollama server. Check if Ollama is running.");
+                        }
+                        else {
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
                     showButton = document.getElementById("translate-" + rowId + "-translocal-entry-local-button")
                     // we need to hide the button if it is visible
                     if (showButton.style.visibility != "hidden") {
@@ -6169,6 +6296,24 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyMicrosoft, apike
                             if (errorstate != "OK") {
                                 messageBox("error", "There has been some uncatched error: " + errorstate);
                                 //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
+                    else if (transsel == "ollama") {
+                        let editor = true;
+                        result = await ollamaTranslateFromStorage(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAItemp, spellCheckIgnore, OpenAITone, "editor");
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                        }
+                        else if (result == "Error 404") {
+                            messageBox("error", "Error 404: Ollama model not found or server not reachable.");
+                        }
+                        else if (result == "Connection error") {
+                            messageBox("error", "Cannot connect to Ollama server. Check if Ollama is running.");
+                        }
+                        else {
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
                             }
                         }
                     }

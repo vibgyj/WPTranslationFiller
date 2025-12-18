@@ -35,6 +35,9 @@ let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
+let ollamaUrlTextbox = document.getElementById("ollama_url");
+let ollamaKeyTextbox = document.getElementById("ollama_api_key");
+let ollamaModelTextbox = document.getElementById("ollama_model");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
@@ -72,7 +75,7 @@ let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "ollamaUrl", "ollamaKey", "ollamaModel", "OpenAIPrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath"], function (data) {
     apikeyTextbox.value = data.apikey;
     apikeydeeplTextbox.value = data.apikeyDeepl;
   //  if (data.DownloadPath != null) {
@@ -157,6 +160,20 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeydeeplCheckbox = data.DeeplFree;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
+    // Ollama settings
+    if (typeof data.ollamaUrl != 'undefined' && data.ollamaUrl != null && data.ollamaUrl != '') {
+        ollamaUrlTextbox.value = data.ollamaUrl;
+    } else {
+        ollamaUrlTextbox.value = 'http://localhost:11434';
+    }
+    if (typeof data.ollamaKey != 'undefined' && data.ollamaKey != null) {
+        ollamaKeyTextbox.value = data.ollamaKey;
+    }
+    if (typeof data.ollamaModel != 'undefined' && data.ollamaModel != null && data.ollamaModel != '') {
+        ollamaModelTextbox.value = data.ollamaModel;
+    } else {
+        ollamaModelTextbox.value = 'llama3.2';
+    }
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -338,6 +355,9 @@ button.addEventListener("click", function () {
     }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
+    let ollamaUrl = ollamaUrlTextbox.value;
+    let ollamaKey = ollamaKeyTextbox.value;
+    let ollamaModel = ollamaModelTextbox.value;
 
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -474,6 +494,9 @@ button.addEventListener("click", function () {
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
             apikeyMicrosoft: apikeyMicrosoft,
+            ollamaUrl: ollamaUrl,
+            ollamaKey: ollamaKey,
+            ollamaModel: ollamaModel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
