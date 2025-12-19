@@ -566,7 +566,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
             index++;
         }
     }
-    console.debug("after post: ",translatedText)
+    //console.debug("after post: ",translatedText)
     return translatedText;
 }
 
