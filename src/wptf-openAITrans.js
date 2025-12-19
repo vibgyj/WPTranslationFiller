@@ -152,8 +152,14 @@ async function getTransAI(
     };
   }
   
-  
+
     try {
+        // Get the base URL from storage
+        const storageData = await new Promise((resolve) => {
+            chrome.storage.local.get(["OpenAIBaseUrl"], (data) => resolve(data));
+        });
+        dataNew.baseUrl = storageData.OpenAIBaseUrl || "https://api.openai.com/v1";
+
         const start = Date.now()
         //console.debug("We start call at :",start)
         const result = await new Promise((resolve) => {

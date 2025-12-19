@@ -62,6 +62,27 @@
         #OpenAI_api_key {
             width: 350px;
         }
+        #OpenAI_base_url {
+            width: 350px;
+        }
+        #fetchModels {
+            margin-left: 10px;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+        #fetchModelsStatus {
+            margin-left: 5px;
+            font-size: 0.9em;
+        }
+        .status-loading {
+            color: #0085ba;
+        }
+        .status-success {
+            color: #04AA6D;
+        }
+        .status-error {
+            color: #dc3545;
+        }
         #Claude_api_key {
             width: 350px;
         }
@@ -306,6 +327,17 @@
                 </td>
             </tr>
             <tr>
+                <td>
+                    <label for="OpenAI_base_url">OpenAI Base URL</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="OpenAI_base_url" type="text" value="https://api.openai.com/v1" placeholder="https://api.openai.com/v1" />
+                        <span class="tooltip" data-tooltip="Base URL for OpenAI-compatible APIs (Ollama, vLLM, OpenRouter). Leave default for OpenAI.">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
             <tr>
                 <td>
                     <label for="Translateio_api_key">translateio API Key</label>
@@ -371,6 +403,15 @@
                             <option value="gpt-5.1-mini">gpt-5.1-mini</option>
                             <option value="gpt-5.1-nano">gpt-5.1-nano</option>
                         </select>
+                        <button type="button" id="fetchModels" title="Fetch models from API">Fetch Models</button>
+                        <span id="fetchModelsStatus"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <div class="form-input">
                         <label for="OpenAI_temp">Temperature:</label>
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
                     </div>

@@ -12,6 +12,46 @@ This extension helps with translation of originals on translate.wordpress.org an
 7. Words within this table are also not marked when using "LT spellchecker".
 8. Words within this table will also not get a "hyphen" added within the translation
 9. Improved behavior when GlotDict is also active: [GlotDict](https://github.com/Mte90/GlotDict) Google Chrome/Firefox extension.
+10. Support for OpenAI-compatible APIs (Ollama, vLLM, OpenRouter, etc.) via configurable base URL.
+
+# OpenAI-Compatible API Providers
+
+The extension supports any OpenAI-compatible API by allowing you to configure a custom base URL. This enables you to use local LLM providers like Ollama or alternative cloud providers like OpenRouter.
+
+## Configuration
+
+In the options page, set the **OpenAI Base URL** field to your provider's API endpoint:
+
+| Provider | Base URL | Notes |
+|----------|----------|-------|
+| OpenAI (default) | `https://api.openai.com/v1` | Standard OpenAI API |
+| Ollama | `http://localhost:11434/v1` | Local LLM server |
+| vLLM | `http://localhost:8000/v1` | High-performance local inference |
+| OpenRouter | `https://openrouter.ai/api/v1` | Multi-provider gateway |
+
+## Fetching Available Models
+
+After setting your base URL and API key, click the **Fetch Models** button next to the model dropdown. This will query the API's `/models` endpoint and populate the dropdown with all available models from your provider. This is especially useful for:
+- Seeing which models are available on your Ollama instance
+- Discovering available models on OpenRouter
+- Ensuring you select a valid model name
+
+## Using Ollama
+
+1. Install [Ollama](https://ollama.ai/) on your machine
+2. Pull a model: `ollama pull llama3.2` (or any model you prefer)
+3. In the extension options:
+   - Set **OpenAI Base URL** to `http://localhost:11434/v1`
+   - Set **OpenAI API Key** to `ollama` (or any non-empty value)
+   - In the **Select a model for OpenAI** dropdown, manually select a model or use the model name from Ollama (e.g., `llama3.2`)
+
+## Using OpenRouter
+
+1. Get an API key from [OpenRouter](https://openrouter.ai/)
+2. In the extension options:
+   - Set **OpenAI Base URL** to `https://openrouter.ai/api/v1`
+   - Set **OpenAI API Key** to your OpenRouter API key
+   - Select the desired model (use OpenRouter model names like `anthropic/claude-3-haiku`)
 
 For full documentation visit the [Wiki](https://github.com/vibgyj/WPTranslationFiller/wiki).
 If any bugs/problems are found, [please add an issue](https://github.com/vibgyj/WPTranslationFiller/issues/new).

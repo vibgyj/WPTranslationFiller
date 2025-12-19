@@ -27,6 +27,7 @@ rangeInput.addEventListener('input', function () {
 })
 
 document.getElementById("exportverbs").addEventListener("click", export_verbs_csv);
+document.getElementById("fetchModels").addEventListener("click", fetchOpenAIModels);
 // This array is used to replace wrong words in translation and is necessary for the export
 let replaceVerb = [];
 
@@ -35,6 +36,7 @@ let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
+let OpenAIBaseUrlTextbox = document.getElementById("OpenAI_base_url");
 let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
 let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
@@ -82,7 +84,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIBaseUrl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -168,6 +170,11 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
+    if (typeof data.OpenAIBaseUrl == 'undefined' || data.OpenAIBaseUrl == null || data.OpenAIBaseUrl == "") {
+        OpenAIBaseUrlTextbox.value = "https://api.openai.com/v1";
+    } else {
+        OpenAIBaseUrlTextbox.value = data.OpenAIBaseUrl;
+    }
     apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
     apikeyTranslateioTextbox.value = data.apikeyTranslateio
     apikeyClaudeTextbox.value = data.apikeyClaude;
@@ -178,13 +185,19 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         transselectBox.value = data.transsel;
     }
-    if (typeof data.OpenAISelect == 'undefined') {
-        OpenAIselectBox.value = "gpt-3.5-turbo";
-    }
-    else if (data.OpenAISelect == "") {
+    if (typeof data.OpenAISelect == 'undefined' || data.OpenAISelect == "") {
         OpenAIselectBox.value = "gpt-3.5-turbo";
     }
     else {
+        // Check if the saved model exists in the dropdown
+        const modelExists = Array.from(OpenAIselectBox.options).some(opt => opt.value === data.OpenAISelect);
+        if (!modelExists) {
+            // Add the custom model as an option
+            const customOption = document.createElement("option");
+            customOption.value = data.OpenAISelect;
+            customOption.textContent = data.OpenAISelect + " (custom)";
+            OpenAIselectBox.insertBefore(customOption, OpenAIselectBox.firstChild);
+        }
         OpenAIselectBox.value = data.OpenAISelect;
     }
     
@@ -367,6 +380,7 @@ button.addEventListener("click", function () {
     }
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
+    let OpenAIBaseUrl = OpenAIBaseUrlTextbox.value || "https://api.openai.com/v1";
     let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
     let apikeyTranslationio = apikeyTranslateioTextbox.value;
     let apikeyClaude = apikeyClaudeTextbox.value;
@@ -513,6 +527,7 @@ button.addEventListener("click", function () {
             apikey: apikey,
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
+            OpenAIBaseUrl: OpenAIBaseUrl,
             apikeyMicrosoft: apikeyMicrosoft,
             apikeyDeepSeek: apikeyDeepSeek,
             apikeyTranslateio: apikeyTranslationio,
@@ -1165,6 +1180,72 @@ async function showChangelog() {
   } catch (error) {
     console.error("Failed to load changelog:", error);
   }
+}
+
+async function fetchOpenAIModels() {
+    const statusSpan = document.getElementById("fetchModelsStatus");
+    const selectBox = document.getElementById("OpenAIselect");
+    const baseUrl = document.getElementById("OpenAI_base_url").value || "https://api.openai.com/v1";
+    const apiKey = document.getElementById("OpenAI_api_key").value;
+
+    // Show loading status
+    statusSpan.textContent = "Fetching...";
+    statusSpan.className = "status-loading";
+
+    try {
+        const result = await new Promise((resolve) => {
+            chrome.runtime.sendMessage(
+                { action: "fetchOpenAIModels", data: { baseUrl, apiKey } },
+                (res) => resolve(res)
+            );
+        });
+
+        if (!result || !result.success) {
+            statusSpan.textContent = result?.error || "Failed to fetch models";
+            statusSpan.className = "status-error";
+            return;
+        }
+
+        const models = result.models;
+        if (!models || models.length === 0) {
+            statusSpan.textContent = "No models found";
+            statusSpan.className = "status-error";
+            return;
+        }
+
+        // Store the currently selected value
+        const currentValue = selectBox.value;
+
+        // Clear existing options
+        selectBox.innerHTML = "";
+
+        // Add fetched models as options
+        models.forEach(model => {
+            const option = document.createElement("option");
+            option.value = model.id;
+            option.textContent = model.name;
+            selectBox.appendChild(option);
+        });
+
+        // Try to restore the previously selected value, or select the first option
+        if (models.some(m => m.id === currentValue)) {
+            selectBox.value = currentValue;
+        }
+
+        statusSpan.textContent = `${models.length} models loaded`;
+        statusSpan.className = "status-success";
+
+        // Clear status after 3 seconds
+        setTimeout(() => {
+            statusSpan.textContent = "";
+            statusSpan.className = "";
+        }, 3000);
+
+    } catch (error) {
+        console.error("Error fetching models:", error);
+        statusSpan.textContent = "Error: " + error.message;
+        statusSpan.className = "status-error";
+    }
 }
 
 

@@ -193,6 +193,48 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request.action === "fetchOpenAIModels") {
+        (async () => {
+            try {
+                const { baseUrl, apiKey } = request.data || {};
+                const modelsUrl = `${baseUrl || "https://api.openai.com/v1"}/models`;
+
+                const resp = await fetch(modelsUrl, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + (apiKey || ""),
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!resp.ok) {
+                    const msg = await resp.text();
+                    sendResponse({ success: false, error: `Request failed (${resp.status}): ${msg}` });
+                    return;
+                }
+
+                const data = await resp.json();
+                // OpenAI-compatible APIs return { data: [...models...] }
+                const models = data.data || data.models || [];
+
+                // Sort models by id and extract relevant info
+                const modelList = models
+                    .map(m => ({
+                        id: m.id || m.name || m.model,
+                        name: m.id || m.name || m.model
+                    }))
+                    .filter(m => m.id) // Filter out any without id
+                    .sort((a, b) => a.id.localeCompare(b.id));
+
+                sendResponse({ success: true, models: modelList });
+            } catch (err) {
+                sendResponse({ success: false, error: err.toString() });
+            }
+        })();
+
+        return true; // keep sendResponse alive for async
+    }
+
     if (request.action === "OpenAI") {
         (async () => {
             try {
@@ -200,7 +242,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const apiKey = dataToSend.apiKey;       // extract the key
                 delete dataToSend.apiKey;               // remove it from the body
 
-                const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+                // Use custom base URL if provided, otherwise default to OpenAI
+                const baseUrl = dataToSend.baseUrl || "https://api.openai.com/v1";
+                delete dataToSend.baseUrl;              // remove it from the body
+                const apiUrl = `${baseUrl}/chat/completions`;
+
+                const resp = await fetch(apiUrl, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
