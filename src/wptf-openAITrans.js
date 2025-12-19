@@ -2,21 +2,34 @@
  * This file includes all functions for translating with the deepL API and uses a promise
  * It depends on commonTranslate for additional translation functions
  */
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor,openAiGloss) {
-    var timeout = 100;
-    errorstate = "OK"
-    //console.debug("gloss:", openAiGloss)
-    //console.debug("row in AI:",rowId)
-    // First we have to preprocess the original to remove unwanted chars
-    //console.debug("ai original:",original)
+// Call this at the start of your translation batch loop
+function startTranslationBatch() {
+  localStorage.setItem('openai_prompt_sent', 'false');
+}
+
+// Call this at the end of your translation batch loop or when needed
+function endTranslationBatch() {
+  localStorage.removeItem('openai_prompt_sent');
+}
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
+    var timeout = 50;
+    errorstate = "OK";
+    
+    // Preprocess original
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
-    //errorstate = "NOK"
-    setTimeout(async function (timeout) {
-        var result = getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
-    //console.debug("OpenAI errorstate:",errorstate,result)
-    }, timeout);
-    timeout += 1;
-    return errorstate;
+    
+    // Wait the timeout delay if needed
+    await delay(timeout);
+    
+    // Await the translation call
+    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    
+    // You can handle errorstate or result here if needed
+    return result;
 }
 
 async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
@@ -36,232 +49,250 @@ async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, 
 }
 
 
-function getTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss) {
-    var row = "";
-    var translatedText = "";
-    var ul = "";
-    var current = "";
-    var prevstate = "";
-    var pluralpresent = "";
-    var responseObj = "";
-    var textareaElem = "";
-    var select = "";
-    var textareaElem1 = "";
-    var previewElem = "";
-    var preview = "";
-    var status = "";
-    var error;
-    var data;
-    var link;
-    var lang = window.navigator.language;
-    var show_debug = false;
-    var link = "";
-    var myprompt;
-    //console.debug("orginal:",original)
-    //console.debug("taal:",lang)
-    //console.debug("origpre:", originalPreProcessed)
-    // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    //console.debug("rowid:",rowId)
-    //console.debug("OpenAiGloss:", openAiGloss)
-    current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-    prevstate = current.innerText;
+async function getTransAI(
+  original, language, record, apikeyOpenAI, OpenAIPrompt,
+  originalPreProcessed, rowId, transtype, plural_line, formal,
+  locale, convertToLower, editor, counter, OpenAISelect,
+  OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
+) {
+  var show_debug = true
+  var myTtranslatedText = "";
+  let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+    let prevstate = current ? current.innerText : "";
+  const maxTokens = estimateMaxTokens(originalPreProcessed);
+  let destlang = language;
     language = language.toUpperCase();
-    let tempPrompt = OpenAIPrompt + '\n';
-   // myprompt = myprompt.replace("informal", OpenAITone);
-    // We need to replace the tone within the prompt
-    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
-    myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss)
-    //console.debug("prompt:",myprompt)
-    //var prompt = encodeURIComponent(prompt);
-    //console.debug("counter:", counter, myprompt)
-    if (originalPreProcessed == '') {
-       // console.debug("undefined:", originalPreProcessed)
-        originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!"
+    var messages;
+
+  let tempPrompt = OpenAIPrompt + '\n'
+    let myprompt = "";
+
+  // Handle tone and language in prompt
+  if (OpenAITone === 'formal') {
+    if (destlang === 'nl') {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
+    } else if (destlang === 'de') {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
+    } else if (destlang === 'fr') {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
+    } else {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
     }
-    originalPreProcessed = '"' + originalPreProcessed + '"';
-    //console.debug("pre:", originalPreProcessed);
-    var message = [{ 'role': 'system', 'content': myprompt }, { 'role': 'user', 'content': `translate this: ${originalPreProcessed}` }];
-    if (OpenAISelect != 'undefined') {
-        let mymodel = OpenAISelect.toLowerCase();
-        //console.debug("mymodel:",mymodel)
-        var dataNew = {
-            messages: message,
+  } else {
+    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+  }
+
+  // Replace glossary and language names
+  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss);
+
+  if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
+  else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
+  else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
+  else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+
+  if (!originalPreProcessed) {
+    originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
+  }
+  originalPreProcessed = `"${originalPreProcessed}"`;
+  //console.debug("originalPreProcessed:",originalPreProcessed)
+  messages = [
+    { role: 'system', content: myprompt },
+    { role: 'user', content: `translate this: ${originalPreProcessed}` }
+  ];
+
+  if (OpenAISelect === 'undefined' || !OpenAISelect) {
+    messageBox("error", "You did not set the OpenAI model!<br> Please check your options");
+    return "NOK";
+  }
+ // reasoning={"effort": "minimal"}
+    const mymodel = OpenAISelect.toLowerCase();
+   if (show_debug) console.debug("Model selected:",mymodel);
+  let dataNew = {};
+
+    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
+        dataNew = {
             model: mymodel,
-            max_tokens: 1000,
-            n: 1,
-            temperature: OpenAItemp,
+            messages,
+            max_completion_tokens: maxTokens,
+            top_p: 1,
             frequency_penalty: 0,
             presence_penalty: 0,
-            top_p: 0.5
+            reasoning_effort: 'minimal',
+            verbosity: 'low',
+            apiKey: apikeyOpenAI,
+            prompt_cache_key: 'WPTF translation',
         };
-
-        // link = "https://api.openai.com/v1/chat/completions";
-        link = "https://api.openai.com/v1/chat/completions";
-        // link = "https://api.openai.com/v1/edits";
-        if (show_debug) {
-            console.debug("link", link);
-            console.debug("original:",original)
-            console.debug("prompt:", myprompt);
-            console.debug("model:", mymodel);
-           // console.debug("header:", data1);
-            console.debug("browser lang:", lang)
-            console.debug("temp:", OpenAItemp)
-            console.debug("tone:", OpenAITone)
-            console.debug(`[${new Date().toISOString()}] started`)
-        }
-        const response = fetch(link, {
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                "Cache-Control": "no-cache",
-                Authorization: "Bearer " + apikeyOpenAI,
-            },
-            body: JSON.stringify(dataNew)
-        })
-            .then(async response => {
-                const isJson = response.headers.get('content-type')?.includes('application/json');
-                data = isJson && await response.json();
-                //console.debug("Response:", data);
-                // check for error response
-                if (!response.ok) {
-                    // get error message from body or default to response status
-                    //console.debug("data:", data, response.status)
-                    if (typeof data != "undefined") {
-                        errorstate = "NOK"
-                        error = [data, error, response.status, errorstate];
-                    }
-                    else {
-                        let message = 'Noresponse';
-                        data = "noData";
-                        errorstate = "NOK"
-                        error = [data, message, response.status, errorstate];
-                    }
-                    return Promise.reject(error);
-                }
-                else {
-                    errorstate = "OK";
-                    //We do have a result so process it
-                    // console.debug('result:', data);
-                    open_ai_response = data.choices[0];
-                    if (typeof open_ai_response.message.content != 'undefined') {
-                        let text = open_ai_response.message.content;
-                        if (show_debug == true) {
-                            let token = data.usage.total_tokens
-                        }
-                        //text = text.trim('\n');
-                        //console.debug("text:", text,original)
-                        if (text == '""') {
-                            text = original + " no translation received"
-                            translatedText = original + " No translation received"
-                        }
-                       // console.debug(`[${new Date().toISOString()}] translation recieved:`,text)
-                        translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
-                        //console.debug("translation raw:",original,translatedText)
-                        //console.debug("plural_line:",plural_line)
-                        await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-                       // console.debug(`[${new Date().toISOString()}] translation processed:`,translatedText)
-                        return Promise.resolve(errorstate)
-                    }
-                    else {
-                        text = "No suggestions"
-                        translatedText = await postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore, locale);
-                        if (translatedText != "") {
-                            await processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-                        }
-                        errorstate = "NOK";
-                    }
-                    return Promise.resolve(errorstate)
-                }
-            })
-            .catch(error => {
-                console.debug("error:", error)
-                if (editor) {
-                    let translateButton = document.querySelector("translation-entry-mybutton");
-                }
-                else {
-                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-                }
-                console.debug("translateButton:",translateButton)
-                translateButton.className += " translated";
-                translateButton.innerText = "Translated";
-                if (error[2] == "400") {
-                    errorstate = "Error 400";
-                    if (editor) {
-                        messageBox("error", "Error 400:" + error[0].error.message)
-                    }
-                }
-                else if (error[2] == "401") {
-                    errorstate = "Error 401";
-                    if (editor) {
-                        messageBox("error", "Error 401 Authorization failed.Please supply a valid auth_key parameter.")
-                    }
-                }
-                else if (error[2] == '404') {
-                    alert("Error 404 The requested resource could not be found.")
-                    errorstate = "Error 404";
-                }
-                else if (error[2] == '429') {
-                    if (editor) {
-                        messageBox("error", "The model: " + mymodel + " is currently overloaded with other requests")
-                        errorstate = "Error 429";
-                    }
-                    else {
-                        text = "No suggestions due to overload OpenAI!!"
-                        translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore,locale);
-                        processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-                        errorstate = "Error 429";
-                    }
-
-                }
-                else if (error[2] == '456') {
-                    //alert("Error 456 Quota exceeded. The character limit has been reached")
-                    errorstate = "Error 456";
-                }
-                else if (error[2] == '503') {
-                    //messageBox("error", "Error 503 has been encountered" + error)
-                    text = "No suggestions server cannot be reached!!"
-                    translatedText = postProcessTranslation(original, text, replaceVerb, originalPreProcessed, "OpenAI", convertToLower, spellCheckIgnore,locale);
-                    processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
-                    errorstate = "Error 503";
-
-                }
-                else if (error == "TypeError: Failed to fetch")
-                {
-                    messageBox("error", "Fetch does not get an answer all from the API")
-                    errorstate = "Undefined error";
-                }
-                else {
-                    if (editor) {
-                        messageBox("error", "Some uncatched error has been found." + error[0])
-                    }
-                    if (typeof error != 'undefined') {
-                        console.debug("error final:", error)
-                        errorstate = error[0].error.message
-                    }
-                    else {
-                        errorstate = "NOK"
-                    }
-                }
-
-                // console.debug("return of errorstate:", errorstate)
-                return errorstate;
-            }).then(err => {
-                //console.debug("in then:", err);
-                if (typeof err != "undefined") {
-                    let errorstate = err; return errorstate
-                }
-                else {
-                    console.debug("found err:", err)
-                }
-
-            })
     }
-    else {
-        messageBox("error", "You did not set the OpenAI model!<br> Please check your options")
+    else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano") { 
+         dataNew = {
+            model: mymodel,
+            messages,
+            max_completion_tokens: maxTokens,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            reasoning_effort: 'none',
+            verbosity: 'low',
+            apiKey: apikeyOpenAI,
+            prompt_cache_key: 'WPTF translation',
+        };
+  }
+  else {
+    dataNew = {
+      model: mymodel, 
+      messages,
+      max_tokens: 1000,
+      n: 1,
+      temperature: OpenAItemp,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      top_p: 0.5,
+     apiKey: apikeyOpenAI,
 
+    };
+  }
+  
+  
+    try {
+        const start = Date.now()
+        //console.debug("We start call at :",start)
+        const result = await new Promise((resolve) => {
+            chrome.runtime.sendMessage(
+                { action: "OpenAI", data: dataNew }, // send only the data
+                (res) => resolve(res)
+            );
+       });
+
+       if (!result) {
+        console.debug("OpenAI proxy returned undefined");
+        return "NOK";
     }
-    
+
+       if (result.error) {
+        const duration = ((Date.now() - start) / 1000).toFixed(2);
+           if (show_debug) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
+            // Example of result.error: "Request failed (401): <some text>"
+           const match = result.error.match(/Request failed \((\d+)\)/);
+           const statusCode = match ? match[1] : "unknown";
+           //console.debug("Editor:",editor)
+           if (statusCode == '401') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Please check your license!`
+                   );
+               }
+               else {
+                   return `Error 401`;
+               }
+           }
+           else if (statusCode == '403') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Country not supported!`
+                   );
+               }
+               else {
+                   return `Request failed with status ${statusCode}. Country not supported!`;
+               }
+           }
+           else if (statusCode == '429') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Rate limit reached!`
+                   );
+               }
+               else {
+                   return `Request failed with status ${statusCode}. Rate limit reached!`;
+               }
+           }
+           else if (statusCode == '500') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Server issue!`
+                   );
+               }
+               else {
+                   return `Request failed with status ${statusCode}. Server issue!`;
+               }
+           }
+           else {
+               return `Request failed with status ${statusCode}. Some undefined error happened!`;
+           }
+    }
+    const duration = ((Date.now() - start) / 1000).toFixed(2);
+    if (show_debug) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
+
+   const data = result.result; // raw proxy response
+   let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
+   if (text === '""' || text === "") {
+       text = "No suggestions";
+   }
+
+    // Post-processing after successful result
+    const start1 = Date.now()
+    //console.debug("text received:",text)
+    myTranslatedText = await postProcessTranslation(
+        original,
+        text,
+        replaceVerb,
+        originalPreProcessed,
+        "OpenAI",
+        convertToLower,
+        spellCheckIgnore,
+        locale
+       );
+    const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] text postprocessed ${duration2}s`, text);
+
+    //if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
+    const start2 = Date.now()
+    await processTransl(
+        original,
+        myTranslatedText,
+        language,
+        record,
+        rowId,
+        transtype,
+        plural_line,
+        locale,
+        convertToLower,
+        current
+    );
+
+     const duration3 = ((Date.now() - start2) / 1000).toFixed(2);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
+    const durationSec = ((Date.now() - start) / 1000).toFixed(2);
+    if (show_debug) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
+
+    return "OK";
+
+    } catch (err) {
+        console.error("Fetch OpenAI failed:", err);
+        return null;
+    }
+
+    console.debug("result:")
+  //  if (!OpenAiResponse.ok) {
+      // error object from OpenAI might be in data.error.message
+   //   const errorMsg = data?.error?.message || `HTTP error ${response.status}`;
+  //    if (editor) messageBox("error", `OpenAI API Error: ${errorMsg}`);
+  //    if (show_debug) console.error("OpenAI API error:", errorMsg);
+  //    return "NOK";
+  //  }
+
+  
+ // } catch (error) {
+ //   if (editor) messageBox("error", "OpenAI API fetch error: " + error.message);
+ //   if (show_debug) console.error("OpenAI fetch error:", error);
+ //   return "NOK";
+ // }
 }
+
+
 
 async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
     var row = "";
@@ -626,3 +657,15 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
     }
     return errorstate
 }
+
+function estimateMaxTokens(inputText) {
+  // Rough estimate: ~4 characters ≈ 1 token in English/Dutch
+  const inputTokens = Math.ceil(inputText.length / 4);
+
+  // Translation output is usually a bit longer → use 1.5x multiplier
+  const estimatedOutput = Math.ceil(inputTokens * 1.5);
+
+  // Add a small safety margin
+  return estimatedOutput + 20;
+}
+

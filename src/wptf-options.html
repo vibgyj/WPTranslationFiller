@@ -5,7 +5,6 @@
     <meta description="WP Translation Filler - Options">
     <meta name="viewport" content="width=device-width, initial-scale=1.2" content-type="image/svg+xml">
     <title>WP Translation Filler - Options</title>
-    <script type="text/javascript" src="wptf-aiGlossary.js"></script>
     <script type="text/javascript" src="wptf-options.js" defer></script>
     <style>
         .form-input {
@@ -49,11 +48,21 @@
             width: 350px;
         }
 
+        #deepseek_api_key {
+            width: 350px;
+        }
+        #Translateio_api_key {
+            width: 350px;
+        }
+
         #microsoft_api_key {
             width: 350px;
         }
 
         #OpenAI_api_key {
+            width: 350px;
+        }
+        #Claude_api_key {
             width: 350px;
         }
 
@@ -102,6 +111,10 @@
         }
 
         #text_openai_prompt {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
+        #text_claude_prompt {
             width: calc(100% - 6px);
             min-height: 100px;
         }
@@ -274,6 +287,16 @@
             </tr>
             <tr>
                 <td>
+                    <label for="deepseek_api_key">DeepSeek API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="deepseek_api_key" type="text" value="DeepSeek-api key->" placeholder="DeepSeek API key" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="OpenAI_api_key">OpenAI API Key</label>
                 </td>
                 <td>
@@ -283,35 +306,24 @@
                 </td>
             </tr>
             <tr>
+            <tr>
                 <td>
-                    <label for="ollama_url">Ollama URL</label>
+                    <label for="Translateio_api_key">translateio API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="ollama_url" type="text" value="http://localhost:11434" placeholder="http://localhost:11434" style="width:350px" />
-                        <span class="tooltip" data-tooltip="Enter the URL of your Ollama server (e.g., http://localhost:11434)">?</span>
+                        <input id="Translateio_api_key" type="text" value="Translateio api key->" />
                     </div>
                 </td>
             </tr>
             <tr>
-                <td>
-                    <label for="ollama_api_key">Ollama API Key (optional)</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="ollama_api_key" type="text" value="" placeholder="Optional API key" style="width:350px" />
-                        <span class="tooltip" data-tooltip="Optional API key if your Ollama server requires authentication">?</span>
-                    </div>
-                </td>
-            </tr>
             <tr>
                 <td>
-                    <label for="ollama_model">Ollama Model</label>
+                    <label for="Claude_api_key">Claude API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="ollama_model" type="text" value="llama3.2" placeholder="llama3.2" style="width:200px" />
-                        <span class="tooltip" data-tooltip="Enter the model name to use (e.g., llama3.2, mistral, gemma2)">?</span>
+                        <input id="Claude_api_key" type="text" value="Claude api key->" />
                     </div>
                 </td>
             </tr>
@@ -323,10 +335,13 @@
                     <div class="form-select">
                         <select title="Select a translator" name="transsel" id="transselect">
                             <option value="deepl">Deepl</option>
+                            <option value="deepseek">DeepSeek</option>
                             <option value="google">Google</option>
                             <option value="microsoft">Microsoft</option>
                             <option value="OpenAI">OpenAI</option>
-                            <option value="ollama">Ollama</option>
+                            <option value="translation_io">translationio</option>
+                            <option value="Claude">Claude</option>
+
                         </select>
                     </div>
                 </td>
@@ -343,10 +358,18 @@
                             <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
                             <option value="gpt-4">gpt-4</option>
                             <option value="gpt-4.1">gpt-4.1</option>
+                            <option value="gpt-4.1-mini">gpt-4.1 mini</option>
+                            <option value="gpt-4.1-nano">gpt-4.1 nano</option>
                             <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
                             <option value="gpt-4-turbo">gpt-4-turbo</option>
                             <option value="gpt-4o">gpt-4o</option>
                             <option value="gpt-4o-mini">gpt-4o-mini</option>
+                            <option value="gpt-5">gpt-5</option>
+                            <option value="gpt-5-mini">gpt-5-mini</option>
+                            <option value="gpt-5-nano">gpt-5-nano</option>
+                            <option value="gpt-5.1">gpt-5.1</option>
+                            <option value="gpt-5.1-mini">gpt-5.1-mini</option>
+                            <option value="gpt-5.1-nano">gpt-5.1-nano</option>
                         </select>
                         <label for="OpenAI_temp">Temperature:</label>
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
@@ -420,46 +443,6 @@
                 <td colspan="1">
                     <div>
                         <span style="width:320px" id="glossary_file_second_uploaded"></span>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" style="padding-top: 20px;">
-                    <strong>AI Glossary (for Ollama/OpenAI with full context)</strong>
-                    <p style="font-size: 12px; color: #666; margin: 5px 0;">
-                        CSV format: source,translation,part_of_speech,comment<br>
-                        Part of speech and comments help AI understand context.
-                    </p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="ai_glossary_file">AI Glossary CSV File</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="ai_glossary_file" type="file" accept=".csv" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="ai_glossary_locale">Target Locale</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input style="width:80px" id="ai_glossary_locale" type="text" placeholder="e.g., es, nl, de" />
-                        <button id="import_ai_glossary" type="button">Import to Database</button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label>AI Glossary Status</label>
-                </td>
-                <td colspan="1">
-                    <div>
-                        <span style="width:320px" id="ai_glossary_status">Not imported</span>
                     </div>
                 </td>
             </tr>
@@ -571,6 +554,12 @@
             </textarea>
         </div>
         <div class="form-input">
+            <label for="text_claude_prompt">Claude prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt for Claude will be populated">?</span>
+            <textarea id="text_claude_prompt">
+    </textarea>
+        </div>
+        <div class="form-input">
             <label for="text_pre_verbs">Pre Translation Replace</label>
             <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
             <textarea id="text_pre_verbs">Your,Je
@@ -643,10 +632,10 @@ You,Je
             <span>auto copy to clipboard</span>
         </label>
         <label class="labeled-checkbox">
-            <input type="checkbox" id="auto-paginate">
-            <span>Auto-paginate (continue to next page after bulk translate)</span>
+            <input type="checkbox" id="disable-auto-close">
+            <span>Disable autoclose editor</span>
         </label>
-        <br/>
+        <br />
         <table id="footer">
             <tr>
                 <td>
@@ -657,6 +646,11 @@ You,Je
                 <td>
                     <div class="wptf-info">
                         <a rel="noopener" href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
+                    </div>
+                </td>
+                <td>
+                    <div class="wptf-info">
+                        <a href="#" id="show-changelog-link">View Changelog</a>
                     </div>
                 </td>
             </tr>

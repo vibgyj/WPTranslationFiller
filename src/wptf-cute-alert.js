@@ -80,7 +80,7 @@ const cuteAlert = ({
                                // sound.play();
                             }).catch(error => {
                                 // Autoplay was prevented.
-                                //console.debug("sound is not allowed!!")
+                                console.debug("sound is not allowed!!")
                             });
                         }
                         else {

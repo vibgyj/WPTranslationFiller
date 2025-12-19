@@ -1,0 +1,82 @@
+[
+  {
+    "english": "Add engaging videos seamlessly in minutes without complexity. Presto Player lets you enhance your website with videos using branding, chapters, and call-to-actions while providing fast load times, detailed analytics, and user-friendly controls for a seamless viewing experience.",
+    "dutch": "Voeg binnen enkele minuten naadloos boeiende Video's toe zonder complexiteit. Met Presto Player kun je je site opwaarderen met Video's door gebruik te maken van branding, hoofdstukken en Call To Actions, terwijl je tegelijkertijd snelle laadtijden, gedetailleerde analyses en gebruiksvriendelijke bediening voor een naadloze kijkervaring krijgt.",
+    "expected": "Voeg binnen enkele minuten naadloos boeiende Video's toe zonder complexiteit. Met Presto Player kun u uw site opwaarderen met Video's door gebruik te maken van branding, hoofdstukken en Call To Actions, terwijl u tegelijkertijd snelle laadtijden, gedetailleerde analyses en gebruiksvriendelijke bediening voor een naadloze kijkervaring krijgt."
+  },
+  {
+    "english": "Select Your Features",
+    "dutch": "Je functies selecteren",
+    "expected": "Uw functies selecteren"
+  },
+  {
+    "english": "Presto Player lets you enhance your website with videos using branding, chapters, and call-to-actions while providing fast load times, detailed analytics, and user-friendly controls for a seamless viewing experience.",
+    "dutch": "Met presto player kun je je site opwaarderen met Video's door gebruik te maken van branding, hoofdstukken en Call To Actions, terwijl je tegelijkertijd snelle laadtijden, gedetailleerde analyses en gebruiksvriendelijke bediening voor een naadloze kijkervaring krijgt.",
+    "expected": "Met presto player kun u uw site opwaarderen met Video's door gebruik te maken van branding, hoofdstukken en Call To Actions, terwijl u tegelijkertijd snelle laadtijden, gedetailleerde analyses en gebruiksvriendelijke bediening voor een naadloze kijkervaring krijgt."
+  },
+  {
+    "english": "Design eye-catching popups directly in Elementor—collect leads, display promotions, or show messages without needing a separate popup plugin.",
+    "dutch": "Ontwerp opvallende pop-ups rechtstreeks in Elementor - Verzamel leads, toon promoties of toon berichten zonder dat je een aparte pop-up Plugin nodig hebt.",
+    "expected": "Ontwerp opvallende pop-ups rechtstreeks in Elementor - Verzamel leads, toon promoties of toon berichten zonder dat u een aparte pop-up Plugin nodig hebt."
+  },
+  {
+    "english": "Save hours by copying Elementor sections, widgets, or pages from one website to another—no need to rebuild layouts from scratch.",
+    "dutch": "Bespaar uren door secties, widgets of pagina's van Elementor van de ene site naar de andere te kopiëren - Je hoeft lay-outs niet helemaal opnieuw op te bouwen.",
+    "expected": "Bespaar uren door secties, widgets of pagina's van Elementor van de ene site naar de andere te kopiëren - U hoeft lay-outs niet helemaal opnieuw op te bouwen."
+  },
+  {
+    "english": "If you rolled back due to an error message, review your error logs to confirm it's resolved",
+    "dutch": "Als je terugdraait vanwege een foutmelding, je fout logs beoordelen om te bevestigen dat het is opgelost",
+    "expected": "Als u terugdraait vanwege een foutmelding, uw fout logs beoordelen om te bevestigen dat het is opgelost"
+  },
+  {
+    "english": "Build your website",
+    "dutch": "Bouw je site",
+    "expected": "Bouw uw site"
+  },
+  {
+    "english": "Upload additional files or resources that will be available for your lesson. Click on the \\\"Plus\\\" icon to upload the files. Please, note that the attached files will be visible on the front end. It will be displayed at the bottom section of the lesson content.",
+    "dutch": "Upload extra bestanden of bronnen die beschikbaar zullen zijn voor je les. Klik op het \\\"plus\\\" icoon om de bestanden te uploaden. Let op dat de bijgevoegde bestanden zichtbaar zijn op de front-end. Ze worden weergegeven onderaan de lesinhoud.",
+    "expected": "Upload extra bestanden of bronnen die beschikbaar zullen zijn voor uw les. Klik op het \\\"plus\\\" icoon om de bestanden te uploaden. Let alstublieft op dat de bijgevoegde bestanden zichtbaar zijn op de front-end. Ze worden weergegeven onderaan de lesinhoud."
+  },
+  {
+    "english": "Sorry, but nothing matched your search terms. Please try again with some different keywords.",
+    "dutch": "Er kwam niets overeen met je zoekopdracht termen. Probeer het nog eens met wat andere keywords.",
+    "expected": "Er kwam niets overeen met uw zoekopdracht termen. Probeer alstublieft het nog eens met wat andere keywords."
+  },
+  {
+    "english": "Select how you want your paragraphs to appear.",
+    "dutch": "Selecteer hoe je wil dat je paragrafen verschijnen.",
+    "expected": "Selecteer hoe u wil dat uw paragrafen verschijnen."
+  },
+  {
+    "english": "The SEO-friendly features make it easier for your content to rank higher on search engines, while social media integration helps you grow your audience.",
+    "dutch": "De SEO vriendelijke functies maken het gemakkelijker voor je inhoud om hoger te scoren in zoekmachines, terwijl de integratie van sociale media je helpt om je publiek te laten groeien.",
+    "expected": "De SEO vriendelijke functies maken het gemakkelijker voor uw inhoud om hoger te scoren in zoekmachines, terwijl de integratie van sociale media u helpt om uw publiek te laten groeien."
+  },
+  {
+    "english": "Please back up your website if it's already live with data. This importer will overwrite your existing settings with the new customizer values for VW Lifestyle Blog",
+    "dutch": "Maak een back-up van je site als deze al live is met gegevens. Deze importeerfunctie overschrijft je bestaande instellingen met de nieuwe customizer waarden voor VW Lifestyle Blog",
+    "expected": "Maak alstublieft een back-up van uw site als deze al live is met gegevens. Deze importeerfunctie overschrijft uw bestaande instellingen met de nieuwe customizer waarden voor VW Lifestyle Blog"
+  },
+  {
+    "english": "CVV verification failed. Please check your CVV.",
+    "dutch": "CVV verificatie mislukt. Controleer je CVV.",
+    "expected": "CVV verificatie mislukt. Controleer alstublieft uw CVV."
+  },
+  {
+    "english": "In order to start processing payments in production or sandbox, you must connect the plugin. You can either\\n\\tconnect by manually entering your client ID and secret, or using our automated connect integration. Click %1$shere%2$s to\\n\\tnavigate to the API Settings page where you can \\\"connect.\\\"",
+    "dutch": "Om betalingen te verwerken in productie of sandbox, moet u de plugin verbinden. Je kunt ofwel\\n\\thandmatig je client ID en secret invoeren om te verbinden, of onze automatische connect integratie gebruiken. Klik %1$shier%2$s om\\n\\tnaar de API instellingen pagina te gaan waar je kunt verbinden.",
+    "expected": "Om betalingen te verwerken in productie of sandbox, moet u de plugin verbinden. U kunt ofwel\\n\\thandmatig uw client ID en secret invoeren om te verbinden, of onze automatische connect integratie gebruiken. Klik %1$shier%2$s om\\n\\tnaar de API instellingen pagina te gaan waar u kunt verbinden."
+  },
+  {
+    "english": "AI credit validity: Lifetime – use anytime.",
+    "dutch": "AI tegoed geldigheid: levenslang – gebruik wanneer je wilt.",
+    "expected": "AI tegoed geldigheid: levenslang – gebruik wanneer u wilt."
+  },
+  {
+    "english": "Using this plugin, an ALT text will be generated for your WordPress media library image(s) with just one click or automatically when the images are uploaded. You can also generate the ALT texts in bulk for all your images.",
+    "dutch": "Met deze plugin wordt er een ALT-tekst gegenereerd voor je WordPress mediabibliotheek afbeelding(en) met slechts \u00e9\u00e9n klik of automatisch wanneer de afbeeldingen worden ge\u00fcpload. Je kunt de ALT-teksten ook in bulk genereren voor al je afbeeldingen.",
+    "expected": "Met deze plugin wordt er een ALT-tekst gegenereerd voor uw WordPress mediabibliotheek afbeelding(en) met slechts \u00e9\u00e9n klik of automatisch wanneer de afbeeldingen worden ge\u00fcpload. U kunt de ALT-teksten ook in bulk genereren voor al uw afbeeldingen."
+  }
+]

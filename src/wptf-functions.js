@@ -1,5 +1,314 @@
-﻿// This file contains functions used within various files
+﻿function escapeRegExpForPronouns(word) {
+  return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
+function enableInterceptSuggestions() {
+    localStorage.setItem('interSuggestions', 'true');
+}
+
+function disableInterceptSuggestions() {
+    localStorage.setItem('interSuggestions', 'false');
+}
+
+function insertAlstublieftIfPlease(original, dutch) {
+    // Split into sentences (keeping punctuation)
+    const engSentences = original.split(/(?<=[.?!])\s+/);
+    const dutchSentences = dutch.split(/(?<=[.?!])\s+/);
+
+    for (let i = 0; i < engSentences.length; i++) {
+        if (/please/i.test(engSentences[i])) {
+            let words = dutchSentences[i].split(/\s+/);
+
+            if (words.length >= 1 && !/\balstublieft\b/i.test(dutchSentences[i])) {
+                // Insert AFTER the first word (index 0)
+                words.splice(1, 0, "alstublieft");
+                dutchSentences[i] = words.join(" ");
+            }
+        }
+    }
+    return dutchSentences.join(" ");
+}
+
+
+function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
+    const markerBase = "__REPLACE_";
+    let markerIndex = 0;
+
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Sentence splitter (keeps punctuation + newlines)
+    const sentenceSplitRegex = /(.*?)([.?!,;:](?:\s+|\r\n|\r|\n)|\s–\s|\r\n|\r|\n|$)/gs;
+
+    // Initial splitting
+    let engMatches = [...english.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+    let dutMatches = [...dutch.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+
+    let engSentences = engMatches.map(m => m[1] + m[2]);
+    let dutchSentences = dutMatches.map(m => m[1] + m[2]);
+
+    if (debug) {
+        console.debug("English split:", engSentences);
+        console.debug("Dutch split:", dutchSentences);
+    }
+
+    // --- NEW STEP: Adjust English commas if sentence counts differ ---
+    if (engSentences.length !== dutchSentences.length) {
+        let engCommaCount = (english.match(/,/g) || []).length;
+        const dutCommaCount = (dutch.match(/,/g) || []).length;
+
+        let adjustedEnglish = english;
+        let adjustedEngMatches = engMatches;
+        let adjustedEngSentences = engSentences;
+
+        while (adjustedEngSentences.length !== dutchSentences.length && engCommaCount > dutCommaCount) {
+            // Remove the first comma in the string (replace only the first)
+            adjustedEnglish = adjustedEnglish.replace(',', '');
+
+            // Re-split adjusted English text
+            adjustedEngMatches = [...adjustedEnglish.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+            adjustedEngSentences = adjustedEngMatches.map(m => m[1] + m[2]);
+
+            let newEngCommaCount = (adjustedEnglish.match(/,/g) || []).length;
+
+            if (newEngCommaCount === engCommaCount) break; // No comma removed, avoid infinite loop
+            engCommaCount = newEngCommaCount;
+        }
+
+        engSentences = adjustedEngSentences;
+        english = adjustedEnglish;
+
+        if (debug) {
+            console.debug("Adjusted English split:", engSentences);
+            console.debug("Adjusted English text:", english);
+        }
+    }
+    // --- End of new comma adjustment step ---
+
+    const updatedSentences = [];
+    const markerReplacements = [];
+
+    // Keep only valid 3-item entries, then normalize (trim) each part to avoid stray-space bugs.
+    const validReplacements = replaceVerbs
+      .filter(entry => Array.isArray(entry) && entry.length === 3)
+      .map(([en, inf, form]) => [typeof en === 'string' ? en.trim() : en, typeof inf === 'string' ? inf.trim() : inf, typeof form === 'string' ? form.trim() : form]);
+
+    // === Step 1: Pronoun replacement (per English match, preserves mapping) ===
+    for (let i = 0; i < dutchSentences.length; i++) {
+        const eng = engSentences[i] || "";
+        let dut = dutchSentences[i] || "";
+
+        const words = eng.trim().split(/\s+/);
+        const firstWord = words[0] || "";
+        const rest = words.slice(1).map(w => w.toLowerCase());
+        const normalizedEnglish = [firstWord, ...rest];
+
+        if (debug) {
+            console.debug(`\n--- Sentence ${i + 1} ---`);
+            console.debug("English words (normalized):", normalizedEnglish);
+            console.debug("Dutch before replacement:", dut);
+        }
+
+        let replacementsThisSentence = [];
+
+        // Process in English word order
+        normalizedEnglish.forEach((word) => {
+            // Match against trimmed english mapping key
+            const matchEntry = validReplacements.find(([en]) => typeof en === 'string' && en === word);
+            if (!matchEntry) return;
+
+            const [, informal, formal] = matchEntry;
+
+            if (debug) {
+                console.debug(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formal}"`);
+            }
+
+            // Use trimmed informal in regex (case-insensitive), no global flag here (replace first occurrence per English match)
+            let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'i');
+            if (matchRegex.test(dut)) {
+                dut = dut.replace(matchRegex, (match, punct, space) => {
+                    if (debug) {
+                        console.debug("Matched informal:", match);
+                    }
+
+                    const marker = `${markerBase}${markerIndex}_0__`;
+
+                    // Extract matched informal portion (case-insensitive)
+                    const informalFound = match.match(new RegExp(`^${escapeRegex(informal)}`, 'i'))[0];
+
+                    // Check if first letter is uppercase
+                    const isCapitalized = informalFound[0] === informalFound[0].toUpperCase();
+
+                    // Capitalize formal replacement if needed
+                    const replacementFinal = isCapitalized
+                        ? formal.charAt(0).toUpperCase() + formal.slice(1)
+                        : formal;
+
+                    replacementsThisSentence.push({ marker, replacement: replacementFinal + (punct || '') });
+                    markerIndex++;
+
+                    return marker + (space || '');
+                });
+            } else {
+                if (debug) {
+                    console.debug(`No occurrence of "${informal}" found in Dutch sentence for "${word}"`);
+                }
+            }
+        });
+
+        if (debug) {
+            console.debug("Dutch after marker insertion:", dut);
+        }
+
+        markerReplacements.push(...replacementsThisSentence);
+        updatedSentences.push(dut);
+    }
+
+    // === Step 2: Apply all marker replacements ===
+    let finalResult = updatedSentences.join("");
+    markerReplacements.forEach(({ marker, replacement }) => {
+        finalResult = finalResult.replace(marker, replacement);
+    });
+
+    // === Step 3: Final cleanup of any remaining informal forms ===
+    const foundEnglishPronouns = new Set(
+        engSentences.join(" ").toLowerCase().match(/\b(you|your|yours)\b/g) || []
+    );
+
+    validReplacements.forEach(([en, informal, formal]) => {
+        if (!foundEnglishPronouns.has(en.toLowerCase())) return; // skip if not in original English
+        let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'gi');
+        finalResult = finalResult.replace(matchRegex, (match, punct, space, offset) => {
+            const before = finalResult.slice(0, offset);
+            const isSentenceStart = /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
+            const replacementFinal = isSentenceStart
+                ? formal.charAt(0).toUpperCase() + formal.slice(1)
+                : formal.toLowerCase();
+            return replacementFinal + (punct || '') + (space || '');
+        });
+    });
+
+    // === Step 3b: Extra pass to replace any leftover informal pronouns in Dutch unconditionally ===
+    const leftoverInformals = validReplacements.map(([, informal]) => informal).join("|");
+    const leftoverRegex = new RegExp(`\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`, "gi");
+
+    finalResult = finalResult.replace(leftoverRegex, (match, informal, punct, space, offset) => {
+        // Find formal replacement for this informal pronoun
+        const replacementPair = validReplacements.find(([ , inf]) => inf.toLowerCase() === informal.toLowerCase());
+        if (!replacementPair) return match; // safety check
+
+        const formal = replacementPair[2];
+        const before = finalResult.slice(0, offset);
+        const isSentenceStart = /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
+        const replacementFinal = isSentenceStart
+            ? formal.charAt(0).toUpperCase() + formal.slice(1)
+            : formal.toLowerCase();
+
+        return replacementFinal + (punct || '') + (space || '');
+    });
+
+    // === Step 4: International polite word insertion (HTML-safe) ===
+    const politeEntry = replaceVerbs.find(entry =>
+        Array.isArray(entry) && entry.length === 2 && /please/i.test(entry[0])
+    );
+
+    if (politeEntry) {
+        if (engSentences.length !== dutchSentences.length) {
+            if (debug) console.debug("Skipping polite word insertion because sentence counts differ.");
+        } else {
+            const politeEnglish = politeEntry[0].trim();
+            const politeTarget = politeEntry[1].trim();
+
+            const finalEngSentences = engSentences;
+            const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
+                .filter(m => m[1].trim() || m[2].trim())
+                .map(m => m[1] + m[2]);
+
+            for (let i = 0; i < finalEngSentences.length; i++) {
+                if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
+                    let sentence = finalDutchSentences[i];
+
+                    // Skip if polite word already exists
+                    if (new RegExp(`\\b${escapeRegex(politeTarget)}\\b`, 'i').test(sentence)) continue;
+
+                    // Preserve any leading HTML tags
+                    const htmlTagPattern = /^(\s*<[^>]+>\s*)+/;
+                    const match = sentence.match(htmlTagPattern);
+                    const insertPos = match ? match[0].length : 0;
+
+                    // Work only on the text part (after HTML tags)
+                    const leadingTags = sentence.slice(0, insertPos);
+                    const textPart = sentence.slice(insertPos).trim();
+
+                    // Split into words
+                    const words = textPart.split(/\s+/);
+
+                    if (words.length > 0) {
+                        let insertAfterIndex = 0; // default: after first word
+
+                        // If the second word is "het" (case-insensitive), insert after that instead
+                        if (words.length > 1 && words[1].toLowerCase() === "het") {
+                            insertAfterIndex = 1;
+                        }
+
+                        // Insert polite word
+                        words.splice(insertAfterIndex + 1, 0, politeTarget);
+
+                        // Rebuild sentence
+                        sentence = leadingTags + words.join(" ");
+                    }
+
+                    finalDutchSentences[i] = sentence;
+                    if (debug) console.debug(`Inserted "${politeTarget}" in sentence ${i + 1}:`, sentence);
+                }
+            }
+
+            finalResult = finalDutchSentences.join("");
+        }
+    } else {
+        if (debug) console.debug("No polite word mapping found in replaceVerbs, skipping polite insertion.");
+    }
+
+    if (debug) {
+        console.debug("\n=== FINAL RESULT ===");
+        console.debug(finalResult);
+    }
+
+    return finalResult;
+}
+
+
+
+function preparePlaceholdersForTranslation(input, replaceVerbs) {
+  const placeholderTagMap = {};
+  let output = input;
+
+  output = output.replace(/<x id="([^_]+)_(\d+)">(.+?)<\/x>/g, (match, baseWord, indexStr, innerText) => {
+    const index = Number(indexStr);
+    const isUpper = /^[A-Z]/.test(innerText);
+    const token = (isUpper ? "X_" : "x_") + index;
+    placeholderTagMap[token] = baseWord;
+    return `<x id="${baseWord}_${index}">${token}</x>`;
+  });
+
+  return { cleanedText: output, placeholderTagMap };
+}
+
+function replaceOneByOne(text, from, to, maxCount) {
+    if (!to || maxCount <= 0) return { text, count: 0 };
+
+    const pattern = new RegExp(`\\b${from}\\b`);
+    let count = 0;
+
+    const newText = text.replace(pattern, (match) => {
+        if (count < maxCount) {
+            count++;
+            return to;
+        }
+        return match;
+    });
+
+    return { text: newText, count };
+}
 function convertToNumber(text) {
     const num = Number(text);
     return (!isNaN(num) && text !== null && text !== '') ? num : 0;
@@ -338,23 +647,28 @@ function setmyCheckBox(event) {
 
 }
 
-function deselectCheckBox(event) {
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    // if the translator is a PTE than we do not need to add the extra checkboxes
-    if (!is_pte) {
-        //document.getElementsByClassName("myCheckBox").checked = true;
-        document.querySelectorAll("tr.preview").forEach((preview, i) => {
-            if (!is_pte) {
-                rowchecked = preview.querySelector("td input");
-                if (rowchecked != null) {
-                    if (rowchecked.checked) {
-                        preview.querySelector("td input").checked = false;
-                    }
-                }
-            }
-        });
-    }
+function deselectCheckBox() {
+    const is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+
+    // Loop through all preview rows
+    document.querySelectorAll("tr.preview").forEach((preview) => {
+        let rowchecked = null;
+
+        if (is_pte) {
+            // PTE users: checkbox inside .checkbox td
+            rowchecked = preview.querySelector(".checkbox input[type='checkbox']");
+        } else {
+            // Non-PTE users: checkbox inside .myCheckBox td
+            rowchecked = preview.querySelector(".myCheckBox input[type='checkbox']");
+        }
+
+        // Uncheck if it exists and is checked
+        if (rowchecked && rowchecked.checked) {
+            rowchecked.checked = false;
+        }
+    });
 }
+
 
 async function validateOld(showDiff) {
     var counter = 0;
@@ -381,16 +695,13 @@ async function validateOld(showDiff) {
     if ((records.length) > 1) {
         let progressbar = document.querySelector(".indeterminate-progress-bar");
         if (progressbar == null) {
-            myheader.insertAdjacentHTML('beforebegin', template);
-            // progressbar = document.querySelector(".indeterminate-progress-bar");
-            // progressbar.style.display = 'block';
+            myheader.insertAdjacentHTML('afterend', template);
         }
         else {
             console.debug("we start the bar")
             progressbar.style.display = 'block';
         }
-
-
+        
         // 12 - 06 - 2021 PSS added project to url so the proper project is used for finding old translations
         let f = document.getElementsByClassName("breadcrumb");
 
@@ -410,7 +721,7 @@ async function validateOld(showDiff) {
         }
         // console.debug("newurl:", newurl)
         let single = "False";
-
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         const processRecordWithDelay = async (record, delay,processed) => {
             try {
                 const startTime = Date.now(); // Record the start time
@@ -467,7 +778,9 @@ async function validateOld(showDiff) {
                     else {
                         if ((records.length) > 1) {
                             let check=__("Check old is ready")
-                                messageBox("info", check)
+                            toastbox("info", check, "2500", "Checked");
+                          //  let check=__("Check old is ready")
+                          //      messageBox("info", check)
                             }
                     // checking old records done
                         progressbar = document.querySelector(".indeterminate-progress-bar");
@@ -624,7 +937,7 @@ async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPl
 }
 
 
-async function validatePage(language, showHistory, locale,showDiff, DefGlossary) {
+async function validatePage(language, showHistory, locale, showDiff, DefGlossary) {
     // This function checks the quality of the current translations
     // added timer to slow down the proces of fetching data
     // without it we get 429 errors when fetching old records
@@ -645,9 +958,9 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
         myglossary = glossary1
     }
     else {
-         DefGlossary == false
-         myglossary = glossary
-        }
+        DefGlossary == false
+        myglossary = glossary
+    }
     //console.debug("validatePage glossary:",myglossary)
     // html code for counter in checkbox
     const line_counter = `
@@ -655,7 +968,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
         <span class="text-line-counter"></span>
     </div>
     `;
-   
+
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
     //console.debug("breadcrumb:",f)
@@ -671,7 +984,7 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
     }
     else {
         let url = ""
-        newurl=""
+        newurl = ""
     }
     var divProjects = document.querySelector("div.projects");
     // We need to set the priority column only to visible if we are in the project 
@@ -693,17 +1006,17 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
             }
         }
     }
-   // await set_glotdict_style().then(function (myGlotDictStat) {
+    // await set_glotdict_style().then(function (myGlotDictStat) {
     //console.debug("glotdict:", myGlotDictStat)
     // Use the retrieved data here or export it as needed
     // increase the timeout if buttons from GlotDict are not shown
     // this set when the checkbox show GlotDict is set
-   // var increaseWith = 0
-   // var timeout = 0;
-     // if (myGlotDictStat) {
-      //  timeout = 100;
-       // increaseWith = 50
-      // }
+    // var increaseWith = 0
+    // var timeout = 0;
+    // if (myGlotDictStat) {
+    //  timeout = 100;
+    // increaseWith = 50
+    // }
     myGlotDictStat = await set_glotdict_style();
 
     // 2. Determine timeout based on result
@@ -719,136 +1032,124 @@ async function validatePage(language, showHistory, locale,showDiff, DefGlossary)
     await sleep(timeout);
 
     // 4. Now run your loop
-    
-     
+
+
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-           // setTimeout(async function() {
-                rowcount++
-                let original = e.querySelector("span.original-raw").innerText;
-                let textareaElem = e.querySelector("textarea.foreign-text");
-                let rowId = textareaElem.parentElement.parentElement.parentElement
-                    .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
+        // setTimeout(async function() {
+        rowcount++
+        let original = e.querySelector("span.original-raw").innerText;
+        let textareaElem = e.querySelector("textarea.foreign-text");
+        let rowId = textareaElem.parentElement.parentElement.parentElement
+            .parentElement.parentElement.parentElement.parentElement.getAttribute("row");
 
-                // we need to fetch the status of the record to pass on
-                let  preview = document.querySelector("#preview-" + rowId)
-                old_status = document.querySelector("#preview-" + rowId);
-                /// checkbox = old_status.querySelector('input[type="checkbox"]'
-                if (old_status != null) {
-                    checkbox = old_status.getElementsByClassName("checkbox")
-                    glossary_word = old_status.getElementsByClassName("glossary-word")
-                }
-                if (checkbox[0] != null) {
-                    my_line_counter = checkbox[0].querySelector("div.line-counter")
-                    // mark lines with glossary word into checkbox
-                    if (glossary_word.length != 0) {
-                        checkbox[0].style.background = "LightSteelBlue"
-                        checkbox[0].title = "Has glossary word"
-                    }
-                    // add counter to checkbox, but do not add it twice      
-                    if (my_line_counter == null) {
-                        checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
-                        let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
-                        this_line_counter.innerText = rowcount
-                    }
-
-                }
-                else {
-                    // if not a PTE it must be put in a different checkbox
-                    //console.debug("we are not a PTE")
-                    if (old_status != null) {
-                        let mycheckbox = old_status.getElementsByClassName("myCheckBox")
-                        mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
-                        let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
-                        this_line_counter.innerText = rowcount
-                        if (glossary_word.length != 0) {
-                            mycheckbox[0].style.background = "LightSteelBlue"
-                            mycheckbox[0].title = "Has glossary word"
-                        }
-                    }
-                    // mycheckbox[0].textContent = rowcount
-                }
-                let element = e.querySelector(".source-details__comment");
-                let toTranslate = false;
-                let showName = false;
-                if (element != null) {
-                    // Fetch the comment with name
-                    let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
-                    if (comment != null) {
-                        toTranslate = checkComments(comment.trim());
-                    }
-                    else {
-                        toTranslate = true;
-                    }
-                }
-                else {
-                    toTranslate = true;
-                }
-                if (toTranslate == false) {
-                    showName = true;
-                }
-                else {
-                    showName = false;
-                }
-                if (textareaElem.innerText !=""){
-                translation = textareaElem.innerText;
-               // console.debug("we do have a innerText")
-                }
-                else {
-                    translation = textareaElem.textContent
-                }
-                if (showName == true) {
-                    // We need to check if the translation is exactly the same as the original
-                    nameDiff = isExactlyEqual(original, translation)
-                    if (nameDiff == true) {
-                        nameDiff = false;
-                    }
-                    else {
-                        nameDiff = true
-                    }
-                }
-                else {
-                    nameDiff = false;
-                }
-
-                var result = validate(language, original, translation, locale, false, rowId, false, DefGlossary);
-               // console.debug("validate in validatepage line 853:",original,result)
-                let record = e.previousSibling.previousSibling.previousSibling
-                // this is the start of validation, so no prev_trans is present      
-                prev_trans = translation
-              //  if (showHistory === 'false') {
-               //     waiting = 0;
-              //  }
-              //  else {
-              //      waiting = 100;
-              //  }
-               // setTimeout(async function () {
-                // PSS this is the one with orange
-                  updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
-
-                  mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
-                //}, waiting);
-           if (rowcount == 1){
-               //console.debug(" we are starting observer")
-             // console.debug("e:",e)
-              mytextarea = e.getElementsByClassName('foreign-text')
-              //console.debug("after start textarea:",mytextarea)
-             //if (StartObserver) {
-             // start_editor_mutation_server(mytextarea, "Details") 
-              //}
-           }
-          //}, timeout);
-           //  timeout += increaseWith;
+        // we need to fetch the status of the record to pass on
+        let preview = document.querySelector("#preview-" + rowId)
+        old_status = document.querySelector("#preview-" + rowId);
+        /// checkbox = old_status.querySelector('input[type="checkbox"]'
+        if (old_status != null) {
+            checkbox = old_status.getElementsByClassName("checkbox")
+            glossary_word = old_status.getElementsByClassName("glossary-word")
         }
-        
-        // 30-06-2021 PSS set fetch status from local storage
-        chrome.storage.local.set({ "noOldTrans": "False" }, function () {
-            // Notify that we saved.
-            // alert("Settings saved");
-        });
+        if (checkbox[0] != null) {
+            my_line_counter = checkbox[0].querySelector("div.line-counter")
+            // mark lines with glossary word into checkbox
+            if (glossary_word.length != 0) {
+                checkbox[0].style.background = "LightSteelBlue"
+                checkbox[0].title = "Has glossary word"
+            }
+            // add counter to checkbox, but do not add it twice      
+            if (my_line_counter == null) {
+                checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
+                let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
+                this_line_counter.innerText = rowcount
+            }
 
-        
-   // });
+        }
+        else {
+            // if not a PTE it must be put in a different checkbox
+            //console.debug("we are not a PTE")
+            if (old_status != null) {
+                let mycheckbox = old_status.getElementsByClassName("myCheckBox")
+                mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
+                let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
+                this_line_counter.innerText = rowcount
+                if (glossary_word.length != 0) {
+                    mycheckbox[0].style.background = "LightSteelBlue"
+                    mycheckbox[0].title = "Has glossary word"
+                }
+            }
+            // mycheckbox[0].textContent = rowcount
+        }
+        let element = e.querySelector(".source-details__comment");
+        let toTranslate = false;
+        let showName = false;
+        if (element != null) {
+            // Fetch the comment with name
+            let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
+            if (comment != null) {
+                toTranslate = checkComments(comment.trim());
+            }
+            else {
+                toTranslate = true;
+            }
+        }
+        else {
+            toTranslate = true;
+        }
+        if (toTranslate == false) {
+            showName = true;
+        }
+        else {
+            showName = false;
+        }
+        if (textareaElem.innerText != "") {
+            translation = textareaElem.innerText;
+            // console.debug("we do have a innerText")
+        }
+        else {
+            translation = textareaElem.textContent
+        }
+        //console.debug("showname:",showName)
+        if (showName == true) {
+            // We need to check if the translation is exactly the same as the original
+            nameDiff = isExactlyEqual(original, translation)
+            if (nameDiff == true) {
+                // we are equal
+                nameDiff = false;
+            }
+            else {
+                nameDiff = true
+            }
+        }
+        else {
+            // it is not a name, so we do not show the label
+            nameDiff = false;
+        }
+        //console.debug("ValidatePage nameDiff:", nameDiff+" "+rowId)
+        // console.debug("ValidatePage showName:",showName)
+        var result = validate(language, original, translation, locale, false, rowId, false, DefGlossary);
+        // console.debug("validate in validatepage line 853:",original,result)
+        let record = e.previousSibling.previousSibling.previousSibling
+        // this is the start of validation, so no prev_trans is present      
+        prev_trans = translation
+        // PSS this is the one with orange
+        updateStyle(textareaElem, result, newurl, showHistory, showName, nameDiff, rowId, record, false, false, translation, [], prev_trans, old_status, showDiff);
+        mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
+        //}, waiting);
+        if (rowcount == 1) {
+            //console.debug(" we are starting observer")
+            // console.debug("e:",e)
+            mytextarea = e.getElementsByClassName('foreign-text')
+
+            // 30-06-2021 PSS set fetch status from local storage
+            chrome.storage.local.set({ "noOldTrans": "False" }, function () {
+                // Notify that we saved.
+                // alert("Settings saved");
+            });
+        }
+    }
 }
+
 function countWordsinTable() {
     var counter = 0;
     var wordCount = 0;
@@ -962,35 +1263,74 @@ async function set_glotdict_style() {
     });
 }
 
-function toastbox(type, message, time, titel, currWindow) {
-    playSound = null;
-        return new Promise((resolve) => {
-            cuteToast({
-                type: type, // or 'info', 'error', 'warning'
-                message: message,
-                timer: time,
-                playSound,
-                img: "/img",
-                title: titel,
-                myWindow: currWindow,
-            })
-            resolve("toast");
-        }).catch((err) => {
-            console.debug("error:", err)
-        });
-        // resolve("toast ready");
+
+function getToastContainer() {
+    let container = document.getElementById("toastContainer");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "toastContainer";
+        container.style.position = "fixed";
+        container.style.top = "20px";
+        container.style.left = "50%";
+        container.style.transform = "translateX(-50%)";
+        container.style.zIndex = "99999";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.alignItems = "center";
+        container.style.pointerEvents = "none"; // clicks pass through
+        document.body.appendChild(container);
+    }
+    return container;
+}
+async function toastbox(type = "info", title = "", duration = 2000, message = "") {
+    const container = getToastContainer();
+
+    const toast = document.createElement("div");
+    toast.style.background = type === "error" ? "#f56260" : "#88cef7"; // red for error, green otherwise
+    toast.style.color = "#fff";
+    toast.style.padding = "10px 20px";
+    toast.style.marginTop = "5px";
+    toast.style.borderRadius = "5px";
+    toast.style.minWidth = "200px";
+    toast.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    toast.style.pointerEvents = "auto"; // allow hover if needed
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(-10px)";
+    toast.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+
+    toast.innerHTML = `<strong>${title}</strong> ${message}`;
+    container.appendChild(toast);
+
+    // Fade in
+    requestAnimationFrame(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateY(0)";
+    });
+
+    // Auto-remove after duration
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-10px)";
+        setTimeout(() => container.removeChild(toast), 300);
+    }, duration);
 }
 
 function close_toast() {
-    const toastContainer = document.querySelector(".toast-container");
-    if (toastContainer != null) {
-        toastContainer.remove();
-    }
+  // Close all individual toast messages
+  const toasts = document.querySelectorAll('.toast-content');
+  toasts.forEach(t => t.remove());
+
+  // Remove the container if empty
+  const container = document.querySelector('.toast-container');
+  if (container) {
+    container.remove();
+  }
 }
 
-function messageBox(type, message) {
+
+async function messageBox(type, message) {
     currWindow = window.self;
-    cuteAlert({
+    await cuteAlert({
         type: type,
         title: "Message",
         message: message,
@@ -999,7 +1339,18 @@ function messageBox(type, message) {
         closeStyle: "alert-close",
     });
 }
-
+async function messageBox_reload(type, message) {
+    currWindow = window.self;
+    await cuteAlert({
+        type: type,
+        title: "Message",
+        message: message,
+        buttonText: "OK",
+        myWindow: currWindow,
+        closeStyle: "alert-close",
+    });
+    window.location.href = window.location.href;
+}
 function sleep(milliseconds) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
@@ -1071,14 +1422,16 @@ function isURL(text) {
     return urlRegex.test(text.trim());
 }
 
-async function isWordInUrl(word) {
-        console.debug("isWordInUrl:", word)
+async function isWordInUrl(word,translation) {
+       // console.debug("isWordInUrl:", word)
         is_in_URL = wptf_check_for_URL(word, translation)
-        console.debug("is in URL changed:", is_in_URL)
-        if (is_in_URL == true) {
+       // console.debug("is in URL changed:", is_in_URL)
+    if (is_in_URL == true) {
+           // console.debug("1336 is in url",word)
             return true
         }
-        else {
+    else {
+       // console.debug("1336 is in url",word)
             return false
        }
 
@@ -1092,13 +1445,13 @@ async function isWordInUrl(word) {
             return cleaned.includes(lowerWord);
         });
     }
-function wptf_check_for_URL(word, translatedText) {
-    if (!word || !translatedText) return false;
+function wptf_check_for_URL(word, translation) {
+    if (!word || !translation) return false;
 
     const lowerWord = word.toLowerCase();
 
     // Step 1: Remove HTML tags (like <code>) to expose inner content
-    const textWithoutTags = translatedText.replace(/<[^>]*>/g, '');
+    const textWithoutTags = translation.replace(/<[^>]*>/g, '');
 
     // Step 2: Match full URLs
     const fullURLRegex = /\b(?:https?|ftp):\/\/[^\s"'<>]+/gi;
@@ -1110,7 +1463,7 @@ function wptf_check_for_URL(word, translatedText) {
         ...(textWithoutTags.match(fullURLRegex) || []),
         ...(textWithoutTags.match(partialPathRegex) || []),
     ];
-
+    console.debug()
     return matches.some(url => url.toLowerCase().includes(lowerWord));
 }
 
@@ -1246,4 +1599,3 @@ function restorePlaceholdersAfterTranslation(text, originalText) {
         return placeholders[counter++] || '';
     });
 }
-

@@ -1,10 +1,25 @@
+background.js - doTranslate
+No description provided.
+
+background.js - backupStorage
+No description provided.
+
+background.js - restoreIfEmpty
+No description provided.
+
+background.js - get
+No description provided.
+
+background.js - set
+No description provided.
+
+background.js - remove
+No description provided.
+
+background.js - init
+No description provided.
+
 contentScript.js - savePage
-No description provided.
-
-contentScript.js - triggerGarbageCollection
-No description provided.
-
-contentScript.js - addname_to_checkbox
 No description provided.
 
 contentScript.js - loadTranslations
@@ -20,9 +35,6 @@ contentScript.js - initTextareaDetection
 No description provided.
 
 contentScript.js - waitForEditableTextarea
-No description provided.
-
-contentScript.js - waitForTextareaAndStart
 No description provided.
 
 contentScript.js - setupTooltipHandler
@@ -109,6 +121,9 @@ No description provided.
 contentScript.js - savetolocalClicked
 No description provided.
 
+contentScript.js - copyOrgClicked
+No description provided.
+
 contentScript.js - tmTransClicked
 No description provided.
 
@@ -128,9 +143,6 @@ contentScript.js - checkFormal
 No description provided.
 
 contentScript.js - checkPageClicked
-No description provided.
-
-contentScript.js - oldcheckPageClicked
 No description provided.
 
 contentScript.js - exportPageClicked
@@ -190,9 +202,6 @@ No description provided.
 contentScript.js - validateEntry
 No description provided.
 
-contentScript.js - remove_all_gloss
-No description provided.
-
 contentScript.js - highlightExactWordInText
 No description provided.
 
@@ -205,7 +214,19 @@ No description provided.
 contentScript.js - decodeHtmlEntities
 No description provided.
 
-contentScript.js - findMissingTranslations
+contentScript.js - working2findAllMissingWords
+No description provided.
+
+contentScript.js - escapeRegExp
+No description provided.
+
+contentScript.js - works2105findMissingTranslations
+No description provided.
+
+contentScript.js - workingfindMissingTranslations
+No description provided.
+
+contentScript.js - prevfindMissingTranslations
 No description provided.
 
 contentScript.js - updateRowButton
@@ -229,28 +250,19 @@ No description provided.
 contentScript.js - countExactWordOccurrences
 No description provided.
 
-contentScript.js - normalizeText
-No description provided.
-
-contentScript.js - normalizeText
-No description provided.
-
-contentScript.js - escapeRegExp
-No description provided.
-
-contentScript.js - escapeRegExp
-No description provided.
-
-contentScript.js - createGlossArray
-No description provided.
-
 contentScript.js - createNewGlossArray
 No description provided.
 
-contentScript.js - countOccurrences
+contentScript.js - isWordPresentUntranslated
 No description provided.
 
-contentScript.js - mark_glossary
+contentScript.js - findMissingTranslations
+No description provided.
+
+contentScript.js - isGlossaryWordInTranslation
+No description provided.
+
+contentScript.js - oldcreateGlossArray
 No description provided.
 
 contentScript.js - validate
@@ -305,9 +317,6 @@ contentScript.js - start_editor_mutation_server
 No description provided.
 
 contentScript.js - start_editor_mutation_server2
-No description provided.
-
-contentScript.js - prevstart_editor_mutation_server2
 No description provided.
 
 contentScript.js - findByKey
@@ -664,7 +673,13 @@ No description provided.
 wptf-buildstats.js - createStatsTable
 No description provided.
 
+wptf-buildstats.js - hasPTEProfile
+No description provided.
+
 wptf-buildstats.js - process_projects
+No description provided.
+
+wptf-buildstats.js - sortStatsTable
 No description provided.
 
 wptf-buildstats.js - handleStats
@@ -679,9 +694,6 @@ No description provided.
 wptf-commonTranslate.js - setPreTranslationReplace
 No description provided.
 
-wptf-commonTranslate.js - setIgnoreSpellCheck
-No description provided.
-
 wptf-commonTranslate.js - setPostTranslationReplace
 No description provided.
 
@@ -694,8 +706,11 @@ No description provided.
 wptf-commonTranslate.js - replaceWord
 No description provided.
 
-wptf-commonTranslate.js - postProcessTranslation
+wptf-commonTranslate.js - escapeRegex
 //# this function processes the translation after it has been received
+
+wptf-commonTranslate.js - postProcessTranslation
+No description provided.
 
 wptf-commonTranslate.js - removeWord
 No description provided.
@@ -703,7 +718,16 @@ No description provided.
 wptf-commonTranslate.js - correctSentence
 No description provided.
 
-wptf-commonTranslate.js - isURL
+wptf-commonTranslate.js - isOnlyURL
+No description provided.
+
+wptf-commonTranslate.js - wrong_correctSentence
+No description provided.
+
+wptf-commonTranslate.js - isOnlyURL
+No description provided.
+
+wptf-commonTranslate.js - old_correctSentence
 No description provided.
 
 wptf-commonTranslate.js - check_hyphen
@@ -725,7 +749,7 @@ wptf-commonTranslate.js - applySentenceCase
 No description provided.
 
 wptf-commonTranslate.js - CheckUrl
-//# This function checks if a text contains an URL
+No description provided.
 
 wptf-commonTranslate.js - isStartsWithUpperCase
 No description provided.
@@ -799,7 +823,7 @@ No description provided.
 wptf-commonTranslate.js - waitForSuggestions
 No description provided.
 
-wptf-commonTranslate.js - processTM
+wptf-commonTranslate.js - old_processTM
 No description provided.
 
 wptf-commonTranslate.js - getFirstCharsUntilPercent
@@ -808,7 +832,7 @@ No description provided.
 wptf-commonTranslate.js - sortRowsArrayByRowAttribute
 No description provided.
 
-wptf-commonTranslate.js - populateWithTM
+wptf-commonTranslate.js - old_populateWithTM
 No description provided.
 
 wptf-commonTranslate.js - submitData
@@ -824,6 +848,12 @@ wptf-commonTranslate.js - determineType
 No description provided.
 
 wptf-commonTranslate.js - handleType
+No description provided.
+
+wptf-commonTranslate.js - handle_plural
+No description provided.
+
+wptf-commonTranslate.js - delay
 No description provided.
 
 wptf-commonTranslate.js - translatePage
@@ -871,7 +901,13 @@ No description provided.
 wptf-commonTranslate.js - hideIncompletePreviewRows
 No description provided.
 
+wptf-commonTranslate.js - hideUntranslatedPreviewRows
+No description provided.
+
 wptf-commonTranslate.js - saveLocal_2
+No description provided.
+
+wptf-commonTranslate.js - processRow
 No description provided.
 
 wptf-commonTranslate.js - bulkSave
@@ -913,6 +949,12 @@ No description provided.
 wptf-commonTranslate.js - saveToLocal
 No description provided.
 
+wptf-commonTranslate.js - onCopySuggestionClicked
+No description provided.
+
+wptf-commonTranslate.js - copyOrgRecords
+No description provided.
+
 wptf-consistency.js - scrapeconsistency
 No description provided.
 
@@ -944,9 +986,6 @@ wptf-database.js - createAndOpenModal
 No description provided.
 
 wptf-database.js - retrieveDataFromIndexedDB
-No description provided.
-
-wptf-database.js - initDb
 No description provided.
 
 wptf-database.js - getTM
@@ -1042,9 +1081,6 @@ No description provided.
 wptf-deeplGloss.js - delete_glossary
 No description provided.
 
-wptf-deeplGloss.js - olddelete_glossary
-No description provided.
-
 wptf-deeplGloss.js - toUtf8
 No description provided.
 
@@ -1054,16 +1090,10 @@ No description provided.
 wptf-deeplGloss.js - no_cors
 No description provided.
 
-wptf-deeplTrans.js - translateText
+wptf-deeplTrans.js - sendRequest
 No description provided.
 
 wptf-deeplTrans.js - deepLTranslate
-No description provided.
-
-wptf-deeplTrans.js - prevdeepLTranslate
-No description provided.
-
-wptf-deeplTrans.js - if
 No description provided.
 
 wptf-deeplTrans.js - processData
@@ -1072,13 +1102,43 @@ No description provided.
 wptf-deeplTrans.js - fetchWithRetry
 No description provided.
 
-wptf-deeplTrans.js - oldgetTransDeepl
+wptf-DeepSeekTrans.js - translateWithDeepSeek
+No description provided.
+
+wptf-functions.js - escapeRegExpForPronouns
+No description provided.
+
+wptf-functions.js - enableInterceptSuggestions
+No description provided.
+
+wptf-functions.js - disableInterceptSuggestions
+No description provided.
+
+wptf-functions.js - insertAlstublieftIfPlease
+No description provided.
+
+wptf-functions.js - replaceVerbInTranslation
+No description provided.
+
+wptf-functions.js - preparePlaceholdersForTranslation
+No description provided.
+
+wptf-functions.js - replaceOneByOne
+No description provided.
+
+wptf-functions.js - convertToNumber
+No description provided.
+
+wptf-functions.js - buildTooltipFromGlossaryArray
+No description provided.
+
+wptf-functions.js - whoCalledMe
 No description provided.
 
 wptf-functions.js - setupTooltipHandler
 No description provided.
 
-wptf-functions.js - countOccurrences
+wptf-functions.js - oldcountOccurrences
 No description provided.
 
 wptf-functions.js - Show_RecCount
@@ -1123,13 +1183,16 @@ No description provided.
 wptf-functions.js - stripQuotes
 No description provided.
 
-wptf-functions.js - countOccurrences
+wptf-functions.js - oldmatchesWithDutchVerbPrefix
 No description provided.
 
-wptf-functions.js - mark_glossary
+wptf-functions.js - normalizeText
 No description provided.
 
-wptf-functions.js - mark_original
+wptf-functions.js - oldnormalizeText
+No description provided.
+
+wptf-functions.js - wrongmark_glossary
 No description provided.
 
 wptf-functions.js - validatePage
@@ -1141,6 +1204,9 @@ No description provided.
 wptf-functions.js - set_glotdict_style
 No description provided.
 
+wptf-functions.js - getToastContainer
+No description provided.
+
 wptf-functions.js - toastbox
 No description provided.
 
@@ -1148,6 +1214,9 @@ wptf-functions.js - close_toast
 No description provided.
 
 wptf-functions.js - messageBox
+No description provided.
+
+wptf-functions.js - messageBox_reload
 No description provided.
 
 wptf-functions.js - sleep
@@ -1161,6 +1230,33 @@ No description provided.
 
 wptf-functions.js - isOnlyURL
 //# This function checks if a text contains only an URL
+
+wptf-functions.js - isURL
+No description provided.
+
+wptf-functions.js - isWordInUrl
+No description provided.
+
+wptf-functions.js - wptf_check_for_URL
+No description provided.
+
+wptf-functions.js - isExactlyEqual
+//# this function determines if a text is equal for capitals or text
+
+wptf-functions.js - restoreCase
+No description provided.
+
+wptf-functions.js - handlePlural1
+No description provided.
+
+wptf-functions.js - handlePlural2
+No description provided.
+
+wptf-functions.js - replacePlaceholdersBeforeTranslation
+No description provided.
+
+wptf-functions.js - restorePlaceholdersAfterTranslation
+No description provided.
 
 wptf-googleTrans.js - googleTranslate
 No description provided.
@@ -1228,10 +1324,64 @@ No description provided.
 wptf-inject.js - loadGlossaryFromDB
 No description provided.
 
+wptf-libretranslate.js - libretranslate
+No description provided.
+
+wptf-mark_glossary.js - createGlossArray
+No description provided.
+
+wptf-mark_glossary.js - getPluralFormsForLocale
+No description provided.
+
+wptf-mark_glossary.js - matchesWithLocalePrefix
+No description provided.
+
+wptf-mark_glossary.js - getInflectedFormsForLocale
+No description provided.
+
+wptf-mark_glossary.js - matchesWithLocaleVerbSystem
+No description provided.
+
+wptf-mark_glossary.js - extractUrlLikeSegments
+No description provided.
+
+wptf-mark_glossary.js - findAllMissingWords
+No description provided.
+
+wptf-mark_glossary.js - splitCompoundWord
+No description provided.
+
+wptf-mark_glossary.js - working_findAllMissingWords
+No description provided.
+
+wptf-mark_glossary.js - isWordInUrl
+No description provided.
+
+wptf-mark_glossary.js - remove_all_gloss
+No description provided.
+
+wptf-mark_glossary.js - mark_glossary
+No description provided.
+
+wptf-mark_glossary.js - mark_preview
+//# mark missing glossary words in original from preview
+
+wptf-mark_glossary.js - filterMissingGlossarySpans
+No description provided.
+
 wptf-microsoftTrans.js - microsoftTranslate
 No description provided.
 
 wptf-microsoftTrans.js - getTransMicrosoft
+No description provided.
+
+wptf-openAITrans.js - startTranslationBatch
+No description provided.
+
+wptf-openAITrans.js - endTranslationBatch
+No description provided.
+
+wptf-openAITrans.js - delay
 No description provided.
 
 wptf-openAITrans.js - AITranslate
@@ -1240,13 +1390,13 @@ No description provided.
 wptf-openAITrans.js - AIreview
 No description provided.
 
-wptf-openAITrans.js - getTransAI
-No description provided.
-
 wptf-openAITrans.js - reviewTransAI
 No description provided.
 
 wptf-openAITrans.js - startreviewOpenAI
+No description provided.
+
+wptf-openAITrans.js - estimateMaxTokens
 No description provided.
 
 wptf-options.js - sortTextarea
@@ -1270,6 +1420,15 @@ No description provided.
 wptf-options.js - messageBox
 No description provided.
 
+wptf-options.js - showChangelog
+No description provided.
+
+wptf-populatewithTM.js - waitforTM
+No description provided.
+
+wptf-populatewithTM.js - processTM
+No description provided.
+
 wptf-purify.min.js - x
 No description provided.
 
@@ -1284,3 +1443,15 @@ wptf-spellcheck.js - prepare_spellcheck
 
 wptf-spellcheck.js - process_result
 //# this function processes the result of the check
+
+wptf-testRunner.js - replaceFormalVerbInTranslation
+No description provided.
+
+wptf-testRunner.js - loadTestsFromFile
+No description provided.
+
+wptf-testRunner.js - showTestResults
+No description provided.
+
+wptf-translatio_io.js - translateWithGolinguist
+No description provided.
