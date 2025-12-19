@@ -548,7 +548,6 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
             });
         }
 
-
     // check if the returned translation does have the same start/ending as the original
     let previewNewText = translatedText
     result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
