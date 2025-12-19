@@ -79,3 +79,10 @@ Version 3.4.33 Moved the editor a bit so you can see the result of populateWithT
 Version 3.4.33 Added label if there is a waiting for a current string which is the same
 Version 3.4.33 Added new OpenAI model 5.1
 Version 3.4.33 Added new API Claude for translation
+Version 3.4.34 Improved Claude translation
+Version 3.4.34 fixed an error when opening the details of a record
+Version 3.4.35 Plurals where no longer populated when pretranslated
+Version 3.4.36 Plural error when no translation was in pretrans
+Version 3.4.37 Fixed a problem with copying from suggestions when the original contains quotes
+Version 3.4.37 Added Claud selection of models
+Version 3.4.37 Improved replacing words that are in <button>..</button>

@@ -412,7 +412,7 @@
                 <td></td>
                 <td>
                     <div class="form-input">
-                        <label for="OpenAI_temp">Temperature:</label>
+                        <label for="OpenAI_temp">AI temperature:</label>
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
                     </div>
                 </td>
@@ -420,11 +420,11 @@
             <tr>
                 <td>
 
-                    <label for="ToneSelect">Select a tone for OpenAI:</label>
+                    <label for="ToneSelect">Select a tone for AI:</label>
                 </td>
                 <td>
                     <div>
-                        <select title="Select a tone for OpenAI" name="ToneSel" id="ToneSelect">
+                        <select title="Select a tone for AI" name="ToneSel" id="ToneSelect">
                             <option value="formal">Formal</option>
                             <option value="informal">Informal</option>
                             <option value="neutral">Neutral</option>
@@ -432,6 +432,23 @@
                             <option value="professional">Professional</option>
                             <option value="polite">Polite</option>
                             <option value="strict">Strict</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="ClaudSelect">Select a model for Claud:</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for Claude" name="ClaudSel" id="ClaudSelect">
+                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+                            <option value="claude-2">claude-2</option>
+                            <option value="claude-instant-1">claude-instant-1</option>
+                            <option value="claude-opus-4-5-20251101">claude-opus-4-5-20251101</option>
+                            <option value="claude-sonnet-4-5-20250929">claude-sonnet-4-5-20250929</option>
+                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
                         </select>
                     </div>
                 </td>

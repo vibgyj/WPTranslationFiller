@@ -42,6 +42,7 @@ let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
+let ClaudselectBox = document.getElementById("ClaudSelect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
 let OpenAIToneBox = document.getElementById("ToneSelect");
 let destLangTextbox = document.getElementById("destination_lang");
@@ -81,17 +82,18 @@ let showDisableClose = document.getElementById("disable-auto-close");
 
 document.getElementById('show-changelog-link').addEventListener('click', function (e) {
     e.preventDefault(); // Prevent the default link behavior
-  console.debug("we show it")
+  //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIBaseUrl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "OpenAIBaseUrl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
   //  }
   //  else {
   //      DownloadTextbox.value = "C:\Temp"
-  //  }
+    //  }
+  //console.debug("DeeplFree:",DeeplFree)
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -200,7 +202,15 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         }
         OpenAIselectBox.value = data.OpenAISelect;
     }
-    
+    if (typeof data.ClaudSelect == 'undefined') {
+        ClaudselectBox.value = "claude-3-5-haiku-latest";
+    }
+    else if (data.ClaudSelect == "") {
+        ClaudselectBox.value = "claude-3-5-haiku-latest";
+    }
+    else {
+        ClaudselectBox.value = data.ClaudSelect;
+    }
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `${data.glossaryFile}`;
     uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
@@ -369,15 +379,23 @@ let button = document.getElementById("save");
 button.addEventListener("click", function () {
     let apikey = apikeyTextbox.value;
     let apikeyDeepl = apikeydeeplTextbox.value;
-    
-    if (document.querySelector("#DeeplFree:checked") !== null) {
-        
-        let showDeeplFree = document.querySelector("#DeeplFree:checked");
-        showDeepl = showDeeplFree.checked;
-    }
-    else {
-        showDeepl = "false";
-    }
+
+    const check = document.getElementById('DeeplFree');
+    if (check.checked) {
+        console.log('Checkbox is checked');
+       showDeepl = true
+    } else {
+         showDeepl = "false";
+       console.log('Checkbox is not checked');
+   }
+    //if (document.querySelector("#DeeplFree:checked") !== null) {
+   //     console.debug("in save :", document.querySelector("#DeeplFree:checked"))
+    //    let showDeeplFree = document.querySelector("#DeeplFree:checked");
+    //    showDeepl = showDeeplFree.checked;
+   // }
+   // else {
+   //     showDeepl = "false";
+    //}
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
     let OpenAIBaseUrl = OpenAIBaseUrlTextbox.value || "https://api.openai.com/v1";
@@ -414,7 +432,15 @@ button.addEventListener("click", function () {
     else {
         OpenAIsel = OpenAIselectBox.value;
     }
-
+     if (typeof ClaudselectBox.value == "undefined") {
+        Claudsel = "claude-3-5-haiku-latest";
+    }
+    else if (ClaudselectBox.value == "") {
+        Claudsel = "claude-3-5-haiku-latest";
+    }
+    else {
+        Claudsel = ClaudselectBox.value;
+    }
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
@@ -532,6 +558,7 @@ button.addEventListener("click", function () {
             apikeyDeepSeek: apikeyDeepSeek,
             apikeyTranslateio: apikeyTranslationio,
             apikeyClaude: apikeyClaude,
+            ClaudSelect: Claudsel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,

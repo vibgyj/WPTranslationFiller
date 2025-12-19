@@ -152,10 +152,10 @@ async function preProcessOriginal(original, preverbs, translator) {
 
         // Deepl does remove crlf so we need to replace them before sending them to the API
         //original = original.replaceAll('\r', "mylinefeed");
-      //  original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
+        original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
         // Deepl does remove tabs so we need to replace them before sending them to the API
         //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
-      //  original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
+        original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
         // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
         // The above replacements are put into the specialchar regex for all api's
       // 1) Define your regex for all the placeholders you care about:
@@ -264,7 +264,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     if (originalPreProcessed != "") {
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
-    const charmatches = original.matchAll(specialChar);
+    var charmatches = original.matchAll(specialChar);
     if (charmatches != null) {
         let index = 0;
         for (const charmatch of charmatches) {
@@ -409,11 +409,10 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
  
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     // console.debug("befor convert to lower:", translatedText)
-   // console.debug("before:", translatedText)
+   //console.debug("before:", translatedText)
     
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
-        console.debug("convert:",convertToLower)
         // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
         for (let i = 0; i < replaceVerb.length; i++) {
             // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
@@ -446,7 +445,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 const replacement = replaceVerb[i][1];
 
                // Skip if inside URL
-               let inUrl = CheckUrl(translatedText, searchWord);
+               let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
                if (!inUrl) {
                   // Escape regex special chars in search word
                   const safeWord = escapeRegex(searchWord);
@@ -459,7 +458,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
        
                    //console.debug("replacing:", searchWord, "->", replacement);
                }
-                console.debug("checkurl after2:",translatedText)
+               // console.debug("checkurl after2:",translatedText)
             }
         }
          
@@ -473,9 +472,10 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
       for (let i = 0; i < replaceVerb.length; i++) {
          const searchWord = replaceVerb[i][0];
         const replacement = replaceVerb[i][1];
-
-        // Skip if inside URL
-       let inUrl = CheckUrl(translatedText, searchWord);
+        //console.debug("searchword:",searchWord)
+          // Skip if inside URL or button tekst in <button>
+       let inUrl = isInsideButtonOrUrl(translatedText, searchWord)
+       //let inUrl = CheckUrl(translatedText, searchWord);
        if (!inUrl) {
         // Escape regex special chars in search word
         const safeWord = escapeRegex(searchWord);
@@ -556,16 +556,16 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     translatedText = result.translatedText;
     // console.debug("end of post:",translatedText)
     // put special chars back
-    //const charmatches = original.matchAll(specialChar);
-    //if (charmatches != null) {
-      //  index = 1;
-      //  for (const charmatch of charmatches) {
+    charmatches = original.matchAll(specialChar);
+    if (charmatches != null) {
+        index = 1;
+        for (const charmatch of charmatches) {
             //console.debug("char:", charmatch)
-         //   translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
-         //   translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
-         //   index++;
-       // }
-   // }
+            translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+            translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+            index++;
+        }
+    }
     //console.debug("after post: ",translatedText)
     return translatedText;
 }
@@ -976,34 +976,6 @@ function applySentenceCase(str) {
         console.debug("Regex error !");
     }
     return str
-}
-//# This function checks if a text contains an URL
-/**
- * Returns true if `searchword` occurs inside any href/src/class attribute or any raw URL
- * inside the provided HTML/text `translated`.
- */
-function CheckUrl(translated, searchword) {
-    if (!translated || !searchword) return false;
-
-    const lowerWord = searchword.toLowerCase();
-    const lowerText = translated.toLowerCase();
-
-    // Match URLs, href/src, class attributes, and span tags
-    const urlRegex = /\b((https?|ftp|file):\/\/|(www|ftp)\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]|<a[^>]*>|class="[^"]*"|<span[^>]*>/ig;
-    const mymatches = lowerText.match(urlRegex);
-
-    if (!mymatches) return false;
-
-    for (const match of mymatches) {
-        // Only normalize dashes/underscores in the URL part for detection, **do not modify the original text**
-        const normalized = match.replace(/[-_]/g, ' ');  
-        if (normalized.includes(lowerWord)) {
-            //console.debug("found word in URL!", match);
-            return true;
-        }
-    }
-
-    return false;
 }
 
 
@@ -2579,7 +2551,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced, repl_array }
 }
 
-async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree,apikeyOpenAI, OpenAIPrompt, OpenAISelect, OpenAITone, OpenAItemp) {
+async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree,apikeyOpenAI, OpenAIPrompt, OpenAISelect, OpenAITone, OpenAItemp,apikeyClaude, ClaudePrompt, openAiGloss,ClaudModel) {
     
     //console.time("translation")
     var translate;
@@ -2675,6 +2647,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
             plural_line = "0";
         }
         const [type, myTranslated] = await determineType(row, record);
+       
         //console.debug("type:",type,row)
         switch (type) {
 
@@ -2731,6 +2704,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                 break;
 
             case 'pretranslated':
+                 
                // console.debug("we have a pretranslated:", original)
                // console.debug("translatedText:", translatedText.length)
                 
@@ -2756,11 +2730,12 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                         plural = pluralpresent.innerText
                         // console.debug("current:",current)
                        
-                        openAiGloss = []
+                        //openAiGloss = []
                         deeplGlossary = []
                         spellCheckIgnore = ""
                         //console.debug("before handle_plural:",row)
-                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI,apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current, editor)
+                        //console.debug("handle_plural 2764:",openAiGloss)
+                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel)
                         editorElem = editor.querySelector("textarea.foreign-text");
                         // console.debug("pretranslated before validate:")
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
@@ -4037,7 +4012,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -4149,8 +4124,10 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 textareaElem = document.querySelector(`#preview-${row} .translation li:nth-of-type(1)`); 
                 plural = pluralpresent.innerText
                 // console.debug("current:",current)
-               //console.debug("myTranslated:",myTranslated)
-                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI,apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor)
+                //console.debug("myTranslated:",myTranslated)
+                //console.debug("handle_plural 4152:",openAiGloss)
+                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel)
+
                 editorElem = editor.querySelector("textarea.foreign-text");
                // console.debug("pretranslated before validate:")
                 select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
@@ -4374,12 +4351,12 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 // Translate
                 if (original != "") {
                     let originals = [original]
-                   
-                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp);
+                    //console.debug("handle_plural 4377:",openAiGloss)
+                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp,ClaudModel);
 
                     if (results.success) {
                         // Use result.translation
-                        console.debug(results.translation);
+                       // console.debug(results.translation);
                     } else {
                         // Handle error
                         // console.error(results);
@@ -4429,7 +4406,8 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             await check_span_missing(row, plural_line);
             //console.debug("pretrans 4351:",pretrans)
             //console.debug("plur:",plural)
-            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt)
+            //console.debug("handle_plural 4432:",openAiGloss)
+            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel)
             editorElem = editor.querySelector("textarea.foreign-text");
 
             await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
@@ -4441,14 +4419,15 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
     }
 }
                              
-async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt) {
+async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel) {
     let debug = false
     var myTranslatedText;
     if (debug == true) {
         console.debug("handle_plural plural_line: ", plural_line, plural)
         console.debug("handle_plural current:", current)
         console.debug("we handle_plural ")
-        console.debug("row at start handle_plural:",row)
+        console.debug("row at start handle_plural:", row)
+        console.debug("handle_plural:",openAiGloss)
      }
     let pretrans = await findTransline(plural, destlang);
     //console.debug("pretrans:",pretrans)
@@ -4577,8 +4556,9 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
 
                 // Translate
              if (plural != "") {
-                    let originals = [plural]
-                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale,OpenAItemp);
+                 let originals = [plural]
+                    //console.debug("before 4583:",openAiGloss)
+                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale,OpenAItemp.ClaudModel);
 
 
                    // if (results.success) {
@@ -4601,7 +4581,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         // console.debug("pretrans:",myTranslatedText)
        //console.debug("row:",row)
         let rowId = row.split("-")[0];
-       // console.debug("rowId:", rowId)
+        //console.debug("rowId:", rowId)
        // console.debug("pretranslated current:",current)
         if (current.innerText == "current") {
             //console.debug(" plural has current:",rowId)
@@ -4652,8 +4632,10 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             //console.debug("It is not a current so we need to add it")
             // 30-10-2021 PSS added a fix for issue #154
             // console.debug("previewtext 4415:", myTranslatedText)
-            //console.debug("record:",record,rowId,row)
+            ////console.debug("record:", record, rowId, row)
+            //console.debug("row:",  rowId)
             textareaElem1 = record.querySelector("#translation_" + rowId + "_0");
+            //console.debug("textareaElem1:",textareaElem1)
             textareaElem1.innerText = myTranslatedText;
             textareaElem1.value = myTranslatedText;
             textareaElem1 = record.querySelector("#translation_" + rowId + "_1");
@@ -4847,8 +4829,9 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
 
                 // Translate
              if (plural != "") {
-                    let originals = [plural]
-                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale,OpenAItemp);
+                 let originals = [plural]
+                    //console.debug("before gloss 4860:",openAiGloss)
+                    const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale,OpenAItemp,ClaudModel);
                 
              }
         }
@@ -4968,7 +4951,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel) {
     //console.debug("We started translatePage")
     var translate;
     var transtype = "";
@@ -5114,7 +5097,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         openAiGloss,
         counter,
         editor,
-        ClaudePrompt
+        ClaudePrompt,
+        ClaudModel
        );
         
     } catch (err) {
@@ -6144,7 +6128,7 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel) {
     var translateButton;
     var result;
     errorstate = "OK"
@@ -6152,6 +6136,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
     locale = checkLocale();
     //transsel= 'deepseek'
     // addTranslateButtons(rowId);
+    //console.debug("6163:",openAiGloss)
+    //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
     currWindow = window.self;
     if (typeof (Storage) !== "undefined") {
         interCept = localStorage.getItem("interXHR");
@@ -6240,7 +6226,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             });
             if (toTranslate) {
                 // console.debug("we need to translate");
+                //console.debug("original:",original)
                 let pretrans = await findTransline(original, destlang);
+                //console.debug("pretrans:",pretrans)
                 //console.debug("original",original," ",destlang)
                 
                 if (pretrans == "notFound") {
@@ -6357,7 +6345,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         //myGlossary = `{${myGlossary}}`;
                         // let Glossary = JSON.parse(`{${myGlossary}}`);
                         //console.debug("OpenAiGloss:",openAiGloss)
-                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp);
+                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp,ClaudModel);
                     
                        if (results.success) {
                        // Use result.translation
@@ -6549,7 +6537,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                       //  let Glossary = JSON.parse(`{${myGlossary}}`);
                         //  console.debug("glossary:",Glossary)
                        let originals = [original]
-                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower,locale,OpenAItemp);
+                        const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower,locale,OpenAItemp,ClaudModel);
                      
                     }
                 }
@@ -6895,206 +6883,19 @@ function hideUntranslatedPreviewRows() {
     },100)
 }
 
-async function saveLocal_2(bulk_timer) {
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    var timeout = 2000;
-    var counter = 0;
-    var line_read = 0;
-    var My1copyClip;
-    var Edopen;
-    let debug = false;
-    StartObserver = false;
-    enableInterceptSuggestions()
-    const perfNow = () => performance.now(); // High resolution timer in ms
-
-    const template = `
-    <div class="indeterminate-progress-bar">
-        <div class="indeterminate-progress-bar__progress"></div>
-    </div>`;
-    var myheader = document.querySelector('#wpadminbar');
-    var progressbar = document.querySelector(".indeterminate-progress-bar");
-    if (!progressbar) {
-        myheader.insertAdjacentHTML('afterend', template);
-    } else {
-        progressbar.style.display = 'block';
-    }
-
-    const checkedRows = Array.from(document.querySelectorAll('.wptf-translated input[type="checkbox"]:checked'))
-        .map(cb => cb.closest('.wptf-translated'))
-        .filter(row => row !== null);
-
-    for (const preview of checkedRows) {
-        try {
-            await processRow(preview);
-        } catch (err) {
-            console.debug("Row failed, skipping to next:", err.message || err);
-        }
-
-        // Wait bulk_timer ms before next row
-        if (bulk_timer > 0) {
-            if (debug) {
-                console.debug(`Waiting ${bulk_timer} ms before next row...`);
-            }
-            await new Promise(res => setTimeout(res, bulk_timer));
-        }
-    }
-
-    // Show summary after all rows processed
-    timeout += bulk_timer;
-    hideIncompletePreviewRows();
-    hideUntranslatedPreviewRows();
-    disableInterceptSuggestions();
-    progressbar = document.querySelector(".indeterminate-progress-bar");
-    if (progressbar) {
-        progressbar.style.display = "none";
-        StartObserver = true;
-        let read = __("We have read:");
-        let saved = __(" records and saved:");
-        await messageBox_reload("info", read + line_read + saved + counter);
-        if (My1copyClip) autoCopyClipBoard = true;
-       
-    } else {
-        console.debug("no progressbar!");
-    }
-
-    async function processRow(preview) {
-        var checkset = preview.querySelector('input[type="checkbox"]');
-        if (!checkset || !checkset.checked) return;
-        var debug = false
-        var myPreviewRow = preview.id;
-        var myNewRow = myPreviewRow.split("-")[1];
-        var rowfound = myPreviewRow;
-        if (rowfound.split("-")[2] != null) {
-            myNewRow = rowfound.split("-")[1] + "-" + rowfound.split("-")[2];
-        }
-        line_read++;
-
-        if (myNewRow.includes("old")) {
-            preview.style.removeProperty("display");
-            preview.style.display = "hidden";
-            return;
-        }
-
-        Edopen = document.querySelector(`#editor-${myNewRow}`);
-        if (!Edopen || Edopen === "Time-out reached") return;
-
-        let current = Edopen.querySelector('span.panel-header__bubble');
-        let original = Edopen.querySelector("span.original-raw")?.innerText || "";
-
-        if ((current.innerText === 'waiting' || current.innerText === 'transFill') && checkset.checked) {
-            let glotpress_suggest = Edopen.querySelector(".translation-actions__save");
-            let glotpress_approve = Edopen.getElementsByClassName("button  is-primary approve")
-            
-            glotpress_suggest.classList.remove("disabled");
-
-            if (autoCopyClipBoard) My1copyClip = true;
-            autoCopyClipBoard = false;
-
-            let t_start = perfNow();
-
-            try {
-                // Step 1: Click edit
-                const editButton = preview.querySelector("td.actions a.action.edit");
-                if (!editButton) throw new Error("Edit button not found");
-                editButton.click();
-
-                // Step 2: Wait for editor to open
-                if (debug) {
-                    console.debug(`[${new Date().toISOString()}] Waiting for editor...`);
-                }
-                const editorOpen = await waitForMyElement(`#editor-${myNewRow} .suggestions-wrapper`, 10000, "6688");
-                if (!editorOpen) throw new Error("Editor did not open");
-
-                // Step 3: Click suggest
-                await glotpress_suggest.click();
-                if (debug) {
-                    console.debug(`[${new Date().toISOString()}] Waiting for dismiss / success...`);
-                }
-                // First dismiss (start save message)
-                let t_dismiss1_start = perfNow();
-                let recordDismiss = await waitForMyElement(`.gp-js-message-dismiss`, 15000, "6698");
-                let t_dismiss1_end = perfNow();
-                if (debug) {
-                    console.debug(`Dismiss1 found in ${(t_dismiss1_end - t_dismiss1_start).toFixed(1)} ms`);
-                }
-                if (recordDismiss !== "Time-out reached") recordDismiss.click();
-
-                
-                // Second dismiss (existing record error) — short timeout instead of 12s
-                let t_dismiss2_start = perfNow();
-                let recordError = await waitForMyElement(`.gp-js-message-dismiss`, 500, "6709"); // 0.5s max wait
-                let t_dismiss2_end = perfNow();
-                if (debug) {
-                    console.debug(`Dismiss2 found in ${(t_dismiss2_end - t_dismiss2_start).toFixed(1)} ms`);
-                }
-
-                if (recordError !== "Time-out reached") {
-                    recordError.click();
-                    glotpress_approve[0].click()
-                    if (debug) {
-                        console.debug("We have an existing record");
-                    }
-                    throw new Error("We have an existing record");
-                 }
-
-                // Saved confirmation
-                let t_saved_start = perfNow();
-                let recordSaved = await waitForMyElement(`.gp-js-success`, 15000, "6523");
-                let t_saved_end = perfNow();
-                if (debug) {
-                    console.debug(`Saved found in ${(t_saved_end - t_saved_start).toFixed(1)} ms`);
-                }
-                if (recordSaved === "Time-out reached") throw new Error("Record not saved");
-                if (debug) {
-                    console.debug(`[${new Date().toISOString()}] Saved...`);
-                }
-                counter++;
-                if (debug) {
-                    console.debug(`Sequence completed successfully in ${(perfNow() - t_start).toFixed(1)} ms`);
-                }
-
-            } catch (err) {
-                if (debug) {
-                    console.debug("Saving failed: ", err.message);
-                }
-            }
-
-        } else {
-            toastbox("info", "Problem with:" + original, "700", "Check record:");
-        }
-    }
-}
-
+/* ---------- Improved bulkSave + saveLocal_2 (drop-in replacement) ---------- */
 
 async function bulkSave(noDiff, bulk_timer) {
-    //event.preventDefault();
-    var counter = 0;
-    var checkboxCounter = 0;
-    var row;
-    var myWindow;
-    var nextpreview;
-    var myinterCept = false;
+    // Keep original behavior: if no checkboxes selected, ask to select all.
+    const is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    const checkboxSelector = is_pte ? '.checkbox input' : '.myCheckBox input';
+    const checkedCount = Array.from(document.querySelectorAll(checkboxSelector)).filter(e => e.checked).length;
 
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    currWindow = window.self;
-    
-    // PSS 17-07-2022 added anhancement to set the checkboxes automatically issue#222
-    if (is_pte) {
-        document.querySelectorAll('.checkbox input').forEach(function (elem) {
-            if (elem.checked == true) {
-                checkboxCounter++;
-            }
-        });
-    }
-    else {
-        document.querySelectorAll('.myCheckBox input').forEach(function (elem) {
-            if (elem.checked == true) {
-                checkboxCounter++;
-            }
-        });
-    }
-    if (checkboxCounter == 0) {
-        cuteAlert({
+    const currWindow = window.self;
+
+    if (checkedCount === 0) {
+        // prompt to select all
+        return cuteAlert({
             type: "question",
             title: "Bulk save",
             message: __("There are no records selected, <br>are you sure you want to select all records?"),
@@ -7102,30 +6903,272 @@ async function bulkSave(noDiff, bulk_timer) {
             cancelText: __("Cancel"),
             myWindow: currWindow
         }).then(async (e) => {
-            if (e == ("confirm")) {
-                //When performing bulk save the difference is shown in Meta #269
-                //value = false;
-                //chrome.storage.local.set({ toonDiff: value }).then((result) => {
-                //  console.log("Value toonDiff is set to false");
-                //});
+            if (e === "confirm") {
                 setmyCheckBox(e);
-                let value = noDiff;
-                await setToonDiff({ toonDiff: value });
-                counter = saveLocal_2(bulk_timer);
+                await setToonDiff({ toonDiff: noDiff });
+                await saveLocal_2(bulk_timer);
             } else {
                 messageBox("info", "Bulk save cancelled");
             }
-        })
+        });
     } else {
-        //When performing bulk save the difference is shown in Meta #269
-        let value = noDiff;
-        // console.debug("value:",value)
-        await setToonDiff({ toonDiff: value });
-        // counter = saveLocal();
-        //counter = saveLocal_1();
-        counter = saveLocal_2(bulk_timer);
+        // proceed with the rows already selected
+        await setToonDiff({ toonDiff: noDiff });
+        await saveLocal_2(bulk_timer);
     }
 }
+
+/* saveLocal_2: main loop and utilities */
+async function saveLocal_2(bulk_timer = 0) {
+    const debug = false;
+    const perfNow = () => performance.now();
+    StartObserver = false;
+    enableInterceptSuggestions();
+
+    // Progress bar insertion (keeps your original UI)
+    const template = `
+    <div class="indeterminate-progress-bar">
+        <div class="indeterminate-progress-bar__progress"></div>
+    </div>`;
+    const myheader = document.querySelector('#wpadminbar');
+    let progressbar = document.querySelector(".indeterminate-progress-bar");
+    if (!progressbar && myheader) {
+        myheader.insertAdjacentHTML('afterend', template);
+        progressbar = document.querySelector(".indeterminate-progress-bar");
+    } else if (progressbar) {
+        progressbar.style.display = 'block';
+    }
+
+    // Helper: wait for a selector (MutationObserver) with timeout.
+    // If your global waitForMyElement exists, prefer that (keeps compatibility).
+    async function waitForSelector(selector, timeoutMs = 5000) {
+        if (typeof waitForMyElement === "function") {
+            // keep using existing helper if available (preserves original logging/ids)
+            try {
+                const res = await waitForMyElement(selector, timeoutMs);
+                return res;
+            } catch (e) {
+                return "Time-out reached";
+            }
+        }
+
+        return new Promise((resolve) => {
+            const el = document.querySelector(selector);
+            if (el) return resolve(el);
+
+            const observer = new MutationObserver(() => {
+                const found = document.querySelector(selector);
+                if (found) {
+                    observer.disconnect();
+                    resolve(found);
+                }
+            });
+            observer.observe(document.documentElement || document.body, {
+                childList: true,
+                subtree: true,
+            });
+
+            setTimeout(() => {
+                observer.disconnect();
+                resolve("Time-out reached");
+            }, timeoutMs);
+        });
+    }
+
+    // Collect checked preview rows (keeps the original selector semantics)
+    const checkedRows = Array.from(document.querySelectorAll('.wptf-translated input[type="checkbox"]:checked'))
+        .map(cb => cb.closest('.wptf-translated'))
+        .filter(row => row !== null);
+
+    let counter = 0;    // saved count
+    let line_read = 0;  // read count
+    let My1copyClip = false;
+
+    // Process each preview row serially
+    for (const preview of checkedRows) {
+        try {
+            const success = await processRow(preview); // returns true if saved
+            if (success) counter++;
+        } catch (err) {
+            // Always continue to next row
+            if (debug) console.debug("processRow threw:", err);
+        }
+
+        // Wait bulk_timer ms before next row (if requested)
+        if (bulk_timer > 0) {
+            if (debug) console.debug(`Waiting ${bulk_timer} ms before next row...`);
+            await new Promise(res => setTimeout(res, bulk_timer));
+        }
+    }
+
+    // Final cleanup & summary
+    hideIncompletePreviewRows();
+    hideUntranslatedPreviewRows();
+    disableInterceptSuggestions();
+
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    if (progressbar) {
+        progressbar.style.display = "none";
+        StartObserver = true;
+        const read = __("We have read:");
+        const saved = __(" records and saved:");
+        await messageBox_reload("info", `${read} ${line_read} ${saved} ${counter}`);
+        if (My1copyClip) autoCopyClipBoard = true;
+    } else {
+        if (debug) console.debug("no progressbar!");
+    }
+
+    /* ---------------- processRow: handles one preview row ---------------- */
+    async function processRow(preview) {
+        // local debug
+        const debugRow = false;
+
+        if (!preview) return false;
+        const checkset = preview.querySelector('input[type="checkbox"]');
+        if (!checkset || !checkset.checked) return false; // nothing to do
+
+        line_read++;
+
+        const previewId = preview.id || "";
+        let myNewRow = "";
+        if (!previewId) return false;
+        const parts = previewId.split("-");
+        if (parts.length >= 3) {
+            myNewRow = `${parts[1]}-${parts[2]}`;
+        } else {
+            myNewRow = parts[1] || parts[0];
+        }
+
+        // Skip "old" rows
+        if (myNewRow.includes("old")) {
+            // hide? original code tried to set display hidden; keep minimal
+            preview.style.display = "none";
+            return false;
+        }
+
+        // Find editor
+        const Edopen = document.querySelector(`#editor-${myNewRow}`);
+        if (!Edopen || Edopen === "Time-out reached") {
+            if (debugRow) console.debug("Editor not found for", myNewRow);
+            return false;
+        }
+
+        const currentBubble = Edopen.querySelector('span.panel-header__bubble');
+        const originalText = Edopen.querySelector("span.original-raw")?.innerText || "";
+
+        // Only act when in waiting or transFill states (preserve original behavior)
+        if (!currentBubble || !/(waiting|transFill)/i.test(currentBubble.innerText)) {
+            // Not in a saveable state
+            toastbox("info", "Problem with:" + originalText, "700", "Check record:");
+            return false;
+        }
+
+        // Get references to suggest/save/approve UI
+        const glotpress_suggest = Edopen.querySelector(".translation-actions__save");
+        const glotpress_approve = Edopen.getElementsByClassName("button  is-primary approve");
+
+        if (!glotpress_suggest) {
+            if (debugRow) console.debug("No suggest button in editor", myNewRow);
+            return false;
+        }
+
+        // Ensure suggest is enabled for clicking
+        glotpress_suggest.classList.remove("disabled");
+
+        // Manage clipboard flag (preserve original behaviour)
+        if (autoCopyClipBoard) My1copyClip = true;
+        autoCopyClipBoard = false;
+
+        const t_start = perfNow();
+
+        try {
+            // Step 1: Click edit (same as original)
+            const editButton = preview.querySelector("td.actions a.action.edit");
+            if (!editButton) {
+                throw new Error("Edit button not found");
+            }
+            editButton.click();
+
+            // Step 2: Wait for the editor area to appear (preserve original but improved)
+            // Wait for suggestions-wrapper (editor container) first (short timeout),
+            // then wait until the save button is present and not disabled (A2 readiness).
+            const editorWrapper = await waitForSelector(`#editor-${myNewRow} .suggestions-wrapper`, 8000);
+            if (editorWrapper === "Time-out reached") {
+                throw new Error("Editor did not open");
+            }
+
+            // A2 readiness: wait for .translation-actions__save:not(.disabled) but only up to a reasonable timeout.
+            const saveReady = await waitForSelector(`#editor-${myNewRow} .translation-actions__save:not(.disabled)`, 8000);
+            if (saveReady === "Time-out reached") {
+                // Fallback: the save button may exist but still disabled. Try to get the button itself (short wait).
+                const fallbackSaveBtn = await waitForSelector(`#editor-${myNewRow} .translation-actions__save`, 2000);
+                if (fallbackSaveBtn === "Time-out reached") {
+                    throw new Error("Save button not available/ready");
+                }
+            }
+
+            // Step 3: Click suggest/save
+            // glotpress_suggest might be a stale reference if DOM re-rendered; requery just before clicking
+            const suggestButton = document.querySelector(`#editor-${myNewRow} .translation-actions__save`);
+            if (!suggestButton) throw new Error("Suggest button disappeared");
+            suggestButton.click();
+
+            // Step 4: Wait for first dismiss message (start save message)
+            const t_dismiss1_start = perfNow();
+            const recordDismiss = await waitForSelector(`.gp-js-message-dismiss`, 15000); // original timeout
+            const t_dismiss1_end = perfNow();
+            if (debugRow) console.debug(`Dismiss1 time: ${(t_dismiss1_end - t_dismiss1_start).toFixed(1)}ms`);
+
+            if (recordDismiss !== "Time-out reached" && typeof recordDismiss.click === "function") {
+                recordDismiss.click();
+            }
+
+            // Step 5: Try to detect an immediate second dismiss (existing record error)
+            const t_dismiss2_start = perfNow();
+            const recordError = await waitForSelector(`.gp-js-message-dismiss`, 500); // short attempt
+            const t_dismiss2_end = perfNow();
+            if (debugRow) console.debug(`Dismiss2 time: ${(t_dismiss2_end - t_dismiss2_start).toFixed(1)}ms`);
+
+            if (recordError !== "Time-out reached" && typeof recordError.click === "function") {
+                // existing record: click dismiss + approve, then abort save flow for this row
+                recordError.click();
+                if (glotpress_approve && glotpress_approve[0]) {
+                    try { glotpress_approve[0].click(); } catch (e) { /* ignore click errors */ }
+                }
+                if (debugRow) console.debug("Existing record detected; aborted current row.");
+                // Throwing to get into catch below is consistent with original behaviour
+                throw new Error("We have an existing record");
+            }
+
+            // Step 6: Wait for success confirmation
+            const t_saved_start = perfNow();
+            const recordSaved = await waitForSelector(`.gp-js-success`, 15000);
+            const t_saved_end = perfNow();
+            if (debugRow) console.debug(`Saved detection time: ${(t_saved_end - t_saved_start).toFixed(1)}ms`);
+
+            if (recordSaved === "Time-out reached") {
+                throw new Error("Record not saved");
+            }
+
+            // If we reached here, saving succeeded
+            if (debug) {
+                console.debug(`[${new Date().toISOString()}] Saved row ${myNewRow} in ${(perfNow() - t_start).toFixed(1)} ms`);
+            }
+            return true;
+
+        } catch (err) {
+            // On any error we gracefully skip this row and continue
+            if (debug || debugRow) {
+                console.debug("Saving failed for row", myNewRow, ":", err.message || err);
+            }
+            return false;
+        } finally {
+            // Always restore clipboard auto-flag or cleanup if needed
+            // Note: original code set autoCopyClipBoard = false before; we already did that earlier
+        }
+    } // end processRow
+}
+/* -------------------------------------------------------------------------- */
 
 function second(milliseconds) {
     return new Promise((resolve) => {

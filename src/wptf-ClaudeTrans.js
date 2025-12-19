@@ -75,64 +75,78 @@ Examples:
     }
 
     async translate(text, options = {}, attempt = 1) {
-        const {
-            glossary = {},
-            formal = false,
-            destinationLanguage = 'Dutch',
-            systemPrompt = null,
-            max_tokens = 1024,
-            temperature = 0.3
-        } = options;
+    const {
+        glossary = {},
+        formal = false,
+        destinationLanguage = 'Dutch',
+        systemPrompt = null,
+        max_tokens = 1024,
+        temperature = 0.3
+    } = options;
 
-        // Build base prompt
-        const basePrompt = this.buildSystemPrompt(glossary, formal, destinationLanguage);
-        // Combine with external prompt if provided, replacing ${destinationLanguage}
-        const finalSystemPrompt = this.applyCustomPrompt(basePrompt, systemPrompt, destinationLanguage);
+    const show_debug = false;
 
-        //console.debug("=== Final prompt sent to Claude ===\n", finalSystemPrompt);
+    // Build base prompt
+    const basePrompt = this.buildSystemPrompt(glossary, formal, destinationLanguage);
 
-        const dataToSend = {
-            apiKey: this.apiKey,
-            apiVersion: this.apiVersion,
-            model: this.model,
-            text,
-            systemPrompt: finalSystemPrompt,
-            max_tokens,
-            temperature
-        };
+    // Combine with external prompt
+    const finalSystemPrompt = this.applyCustomPrompt(basePrompt, systemPrompt, destinationLanguage);
 
-        const result = await callClaude(dataToSend);
+    // Include the text to translate inside the system prompt
+    const systemWithText = `
+${finalSystemPrompt}
 
-        // Handle rate limiting / overloaded errors with retry
-        if (result.error && result.error.includes("Overloaded") && attempt < this.maxRetries) {
-            const delay = this.retryDelay * attempt; // Exponential backoff
-            console.warn(`API Overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
-            await this.sleep(delay);
-            return this.translate(text, options, attempt + 1);
-        }
+TRANSLATE THE FOLLOWING TEXT IMMEDIATELY:
+"""
+${text}
+"""
+Do NOT provide explanations, comments, or extra text. Output ONLY the literal translation.
+`;
 
-        if (!result || result.error) {
-            return { success: false, error: result?.error || "Unknown error" };
-        }
+    if (show_debug) console.debug("=== Final system prompt sent to Claude ===\n", systemWithText);
+    console.debug("text:",text)
+    const dataToSend = {
+        apiKey: this.apiKey,
+        apiVersion: this.apiVersion,
+        model: this.model,
+        systemPrompt: systemWithText,
+        text: text || " ", // <--- Required by your callClaude validation
+        max_tokens,
+        temperature
+    };
 
-        // Clean any unwanted formatting Claude might add
-        let translation = result.translation;
-        if (translation) {
-            translation = translation
-                .replace(/^#{1,6}\s+/gm, '')                    // Remove headers
-                .replace(/^[\*\-\+]\s+/gm, '')                  // Remove bullets
-                .replace(/^>\s*/gm, '')                         // Remove blockquotes
-                .replace(/^(Translation|Output|Result):\s*/i, '') // Remove prefixes
-                .replace(/^["'](.+)["']$/s, '$1')              // Remove wrapping quotes
-                .trim();
-        }
+    const result = await callClaude(dataToSend);
 
-        return {
-            success: true,
-            translation,
-            usage: result.usage
-        };
+    // Handle rate limiting / overloaded errors with retry
+    if (result.error && result.error.includes("Overloaded") && attempt < this.maxRetries) {
+        const delay = this.retryDelay * attempt;
+        console.debug(`API Overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
+        await this.sleep(delay);
+        return this.translate(text, options, attempt + 1);
     }
+
+    if (!result || result.error) {
+        return { success: false, error: result?.error || "Unknown error" };
+    }
+
+    // Clean any unwanted formatting Claude might add
+    let translation = result.translation;
+    if (translation) {
+        translation = translation
+            .replace(/^#{1,6}\s+/gm, '')
+            .replace(/^>\s*/gm, '')
+            .replace(/^(Translation|Output|Result):\s*/i, '')
+            .replace(/^["'](.+)["']$/s, '$1')
+            .trim();
+    }
+
+    return {
+        success: true,
+        translation,
+        usage: result.usage
+    };
+}
+
 }
 
 // Line-by-line translation
@@ -155,7 +169,8 @@ async function translateLineByLine(
     spellCheckIgnore,
     convertToLower,
     locale,
-    OpenAiTemp
+    OpenAiTemp,
+    Model
 ) {
     const results = [];
     const show_debug = true;
@@ -165,7 +180,7 @@ async function translateLineByLine(
         maxRetries: 3,      // Retry up to 3 times on overload
         retryDelay: 500    // Start with 1 second, then 2s, then 3s
     });
-
+    
     // Convert glossary string to object
     let Glossary = myglossary.replaceAll("->", ":");  
     let glossary = JSON.parse(`{${Glossary}}`);
@@ -197,15 +212,19 @@ async function translateLineByLine(
         let originalPreProcessed = await preProcessOriginal(originalText, preverbs, "OpenAI");
         originalText = originalPreProcessed;
         const start = Date.now();
-        console.debug("Using temperature:", temp);
-
+        let max_Tokens = estimateMaxTokens(originalPreProcessed);
+        
+        //console.debug("original:",originalPreProcessed)
+        //console.debug("maxTokens:", max_Tokens)
+        //console.debug("original:",originalPreProcessed)
         const result = await translator.translate(originalText, {
             glossary: glossary,
             formal: myFormal,
             destinationLanguage: language,
             systemPrompt: ClaudePrompt,   // Appends and replaces ${destinationLanguage}
-            max_tokens: 1024,
-            temperature: temp
+            max_tokens: max_Tokens,
+            temperature: temp,
+            model: Model
         });
 
         if (result.success) {

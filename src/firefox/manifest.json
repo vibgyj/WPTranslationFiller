@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.33",
+  "version": "3.4.37",
   "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -93,6 +93,7 @@
     "*://analytics.languagetoolplus.com/*",
     "*://api.cognitive.microsofttranslator.com/*",
     "*://api.openai.com/*",
+    "*://api.anthropic.com/*",
     "*://cors-anywhere.herokuapp.com/*"
   ],
   "optional_host_permissions": [
@@ -121,6 +122,7 @@
         "jsstore.js",
         "jsstore.worker.js",
         "wptf-commonTranslate.js",
+        "wptf-ClaudeTrans.js",
         "wptf-openAITrans.js",
         "wptf-deeplTrans.js",
         "wptf-DeepSeekTrans.js",
