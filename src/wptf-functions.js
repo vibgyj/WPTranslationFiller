@@ -1,10 +1,73 @@
-﻿//# This function checks if a text contains an URL
+﻿
+const toBoolean = (value) => {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+        return value.toLowerCase() === "true" || value === "1";
+    }
+    if (typeof value === "number") return value === 1;
+    return false;
+};
+
+
+/**
+ * Convert comma-separated glossary to Ollama-friendly line format (sorted A-Z)
+ * Example input: 
+ *   `"appearance" -> "weergave", "array" -> "array", "backend" -> "back-end",`
+ * Output:
+ *   `'appearance' -> 'weergave'
+ *    'array' -> 'array'
+ *    'backend' -> 'back-end'`
+ */
+/**
+ * Convert comma-separated glossary to Ollama-friendly line format (sorted A-Z)
+ * Each line starts with "- "
+ */
+function convertGlossaryForOllama(input) {
+    if (!input) return '';
+
+    return input
+        .split(',')                          // split by comma
+        .map(pair => pair.trim())             // remove leading/trailing spaces
+        .filter(pair => pair.length > 0)      // remove empty entries
+        .map(pair => pair.replace(/['"]/g, '')) // remove all quotes
+        .sort((a, b) => a.localeCompare(b))   // sort alphabetically A-Z
+        .join('\n');                          // join into lines
+}
+
+
+
+function showTranslationSpinner(text = "Translating…") {
+    if (document.getElementById("wpft-translation-spinner")) return;
+
+    const spinner = document.createElement("div");
+    spinner.id = "wpft-translation-spinner";
+    spinner.innerHTML = `
+        <div class="wpft-spinner-box">
+            <div class="wpft-spinner"></div>
+            <div class="wpft-spinner-text">${text}</div>
+        </div>
+    `;
+
+    document.body.appendChild(spinner);
+}
+
+function hideTranslationSpinner() {
+    const spinner = document.getElementById("wpft-translation-spinner");
+    if (spinner) spinner.remove();
+}
+
+function estimateTokens(text) {
+                const extraBuffer = 200; // safety buffer for full response
+                const estimated = Math.ceil(text.length / 4) + extraBuffer; // 1 token ≈ 4 chars
+                return Math.max(estimated, 200); // minimum 500 tokens
+            }
+// Helper function to check if a word is inside <button> tags or URLs
+//# This function checks if a text contains an URL
 /**
  * Returns true if `searchword` occurs inside any href/src/class attribute or any raw URL
  * inside the provided HTML/text `translated`.
  */
 
-// Helper function to check if a word is inside <button> tags or URLs
 function isInsideButtonOrUrl(translatedText, searchWord) {
     // Match <button> tags and URLs
     const buttonRegex = /<button[^>]*>[\s\S]*?<\/button>/gi;
@@ -1430,7 +1493,7 @@ function getPreview(rowId) {
     preview = document.querySelector(`#preview-${rowId}`)
     return preview
 }
-function exportGlossaryForOpenAi(locale = "nl") {
+function exportGlossaryForOpenAi(locale = "NL") {
     const request = indexedDB.open("DeeplGloss", 1); // use versioning to trigger onupgradeneeded
 
     request.onupgradeneeded = function (event) {

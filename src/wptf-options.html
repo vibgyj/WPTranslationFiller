@@ -65,6 +65,9 @@
         #Claude_api_key {
             width: 350px;
         }
+        #Ollama_api_key {
+            width: 350px;
+        }
 
         #glossary_file {
             display: block;
@@ -329,6 +332,26 @@
             </tr>
             <tr>
                 <td>
+                    <label for="Ollama_api_key">Ollama API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Ollama_api_key" type="text" value="Ollama api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="Ollama_model">Ollama model</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Ollama_model" type="text" value="Ollama model->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="transselect">Select a translator:</label>
                 </td>
                 <td>
@@ -341,6 +364,7 @@
                             <option value="OpenAI">OpenAI</option>
                             <option value="translation_io">translationio</option>
                             <option value="Claude">Claude</option>
+                            <option value="Ollama">Ollama</option>
 
                         </select>
                     </div>
@@ -651,6 +675,10 @@ You,Je
         <label class="labeled-checkbox">
             <input type="checkbox" id="disable-auto-close">
             <span>Disable autoclose editor</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="ollama-local">
+            <span>Use local Ollama</span>
         </label>
         <br />
         <table id="footer">

@@ -4011,7 +4011,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -4362,6 +4362,11 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     }
                 }
             }
+            else if (transsel === "Ollama") {
+                        let is_editor = true
+                        result = await translateWithOllama(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel);
+                        hideTranslationSpinner();
+                    } 
             await  mark_as_translated(row, current, true, rawPreview);
             if (is_pte) {
                 rowchecked = rawPreview.querySelector(".checkbox input");
@@ -4950,7 +4955,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel) {
     //console.debug("We started translatePage")
     var translate;
     var transtype = "";
@@ -5097,7 +5102,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         counter,
         editor,
         ClaudePrompt,
-        ClaudModel
+        ClaudModel,
+        apikeyOllama,
+        LocalOllama,
+        ollamaModel
        );
         
     } catch (err) {
@@ -6127,7 +6135,7 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel) {
     var translateButton;
     var result;
     errorstate = "OK"
@@ -6137,6 +6145,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
     // addTranslateButtons(rowId);
     //console.debug("6163:",openAiGloss)
     //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
+    //console.debug("apiKey ollama:", apikeyOllama) 
+    //console.debug("Local ollama:", LocalOllama) 
     currWindow = window.self;
     if (typeof (Storage) !== "undefined") {
         interCept = localStorage.getItem("interXHR");
@@ -6354,6 +6364,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                      // console.error(results);
                       }
                     }
+                    if (transsel === "Ollama") {
+                        let is_editor = true
+                        result = await translateWithOllama(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel);
+                        hideTranslationSpinner();
+                    } 
                     showButton = document.getElementById("translate-" + rowId + "-translocal-entry-local-button")
                     // we need to hide the button if it is visible
                     if (showButton.style.visibility != "hidden") {

@@ -1,6 +1,50 @@
+
+#wpft-translation-spinner {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.75);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+}
+
+.wpft-spinner-box {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 6px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #1d2327;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.wpft-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid #ccd0d4;
+    border-top-color: #2271b1;
+    border-radius: 50%;
+    animation: wpft-spin 0.9s linear infinite;
+}
+
+@keyframes wpft-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 mymarker {
     background-color: lightgreen;
 }
+
+
+
 
 /* .gp-js-message { */
 /*    color: blue !important; */

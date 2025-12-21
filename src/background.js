@@ -250,7 +250,157 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // In your background script (service worker or background.js)
 
-    // background.js
+      // Ollama translation
+  if (request.action === "ollama_translate") {
+    console.debug("Ollama translation request received");
+
+   (async () => {
+    try {
+        const {
+            text,
+            model,
+            systemPrompt,
+            max_tokens,
+            temperature,
+            apiKey,
+            useLocal
+        } = request.data;
+        
+        if (!text) return sendResponse({ success: false, error: "Text is missing" });
+        if (!model) return sendResponse({ success: false, error: "Model is missing" });
+        if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
+
+       const myLocal = toBoolean(useLocal);
+
+        // === Local translation path ===
+        if (myLocal) {
+            console.debug("text in local:", text); 
+            let message = [
+             { 'role': 'system', 'content': systemPrompt },
+             { 'role': 'user', 'content': `translate this: ${text}` }
+            ];
+            
+           var bodyToSend = {
+              messages: message,
+              model: model,
+              stream: false,
+              options: {
+              temperature:temperature
+             }
+            };
+            const result = await callLocalOllama(bodyToSend);
+
+            if (!result.success) {
+               return sendResponse({
+               success: false,
+               error: result.error,
+              raw: result.raw
+            });
+        }
+
+        sendResponse({
+        success: true,
+        translation: result.translation
+        });
+     }
+
+        // === Online translation path ===
+if (!apiKey) {
+    return sendResponse({ success: false, error: "Ollama API key missing for online translation" });
+}
+
+let message = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: `translate this: ${text}` }
+];
+
+var bodyToSend = {
+    messages: message,
+    model: model,
+    stream: false,
+    options: {
+        temperature: temperature
+    }
+};
+
+console.debug("Sending chat request to Ollama online:", bodyToSend);
+
+const resp = await fetch("https://ollama.com/api/chat", {
+    method: "POST",
+    headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(bodyToSend)
+});
+
+console.debug("Ollama response received:", resp);
+
+// 🔑 READ BODY ONCE AS TEXT
+let rawText = "";
+try {
+    rawText = await resp.text();
+} catch (e) {
+    // ignore
+}
+
+const isJson =
+    rawText &&
+    resp.headers.get("content-type")?.includes("application/json");
+
+let data = null;
+if (isJson) {
+    try {
+        data = JSON.parse(rawText);
+    } catch (e) {
+        // leave data null
+    }
+}
+
+console.debug("HTTP status:", resp.status);
+console.debug("Raw response text:", rawText);
+console.debug("Parsed JSON:", data);
+
+// 🚨 HANDLE HTTP ERRORS FIRST
+if (!resp.ok) {
+    return sendResponse({
+        success: false,
+        error:
+            data?.error ||
+            rawText ||
+            `HTTP ${resp.status} (Ollama request failed)`,
+        status: resp.status,
+        raw: data || rawText
+    });
+}
+
+// ✅ SUCCESS PATH
+if (!data?.message?.content) {
+    return sendResponse({
+        success: false,
+        error: "No content returned from Ollama",
+        raw: data
+    });
+}
+
+console.debug("Processed translation:", data.message.content);
+
+sendResponse({
+    success: true,
+    translation: data.message.content,
+    usage: data.usage || null
+});
+
+    } catch (err) {
+        sendResponse({ success: false, error: err?.message || String(err) });
+    }
+})();
+
+
+    return true; // keep response channel open
+}
+
+
 
     if (request.action == "ClaudeAI") {
     (async () => {
@@ -515,3 +665,58 @@ const StorageWrapper = (() => {
 
 // Initialize wrapper
 StorageWrapper.init();
+
+/**
+ * Call local Ollama instance for translation
+ * @param {Object} bodyToSend - The chat body including model, messages, temperature, etc.
+ * @returns {Promise<Object>} - Object containing translation in message.content or error
+ */
+async function callLocalOllama(bodyToSend) {
+    try {
+        const LOCAL_CHAT_URL = "http://127.0.0.1:11434/api/chat";
+        
+        const resp = await fetch(LOCAL_CHAT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(bodyToSend)
+        });
+        
+        const data = await resp.json();
+        
+        if (!resp.ok) {
+            return {
+                success: false,
+                error: data?.error || `HTTP ${resp.status}`,
+                raw: data
+            };
+        }
+        
+        if (!data.message?.content) {
+            return {
+                success: false,
+                error: "No content returned from Ollama",
+                raw: data
+            };
+        }
+        
+        return {
+            success: true,
+            translation: data.message.content,
+            raw: data
+        };
+        
+    } catch (err) {
+        return {
+            success: false,
+            error: err?.message || String(err)
+        };
+    }
+}
+const toBoolean = (value) => {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+        return value.toLowerCase() === "true" || value === "1";
+    }
+    if (typeof value === "number") return value === 1;
+    return false;
+};
