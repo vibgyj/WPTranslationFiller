@@ -14,13 +14,20 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
     // Replace glossary and language names
     let convertedGlossary = convertGlossaryForOllama(openAiGloss)
     let myprompt = ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
-    console.debug("Ollama Prompt after glossary insertion:", myprompt);
+    
     myprompt = myprompt.replaceAll("{{tone}}", OpenAITone);
+     if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
+     else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
+     else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
+    else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+    //console.debug("Ollama Prompt after replacements:", myprompt);
     if (toBoolean(is_editor)) {
         showTranslationSpinner("Translating…");
     }
-
-     let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
+     
+    let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
+    //originalPreProcessed = '"""' + originalPreProcessed + '"""';
+    console.debug("Ollama Pre-processed Original:", originalPreProcessed);
                     return new Promise((resolve, reject) => {
                         chrome.runtime.sendMessage({
                             action: "ollama_translate",
@@ -36,7 +43,20 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                             }
                         }, (response) => {
                            
-                           if (!response) return reject(new Error("No response from background"));
+                            if (!response) {
+                                hideTranslationSpinner();
+                                if (typeof response != 'undefined') {
+                                    const rawErr = response.error?.trim() || "Ollama translation failed";
+                                    const errMsg = /unauthorized/i.test(rawErr)
+                                        ? "Ollama API authorization failed. Check your API key."
+                                        : rawErr;
+                                    messageBox("error", "There has been an error: " + `${errMsg}`);
+                                }
+                                else {
+                                    messageBox("error", "No response from Ollama API. Check your connection and settings.");
+                                }
+                                return "NOK";
+                            }
                            if (!response.success) {
                                const rawErr = response.error?.trim() || "Ollama translation failed";
                                const errMsg = /unauthorized/i.test(rawErr)
