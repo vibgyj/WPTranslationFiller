@@ -7,15 +7,18 @@
 
 // Wrapper function that reads Ollama settings from storage
 // This simplifies integration by not requiring all function signatures to be modified
-async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss,apikeyOllama,LocalOllama, ollamaModel) {
+async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt) {
     //let mymodel = "gpt-oss:20b"
-      // Ensure ollamaModel has a valid value, fallback to default
-      let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
-     // Replace glossary and language names
-     let convertedGlossary = convertGlossaryForOllama(openAiGloss)
-     let myprompt = OpenAIPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
-     myprompt = myprompt.replaceAll("{{tone}}", OpenAITone);
-     showTranslationSpinner("Translating…");
+    // Ensure ollamaModel has a valid value, fallback to default
+    let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
+    // Replace glossary and language names
+    let convertedGlossary = convertGlossaryForOllama(openAiGloss)
+    let myprompt = ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
+    console.debug("Ollama Prompt after glossary insertion:", myprompt);
+    myprompt = myprompt.replaceAll("{{tone}}", OpenAITone);
+    if (toBoolean(is_editor)) {
+        showTranslationSpinner("Translating…");
+    }
 
      let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
                     return new Promise((resolve, reject) => {

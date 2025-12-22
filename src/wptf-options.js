@@ -64,6 +64,7 @@ let myScreenWidthValue = document.getElementById("screenWidth");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
 let ClaudePromptTextbox = document.getElementById("text_claude_prompt");
+let OllamaPromptTextbox = document.getElementById("text_ollama_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let spellcheckTextbox = document.getElementById("text_ignore_verbs");
@@ -85,7 +86,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -232,6 +233,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     }
     else {
         ClaudePromptTextbox.value = data.ClaudePrompt;
+    }
+    if (typeof data.ollamaPrompt == 'undefined') {
+        OllamaPromptTextbox.value = 'Enter prompt'
+    }
+    else {
+        OllamaPromptTextbox.value = data.ollamaPrompt;
     }
     if (typeof data.reviewPrompt == 'undefined') {
         reviewTextbox.value = 'Enter prompt'
@@ -589,6 +596,7 @@ button.addEventListener("click", function () {
             preTranslationReplace: preTranslation,
             OpenAIPrompt: promptText,
             ClaudePrompt: ClaudePrompt,
+            ollamaPrompt: OllamaPromptTextbox.value,
             reviewPrompt: reviewText,
             spellCheckIgnore: spellIgnoreverbs,
             showHistory: showHist,
