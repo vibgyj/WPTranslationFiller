@@ -104,7 +104,7 @@
   "This button starts the import of a local file into the local database": "This button starts the import of a local file into the local database",
   "This button starts the import of a local .po file containing translations into the current table": "This button starts the import of a local .po file containing translations into the current table",
   "This function checks the page for missing verbs and if set starts spellchecking": "This function checks the page for missing verbs and if set starts spellchecking",
-  "This is the function to compair the suggestion with the local entry": "This is the function to compair the suggestion with the local entry",
+  "This is the function to compair the suggestion with the local entry": "This is the function to compare the suggestion with the local entry",
   "This is the function to copy originals  with selected items": "his is the function to copy originals  with selected items",
   "This function populates the table with translations from the local database": "This function populates the table with translations from the local database",
   "This is the function to save all suggestions selected in bulk": "This is the function to save all suggestions selected in bulk",
