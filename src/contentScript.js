@@ -1328,7 +1328,7 @@ async function translatedButton() {
     compairButton.id = "Compair";
     compairButton.className = "compair-button";
     compairButton.onclick = compairClicked;
-    compairButton.innerText = __("Compair");
+    compairButton.innerText = __("Compaire");
     compairContainer.appendChild(compairButton)
     compairContainer.appendChild(classToolTip)
 
@@ -1503,7 +1503,7 @@ async function translatedButton() {
     dropdown.name = "WPTF_select"
     // Add a default option (always visible, not selectable)
     let defaultOption = document.createElement("option");
-    defaultOption.textContent = "DeepL";
+    defaultOption.textContent = "DeepL/AI";
     defaultOption.value = "";
     defaultOption.disabled = true;
     defaultOption.selected = true;
