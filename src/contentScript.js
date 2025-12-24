@@ -1316,21 +1316,21 @@ async function translatedButton() {
 
    
 
-    let compairContainer = document.createElement("div")
-    compairContainer.className = 'button-tooltip'
+    let compareContainer = document.createElement("div")
+    compareContainer.className = 'button-tooltip'
     classToolTip = document.createElement("span")
     classToolTip.className = 'tooltiptext'
     classToolTip.innerText = __("This is the function to compare the suggestion with the local entry")
 
-    let compairButton = document.createElement("a");
-    compairButton.href = "#";
-    compairButton.style.visible = 'hidden'
-    compairButton.id = "Compair";
-    compairButton.className = "compair-button";
-    compairButton.onclick = compairClicked;
-    compairButton.innerText = __("Compare");
-    compairContainer.appendChild(compairButton)
-    compairContainer.appendChild(classToolTip)
+    let compareButton = document.createElement("a");
+    compareButton.href = "#";
+    compareButton.style.visible = 'hidden'
+    compareButton.id = "Compare";
+    compareButton.className = "compare-button";
+    compareButton.onclick = compareClicked;
+    compareButton.innerText = __("Compare");
+    compareContainer.appendChild(compareButton)
+    compareContainer.appendChild(classToolTip)
 
 
     let statsContainer = document.createElement("div")
@@ -1367,7 +1367,7 @@ async function translatedButton() {
         localtransButton.style.visible = 'visible'
         translateButton.style.visibility = 'visible'
         copyOrgButton.style.visibility = 'visible'
-        compairButton.style.visibility = 'visible'
+        compareButton.style.visibility = 'visible'
 
     });
 
@@ -1403,7 +1403,7 @@ async function translatedButton() {
         // divNavBar.appendChild(impLocButton);
         // divNavBar.appendChild(checkButton);
         divNavBar.appendChild(checkContainer);
-        divNavBar.appendChild(compairContainer);
+        divNavBar.appendChild(compareContainer);
         // divNavBar.appendChild(tmtransButton);
         divNavBar.appendChild(TmContainer);
         divNavBar.appendChild(localtransContainer);
@@ -1884,12 +1884,12 @@ async function savetolocalClicked(event) {
 }
 
 
-async function compairClicked(event) {
+async function compareClicked(event) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var formal = checkFormal(false);
     chrome.storage.local.get(["convertToLower", "spellCheckIgnore", "formal","destlang"], function (data) {
 
-        compairWithSuggestion(is_pte, data.convertToLower, data.spellCheckIgnore, data.destlang)
+        compareWithSuggestion(is_pte, data.convertToLower, data.spellCheckIgnore, data.destlang)
     });
 }
 
@@ -2922,7 +2922,7 @@ async function checkbuttonClick(event) {
             let newurl = url.split("?")[0];
             if (typeof newurl != "undefined") {
                 // 02-07-2021 PSS Sometimes the difference is not shown in the single entry #95
-                // Fetch only the current string to compaire with the waiting string
+                // Fetch only the current string to compare with the waiting string
                 url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId + "&sort%5Bby%5D=translation_date_added&sort%5Bhow%5D=desc";
                 // url = newurl + "?filters%5Bstatus%5D=mystat&filters%5Boriginal_id%5D=" + rowId;
                 chrome.storage.local.get(["showTransDiff"], async function (data) {
