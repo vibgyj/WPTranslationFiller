@@ -104,7 +104,7 @@ Do NOT provide explanations, comments, or extra text. Output ONLY the literal tr
 `;
 
     if (show_debug) console.debug("=== Final system prompt sent to Claude ===\n", systemWithText);
-
+    console.debug("text:",text)
     const dataToSend = {
         apiKey: this.apiKey,
         apiVersion: this.apiVersion,
