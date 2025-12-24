@@ -98,7 +98,6 @@ const GoogleRegex = /%(\d{1,2})?\$?[sdl]/gi;
 
 async function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
-    
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
     const charmatches = original.matchAll(specialChar);
@@ -194,6 +193,11 @@ async function preProcessOriginal(original, preverbs, translator) {
         if (index == 0) {
             //  console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
+    }
+    else if (translator == "Ollama") {
+
+      // for now we do nothing
+        
     }
     if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);

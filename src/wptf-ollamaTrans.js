@@ -27,7 +27,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
      
     let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
     //originalPreProcessed = '"""' + originalPreProcessed + '"""';
-    console.debug("Ollama Pre-processed Original:", originalPreProcessed);
+    //console.debug("Ollama Pre-processed Original:", originalPreProcessed);
                     return new Promise((resolve, reject) => {
                         chrome.runtime.sendMessage({
                             action: "ollama_translate",
