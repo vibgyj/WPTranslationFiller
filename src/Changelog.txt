@@ -86,3 +86,6 @@ Version 3.4.36 Plural error when no translation was in pretrans
 Version 3.4.37 Fixed a problem with copying from suggestions when the original contains quotes
 Version 3.4.37 Added Claud selection of models
 Version 3.4.37 Improved replacing words that are in <button>..</button>
+Version 3.4.38 Added Ollama translation API
+Version 3.4.38 Added Ollama prompt
+Version 3.4.38 Fixed a typo "Compair" to "Compare" props to zenideas

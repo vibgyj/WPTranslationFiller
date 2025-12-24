@@ -38,9 +38,11 @@ let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
 let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
+let apikeyOllamaTextbox = document.getElementById("Ollama_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let ClaudselectBox = document.getElementById("ClaudSelect");
+let OllamaselectBox = document.getElementById("Ollama_model");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
 let OpenAIToneBox = document.getElementById("ToneSelect");
 let destLangTextbox = document.getElementById("destination_lang");
@@ -62,6 +64,7 @@ let myScreenWidthValue = document.getElementById("screenWidth");
 let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
 let ClaudePromptTextbox = document.getElementById("text_claude_prompt");
+let OllamaPromptTextbox = document.getElementById("text_ollama_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let spellcheckTextbox = document.getElementById("text_ignore_verbs");
@@ -76,14 +79,14 @@ let showDefGlossary = document.getElementById("use-default-glossary");
 let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 let showDisableClose = document.getElementById("disable-auto-close");
-
+let showLocalOllama = document.getElementById("ollama-local");
 
 document.getElementById('show-changelog-link').addEventListener('click', function (e) {
     e.preventDefault(); // Prevent the default link behavior
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -173,7 +176,13 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
     apikeyTranslateioTextbox.value = data.apikeyTranslateio
     apikeyClaudeTextbox.value = data.apikeyClaude;
+    if (data.apikeyOllama == null && typeof data.apikeyOllama == "undefined") {
+        apikeyOllamaTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeyOllamaTextbox.value = data.apikeyOllama;
 
+    }
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -198,6 +207,15 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         ClaudselectBox.value = data.ClaudSelect;
     }
+    if (typeof data.ollamaModel == 'undefined') {
+        OllamaselectBox.value = "gemma3:27b";
+    }
+    else if (data.ollamaModel == "") {
+        OllamaselectBox.value = "gemma3:27b";
+    }
+    else {
+        OllamaselectBox.value = data.ollamaModel;
+    }
     destLangTextbox.value = data.destlang;
     uploadedFile.innerText = `${data.glossaryFile}`;
     uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
@@ -215,6 +233,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     }
     else {
         ClaudePromptTextbox.value = data.ClaudePrompt;
+    }
+    if (typeof data.ollamaPrompt == 'undefined') {
+        OllamaPromptTextbox.value = 'Enter prompt'
+    }
+    else {
+        OllamaPromptTextbox.value = data.ollamaPrompt;
     }
     if (typeof data.reviewPrompt == 'undefined') {
         reviewTextbox.value = 'Enter prompt'
@@ -350,6 +374,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
            showDisableClose.checked = false;
         }
     }
+    if (data.LocalOllama != "null" && typeof data.LocalOllama != "undefined") {
+        if (data.LocalOllama == true) {
+            showLocalOllama.checked = true;
+        }
+        else {
+           showLocalOllama.checked = false;
+        }
+    }
    
 });
 
@@ -373,7 +405,6 @@ button.addEventListener("click", function () {
        showDeepl = true
     } else {
          showDeepl = "false";
-       console.log('Checkbox is not checked');
    }
     //if (document.querySelector("#DeeplFree:checked") !== null) {
    //     console.debug("in save :", document.querySelector("#DeeplFree:checked"))
@@ -388,6 +419,7 @@ button.addEventListener("click", function () {
     let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
     let apikeyTranslationio = apikeyTranslateioTextbox.value;
     let apikeyClaude = apikeyClaudeTextbox.value;
+    let apikeyOllama = apikeyOllamaTextbox.value;
     
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -534,6 +566,13 @@ button.addEventListener("click", function () {
     else {
         showClose = "false";
     }
+    if (document.querySelector("#ollama-local:checked") !== null) {
+        let localOllama_Set = document.querySelector("#ollama-local:checked");
+        localOllama = localOllama_Set.checked;
+    }
+    else {
+        localOllama = "false";
+    }
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -543,11 +582,13 @@ button.addEventListener("click", function () {
             apikeyDeepSeek: apikeyDeepSeek,
             apikeyTranslateio: apikeyTranslationio,
             apikeyClaude: apikeyClaude,
+            apikeyOllama: apikeyOllama,
             ClaudSelect: Claudsel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
             OpenAISelect: OpenAIsel,
+            ollamaModel: OllamaselectBox.value,
             OpenAITone:OpenAITone,
             OpenAItemp: OpenAItempVal,
             destlang: destlang,
@@ -555,6 +596,7 @@ button.addEventListener("click", function () {
             preTranslationReplace: preTranslation,
             OpenAIPrompt: promptText,
             ClaudePrompt: ClaudePrompt,
+            ollamaPrompt: OllamaPromptTextbox.value,
             reviewPrompt: reviewText,
             spellCheckIgnore: spellIgnoreverbs,
             showHistory: showHist,
@@ -578,7 +620,8 @@ button.addEventListener("click", function () {
             WPTFscreenWidth: theScreenWidthValue,
             strictValidate: strictValidat,
             autoCopyClip: autoCopyClipBoard,
-            DisableAutoClose: showClose
+            DisableAutoClose: showClose,
+            LocalOllama: localOllama
 
         });
 

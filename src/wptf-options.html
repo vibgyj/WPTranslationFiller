@@ -65,6 +65,9 @@
         #Claude_api_key {
             width: 350px;
         }
+        #Ollama_api_key {
+            width: 350px;
+        }
 
         #glossary_file {
             display: block;
@@ -118,7 +121,10 @@
             width: calc(100% - 6px);
             min-height: 100px;
         }
-
+        #text_ollama_prompt {
+            width: calc(100% - 6px);
+            min-height: 100px;
+        }
         #text_openai_review {
             width: calc(100% - 6px);
             min-height: 100px;
@@ -329,6 +335,26 @@
             </tr>
             <tr>
                 <td>
+                    <label for="Ollama_api_key">Ollama API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Ollama_api_key" type="text" value="Ollama api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="Ollama_model">Ollama model</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Ollama_model" type="text" value="Ollama model->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="transselect">Select a translator:</label>
                 </td>
                 <td>
@@ -340,7 +366,8 @@
                             <option value="microsoft">Microsoft</option>
                             <option value="OpenAI">OpenAI</option>
                             <option value="translation_io">translationio</option>
-                            <option value="Claude">Claude</option>
+                            <option value="Claude">Claud</option>
+                            <option value="Ollama">Ollama</option>
 
                         </select>
                     </div>
@@ -371,7 +398,7 @@
                             <option value="gpt-5.1-mini">gpt-5.1-mini</option>
                             <option value="gpt-5.1-nano">gpt-5.1-nano</option>
                         </select>
-                        <label for="OpenAI_temp">AI temperature:</label>
+                        <label for="OpenAI_temp">temperature:</label>
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
                     </div>
                 </td>
@@ -559,13 +586,13 @@
             </tr>
         </table>
         <div class="form-input">
-            <label for="text_openai_prompt">OpenAI prompt</label>
+            <label for="text_openai_prompt">AI prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated">?</span>
             <textarea id="text_openai_prompt">
             </textarea>
         </div>
         <div class="form-input">
-            <label for="text_openai_review">OpenAI review prompt</label>
+            <label for="text_openai_review">AI review prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
             <textarea id="text_openai_review">
             </textarea>
@@ -574,7 +601,13 @@
             <label for="text_claude_prompt">Claude prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt for Claude will be populated">?</span>
             <textarea id="text_claude_prompt">
-    </textarea>
+            </textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_ollama_prompt">Ollama prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt for Ollama will be populated">?</span>
+            <textarea id="text_ollama_prompt">
+     </textarea>
         </div>
         <div class="form-input">
             <label for="text_pre_verbs">Pre Translation Replace</label>
@@ -651,6 +684,10 @@ You,Je
         <label class="labeled-checkbox">
             <input type="checkbox" id="disable-auto-close">
             <span>Disable autoclose editor</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="ollama-local">
+            <span>Use local Ollama</span>
         </label>
         <br />
         <table id="footer">
