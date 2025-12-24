@@ -106,7 +106,7 @@
   "This button starts the import of a local po file containing translations into the current table": "Deze knop start de import van een lokaal .po bestand met vertalingen in de huidige tabel",
   "This function checks the page for missing verbs and if set starts spellchecking": "Deze functie controleert de pagina voor ontbrekende woorden, en indien ingesteld start de spellingcontrole",
   "This function populates the table with translations from the local database": "Deze functie vult de tabel met vertalingen uit de lokale database",
-  "This is the function to compair the suggestion with the local entry": "Deze functie vergelijkt de suggestie met de waarde in de lokale DB",
+  "This is the function to compare the suggestion with the local entry": "Deze functie vergelijkt de suggestie met de waarde in de lokale DB",
   "This is the function to copy originals  with selected items": "Deze functie kopieerd geselecteerde originelen naar de vertaling",
   "This is the function to save all suggestions selected in bulk": "Deze functie slaat alle suggesties in bulk op",
   "This is the function to populate the local database with selected items": "Deze functie vult de lokale database met geselecteerde items",
