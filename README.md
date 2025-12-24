@@ -42,7 +42,8 @@ If any bugs/problems are found, [please add an issue](https://github.com/vibgyj/
 # Git versioning
 1. git Extended tag 3.4.39
 
-
 ## Contributions
-This repository is provided for reference and transparency only. Pull requests will not be accepted.<br>
+This repository is provided for reference and transparency only.
+Pull requests will not be accepted.
 If you have a request or bug, please create an issue, and I will review it
+
