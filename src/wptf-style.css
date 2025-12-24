@@ -391,7 +391,7 @@ mymarker {
 }
 
 
-.wptfNavBarCont .compair-button {
+.wptfNavBarCont .compare-button {
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -402,11 +402,11 @@ mymarker {
     border-radius: 5px !important;
 }
 
-    .wptfNavBarCont .compair-button.ready {
+    .wptfNavBarCont .compare-button.ready {
         background: green;
     }
 
-    .wptfNavBarCont .compair-button::before {
+    .wptfNavBarCont .compare-button::before {
         content: '\f326';
         -webkit-font-smoothing: antialiased;
         display: inline-block;
@@ -415,11 +415,11 @@ mymarker {
         width: 28px;
     }
 
-.wptfNavBarCont .compair-button:hover {
+.wptfNavBarCont .compare-button:hover {
     background: darkgray !important;
 }
 
-    .wptfNavBarCont .compair-button.started {
+    .wptfNavBarCont .compare-button.started {
         content: "";
         display: inline-block;
         margin: auto;
@@ -430,7 +430,7 @@ mymarker {
     }
 
 
-    .wptfNavBarCont .compair-button.restarted {
+    .wptfNavBarCont .compare-button.restarted {
         content: "";
         display: inline-block;
         margin: auto;
@@ -441,12 +441,12 @@ mymarker {
         animation: blink-background 1s ease-in-out infinite;
     }
 
-.wptfNavBarCont .compair-button.after_error {
+.wptfNavBarCont .compare-button.after_error {
     animation: none;
     background: red;
 }
 
-    .wptfNavBarCont .compair-button.ready {
+    .wptfNavBarCont .compare-button.ready {
         animation: none !important;
         color: white !important;
         padding: 5px 5px 5px 5px;
