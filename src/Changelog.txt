@@ -89,3 +89,4 @@ Version 3.4.37 Improved replacing words that are in <button>..</button>
 Version 3.4.38 Added Ollama translation API
 Version 3.4.38 Added Ollama prompt
 Version 3.4.38 Fixed a typo "Compair" to "Compare" props to zenideas
+Version 3.4.39 Added text suggestions done by zenideas

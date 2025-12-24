@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.38",
-  "description": "Firefox addon to automatically fill translations from Google, DeepL, Microsoft, and OpenAI translation API's. This is the extended version.",
+  "version": "3.4.39",
+  "description": "Automatically populate translations from Google, DeepL, Microsoft, OpenAI, Ollama, DeepSeek, Translationio, Claud and in future other translation API's.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
   },
