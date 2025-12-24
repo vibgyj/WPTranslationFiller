@@ -1,9 +1,9 @@
 # WordPress Translation Filler (Extended) - Google Chrome/Firefox Extension/Edge
 
-Automatically fill translations on translate.wordpress.org using API's and indicate the accuracy of translation according to locale glossary.
+Automatically populates translations on translate.wordpress.org via APIs and validates accuracy against the local glossary.
 
 This extension helps with translation of originals on translate.wordpress.org and has the following features:
-1. Fetch translations using API's like DeepL, OpenAI, Google and Microsoft.
+1. Fetch translations using APIs like DeepL, OpenAI, Google and Microsoft.
 2. Indicate translation accuracy based on uploaded locale glossary.
 3. Provide convenient Approve/Reject button based on translation accuracy.
 4. Integrate Languagetool LT to run spellchecks on your translations.
