@@ -92,3 +92,4 @@ Version 3.4.38 Fixed a typo "Compair" to "Compare" props to zenideas
 Version 3.4.39 Added text suggestions done by zenideas
 Version 3.4.39 Fixed not translating first row with TM
 Version 3.4.39 Added a retry to the Olllama fetch call
+Version 3.4.39 Added extra parameter to the body of the Ollama request "repeat_penalty": 1.1

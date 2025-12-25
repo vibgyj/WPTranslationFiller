@@ -263,7 +263,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 max_tokens,
                 temperature,
                 apiKey,
-                useLocal
+                useLocal,
+                repeat_penalty
             } = request.data;
             
             if (!text) return sendResponse({ success: false, error: "Text is missing" });
@@ -311,11 +312,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     messages: message,
                     model: model,
                     stream: false,
-                    options: { temperature: temperature }
+                    options: { temperature: temperature, repeat_penalty: repeat_penalty }
                 };
 
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 12000); // 3 retries, 15s timeout
+                    console.debug("raw result:",result.translation)
                     sendResponse({
                         success: true,
                         translation: result.translation

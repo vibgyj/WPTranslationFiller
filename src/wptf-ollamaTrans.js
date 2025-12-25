@@ -19,7 +19,12 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
      if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
      else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
      else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-    else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+     else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian'); 
+     else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
+     else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
+     else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
+     else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
+     else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
     //console.debug("Ollama Prompt after replacements:", myprompt);
     if (toBoolean(is_editor)) {
         showTranslationSpinner("Translating…");
@@ -39,7 +44,8 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 model: mymodel,          // example model, must exist
                                 temperature: 0.5,                    // optional
                                 max_tokens: estimateTokens(original),                      // required by background
-                                useLocal: LocalOllama
+                                useLocal: LocalOllama,
+                                repeat_penalty: 1.1
                             }
                         }, (response) => {
                            
