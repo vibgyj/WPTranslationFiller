@@ -1,5 +1,14 @@
 ﻿// background.js
 console.debug("background loaded")
+function encodeBase64(text) {
+    // Convert UTF-8 string to base64
+    return btoa(unescape(encodeURIComponent(text)));
+}
+function decodeBase64(encoded) {
+    // Convert base64 back to UTF-8 string
+    return decodeURIComponent(escape(atob(encoded)));
+}
+
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.debug("request;", request)
@@ -302,10 +311,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             // === Local translation path ===
             if (myLocal) {
-                console.debug("text in local:", text); 
+               // console.debug("prompt:", systemPrompt)
+               
                 let message = [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `translate this: ${text}` }
+                    { role: 'user', content: `translate ${text}` }
                 ];
                 
                 var bodyToSend = {
@@ -317,7 +327,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 12000); // 3 retries, 15s timeout
-                    console.debug("raw result:",result.translation)
+                    console.debug("Local Ollama result:", result.translation);
+                    
                     sendResponse({
                         success: true,
                         translation: result.translation

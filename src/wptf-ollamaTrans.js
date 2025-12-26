@@ -78,7 +78,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                  translatedText,
                                  replaceVerb,
                                 originalPreProcessed,
-                                "OpenAI",
+                                "Ollama",
                                 convertToLower,
                                 spellCheckIgnore,
                                 destlang

@@ -196,8 +196,34 @@ async function preProcessOriginal(original, preverbs, translator) {
     }
     else if (translator == "Ollama") {
 
-      // for now we do nothing
-        
+         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+         index = 0;
+         placeholderMap = {};
+         // Replace each match with a unique token and store original
+         const matches = [...original.matchAll(placeholderRegex)];
+         for (const match of matches) {
+           const token = `<x id="var${index}"/>`;
+           original = original.replace(match[0], token);
+           placeholderMap[token] = match[0]; // keep mapping to restore later
+          index++;
+         }
+    
+        // We need to remove markup that contains & and ; otherwise translation will fail
+        let markupmatches = original.match(markupRegex)
+        if (markupmatches != null) {
+            index = 1;
+            for (const markupmatch of markupmatches) {
+                //console.debug("before:",markupmatch)
+                original = original.replace(markupmatch, `{mymark_var${index}}`);
+                index++;
+            }
+        }
+
+        translatedText
+        .replace(/\t/g, "__TAB__")
+        .replace(/\r\n/g, "__CRLF__")
+        .replace(/\n/g, "__LF__");
+      
     }
     if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
@@ -295,13 +321,47 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         }
         translatedText = restorePlaceholdersAfterTranslation(translatedText,original)
     }
+    else if (translator == "Ollama") {
+       // We need to put back the %s etc
+      for (const token in placeholderMap) {
+            const originalValue = placeholderMap[token];
+            // Make token safe for regex use
+            const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Replace all occurrences in translatedText
+            translatedText = translatedText.replace(new RegExp(escapedToken, 'g'), originalValue);
+      }
+
+      const markers = [
+        { marker: "__TAB__", replacement: "\t" },
+        { marker: "__CRLF__", replacement: "\r\n" },
+        { marker: "__LF__", replacement: "\n" }
+    ];
+
+    markers.forEach(({ marker, replacement }) => {
+        if (originalPreProcessed.includes(marker)) {
+            // Restore the marker to real character
+            translatedText = translatedText.replace(new RegExp(marker, "g"), replacement);
+        } else {
+            // Remove marker even if attached to other characters
+            translatedText = translatedText.replace(new RegExp(marker + "(?=\\S|$)", "g"), "");
+        }
+    });
+     // Controleer of het originele tekst eindigt met newline
+       const hasTrailingNewline = /\r?\n$/.test(original);
+
+       // Pas trailing newline in vertaling aan op basis van origineel
+      if (!hasTrailingNewline) {
+          translatedText = translatedText.replace(/[\r\n]+$/g, "");
+        }
+
+    }
     else if (translator == "deepl") {
         //console.debug("placeholdemap:",placeholderMap)
-        for (const token in placeholderMap) {
+       for (const token in placeholderMap) {
            // console.debug("token:",token)
             const originalValue = placeholderMap[token];
 
-            // Make token safe for regex use
+       //     // Make token safe for regex use
             const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             // Replace all occurrences in translatedText
