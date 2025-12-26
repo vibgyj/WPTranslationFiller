@@ -1,6 +1,6 @@
 ﻿// Helper: Wait for TM suggestion or "no-suggestions" element scoped to rowId's editor
+//sleep(1000)
 function waitforTM(rowId, TMwait) {
-  // console.debug("TMwait in waitforTM:", TMwait)
    
   const timeout = 10000; // max 10 seconds
   var suggestion
@@ -8,7 +8,8 @@ function waitforTM(rowId, TMwait) {
     let elapsed = 0;
 
     const interval = setInterval(() => {
-      const editor = document.querySelector(`#editor-${rowId}`);
+        const editor = document.querySelector(`#editor-${rowId}`);
+        //console.debug("editor in waitforTM:", editor)
       if (!editor) return;
 
       const TMswitch = localStorage.getItem("switchTM");
@@ -16,7 +17,8 @@ function waitforTM(rowId, TMwait) {
 
       if (TMswitch === "false") {
         // Standard TM
-        tmContainer = editor.querySelector("details.suggestions__translation-memory.initialized");
+          tmContainer = editor.querySelector("details.suggestions__translation-memory.initialized");
+          //console.debug("tmContainer:", tmContainer) 
         if (!tmContainer) {
           elapsed += TMwait;
           if (elapsed >= timeout) {
@@ -26,8 +28,9 @@ function waitforTM(rowId, TMwait) {
           return;
         }
 
-        const noSuggestions = tmContainer.querySelector(".no-suggestions");
-        if (noSuggestions) {
+          const Suggestions = tmContainer.querySelector(".suggestions-list");
+          //console.debug( "Suggestions:", Suggestions)
+        if (!Suggestions) {
           clearInterval(interval);
           resolve("nosuggestions");
           return;

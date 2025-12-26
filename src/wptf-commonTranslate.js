@@ -98,7 +98,6 @@ const GoogleRegex = /%(\d{1,2})?\$?[sdl]/gi;
 
 async function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
-    
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
     const charmatches = original.matchAll(specialChar);
@@ -194,6 +193,37 @@ async function preProcessOriginal(original, preverbs, translator) {
         if (index == 0) {
             //  console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
+    }
+    else if (translator == "Ollama") {
+
+         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+         index = 0;
+         placeholderMap = {};
+         // Replace each match with a unique token and store original
+         const matches = [...original.matchAll(placeholderRegex)];
+         for (const match of matches) {
+           const token = `<x id="var${index}"/>`;
+           original = original.replace(match[0], token);
+           placeholderMap[token] = match[0]; // keep mapping to restore later
+          index++;
+         }
+    
+        // We need to remove markup that contains & and ; otherwise translation will fail
+        let markupmatches = original.match(markupRegex)
+        if (markupmatches != null) {
+            index = 1;
+            for (const markupmatch of markupmatches) {
+                //console.debug("before:",markupmatch)
+                original = original.replace(markupmatch, `{mymark_var${index}}`);
+                index++;
+            }
+        }
+
+        translatedText
+        .replace(/\t/g, "__TAB__")
+        .replace(/\r\n/g, "__CRLF__")
+        .replace(/\n/g, "__LF__");
+      
     }
     if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
@@ -291,13 +321,47 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         }
         translatedText = restorePlaceholdersAfterTranslation(translatedText,original)
     }
+    else if (translator == "Ollama") {
+       // We need to put back the %s etc
+      for (const token in placeholderMap) {
+            const originalValue = placeholderMap[token];
+            // Make token safe for regex use
+            const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Replace all occurrences in translatedText
+            translatedText = translatedText.replace(new RegExp(escapedToken, 'g'), originalValue);
+      }
+
+      const markers = [
+        { marker: "__TAB__", replacement: "\t" },
+        { marker: "__CRLF__", replacement: "\r\n" },
+        { marker: "__LF__", replacement: "\n" }
+    ];
+
+    markers.forEach(({ marker, replacement }) => {
+        if (originalPreProcessed.includes(marker)) {
+            // Restore the marker to real character
+            translatedText = translatedText.replace(new RegExp(marker, "g"), replacement);
+        } else {
+            // Remove marker even if attached to other characters
+            translatedText = translatedText.replace(new RegExp(marker + "(?=\\S|$)", "g"), "");
+        }
+    });
+     // Controleer of het originele tekst eindigt met newline
+       const hasTrailingNewline = /\r?\n$/.test(original);
+
+       // Pas trailing newline in vertaling aan op basis van origineel
+      if (!hasTrailingNewline) {
+          translatedText = translatedText.replace(/[\r\n]+$/g, "");
+        }
+
+    }
     else if (translator == "deepl") {
         //console.debug("placeholdemap:",placeholderMap)
-        for (const token in placeholderMap) {
+       for (const token in placeholderMap) {
            // console.debug("token:",token)
             const originalValue = placeholderMap[token];
 
-            // Make token safe for regex use
+       //     // Make token safe for regex use
             const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             // Replace all occurrences in translatedText
@@ -3790,66 +3854,6 @@ function sortRowsArrayByRowAttribute() {
 }
 
 
-async function old_populateWithTM(apikey, apikeyDeepl, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, spellCheckIgnore, TMtreshold, interCept) {
-  //  const sortedRows = sortRowsArrayByRowAttribute();
-   // myrecCount = sortedRows
-    if (transsel == "OpenAI" && interCept == 'false') {
-        FetchLiDelay = 1500
-    }
-    else {
-        // setting this to a lower value will cause missing suggestions
-        FetchLiDelay = 1000
-    }
-    locale = checkLocale();
-    StartObserver = false;
-    setPostTranslationReplace(postTranslationReplace);
-    setPreTranslationReplace(preTranslationReplace);
-    let GlotPressBulkButton = document.getElementById("bulk-actions-toolbar-bottom")
-    // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
-    translateButton.innerText = __("Translate");
-    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-    if (translateButton.className == "tm-trans-button") {
-        translateButton.className += " started";
-    }
-    else {
-        translateButton.classList.remove("tm-trans-button", "started", "translated");
-        translateButton.classList.remove("tm-trans-button", "restarted", "translated");
-        translateButton.className = "tm-trans-button restarted";
-    }
-    myrecCount = document.querySelectorAll("tr.editor")
-    interCept = localStorage.getItem("interXHR");
-
-    let currWindow = window.self
-    if (interCept == 'false') {
-        //console.debug("auto translations are fetched")
-        cuteAlert({
-            type: "question",
-            title: __("Auto translate"),
-            message: __("Auto translate is on, do you want to continue?"),
-            confirmText: "Confirm",
-            cancelText: "Cancel",
-            myWindow: currWindow
-        }).then(async (e) => {
-            if (e == "cancel") {
-                translateButton = document.querySelector(".wptfNavBarCont a.tm-trans-button");
-                translateButton.className += " translated";
-                translateButton.innerText = __("Translated");
-                messageBox("info", __("TM is stopped!"));
-                StartObserver = true
-                return
-            }
-            else {
-                processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, GlotPressBulkButton, FetchLiDelay, interCept)
-            }
-        })
-    }
-    else {
-        processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, GlotPressBulkButton, FetchLiDelay, interCept)
-
-    }
-}
-
 function submitData(myTextarea) {
     // Get the data from the textarea
     var textData = myTextarea
@@ -5167,808 +5171,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     //console.debug("translatePage ready")
 }
 
-async function oldtranslatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss) {
-    //console.time("translation")
-    var translate;
-    var transtype = "";
-    var plural_line = "";
-    var plural_present = "";
-    var record = "";
-    var row = "";
-    var newrow;
-    var rowfound = "";
-    var preview = "";
-    var previewElem;
-    var pretrans;
-    var timeout = 100;
-    var mytimeout = 1000;
-    var vartime = 500;
-    var stop = false;
-    var editor = false;
-    var counter = 0;
-    var myrecCount = 0;
-    var previewClass;
-    var localRow;
-    var myheader = document.querySelector('header');
-    const template = `
-    <div class="indeterminate-progress-bar">
-        <div class="indeterminate-progress-bar__progress"></div>
-    </div>
-    `;
-    progressbar = document.querySelector(".indeterminate-progress-bar");
-    inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
-    //console.debug("glos:", openAiGloss)
-    if (progressbar == null) {
-        myheader.insertAdjacentHTML('afterend', template);
-        // progressbar = document.querySelector(".indeterminate-progress-bar");
-        //progressbar.style.display = 'block;';
-    }
-    else {
-        // we need to remove the style of inprogress to see the animation again
-        inprogressbar.style = ""
-        progressbar.style.display = 'block';
-    }
-    //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
-    if (transsel == 'OpenAI') {
-        vartime = openAIWait;
-    }
-    //console.debug("DeepL:",transsel,DeepLWait)
-    if (transsel == 'deepl') {
-        vartime = DeepLWait
-    }
-    locale = checkLocale();
-    // We need to fetch the setting for mocking
 
-    if (typeof (Storage) !== "undefined") {
-        interCept = localStorage.getItem("interXHR");
-    }
-    else {
-        interCept = false;
-        //console.debug("Cannot read localstorage, set intercept to false");
-    }
-
-    // Check if the value exists and is either "true" or "false"
-    if (interCept === null || (interCept !== "true" && interCept !== "false")) {
-        // If the value is not present or not a valid boolean value, set it to false
-        interCept = false;
-        localStorage.setItem("interXHR", interCept);
-    }
-
-    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-    
-    // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-    translateButton.innerText = __("Translate");
-    //console.debug("Button classname:", translateButton.className);
-    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-    if (translateButton.className == "translation-filler-button") {
-        translateButton.className += " started";
-    }
-    else {
-        translateButton.classList.remove("translation-filler-button", "started", "translated");
-        translateButton.classList.remove("translation-filler-button", "restarted", "translated");
-        translateButton.className = "translation-filler-button restarted";
-    }
-
-    // 15-05-2021 PSS added fix for issue #73
-    // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
-    if (typeof postTranslationReplace != "undefined" && postTranslationReplace.length != 0) {
-        if (typeof preTranslationReplace != "undefined" && preTranslationReplace.length != 0) {
-            // PSS 21-07-2022 Currently when using formal, the translation is still default #225
-            setPostTranslationReplace(postTranslationReplace, formal);
-            setPreTranslationReplace(preTranslationReplace);
-            myrecCount = document.querySelectorAll("tr.editor")
-            tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
-            for (let record of myrecCount) {
-                //setTimeout(async function () {
-                counter++;
-                transtype = "single";
-                // 16-08-2021 PSS fixed retranslation issue #118
-                rowfound = record.id
-               // console.debug("rowfound:", rowfound)
-                const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
-
-                if (match) {
-                    row = match[1];
-                   // console.log("Extracted value:", row);
-                } else {
-                   // console.log("No match found");
-                }
-                
-                // let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                let currec = record.querySelector("div.editor-panel__left div.panel-header");
-                // We need to determine the current state of the record
-                if (currec != null) {
-                    var current = await currec.querySelector("span.panel-header__bubble");
-                    var prevstate = current.innerText;
-                }
-                let original = record.querySelector("div.editor-panel__left div.panel-content span.original-raw").innerText;
-                // 14-08-2021 PSS we need to put the status back of the label after translating
-
-                let transname = document.querySelector(`#preview-${row} .original div.trans_name_div_true`);
-                if (transname != null) {
-                    transname.className = "trans_name_div";
-                    transname.innerText = __("URL, name of theme or plugin or author!");
-                    // In case of a plugin/theme name we need to set the button to blue
-                    let curbut = document.querySelector(`#preview-${row} .priority .tf-save-button`);
-                    // console.debug("currbut:",curbut)
-                    curbut.style.backgroundColor = "#0085ba";
-                    curbut.innerText = "Save";
-                    curbut.title = __("Save the string");
-                    transtype = "single";
-                }
-                // If in the original field "Singular is present we have a plural translation
-
-                pluralpresent = document.querySelector(`#preview-${row} .original li:nth-of-type(1) .original-text`);
-                if (pluralpresent != null) {
-                    original = pluralpresent.innerText;
-                    transtype = "plural";
-                    plural_line = "1";
-                }
-                else {
-                    transtype = "single";
-                    plural_line = "0";
-                }
-                // PSS 09-03-2021 added check to see if we need to translate
-                //Needs to be put into a function, because now it is unnessary double code
-                toTranslate = true;
-                // Check if the comment is present, if not then if will block the request for the details name etc.
-                let element = record.querySelector(".source-details__comment");
-                if (element != null) {
-                    let comment = record.querySelector(".source-details__comment p").innerText;
-                    comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-                    toTranslate = checkComments(comment.trim());
-                }
-                // Do we need to translate as we did not find a comment??
-                if (toTranslate) {
-                    pretrans = await findTransline(original, destlang);
-                    // 07-05-2021 PSS added pretranslate in pages
-                    if (pretrans != "notFound") {
-                        localRow = row
-                    }
-                    if (pretrans == "notFound") {
-                        // 20-06-2021 PSS fixed that translation stopped when the page already is completely translated issue #85
-                        if (document.getElementById("translate-" + row + "-translocal-entry-local-button") != null) {
-                            let transhide = document.getElementById("translate-" + row + "-translocal-entry-local-button");
-                            transhide.style.visibility = 'hidden'
-                        }
-                        if (transsel == "google") {
-                            result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore, false);
-                            if (errorstate == "Error 400") {
-                                messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
-                                //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
-                                stop = true;
-                                // break;
-                            }
-                            else {
-                                if (errorstate != "OK") {
-                                    messageBox("error", "There has been some uncatched error: " + errorstate);
-                                    //alert("There has been some uncatched error: " + errorstate);
-                                    stop = true;
-                                    // break;
-                                }
-                            }
-                        }
-                        else if (transsel == "deepl") {
-                            //console.debug("row in page before translate:",original,row)
-                            result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false);
-                            if (result == "Error 403") {
-                                messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
-                                //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
-                                stop = true;
-                                // break;
-                            }
-                            else if (result == "Error 400") {
-                                messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
-                                //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                stop = true;
-                                // break;
-                            }
-                            else if (result == "Error 456") {
-                                messageBox("error", __("Error 456 Quota exceeded. The character limit has been reached"));
-                                stop = true;
-                                //break;
-                            }
-                            else {
-                                //console.debug("errorstate:",errorstate)
-                                if (errorstate != "OK") {
-                                    // messageBox("error", "There has been some uncatched error: " + errorstate);
-                                    //alert("There has been some uncatched error: " + errorstate);
-                                    stop = true;
-                                   // console.debug("we break!!")
-                                    //break;
-                                }
-                            }
-                        }
-                        else if (transsel == "microsoft") {
-                            result = await microsoftTranslate(original, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore, false);
-                            if (result == "Error 401") {
-                                messageBox("error", __("Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!"));
-                                //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
-                                stop = true;
-                                //  break;
-                            }
-                            else if (result == "Error 403") {
-                                messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
-                                //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
-                                stop = true;
-                                //  break;
-                            }
-                            else {
-                                if (errorstate != "OK") {
-                                    messageBox("error", "There has been some uncatched error: " + errorstate);
-                                    //alert("There has been some uncatched error: " + errorstate);
-                                    stop = true;
-                                    //  break;
-                                }
-                            }
-                        }
-                        else if (transsel == "OpenAI") {
-                            //console.debug("row in page AI:",row)
-                            let result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
-                            if (errorstate == "Error 401") {
-                                messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
-                                // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
-                                stop = true;
-                                // break;
-                            }
-                            else if (result == "Error 403") {
-                                // messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
-                                //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                stop = true;
-                                // break;
-                            }
-                            else if (result == "Error 429") {
-                                // messageBox("error", "Error in translation received status 429 :" + errorstate);
-                                //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                stop = true;
-                                // break
-                            }
-                            else {
-                                //console.debug("errorstate:",errorstate)
-                                if (errorstate != "OK") {
-                                    messageBox("error", "There has been some uncatched error: " + errorstate);
-                                    stop = 'true';
-                                    // break;
-                                    //alert("There has been some uncatched error: " + errorstate);
-                                }
-                            }
-                        }
-                    } else {
-                        // Pretranslation found!
-                       // console.debug("we found a pretranslated!",pretrans,row,localRow)
-                        let translatedText = pretrans;
-                        // check if the returned translation does have the same start/ending as the original
-                        if (translatedText != "No suggestions") {
-                            // console.debug("trnans:",translatedText)
-                            result = check_start_end(translatedText, "", 0, "", original, "", 0);
-                        }
-                        let textareaElem = record.querySelector("textarea.foreign-text");
-                        textareaElem.innerText = translatedText;
-                        textareaElem.value = translatedText;
-                        if (typeof current != "undefined") {
-                            current.innerText = "transFill";
-                            current.value = "transFill";
-                        }
-                        // 23-09-2021 PSS if the status is not changed then sometimes the record comes back into the translation list issue #145
-                        select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
-                        //select = next_editor.getElementsByClassName("meta");
-                        var status = select.querySelector("dd");
-                        status.innerText = "transFill";
-                        status.value = "transFill";
-                        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                        if (currec != null) {
-                            var current = currec.querySelector("span.panel-header__bubble");
-                        }
-                        // console.debug("before validate:", destlang, textareaElem, "org: ",original,"locale: ", locale)
-                        // if it is a local translation we still need to set the quality of the translation!!
-                        validateEntry(destlang, textareaElem, "", "", row, locale, record, false);
-                        // PSS 10-05-2021 added populating the preview field issue #68
-                        // Fetch the first field Singular
-                        preview = document.querySelector(`#preview-${row}`)
-                        //preview = await document.getElementById("preview-" + row)
-                        // Here we add the "local" text into the preview
-                        var element1 = document.createElement("div");
-                        element1.setAttribute("class", "trans_local_div");
-                        element1.setAttribute("id", "trans_local_div");
-                        element1.appendChild(document.createTextNode(__("Local")));
-                        textareaElem.appendChild(element1);
-                        
-                        if (previewElem != null) {
-                            previewElem[0].innerText = translatedText;
-                            previewClass = preview;
-                            previewClass.classList.replace("no-translations", "has-translations");
-                            previewClass.classList.replace("untranslated", "status-waiting");
-                            previewClass.classList.replace("status-fuzzy", "status-waiting");
-                            previewClass.classList.add("wptf-translated");
-                        } else {
-                            //console.debug("we are in the wrong preview:", row)
-                            var preview = document.querySelector("#preview-" + row + " td.translation");
-                            let spanmissing = preview.querySelector(" span.missing");
-                            if (spanmissing != null) {
-                                if (plural_line == "1") {
-                                    spanmissing.remove();
-                                }
-                                if (transtype != "single") {
-                                    ul = document.createElement("ul");
-                                    preview.appendChild(ul);
-                                    var li1 = document.createElement("li");
-                                    li1.style.cssText = "text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;";
-                                    ul.appendChild(li1);
-                                   // var small = document.createElement("small");
-                                   // li1.appendChild(small);
-                                    small.appendChild(document.createTextNode("Singular:"));
-                                    var br = document.createElement("br");
-                                    li1.appendChild(br);
-                                    var myspan1 = document.createElement("span");
-                                    myspan1.className = "translation-text";
-                                    li1.appendChild(myspan1);
-                                    myspan1.appendChild(document.createTextNode(translatedText));
-
-                                    // Also create the second li
-                                    var li2 = document.createElement("li");
-                                    //li2.style.cssText = 'text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;';
-                                    ul.appendChild(li2);
-                                   // var small = document.createElement("small");
-                                  //  li2.appendChild(small);
-                                    //small.appendChild(document.createTextNode("Plural:"));
-                                  //  var br = document.createElement("br");
-                                    //li2.appendChild(br);
-                                    var myspan2 = document.createElement("span");
-                                    myspan2.className = "translation-text";
-                                    li2.appendChild(myspan2);
-                                    myspan2.appendChild(document.createTextNode("empty"));
-
-                                } else {
-                                    // console.debug("this is the one!!!!")
-                                    // console.debug("prev:",preview)
-                                    let spanmissing = preview.querySelector(" span.missing");
-                                    if (spanmissing != null) {
-                                        // console.debug("removing span");
-                                        spanmissing.remove();
-                                    }
-
-                                    var myspan1 = document.createElement("span");
-                                    myspan1.className = "translation-text";
-                                    myspan1.appendChild(document.createTextNode(""));
-                                    preview.appendChild(myspan1);
-                                    myspan1.innerText = translatedText;
-                                    current.innerText = "transFill";
-                                    current.value = "transFill";
-
-                                    let localpresent = preview.querySelector("div.trans_local_div:nth-of-type(1)");
-                                    // 17-02-2034 PSS do not add the label twice
-                                    if (localpresent == null) {
-                                        let element1 = document.createElement("div");
-                                        element1.setAttribute("class", "trans_local_div");
-                                        element1.setAttribute("id", "trans_local_div");
-                                        //PSS
-                                        element1.appendChild(document.createTextNode(__("Local")));
-                                        preview.appendChild(element1);
-                                    }
-                                    preview = document.querySelector(`#preview-${row}`);
-                                    if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
-                                        translated = true
-                                        rowchecked = preview.querySelector("td input");
-                                        if (rowchecked == null) {
-                                            rowchecked = preview.querySelector("th input");
-                                        }
-                                        if (rowchecked != null) {
-                                            if (!rowchecked.checked) {
-                                                rowchecked.checked = true;
-                                            }
-                                        }
-                                    }
-                                    mark_as_translated(row, current, translated, preview);
-                                }
-                            } else {
-                                // console.debug("single")
-                                // if it is as single with local then we need also update the preview
-                               // console.debug("We have a single with local")
-                                let spanmissing = preview.querySelector(" span.missing");
-                                if (spanmissing != null) {
-                                    // console.debug("removing span");
-                                    spanmissing.remove();
-                                }
-                                let textareaElem = preview.querySelector("span.translation-text");
-                                // console.debug("textareaElem", textareaElem)
-                                // PSS 30-07-2022 fixed error when record is already present with span
-                                if (typeof textareaElem == null) {
-                                    var myspan1 = document.createElement("span");
-                                    myspan1.className = "translation-text";
-                                    textareaELem.appendChild(myspan1);
-                                    myspan1.appendChild(document.createTextNode("empty"));
-                                    myspan1.innerText = translatedText;
-                                    myspan1.value = translatedText;
-                                }
-                                else {
-                                    textareaElem.innerText = translatedText;
-                                }
-                                current.innerText = "transFill";
-                                current.value = "transFill";
-                                let localpresent = preview.querySelector(".trans_local_div:nth-of-type(1)");
-                                //console.debug("local:",localpresent)
-                                // 17-02-2034 PSS do not add the label twice
-                                if (localpresent == null) {
-                                    let element1 = document.createElement("div");
-                                    element1.setAttribute("class", "trans_local_div");
-                                    element1.setAttribute("id", "trans_local_div");
-                                    //PSS
-                                    element1.appendChild(document.createTextNode(__("Local")));
-                                    preview.appendChild(element1);
-                                }
-                                // we need to set the checkbox as marked
-                                preview = getPreview(rowId);
-                                //preview = document.querySelector(`#preview-${rowId}`);
-                                if (is_pte) {
-                                    rowchecked = preview.querySelector(".checkbox input");
-                                }
-                                else {
-                                    rowchecked = preview.querySelector(".myCheckBox input");
-                                }
-                                if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
-                                    if (rowchecked != null) {
-                                        if (!rowchecked.checked) {
-                                            rowchecked.checked = true;
-                                        }
-                                    }
-                                }
-                            }
-                            // we need to set the editor record to translated
-                            currentClass = record;
-                            // console.debug("class:",currentClass)
-                            currentClass.classList.replace("no-translations", "has-translations");
-                            currentClass.classList.replace("untranslated", "status-waiting");
-                            currentClass.classList.replace("status-fuzzy", "status-waiting");
-                            currentClass.classList.add("wptf-translated");
-                            //console.debug("preview in local:",preview)
-                            previewClass = preview;
-                            previewClass.classList.replace("no-translations", "has-translations");
-                            previewClass.classList.replace("untranslated", "status-waiting");
-                            previewClass.classList.replace("status-fuzzy", "status-waiting");
-                            previewClass.classList.add("wptf-translated");
-                        }
-                        let localButton = document.getElementById("translate-" + row + "-translocal-entry-local-button");
-                        if (localButton != null) {
-                            localButton.style.visibility = "visible";
-                        }
-                    }
-                    // 10-04-2021 PSS added translation of plural into translatePage
-                    let e = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                    if (e != null) {
-                        checkplural = e.querySelector(`#editor-${row} .source-string__plural span.original`);
-                        // console.debug("we are in plural:",checkplural.innerText)
-                        if (checkplural != null) {
-                            transtype = "plural";
-                            plural_line = "2";
-                            let plural = checkplural.innerText;
-                            // console.debug("Plural: ", plural_line, plural)
-                            let pretrans = await findTransline(plural, destlang);
-                            if (pretrans == "notFound") {
-                                if (transsel == "google") {
-                                    result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore, false);
-                                    if (errorstate == "Error 400") {
-                                        messageBox("error", __("API key not valid. Please pass a valid API key.<br>Please check your licence in the options!!!"));
-                                        //alert("API key not valid. Please pass a valid API key. \r\nPlease check your licence in the options!!!");
-                                        // break;
-                                    }
-                                    else {
-                                        if (errorstate != "OK") {
-                                            messageBox("error", "There has been some uncatched error: " + errorstate);
-                                            //alert("There has been some uncatched error: " + errorstate);
-                                            // break;
-                                        }
-                                    }
-                                }
-                                else if (transsel == "deepl") {
-                                    // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-                                    result = deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false);
-                                    if (result == "Error 403") {
-                                        messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
-                                        //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
-                                        //  break;
-                                    }
-                                    else if (result == "Error 400") {
-                                        messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
-                                        //alert("Error in translation received status 400 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                        // break;
-                                    }
-                                    else if (result == "Error 456") {
-                                        messageBox("error", "Error 456 Quota exceeded. The character limit has been reached");
-                                        // break;
-                                    }
-                                    else {
-                                        if (errorstate != "OK") {
-                                            messageBox("error", "There has been some uncatched error: " + errorstate);
-                                            //alert("There has been some uncatched error: " + errorstate);
-                                            // break;
-                                        }
-                                    }
-                                }
-                                else if (transsel == "microsoft") {
-                                    result = await microsoftTranslate(plural, destlang, record, apikeyMicrosoft, replacePreVerb, row, transtype, plural_line, locale, convertToLower, spellCheckIgnore, false);
-                                    if (result == "Error 401") {
-                                        messageBox("error", __("Error in translation received status 401, authorisation refused.<br>Please check your licence in the options!!!"));
-                                        //alert("Error in translation received status 401, authorisation refused.\r\nPlease check your licence in the options!!!");
-                                        //break;
-                                    }
-                                    else if (result == "Error 403") {
-                                        messageBox("error", "Error in translation received status 403<br>Language: " + destlang + " not supported!");
-                                        //alert("Error in translation received status 403  \r\nLanguage: " + language + " not supported!");
-                                        // break;
-                                    }
-                                    else {
-                                        if (errorstate != "OK") {
-                                            messageBox("error", "There has been some uncatched error: " + errorstate);
-                                            //alert("There has been some uncatched error: " + errorstate);
-                                            // break;
-                                        }
-                                    }
-                                }
-                                else if (transsel == "OpenAI") {
-                                    result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
-
-                                    if (result == "Error 401") {
-                                        messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
-                                        // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
-                                        // break;
-                                        stop = true;
-                                    }
-                                    else if (result == "Error 403") {
-                                        messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
-                                        //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                    }
-                                    else if (result == "Error 429") {
-                                        //messageBox("error", "Error in translation received status 429 :" + errorstate);
-                                        //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                                        stop = true;
-                                    }
-                                    else {
-                                        if (errorstate != "OK") {
-                                            stop = true;
-                                            messageBox("error", "There has been some uncatched error: " + errorstate);
-                                            // break;
-                                            //alert("There has been some uncatched error: " + errorstate);
-                                        }
-                                    }
-                                }
-                            }
-                            else {
-                                //console.debug("we are in plural")
-                                // 21-06-2021 PSS fixed issue #86 no lookup was done for plurals
-                                // 17-08-2021 PSS additional fix #118 when translation is already present we only need the first part of the rowId
-                                let translatedText = pretrans;
-                                //console.debug("pretrans:",translatedText)
-                                let rowId = row.split("-")[0];
-                                //console.debug("rowId:", rowId)
-                                if (current.innerText == "current") {
-                                    //console.debug(" plural has current:",rowId)
-                                    textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
-                                    textareaElem1.innerText = translatedText;
-                                    textareaElem1.value = translatedText;
-                                    // the code below is to populate the Russion and Ukrain plurals
-                                    textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
-                                    if (textareaElem2 != null) {
-                                        plural = plural + "_02"
-                                        let pretrans = await findTransline(plural, destlang);
-                                        //console.debug("res:", pretrans)
-                                        translatedText = pretrans
-                                        textareaElem2.innerText = translatedText;
-                                        textareaElem2.value = translatedText;
-                                    }
-
-                                    textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
-                                    //console.debug("elem3:", textareaElem3)
-                                    if (textareaElem3 != null) {
-                                        plural = plural + "_03"
-                                        let pretrans = await findTransline(plural, destlang);
-                                        //console.debug("res:", pretrans)
-                                        translatedText = pretrans
-                                        textareaElem3.innerText = translatedText;
-                                        textareaElem3.value = translatedText;
-                                    }
-
-                                    // Populate the second line in preview Plural
-                                    if (prevstate != "current") {
-                                        let preview = document.querySelector("#preview-" + rowId + " td.translation");
-                                        if (preview != null) {
-                                            preview.innerText = translatedText;
-                                            preview.value = translatedText;
-                                            var element1 = document.createElement("div");
-                                            element1.setAttribute("class", "trans_local_div");
-                                            element1.setAttribute("id", "trans_local_div");
-                                            //PSS
-                                            element1.appendChild(document.createTextNode(__("Local")));
-                                            preview.appendChild(element1);
-                                        }
-                                    }
-                                }
-                                else {
-                                    // 30-10-2021 PSS added a fix for issue #154
-                                    // If the span missing is present it needs to be removed and the ul added otherwise the second line cannot be populated
-                                    plural_line="1"
-                                    check_span_missing(row, plural_line);
-                                    //console.debug("after span missing:",current.innerText)
-                                    // let rowId = row.split("-")[0];
-                                    //console.debug("translated plural row:",row,rowId)
-                                    textareaElem1 = document.querySelector("textarea#translation_" + rowId + "_1");
-                                    textareaElem1.innerText = translatedText;
-                                    textareaElem1.value = translatedText;
-                                    // the code below is to populate the Russion and Ukrain plurals
-                                    textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
-                                    if (textareaElem2 != null) {
-                                        plural = plural + "_02"
-                                        let pretrans = await findTransline(plural, destlang);
-                                        if (pretrans != null) {
-                                            //console.debug("res:", pretrans)
-                                            translatedText = pretrans
-                                            textareaElem2.innerText = translatedText;
-                                            textareaElem2.value = translatedText;
-                                        }
-                                    }
-
-                                    textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
-                                    //console.debug("elem3:", textareaElem3)
-                                    if (textareaElem3 != null) {
-                                        plural = plural + "_03"
-                                        let pretrans = await findTransline(plural, destlang);
-                                        if (pretrans != null) {
-                                            //console.debug("res:", pretrans)
-                                            translatedText = pretrans
-                                            textareaElem3.innerText = translatedText;
-                                            textareaElem3.value = translatedText;
-                                        }
-                                    }
-
-                                    let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
-                                    //console.debug("previewElem 3052:",previewElem)
-                                    if (previewElem != null) {
-                                        previewElem.innerText = translatedText;
-                                        previewElem.value = translatedText;
-                                        var element1 = document.createElement("div");
-                                        element1.setAttribute("class", "trans_local_div");
-                                        element1.setAttribute("id", "trans_local_div");
-                                        //PSS
-                                        element1.appendChild(document.createTextNode(__("Local")));
-                                        previewElem.appendChild(element1);
-                                    }
-                                    // current.innerText = "transFill";
-                                    // current.value = "transFill";
-                                }
-                            }
-                            //let rowId = row.split("-")[0];
-                            preview = document.querySelector(`#preview-${row}`);
-                            // console.debug("preview after plural:",preview)
-                            if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
-                                rowchecked = preview.querySelector("th input");
-                                if (rowchecked == null) {
-                                    rowchecked = preview.querySelector("th input");
-                                }
-                                if (rowchecked == null) {
-                                    rowchecked = preview.querySelector("td input");
-                                }
-                                if (rowchecked != null) {
-                                    if (!rowchecked.checked) {
-                                        rowchecked.checked = true;
-                                    }
-                                }
-                            }
-                            previewClass = preview;
-                            previewClass.classList.replace("no-translations", "has-translations");
-                            previewClass.classList.replace("untranslated", "status-waiting");
-                            previewClass.classList.replace("status-fuzzy", "status-waiting");
-                            previewClass.classList.add("wptf-translated");
-                        }
-                    }
-                } else {
-                    // This is when urls/plugin/theme names are present or local translation is present
-                    translated = true
-                    let translatedText = original;
-                    let preview = document.querySelector("#preview-" + row + " td.translation");
-                    //console.debug("we have a local",original,row)
-                    if (preview == null) {
-                        preview = document.querySelector("#preview-" + myrow + " td.translation");
-                    }
-                    let spanmissing = preview.querySelector(" span.missing");
-                    if (spanmissing != null) {
-                        spanmissing.remove();
-                    }
-                    var myspan1 = document.createElement("span");
-                    myspan1.className = "translation-text";
-                    myspan1.appendChild(document.createTextNode(""));
-                    preview.appendChild(myspan1);
-                    myspan1.innerText = translatedText;
-                    let textareaElem = record.querySelector("textarea.foreign-text");
-
-                    // let preview = document.querySelector("#preview-" + row + " td.translation");
-                    if (textareaElem != null) {
-                        textareaElem.innerText = translatedText;
-                        textareaElem.value = translatedText
-                        // preview.innerText = translatedText;
-                        // preview.value = translatedText;
-                        // We need to alter the status otherwise the save button does not work
-                        current.innerText = "transFill";
-                        current.value = "transFill";
-
-                    }
-                    if (toTranslate == false) {
-                        nameDiff = false;
-                        showName = true;
-                    }
-                    else {
-                        showName = false;
-                    }
-                    if (showName == true) {
-                        let originalElem = document.querySelector("#preview-" + row + " .original");
-                        nameDiff = isExactlyEqual(translatedText, originalElem.innerText)
-                        showNameLabel(originalElem,row,nameDiff)
-                    }
-                    preview = document.querySelector(`#preview-${row}`);
-                    // we need to set the button to "save"
-                    let curbut = preview.querySelector(`.tf-save-button`);
-                    //console.debug("currbut:", curbut)
-                    if (curbut != null) {
-                        curbut.style.backgroundColor = "#0085ba";
-                        curbut.innerText = __("Save");
-                        curbut.title = __("Save the string");
-                    }
-                    rowchecked = preview.querySelector("td input");
-                    if (rowchecked == null) {
-                        rowchecked = preview.querySelector("th input");
-                    }
-                    if (translatedText != "No suggestions" && translatedText != "No suggestions due to overload openAI!!") {
-                        if (rowchecked != null) {
-                            if (!rowchecked.checked) {
-                                rowchecked.checked = true;
-                            }
-                        }
-                    }
-                    mark_as_translated(row, current, translated, preview)
-                    // await validateEntry(destlang, textareaElem, "", "", row);
-                }
-                // single translation completed
-                if (completedCallback) {
-                    let textareaElem = record.querySelector("textarea.foreign-text");
-                    completedCallback(original, textareaElem.innerText);
-                }
-                if (counter == tableRecords) {
-                    // Translation completed we need to stop spinning the translate button
-                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-                    translateButton.className += " translated";
-                    translateButton.innerText = __("Translated");
-                    progressbar = document.querySelector(".indeterminate-progress-bar");
-                    progressbar.style.display = "none";
-                    messageBox("info", __("Translation is ready"));
-                }
-                // We need to wait a bit before fetching the net record
-                await delay(vartime * counter)
-                // }, vartime * counter)
-                if (stop == true) {
-                    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-                    translateButton.className += " translated";
-                    translateButton.innerText = __("Translated");
-                    messageBox("error", "End There has been some uncatched error: " + errorstate);
-                    break;
-                }
-            }
-        }
-        else {
-            messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
-            // 07-07-2021 Fix for issue #98
-            translateButton = document.querySelector(".paging a.translation-filler-button");
-            translateButton.className += " after_error";
-        }
-    } else {
-        messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
-        // 07-07-2021 Fix for issue #98
-        translateButton = document.querySelector(".paging a.translation-filler-button");
-        translateButton.className += " after_error";
-    }
-    // console.timeEnd("translation");
-}
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-}
 function check_span_missing(row, plural_line) {
     // console.debug("check_span_missing plural_line:",plural_line)
     let preview = document.querySelector("#preview-" + row + " td.translation");

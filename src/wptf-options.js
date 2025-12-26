@@ -588,7 +588,7 @@ button.addEventListener("click", function () {
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
             OpenAISelect: OpenAIsel,
-            ollamaModel: OllamaselectBox.value,
+            ollamaModel: OllamaselectBox.value.trim(),
             OpenAITone:OpenAITone,
             OpenAItemp: OpenAItempVal,
             destlang: destlang,

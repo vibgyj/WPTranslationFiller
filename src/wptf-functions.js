@@ -8,6 +8,11 @@ const toBoolean = (value) => {
     return false;
 };
 
+// function to introduce a delay
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 
 /**
  * Convert comma-separated glossary to Ollama-friendly line format (sorted A-Z)

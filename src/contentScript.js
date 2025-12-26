@@ -1320,7 +1320,7 @@ async function translatedButton() {
     compairContainer.className = 'button-tooltip'
     classToolTip = document.createElement("span")
     classToolTip.className = 'tooltiptext'
-    classToolTip.innerText = __("This is the function to compair the suggestion with the local entry")
+    classToolTip.innerText = __("This is the function to compaire the suggestion with the local entry")
 
     let compairButton = document.createElement("a");
     compairButton.href = "#";
