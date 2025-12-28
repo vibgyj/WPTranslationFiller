@@ -36,16 +36,21 @@ if (typeof addon_translations == 'undefined') {
 
 async function loadTranslations(language) {
     try {
-        const response = fetch(chrome.runtime.getURL(`locales/${language}.json`)); // No await yet
-        const res = await response; // Await only when needed
-
-        if (res.ok) {
-            addon_translations = await res.json();
-        } else {
-            console.debug(`File not loaded: ${language} translations`);
-        }
+        const url = chrome.runtime.getURL(`locales/${language}.json`);
+        const res = await fetch(url);
+        addon_translations = await res.json();
+        console.debug(`Loaded translations for ${language}:`, addon_translations);
     } catch (error) {
-        console.error(error);
+        console.debug(`Failed to load "${language}.json", falling back to "en.json".`);
+        try {
+            const fallbackUrl = chrome.runtime.getURL('locales/en.json');
+            const res = await fetch(fallbackUrl);
+            addon_translations = await res.json();
+            console.debug(`Loaded default translations:`);
+        } catch (fallbackError) {
+            console.debug("Failed to load default 'en.json' translations:", fallbackError);
+            addon_translations = {}; // lege fallback
+        }
     }
 }
 
