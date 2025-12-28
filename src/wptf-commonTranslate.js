@@ -100,16 +100,18 @@ async function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
-    const charmatches = original.matchAll(specialChar);
-    if (charmatches != null) {
-        let index = 0;
-        for (const charmatch of charmatches) {
-            // Replace the found match with a DeepL-safe placeholder
-            original = original.replace(
-                charmatch[0], 
-                `<x id="special_var${index}"/>`
-            );
-            index++;
+    if (translator != "lingvanex") {
+        const charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            let index = 0;
+            for (const charmatch of charmatches) {
+                // Replace the found match with a DeepL-safe placeholder
+                original = original.replace(
+                    charmatch[0],
+                    `<x id="special_var${index}"/>`
+                );
+                index++;
+            }
         }
     }
     //console.debug("original:",original)
@@ -193,6 +195,20 @@ async function preProcessOriginal(original, preverbs, translator) {
         if (index == 0) {
             //  console.debug("preProcessOriginal no placeholders found index === 0 ");
         }
+    }
+    else if (translator == "lingvanex") {
+         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+         index = 0;
+         placeholderMap = {};
+         // Replace each match with a unique token and store original
+         const matches = [...original.matchAll(placeholderRegex)];
+         for (const match of matches) {
+           const token = `var_${index}`;
+           original = original.replace(match[0], token);
+           placeholderMap[token] = match[0]; // keep mapping to restore later
+          index++;
+         }
+
     }
     else if (translator == "Ollama") {
 
@@ -294,18 +310,8 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     if (originalPreProcessed != "") {
         translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
-    var charmatches = original.matchAll(specialChar);
-    if (charmatches != null) {
-        let index = 0;
-        for (const charmatch of charmatches) {
-            // Put back the original matched value
-            translatedText = translatedText.replace(
-                `<x id="special_var${index}"/>`,
-                charmatch[0]
-            );
-            index++;
-        }
-    }
+    
+
         //console.debug("after replacing special_var:",translatedText)
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
@@ -320,6 +326,14 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
             }
         }
         translatedText = restorePlaceholdersAfterTranslation(translatedText,original)
+    }
+    else if (translator == "lingvanex") {
+        // We need to put back the %s etc
+        // Vervang elk token terug door zijn originele waarde
+        for (const [token, originalValue] of Object.entries(placeholderMap)) {
+            const regex = new RegExp(escapeRegExp(token), "g"); // globale match
+            translatedText = translatedText.replace(regex, originalValue);
+        }
     }
     else if (translator == "Ollama") {
        // We need to put back the %s etc
@@ -619,16 +633,35 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     translatedText = result.translatedText;
     // console.debug("end of post:",translatedText)
     // put special chars back
-    charmatches = original.matchAll(specialChar);
+    console.debug("before replacing special_var:", translatedText) 
+    if (translator != "lingvanex")
+        var charmatches = original.matchAll(specialChar);
+    
     if (charmatches != null) {
-        index = 1;
+        let index = 0;
+        
         for (const charmatch of charmatches) {
-            //console.debug("char:", charmatch)
-            translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
-            translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+        //console.debug("char matches:", charmatch[0])
+             //Put back the original matched value
+            translatedText = translatedText.replace(
+                `<x id="special_var${index}"/>`,
+              charmatch[0]
+            );
             index++;
-        }
+       }
     }
+   
+        charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            index = 1;
+            for (const charmatch of charmatches) {
+                //console.debug("char:", charmatch)
+                translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+                translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+                index++;
+            }
+        }
+   
     //console.debug("after post: ",translatedText)
     return translatedText;
 }
@@ -4015,7 +4048,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -4129,7 +4162,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 // console.debug("current:",current)
                 //console.debug("myTranslated:",myTranslated)
                 //console.debug("handle_plural 4152:",openAiGloss)
-                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt)
+                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex)
 
                 editorElem = editor.querySelector("textarea.foreign-text");
                // console.debug("pretranslated before validate:")
@@ -4146,7 +4179,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 //console.debug("trans:", myTranslated, "orig:", original)
                 // We need to set the preview here as processTransl does not populate it, as it thinks it is in editor
                 // we have no plural, so the translation can be written directly into the preview
-                console.debug("my:",myTranslated)
+                //console.debug("my:",myTranslated)
                 if (formal) {
                    translated = await replaceVerbInTranslation(original, myTranslated, replaceVerb, debug = false)
                  }              
@@ -4229,6 +4262,10 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 result = await translateWithGolinguist(original, "nl-nl", record, row, apikeyTranslateio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
 
             }
+            else if (transsel === "lingvanex") {
+                    let is_editor = true
+                    result = await translateWithLingvanex(original, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyLingvanex);
+                    } 
             else if (transsel == "google") {
                 //console.debug("before google:",spellCheckIgnore)
                 result = await googleTranslate(original, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore, false);
@@ -4415,7 +4452,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             //console.debug("pretrans 4351:",pretrans)
             //console.debug("plur:",plural)
             //console.debug("handle_plural 4432:",openAiGloss)
-            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt)
+            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex)
             editorElem = editor.querySelector("textarea.foreign-text");
 
             await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
@@ -4427,7 +4464,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
     }
 }
                              
-async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt) {
+async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex) {
     let debug = false
     var myTranslatedText;
     if (debug == true) {
@@ -4559,6 +4596,12 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                 }
             }
         }
+        else if (transsel === "lingvanex") {
+                        let is_editor = true
+                        result = await translateWithLingvanex(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyLingvanex);
+                        //console.debug("result lingvanex:", result)
+                        //hideTranslationSpinner();
+                    } 
         else if (transsel === "Ollama") {
             let is_editor = is_Editor
             result = await translateWithOllama(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
@@ -4838,7 +4881,12 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                     //alert("There has been some uncatched error: " + errorstate);
                 }
             }
-        }
+         }
+        else if (transsel === "lingvanex") {
+                  let is_editor = true
+                  result = await translateWithLingvanex(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyLingvanex);
+                  
+        } 
         else if (transsel == "Claude") {
                 let editor = true
 
@@ -4973,7 +5021,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex) {
     //console.debug("We started translatePage")
     var translate;
     var transtype = "";
@@ -5124,7 +5172,8 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         apikeyOllama,
         LocalOllama,
         ollamaModel,
-        ollamaPrompt
+        ollamaPrompt,
+        apikeyLingvanex
        );
         
     } catch (err) {
@@ -5353,7 +5402,7 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex) {
     var translateButton;
     var result;
     errorstate = "OK"
@@ -5363,8 +5412,9 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
     // addTranslateButtons(rowId);
     //console.debug("6163:",openAiGloss)
     //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
-    //console.debug("apiKey ollama:", apikeyOllama) 
+    //console.debug("apiKey ollama:", apikeyOllama)
     //console.debug("Local ollama:", LocalOllama) 
+    
     currWindow = window.self;
     if (typeof (Storage) !== "undefined") {
         interCept = localStorage.getItem("interXHR");
@@ -5582,6 +5632,12 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                      // console.error(results);
                       }
                     }
+                    else if (transsel === "lingvanex") {
+                        let is_editor = true
+                        result = await translateWithLingvanex(original, destlang, e, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyLingvanex);
+                        //console.debug("result lingvanex:", result)
+                        //hideTranslationSpinner();
+                    } 
                     if (transsel === "Ollama") {
                         let is_editor = true
                         result = await translateWithOllama(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
@@ -5760,6 +5816,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                             }
                         }
                     }
+                     else if (transsel === "lingvanex") {
+                        let is_editor = true
+                        result = await translateWithLingvanex(original, destlang, e, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyLingvanex);
+                    } 
                     else if (transsel == "Claude") {
                         let editor = true
 

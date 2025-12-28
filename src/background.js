@@ -357,7 +357,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 messages: message,
                 model: model,
                 stream: false,
-                options: { temperature: temperature }
+                options: { temperature: temperature,repeat_penalty: repeat_penalty }
             };
 
             console.debug("Sending chat request to Ollama online:", bodyToSend);
@@ -529,7 +529,187 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     })();
     return true; // keep response channel open
+    }
+    else if (request.action === "google_translate") {
+    
+        (async () => {
+            try {
+                const payload = request.payload || {};
+                const apiKey = payload.apiKey;
+                const text = payload.text;
+                const targetLang = payload.targetLang;
+                const sourceLang = payload.sourceLang || null;
+
+                if (!apiKey || !text || !targetLang) {
+                    sendResponse({
+                        ok: false,
+                        error: {
+                            type: "invalid_request",
+                            message: "Missing apiKey, text, or targetLang"
+                        }
+                    });
+                    return;
+                }
+
+                const body = { q: text, target: targetLang, format: "text" };
+                if (sourceLang) body.source = sourceLang;
+
+                const res = await fetch(
+                    "https://translation.googleapis.com/language/translate/v2?key=" + apiKey,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(body)
+                    }
+                );
+                console.debug("Google Translate raw response status:", res); 
+               // console.debug("Google data:",await res.json())
+                let data;
+                try {
+                    data = await res.json();
+                } catch (parseErr) {
+                    sendResponse({
+                        ok: false,
+                        error: { type: "parse_error", message: "Invalid JSON response" }
+                    });
+                    return;
+                }
+
+                if (!res.ok || !data?.data?.translations?.[0]) {
+                    sendResponse({
+                        ok: false,
+                        error: {
+                            type: "google_error",
+                            message: data?.error?.message || "Unknown Google Translate error"
+                        }
+                    });
+                    return;
+                }
+
+                const tr = data.data.translations[0];
+                console.debug("Google Translate processed translation:", tr.translatedText);
+                sendResponse({
+                    ok: true,
+                    result: {
+                        text: tr.translatedText,
+                        detectedSourceLang: tr.detectedSourceLanguage
+                    }
+                });
+
+            } catch (err) {
+                sendResponse({
+                    ok: false,
+                    error: {
+                        type: "network_error",
+                        message: err.message || "Unknown network error"
+                    }
+                });
+            }
+        })();
+
+        return true; // important for async response
+
+    }
+
+else if (request.action == "Lingvanex") {
+        (async () => {
+            
+        try {
+            const {
+                apiKey,
+                text,
+                sourceLang,
+                targetLang,
+                translateMode = "html",   // "text" of "html"
+                enableTransliteration = false
+            } = request.data || {};
+            //console.debug("Lingvanex translation request received", targetLang);
+            if (!apiKey) {
+                sendResponse({ success: false, error: "API key is missing" });
+                return;
+            }
+            if (!text || !targetLang) {
+                sendResponse({ success: false, error: "Required field missing (text/targetLang)" });
+                return;
+            }
+
+            const bodyToSend = {
+                platform: "api",
+                to: targetLang,
+                data: text,
+                translateMode,
+                enableTransliteration
+            };
+            if (sourceLang) bodyToSend.from = sourceLang;
+
+            const resp = await fetch("https://api-b2b.backenster.com/b1/api/v3/translate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": apiKey
+                },
+                body: JSON.stringify(bodyToSend)
+            });
+
+            const respText = await resp.text().catch(() => "");
+            console.debug("Lingvanex raw response:", respText);
+
+            let respData;
+            try {
+                respData = JSON.parse(respText);
+            } catch (e) {
+                sendResponse({
+                    success: false,
+                    error: "Cannot parse JSON from Lingvanex",
+                    raw: respText
+                });
+                return;
+            }
+
+            // Handle HTTP status errors
+            if (resp.status === 400) {
+                sendResponse({ success: false, error: "Bad Request – check parameters", raw: respData });
+                return;
+            }
+
+            if (resp.status === 403) {
+                sendResponse({ success: false, error: "Authorization Error – invalid/missing API key", raw: respData });
+                return;
+            }
+
+            if (resp.status === 500) {
+                sendResponse({ success: false, error: "Internal Server Error", raw: respData });
+                return;
+            }
+
+            // Lingvanex-specific error field
+            if (respData.err) {
+                sendResponse({
+                    success: false,
+                    error: respData.err,
+                    raw: respData
+                });
+                return;
+            }
+
+            // Success
+            sendResponse({
+                success: true,
+                translation: respData.result || "",
+                detectedSourceLang: respData.from || sourceLang || "auto",
+                provider: "lingvanex"
+            });
+
+        } catch (err) {
+            sendResponse({
+                success: false,
+                error: err?.message || String(err)
+            });
+        }
+    })();
+    return true; // keep response channel open
 }
+
 
     else if (request.action === "translateio") {
         

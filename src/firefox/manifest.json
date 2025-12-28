@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.39",
+  "version": "3.4.40",
   "description": "Automatically populate translations from Google, DeepL, Microsoft, OpenAI, Ollama, DeepSeek, Translationio, Claud and in future other translation API's.",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -82,6 +82,7 @@
     "declarativeNetRequestFeedback"
   ],
   "host_permissions": [
+    "*://api-b2b.backenster.com/*",
     "*://agw.golinguist.com/*",
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",

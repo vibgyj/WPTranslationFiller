@@ -94,3 +94,7 @@ Version 3.4.39 Fixed not translating first row with TM
 Version 3.4.39 Added a retry to the Olllama fetch call
 Version 3.4.39 Added extra parameter to the body of the Ollama request "repeat_penalty": 1.1
 Version 3.4.39 Postreplace did not work with Ollama
+Version 3.4.40 Added Linvanex translation API
+Version 3.4.40 Added preventing text between code tags to be translated
+Version 3.4.40 Fixed a problem with translation with Microsoft
+Version 3.4.40 Fixed Google translation no longer working due to CORS

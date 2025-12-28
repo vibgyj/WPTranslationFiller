@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.39",
-  "description": "Automatically populate translations from Google, DeepL, Microsoft, OpenAI, Ollama, DeepSeek, Translationio, Claud and in future other translation API's.",
+  "version": "3.4.40",
+  "description": "Automatically populate translations from Google, DeepL, Microsoft, OpenAI, Ollama, DeepSeek, Translationio, Claud",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
   },
@@ -14,6 +14,7 @@
     {
       "resources": [
         "/img/*",
+        "*://api-b2b.backenster.com/*",
         "wptf-cute-alert.css",
         "error-alert.flac",
         "clipboard-icon.png",
@@ -80,6 +81,7 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-lingvanexTrans.js",
         "wptf-ollamaTrans.js",
         "wptf-translatio_io.js",
         "wptf-buildstats.js",

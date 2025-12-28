@@ -242,7 +242,7 @@ async function translateLineByLine(
                 result.translation,
                 replaceVerb,
                 originalPreProcessed,
-                "OpenAI",
+                "Claud",
                 convertToLower,
                 spellCheckIgnore,
                 locale
