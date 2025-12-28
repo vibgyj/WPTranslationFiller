@@ -1,4 +1,79 @@
 ﻿
+
+/**
+ * Convert a string glossary in 'key -> value' format into an array of pairs
+ * Example input:
+ *   "appearance -> weergave, array -> array, backend -> back-end"
+ * Output:
+ *   [
+ *     ["appearance", "weergave"],
+ *     ["array", "array"],
+ *     ["backend", "back-end"]
+ *   ]
+ */
+function convertArrowGlossaryToArray(glossaryString) {
+    if (!glossaryString) return [];
+
+    const result = [];
+
+    // split on comma first
+    const entries = glossaryString.split(/\s*,\s*/);
+
+    for (const entry of entries) {
+        // split on '->'
+        const parts = entry.split(/\s*->\s*/);
+        if (parts.length === 2) {
+            // trim en verwijder eventuele aanhalingstekens
+            const key = parts[0].trim().replace(/^"|"$/g, '');
+            const value = parts[1].trim().replace(/^"|"$/g, '');
+            if (key) result.push([key, value]);
+        }
+    }
+
+    return result;
+}
+
+
+
+ function applyOpenAiGlossary(text, Gloss) {
+    //console.debug("Applying glossary:", Gloss); 
+    if (!text || !Gloss) return text;
+    let result = text;
+    const applyPair = ([source, target]) => {
+        if (!source || !target) return;
+        if (source.toLowerCase() === target.toLowerCase()) return; // skip if same
+
+        const regex = new RegExp(`\\b${escapeRegExp(source)}\\b`, "gi");
+        result = result.replace(regex, (match) => {
+            // alleen vervangen als match niet gelijk is aan target
+            if (match.toLowerCase() === target.toLowerCase()) return match;
+            return target;
+        });
+    };
+
+    if (Array.isArray(Gloss)) {
+        for (const pair of Gloss) {
+            if (!Array.isArray(pair) || pair.length < 2) continue;
+            applyPair(pair);
+        }
+    } else if (typeof Gloss === "object") {
+        for (const [source, target] of Object.entries(Gloss)) {
+            applyPair([source, target]);
+        }
+    }
+    return result;
+}
+
+
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const toBoolean = (value) => {
     if (typeof value === "boolean") return value;
     if (typeof value === "string") {
@@ -76,6 +151,7 @@ function estimateTokens(text) {
 function isInsideButtonOrUrl(translatedText, searchWord) {
     // Match <button> tags and URLs
     const buttonRegex = /<button[^>]*>[\s\S]*?<\/button>/gi;
+    const codeRegex = /<code[^>]*>[\s\S]*?<\/code>/gi;
     const urlRegex = /\b((https?|ftp|file):\/\/|(www|ftp)\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]/ig;
 
     // Check if the word is inside a <button> tag
@@ -84,6 +160,15 @@ function isInsideButtonOrUrl(translatedText, searchWord) {
         for (const match of buttonMatches) {
             if (match.toLowerCase().includes(searchWord.toLowerCase())) {
                 return true;  // Found word inside <button>
+            }
+        }
+    }
+    // Check if the word is inside a <code> tag
+    const codeMatches = translatedText.match(codeRegex);
+    if (codeMatches) {
+        for (const match of codeMatches) {
+            if (match.toLowerCase().includes(searchWord.toLowerCase())) {
+                return true;  // Found word inside <code>
             }
         }
     }
@@ -1498,8 +1583,10 @@ function getPreview(rowId) {
     preview = document.querySelector(`#preview-${rowId}`)
     return preview
 }
+
+
 function exportGlossaryForOpenAi(locale = "NL") {
-    const request = indexedDB.open("DeeplGloss", 1); // use versioning to trigger onupgradeneeded
+    const request = indexedDB.open("DeeplGloss", 1);
 
     request.onupgradeneeded = function (event) {
         const dbDeepL = event.target.result;
@@ -1509,10 +1596,8 @@ function exportGlossaryForOpenAi(locale = "NL") {
         }
     };
 
-
     request.onsuccess = function (event) {
         const db = event.target.result;
-
         if (!db.objectStoreNames.contains("glossary")) {
             console.warn("Glossary store not found after upgrade.");
             return;
@@ -1520,7 +1605,6 @@ function exportGlossaryForOpenAi(locale = "NL") {
 
         const transaction = db.transaction(["glossary"], "readonly");
         const store = transaction.objectStore("glossary");
-
         const glossaryMap = new Map();
 
         store.openCursor().onsuccess = function (event) {
@@ -1532,13 +1616,19 @@ function exportGlossaryForOpenAi(locale = "NL") {
                 }
                 cursor.continue();
             } else {
-                const lines = Array.from(glossaryMap.entries())
-                    .map(([key, value]) => `"${key}" -> "${value}"`)
+                /* 1️⃣ OpenAiGloss EXACT laten zoals voorheen */
+                const openAiGlossString = Array.from(glossaryMap.entries())
+                    .map(([k, v]) => `"${k}" -> "${v}"`)
                     .join(", ");
 
-                chrome.storage.local.set({ OpenAiGloss: lines }, () => {
-                    //console.log("OpenAiGloss stored");
-                });
+                chrome.storage.local.set({ OpenAiGloss: openAiGlossString });
+
+                /* 2️⃣ Parallel GLOBAL_GLOSSARY vullen (geconverteerd) */
+                GLOBAL_GLOSSARY = Array.from(glossaryMap.entries())
+                    .map(([k, v]) => [k.trim(), v.trim()])
+                    .filter(([k, v]) => k && v);
+
+               // console.debug("GLOBAL_GLOSSARY ready:", GLOBAL_GLOSSARY);
             }
         };
     };
@@ -1547,6 +1637,8 @@ function exportGlossaryForOpenAi(locale = "NL") {
         console.error("Failed to open IndexedDB:", event);
     };
 }
+
+
 //# This function checks if a text contains only an URL
 function isOnlyURL(text) {
     // Trim and compare the full match to the text

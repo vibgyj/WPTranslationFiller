@@ -39,6 +39,7 @@ let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
 let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
 let apikeyOllamaTextbox = document.getElementById("Ollama_api_key");
+let apikeyLingvanexTextbox = document.getElementById("Lingvanex_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let ClaudselectBox = document.getElementById("ClaudSelect");
@@ -86,7 +87,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -176,6 +177,8 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
     apikeyTranslateioTextbox.value = data.apikeyTranslateio
     apikeyClaudeTextbox.value = data.apikeyClaude;
+    apikeyLingvanexTextbox.value = data.apikeyLingvanex;
+
     if (data.apikeyOllama == null && typeof data.apikeyOllama == "undefined") {
         apikeyOllamaTextbox.value = "Enter key or leave empty";
     }
@@ -420,6 +423,7 @@ button.addEventListener("click", function () {
     let apikeyTranslationio = apikeyTranslateioTextbox.value;
     let apikeyClaude = apikeyClaudeTextbox.value;
     let apikeyOllama = apikeyOllamaTextbox.value;
+    let apikeyLingvanex = apikeyLingvanexTextbox.value;
     
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -583,6 +587,7 @@ button.addEventListener("click", function () {
             apikeyTranslateio: apikeyTranslationio,
             apikeyClaude: apikeyClaude,
             apikeyOllama: apikeyOllama,
+            apikeyLingvanex: apikeyLingvanex,
             ClaudSelect: Claudsel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,

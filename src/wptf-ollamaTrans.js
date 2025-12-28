@@ -12,6 +12,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
     // Ensure ollamaModel has a valid value, fallback to default
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     // Replace glossary and language names
+    //console.debug("Ollama Prompt before replacements:", openAiGloss)
     let convertedGlossary = convertGlossaryForOllama(openAiGloss)
     let myprompt = ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     
@@ -45,7 +46,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 temperature: 0.5,                    // optional
                                 max_tokens: estimateTokens(original),                      // required by background
                                 useLocal: LocalOllama,
-                                repeat_penalty: 1.1
+                                repeat_penalty: 1.0
                             }
                         }, (response) => {
                            

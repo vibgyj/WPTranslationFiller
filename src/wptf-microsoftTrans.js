@@ -8,7 +8,7 @@ var preview = "";
 var translatedText = "";
 var trntype = "";
 async function microsoftTranslate(original, destlang, e, apikeyMicrosoft, preverbs, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore) {
-    var originalPreProcessed = preProcessOriginal(original, preverbs, "microsoft");
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "microsoft");
     //console.debug("microsoftTranslate result of preProcessOriginal:", originalPreProcessed);
     //var myRe = |(\</?([a-zA-Z]+[1-6]?)(\s[^>]*)?(\s?/)?\>|)/gm;
     var myRe = /(\<\w*)((\s\/\>)|(.*\<\/\w*\>))/gm;
@@ -45,6 +45,7 @@ async function getTransMicrosoft(record, language, apikeyMicrosoft, original, or
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
+    //console.debug("originalPreProcessed:", originalPreProcessed); 
     let requestBody = [
         {
             "text": originalPreProcessed,
@@ -57,6 +58,7 @@ async function getTransMicrosoft(record, language, apikeyMicrosoft, original, or
     });
 
     myBody = JSON.stringify(requestBody);
+
     link = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&textType=" + trntype + "&from=en&to=" + language
     const response = fetch(link, {
         method: 'POST',
@@ -83,7 +85,10 @@ async function getTransMicrosoft(record, language, apikeyMicrosoft, original, or
             else {
                 //We do have a result so process it
                 translatedText = data[0].translations[0].text;
-                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore,locale);
+                translatedText = postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, "deepl", convertToLower, spellCheckIgnore, locale);
+                 if (GLOBAL_GLOSSARY) {
+                 translatedText = applyOpenAiGlossary(translatedText, GLOBAL_GLOSSARY);
+                 }
                 processTransl(original, translatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current);
                 return Promise.resolve("OK");
             }
