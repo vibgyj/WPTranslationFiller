@@ -164,12 +164,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             "split_sentences",
             "outline_detection",
             "context",
-            "glossary_id"
+            "glossary_id",
+            "enable_beta_languages" 
         ];
 
         const formData = new URLSearchParams();
         for (const key of allowedKeys) {
-            const value = deeplParams[key];
+            let value = deeplParams[key];
+            // for Bengali it is necessary to set enable_beta_languages to 1
+             if (key === "enable_beta_languages" && (value === undefined || value === null || value === '')) {
+                value = '1';
+            }
             if (value !== undefined && value !== null && value !== '') {
                 if (Array.isArray(value)) {
                     for (const entry of value) {
@@ -183,7 +188,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         //console.debug("✅ Final URL:", DeeplURL);
         //console.debug("✅ Final body:", formData.toString());
-
+        
+        
         fetch(DeeplURL, {
             method: "POST",
             headers: {

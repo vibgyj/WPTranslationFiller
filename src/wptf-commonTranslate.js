@@ -633,7 +633,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     translatedText = result.translatedText;
     // console.debug("end of post:",translatedText)
     // put special chars back
-    console.debug("before replacing special_var:", translatedText) 
+    //console.debug("before replacing special_var:", translatedText) 
     if (translator != "lingvanex")
         var charmatches = original.matchAll(specialChar);
     
