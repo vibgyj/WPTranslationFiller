@@ -101,3 +101,4 @@ Version 3.4.40 Fixed Google translation no longer working due to CORS
 Version 3.4.40 fixed Bengali translation with DeepL not working (Bengali is in Beta)
 Version 3.4.40 added language Bengali
 Version 3.4.41 Fixed error handling Google
+Version 3.4.42 Chrome refused the upload due to mentioning Google etc, so removed that

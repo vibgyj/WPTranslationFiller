@@ -40,10 +40,12 @@ let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
 let apikeyOllamaTextbox = document.getElementById("Ollama_api_key");
 let apikeyLingvanexTextbox = document.getElementById("Lingvanex_api_key");
+let apikeyGeminiTextbox = document.getElementById("gemini_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let ClaudselectBox = document.getElementById("ClaudSelect");
 let OllamaselectBox = document.getElementById("Ollama_model");
+let GeminiselectBox = document.getElementById("GeminiSelect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
 let OpenAIToneBox = document.getElementById("ToneSelect");
 let destLangTextbox = document.getElementById("destination_lang");
@@ -66,6 +68,7 @@ let verbsTextbox = document.getElementById("text_verbs");
 let promptTextbox = document.getElementById("text_openai_prompt");
 let ClaudePromptTextbox = document.getElementById("text_claude_prompt");
 let OllamaPromptTextbox = document.getElementById("text_ollama_prompt");
+let GeminiPromptTextbox = document.getElementById("text_gemini_prompt");
 let reviewTextbox = document.getElementById("text_openai_review");
 let preverbsTextbox = document.getElementById("text_pre_verbs");
 let spellcheckTextbox = document.getElementById("text_ignore_verbs");
@@ -87,7 +90,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -178,6 +181,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeyTranslateioTextbox.value = data.apikeyTranslateio
     apikeyClaudeTextbox.value = data.apikeyClaude;
     apikeyLingvanexTextbox.value = data.apikeyLingvanex;
+    apikeyGeminiTextbox.value = data.apikeyGemini;
 
     if (data.apikeyOllama == null && typeof data.apikeyOllama == "undefined") {
         apikeyOllamaTextbox.value = "Enter key or leave empty";
@@ -201,6 +205,16 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         OpenAIselectBox.value = data.OpenAISelect;
     }
+    
+    if (typeof data.GeminiSelect == 'undefined') {
+         GeminiselectBox.value = "gemini-2.5-flash";
+    }
+    else if (data.GeminiSelect == "") {
+         GeminiselectBox.value = "gemini-2.5-flash";
+    }
+    else {
+         GeminiselectBox.value = data.GeminiSelect;
+    }
     if (typeof data.ClaudSelect == 'undefined') {
         ClaudselectBox.value = "claude-3-5-haiku-latest";
     }
@@ -210,6 +224,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         ClaudselectBox.value = data.ClaudSelect;
     }
+
     if (typeof data.ollamaModel == 'undefined') {
         OllamaselectBox.value = "gemma3:27b";
     }
@@ -242,6 +257,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     }
     else {
         OllamaPromptTextbox.value = data.ollamaPrompt;
+    }
+    if (typeof data.GeminiPrompt == 'undefined') {
+        GeminiPromptTextbox.value = 'Enter prompt'
+    }
+    else {
+        GeminiPromptTextbox.value = data.GeminiPrompt;
     }
     if (typeof data.reviewPrompt == 'undefined') {
         reviewTextbox.value = 'Enter prompt'
@@ -424,6 +445,7 @@ button.addEventListener("click", function () {
     let apikeyClaude = apikeyClaudeTextbox.value;
     let apikeyOllama = apikeyOllamaTextbox.value;
     let apikeyLingvanex = apikeyLingvanexTextbox.value;
+    let apikeyGemini = apikeyGeminiTextbox.value;
     
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -463,6 +485,16 @@ button.addEventListener("click", function () {
     else {
         Claudsel = ClaudselectBox.value;
     }
+     if (typeof GeminiselectBox.value == "undefined") {
+        Geminisel = "gemini-2.5-flash";
+    }
+    else if (GeminiselectBox.value == "") {
+        Geminisel = "gemini-2.5-flash";
+    }
+    else {
+        Geminisel = GeminiselectBox.value;
+    }
+    console.debug("geminisel:",Geminisel)
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
@@ -588,6 +620,8 @@ button.addEventListener("click", function () {
             apikeyClaude: apikeyClaude,
             apikeyOllama: apikeyOllama,
             apikeyLingvanex: apikeyLingvanex,
+            apikeyGemini: apikeyGemini,
+            GeminiSelect: Geminisel,
             ClaudSelect: Claudsel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
@@ -602,6 +636,7 @@ button.addEventListener("click", function () {
             OpenAIPrompt: promptText,
             ClaudePrompt: ClaudePrompt,
             ollamaPrompt: OllamaPromptTextbox.value,
+            GeminiPrompt: GeminiPromptTextbox.value,
             reviewPrompt: reviewText,
             spellCheckIgnore: spellIgnoreverbs,
             showHistory: showHist,

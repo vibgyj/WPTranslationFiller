@@ -922,7 +922,6 @@ async function validateOld(showDiff) {
             myheader.insertAdjacentHTML('afterend', template);
         }
         else {
-            console.debug("we start the bar")
             progressbar.style.display = 'block';
         }
         
@@ -1694,7 +1693,7 @@ function wptf_check_for_URL(word, translation) {
         ...(textWithoutTags.match(fullURLRegex) || []),
         ...(textWithoutTags.match(partialPathRegex) || []),
     ];
-    console.debug()
+   
     return matches.some(url => url.toLowerCase().includes(lowerWord));
 }
 

@@ -46,7 +46,8 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 temperature: 0.5,                    // optional
                                 max_tokens: estimateTokens(original),                      // required by background
                                 useLocal: LocalOllama,
-                                repeat_penalty: 1.0
+                                repeat_penalty: 1.0,
+                                do_not_complete: 1
                             }
                         }, (response) => {
                            

@@ -263,7 +263,86 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // keep sendResponse alive for async
     }
 
-    // In your background script (service worker or background.js)
+  if (request.action === "Gemini") {
+    (async () => {
+        try {
+            const { apiKey, text, sourceLang, targetLang ,formal, locale, model,prompt} = request.data;
+            console.debug("model:", model)
+            console.debug("prompt:",prompt)
+           
+            //const prompt = `
+           //  Translate from ${sourceLang} to ${targetLang}.
+           //  Return only the translation.
+           // Text:
+           //  ${text}
+           // `.trim();
+            let URL = `https://generativelanguage.googleapis.com/v1/models/` + model + `:generateContent?key=${apiKey}`
+            const res = await fetch(URL,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [
+                            { role: "user", parts: [{ text: prompt }] }
+                        ],
+                        generationConfig: {
+                            temperature: 0.2,
+                            maxOutputTokens: 2048
+                        }
+                    })
+                }
+            );
+
+            let data;
+            try {
+                data = await res.json();
+            } catch (parseErr) {
+                throw new Error(`Failed to parse Gemini response (HTTP ${res.status})`);
+            }
+
+            // HTTP-fouten expliciet afhandelen
+            if (!res.ok) {
+                let errorMessage = `Gemini request failed (HTTP ${res.status})`;
+
+                if (data?.error?.message) {
+                    errorMessage += `: ${data.error.message}`;
+                }
+
+                // Extra details indien beschikbaar
+                if (data?.error?.details?.[0]?.fieldViolations?.length) {
+                    const violations = data.error.details[0].fieldViolations
+                        .map(v => `${v.field}: ${v.description}`)
+                        .join("; ");
+                    errorMessage += ` (${violations})`;
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            const translation =
+                data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!translation) {
+                throw new Error("Gemini returned no translation content");
+            }
+
+            sendResponse({
+                success: true,
+                translation: translation.trim()
+            });
+
+        } catch (err) {
+            console.error("Gemini error:", err);
+            sendResponse({
+                success: false,
+                error: err.message || "Unknown Gemini error"
+            });
+        }
+    })();
+
+    return true;
+}
+
 
       // Ollama translation
  if (request.action === "ollama_translate") {
@@ -291,7 +370,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             // === Helper: local call with timeout ===
             async function callLocalWithTimeout(body, timeoutMs) {
                 return Promise.race([
-                    callLocalOllama(body),
+                    await callLocalOllama(body),
                     new Promise((_, reject) =>
                         setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
                     )
@@ -299,7 +378,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
 
             // === Helper: retry loop ===
-            async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 12000) {
+            async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 14000) {
                 let lastError = null;
                 for (let i = 0; i < maxRetries; i++) {
                     try {
@@ -332,7 +411,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 };
 
                 try {
-                    const result = await callLocalWithRetry(bodyToSend, 3, 12000); // 3 retries, 15s timeout
+                    const result = await callLocalWithRetry(bodyToSend, 3, 14000); // 3 retries, 15s timeout
                     console.debug("Local Ollama result:", result.translation);
                     
                     sendResponse({
