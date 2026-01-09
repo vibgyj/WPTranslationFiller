@@ -101,4 +101,8 @@ Version 3.4.40 Fixed Google translation no longer working due to CORS
 Version 3.4.40 fixed Bengali translation with DeepL not working (Bengali is in Beta)
 Version 3.4.40 added language Bengali
 Version 3.4.41 Fixed error handling Google
-Version 3.4.42 Chrome refused the upload due to mentioning Google etc, so removed that
+Version 3.4.42 Chrome refused the upload due to mentioning Google etc, so removed thatt
+Version 3.4.42 Added Gemini translation API
+Version 3.4.43 Fixed a problem with replacing blanks at the start or end of the translation
+Version 3.4.44 Fixed a problem within the replacing of converting to uppecase, URLS where altered
+Version 3.4.44 Added LMStudio as API

@@ -1,4 +1,66 @@
-﻿
+﻿function replaceAt(text, searchValue, replacementValue) {
+    if (!text || !searchValue) return text;
+
+    const index = text.indexOf(searchValue);
+    if (index === -1) return text;
+
+    return (
+        text.slice(0, index) +
+        replacementValue +
+        text.slice(index + searchValue.length)
+    );
+}
+function removeTrailingNewline(text) {
+    return text.replace(/\n+$/, "");
+}
+
+
+function normalizeExtraNewlines(originalText, translatedText) {
+    // Determine the maximum number of consecutive newlines in the original text
+    const matches = originalText.match(/\n+/g) || [];
+    const maxNewlines = Math.max(1, ...matches.map(m => m.length));
+
+    // Collapse translated newlines to at most that amount
+    const limitRegex = new RegExp(`\\n{${maxNewlines + 1},}`, "g");
+
+    return translatedText.replace(limitRegex, "\n".repeat(maxNewlines));
+}
+
+// check centences for all caps words
+function enforceAllCaps(source, translated) {
+    const sourceWords = source.split(/\s+/);
+
+    const allCapsWords = Array.from(new Set(
+        sourceWords.filter(w => /^[A-Z0-9]+(?:[-_][A-Z0-9]+)*$/.test(w))
+    ));
+
+    // 1. Extract and mask URLs
+    const urls = [];
+    let masked = translated.replace(
+        /\b(?:https?:\/\/|www\.)[^\s]+/gi,
+        url => {
+            urls.push(url);
+            return `__URL_${urls.length - 1}__`;
+        }
+    );
+
+    // 2. Enforce ALL CAPS outside URLs only
+    allCapsWords.forEach(word => {
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`\\b${escapedWord}\\b`, 'gi');
+        masked = masked.replace(re, m => m.toUpperCase());
+    });
+
+    // 3. Restore URLs
+    let result = masked.replace(/__URL_(\d+)__/g, (_, i) => urls[i]);
+
+    return result;
+}
+
+
+
+
+
 
 /**
  * Convert a string glossary in 'key -> value' format into an array of pairs
@@ -216,10 +278,10 @@ function CheckUrl(translated, searchword) {
 
 
 function estimateMaxTokens(text) {
-    const extraBuffer = 100; // safety buffer for full response
+    const extraBuffer = 300; // safety buffer for full response
     const estimated = Math.ceil(text.length / 4) + extraBuffer; // 1 token ≈ 4 chars
    //console.debug("In function estimateMaxTokens - estimated tokens:", estimated)
-    return Math.max(estimated, 200); // minimum 200 to
+    return Math.max(estimated, 300); // minimum 200 to
 }
 
 function escapeRegExpForPronouns(word) {

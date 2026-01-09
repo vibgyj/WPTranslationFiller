@@ -5822,7 +5822,7 @@ async function fetchOldRec(url, rowId, showDiff) {
                        
                         element2.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
                         if (OldRec_status = 'current') {
-                            console.debug("orig[0]:",orig[0])
+                            //console.debug("orig[0]:",orig[0])
                             element2.appendChild(document.createTextNode(orig[0].innerText));
                         }
                         else {

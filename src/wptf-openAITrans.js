@@ -59,7 +59,7 @@ async function getTransAI(
   var myTtranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     let prevstate = current ? current.innerText : "";
-  const maxTokens = estimateMaxTokens(originalPreProcessed);
+    
   let destlang = language;
     language = language.toUpperCase();
     var messages;
@@ -99,6 +99,9 @@ async function getTransAI(
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
   originalPreProcessed = `"${originalPreProcessed}"`;
+  let maxTokens = estimateMaxTokens(originalPreProcessed);
+  let prompt_tokens = estimateMaxTokens(myprompt);
+  max_Tokens = maxTokens + prompt_tokens
   //console.debug("originalPreProcessed:",originalPreProcessed)
   messages = [
     { role: 'system', content: myprompt },
@@ -118,7 +121,7 @@ async function getTransAI(
         dataNew = {
             model: mymodel,
             messages,
-            max_completion_tokens: maxTokens,
+            max_completion_tokens: max_Tokens,
             top_p: 1,
             frequency_penalty: 0,
             presence_penalty: 0,
@@ -132,7 +135,7 @@ async function getTransAI(
          dataNew = {
             model: mymodel,
             messages,
-            max_completion_tokens: maxTokens,
+            max_completion_tokens: max_Tokens,
             top_p: 1,
             frequency_penalty: 0,
             presence_penalty: 0,
@@ -146,7 +149,7 @@ async function getTransAI(
     dataNew = {
       model: mymodel, 
       messages,
-      max_tokens: 1000,
+      max_tokens: max_Tokens,
       n: 1,
       temperature: OpenAItemp,
       frequency_penalty: 0,

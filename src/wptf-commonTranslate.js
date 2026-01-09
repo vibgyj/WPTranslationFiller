@@ -1,4 +1,5 @@
-﻿/**
+﻿
+/**
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
@@ -211,7 +212,7 @@ async function preProcessOriginal(original, preverbs, translator) {
 
     }
     else if (translator == "Ollama") {
-
+         
          const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
          index = 0;
          placeholderMap = {};
@@ -349,9 +350,9 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         { marker: "__TAB__", replacement: "\t" },
         { marker: "__CRLF__", replacement: "\r\n" },
         { marker: "__LF__", replacement: "\n" }
-    ];
+      ];
 
-    markers.forEach(({ marker, replacement }) => {
+      markers.forEach(({ marker, replacement }) => {
         if (originalPreProcessed.includes(marker)) {
             // Restore the marker to real character
             translatedText = translatedText.replace(new RegExp(marker, "g"), replacement);
@@ -364,9 +365,12 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
        const hasTrailingNewline = /\r?\n$/.test(original);
 
        // Pas trailing newline in vertaling aan op basis van origineel
-      if (!hasTrailingNewline) {
-          translatedText = translatedText.replace(/[\r\n]+$/g, "");
-        }
+     // if (!hasTrailingNewline) {
+     //     translatedText = translatedText.replace(/[\r\n]+$/g, "");
+     //   }
+        translatedText = normalizeExtraNewlines(original, translatedText)
+        translatedText = removeTrailingNewline(translatedText)
+
 
     }
     else if (translator == "deepl") {
@@ -512,8 +516,6 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                   const wordRegex = new RegExp(safeWord, 'g');
                   translatedText = translatedText.replace(wordRegex, replacement);
                   translatedText = correctSentence(translatedText, spellCheckIgnore);
-       
-                  //console.debug("replacing:", searchWord, "->", replacement);
                }
                 
             }
@@ -533,20 +535,17 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
 
                    translatedText = translatedText.replace(wordRegex, replacement);
                    translatedText = correctSentence(translatedText, spellCheckIgnore);
-       
-                   //console.debug("replacing:", searchWord, "->", replacement);
                }
-               // console.debug("checkurl after2:",translatedText)
             }
         }
          
     }
     else {
-        //console.debug("convert off:",convertToLower)
+       // console.debug("convert off:",convertToLower)
         //console.debug("conversion lowercase is off")
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-       //console.debug("checkurl before:",translatedText)
+      // console.debug("checkurl before:",translatedText)
       for (let i = 0; i < replaceVerb.length; i++) {
          const searchWord = replaceVerb[i][0];
         const replacement = replaceVerb[i][1];
@@ -570,7 +569,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         //console.debug("skipping replacement, word in URL:", searchWord);
           }
    
-}
+     }
       // console.debug("final translation:", translatedText);
 
     }
@@ -625,7 +624,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                             return linkmatches[parseInt(n)-1] || _;
             });
         }
-
+   // console.debug("before checking start/end:", translatedText)
     // check if the returned translation does have the same start/ending as the original
     let previewNewText = translatedText
     result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
@@ -633,37 +632,35 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     translatedText = result.translatedText;
     // console.debug("end of post:",translatedText)
     // put special chars back
-    //console.debug("before replacing special_var:", translatedText) 
     if (translator != "lingvanex")
         var charmatches = original.matchAll(specialChar);
     
-    if (charmatches != null) {
-        let index = 0;
-        
-        for (const charmatch of charmatches) {
-        //console.debug("char matches:", charmatch[0])
-             //Put back the original matched value
-            translatedText = translatedText.replace(
+        if (charmatches != null) {
+           let index = 0;
+           for (const charmatch of charmatches) {
+           //Put back the original matched value
+           translatedText = translatedText.replace(
                 `<x id="special_var${index}"/>`,
-              charmatch[0]
+                charmatch[0]
             );
             index++;
        }
     }
    
-        charmatches = original.matchAll(specialChar);
-        if (charmatches != null) {
+    translatedNewText = enforceAllCaps(original, translatedText)
+
+    charmatches = original.matchAll(specialChar);
+    if (charmatches != null) {
             index = 1;
             for (const charmatch of charmatches) {
-                //console.debug("char:", charmatch)
-                translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
-                translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+                translatedText = translatedNewText.replace(`{special_var${index}}`, charmatch);
+                translatedText = translatedNewText.replace(`{Special_var${index}}`, charmatch);
                 index++;
             }
-        }
-   
-    //console.debug("after post: ",translatedText)
-    return translatedText;
+    }
+    
+    //console.debug("after post: ",translatedNewText)
+    return translatedNewText;
 }
 
 function removeWord(sentence, searchWord) {
@@ -4407,15 +4404,22 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                         let is_editor = false
                         result = await translateWithGemini(original, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
                          console.debug("result gemini:", result)
-                         if (result == "NOK") {
-                            stop = true;
-                            return "stop"
-                         }
+                if (result == "NOK") {
+                    console.debug("Gemini translation error, possible wrong key") 
+                      messageBox("error", "There has been some uncatched error, possibly wrong key ");
+                      stop = true;
+                      return "stop"
+                }
                        
              } 
             else if (transsel === "Ollama") {
                         let is_editor = is_entry
                         result = await translateWithOllama(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        hideTranslationSpinner();
+            } 
+            else if (transsel === "LMStudio") {
+                        let is_editor = false
+                        result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
                         hideTranslationSpinner();
                     } 
             await  mark_as_translated(row, current, true, rawPreview);
@@ -4488,7 +4492,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     //console.debug("pretrans:",pretrans)
     if (pretrans == "notFound") {
         if (transsel == "translation_io") {
-            is_entry = true
+            is_entry = false
             result = await translateWithGolinguist(plural, "nl-nl", record, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
 
         }
@@ -4616,9 +4620,16 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             let is_editor = is_Editor
             result = await translateWithOllama(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
             hideTranslationSpinner();
-           
-            
         }
+        else if (transsel === "LMStudio") {
+                        let is_editor = false
+                        result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        hideTranslationSpinner();
+                        if (result == "NOK") {
+                            stop = true;
+                            return "stop"
+                         }
+                    } 
          else if (transsel === "gemini") {
                         let is_editor = false
                         result = await translateWithGemini(original, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
@@ -4930,10 +4941,17 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         else if (transsel === "Ollama") {
              let is_editor = is_Editor
             result = await translateWithOllama(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
-            hideTranslationSpinner();
-           
-            
+            hideTranslationSpinner();   
         }
+        else if (transsel === "LMStudio") {
+                let is_editor = false
+                result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                hideTranslationSpinner();
+                if (result == "NOK") {
+                    stop = true;
+                    return "stop"
+                    }
+                } 
         
     }
     else {
@@ -5547,7 +5565,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 let pretrans = await findTransline(original, destlang);
                 //console.debug("pretrans:",pretrans)
                 //console.debug("original",original," ",destlang)
-                
+                //console.debug("transsel:",transsel)
                 if (pretrans == "notFound") {
                     if (transsel == "translation_io") {
                         is_entry = true
@@ -5682,12 +5700,18 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         let is_editor = true
                         
                         result = await translateWithGemini(original, destlang, e, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
-                        //console.debug("result lingvanex:", result)
-                        //hideTranslationSpinner();
+                        //console.debug("result gemini:", result)
+                        
                     } 
-                    if (transsel === "Ollama") {
+                    else if (transsel === "Ollama") {
                         let is_editor = true
                         result = await translateWithOllama(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        hideTranslationSpinner();
+                    } 
+                    
+                    else if (transsel === "LMStudio") {
+                        let is_editor = true
+                        result = await translateWithLMStudio(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
                         hideTranslationSpinner();
                     } 
                     showButton = document.getElementById("translate-" + rowId + "-translocal-entry-local-button")
@@ -5879,9 +5903,14 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower,locale,OpenAItemp,ClaudModel);
                      
                     }
-                    if (transsel === "Ollama") {
+                    else if (transsel === "Ollama") {
                         let is_editor = true
                         result = await translateWithOllama(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        hideTranslationSpinner();
+                    } 
+                    else if (transsel === "LMStudio") {
+                        let is_editor = true
+                        result = await translateWithLMStudio(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
                         hideTranslationSpinner();
                     } 
                 }
@@ -7073,6 +7102,7 @@ async function processTransl (original, translatedText, language, record, rowId,
 
 // PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks
 function processPlaceholderSpaces(originalPreProcessed, translatedText) {
+   // console.debug("translatedText:", translatedText) 
     if (originalPreProcessed == "") {
         //console.debug("preprocessed empty");
     }
@@ -7156,9 +7186,9 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                             found = translatedText.search("[" + counter + "]");
                             // console.debug('processPlaceholderSpaces found at :', found);
                             if (found != 1) {
-                                // console.debug("processPlaceholderSpaces in trans no blank before!!!");
+                                console.debug("processPlaceholderSpaces in trans no blank before!!!");
                                 repl = transval.substr(0, 1) + " " + transval.substr(1,);
-                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                                translatedText = replaceAt(translatedText, transval, repl);
                             }
                         }
                     }
@@ -7168,7 +7198,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         // console.debug("processPlaceholderSpaces no blank before in org!");
                         if (transval.startsWith(" ")) {
                             //  console.debug("processPlaceholderSpaces apparently blank in front in trans!!!");
-                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            translatedText = replaceAt(translatedText, transval, repl);
                             // console.debug("processPlaceholderSpaces blank in front removed in trans", translatedText);
                         }
                     }
@@ -7187,13 +7217,13 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                             if (found != (originalPreProcessed.length) - 2) {
                                 //if (foundorg===found){
                                 repl = transval.substring(0, transval.length - 1);
-                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                                translatedText = replaceAt(translatedText, transval, repl);
                                 //  console.debug("processPlaceholderSpaces blank in behind removed in trans", translatedText);
                                 //}
                             }
                             else {
                                 repl = transval.substring(0, transval.length) + " ";
-                                translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                                translatedText = replaceAt(translatedText, transval, repl);
                             }
                         }
                     }
@@ -7209,11 +7239,11 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         if (found != (translatedText.length) - 2) {
                             // console.debug("found at end of line:", found);
                             repl = transval.substring(0, transval.length - 1) + " " + transval.substring(transval.length - 1,);
-                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            translatedText = replaceAt(translatedText, transval, repl);
                         }
                         else {
                             repl = transval.substring(0, transval.length) + " ";
-                            translatedText = translatedText.replaceAt(translatedText, transval, repl);
+                            translatedText = replaceAt(translatedText, transval, repl);
                         }
                     }
                 }

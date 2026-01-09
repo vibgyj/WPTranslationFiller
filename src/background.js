@@ -266,16 +266,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "Gemini") {
     (async () => {
         try {
-            const { apiKey, text, sourceLang, targetLang ,formal, locale, model,prompt} = request.data;
-            console.debug("model:", model)
-            console.debug("prompt:",prompt)
-           
-            //const prompt = `
-           //  Translate from ${sourceLang} to ${targetLang}.
-           //  Return only the translation.
-           // Text:
-           //  ${text}
-           // `.trim();
+            const { apiKey, text, sourceLang, targetLang ,formal, locale, model,prompt,max_tokens} = request.data;
+            //console.debug("model:", model)
+            //console.debug("max:",max_tokens)
             let URL = `https://generativelanguage.googleapis.com/v1/models/` + model + `:generateContent?key=${apiKey}`
             const res = await fetch(URL,
                 {
@@ -285,10 +278,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         contents: [
                             { role: "user", parts: [{ text: prompt }] }
                         ],
-                        generationConfig: {
-                            temperature: 0.2,
-                            maxOutputTokens: 2048
-                        }
+                       generationConfig: {
+                         temperature: 0.0,
+                         topP: 1.0,
+                         topK: 1,
+                         maxOutputTokens: max_tokens
+                       }
+
                     })
                 }
             );
@@ -343,42 +339,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
 }
 
-
-      // Ollama translation
- if (request.action === "ollama_translate") {
-    console.debug("Ollama translation request received");
-
-    (async () => {
-        try {
-            const {
-                text,
-                model,
-                systemPrompt,
-                max_tokens,
-                temperature,
-                apiKey,
-                useLocal,
-                repeat_penalty
-            } = request.data;
-            
-            if (!text) return sendResponse({ success: false, error: "Text is missing" });
-            if (!model) return sendResponse({ success: false, error: "Model is missing" });
-            if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
-
-            const myLocal = toBoolean(useLocal);
-
-            // === Helper: local call with timeout ===
-            async function callLocalWithTimeout(body, timeoutMs) {
-                return Promise.race([
-                    await callLocalOllama(body),
-                    new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
-                    )
-                ]);
-            }
-
-            // === Helper: retry loop ===
-            async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 14000) {
+ // === Helper: retry loop ===
+            async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 12000) {
                 let lastError = null;
                 for (let i = 0; i < maxRetries; i++) {
                     try {
@@ -392,26 +354,71 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     }
                 }
                 throw lastError;
+    }
+               // === Helper: local call with timeout ===
+            async function callLocalWithTimeout(body, timeoutMs) {
+                return Promise.race([
+                    await callLocalOllama(body),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
+                    )
+                ]);
             }
+      // Ollama translation
+ if (request.action === "ollama_translate") {
+    console.debug("Ollama translation request received");
+    
+    (async () => {
+        try {
+            var {
+                text,
+                target_lang,
+                model,
+                systemPrompt,
+                max_tokens,
+                temperature,
+                apiKey,
+                useLocal,
+                repeat_penalty,
+                do_not_complete,
+            } = request.data;
+             console.debug("model:", model);
+            if (!text) return sendResponse({ success: false, error: "Text is missing" });
+            if (!model) return sendResponse({ success: false, error: "Model is missing" });
+            if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
+            console.debug("original:",text)
+            const myLocal = toBoolean(useLocal);
 
             // === Local translation path ===
             if (myLocal) {
-               // console.debug("prompt:", systemPrompt)
-               
+                
+                // console.debug("prompt:", systemPrompt)
+               // console.debug("text to translate:", text)
+               // text = "'" + text + "'";
                 let message = [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `translate ${text}` }
+                    { role: 'user', content: text }
                 ];
                 
                 var bodyToSend = {
+                    text: text,
                     messages: message,
                     model: model,
                     stream: false,
-                    options: { temperature: temperature, repeat_penalty: repeat_penalty }
+                    grammar_rules: {
+                    "capitalize_first_word": true,
+                    "lowercase_others": true,
+                    "proper_nouns": ["AI", "Ollama", "UTM"], // List any known proper nouns here if needed
+                    "preserve_caps": true,
+                    "full_verb_position": "end",
+                    "numeric_translation": true,
+                    "treat_as_normal_text": true // Important, based on your instructions
+                    },
+                    options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 };
 
                 try {
-                    const result = await callLocalWithRetry(bodyToSend, 3, 14000); // 3 retries, 15s timeout
+                    const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
                     console.debug("Local Ollama result:", result.translation);
                     
                     sendResponse({
@@ -514,8 +521,101 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })();
 
     return true; // keep response channel open
+    }
+
+    if (request.action === "LMStudio_translate") {
+        console.debug("LMStudio translation request received");
+
+        var {
+                text,
+                target_lang,
+                model,
+                systemPrompt,
+                max_tokens,
+                temperature,
+                apiKey,
+                useLocal,
+                repeat_penalty,
+                do_not_complete,
+            } = request.data;
+       // console.debug("prompt:", systemPrompt);
+
+        (async () => {
+            const mymodel = model || 'gpt-oss-20b';
+            //const mymodel = 'gpt-oss-20b';
+            console.debug("mymodel:", model) 
+            const modelLoaded = await isLMStudioModelLoaded(mymodel);
+
+       if (!modelLoaded) {
+          sendResponse({
+          ok: false,
+        text: `LM Studio model "${mymodel}" is not loaded or server is not running!`
+       });
+        return;
+      }
+
+    const body = {
+      model: mymodel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text }
+      ],
+        temperature: temperature ?? 0,
+      stream: false   
+    };
+
+    if (max_tokens) body.max_tokens = max_tokens;
+
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    };
+
+    // ✅ JUISTE ENDPOINT
+            //const url = 'http://192.168.1.236:1234/v1/chat/completions';
+    const url = 'http://127.0.0.1:1234/v1/chat/completions';
+     try {
+  const res = await fetch(url, options);
+
+  // ✅ lees de body precies 1 keer
+  const json = await res.json();
+
+  console.debug("LM Studio JSON response:", json);
+
+  // check HTTP status
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} - ${JSON.stringify(json)}`);
+  }
+
+  // check LM Studio “error” in JSON (optioneel)
+  if (json.error) {
+    throw new Error(`LM Studio error: ${json.error}`);
+  }
+
+  // haal assistant-tekst veilig
+  const output = json?.choices?.[0]?.message?.content ?? null;
+
+  sendResponse({
+    ok: !!output,
+    text: output
+  });
+
+} catch (err) {
+  console.error("LM Studio call error:", err);
+
+  sendResponse({
+    ok: false,
+    text: err.message || "Unknown error"
+  });
 }
 
+})();
+    // Return true om async sendResponse mogelijk te maken
+    return true;
+  }
 
     if (request.action == "ClaudeAI") {
     (async () => {
@@ -977,7 +1077,7 @@ async function callLocalOllama(bodyToSend) {
         });
         
         const data = await resp.json();
-        
+        console.debug("Local Ollama response:", data); 
         if (!resp.ok) {
             return {
                 success: false,
@@ -1015,3 +1115,43 @@ const toBoolean = (value) => {
     if (typeof value === "number") return value === 1;
     return false;
 };
+
+            /**
+ * Stop a local Ollama model session to avoid cached responses
+ * @param {string} model - Model name to stop
+ * @returns {Promise<Object>} - Result with error or success
+ */
+async function stopLocalModelSession(model) {
+    try {
+        const STOP_URL = `http://127.0.0.1:11434/api/stop`;
+
+        const resp = await fetch(STOP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model }) // pass the model you want to stop
+        });
+
+        if (!resp.ok) {
+            let textResp = await resp.text().catch(() => "");
+            return { error: `Cannot stop model session. HTTP ${resp.status}`, raw: textResp };
+        }
+
+        return { success: true };
+    } catch (err) {
+        return { error: err?.message || String(err) };
+    }
+}
+
+ async function isLMStudioModelLoaded(modelName) {
+  try {
+    const res = await fetch('http://127.0.0.1:1234/v1/models');
+    if (!res.ok) return false;
+
+    const json = await res.json();
+    if (!json.data || !Array.isArray(json.data)) return false;
+
+    return json.data.some(m => m.id === modelName);
+  } catch (e) {
+    return false;
+  }
+}

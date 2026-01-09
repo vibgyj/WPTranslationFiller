@@ -39,6 +39,7 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
         replacePreVerb,
         "gemini"
     ); 
+    originalPreProcessed = originalPreProcessed + '\u200B'
     let sourceLang = "en"
     let targetLang = destlang
       const prompt = `
@@ -48,7 +49,9 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
             ${originalPreProcessed}
             `.trim();
     formal = false
-    
+    let max_Tokens = estimateMaxTokens(originalPreProcessed);
+    let prompt_tokens = estimateMaxTokens(prompt);
+    max_Tokens = max_Tokens + prompt_tokens
     return new Promise((resolve) => {
         chrome.runtime.sendMessage(
             {
@@ -61,7 +64,8 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
                     formal,
                     locale,
                     model: GeminiModel,
-                    prompt: prompt
+                    prompt: prompt,
+                    max_tokens: max_Tokens
                 }
             },
             (response) => {
@@ -80,7 +84,8 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
                          messageBox("error", "Gemini eorror: " + response.error);
                          resolve(response);
                     }
-                    else {
+                     else {
+                         console.debug("Gemini Error:", response.error);
                         resolve("NOK")
                     }
                     return;

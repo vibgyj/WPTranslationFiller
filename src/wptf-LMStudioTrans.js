@@ -1,16 +1,7 @@
-﻿/**
- * This file includes all functions for translating with the Ollama API
- * It depends on commonTranslate for additional translation functions
- * Ollama provides a local LLM API compatible with OpenAI's chat format
- * Uses the AI Glossary database for rich translation context
- */
-
-// Wrapper function that reads Ollama settings from storage
-// This simplifies integration by not requiring all function signatures to be modified
-async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt) {
-    //let mymodel = "gpt-oss:20b"
-    // Ensure ollamaModel has a valid value, fallback to default
+﻿// LMStudio translate
+async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt){
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
+     
     // Replace glossary and language names
     //console.debug("Ollama Prompt before replacements:", openAiGloss)
     let convertedGlossary = convertGlossaryForOllama(openAiGloss)
@@ -38,9 +29,10 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
     let max_Tokens = estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = estimateMaxTokens(myprompt);
     max_Tokens = max_Tokens + prompt_tokens
+     const start = Date.now()
                     return new Promise((resolve, reject) => {
                         chrome.runtime.sendMessage({
-                            action: "ollama_translate",
+                            action: "LMStudio_translate",
                             data: {
                                 text: originalPreProcessed,                          // string to translate
                                 target_lang: destlang,               // optional, can be ignored by background
@@ -54,31 +46,34 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 do_not_complete: 1
                             }
                         }, (response) => {
-                           
+                            console.debug("LMStudio response:", response);
                             if (!response) {
                                 hideTranslationSpinner();
                                 if (typeof response != 'undefined') {
-                                    const rawErr = response.error?.trim() || "Ollama translation failed";
+                                    const rawErr = response.error?.trim() || "LMStudio translation failed";
                                     const errMsg = /unauthorized/i.test(rawErr)
-                                        ? "Ollama API authorization failed. Check your API key."
+                                        ? "LMStudio API authorization failed. Check your API key."
                                         : rawErr;
                                     messageBox("error", "There has been an error: " + `${errMsg}`);
                                 }
                                 else {
-                                    messageBox("error", "No response from Ollama API. Check your connection and settings.");
+                                    messageBox("error", "No response fromMStudio. Check your connection and settings.");
                                 }
                                 return "NOK";
                             }
-                           if (!response.success) {
-                               const rawErr = response.error?.trim() || "Ollama translation failed";
-                               const errMsg = /unauthorized/i.test(rawErr)
-                               ? "Ollama API authorization failed. Check your API key."
-                              : rawErr;
+                           if (!response.ok) {
+                               const rawErr = response.error?.trim() || "LMStudio translation failed";
+                               console.debug("response:", response)
+                               console.debug("response error:",response.text)
+                               const errMsg = response.text
+                              
                                hideTranslationSpinner();
                               messageBox("error", "There has been an error: " +  `${errMsg}`);
                               return "NOK";
-                           }
-                            translatedText = response.translation
+                            }
+                            const duration = ((Date.now() - start) / 1000).toFixed(2);
+                           console.debug("Duur:",duration)
+                            translatedText = response.text
                              let convertedGlossary = GLOBAL_GLOSSARY;
                              if (convertedGlossary) {
                                 translatedText = applyOpenAiGlossary(
@@ -115,4 +110,3 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                         })
                     })
 }
-

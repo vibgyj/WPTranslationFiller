@@ -332,7 +332,6 @@
                 </td>
             </tr>
             <tr>
-            <tr>
                 <td>
                     <label for="Translateio_api_key">translateio API Key</label>
                 </td>
@@ -342,7 +341,6 @@
                     </div>
                 </td>
             </tr>
-            <tr>
             <tr>
                 <td>
                     <label for="Claude_api_key">Claude API Key</label>
@@ -385,21 +383,32 @@
             </tr>
             <tr>
                 <td>
-                    <label for="transselect">Select a translator:</label>
+                    <label for="ClaudSelect">Select a model for Claud:</label>
                 </td>
                 <td>
-                    <div class="form-select">
-                        <select title="Select a translator" name="transsel" id="transselect">
-                            <option value="deepl">Deepl</option>
-                            <option value="deepseek">DeepSeek</option>
-                            <option value="gemini">Gemini</option>
-                            <option value="google">Google</option>
-                            <option value="lingvanex">Lingvanex</option>
-                            <option value="microsoft">Microsoft</option>
-                            <option value="OpenAI">OpenAI</option>
-                            <option value="translation_io">translationio</option>
-                            <option value="Claude">Claud</option>
-                            <option value="Ollama">Ollama</option>
+                    <div class="form-input">
+                        <select title="Select a model for Claude" name="ClaudSel" id="ClaudSelect">
+                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+                            <option value="claude-2">claude-2</option>
+                            <option value="claude-instant-1">claude-instant-1</option>
+                            <option value="claude-opus-4-5-20251101">claude-opus-4-5-20251101</option>
+                            <option value="claude-sonnet-4-5-20250929">claude-sonnet-4-5-20250929</option>
+                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="GeminiSelect">Select a model for Gemini:</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for Gemini" name="GeminiSel" id="GeminiSelect">
+                            <option value="gemini-2.0-flash">gemini-2.5-flash</option>
+                            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
 
                         </select>
                     </div>
@@ -437,7 +446,6 @@
             </tr>
             <tr>
                 <td>
-
                     <label for="ToneSelect">Select a tone for AI:</label>
                 </td>
                 <td>
@@ -456,30 +464,22 @@
             </tr>
             <tr>
                 <td>
-                    <label for="ClaudSelect">Select a model for Claud:</label>
+                    <label for="transselect">Select a translator:</label>
                 </td>
                 <td>
-                    <div class="form-input">
-                        <select title="Select a model for Claude" name="ClaudSel" id="ClaudSelect">
-                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
-                            <option value="claude-2">claude-2</option>
-                            <option value="claude-instant-1">claude-instant-1</option>
-                            <option value="claude-opus-4-5-20251101">claude-opus-4-5-20251101</option>
-                            <option value="claude-sonnet-4-5-20250929">claude-sonnet-4-5-20250929</option>
-                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="GeminiSelect">Select a model for Gemini:</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <select title="Select a model for Gemini" name="GeminiSel" id="GeminiSelect">
-                            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                    <div class="form-select">
+                        <select title="Select a translator" name="transsel" id="transselect">
+                            <option value="deepl">Deepl</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="gemini">Gemini</option>
+                            <option value="google">Google</option>
+                            <option value="lingvanex">Lingvanex</option>
+                            <option value="LMStudio">LMStudio</option>
+                            <option value="microsoft">Microsoft</option>
+                            <option value="OpenAI">OpenAI</option>
+                            <option value="translation_io">translationio</option>
+                            <option value="Claude">Claud</option>
+                            <option value="Ollama">Ollama</option>
 
                         </select>
                     </div>
@@ -634,32 +634,27 @@
         <div class="form-input">
             <label for="text_openai_prompt">AI prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated">?</span>
-            <textarea id="text_openai_prompt">
-            </textarea>
+            <textarea id="text_openai_prompt"></textarea>
         </div>
         <div class="form-input">
             <label for="text_openai_review">AI review prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
-            <textarea id="text_openai_review">
-            </textarea>
+            <textarea id="text_openai_review"></textarea>
         </div>
         <div class="form-input">
             <label for="text_claude_prompt">Claude prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt for Claude will be populated">?</span>
-            <textarea id="text_claude_prompt">
-            </textarea>
+            <textarea id="text_claude_prompt"></textarea>
         </div>
         <div class="form-input">
             <label for="text_ollama_prompt">Ollama prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt for Ollama will be populated">?</span>
-            <textarea id="text_ollama_prompt">
-     </textarea>
-        </div>.
+            <textarea id="text_ollama_prompt"></textarea>
+        </div>
         <div class="form-input">
             <label for="text_gemini_prompt">Gemini prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt for Gemini will be populated">?</span>
-            <textarea id="text_gemini_prompt">
-</textarea>
+            <textarea id="text_gemini_prompt"></textarea>
         </div>
         <div class="form-input">
             <label for="text_pre_verbs">Pre Translation Replace</label>
