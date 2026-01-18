@@ -16,7 +16,7 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 700px;
             margin: auto;
             font-size: 12pt;
         }
@@ -373,7 +373,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="Ollama_model">Ollama model</label>
+                    <label for="Ollama_model">Ollama/LMstudio model</label>
                 </td>
                 <td>
                     <div class="form-input">
@@ -458,6 +458,7 @@
                             <option value="professional">Professional</option>
                             <option value="polite">Polite</option>
                             <option value="strict">Strict</option>
+                            <option value="technical">Technical</option>
                         </select>
                     </div>
                 </td>
@@ -474,7 +475,7 @@
                             <option value="gemini">Gemini</option>
                             <option value="google">Google</option>
                             <option value="lingvanex">Lingvanex</option>
-                            <option value="LMStudio">LMStudio</option>
+                            <option value="LMStudio">LMstudio</option>
                             <option value="microsoft">Microsoft</option>
                             <option value="OpenAI">OpenAI</option>
                             <option value="translation_io">translationio</option>
@@ -647,7 +648,7 @@
             <textarea id="text_claude_prompt"></textarea>
         </div>
         <div class="form-input">
-            <label for="text_ollama_prompt">Ollama prompt</label>
+            <label for="text_ollama_prompt">Ollama/LMstudio prompt</label>
             <span class="tooltip" data-tooltip="With the value of this field the prompt for Ollama will be populated">?</span>
             <textarea id="text_ollama_prompt"></textarea>
         </div>

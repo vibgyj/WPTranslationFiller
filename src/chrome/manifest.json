@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.43",
+  "version": "3.4.49",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -14,6 +14,7 @@
     {
       "resources": [
         "/img/*",
+        "*://api-b2b.backenster.com/*",
         "wptf-cute-alert.css",
         "error-alert.flac",
         "clipboard-icon.png",
@@ -58,7 +59,6 @@
   "host_permissions": [
     "<all_urls>",
     "*://generativelanguage.googleapis.com/*",
-    "*://api-b2b.backenster.com/*",
     "*://agw.golinguist.com/*",
     "*://translate.wordpress.org/*",
     "*://api-free.deepl.com/*",
@@ -82,7 +82,10 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-functions.js",
+        "wptf-LMStudioTrans.js",
         "wptf-GeminiTrans.js",
+        "wptf-lingvanexTrans.js",
         "wptf-ollamaTrans.js",
         "wptf-translatio_io.js",
         "wptf-buildstats.js",
@@ -91,7 +94,6 @@
         "wptf-deeplGloss.js",
         "wptf-mark_glossary.js",
         "wptf-spellcheck.js",
-        "wptf-functions.js",
         "wptf-purify.min.js",
         "wptf-cute-alert.js",
         "wptf-consistency.js",

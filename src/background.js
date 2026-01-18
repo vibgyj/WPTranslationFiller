@@ -13,23 +13,20 @@ function decodeBase64(encoded) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.debug("request;", request)
     if (request.action === "load_deepl_glossary") {
-        console.debug(request.isFree)
+       // console.debug(request.isFree)
         //   console.debug(request.apiKey)
-        //console.debug(request.glossaryData)
+        console.debug(request.glossaryData)
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        let deeplServer = isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
-        console.debug("deeplServer in upload:",deeplServer)
-        //let deeplServer = request.isFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
-        let url = `${deeplServer}/v2/glossaries`;
-        // console.debug("Url:",url)
+        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+        //console.debug("deeplServer in upload:",deeplServer)
+        let url = `${deeplServer}`;
+        console.debug("Url:",url)
         let response = fetch(url, {
             method: "POST",
             accept: "*/*",
             Encoding: "gzip, deflate, br",
             body: request.glossaryData,
             headers: {
-                'Access-Control-Allow-Headers': 'X-Requested-With',
-                'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'application/json',
                 'Authorization': `DeepL-Auth-Key ${request.apiKey}`
             }
@@ -52,45 +49,70 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keeps sendResponse alive for async operations
     }
     else if (request.action === "fetch_deepl_glossaries") {
-        console.debug("we have a request to show the glossary:", request.isFree)
-        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v2/glossaries";
-        console.debug("We fetch glossaries")
-        console.debug("isFree:",request.isFree)
-        console.debug("key:", request.apiKey)
-        console.debug("deeplServer:",deeplServer)
-        fetch(deeplServer, {
-            method: "GET",
-            headers: {
-                "Authorization": `DeepL-Auth-Key ${request.apiKey}`, // Replace with your actual API key
-                "Content-Type": "application/json"
-            }
-        })
-            .then(response => {
-                console.debug("response:",response)
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("DeepL Response:", data); // Debugging step
-                sendResponse({ success: true, glossaries: data });
-            })
-            .catch(error => {
-                console.error("Fetch Error:", error); // Debugging step
-                sendResponse({ success: false, error: error.message });
-            });
+    console.debug("we have a request to show the glossary:", request.isFree);
 
-        return true; //  Keeps sendResponse alive for async fetch()
-    }
+    const isFree = request.isFree === true || request.isFree === "true";
+    let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+
+
+    console.debug("We fetch glossaries");
+    console.debug("isFree:", request.isFree);
+    console.debug("key:", request.apiKey);
+    console.debug("deeplServer:", deeplServer);
+
+    fetch(deeplServer, {
+        method: "GET",
+        headers: {
+            "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
+            "Content-Type": "application/json"
+        }
+    })
+        .then(async response => {
+            console.debug("raw response:", response);
+
+            const text = await response.text(); // READ BODY HERE
+
+            let body;
+            try {
+                body = text ? JSON.parse(text) : null;
+            } catch {
+                body = text;
+            }
+
+            if (!response.ok) {
+                // Pass through full DeepL error
+                throw {
+                    status: response.status,
+                    body: body
+                };
+            }
+
+            return body;
+        })
+        .then(data => {
+            console.log("DeepL Response:", data);
+            sendResponse({ success: true, glossaries: data });
+        })
+        .catch(error => {
+            console.error("Fetch Error:", error);
+            console.error("Fetch Error:", error.body);
+            sendResponse({
+                success: false,
+                status: error.status || null,
+                error: error.body || error.message
+            });
+        });
+
+    return true; // keep sendResponse alive
+}
+
     else if (request.action === "delete_deepl_glossary") {
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
         console.debug("isFree:",isFree)
-        let deeplServer = isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
-        // let deeplServer = request.isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+        console.debug("We delete glossary with id:", request.glossary_id)
        console.debug("deeplserver:",deeplServer)
-        let url = `${deeplServer}/v2/glossaries/${request.glossary_id}`;
+        let url = `${deeplServer}/${request.glossary_id}`;
 
         fetch(url, {
             method: "DELETE",
@@ -388,35 +410,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
             console.debug("original:",text)
             const myLocal = toBoolean(useLocal);
-
+            let tone = "informal"
             // === Local translation path ===
             if (myLocal) {
                 
                 // console.debug("prompt:", systemPrompt)
                // console.debug("text to translate:", text)
                // text = "'" + text + "'";
-                let message = [
+               let messages = [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: text }
-                ];
-                
-                var bodyToSend = {
-                    text: text,
-                    messages: message,
-                    model: model,
-                    stream: false,
-                    grammar_rules: {
-                    "capitalize_first_word": true,
-                    "lowercase_others": true,
-                    "proper_nouns": ["AI", "Ollama", "UTM"], // List any known proper nouns here if needed
-                    "preserve_caps": true,
-                    "full_verb_position": "end",
-                    "numeric_translation": true,
-                    "treat_as_normal_text": true // Important, based on your instructions
-                    },
-                    options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
-                };
+                   { role: 'user', content: 'Translate the provided text without any comment or instruction' },
+                   { role: 'user', content: `translate this: ${text}` }
+                  ];
 
+                  var bodyToSend = {
+                  model: model,
+                  messages: messages,
+                  stream: false,
+                 options: { emperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1 }
+                 };
+                //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
                     console.debug("Local Ollama result:", result.translation);
@@ -442,8 +455,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             let message = [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `translate this: ${text}` }
-            ];
+                { role: "user", content: `You act a a translator` },
+                { role: "user", content: text }
+                ];
 
             var bodyToSend = {
                 messages: message,
@@ -523,99 +537,116 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // keep response channel open
     }
 
-    if (request.action === "LMStudio_translate") {
-        console.debug("LMStudio translation request received");
+ if (request.action === "LMStudio_translate") {
+    console.debug("LMStudio translation request received");
 
-        var {
-                text,
-                target_lang,
-                model,
-                systemPrompt,
-                max_tokens,
-                temperature,
-                apiKey,
-                useLocal,
-                repeat_penalty,
-                do_not_complete,
-            } = request.data;
-       // console.debug("prompt:", systemPrompt);
+    const {
+        text,
+        target_lang,
+        model,
+        systemPrompt,
+        max_tokens,
+        temperature,
+        apiKey,
+        useLocal,
+        repeat_penalty,
+        do_not_complete,
+    } = request.data;
+     
+    (async () => {
+        const mymodel = model || 'gpt-oss-20b';
+        console.debug("mymodel:", mymodel);
+        console.debug("text:", text) 
+        // Check of het model geladen is
+        const modelLoaded = await isLMStudioModelLoaded(mymodel);
+        if (!modelLoaded) {
+            sendResponse({
+                ok: false,
+                text: `LM Studio model "${mymodel}" <br>is not loaded or server is not running!`
+            });
+            return;
+        }
+       // let mysystemPrompt = 'Translate the text exactly into Dutch. Do NOT change, move, or remove placeholders like <mytab1>, <mylinefeed2>, etc. Output ONLY the translated text, without explanations or notes.'
+       let mysystemPrompt = systemPrompt
+        console.debug("systemPrompt:", mysystemPrompt)
+        // Bouw de body
+        const body = {
+             messages: [
+            {role: "system", content: mysystemPrompt  // hier gebruik je je eigen variabele prompt
+             },
+             {
+            role: "user",content: text  // de tekst die je wilt vertalen
+            }
+            ],
+            temperature: temperature ?? 0,
+            normalization: false,
+            stream: false
+        };
+        if (max_tokens) body.max_tokens = max_tokens;
 
-        (async () => {
-            const mymodel = model || 'gpt-oss-20b';
-            //const mymodel = 'gpt-oss-20b';
-            console.debug("mymodel:", model) 
-            const modelLoaded = await isLMStudioModelLoaded(mymodel);
+        const options = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        };
 
-       if (!modelLoaded) {
-          sendResponse({
-          ok: false,
-        text: `LM Studio model "${mymodel}" is not loaded or server is not running!`
-       });
-        return;
-      }
+        const url = 'http://127.0.0.1:1234/v1/chat/completions';
 
-    const body = {
-      model: mymodel,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: text }
-      ],
-        temperature: temperature ?? 0,
-      stream: false   
-    };
+        try {
+            // fetch met timeout + retries
+            const res = await fetchWithTimeoutAndRetry(
+                url,
+                options,
+                15000, // timeout per retry in ms
+                3      // max retries
+            );
 
-    if (max_tokens) body.max_tokens = max_tokens;
+            // Lees de body precies één keer
+            const json = await res.json();
+            console.debug("LM Studio JSON response:", json);
 
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    };
+            // Check HTTP status
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status} - ${JSON.stringify(json)}`);
+            }
 
-    // ✅ JUISTE ENDPOINT
-            //const url = 'http://192.168.1.236:1234/v1/chat/completions';
-    const url = 'http://127.0.0.1:1234/v1/chat/completions';
-     try {
-  const res = await fetch(url, options);
+            // Check LM Studio error in JSON
+            if (json.error) {
+                throw new Error(`LM Studio error: ${json.error}`);
+            }
 
-  // ✅ lees de body precies 1 keer
-  const json = await res.json();
+            // Haal assistant-tekst veilig
+            const output = json?.choices?.[0]?.message?.content ?? null;
 
-  console.debug("LM Studio JSON response:", json);
+            sendResponse({
+                ok: !!output,
+                text: output
+            });
 
-  // check HTTP status
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status} - ${JSON.stringify(json)}`);
-  }
+        } catch (err) {
+            // TECHNISCH LOGGEN
+            if (err.name === 'AbortError') {
+                console.warn('LM Studio request aborted (timeout)');
+            } else {
+                console.error('LM Studio call error:', err);
+            }
 
-  // check LM Studio “error” in JSON (optioneel)
-  if (json.error) {
-    throw new Error(`LM Studio error: ${json.error}`);
-  }
+            // GEBRUIKERSMELDING
+            const userMessage = (err.name === 'AbortError')
+                ? 'The translation took too long and was stopped.'
+                : (err.message || 'Unknown error');
 
-  // haal assistant-tekst veilig
-  const output = json?.choices?.[0]?.message?.content ?? null;
+            sendResponse({
+                ok: false,
+                text: userMessage
+            });
+        }
+    })();
 
-  sendResponse({
-    ok: !!output,
-    text: output
-  });
-
-} catch (err) {
-  console.error("LM Studio call error:", err);
-
-  sendResponse({
-    ok: false,
-    text: err.message || "Unknown error"
-  });
-}
-
-})();
     // Return true om async sendResponse mogelijk te maken
     return true;
-  }
+}
+
 
     if (request.action == "ClaudeAI") {
     (async () => {
@@ -1155,3 +1186,51 @@ async function stopLocalModelSession(model) {
     return false;
   }
 }
+
+async function fetchWithTimeoutAndRetry(
+    url,
+    options,
+    timeoutPerRetryMs = 15000,
+    maxRetries = 3
+) {
+    let lastError;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+            () => controller.abort(),
+            timeoutPerRetryMs
+        );
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+            return response; // ✅ succes
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+            lastError = err;
+
+            if (err.name === 'AbortError') {
+                console.debug(
+                    `LMStudio timeout on attempt ${attempt}/${maxRetries} (${timeoutPerRetryMs}ms)`
+                );
+            } else {
+                console.debug(
+                    `LMStudio fetch error on attempt ${attempt}/${maxRetries}:`,
+                    err.message
+                );
+            }
+
+            // ⛔ geen delay: LM Studio is meestal nog bezig
+            // retry betekent nieuwe inference
+        }
+    }
+
+    throw lastError;
+}
+

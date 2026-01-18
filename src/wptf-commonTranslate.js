@@ -65,6 +65,7 @@ function setPreTranslationReplace(preTranslationReplace) {
 function setPostTranslationReplace(postTranslationReplace, formal) {
     // PSS 21-07-2022 Currently when using formal, the translation is still default #225
     //console.debug("in setpost:",postTranslationReplace)
+    
     replaceVerb = [];
     if (postTranslationReplace != undefined) {
         let lines = postTranslationReplace.split("\n");
@@ -91,7 +92,8 @@ const linkRegex = /(https?|ftp|file):\/\/[^\s]+/gi;
 // the below regex did not work for links
 //const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
 // the below regex is to prevent DeepL to crash or make no sence of the translation
-const markupRegex = new RegExp(/<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-z]+;|<ul>|<li>/g);
+const markupRegex = /<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-zA-Z0-9]+;|&|<ul[^>]*>|<li[^>]*>/g;
+
 //const specialChar = new RegExp(/ # | #|\#|\t|\r\n|\r|\n|&#->/ig);
 const specialChar = /<[^>]+>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|\#|#/gi;
 const GoogleRegex = /%(\d{1,2})?\$?[sdl]/gi;
@@ -101,10 +103,12 @@ async function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
-    if (translator != "lingvanex") {
+   // console.debug("translator:",translator)
+    if (translator != "lingvanex" && translator != "LMstudio") {
         const charmatches = original.matchAll(specialChar);
         if (charmatches != null) {
-            let index = 0;
+            // we need to start with 1 otherwise translation API's alter the zero value
+            let index = 1;
             for (const charmatch of charmatches) {
                 // Replace the found match with a DeepL-safe placeholder
                 original = original.replace(
@@ -115,17 +119,7 @@ async function preProcessOriginal(original, preverbs, translator) {
             }
         }
     }
-    //console.debug("original:",original)
-     // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-   // const linkmatches = original.match(linkRegex);
-     //   if (linkmatches != null) {
-     //       index = 1;
-     //       for (const linkmatch of linkmatches) {
-        //        original = original.replace(linkmatch, `{linkvar${index}}`);
-        //        original = original.replace('.{', '. {');
-         //       index++;
-         //   }
-    // }
+    
     // prereplverb contains the verbs to replace before translation
     for (let i = 0; i < preverbs.length; i++) {
         if (!CheckUrl(original, preverbs[i][0])) {
@@ -160,24 +154,24 @@ async function preProcessOriginal(original, preverbs, translator) {
         original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
         // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
         // The above replacements are put into the specialchar regex for all api's
-      // 1) Define your regex for all the placeholders you care about:
-     // Match placeholders (like %1$s, &#123;, %placeholder%, etc.)
-     const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+        // 1) Define your regex for all the placeholders you care about:
+        // Match placeholders (like %1$s, &#123;, %placeholder%, etc.)
+        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
 
-      // Store placeholder mappings for post-replacement
+        // Store placeholder mappings for post-replacement
 
-     index = 0;
-     placeholderMap = {};
-     // Replace each match with a unique token and store original
-     const matches = [...original.matchAll(placeholderRegex)];
-     for (const match of matches) {
-       const token = `<x id="var${index}"/>`;
-       original = original.replace(match[0], token);
-       placeholderMap[token] = match[0]; // keep mapping to restore later
+        index = 0;
+        placeholderMap = {};
+        // Replace each match with a unique token and store original
+        const matches = [...original.matchAll(placeholderRegex)];
+        for (const match of matches) {
+            const token = `<x id="var${index}"/>`;
+            original = original.replace(match[0], token);
+            placeholderMap[token] = match[0]; // keep mapping to restore later
 
-        index++;
+            index++;
         }
-    
+
         // We need to remove markup that contains & and ; otherwise translation will fail
         let markupmatches = original.match(markupRegex)
         if (markupmatches != null) {
@@ -188,7 +182,8 @@ async function preProcessOriginal(original, preverbs, translator) {
                 index++;
             }
         }
-        
+        //console.debug("preProcessOrigineel:", original)
+
     }
     else if (translator == "microsoft") {
         // const matches = original.matchAll(placeHolderRegex);
@@ -198,33 +193,33 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
     }
     else if (translator == "lingvanex") {
-         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-         index = 0;
-         placeholderMap = {};
-         // Replace each match with a unique token and store original
-         const matches = [...original.matchAll(placeholderRegex)];
-         for (const match of matches) {
-           const token = `var_${index}`;
-           original = original.replace(match[0], token);
-           placeholderMap[token] = match[0]; // keep mapping to restore later
-          index++;
-         }
+        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+        index = 0;
+        placeholderMap = {};
+        // Replace each match with a unique token and store original
+        const matches = [...original.matchAll(placeholderRegex)];
+        for (const match of matches) {
+            const token = `var_${index}`;
+            original = original.replace(match[0], token);
+            placeholderMap[token] = match[0]; // keep mapping to restore later
+            index++;
+        }
 
     }
     else if (translator == "Ollama") {
-         
-         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-         index = 0;
-         placeholderMap = {};
-         // Replace each match with a unique token and store original
-         const matches = [...original.matchAll(placeholderRegex)];
-         for (const match of matches) {
-           const token = `<x id="var${index}"/>`;
-           original = original.replace(match[0], token);
-           placeholderMap[token] = match[0]; // keep mapping to restore later
-          index++;
-         }
-    
+
+        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+        index = 0;
+        placeholderMap = {};
+        // Replace each match with a unique token and store original
+        const matches = [...original.matchAll(placeholderRegex)];
+        for (const match of matches) {
+            const token = `<x id="var${index}"/>`;
+            original = original.replace(match[0], token);
+            placeholderMap[token] = match[0]; // keep mapping to restore later
+            index++;
+        }
+
         // We need to remove markup that contains & and ; otherwise translation will fail
         let markupmatches = original.match(markupRegex)
         if (markupmatches != null) {
@@ -237,12 +232,62 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
 
         translatedText
-        .replace(/\t/g, "__TAB__")
-        .replace(/\r\n/g, "__CRLF__")
-        .replace(/\n/g, "__LF__");
-      
+            .replace(/\t/g, "__TAB__")
+            .replace(/\r\n/g, "__CRLF__")
+            .replace(/\n/g, "__LF__");
+
     }
-    if (translator == "OpenAI") {
+    else if (translator == "LMstudio") {
+
+         // original = original.replace(/(.!?\r\n|\n|\r)/gm, "<code>mylinefeed</code>");
+        // LMstudiol does remove tabs so we need to replace them before sending them to the API
+         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+
+        // Store placeholder mappings for post-replacement
+
+        let index = 1;
+        placeholderMap = {};
+        // Replace each match with a unique token and store original
+        const matches = [...original.matchAll(placeholderRegex)];
+        for (const match of matches) {
+        const token = `__[mVar_${index}__]`;
+        original = original.replace(match[0], token);
+        placeholderMap[token] = match[0]; // keep mapping to restore later
+
+         index++;
+        }
+        //console.debug("after replacing placeholders for LMstudio:", original)
+        //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
+        index = 1;
+        original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
+           if (match === '\t') return `mytab`;
+             return `<code>placeholder${index}</code>`;
+          });
+
+       
+        console.debug("after replacing tabs for LMstudio:", original)
+     //   original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
+    //    if (match === '\t') {
+    //       return `<mytab${index++}>`;
+     //   }
+     //   return `<mylinefeed${index++}>`;
+     //   });
+
+
+         // We need to remove markup that contains & and ; otherwise translation will fail
+        let markupmatches = original.match(markupRegex)
+        if (markupmatches != null) {
+            index = 1;
+            for (const markupmatch of markupmatches) {
+                //console.debug("before:",markupmatch)
+                original = original.replace(markupmatch, `{mymark_var${index}}`);
+                index++;
+            }
+        }
+        console.debug("preProcessOrigineel LMstudio:", original) 
+
+    }
+    else if (translator == "OpenAI") {
         const matches = original.matchAll(placeHolderRegex);
        // console.debug("matches:",matches.length)
         if (matches !== null) {
@@ -291,7 +336,7 @@ function escapeRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // escapes all regex metacharacters
 }
 
-function postProcessTranslation (original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale) {
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale) {
     var pos;
     var index = 0;
     var foundIgnore;
@@ -309,11 +354,11 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         console.debug("translator :", translator);
     }
     if (originalPreProcessed != "") {
-        translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
+        translatedText =  processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
-    
 
-        //console.debug("after replacing special_var:",translatedText)
+
+    //console.debug("after replacing special_var:",translatedText)
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
@@ -326,7 +371,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 index++;
             }
         }
-        translatedText = restorePlaceholdersAfterTranslation(translatedText,original)
+        translatedText =  restorePlaceholdersAfterTranslation(translatedText, original)
     }
     else if (translator == "lingvanex") {
         // We need to put back the %s etc
@@ -337,37 +382,33 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         }
     }
     else if (translator == "Ollama") {
-       // We need to put back the %s etc
-      for (const token in placeholderMap) {
+        // We need to put back the %s etc
+        for (const token in placeholderMap) {
             const originalValue = placeholderMap[token];
             // Make token safe for regex use
             const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             // Replace all occurrences in translatedText
             translatedText = translatedText.replace(new RegExp(escapedToken, 'g'), originalValue);
-      }
-
-      const markers = [
-        { marker: "__TAB__", replacement: "\t" },
-        { marker: "__CRLF__", replacement: "\r\n" },
-        { marker: "__LF__", replacement: "\n" }
-      ];
-
-      markers.forEach(({ marker, replacement }) => {
-        if (originalPreProcessed.includes(marker)) {
-            // Restore the marker to real character
-            translatedText = translatedText.replace(new RegExp(marker, "g"), replacement);
-        } else {
-            // Remove marker even if attached to other characters
-            translatedText = translatedText.replace(new RegExp(marker + "(?=\\S|$)", "g"), "");
         }
-    });
-     // Controleer of het originele tekst eindigt met newline
-       const hasTrailingNewline = /\r?\n$/.test(original);
 
-       // Pas trailing newline in vertaling aan op basis van origineel
-     // if (!hasTrailingNewline) {
-     //     translatedText = translatedText.replace(/[\r\n]+$/g, "");
-     //   }
+        const markers = [
+            { marker: "__TAB__", replacement: "\t" },
+            { marker: "__CRLF__", replacement: "\r\n" },
+            { marker: "__LF__", replacement: "\n" }
+        ];
+
+        markers.forEach(({ marker, replacement }) => {
+            if (originalPreProcessed.includes(marker)) {
+                // Restore the marker to real character
+                translatedText = translatedText.replace(new RegExp(marker, "g"), replacement);
+            } else {
+                // Remove marker even if attached to other characters
+                translatedText = translatedText.replace(new RegExp(marker + "(?=\\S|$)", "g"), "");
+            }
+        });
+        // Controleer of het originele tekst eindigt met newline
+        const hasTrailingNewline = /\r?\n$/.test(original);
+
         translatedText = normalizeExtraNewlines(original, translatedText)
         translatedText = removeTrailingNewline(translatedText)
 
@@ -375,11 +416,12 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     }
     else if (translator == "deepl") {
         //console.debug("placeholdemap:",placeholderMap)
-       for (const token in placeholderMap) {
-           // console.debug("token:",token)
+        //console.debug("we are in Deepl!!!")
+        for (const token in placeholderMap) {
+            // console.debug("token:",token)
             const originalValue = placeholderMap[token];
 
-       //     // Make token safe for regex use
+            //     // Make token safe for regex use
             const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             // Replace all occurrences in translatedText
@@ -404,7 +446,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
 
         const linkmatches = original.match(linkRegex);
-        
+
         if (linkmatches != null) {
             index = 1;
             for (const match of linkmatches) {
@@ -412,28 +454,47 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 index++;
             }
         }
-       // const charmatches = original.matchAll(specialChar);
-       // if (charmatches != null) {
-         //   index = 1;
-         //   for (const charmatch of charmatches) {
-                //console.debug("char:", charmatch)
-           //    translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
-           //     translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
-           //     index++;
-           // }
-       // }
+        // const charmatches = original.matchAll(specialChar);
+        // if (charmatches != null) {
+        //   index = 1;
+        //   for (const charmatch of charmatches) {
+        //console.debug("char:", charmatch)
+        //    translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
+        //     translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
+        //     index++;
+        // }
+        // }
 
     }
-    else if (translator == "OpenAI") {
-        const matches = original.matchAll(placeHolderRegex);
+    else if (translator  == "LMstudio") {
+        // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
+        //console.debug("we are in LMstudio:",translatedText)
+        const markupmatches = original.match(markupRegex);
         index = 1;
+        if (markupmatches != null) {
+            for (const markupmatch of markupmatches) {
+                translatedText = translatedText.replace(`{mymark_var${index}}`, markupmatch);
+                index++;
+            }
+        }
+        //console.debug("translated before replacing tabs chars LMstudio:", translatedText)
+        translatedText = translatedText.replace(/__\[mytab\d+\]__/g, '\t');
+        translatedText = translatedText.replace(/<code>placeholder\d+<\/code>/g, '\n');
+        translatedText = translatedText.replace(/<mytab\d+>/g, '\t');
+         translatedText = translatedText.replaceAll("mytab", "\t");
+    //  translatedText = translatedText.replace(/<mylinefeed\d+>/g, '\n');
+      
+    }
+    else if (translator == "OpenAI") {
+       // const matches = original.matchAll(placeHolderRegex);
+       // index = 1;
         //console.debug("translated in OpenAI:",translatedText)
         //for (const match of matches) {
-            //  translatedText = translatedText.replace(`{var ${index}}`, match);
-         //   index++;
-       // }
+        //  translatedText = translatedText.replace(`{var ${index}}`, match);
+        //   index++;
+        // }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
-        
+
         if (translatedText.endsWith(".") == true) {
             if (original.endsWith(".") != true) {
                 translatedText = translatedText.substring(0, translatedText.length - 1)
@@ -451,8 +512,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 translatedText = translatedText.substring(0, translatedText.length - 1)
             }
         }
-        //console.debug("translated:", translatedText)
-        //console.debug("Original:",original)
+        
         if (translatedText.startsWith('"') == true) {
             if (original.startsWith('"') != true) {
                 translatedText = translatedText.substring(1, translatedText.length)
@@ -462,7 +522,7 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
             if (original.endsWith('"') != true) {
                 translatedText = translatedText.substring(0, translatedText.length - 1)
             }
-            }
+        }
         if (translatedText.startsWith("'") == true && translatedText.endsWith('"') == true) {
             if (original.startsWith("'") != true && original.endsWith('"') != true)
                 translatedText = translatedText.substring(1, translatedText.length)
@@ -488,17 +548,17 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
         translatedText = translatedText.replace("> .", ">");
     }
 
- 
+
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     // console.debug("befor convert to lower:", translatedText)
-   //console.debug("before:", translatedText)
-    
+    //console.debug("before:", translatedText)
+
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
         // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
         for (let i = 0; i < replaceVerb.length; i++) {
             // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
-            
+
             if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
                 // PSS solution for issue #291
                 replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
@@ -506,74 +566,74 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
                 const searchWord = replaceVerb[i][0];
                 const replacement = replaceVerb[i][1];
 
-               // Skip if inside URL
-               let inUrl = CheckUrl(translatedText, searchWord);
-               if (!inUrl) {
-                   // Escape regex special chars in search word
-                  const safeWord = escapeRegex(searchWord);
+                // Skip if inside URL
+                let inUrl = CheckUrl(translatedText, searchWord);
+                if (!inUrl) {
+                    // Escape regex special chars in search word
+                    const safeWord = escapeRegex(searchWord);
 
-                  // Build regex WITHOUT word boundaries, so tokens like {aap} will match
-                  const wordRegex = new RegExp(safeWord, 'g');
-                  translatedText = translatedText.replace(wordRegex, replacement);
-                  translatedText = correctSentence(translatedText, spellCheckIgnore);
-               }
-                
+                    // Build regex WITHOUT word boundaries, so tokens like {aap} will match
+                    const wordRegex = new RegExp(safeWord, 'g');
+                    translatedText = translatedText.replace(wordRegex, replacement);
+                    translatedText = correctSentence(translatedText, spellCheckIgnore);
+                }
+
             }
             else {
                 // PSS solution for issue #291
-                 const searchWord = replaceVerb[i][0];
+                const searchWord = replaceVerb[i][0];
                 const replacement = replaceVerb[i][1];
 
-               // Skip if inside URL
-               let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
-               if (!inUrl) {
-                  // Escape regex special chars in search word
-                  const safeWord = escapeRegex(searchWord);
+                // Skip if inside URL
+                let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
+                if (!inUrl) {
+                    // Escape regex special chars in search word
+                    const safeWord = escapeRegex(searchWord);
 
-                   // Build regex WITHOUT word boundaries, so tokens like {aap} will match
-                   const wordRegex = new RegExp(safeWord, 'g');
+                    // Build regex WITHOUT word boundaries, so tokens like {aap} will match
+                    const wordRegex = new RegExp(safeWord, 'g');
 
-                   translatedText = translatedText.replace(wordRegex, replacement);
-                   translatedText = correctSentence(translatedText, spellCheckIgnore);
-               }
+                    translatedText = translatedText.replace(wordRegex, replacement);
+                    translatedText = correctSentence(translatedText, spellCheckIgnore);
+                }
             }
         }
-         
+
     }
     else {
-       // console.debug("convert off:",convertToLower)
+        // console.debug("convert off:",convertToLower)
         //console.debug("conversion lowercase is off")
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-      // console.debug("checkurl before:",translatedText)
-      for (let i = 0; i < replaceVerb.length; i++) {
-         const searchWord = replaceVerb[i][0];
-        const replacement = replaceVerb[i][1];
-        //console.debug("searchword:",searchWord)
-          // Skip if inside URL or button tekst in <button>
-       let inUrl = isInsideButtonOrUrl(translatedText, searchWord)
-       //let inUrl = CheckUrl(translatedText, searchWord);
-       if (!inUrl) {
-        // Escape regex special chars in search word
-        const safeWord = escapeRegex(searchWord);
+       // console.debug("checkurl before:",translatedText)
+        for (let i = 0; i < replaceVerb.length; i++) {
+            const searchWord = replaceVerb[i][0];
+            const replacement = replaceVerb[i][1];
+            //console.debug("searchword:",searchWord)
+            // Skip if inside URL or button tekst in <button>
+            let inUrl = isInsideButtonOrUrl(translatedText, searchWord)
+            //let inUrl = CheckUrl(translatedText, searchWord);
+            if (!inUrl) {
+                // Escape regex special chars in search word
+                const safeWord = escapeRegex(searchWord);
 
-        // Build regex WITHOUT word boundaries, so tokens like {aap} will match
-        const wordRegex = new RegExp(safeWord, 'g');
+                // Build regex WITHOUT word boundaries, so tokens like {aap} will match
+                const wordRegex = new RegExp(safeWord, 'g');
 
-        translatedText = translatedText.replace(wordRegex, replacement);
-        translatedText = correctSentence(translatedText, spellCheckIgnore);
-       
-        //console.debug("replacing:", searchWord, "->", replacement);
-       }
-       else {
-        //console.debug("skipping replacement, word in URL:", searchWord);
-          }
-   
-     }
-      // console.debug("final translation:", translatedText);
+                translatedText = translatedText.replace(wordRegex, replacement);
+                translatedText = correctSentence(translatedText, spellCheckIgnore);
+
+                //console.debug("replacing:", searchWord, "->", replacement);
+            }
+            else {
+                //console.debug("skipping replacement, word in URL:", searchWord);
+            }
+
+        }
+        // console.debug("final translation:", translatedText);
 
     }
-    //console.debug("checkurl after:",translatedText)
+    console.debug("checkurl after:",translatedText)
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -618,50 +678,101 @@ function postProcessTranslation (original, translatedText, replaceVerb, original
     }
     // We need to put back the links present within the original
     const linkmatches = original.match(linkRegex);
-        //console.debug("linkmatches2:", linkmatches)
-        if (linkmatches != null) {
-            translatedText = translatedText.replace(/\{linkvar(\d+)\}/g, (_, n) => {
-                            return linkmatches[parseInt(n)-1] || _;
-            });
-        }
-   // console.debug("before checking start/end:", translatedText)
+    //console.debug("linkmatches2:", linkmatches)
+    if (linkmatches != null) {
+        translatedText = translatedText.replace(/\{linkvar(\d+)\}/g, (_, n) => {
+            return linkmatches[parseInt(n) - 1] || _;
+        });
+    }
+    // console.debug("before checking start/end:", translatedText)
     // check if the returned translation does have the same start/ending as the original
     let previewNewText = translatedText
     result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
-    //console.debug("after checking:", result, result.translatedText)
+   //console.debug("after checking:", result, result.translatedText)
     translatedText = result.translatedText;
-    // console.debug("end of post:",translatedText)
-    // put special chars back
-    if (translator != "lingvanex")
-        var charmatches = original.matchAll(specialChar);
+    translatedNewText = enforceAllCaps(original, translatedText)
     
-        if (charmatches != null) {
-           let index = 0;
-           for (const charmatch of charmatches) {
-           //Put back the original matched value
-           translatedText = translatedText.replace(
+    // we need to put back the special chars like #, \n, \t etc mostly for Deepl
+    translatedNewText = replace_mVar(original, translatedNewText, specialChar)
+
+    var charmatches = original.matchAll(specialChar);
+    if (charmatches != null) {
+        let index = 1;
+        for (const charmatch of charmatches) {
+            // Put back the original matched value
+            translatedNewText = translatedNewText.replace(
                 `<x id="special_var${index}"/>`,
-                charmatch[0]
+                charmatch
             );
             index++;
-       }
+        }
     }
-   
-    translatedNewText = enforceAllCaps(original, translatedText)
-
-    charmatches = original.matchAll(specialChar);
-    if (charmatches != null) {
-            index = 1;
-            for (const charmatch of charmatches) {
-                translatedText = translatedNewText.replace(`{special_var${index}}`, charmatch);
-                translatedText = translatedNewText.replace(`{Special_var${index}}`, charmatch);
-                index++;
-            }
-    }
-    
+   // console.debug("after replace_mVar:", translatedNewText)
+   //  var charmatches = original.matchAll(specialChar);
+   // if (charmatches != null) {
+    //    let index = 1;
+     //   for (const charmatch of charmatches) {
+            // Put back the original matched value
+         //   translatedNewText = translatedNewText.replace(
+           //     `<mVal${index}>`,
+           //     charmatch
+           // );
+          //  index++;
+       // }
+   // }
+    //console.debug("before replace_special_var:", translatedNewText)
+   // charmatches = [...original.matchAll(specialChar)]; // array van matches
+    translatedNewText = replace_special_var(original, translatedNewText, specialChar)
+    //console.debug("after replace_special_var:", translatedNewText)
+    let processedText = translatedNewText;
+    // This function below restores the placeholders for Deepl and Google so also __[mVar_1__]
+    translatedNewText = restorePlaceholders(processedText, placeholderMap);
     //console.debug("after post: ",translatedNewText)
     return translatedNewText;
 }
+
+function replace_special_var(original,translatedNewText, specialChar) {
+    var charmatches = [...original.matchAll(specialChar)]; // array van matches
+   // console.debug("specialChar:", specialChar) 
+   if (charmatches.length > 0) {
+     for (let index = 1; index < charmatches.length; index++) {
+        const charmatch = charmatches[index][0]; // de daadwerkelijke match
+        translatedNewText = translatedNewText.replace(`{special_var${index}}`, charmatch);
+     }
+    }
+    return translatedNewText;
+}
+
+function replace_mVar(original, translatedNewText, specialChar) {
+    charmatches = [...original.matchAll(specialChar)]; // array van matches
+    
+    if (charmatches.length > 0) {
+       
+       let myindex = 1; // start bij 1 als jouw placeholders zo nummeren
+       for (const charmatch of charmatches) {
+           // charmatch[0] is de daadwerkelijke match
+           translatedNewText = translatedNewText.replace(
+            `<mVar_${myindex}>`,
+            charmatch[0]
+        );
+        myindex++;
+       }
+    }
+    return translatedNewText;
+}
+
+function restorePlaceholders(text, placeholderMap) {
+    // Vervang tokens terug in omgekeerde volgorde (veilig tegen nesting)
+    const tokens = Object.keys(placeholderMap).sort().reverse();
+
+    for (const token of tokens) {
+        text = text.replaceAll(token, placeholderMap[token]);
+    }
+
+    return text;
+}
+
+
 
 function removeWord(sentence, searchWord) {
     var formal = checkFormal(false);
@@ -756,106 +867,6 @@ function correctSentence(translatedText, ignoreList) {
 function isOnlyURL(text) {
     return /^(https?|ftp|file):\/\/[^\s<>"]+$/.test(text);
 }
-function wrong_correctSentence(translatedText, ignoreList) {
-    // Function to check if a word is a URL
-    function isOnlyURL(text) {
-        return /https?:\/\/[^\s]+/.test(text);
-    }
-
-    // Split sentence into words, but temporarily preserve URLs by replacing them with a placeholder
-    let urlPlaceholders = [];
-    let processedText = translatedText.replace(/https?:\/\/[^\s]+/g, (url) => {
-        const placeholder = `{{url${urlPlaceholders.length}}}`;
-        urlPlaceholders.push(url);
-        return placeholder;
-    });
-
-    // Ensure ignore list is always an array, even if undefined or invalid
-    if (!ignoreList || typeof ignoreList !== "string") {
-        ignoreList = "";
-    }
-
-    // Convert ignore list into an array, handling different line endings
-    let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
-
-    // Convert ignore list to a map for fast lookup (case-insensitive)
-    let ignoreMap = new Map();
-    ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
-
-    // Split sentence into words (preserving punctuation)
-    let words = processedText.split(/\b/);
-
-    // Process each word
-    let correctedWords = words.map((word, index) => {
-        let lowerWord = word.toLowerCase();
-
-        // If it's a URL placeholder, just return the URL from the placeholder array
-        if (word.startsWith("{{url")) {
-            const urlIndex = word.match(/\d+/)[0]; // Extract the index from the placeholder
-            return urlPlaceholders[urlIndex];
-        }
-
-        // Skip word if it's part of the ignore list
-        if (ignoreMap.has(lowerWord)) {
-            return ignoreMap.get(lowerWord);
-        }
-
-        // Check for words after "?" or "!" to capitalize them
-        if (index > 0 && /[?!]/.test(words[index - 1])) {
-            // Capitalize if it's not in the ignore list
-            word = word.charAt(0).toUpperCase() + word.slice(1);
-        }
-
-        return word;
-    });
-
-    // Reconstruct the sentence with URLs restored
-    let finalSentence = correctedWords.join('');
-
-    // Now replace any remaining URL placeholders with the actual URLs
-    urlPlaceholders.forEach((url, index) => {
-        finalSentence = finalSentence.replace(`{{url${index}}}`, url);
-    });
-
-    return finalSentence;
-}
-
-
-
-function old_correctSentence(translatedText, ignoreList) {
-    // Ensure ignoreList is always an array, even if undefined or invalid
-    let myURL = isOnlyURL(translatedText)
-    //console.debug("myURL:",myURL)
-    if (!myURL) {
-        if (!ignoreList || typeof ignoreList !== "string") {
-            ignoreList = "";
-        }
-
-        // Convert ignore list into an array, handling different line endings
-        let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
-
-        // Convert ignore list to a map for fast lookup (case-insensitive)
-        let ignoreMap = new Map();
-        ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
-
-        // Split sentence into words (preserving punctuation)
-        let words = translatedText.split(/\b/);
-
-        // Process each word
-        let correctedWords = words.map(word => {
-            let lowerWord = word.toLowerCase();
-            // console.debug("translated after :", translatedText, ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word)
-            return ignoreMap.has(lowerWord) ? ignoreMap.get(lowerWord) : word;
-        });
-
-        // Reconstruct and return the corrected sentence
-        return correctedWords.join('');
-    }
-    else {
-        return translatedText
-    }
-}
-
 
 function check_hyphen(translatedText, spellCheckIgnore) {
     var lines = [];
@@ -5116,6 +5127,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     if (transsel == 'OpenAI') {
         vartime = convertToNumber(openAIWait);
     }
+    else if (transsel == "LMstudio") {
+        vartime = convertToNumber(openAIWait);
+    }
+
     //console.debug("DeepL:",transsel,DeepLWait)
     if (transsel == 'deepl') {
         // console.debug("we have deepl")
@@ -6790,9 +6805,13 @@ async function processTransl (original, translatedText, language, record, rowId,
     else {
         mytranslatedText = translatedText
     }
-    result = check_start_end(mytranslatedText, mytranslatedText, 0, "", original, "", 0);
+
+    //console.debug("processTransl before check_start_end Iin processtranslation",mytranslatedText)
+    // PSS 17-01 This one called from translate entry  
+  //  result = check_start_end(mytranslatedText, mytranslatedText, 0, "", original, "", 0);
+    // PSS 17-01 This one is double as it is already done in postProcessTranslation
    // console.debug("result:", result.translatedText.endsWith(" "))
-    mytranslatedText = result.translatedText
+   //  mytranslatedText = result.translatedText
     //console.debug("processTransl ends with blank after replacce:",mytranslatedText.endsWith(" "))
     //translatedText = restoreCase(original, translatedText);
     if (transtype == "single") {

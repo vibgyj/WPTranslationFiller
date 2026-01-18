@@ -7,13 +7,16 @@
 
 // Wrapper function that reads Ollama settings from storage
 // This simplifies integration by not requiring all function signatures to be modified
-async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt) {
+async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt) {
+    var myTranslatedText = "";
     //let mymodel = "gpt-oss:20b"
     // Ensure ollamaModel has a valid value, fallback to default
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     // Replace glossary and language names
     //console.debug("Ollama Prompt before replacements:", openAiGloss)
-    let convertedGlossary = convertGlossaryForOllama(openAiGloss)
+    let convertedGlossary = convertGlossaryForOllamaMerged(openAiGloss)
+    //let newConverted = convertGlossaryToQuoted(convertedGlossary)
+    //console.debug("Ollama Converted Glossary:", convertedGlossary)
     let myprompt = ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     
     myprompt = myprompt.replaceAll("{{tone}}", OpenAITone);
@@ -28,7 +31,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
      else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
     //console.debug("Ollama Prompt after replacements:", myprompt);
     if (toBoolean(is_editor)) {
-        showTranslationSpinner("Translating…");
+        showTranslationSpinner(__("Fetching translation…"));
     }
      
     let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
@@ -54,7 +57,8 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 do_not_complete: 1
                             }
                         }, (response) => {
-                           
+                           // console.debug("response:",response)
+							
                             if (!response) {
                                 hideTranslationSpinner();
                                 if (typeof response != 'undefined') {
@@ -79,6 +83,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                               return "NOK";
                            }
                             translatedText = response.translation
+							translatedText = normalizeExtraNewlines(original, translatedText)
                              let convertedGlossary = GLOBAL_GLOSSARY;
                              if (convertedGlossary) {
                                 translatedText = applyOpenAiGlossary(
@@ -86,7 +91,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 convertedGlossary
                                   );
                             }
-                                let myTranslatedText = postProcessTranslation(
+                                 myTranslatedText = postProcessTranslation(
                                  original,
                                  translatedText,
                                  replaceVerb,
@@ -96,7 +101,8 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 spellCheckIgnore,
                                 destlang
                                     );
-
+                                     //console.debug("Ollama Translated Text:", myTranslatedText)
+                           
                                let current = "untranslated"
                                processTransl(
                                  original,
