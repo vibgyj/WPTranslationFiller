@@ -96,15 +96,21 @@ function convertGlossaryListToWordsFormat(glossaryString) {
 }
 
 function normalizeExtraNewlines(originalText, translatedText) {
-    // Determine the maximum number of consecutive newlines in the original text
+    // 1️⃣ Bepaal maximale opeenvolgende newlines in de originele tekst
     const matches = originalText.match(/\n+/g) || [];
-    const maxNewlines = Math.max(1, ...matches.map(m => m.length));
+    const maxNewlines = Math.max(0, ...matches.map(m => m.length)); // 0 is toegestaan
 
-    // Collapse translated newlines to at most that amount
+    // 2️⃣ Collapse teveel newlines in de vertaling
     const limitRegex = new RegExp(`\\n{${maxNewlines + 1},}`, "g");
+    translatedText = translatedText.replace(limitRegex, "\n".repeat(maxNewlines));
 
-    return translatedText.replace(limitRegex, "\n".repeat(maxNewlines));
+    // 3️⃣ Verwijder eventuele trailing punt + alle trailing newlines
+    translatedText = translatedText.replace(/[.]\n*$/s, "");
+    translatedText = translatedText.replace(/\n+$/s, ""); // verwijder alles achteraan
+
+    return translatedText;
 }
+
 
 // check centences for all caps words
 function enforceAllCaps(source, translated) {

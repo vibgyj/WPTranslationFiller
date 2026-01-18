@@ -239,6 +239,15 @@ async function preProcessOriginal(original, preverbs, translator) {
     }
     else if (translator == "LMstudio") {
 
+        const linkmatches = original.match(linkRegex);
+
+       if (linkmatches != null) {
+          let index = 1;
+           for (const match of linkmatches) {
+               original = original.replace(match, `{linkvar${index}}`);
+              index++;
+            }
+       }
          // original = original.replace(/(.!?\r\n|\n|\r)/gm, "<code>mylinefeed</code>");
         // LMstudiol does remove tabs so we need to replace them before sending them to the API
          const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
@@ -250,7 +259,7 @@ async function preProcessOriginal(original, preverbs, translator) {
         // Replace each match with a unique token and store original
         const matches = [...original.matchAll(placeholderRegex)];
         for (const match of matches) {
-        const token = `__[mVar_${index}__]`;
+        const token = `[[mVar_${index}]]`;
         original = original.replace(match[0], token);
         placeholderMap[token] = match[0]; // keep mapping to restore later
 
@@ -265,7 +274,6 @@ async function preProcessOriginal(original, preverbs, translator) {
           });
 
        
-        console.debug("after replacing tabs for LMstudio:", original)
      //   original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
     //    if (match === '\t') {
     //       return `<mytab${index++}>`;
@@ -284,7 +292,7 @@ async function preProcessOriginal(original, preverbs, translator) {
                 index++;
             }
         }
-        console.debug("preProcessOrigineel LMstudio:", original) 
+        //console.debug("preProcessOrigineel LMstudio:", original) 
 
     }
     else if (translator == "OpenAI") {
@@ -301,6 +309,7 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
        
     }
+    console.debug("preProcessOriginal result:", original)
     return original;
 }
 
@@ -467,7 +476,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     }
     else if (translator  == "LMstudio") {
-        // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
+        // We need to replace & back 
         //console.debug("we are in LMstudio:",translatedText)
         const markupmatches = original.match(markupRegex);
         index = 1;
@@ -482,7 +491,37 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = translatedText.replace(/<code>placeholder\d+<\/code>/g, '\n');
         translatedText = translatedText.replace(/<mytab\d+>/g, '\t');
          translatedText = translatedText.replaceAll("mytab", "\t");
-    //  translatedText = translatedText.replace(/<mylinefeed\d+>/g, '\n');
+        //  translatedText = translatedText.replace(/<mylinefeed\d+>/g, '\n');
+        const linkmatches = original.match(linkRegex);
+
+        if (linkmatches != null) {
+            index = 1;
+            for (const match of linkmatches) {
+                translatedText = translatedText.replace(`{linkvar${index}}`, match);
+                index++;
+            }
+        }
+        // placeholderMap = { token: origineleWaarde }
+
+        for (const [token, originalValue] of Object.entries(placeholderMap)) {
+           // zoek in de vertaalde tekst varianten van de token
+           // LLM kan bijv. [[mVar_1]] -> [mVar_1], of "mVar_1", of [[ mVar_1 ]]
+           const variants = [
+           token,                               // zoals verstuurd
+           token.replace(/\[/g, "").replace(/\]/g, ""), // zonder brackets
+           token.replace(/\[\[/g, "[").replace(/\]\]/g, "]"), // enkel bracket genormaliseerd
+           token.replace(/\s+/g, ""),           // whitespace verwijderd
+           token.replace(/"/g, ""),             // quotes verwijderd
+        ];
+
+    for (const variant of variants) {
+        if (translatedText.includes(variant)) {
+            translatedText = translatedText.replaceAll(variant, originalValue);
+        }
+    }
+}
+
+
       
     }
     else if (translator == "OpenAI") {
@@ -633,7 +672,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // console.debug("final translation:", translatedText);
 
     }
-    console.debug("checkurl after:",translatedText)
+   // console.debug("checkurl after:",translatedText)
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -2448,16 +2487,11 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         console.debug("value4:" + "repl_verb: ", repl_verb)
         console.debug("value5:" + "original: ", original)
         console.debug("value6:", replaced)
-        console.debug("values7:", myrow)
+        console.debug("value7:", myrow)
+        console.debug("value8:",no_period)
     }
     countReplaced = Number(counter)
-    //if (original.endsWith("\n") != true) {
-    //    if (translatedText.endsWith("\n") == true) {
-    //        translatedText = translatedText.substring(0, translatedText.length - 1);
-    //        countReplaced++;
-    //        replaced = true;
-    //    }
-    // }
+    
     if (previewNewText != "No suggestions") {
         if (original.startsWith(" ")) {
             // console.debug("Original starts with blanc!"+ original);
@@ -2521,16 +2555,29 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         }
         // 29-07-2023 PSS we need to check if the original does not end with three dots otherwise one period will be added or removed
         if (!original.endsWith('\u2026') && !original.endsWith('\u002e\u002e\u002e')) {
-            if (original.endsWith(".")) {
-                if (!previewNewText.endsWith(".")) {
-                    previewNewText = previewNewText + "."
-                    translatedText = translatedText + ".";
-                    repl_verb += myrow + " '.' " + "->" + "added" + "<br>";
-                    let verb = myrow + " '.' " + "->" + "added" + "<br>";
-                    mark = "."
-                    repl_array.push([mark, mark])
-                    countReplaced++;
-                    replaced = true;
+            //console.debug("no_period value:", no_period)
+            if (no_period == "false") {
+                if (original.endsWith(".")) {
+                    if (!previewNewText.endsWith(".")) {
+
+                        previewNewText = previewNewText + "."
+                        translatedText = translatedText + ".";
+                        repl_verb += myrow + " '.' " + "->" + "added" + "<br>";
+                        let verb = myrow + " '.' " + "->" + "added" + "<br>";
+                        mark = "."
+                        repl_array.push([mark, mark])
+                        countReplaced++;
+                        replaced = true;
+                    }
+                }
+            }
+            else {
+                // If there is a period in the translation and no_period is true we need to remove it
+                if (original.endsWith(".")) {
+                    if (previewNewText.endsWith(".")) {
+                        previewNewText = (previewNewText.substring(0, previewNewText.length - 1));
+                        translatedText = translatedText.substring(0, translatedText.length - 1);
+                    }
                 }
             }
         }
@@ -2652,6 +2699,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
     if (previewNewText == null) {
         previewNewText = translatedText
     }
+    //console.debug("check_start_end:",translatedText) 
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced, repl_array }
 }
 

@@ -84,13 +84,14 @@ let showStrictValidation = document.getElementById("use-strict-validation");
 let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 let showDisableClose = document.getElementById("disable-auto-close");
 let showLocalOllama = document.getElementById("ollama-local");
+let showNoPeriodCheckbox = document.getElementById("no-period");
 
 document.getElementById('show-changelog-link').addEventListener('click', function (e) {
     e.preventDefault(); // Prevent the default link behavior
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -284,6 +285,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             showHistCheckbox.checked = false;
         }
     }
+    if (data.noPeriod != "null") {
+        if (data.noPeriod == true) {
+            showNoPeriodCheckbox.checked = true;
+        }
+        else {
+            showNoPeriodCheckbox.checked = false;
+        }
+    }
     if (data.showTransDiff != "null") {
         if (data.showTransDiff == true) {
             showDiffCheckbox.checked = true;
@@ -398,6 +407,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
            showDisableClose.checked = false;
         }
     }
+    if (data.noPeriod != "null") {
+        if (data.noPeriod == true) {
+            showNoPeriodCheckbox.checked = true;
+        }
+        else {
+           showNoPeriodCheckbox.checked = false;
+        }
+    }
     if (data.LocalOllama != "null" && typeof data.LocalOllama != "undefined") {
         if (data.LocalOllama == true) {
             showLocalOllama.checked = true;
@@ -425,7 +442,6 @@ button.addEventListener("click", function () {
 
     const check = document.getElementById('DeeplFree');
     if (check.checked) {
-        console.log('Checkbox is checked');
        showDeepl = true
     } else {
          showDeepl = "false";
@@ -494,7 +510,7 @@ button.addEventListener("click", function () {
     else {
         Geminisel = GeminiselectBox.value;
     }
-    console.debug("geminisel:",Geminisel)
+    
     let destlang = destLangTextbox.value;
     let postTranslation = verbsTextbox.value;
     let promptText = promptTextbox.value;
@@ -609,6 +625,13 @@ button.addEventListener("click", function () {
     else {
         localOllama = "false";
     }
+    if (document.querySelector("#no-period:checked") !== null) {
+        let showNoPeriod_Set = document.querySelector("#no-period:checked");
+        showNoPeriod = showNoPeriod_Set.checked;
+    }
+    else { 
+        showNoPeriod = "false";
+    }
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -661,8 +684,8 @@ button.addEventListener("click", function () {
             strictValidate: strictValidat,
             autoCopyClip: autoCopyClipBoard,
             DisableAutoClose: showClose,
-            LocalOllama: localOllama
-
+            LocalOllama: localOllama,
+            noPeriod:showNoPeriod
         });
 
         if (glossaryFile.value !== "") {

@@ -114,3 +114,5 @@ Version 3.4.48 Added retries for LMstudio in background script
 Version 3.4.49 Added OpenAIWait to slow down LMstudio calls
 Version 3.4.50 Fixed a problem with not replacing "special_var" type of placeholders"
 Version 3.4.51 Fixed replacing problem with LMstudio when placeholders are present
+Version 3.4.51 Fixed issue 365 GitHub adding a period when language is Bengali
+Version 3.4.51 Fixed issue model adding extra line feeds with LMstudio

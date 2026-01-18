@@ -34,7 +34,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
     let max_Tokens = estimateMaxTokens(originalPreProcessed);
     originalPreProcessed = applyGlossaryMap(originalPreProcessed, convertedGlossary)
     
-    //console.debug("after replacing glossary words:", originalPreProcessed) 
+    console.debug("after replacing glossary words:", originalPreProcessed) 
     max_Tokens = max_Tokens + prompt_tokens + glossary_tokens
      const start = Date.now()
                     return new Promise((resolve, reject) => {
@@ -85,6 +85,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                             const duration = ((Date.now() - start) / 1000).toFixed(2);
                            console.debug("Duur:",duration)
                             translatedText = response.text
+                            translatedText = normalizeExtraNewlines(original, translatedText)
                              let convertedGlossary = GLOBAL_GLOSSARY;
                              if (convertedGlossary) {
                                 translatedText = applyOpenAiGlossary(

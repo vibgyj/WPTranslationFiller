@@ -18,6 +18,7 @@ var classToolTip;
 var is_entry = false;
 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 var GLOBAL_GLOSSARY = []; // globale variabele bovenin content script
+var no_period = false;
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -345,6 +346,10 @@ chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
 });
 
+chrome.storage.local.get('noPeriod', async function (result) {
+    no_period = result.noPeriod; // Assign the value to the global variable
+   return no_period
+});
 
 chrome.storage.local.get('DefGlossary', async function (result) {
     DefGlossary = result.DefGlossary; // Assign the value to the global variable

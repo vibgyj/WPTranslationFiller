@@ -580,7 +580,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             ],
             temperature: temperature ?? 0,
             normalization: false,
-            stream: false
+            stream: false,
+            top_p: 1.0,
+            top_k: 50
         };
         if (max_tokens) body.max_tokens = max_tokens;
 
@@ -598,7 +600,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 url,
                 options,
                 15000, // timeout per retry in ms
-                3      // max retries
+                4      // max retries
             );
 
             // Lees de body precies één keer

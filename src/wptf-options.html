@@ -689,10 +689,25 @@ You,Je
             </label>
         </fieldset>
         <br />
-        <label class="labeled-checkbox">
-            <input type="checkbox" id="Auto-LT-spellcheck">
-            <span>Auto spellcheck after pagecheck</span>
-        </label>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td>
+                  <label class="labeled-checkbox">
+                      <input type="checkbox" id="Auto-LT-spellcheck">
+                      <span>Auto spellcheck after pagecheck</span>
+                  </label>
+                </td>
+                <td style="padding-left: 5%;">
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="no-period">
+                        <span>No period</span>
+                    </label>
+
+                </td>
+
+        </tr>
+        </table>
+        
         <label class="labeled-checkbox">
             <input type="checkbox" id="Auto-review-OpenAI">
             <span>Auto review with OpenAi after pagecheck</span>
