@@ -47,9 +47,12 @@ async function translateWithLingvanex(
 
             // Success
             //console.log("Lingvanex Translation:", response.translation);
+            if (convertedGlossary) {
+                 preTranslatedText = applyOpenAiGlossary(response.translation, convertedGlossary);
+             }
             let myTranslatedText =  postProcessTranslation(
                 original,
-                response.translation,
+                preTranslatedText,
                 replaceVerb,
                 originalPreProcessed,
                 "lingvanex",
@@ -57,9 +60,7 @@ async function translateWithLingvanex(
                 spellCheckIgnore,
                 locale
             );
-             if (convertedGlossary) {
-                 myTranslatedText = applyOpenAiGlossary(myTranslatedText, convertedGlossary);
-             }
+             
               processTransl(
                 original,
                 myTranslatedText,

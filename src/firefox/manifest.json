@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.40",
-  "description": "Automatically populate translations from Google, DeepL, Microsoft, OpenAI, Ollama, DeepSeek, Translationio, Claud and in future other translation API's.",
+  "version": "3.4.51",
+  "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
   },
@@ -82,18 +82,20 @@
     "declarativeNetRequestFeedback"
   ],
   "host_permissions": [
+    "*://generativelanguage.googleapis.com/*",
     "*://api-b2b.backenster.com/*",
     "*://agw.golinguist.com/*",
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",
     "*://api.deepseek.com/*",
-    "*://ollama.com/*",
     "*://translation.googleapis.com/*",
     "*://translate.wordpress.org/*",
     "*://api.languagetool.org/*",
     "*://api.languagetoolplus.com/*",
     "*://analytics.languagetoolplus.com/*",
     "*://api.cognitive.microsofttranslator.com/*",
+    "*://ollama.com/*",
+    "*://127.0.0.1/*",
     "*://api.openai.com/*",
     "*://api.anthropic.com/*",
     "*://cors-anywhere.herokuapp.com/*"
@@ -110,6 +112,8 @@
     {
       "matches": [ "https://translate.wordpress.org/*" ],
       "js": [
+        "wptf-LMStudioTrans.js",
+        "wptf-GeminiTrans.js",
         "wptf-ollamaTrans.js",
         "wptf-translatio_io.js",
         "wptf-buildstats.js",

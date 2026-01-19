@@ -1,5 +1,159 @@
 ﻿
+/**
+ * Applies a flat glossary mapping to a string.
+ * Matches exact words (case-insensitive) and replaces them.
+ *
+ * @param {string} text - de input string
+ * @param {Object} glossary - format: { "Website": "site", "appearance": "weergave", ... }
+ * @returns {string} - string met glossary toegepast
+ */
+function applyGlossaryMap(text, glossaryText) {
+  if (typeof text !== "string") text = "";
+    if (!glossaryText || typeof glossaryText !== "string") return text;
 
+    // Parse glossary lines
+    const glossary = {};
+    const lines = glossaryText.split(/\r?\n/);
+    for (const line of lines) {
+        // Match "key": "value"
+        const match = line.match(/"([^"]+)"\s*:\s*"([^"]+)"/);
+        if (match) {
+            const key = match[1];
+            const value = match[2];
+            glossary[key] = value;
+        }
+    }
+
+    // Nu kan je dezelfde replace logic gebruiken
+    let result = text;
+
+    const keys = Object.keys(glossary).sort((a, b) => b.length - a.length);
+
+    for (const key of keys) {
+        const value = glossary[key];
+        if (!value) continue;
+
+        // Exact word match, case-insensitive
+        const regex = new RegExp(`\\b${escapeRegexKey(key)}\\b`, "gi");
+        result = result.replace(regex, value);
+    }
+
+    return result;
+}
+
+/**
+ * Escapes regex special characters in glossary keys
+ */
+function escapeRegexKey(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+
+
+/**
+ * Escapes regex metacharacters in glossary keys
+ */
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function replaceAt(text, searchValue, replacementValue) {
+    if (!text || !searchValue) return text;
+
+    const index = text.indexOf(searchValue);
+    if (index === -1) return text;
+
+    return (
+        text.slice(0, index) +
+        replacementValue +
+        text.slice(index + searchValue.length)
+    );
+}
+function removeTrailingNewline(text) {
+    return text.replace(/\n+$/, "");
+}
+function convertGlossaryListToWordsFormat(glossaryString) {
+  let id = 1;
+  const lines = glossaryString.split(',').map(line => line.trim());
+
+  const words = lines
+    .map(line => {
+      const match = line.match(/"(.+?)"\s*->\s*"(.+?)"/);
+      if (!match) return null;
+      const [, source, target] = match;
+
+      // Handmatig JSON string maken met exacte volgorde
+      return `{
+  "word_id": "${id++}",
+  "word_specification": "${source}",
+  "meanings": ["${target}"]
+}`;
+    })
+    .filter(Boolean);
+
+  // Plaats alle woorden in "words" array
+  return `{ "words": [\n${words.join(',\n')}\n] }`;
+}
+
+function normalizeExtraNewlines(originalText, translatedText) {
+    // 1️⃣ Bepaal maximale opeenvolgende newlines in de originele tekst
+    const matches = originalText.match(/\n+/g) || [];
+    const maxNewlines = Math.max(0, ...matches.map(m => m.length)); // 0 is toegestaan
+
+    // 2️⃣ Collapse teveel newlines in de vertaling
+    const limitRegex = new RegExp(`\\n{${maxNewlines + 1},}`, "g");
+    translatedText = translatedText.replace(limitRegex, "\n".repeat(maxNewlines));
+
+    // 3️⃣ Verwijder eventuele trailing punt + alle trailing newlines
+    translatedText = translatedText.replace(/[.]\n*$/s, "");
+    translatedText = translatedText.replace(/\n+$/s, ""); // verwijder alles achteraan
+
+    return translatedText;
+}
+
+
+// check centences for all caps words
+function enforceAllCaps(source, translated) {
+    const sourceWords = source.split(/\s+/);
+
+    const allCapsWords = Array.from(new Set(
+        sourceWords.filter(w => /^[A-Z0-9]+(?:[-_][A-Z0-9]+)*$/.test(w))
+    ));
+
+    // 1. Extract and mask URLs
+    const urls = [];
+    let masked = translated.replace(
+        /\b(?:https?:\/\/|www\.)[^\s]+/gi,
+        url => {
+            urls.push(url);
+            return `__URL_${urls.length - 1}__`;
+        }
+    );
+
+    // 2. Enforce ALL CAPS outside URLs only
+    allCapsWords.forEach(word => {
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`\\b${escapedWord}\\b`, 'gi');
+        masked = masked.replace(re, m => m.toUpperCase());
+    });
+
+    // 3. Restore URLs
+    let result = masked.replace(/__URL_(\d+)__/g, (_, i) => urls[i]);
+
+    return result;
+}
+
+function convertGlossaryForOllama(input) {
+    if (!input) return '';
+
+    return input
+        .split(',')                          // split by comma
+        .map(pair => pair.trim())             // remove leading/trailing spaces
+        .filter(pair => pair.length > 0)      // remove empty entries
+        .map(pair => pair.replace(/['"]/g, '')) // remove all quotes
+        .sort((a, b) => a.localeCompare(b))   // sort alphabetically A-Z
+        .join('\n');                          // join into lines
+}
 /**
  * Convert a string glossary in 'key -> value' format into an array of pairs
  * Example input:
@@ -87,8 +241,6 @@ const toBoolean = (value) => {
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
-
-
 /**
  * Convert comma-separated glossary to Ollama-friendly line format (sorted A-Z)
  * Example input: 
@@ -98,6 +250,30 @@ function delay(ms) {
  *    'array' -> 'array'
  *    'backend' -> 'back-end'`
  */
+function convertGlossaryForOllamaMerged(input) {
+    if (!input) return '';
+
+    return input
+        .split(/\r?\n|,/)                 // split on newlines or commas
+        .map(line => line.trim())          // trim spaces
+        .filter(line => line.length > 0)   // skip empty lines
+        .map(line => {
+            // Convert from -> to if needed
+            if (line.includes('->')) {
+                let [from, to] = line.split('->').map(p => p.trim());
+                // Only add quotes if not already present
+                if (!/^".*"$/.test(from)) from = `"${from}"`;
+                if (!/^".*"$/.test(to)) to = `"${to}"`;
+                return `${from}: ${to}`;
+            }
+            // If already in "key": "value" format, just remove trailing comma
+            return line.replace(/,$/, '');
+        })
+        .filter(line => line.length > 0)
+        .join('\n');                       // join as separate lines
+}
+
+
 /**
  * Convert comma-separated glossary to Ollama-friendly line format (sorted A-Z)
  * Each line starts with "- "
@@ -106,13 +282,64 @@ function convertGlossaryForOllama(input) {
     if (!input) return '';
 
     return input
-        .split(',')                          // split by comma
-        .map(pair => pair.trim())             // remove leading/trailing spaces
-        .filter(pair => pair.length > 0)      // remove empty entries
-        .map(pair => pair.replace(/['"]/g, '')) // remove all quotes
-        .sort((a, b) => a.localeCompare(b))   // sort alphabetically A-Z
-        .join('\n');                          // join into lines
+        .split(',')                       // split op komma
+        .map(pair => pair.trim())          // verwijder spaties
+        .filter(pair => pair.length > 0)   // verwijder lege entries
+        .map(pair => pair.replace(/,$/, '')) // verwijder trailing comma als die er nog is
+        .join('\n');                       // plak samen per regel
 }
+
+
+function convertGlossaryToQuoted(glossaryText) {
+    return glossaryText
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line && line.includes('->'))
+        .map(line => {
+            const [from, to] = line.split('->').map(p => p.trim());
+            // Zet om naar JSON-stijl: "key": "value"
+            return `"${from}": "${to}"`;
+        })
+        .join(',\n'); // komma en nieuwe regel zodat het als JSON object kan worden geplakt
+}
+
+
+function moveDutchVerbToEndWithCase(translated, glossary) {
+    console.debug("glossary:", glossary);
+    const words = translated.split(/\s+/).filter(Boolean);
+    if (words.length < 2) return translated;
+
+    const firstWord = words[0];
+
+    // Maak array van tweede waarden van de glossary
+    const glossaryValues = Object.values(glossary).map(v => v.trim());
+    const glossaryValuesLower = glossaryValues.map(v => v.trim().replace(/^"|"$/g, '').toLowerCase());
+
+    console.log("First word:", firstWord);
+    console.log("Glossary values:", glossaryValues);
+    console.log("Glossary values lowercased (quotes removed):", glossaryValuesLower);
+
+    // Zoek index van eerste woord (case-insensitive)
+    const matchIndex = glossaryValuesLower.indexOf(firstWord.toLowerCase());
+    if (matchIndex !== -1) {
+        console.log("Match found in glossary at index:", matchIndex, "value:", glossaryValues[matchIndex]);
+
+        // Verwijder eerste woord
+        words.shift();
+
+        // Zet eerste woord van resterende woorden naar hoofdletter
+        words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+
+        return words.join(' ');
+    } else {
+        console.log("No match found in glossary for:", firstWord);
+    }
+
+    return translated;
+}
+
+
+
 
 
 
@@ -216,10 +443,10 @@ function CheckUrl(translated, searchword) {
 
 
 function estimateMaxTokens(text) {
-    const extraBuffer = 100; // safety buffer for full response
+    const extraBuffer = 300; // safety buffer for full response
     const estimated = Math.ceil(text.length / 4) + extraBuffer; // 1 token ≈ 4 chars
    //console.debug("In function estimateMaxTokens - estimated tokens:", estimated)
-    return Math.max(estimated, 200); // minimum 200 to
+    return Math.max(estimated, 300); // minimum 200 to
 }
 
 function escapeRegExpForPronouns(word) {
@@ -922,7 +1149,6 @@ async function validateOld(showDiff) {
             myheader.insertAdjacentHTML('afterend', template);
         }
         else {
-            console.debug("we start the bar")
             progressbar.style.display = 'block';
         }
         
@@ -1694,7 +1920,7 @@ function wptf_check_for_URL(word, translation) {
         ...(textWithoutTags.match(fullURLRegex) || []),
         ...(textWithoutTags.match(partialPathRegex) || []),
     ];
-    console.debug()
+   
     return matches.some(url => url.toLowerCase().includes(lowerWord));
 }
 

@@ -31,7 +31,11 @@ async function googleTranslate(original, destlang, e, apiKey, preverbs, rowId, t
                 try {
                     if (chrome.runtime.lastError) throw new Error(chrome.runtime.lastError.message);
                     if (!response) throw new Error("No response from background");
-                    if (!response.ok) throw new Error(`[GoogleTranslate] ${response.error.type}: ${response.error.message}`);
+                    if (!response.ok) {
+                       // throw new Error(`[GoogleTranslate] ${response.error.type}: ${response.error.message}`);
+                        messageBox("error", `Google translate error: ${response.error.message}`);
+                        resolve("NOK")
+                    }
 
                     let translatedText = response.result.text;
                     let myTranslatedText = translatedText;
@@ -40,6 +44,7 @@ async function googleTranslate(original, destlang, e, apiKey, preverbs, rowId, t
                         console.debug("Applying glossary to:", translatedText);
                         myTranslatedText = applyOpenAiGlossary(translatedText, convertedGlossary);
                         console.debug("After glossary:", myTranslatedText); 
+                        
                     }
                     myTranslatedText = postProcessTranslation(
                         original,

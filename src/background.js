@@ -13,23 +13,20 @@ function decodeBase64(encoded) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.debug("request;", request)
     if (request.action === "load_deepl_glossary") {
-        console.debug(request.isFree)
+       // console.debug(request.isFree)
         //   console.debug(request.apiKey)
-        //console.debug(request.glossaryData)
+        console.debug(request.glossaryData)
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        let deeplServer = isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
-        console.debug("deeplServer in upload:",deeplServer)
-        //let deeplServer = request.isFree == true ? "https://api-free.deepl.com" : "https://api.deepl.com";
-        let url = `${deeplServer}/v2/glossaries`;
-        // console.debug("Url:",url)
+        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+        //console.debug("deeplServer in upload:",deeplServer)
+        let url = `${deeplServer}`;
+        console.debug("Url:",url)
         let response = fetch(url, {
             method: "POST",
             accept: "*/*",
             Encoding: "gzip, deflate, br",
             body: request.glossaryData,
             headers: {
-                'Access-Control-Allow-Headers': 'X-Requested-With',
-                'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'application/json',
                 'Authorization': `DeepL-Auth-Key ${request.apiKey}`
             }
@@ -52,45 +49,70 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // Keeps sendResponse alive for async operations
     }
     else if (request.action === "fetch_deepl_glossaries") {
-        console.debug("we have a request to show the glossary:", request.isFree)
-        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v2/glossaries";
-        console.debug("We fetch glossaries")
-        console.debug("isFree:",request.isFree)
-        console.debug("key:", request.apiKey)
-        console.debug("deeplServer:",deeplServer)
-        fetch(deeplServer, {
-            method: "GET",
-            headers: {
-                "Authorization": `DeepL-Auth-Key ${request.apiKey}`, // Replace with your actual API key
-                "Content-Type": "application/json"
-            }
-        })
-            .then(response => {
-                console.debug("response:",response)
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("DeepL Response:", data); // Debugging step
-                sendResponse({ success: true, glossaries: data });
-            })
-            .catch(error => {
-                console.error("Fetch Error:", error); // Debugging step
-                sendResponse({ success: false, error: error.message });
-            });
+    console.debug("we have a request to show the glossary:", request.isFree);
 
-        return true; //  Keeps sendResponse alive for async fetch()
-    }
+    const isFree = request.isFree === true || request.isFree === "true";
+    let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+
+
+    console.debug("We fetch glossaries");
+    console.debug("isFree:", request.isFree);
+    console.debug("key:", request.apiKey);
+    console.debug("deeplServer:", deeplServer);
+
+    fetch(deeplServer, {
+        method: "GET",
+        headers: {
+            "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
+            "Content-Type": "application/json"
+        }
+    })
+        .then(async response => {
+            console.debug("raw response:", response);
+
+            const text = await response.text(); // READ BODY HERE
+
+            let body;
+            try {
+                body = text ? JSON.parse(text) : null;
+            } catch {
+                body = text;
+            }
+
+            if (!response.ok) {
+                // Pass through full DeepL error
+                throw {
+                    status: response.status,
+                    body: body
+                };
+            }
+
+            return body;
+        })
+        .then(data => {
+            console.log("DeepL Response:", data);
+            sendResponse({ success: true, glossaries: data });
+        })
+        .catch(error => {
+            console.error("Fetch Error:", error);
+            console.error("Fetch Error:", error.body);
+            sendResponse({
+                success: false,
+                status: error.status || null,
+                error: error.body || error.message
+            });
+        });
+
+    return true; // keep sendResponse alive
+}
+
     else if (request.action === "delete_deepl_glossary") {
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
         console.debug("isFree:",isFree)
-        let deeplServer = isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
-        // let deeplServer = request.isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+        console.debug("We delete glossary with id:", request.glossary_id)
        console.debug("deeplserver:",deeplServer)
-        let url = `${deeplServer}/v2/glossaries/${request.glossary_id}`;
+        let url = `${deeplServer}/${request.glossary_id}`;
 
         fetch(url, {
             method: "DELETE",
@@ -263,42 +285,83 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // keep sendResponse alive for async
     }
 
-    // In your background script (service worker or background.js)
-
-      // Ollama translation
- if (request.action === "ollama_translate") {
-    console.debug("Ollama translation request received");
-
+  if (request.action === "Gemini") {
     (async () => {
         try {
-            const {
-                text,
-                model,
-                systemPrompt,
-                max_tokens,
-                temperature,
-                apiKey,
-                useLocal,
-                repeat_penalty
-            } = request.data;
-            
-            if (!text) return sendResponse({ success: false, error: "Text is missing" });
-            if (!model) return sendResponse({ success: false, error: "Model is missing" });
-            if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
+            const { apiKey, text, sourceLang, targetLang ,formal, locale, model,prompt,max_tokens} = request.data;
+            //console.debug("model:", model)
+            //console.debug("max:",max_tokens)
+            let URL = `https://generativelanguage.googleapis.com/v1/models/` + model + `:generateContent?key=${apiKey}`
+            const res = await fetch(URL,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [
+                            { role: "user", parts: [{ text: prompt }] }
+                        ],
+                       generationConfig: {
+                         temperature: 0.0,
+                         topP: 1.0,
+                         topK: 1,
+                         maxOutputTokens: max_tokens
+                       }
 
-            const myLocal = toBoolean(useLocal);
+                    })
+                }
+            );
 
-            // === Helper: local call with timeout ===
-            async function callLocalWithTimeout(body, timeoutMs) {
-                return Promise.race([
-                    callLocalOllama(body),
-                    new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
-                    )
-                ]);
+            let data;
+            try {
+                data = await res.json();
+            } catch (parseErr) {
+                throw new Error(`Failed to parse Gemini response (HTTP ${res.status})`);
             }
 
-            // === Helper: retry loop ===
+            // HTTP-fouten expliciet afhandelen
+            if (!res.ok) {
+                let errorMessage = `Gemini request failed (HTTP ${res.status})`;
+
+                if (data?.error?.message) {
+                    errorMessage += `: ${data.error.message}`;
+                }
+
+                // Extra details indien beschikbaar
+                if (data?.error?.details?.[0]?.fieldViolations?.length) {
+                    const violations = data.error.details[0].fieldViolations
+                        .map(v => `${v.field}: ${v.description}`)
+                        .join("; ");
+                    errorMessage += ` (${violations})`;
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            const translation =
+                data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!translation) {
+                throw new Error("Gemini returned no translation content");
+            }
+
+            sendResponse({
+                success: true,
+                translation: translation.trim()
+            });
+
+        } catch (err) {
+            console.error("Gemini error:", err);
+            sendResponse({
+                success: false,
+                error: err.message || "Unknown Gemini error"
+            });
+        }
+    })();
+
+    return true;
+}
+
+ // === Helper: retry loop ===
             async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 12000) {
                 let lastError = null;
                 for (let i = 0; i < maxRetries; i++) {
@@ -313,26 +376,62 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     }
                 }
                 throw lastError;
+    }
+               // === Helper: local call with timeout ===
+            async function callLocalWithTimeout(body, timeoutMs) {
+                return Promise.race([
+                    await callLocalOllama(body),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
+                    )
+                ]);
             }
-
+      // Ollama translation
+ if (request.action === "ollama_translate") {
+    console.debug("Ollama translation request received");
+    
+    (async () => {
+        try {
+            var {
+                text,
+                target_lang,
+                model,
+                systemPrompt,
+                max_tokens,
+                temperature,
+                apiKey,
+                useLocal,
+                repeat_penalty,
+                do_not_complete,
+            } = request.data;
+             console.debug("model:", model);
+            if (!text) return sendResponse({ success: false, error: "Text is missing" });
+            if (!model) return sendResponse({ success: false, error: "Model is missing" });
+            if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
+            console.debug("original:",text)
+            const myLocal = toBoolean(useLocal);
+            let tone = "informal"
             // === Local translation path ===
             if (myLocal) {
-               // console.debug("prompt:", systemPrompt)
-               
-                let message = [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `translate ${text}` }
-                ];
                 
-                var bodyToSend = {
-                    messages: message,
-                    model: model,
-                    stream: false,
-                    options: { temperature: temperature, repeat_penalty: repeat_penalty }
-                };
+                // console.debug("prompt:", systemPrompt)
+               // console.debug("text to translate:", text)
+               // text = "'" + text + "'";
+               let messages = [
+                    { role: 'system', content: systemPrompt },
+                   { role: 'user', content: 'Translate the provided text without any comment or instruction' },
+                   { role: 'user', content: `translate this: ${text}` }
+                  ];
 
+                  var bodyToSend = {
+                  model: model,
+                  messages: messages,
+                  stream: false,
+                 options: { emperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1 }
+                 };
+                //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
-                    const result = await callLocalWithRetry(bodyToSend, 3, 12000); // 3 retries, 15s timeout
+                    const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
                     console.debug("Local Ollama result:", result.translation);
                     
                     sendResponse({
@@ -356,8 +455,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             let message = [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `translate this: ${text}` }
-            ];
+                { role: "user", content: `You act a a translator` },
+                { role: "user", content: text }
+                ];
 
             var bodyToSend = {
                 messages: message,
@@ -435,6 +535,118 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })();
 
     return true; // keep response channel open
+    }
+
+ if (request.action === "LMStudio_translate") {
+    console.debug("LMStudio translation request received");
+
+    const {
+        text,
+        target_lang,
+        model,
+        systemPrompt,
+        max_tokens,
+        temperature,
+        apiKey,
+        useLocal,
+        repeat_penalty,
+        do_not_complete,
+    } = request.data;
+     
+    (async () => {
+        const mymodel = model || 'gpt-oss-20b';
+        console.debug("mymodel:", mymodel);
+        console.debug("text:", text) 
+        // Check of het model geladen is
+        const modelLoaded = await isLMStudioModelLoaded(mymodel);
+        if (!modelLoaded) {
+            sendResponse({
+                ok: false,
+                text: `LM Studio model "${mymodel}" <br>is not loaded or server is not running!`
+            });
+            return;
+        }
+       // let mysystemPrompt = 'Translate the text exactly into Dutch. Do NOT change, move, or remove placeholders like <mytab1>, <mylinefeed2>, etc. Output ONLY the translated text, without explanations or notes.'
+       let mysystemPrompt = systemPrompt
+        console.debug("systemPrompt:", mysystemPrompt)
+        // Bouw de body
+        const body = {
+             messages: [
+            {role: "system", content: mysystemPrompt  // hier gebruik je je eigen variabele prompt
+             },
+             {
+            role: "user",content: text  // de tekst die je wilt vertalen
+            }
+            ],
+            temperature: temperature ?? 0,
+            normalization: false,
+            stream: false,
+            top_p: 1.0,
+            top_k: 50
+        };
+        if (max_tokens) body.max_tokens = max_tokens;
+
+        const options = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        };
+
+        const url = 'http://127.0.0.1:1234/v1/chat/completions';
+
+        try {
+            // fetch met timeout + retries
+            const res = await fetchWithTimeoutAndRetry(
+                url,
+                options,
+                15000, // timeout per retry in ms
+                4      // max retries
+            );
+
+            // Lees de body precies één keer
+            const json = await res.json();
+            console.debug("LM Studio JSON response:", json);
+
+            // Check HTTP status
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status} - ${JSON.stringify(json)}`);
+            }
+
+            // Check LM Studio error in JSON
+            if (json.error) {
+                throw new Error(`LM Studio error: ${json.error}`);
+            }
+
+            // Haal assistant-tekst veilig
+            const output = json?.choices?.[0]?.message?.content ?? null;
+
+            sendResponse({
+                ok: !!output,
+                text: output
+            });
+
+        } catch (err) {
+            // TECHNISCH LOGGEN
+            if (err.name === 'AbortError') {
+                console.warn('LM Studio request aborted (timeout)');
+            } else {
+                console.error('LM Studio call error:', err);
+            }
+
+            // GEBRUIKERSMELDING
+            const userMessage = (err.name === 'AbortError')
+                ? 'The translation took too long and was stopped.'
+                : (err.message || 'Unknown error');
+
+            sendResponse({
+                ok: false,
+                text: userMessage
+            });
+        }
+    })();
+
+    // Return true om async sendResponse mogelijk te maken
+    return true;
 }
 
 
@@ -898,7 +1110,7 @@ async function callLocalOllama(bodyToSend) {
         });
         
         const data = await resp.json();
-        
+        console.debug("Local Ollama response:", data); 
         if (!resp.ok) {
             return {
                 success: false,
@@ -936,3 +1148,91 @@ const toBoolean = (value) => {
     if (typeof value === "number") return value === 1;
     return false;
 };
+
+            /**
+ * Stop a local Ollama model session to avoid cached responses
+ * @param {string} model - Model name to stop
+ * @returns {Promise<Object>} - Result with error or success
+ */
+async function stopLocalModelSession(model) {
+    try {
+        const STOP_URL = `http://127.0.0.1:11434/api/stop`;
+
+        const resp = await fetch(STOP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model }) // pass the model you want to stop
+        });
+
+        if (!resp.ok) {
+            let textResp = await resp.text().catch(() => "");
+            return { error: `Cannot stop model session. HTTP ${resp.status}`, raw: textResp };
+        }
+
+        return { success: true };
+    } catch (err) {
+        return { error: err?.message || String(err) };
+    }
+}
+
+ async function isLMStudioModelLoaded(modelName) {
+  try {
+    const res = await fetch('http://127.0.0.1:1234/v1/models');
+    if (!res.ok) return false;
+
+    const json = await res.json();
+    if (!json.data || !Array.isArray(json.data)) return false;
+
+    return json.data.some(m => m.id === modelName);
+  } catch (e) {
+    return false;
+  }
+}
+
+async function fetchWithTimeoutAndRetry(
+    url,
+    options,
+    timeoutPerRetryMs = 15000,
+    maxRetries = 3
+) {
+    let lastError;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+            () => controller.abort(),
+            timeoutPerRetryMs
+        );
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+            return response; // ✅ succes
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+            lastError = err;
+
+            if (err.name === 'AbortError') {
+                console.debug(
+                    `LMStudio timeout on attempt ${attempt}/${maxRetries} (${timeoutPerRetryMs}ms)`
+                );
+            } else {
+                console.debug(
+                    `LMStudio fetch error on attempt ${attempt}/${maxRetries}:`,
+                    err.message
+                );
+            }
+
+            // ⛔ geen delay: LM Studio is meestal nog bezig
+            // retry betekent nieuwe inference
+        }
+    }
+
+    throw lastError;
+}
+

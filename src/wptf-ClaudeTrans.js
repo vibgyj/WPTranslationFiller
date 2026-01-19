@@ -18,6 +18,7 @@ class ClaudeTranslator {
         this.apiVersion = '2023-06-01';
         this.maxRetries = options.maxRetries || 3;
         this.retryDelay = options.retryDelay || 1000;
+        this.max_Tokens = options.max_tokens || 1024;
     }
 
     // Helper to sleep/wait
@@ -80,7 +81,7 @@ Examples:
         formal = false,
         destinationLanguage = 'Dutch',
         systemPrompt = null,
-        max_tokens = 1024,
+        max_tokens = max_tokens,
         temperature = 0.3
     } = options;
 
@@ -213,7 +214,8 @@ async function translateLineByLine(
         originalText = originalPreProcessed;
         const start = Date.now();
         let max_Tokens = estimateMaxTokens(originalPreProcessed);
-        
+        let prompt_tokens = estimateMaxTokens(prompt);
+        max_Tokens = max_Tokens + prompt_tokens
         //console.debug("original:",originalPreProcessed)
         //console.debug("maxTokens:", max_Tokens)
         //console.debug("original:",originalPreProcessed)

@@ -18,6 +18,7 @@ var classToolTip;
 var is_entry = false;
 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 var GLOBAL_GLOSSARY = []; // globale variabele bovenin content script
+var no_period = false;
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -36,16 +37,21 @@ if (typeof addon_translations == 'undefined') {
 
 async function loadTranslations(language) {
     try {
-        const response = fetch(chrome.runtime.getURL(`locales/${language}.json`)); // No await yet
-        const res = await response; // Await only when needed
-
-        if (res.ok) {
-            addon_translations = await res.json();
-        } else {
-            console.debug(`File not loaded: ${language} translations`);
-        }
+        const url = chrome.runtime.getURL(`locales/${language}.json`);
+        const res = await fetch(url);
+        addon_translations = await res.json();
+        //console.debug(`Loaded translations for ${language}:`, addon_translations);
     } catch (error) {
-        console.error(error);
+        console.debug(`Failed to load "${language}.json", falling back to "en.json".`);
+        try {
+            const fallbackUrl = chrome.runtime.getURL('locales/en.json');
+            const res = await fetch(fallbackUrl);
+            addon_translations = await res.json();
+            console.debug(`Loaded default translations:`);
+        } catch (fallbackError) {
+            console.debug("Failed to load default 'en.json' translations:", fallbackError);
+            addon_translations = {}; // lege fallback
+        }
     }
 }
 
@@ -340,6 +346,10 @@ chrome.storage.local.get('transsel', async function (result) {
     translator = result.transsel; // Assign the value to the global variable
 });
 
+chrome.storage.local.get('noPeriod', async function (result) {
+    no_period = result.noPeriod; // Assign the value to the global variable
+   return no_period
+});
 
 chrome.storage.local.get('DefGlossary', async function (result) {
     DefGlossary = result.DefGlossary; // Assign the value to the global variable
@@ -1320,7 +1330,7 @@ async function translatedButton() {
     compairContainer.className = 'button-tooltip'
     classToolTip = document.createElement("span")
     classToolTip.className = 'tooltiptext'
-    classToolTip.innerText = __("This is the function to compaire the suggestion with the local entry")
+    classToolTip.innerText = __("This is the function to compare the suggestion with the local entry")
 
     let compairButton = document.createElement("a");
     compairButton.href = "#";
@@ -1328,7 +1338,7 @@ async function translatedButton() {
     compairButton.id = "Compair";
     compairButton.className = "compair-button";
     compairButton.onclick = compairClicked;
-    compairButton.innerText = __("Compaire");
+    compairButton.innerText = __("Compare");
     compairContainer.appendChild(compairButton)
     compairContainer.appendChild(classToolTip)
 
@@ -2071,7 +2081,7 @@ function translatePageClicked(event) {
     event.preventDefault();
     var formal;
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyTranslateio", "apikeyLingvanex", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt"],
+        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyTranslateio", "apikeyLingvanex", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "GeminiPrompt"],
         function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -2092,7 +2102,7 @@ function translatePageClicked(event) {
                         // OpenAiGloss is populated from the DeepL glossary within indexedDB
                         OpenAiGloss = data.OpenAiGloss;
     
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -3109,7 +3119,7 @@ function translateEntryClicked(event) {
         rowId = newrowId;
     }
     
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiSelect", "GeminiPrompt", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt"], function (data) {
         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
         
         if (data.ForceFormal != true) {
@@ -3125,8 +3135,9 @@ function translateEntryClicked(event) {
         var myOpenAiGloss = data.OpenAiGloss
         //console.debug("before transl 3122:",myOpenAiGloss)
         //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
+       // console.debug("geminiSel:",data.GeminiSelect)
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt);
         }
         else {
             messageBox("error", "You need to set the parameter for Destination language");
@@ -5816,7 +5827,7 @@ async function fetchOldRec(url, rowId, showDiff) {
                        
                         element2.style.cssText = "padding-left:10px; width:100%; display:block; word-break: break-word; background:lightgrey";
                         if (OldRec_status = 'current') {
-                            console.debug("orig[0]:",orig[0])
+                            //console.debug("orig[0]:",orig[0])
                             element2.appendChild(document.createTextNode(orig[0].innerText));
                         }
                         else {

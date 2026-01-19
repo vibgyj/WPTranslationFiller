@@ -100,3 +100,19 @@ Version 3.4.40 Fixed a problem with translation with Microsoft
 Version 3.4.40 Fixed Google translation no longer working due to CORS
 Version 3.4.40 fixed Bengali translation with DeepL not working (Bengali is in Beta)
 Version 3.4.40 added language Bengali
+Version 3.4.41 Fixed error handling Google
+Version 3.4.42 Chrome refused the upload due to mentioning Google etc, so removed thatt
+Version 3.4.42 Added Gemini translation API
+Version 3.4.43 Fixed a problem with replacing blanks at the start or end of the translation
+Version 3.4.44 Fixed a problem within the replacing of converting to uppecase, URLS where altered
+Version 3.4.44 Added LMStudio as API
+Version 3.4.45 Modified labels in the options page
+Version 3.4.46 Altered the endpoints of Deepl due to new API structure
+Version 3.4.47 Improved handling of placeholders like '<x id="var1"/>', they were altered during translation
+Version 3.4.47 Modified the Firefox manifest to version, added the LMstudion js file
+Version 3.4.48 Added retries for LMstudio in background script
+Version 3.4.49 Added OpenAIWait to slow down LMstudio calls
+Version 3.4.50 Fixed a problem with not replacing "special_var" type of placeholders"
+Version 3.4.51 Fixed replacing problem with LMstudio when placeholders are present
+Version 3.4.51 Fixed issue 365 GitHub adding a period when language is Bengali
+Version 3.4.51 Fixed issue model adding extra line feeds with LMstudio

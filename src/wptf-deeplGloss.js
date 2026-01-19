@@ -4,8 +4,8 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
     chrome.runtime.sendMessage({
         action: "load_deepl_glossary",
         apiKey: apiKey,
-        isFree: DeeplFree,
         glossaryData: gloss,
+        isFree: DeeplFree
     }, (response) => {
         //console.debug("Received response:", response); // Debugging step
         console.debug("response:",response)
@@ -88,9 +88,16 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
                     });
                 }
                 else {
-                    messageBox("info", "We did not get a result of the request<br>" + response.error)
+                    //console.debug("status:", response.status) 
+                    if (response.error.includes('456')) {
+                        messageBox("info", "Quota exceeded<br>The character limit has been reached<br>" + response.error)
+                    }
+                    else {
+                        messageBox("info", "We did get a result of the request<br>" + response.error)
+                    }
                     console.debug("result:", response)
                 }
+                
             }
             else {
                 messageBox("info", "We did not get a result of the request<br>" + "response is undefined!")
@@ -261,8 +268,8 @@ async function show_glossary(apikeyDeepl, DeeplFree, language) {
        //console.log("Received response:", response); // Debugging step
 
         if (response && response.success) {
-           // console.log("DeepL Glossaries:", response.glossaries);
-            var glossaryId =  response.glossaries.glossaries
+            // console.log("DeepL Glossaries:", response.glossaries);
+            var glossaryId = response.glossaries.glossaries
             // var currWindow = window.self;
             //console.debug("all the glossaries:", glossaryId,glossaryId.length)
             if (typeof glossaryId != 'undefined' && glossaryId.length != 0) {
@@ -339,7 +346,7 @@ async function show_glossary(apikeyDeepl, DeeplFree, language) {
                         })
                     }
                 })
-            } 
+            }
             else {
                 messageBox("warning", "No glossaries found!!");
                 localStorage.setItem('deeplGlossary', "");
@@ -350,6 +357,12 @@ async function show_glossary(apikeyDeepl, DeeplFree, language) {
                 }
             }
 
+        }
+        else {
+            console.error("DeepL error:", response);
+            if (response.status == 401) {
+                messageBox("info", "We did get a result of the request<br>Wong key" + "<br>" + response.error.message + "<br>" + response.status)
+            }
         }
     })
 }
@@ -565,25 +578,36 @@ async function delete_all_glossary(apikeyDeepl,isFree) {
     currWindow = window.self;
     chrome.runtime.sendMessage({
         action: "fetch_deepl_glossaries",
-        apiKey: apikeyDeepl
+        apiKey: apikeyDeepl,
+        isFree: DeeplFree
+        
     }, (response) => {
-        if (response && response.success) {
-            var glossaryId = response.glossaries.glossaries
-            //console.debug("all the glossaries:", glossaryId,glossaryId.length)
-            if (typeof glossaryId != 'undefined' && glossaryId.length != 0) {
-                var gloss = ""
-                for (let i = 0, len = glossaryId.length, text = ""; i < len; i++) {
-                    deleteGlossary(myKey, DeeplFree, glossaryId[i].glossary_id)
+        if (response.success) {
+            if (response && response.success) {
+                var glossaryId = response.glossaries.glossaries
+                //console.debug("all the glossaries:", glossaryId,glossaryId.length)
+                if (typeof glossaryId != 'undefined' && glossaryId.length != 0) {
+                    var gloss = ""
+                    for (let i = 0, len = glossaryId.length, text = ""; i < len; i++) {
+                        deleteGlossary(myKey, DeeplFree, glossaryId[i].glossary_id)
+                    }
                 }
+
+                // We need to set the status back
+                localStorage.setItem('deeplGlossary', "");
+                let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-green`);
+                if (loadGlossButton != null) {
+                    loadGlossButton.classList.remove("LoadGloss-button-green");
+                    loadGlossButton.classList.add("LoadGloss-button-red");
+                }
+                messageBox("info", "All glossaries deleted!");
             }
+
         }
-        // We need to set the status back
-        localStorage.setItem('deeplGlossary', "");
-        let loadGlossButton = document.querySelector(`.paging .LoadGloss-button-green`);
-        if (loadGlossButton != null) {
-            loadGlossButton.classList.remove("LoadGloss-button-green");
-            loadGlossButton.classList.add("LoadGloss-button-red");
-        }
+        else {
+            console.debug("DeepL error:", response.error.message);
+            messageBox("error", "We did get a result of the request<br>Wong key" + "<br>" + response.error.message + "<br>" + response.status)
+            }
     })
 }
 function deleteGlossary(apiKey, isFree, glossaryId) {
@@ -596,7 +620,9 @@ function deleteGlossary(apiKey, isFree, glossaryId) {
         if (response && response.success) {
             console.log(response.message);
         } else {
-            console.error("Error deleting glossary:", response ? response.error : "No response received");
+             messageBox("error", "We did get a result of the request<br>Key does not exist" + "<br>" + response.error.message + "<br>" + response.status)
+
+            console.debug("Error deleting glossary:", response ? response.error : "No response received");
         }
     });
 }
