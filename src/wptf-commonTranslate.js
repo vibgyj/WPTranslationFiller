@@ -424,13 +424,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     }
     else if (translator == "deepl") {
-        //console.debug("placeholdemap:",placeholderMap)
-        //console.debug("we are in Deepl!!!")
         for (const token in placeholderMap) {
-            // console.debug("token:",token)
             const originalValue = placeholderMap[token];
 
-            //     // Make token safe for regex use
+            // Make token safe for regex use
             const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             // Replace all occurrences in translatedText
