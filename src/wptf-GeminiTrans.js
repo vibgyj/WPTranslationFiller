@@ -65,7 +65,9 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
                     locale,
                     model: GeminiModel,
                     prompt: prompt,
-                    max_tokens: max_Tokens
+                    max_tokens: max_Tokens,
+                    Top_p,
+                    Top_k
                 }
             },
             (response) => {

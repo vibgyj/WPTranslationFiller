@@ -1,4 +1,76 @@
 ﻿
+async function loadTopP() {
+    const result = await chrome.storage.local.get('AI_Top_p');
+    Top_p = result.AI_Top_p;
+}
+async function loadTopK() {
+    const result = await chrome.storage.local.get('AI_Top_k');
+    Top_k = result.AI_Top_k;
+}
+
+/**
+ * Vervangt alle blokken van 2 of meer spaties in de tekst door unieke placeholders.
+ * @param {string} original - de originele tekst waarin spatieblokken vervangen moeten worden
+ * @returns {object} - { original: tekst met placeholders, spaceMap: mapping van placeholders naar spatieblokken }
+ */
+function replaceMultiSpaces(original) {
+    const spaceMap = {};
+    let index = 0;
+
+    original = original.replace(/ {2,}/g, match => {
+        const key = `[[placeholder2_${index}]]`; // unieke key
+        spaceMap[key] = match;
+        index++;
+        return key;
+    });
+
+    return { original, spaceMap };
+}
+
+function restorePlaceholders(translatedText, placeholderMap) {
+    if (!placeholderMap || Object.keys(placeholderMap).length === 0) {
+        return translatedText;
+    }
+
+    // Sorteer DESC (belangrijk!)
+    const tokens = Object.keys(placeholderMap).sort((a, b) => {
+        const ai = Number(a.match(/\d+/)[0]);
+        const bi = Number(b.match(/\d+/)[0]);
+        return bi - ai;
+    });
+
+    for (const token of tokens) {
+        const originalValue = placeholderMap[token];
+
+        // Match uitsluitend [[mVar_N]] met optionele whitespace
+        // ✔ [[mVar_5]]
+        // ✔ [[ mVar_5 ]]
+        // ✘ mVar_5
+        // ✘ %7$s
+        const safeRegex = new RegExp(
+            "\\[\\[\\s*" +
+            token.replace("[[", "").replace("]]", "") +
+            "\\s*\\]\\]",
+            "g"
+        );
+
+        translatedText = translatedText.replace(safeRegex, originalValue);
+    }
+
+    return translatedText;
+}
+
+function restoreMultiSpaces(text, spaceMap) {
+    for (const key in spaceMap) {
+        text = text.replaceAll(key, spaceMap[key]);
+    }
+    return text;
+}
+
+
+
+
+
 /**
  * Applies a flat glossary mapping to a string.
  * Matches exact words (case-insensitive) and replaces them.

@@ -238,7 +238,10 @@ async function preProcessOriginal(original, preverbs, translator) {
 
     }
     else if (translator == "LMstudio") {
-
+       
+        const result = replaceMultiSpaces(original);
+        original = result.original; // original bevat nu de tekst met [[Space_X]] placeholders
+        spaceMap = result.spaceMap;
         const linkmatches = original.match(linkRegex);
 
        if (linkmatches != null) {
@@ -272,14 +275,6 @@ async function preProcessOriginal(original, preverbs, translator) {
            if (match === '\t') return `mytab`;
              return `<code>placeholder${index}</code>`;
           });
-
-       
-     //   original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
-    //    if (match === '\t') {
-    //       return `<mytab${index++}>`;
-     //   }
-     //   return `<mylinefeed${index++}>`;
-     //   });
 
 
          // We need to remove markup that contains & and ; otherwise translation will fail
@@ -473,7 +468,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     }
     else if (translator  == "LMstudio") {
-        // We need to replace & back 
+        // We need to replace & back \
+        // We need to restore multiple spaces first
+        translatedText = restoreMultiSpaces(translatedText, spaceMap);
+        
         //console.debug("we are in LMstudio:",translatedText)
         const markupmatches = original.match(markupRegex);
         index = 1;
@@ -499,26 +497,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
         // placeholderMap = { token: origineleWaarde }
-
-        for (const [token, originalValue] of Object.entries(placeholderMap)) {
-           // zoek in de vertaalde tekst varianten van de token
-           // LLM kan bijv. [[mVar_1]] -> [mVar_1], of "mVar_1", of [[ mVar_1 ]]
-           const variants = [
-           token,                               // zoals verstuurd
-           token.replace(/\[/g, "").replace(/\]/g, ""), // zonder brackets
-           token.replace(/\[\[/g, "[").replace(/\]\]/g, "]"), // enkel bracket genormaliseerd
-           token.replace(/\s+/g, ""),           // whitespace verwijderd
-           token.replace(/"/g, ""),             // quotes verwijderd
-        ];
-
-    for (const variant of variants) {
-        if (translatedText.includes(variant)) {
-            translatedText = translatedText.replaceAll(variant, originalValue);
-        }
-    }
-}
-
-
+        translatedText = restorePlaceholders(translatedText, placeholderMap)
+       
       
     }
     else if (translator == "OpenAI") {
@@ -797,16 +777,16 @@ function replace_mVar(original, translatedNewText, specialChar) {
     return translatedNewText;
 }
 
-function restorePlaceholders(text, placeholderMap) {
+//function restorePlaceholders(text, placeholderMap) {
     // Vervang tokens terug in omgekeerde volgorde (veilig tegen nesting)
-    const tokens = Object.keys(placeholderMap).sort().reverse();
+ //   const tokens = Object.keys(placeholderMap).sort().reverse();
 
-    for (const token of tokens) {
-        text = text.replaceAll(token, placeholderMap[token]);
-    }
+ //   for (const token of tokens) {
+  //      text = text.replaceAll(token, placeholderMap[token]);
+  //  }
 
-    return text;
-}
+  //  return text;
+//}
 
 
 
@@ -4679,7 +4659,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         }
         else if (transsel === "LMStudio") {
                         let is_editor = false
-                        result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        result = await translateWithLMStudio(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
                         hideTranslationSpinner();
                         if (result == "NOK") {
                             stop = true;

@@ -47,6 +47,8 @@ let ClaudselectBox = document.getElementById("ClaudSelect");
 let OllamaselectBox = document.getElementById("Ollama_model");
 let GeminiselectBox = document.getElementById("GeminiSelect");
 let OpenAItempBox = document.getElementById("OpenAI_temp");
+let Top_k_Box = document.getElementById("AI_Top_k");
+let Top_p_Box = document.getElementById("AI_Top_p");
 let OpenAIToneBox = document.getElementById("ToneSelect");
 let destLangTextbox = document.getElementById("destination_lang");
 let uploadedFile = document.getElementById("glossary_file_uploaded");
@@ -91,7 +93,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "OpenAITone", "OpenAItemp", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -165,6 +167,21 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         OpenAItempBox.value = data.OpenAItemp;
         OpenAItemp = data.OpenAItemp
+    }
+
+    if (typeof data.AI_Top_k == "undefined") {
+        AI_Top_k = 1;
+    }
+    else {
+        Top_k_Box.value = data.AI_Top_k;
+        AI_Top_k = data.AI_Top_k
+    }
+    if (typeof data.AI_Top_p == "undefined") {
+        AI_Top_p = 0.1;
+    }
+    else {
+        Top_p_Box.value = data.AI_Top_p;
+        AI_Top_p = data.AI_Top_p
     }
     if (typeof data.OpenAITone == "undefined") {
         OpenTone = 'informal';
@@ -523,6 +540,8 @@ button.addEventListener("click", function () {
     let DeepLVal = DeepLwaitValue.value;
     let bulkWaitVal = bulkWaitValue.value;
     let OpenAItempVal = OpenAItempBox.value;
+    let AI_Top_k_Val = Top_k_Box.value;
+    let AI_Top_p_Val = Top_p_Box.value;
     let TMtresholdVal = document.getElementById("TMtreshold").value;
     let theScreenWidthValue = myScreenWidthValue.value
     if (document.querySelector("#show-history:checked") !== null) {
@@ -632,6 +651,8 @@ button.addEventListener("click", function () {
     else { 
         showNoPeriod = "false";
     }
+    console.debug("AI top p val:", AI_Top_p_Val)
+    console.debug("AI top k val:", AI_Top_k_Val)
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -685,7 +706,9 @@ button.addEventListener("click", function () {
             autoCopyClip: autoCopyClipBoard,
             DisableAutoClose: showClose,
             LocalOllama: localOllama,
-            noPeriod:showNoPeriod
+            noPeriod: showNoPeriod,
+            AI_Top_k: AI_Top_k_Val,
+            AI_Top_p: AI_Top_p_Val
         });
 
         if (glossaryFile.value !== "") {

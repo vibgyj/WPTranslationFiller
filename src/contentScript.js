@@ -19,6 +19,9 @@ var is_entry = false;
 var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
 var GLOBAL_GLOSSARY = []; // globale variabele bovenin content script
 var no_period = false;
+var spaceMap = {}; // this will hold the space mappings for the current session
+var Top_p = 0.1
+var Top_k = 1 
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -263,6 +266,10 @@ async function startFullScript(textarea) {
     const myCustomEvent = new CustomEvent('myCustomEvent', {
         detail: { message: 'This is a custom event!' }
     });
+    // We need to set Top_p and Top_k first
+    await loadTopP();
+    await loadTopK();
+    
 
     let is_loaded = await loadGlossaries(myCustomEvent);
 
@@ -351,6 +358,7 @@ chrome.storage.local.get('noPeriod', async function (result) {
    return no_period
 });
 
+
 chrome.storage.local.get('DefGlossary', async function (result) {
     DefGlossary = result.DefGlossary; // Assign the value to the global variable
 });
@@ -365,6 +373,7 @@ chrome.storage.local.get('strictValidate', async function (result) {
         strictValidation = false
     }
 });
+
 
 chrome.storage.local.get('autoCopyClip', async function (result) {
     autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable

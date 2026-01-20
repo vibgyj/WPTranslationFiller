@@ -288,7 +288,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "Gemini") {
     (async () => {
         try {
-            const { apiKey, text, sourceLang, targetLang ,formal, locale, model,prompt,max_tokens} = request.data;
+            const { apiKey, text, sourceLang, targetLang ,formal, locale, model,prompt,max_tokens,Top_p,Top_k} = request.data;
             //console.debug("model:", model)
             //console.debug("max:",max_tokens)
             let URL = `https://generativelanguage.googleapis.com/v1/models/` + model + `:generateContent?key=${apiKey}`
@@ -302,8 +302,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         ],
                        generationConfig: {
                          temperature: 0.0,
-                         topP: 1.0,
-                         topK: 1,
+                         topP: Top_p,
+                         topK: Top_k,
                          maxOutputTokens: max_tokens
                        }
 
@@ -551,12 +551,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         useLocal,
         repeat_penalty,
         do_not_complete,
+        Top_p,
+        Top_k
     } = request.data;
      
     (async () => {
         const mymodel = model || 'gpt-oss-20b';
         console.debug("mymodel:", mymodel);
         console.debug("text:", text) 
+        let myText = "'"+text+"'";
         // Check of het model geladen is
         const modelLoaded = await isLMStudioModelLoaded(mymodel);
         if (!modelLoaded) {
@@ -572,17 +575,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // Bouw de body
         const body = {
              messages: [
-            {role: "system", content: mysystemPrompt  // hier gebruik je je eigen variabele prompt
-             },
-             {
-            role: "user",content: text  // de tekst die je wilt vertalen
-            }
+            {role: "user", content: systemPrompt  // hier gebruik je je eigen variabele prompt
+             }
+           
             ],
             temperature: temperature ?? 0,
             normalization: false,
             stream: false,
-            top_p: 1.0,
-            top_k: 50
+            top_p: Top_p,
+            top_k: Top_k,
+            repeat_penalty,
+            do_not_complete
         };
         if (max_tokens) body.max_tokens = max_tokens;
 

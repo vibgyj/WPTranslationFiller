@@ -116,3 +116,9 @@ Version 3.4.50 Fixed a problem with not replacing "special_var" type of placehol
 Version 3.4.51 Fixed replacing problem with LMstudio when placeholders are present
 Version 3.4.51 Fixed issue 365 GitHub adding a period when language is Bengali
 Version 3.4.51 Fixed issue model adding extra line feeds with LMstudio
+Version 3.4.52 Fixed plural not translated properly with LMstudio
+Version 3.4.52 Added parameters to LMstudio calls like Top_p and Top_k
+Version 3.4.53 Removed quotes around the text to translate for LMstudio
+Version 3.4.54 Fixeed an issue with reverting placeholders for LMstudio
+Version 3.4.54 Added Top_P and Top_k parameters to the settings page
+Version 3.4.54 Added Top_p and Top_k as paramters to Gemini translation
