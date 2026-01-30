@@ -1,5 +1,5 @@
 ﻿// background.js
-console.debug("background loaded")
+//console.debug("background loaded")
 function encodeBase64(text) {
     // Convert UTF-8 string to base64
     return btoa(unescape(encodeURIComponent(text)));
@@ -11,162 +11,112 @@ function decodeBase64(encoded) {
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.debug("request;", request)
-    if (request.action === "load_deepl_glossary") {
-       // console.debug(request.isFree)
-        //   console.debug(request.apiKey)
-        console.debug(request.glossaryData)
-        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
-        //console.debug("deeplServer in upload:",deeplServer)
-        let url = `${deeplServer}`;
-        console.debug("Url:",url)
-        let response = fetch(url, {
-            method: "POST",
-            accept: "*/*",
-            Encoding: "gzip, deflate, br",
-            body: request.glossaryData,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `DeepL-Auth-Key ${request.apiKey}`
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json(); // DeepL API usually returns JSON
-            })
-            .then(data => {
-                console.log("Glossary uploaded successfully:", data);
-                sendResponse({ success: true, glossaries: data });
+    if (request.action === "CheckModelLMs") {
 
-            })
-            .catch(error => {
-                console.error("Error uploading glossary:", error);
-                sendResponse({ success: false, error: error.message });
-            })
-        return true; // Keeps sendResponse alive for async operations
-    }
-    else if (request.action === "fetch_deepl_glossaries") {
-    console.debug("we have a request to show the glossary:", request.isFree);
+       const model = request.model;
 
-    const isFree = request.isFree === true || request.isFree === "true";
-    let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
-
-
-    console.debug("We fetch glossaries");
-    console.debug("isFree:", request.isFree);
-    console.debug("key:", request.apiKey);
-    console.debug("deeplServer:", deeplServer);
-
-    fetch(deeplServer, {
-        method: "GET",
-        headers: {
-            "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
-            "Content-Type": "application/json"
-        }
-    })
-        .then(async response => {
-            console.debug("raw response:", response);
-
-            const text = await response.text(); // READ BODY HERE
-
-            let body;
+       // start async werk in microtask
+        (async () => {
             try {
-                body = text ? JSON.parse(text) : null;
-            } catch {
-                body = text;
+                // call je bestaande async functie
+                const found = await isLMStudioModelLoaded(model);
+
+                // stuur alleen boolean terug
+                sendResponse(found);
+            } catch (e) {
+                console.debug("Fout bij model check:", e);
+                sendResponse(false);
             }
-
-            if (!response.ok) {
-                // Pass through full DeepL error
-                throw {
-                    status: response.status,
-                    body: body
-                };
-            }
-
-            return body;
-        })
-        .then(data => {
-            console.log("DeepL Response:", data);
-            sendResponse({ success: true, glossaries: data });
-        })
-        .catch(error => {
-            console.error("Fetch Error:", error);
-            console.error("Fetch Error:", error.body);
-            sendResponse({
-                success: false,
-                status: error.status || null,
-                error: error.body || error.message
-            });
-        });
-
-    return true; // keep sendResponse alive
-}
-
-    else if (request.action === "delete_deepl_glossary") {
-        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        console.debug("isFree:",isFree)
-        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
-        console.debug("We delete glossary with id:", request.glossary_id)
-       console.debug("deeplserver:",deeplServer)
-        let url = `${deeplServer}/${request.glossary_id}`;
-
-        fetch(url, {
-            method: "DELETE",
-            headers: {
-                "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
-                "Content-Type": "application/json"
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.text(); // DELETE request usually returns empty response
-            })
-            .then(() => {
-                //console.log(`Glossary ${request.glossary_id} deleted successfully`);
-                sendResponse({ success: true, message: `Glossary ${request.glossary_id} deleted` });
-            })
-            .catch(error => {
-                console.error("Error deleting glossary:", error);
-                sendResponse({ success: false, error: error.message });
-            });
-
-        return true; // Keeps sendResponse alive for async operations
-    }
-    else if (request.action === 'getGlossary') {
-        console.debug("We started getGlossary")
-        // Get all glossary records
-        const transaction = DeepLdb.transaction(['glossary'], 'readonly');
-        const store = transaction.objectStore('glossary');
-        const index = store.index('localeOriginal');
-        const requestData = index.getAll(); // Retrieve all records from the index
-
-        requestData.onsuccess = (event) => {
-            sendResponse(event.target.result); // Send the records back to the content script
-        };
-
-        requestData.onerror = (event) => {
-            console.error('Error retrieving data:', event);
-            sendResponse([]); // Send an empty array if there’s an error
-        };
-
-        return true; // Indicate asynchronous response
-    }
-
-    else if (request.action === 'addGlossaryRecord') {
-        const record = request.record;
-        const result = addRecordToDB(record); // Replace this with your actual function to add the record
-        sendResponse({ success: result });  // Send a response back
-        // Return true to indicate asynchronous response
+        })();
         return true;
+
     }
-    else if (request.action === "translate") {
-        console.debug("Received translation request", request.body);
+    else if (request.action == "Gemini") {
+        setTimeout(async () => {
+            (async () => {
+                try {
+                    const { apiKey, text, sourceLang, targetLang, formal, locale, model, prompt, max_tokens, Top_p, Top_k } = request.data;
+                    //console.debug("model:", model)
+                    //console.debug("max:",max_tokens)
+                    let URL = `https://generativelanguage.googleapis.com/v1/models/` + model + `:generateContent?key=${apiKey}`
+                    const res = await fetch(URL,
+
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                            },
+                            body: JSON.stringify({
+                                contents: [
+                                    { role: "user", parts: [{ text: prompt }] }
+                                ],
+                                generationConfig: {
+                                    temperature: 0.0,
+                                    topP: Top_p,
+                                    topK: Top_k,
+                                    maxOutputTokens: max_tokens
+                                }
+                            }),
+                            // Firefox-specifieke optimalisaties:
+                            keepalive: true,       // Houd de verbinding open voor hergebruik
+                            priority: 'high'      // Experimentele optie voor hogere prioriteit (Firefox)
+                        }
+                    );
+
+                    let data;
+                    try {
+                        data = await res.json();
+                    } catch (parseErr) {
+                        throw new Error(`Failed to parse Gemini response (HTTP ${res.status})`);
+                    }
+
+                    // HTTP-fouten expliciet afhandelen
+                    if (!res.ok) {
+                        let errorMessage = `Gemini request failed (HTTP ${res.status})`;
+
+                        if (data?.error?.message) {
+                            errorMessage += `: ${data.error.message}`;
+                        }
+
+                        // Extra details indien beschikbaar
+                        if (data?.error?.details?.[0]?.fieldViolations?.length) {
+                            const violations = data.error.details[0].fieldViolations
+                                .map(v => `${v.field}: ${v.description}`)
+                                .join("; ");
+                            errorMessage += ` (${violations})`;
+                        }
+
+                        throw new Error(errorMessage);
+                    }
+
+                    const translation =
+                        data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (!translation) {
+                        throw new Error("Gemini returned no translation content");
+                    }
+
+                    sendResponse({
+                        success: true,
+                        translation: translation.trim()
+                    });
+
+                } catch (err) {
+                    console.error("Gemini error:", err);
+                    sendResponse({
+                        success: false,
+                        error: err.message || "Unknown Gemini error"
+                    });
+                }
+            })();
+        },0)
+
+    return true;
+}
+    
+   else if (request.action === "DeepL") {
+        //console.debug("Received translation request", request.body);
 
         // Destructure DeepL endpoint + control params
         //console.debug("requestbody:", request.body)
@@ -245,8 +195,47 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true;
     }
+    else if (request.action == "Mistral") {
+         (async () => {
+        try {
+            const dataToSend = { ...request.data }; // copy data
+            const apiKey = dataToSend.apiKey;       // extract key
+            delete dataToSend.apiKey;               // remove from body
 
-    if (request.action === "OpenAI") {
+            const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + apiKey
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            if (!resp.ok) {
+                const msg = await resp.text();
+                sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
+                return;
+            }
+
+            let data;
+            const contentType = resp.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                data = await resp.json();
+            } else {
+                data = await resp.text();
+            }
+
+            sendResponse({ result: data });
+        } catch (err) {
+            sendResponse({ error: err.toString() });
+        }
+    })();
+
+    return true; // keep sendResponse alive
+    }
+
+
+   else if (request.action === "OpenAI") {
         (async () => {
             try {
                 const dataToSend = { ...request.data }; // copy newData
@@ -285,109 +274,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // keep sendResponse alive for async
     }
 
-  if (request.action === "Gemini") {
-    (async () => {
-        try {
-            const { apiKey, text, sourceLang, targetLang ,formal, locale, model,prompt,max_tokens,Top_p,Top_k} = request.data;
-            //console.debug("model:", model)
-            //console.debug("max:",max_tokens)
-            let URL = `https://generativelanguage.googleapis.com/v1/models/` + model + `:generateContent?key=${apiKey}`
-            const res = await fetch(URL,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [
-                            { role: "user", parts: [{ text: prompt }] }
-                        ],
-                       generationConfig: {
-                         temperature: 0.0,
-                         topP: Top_p,
-                         topK: Top_k,
-                         maxOutputTokens: max_tokens
-                       }
+    
 
-                    })
-                }
-            );
-
-            let data;
-            try {
-                data = await res.json();
-            } catch (parseErr) {
-                throw new Error(`Failed to parse Gemini response (HTTP ${res.status})`);
-            }
-
-            // HTTP-fouten expliciet afhandelen
-            if (!res.ok) {
-                let errorMessage = `Gemini request failed (HTTP ${res.status})`;
-
-                if (data?.error?.message) {
-                    errorMessage += `: ${data.error.message}`;
-                }
-
-                // Extra details indien beschikbaar
-                if (data?.error?.details?.[0]?.fieldViolations?.length) {
-                    const violations = data.error.details[0].fieldViolations
-                        .map(v => `${v.field}: ${v.description}`)
-                        .join("; ");
-                    errorMessage += ` (${violations})`;
-                }
-
-                throw new Error(errorMessage);
-            }
-
-            const translation =
-                data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!translation) {
-                throw new Error("Gemini returned no translation content");
-            }
-
-            sendResponse({
-                success: true,
-                translation: translation.trim()
-            });
-
-        } catch (err) {
-            console.error("Gemini error:", err);
-            sendResponse({
-                success: false,
-                error: err.message || "Unknown Gemini error"
-            });
-        }
-    })();
-
-    return true;
-}
-
- // === Helper: retry loop ===
-            async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 12000) {
-                let lastError = null;
-                for (let i = 0; i < maxRetries; i++) {
-                    try {
-                        console.debug(`Local Ollama attempt ${i + 1} of ${maxRetries}`);
-                        const result = await callLocalWithTimeout(body, timeoutMs);
-                        if (result.success) return result;
-                        lastError = new Error(result.error || "Unknown local Ollama error");
-                    } catch (err) {
-                        lastError = err;
-                        console.warn(`Attempt ${i + 1} failed: ${err.message}`);
-                    }
-                }
-                throw lastError;
-    }
-               // === Helper: local call with timeout ===
-            async function callLocalWithTimeout(body, timeoutMs) {
-                return Promise.race([
-                    await callLocalOllama(body),
-                    new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
-                    )
-                ]);
-            }
       // Ollama translation
- if (request.action === "ollama_translate") {
+ else if (request.action === "ollama_translate") {
     console.debug("Ollama translation request received");
     
     (async () => {
@@ -403,8 +293,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 useLocal,
                 repeat_penalty,
                 do_not_complete,
+                Top_p,
+                Top_k
             } = request.data;
-             console.debug("model:", model);
+            console.debug("model:", model);
+            let myTop_p = parseInt(Top_p)
+            let myTop_k = parseInt(Top_k) 
             if (!text) return sendResponse({ success: false, error: "Text is missing" });
             if (!model) return sendResponse({ success: false, error: "Model is missing" });
             if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
@@ -427,7 +321,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                   model: model,
                   messages: messages,
                   stream: false,
-                 options: { emperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1 }
+                 options: { emperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1 ,top_p: myTop_p,  top_k: myTop_k}
                  };
                 //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
@@ -455,7 +349,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             let message = [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `You act a a translator` },
+                { role: "user", content: `Translate` },
                 { role: "user", content: text }
                 ];
 
@@ -463,7 +357,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 messages: message,
                 model: model,
                 stream: false,
-                options: { temperature: temperature,repeat_penalty: repeat_penalty }
+                options: { temperature: temperature,repeat_penalty: repeat_penalty, do_not_complete: 1 ,top_p: myTop_p,  top_k: myTop_k}
             };
 
             console.debug("Sending chat request to Ollama online:", bodyToSend);
@@ -537,123 +431,133 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // keep response channel open
     }
 
- if (request.action === "LMStudio_translate") {
-    console.debug("LMStudio translation request received");
+else if (request.action === "LMStudio_translate") {
+   // console.debug("LMStudio translation request received");
+        setTimeout(async () => {
+            const {
+                text,
+                target_lang,
+                model,
+                systemPrompt,
+                max_tokens,
+                temperature,
+                apiKey,
+                useLocal,
+                repeat_penalty,
+                do_not_complete,
+                Top_p,
+                Top_k
+            } = request.data;
 
-    const {
-        text,
-        target_lang,
-        model,
-        systemPrompt,
-        max_tokens,
-        temperature,
-        apiKey,
-        useLocal,
-        repeat_penalty,
-        do_not_complete,
-        Top_p,
-        Top_k
-    } = request.data;
-     
-    (async () => {
-        const mymodel = model || 'gpt-oss-20b';
-        console.debug("mymodel:", mymodel);
-        console.debug("text:", text) 
-        let myText = "'"+text+"'";
-        // Check of het model geladen is
-        const modelLoaded = await isLMStudioModelLoaded(mymodel);
-        if (!modelLoaded) {
-            sendResponse({
-                ok: false,
-                text: `LM Studio model "${mymodel}" <br>is not loaded or server is not running!`
-            });
-            return;
-        }
-       // let mysystemPrompt = 'Translate the text exactly into Dutch. Do NOT change, move, or remove placeholders like <mytab1>, <mylinefeed2>, etc. Output ONLY the translated text, without explanations or notes.'
-       let mysystemPrompt = systemPrompt
-        console.debug("systemPrompt:", mysystemPrompt)
-        // Bouw de body
-        const body = {
-             messages: [
-            {role: "user", content: systemPrompt  // hier gebruik je je eigen variabele prompt
-             }
-           
-            ],
-            temperature: temperature ?? 0,
-            normalization: false,
-            stream: false,
-            top_p: Top_p,
-            top_k: Top_k,
-            repeat_penalty,
-            do_not_complete
-        };
-        if (max_tokens) body.max_tokens = max_tokens;
+            (async () => {
+                //const mymodel = model || 'gpt-oss-20b';
+                // console.debug("mymodel:", mymodel);
+                // console.debug("text:", text) 
+                let myText = "'" + text + "'";
+                
+                // let mysystemPrompt = 'Translate the text exactly into Dutch. Do NOT change, move, or remove placeholders like <mytab1>, <mylinefeed2>, etc. Output ONLY the translated text, without explanations or notes.'
+                //let mysystemPrompt = systemPrompt
+                // console.debug("systemPrompt:", mysystemPrompt)
+               //  Bouw de body
+               const body = {
+                   messages: [
+                       {
+                          role: "user", content: systemPrompt  // hier gebruik je je eigen variabele prompt
+                        }
 
-        const options = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        };
+                   ],
+                   temperature: temperature ?? 0,
+                    normalization: false,
+                    stream: false,
+                    top_p: Top_p,
+                   top_k: Top_k,
+                   repeat_penalty: 1.1,
+                   do_not_complete
+               };
 
-        const url = 'http://127.0.0.1:1234/v1/chat/completions';
+          //    const body = {
+          //       prompt: systemPrompt,   // 👈 VERPLICHT
+          //     temperature: temperature ?? 0,
+           //    stream: false,
+           //     top_p: Top_p,
+            //   top_k: Top_k,
+            //   repeat_penalty
+           //   };
 
-        try {
-            // fetch met timeout + retries
-            const res = await fetchWithTimeoutAndRetry(
-                url,
-                options,
-                15000, // timeout per retry in ms
-                4      // max retries
-            );
+              
 
-            // Lees de body precies één keer
-            const json = await res.json();
-            console.debug("LM Studio JSON response:", json);
+                if (max_tokens) body.max_tokens = max_tokens;
 
-            // Check HTTP status
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status} - ${JSON.stringify(json)}`);
-            }
+                const options = {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    },
+                    body: JSON.stringify(body)
+                };
 
-            // Check LM Studio error in JSON
-            if (json.error) {
-                throw new Error(`LM Studio error: ${json.error}`);
-            }
+                const url = 'http://127.0.0.1:1234/v1/chat/completions';
 
-            // Haal assistant-tekst veilig
-            const output = json?.choices?.[0]?.message?.content ?? null;
+                try {
+                    // fetch met timeout + retries
+                    const res = await fetchWithTimeoutAndRetry(
+                        url,
+                        options,
+                        15000, // timeout per retry in ms
+                        5      // max retries
+                    );
 
-            sendResponse({
-                ok: !!output,
-                text: output
-            });
+                    // Lees de body precies één keer
+                    const json = await res.json();
+                    //console.debug("LM Studio JSON response:", json);
 
-        } catch (err) {
-            // TECHNISCH LOGGEN
-            if (err.name === 'AbortError') {
-                console.warn('LM Studio request aborted (timeout)');
-            } else {
-                console.error('LM Studio call error:', err);
-            }
+                    // Check HTTP status
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status} - ${JSON.stringify(json)}`);
+                    }
 
-            // GEBRUIKERSMELDING
-            const userMessage = (err.name === 'AbortError')
-                ? 'The translation took too long and was stopped.'
-                : (err.message || 'Unknown error');
+                    // Check LM Studio error in JSON
+                    if (json.error) {
+                        throw new Error(`LM Studio error: ${json.error}`);
+                    }
 
-            sendResponse({
-                ok: false,
-                text: userMessage
-            });
-        }
-    })();
+                    // Haal assistant-tekst veilig
+                     const output = json?.choices?.[0]?.message?.content ?? null;
+                    //const output = json?.choices?.[0]?.text ?? null;
+
+                    sendResponse({
+                        ok: !!output,
+                        text: output
+                    });
+
+                } catch (err) {
+                    // TECHNISCH LOGGEN
+                    if (err.name === 'AbortError') {
+                        console.debug('LM Studio request aborted (timeout)');
+                    } else {
+                        console.debug('LM Studio call error:', err);
+                    }
+
+                    // GEBRUIKERSMELDING
+                    const userMessage = (err.name === 'AbortError')
+                        ? 'The translation took too long and was stopped.'
+                        : (err.message || 'Unknown error');
+
+                    sendResponse({
+                        ok: false,
+                        text: userMessage
+                    });
+                }
+            })();
+        },0)
 
     // Return true om async sendResponse mogelijk te maken
     return true;
 }
 
 
-    if (request.action == "ClaudeAI") {
+    else if (request.action == "ClaudeAI") {
     (async () => {
         try {
             // expecting { apiKey, apiVersion, model, text, systemPrompt, max_tokens, temperature }
@@ -977,9 +881,166 @@ else if (request.action == "Lingvanex") {
 
             // keep the channel open
             return true;
+    };
+        if (request.action === "load_deepl_glossary") {
+       // console.debug(request.isFree)
+        //   console.debug(request.apiKey)
+        console.debug(request.glossaryData)
+        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
+        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+        //console.debug("deeplServer in upload:",deeplServer)
+        let url = `${deeplServer}`;
+        console.debug("Url:",url)
+        let response = fetch(url, {
+            method: "POST",
+            accept: "*/*",
+            Encoding: "gzip, deflate, br",
+            body: request.glossaryData,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `DeepL-Auth-Key ${request.apiKey}`
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json(); // DeepL API usually returns JSON
+            })
+            .then(data => {
+                console.log("Glossary uploaded successfully:", data);
+                sendResponse({ success: true, glossaries: data });
+
+            })
+            .catch(error => {
+                console.error("Error uploading glossary:", error);
+                sendResponse({ success: false, error: error.message });
+            })
+        return true; // Keeps sendResponse alive for async operations
+    }
+    else if (request.action === "fetch_deepl_glossaries") {
+    console.debug("we have a request to show the glossary:", request.isFree);
+
+    const isFree = request.isFree === true || request.isFree === "true";
+    let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+
+
+    console.debug("We fetch glossaries");
+    console.debug("isFree:", request.isFree);
+    console.debug("key:", request.apiKey);
+    console.debug("deeplServer:", deeplServer);
+
+    fetch(deeplServer, {
+        method: "GET",
+        headers: {
+            "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
+            "Content-Type": "application/json"
+        }
+    })
+        .then(async response => {
+            console.debug("raw response:", response);
+
+            const text = await response.text(); // READ BODY HERE
+
+            let body;
+            try {
+                body = text ? JSON.parse(text) : null;
+            } catch {
+                body = text;
+            }
+
+            if (!response.ok) {
+                // Pass through full DeepL error
+                throw {
+                    status: response.status,
+                    body: body
+                };
+            }
+
+            return body;
+        })
+        .then(data => {
+            console.log("DeepL Response:", data);
+            sendResponse({ success: true, glossaries: data });
+        })
+        .catch(error => {
+            console.error("Fetch Error:", error);
+            console.error("Fetch Error:", error.body);
+            sendResponse({
+                success: false,
+                status: error.status || null,
+                error: error.body || error.message
+            });
+        });
+
+    return true; // keep sendResponse alive
+}
+
+    else if (request.action === "delete_deepl_glossary") {
+        let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
+        console.debug("isFree:",isFree)
+        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
+        console.debug("We delete glossary with id:", request.glossary_id)
+       console.debug("deeplserver:",deeplServer)
+        let url = `${deeplServer}/${request.glossary_id}`;
+
+        fetch(url, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `DeepL-Auth-Key ${request.apiKey}`,
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text(); // DELETE request usually returns empty response
+            })
+            .then(() => {
+                //console.log(`Glossary ${request.glossary_id} deleted successfully`);
+                sendResponse({ success: true, message: `Glossary ${request.glossary_id} deleted` });
+            })
+            .catch(error => {
+                console.error("Error deleting glossary:", error);
+                sendResponse({ success: false, error: error.message });
+            });
+
+        return true; // Keeps sendResponse alive for async operations
+    }
+    else if (request.action === 'getGlossary') {
+        console.debug("We started getGlossary")
+        // Get all glossary records
+        const transaction = DeepLdb.transaction(['glossary'], 'readonly');
+        const store = transaction.objectStore('glossary');
+        const index = store.index('localeOriginal');
+        const requestData = index.getAll(); // Retrieve all records from the index
+
+        requestData.onsuccess = (event) => {
+            sendResponse(event.target.result); // Send the records back to the content script
         };
 
-        async function doTranslate(text, sourceLocale, targetLocale,apiKey, trans_url) {
+        requestData.onerror = (event) => {
+            console.error('Error retrieving data:', event);
+            sendResponse([]); // Send an empty array if there’s an error
+        };
+
+        return true; // Indicate asynchronous response
+    }
+
+    else if (request.action === 'addGlossaryRecord') {
+        const record = request.record;
+        const result = addRecordToDB(record); // Replace this with your actual function to add the record
+        sendResponse({ success: result });  // Send a response back
+        // Return true to indicate asynchronous response
+        return true;
+    }
+
+        
+    })
+
+
+    async function doTranslate(text, sourceLocale, targetLocale,apiKey, trans_url) {
            
             const url = trans_url
             const body = {
@@ -1014,8 +1075,6 @@ else if (request.action == "Lingvanex") {
 
             return resp.json();
         }
-    })
-
 //* - Automatically backs up storage on extension update
 // * - Restores from backup if storage is empty
 // * - Safe: does not overwrite existing user data
@@ -1206,7 +1265,7 @@ async function fetchWithTimeoutAndRetry(
             () => controller.abort(),
             timeoutPerRetryMs
         );
-
+       // console.debug("Attempt:",attempt)
         try {
             const response = await fetch(url, {
                 ...options,
@@ -1239,3 +1298,28 @@ async function fetchWithTimeoutAndRetry(
     throw lastError;
 }
 
+// === Helper: retry loop ===
+            async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 12000) {
+                let lastError = null;
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        console.debug(`Local Ollama attempt ${i + 1} of ${maxRetries}`);
+                        const result = await callLocalWithTimeout(body, timeoutMs);
+                        if (result.success) return result;
+                        lastError = new Error(result.error || "Unknown local Ollama error");
+                    } catch (err) {
+                        lastError = err;
+                        console.warn(`Attempt ${i + 1} failed: ${err.message}`);
+                    }
+                }
+                throw lastError;
+    }
+               // === Helper: local call with timeout ===
+            async function callLocalWithTimeout(body, timeoutMs) {
+                return Promise.race([
+                    await callLocalOllama(body),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
+                    )
+                ]);
+            }

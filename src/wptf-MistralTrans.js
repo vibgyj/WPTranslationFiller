@@ -1,4 +1,4 @@
-﻿/**
+/**
  * This file includes all functions for translating with the deepL API and uses a promise
  * It depends on commonTranslate for additional translation functions
  */
@@ -15,7 +15,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
+async function MistralTranslate(original, destlang, record, apikeyMistral, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
     var timeout = 50;
     errorstate = "OK";
     
@@ -24,38 +24,25 @@ async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPromp
     
     // Wait the timeout delay if needed
     await delay(timeout);
-    
+    console.debug("select:",MistralSelect)
     // Await the translation call
-    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    var result = await getMistralTrans(original, destlang, record, apikeyMistral, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     
     // You can handle errorstate or result here if needed
     return result;
 }
 
-async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
-    // First we have to preprocess the original to remove unwanted chars
-    //var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
-    var originalPreProcessed = original;
-    //errorstate = "NOK"
-    if (apikeyOpenAI != "") {
-        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview);
-    }
-    else {
-
-        errorstate = "No apikey provided!"
-    }
-        //console.debug("OpenAI errorstate:",errorstate,result)
-    return errorstate;
-}
 
 
-async function getTransAI(
+
+async function getMistralTrans(
   original, language, record, apikeyOpenAI, OpenAIPrompt,
   originalPreProcessed, rowId, transtype, plural_line, formal,
-  locale, convertToLower, editor, counter, OpenAISelect,
+  locale, convertToLower, editor, counter, MistralSelect,
   OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
 ) {
-  var show_debug = true
+    var show_debug = true
+  var text =""
   var myTtranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     let prevstate = current ? current.innerText : "";
@@ -107,46 +94,19 @@ async function getTransAI(
     { role: 'system', content: myprompt },
     { role: 'user', content: `translate this: ${originalPreProcessed}` }
   ];
-
-  if (OpenAISelect === 'undefined' || !OpenAISelect) {
-    messageBox("error", "You did not set the OpenAI model!<br> Please check your options");
+  console.debug("select:",MistralSelect)
+  if (MistralSelect === 'undefined' || !MistralSelect) {
+    messageBox("error", "You did not set the Mistral model!<br> Please check your options");
     return "NOK";
   }
  // reasoning={"effort": "minimal"}
-    const mymodel = OpenAISelect.toLowerCase();
+    const mymodel = MistralSelect.toLowerCase();
    if (show_debug) console.debug("Model selected:",mymodel);
-  let dataNew = {};
+    let dataNew = {};
+    // check if there are other models are available
 
-    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
-        dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: Top_p,
-            top_k: Top_k,
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'minimal',
-            verbosity: 'low',
-            apiKey: apikeyOpenAI,
-            prompt_cache_key: 'WPTF translation',
-        };
-    }
-    else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano") { 
-         dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: 1,
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'none',
-            verbosity: 'low',
-            apiKey: apikeyOpenAI,
-            prompt_cache_key: 'WPTF translation',
-        };
-  }
-  else {
+    // model: 'mistral-small-latest', 
+    // model: 'ministral-14b-2512',
     dataNew = {
       model: mymodel, 
       messages,
@@ -155,11 +115,11 @@ async function getTransAI(
       temperature: OpenAItemp,
       frequency_penalty: 0,
       presence_penalty: 0,
-      top_p: 0.5,
+      top_p:Top_p,
      apiKey: apikeyOpenAI,
 
     };
-  }
+ 
   
   
     try {
@@ -167,24 +127,36 @@ async function getTransAI(
         //console.debug("We start call at :",start)
         const result = await new Promise((resolve) => {
             chrome.runtime.sendMessage(
-                { action: "OpenAI", data: dataNew }, // send only the data
+                { action: "Mistral", data: dataNew }, // send only the data
                 (res) => resolve(res)
             );
        });
 
        if (!result) {
-        console.debug("OpenAI proxy returned undefined");
+        console.debug("Mistral proxy returned undefined");
         return "NOK";
     }
 
        if (result.error) {
         const duration = ((Date.now() - start) / 1000).toFixed(2);
-           if (show_debug) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
+           if (show_debug) console.debug(`[${new Date().toISOString()}] "Mistral proxy error:" ${duration}s`, result.error);
             // Example of result.error: "Request failed (401): <some text>"
            const match = result.error.match(/Request failed \((\d+)\)/);
+          // console.debug("message:",result.error)
            const statusCode = match ? match[1] : "unknown";
            //console.debug("Editor:",editor)
-           if (statusCode == '401') {
+            if (statusCode == '400') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode} and text ${result.error} `
+                   );
+               }
+               else {
+                   return `Error 401`;
+               }
+           }
+           else if (statusCode == '401') {
                if (editor) {
                    messageBox(
                        "warning",
@@ -233,10 +205,17 @@ async function getTransAI(
            }
     }
     const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (show_debug) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
+    if (show_debug) console.debug("Mistral proxy response (raw):", result.result," ",duration);
 
-   const data = result.result; // raw proxy response
-   let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
+    const data = result.result; // raw proxy response
+    if (mymodel != "magistral-small-2509") {
+        text = data?.choices?.[0]?.message?.content
+    }
+    else {
+        console.debug("data:", data)
+          text = data?.choices?.[0]?.message?.content[1].text;
+          console.debug("text:",text)
+        }
    if (text === '""' || text === "") {
        text = "No suggestions";
    }
@@ -280,7 +259,7 @@ async function getTransAI(
     return "OK";
 
     } catch (err) {
-        console.error("Fetch OpenAI failed:", err);
+        console.error("Fetch Mistral failed:", err);
         return null;
     }
 
@@ -666,5 +645,6 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
     }
     return errorstate
 }
+
 
 

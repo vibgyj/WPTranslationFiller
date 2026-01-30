@@ -1,12 +1,72 @@
-﻿
-async function loadTopP() {
-    const result = await chrome.storage.local.get('AI_Top_p');
-    Top_p = result.AI_Top_p;
+﻿async function checkModelAndContinue(modelName) {
+    try {
+        const isLoaded = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(
+                { action: "CheckModelLMs", model: modelName },
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        reject(chrome.runtime.lastError);
+                        return;
+                    }
+                    resolve(response); // true of false
+                }
+            );
+        });
+
+        if (!isLoaded) {
+             messageBox("error", __(`The model: "${modelName}" is not loaded.<br>Please load the model first`));
+            //alert(`Het model "${modelName}" is niet geladen!`);
+            return false; // 🔹 signaleren aan de aanroepende functie
+        }
+
+        // Model is geladen, de functie kan verder
+        //console.debug(`Het model "${modelName}" is geladen. Verder gaan...`);
+       return true
+
+        return true; // 🔹 resultaat teruggeven
+    } catch (err) {
+        console.debug("Fout bij check:", err.message);
+         messageBox("error", __(`The model: "${modelName}" is not loaded.<br>Or server is not running<br>Please load the model first`));
+       // alert("Er is een fout opgetreden bij het controleren van het model.");
+        return false; // fout signaleren
+    }
 }
-async function loadTopK() {
-    const result = await chrome.storage.local.get('AI_Top_k');
-    Top_k = result.AI_Top_k;
+
+function generateTranslateID() {
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[-:.TZ]/g, ""); // 20260128T084512 -> 20260128084512
+    const random = Math.floor(Math.random() * 1000); // kleine random voor zekerheid
+    return `translate-${timestamp}-${random}`;
 }
+
+async function initPublicVars() {
+   var result = await chrome.storage.local.get('showHistory') 
+   showHistory = result.showHistory; // Assign the value to the global variable
+   result = await  chrome.storage.local.get('transsel')
+   translator = result.transsel; // Assign the value to the global variable
+   result = await chrome.storage.local.get('noPeriod')
+   no_period = result.noPeriod; // Assign the value to the global variable
+   result = await chrome.storage.local.get('DefGlossary')
+   DefGlossary = result.DefGlossary; // Assign the value to the global variable
+   result = await chrome.storage.local.get('AI_Top_p');
+   Top_p = result.AI_Top_p;
+   result = await chrome.storage.local.get('AI_Top_k');
+   Top_k = result.AI_Top_k;
+   result = await chrome.storage.local.get('autoCopyClip')
+    autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
+   result = await chrome.storage.local.get('strictValidate')
+   strictValidation = result.strictValidate; // Assign the value to the global variable
+
+}
+
+//async function loadTopP() {
+//    const result = await chrome.storage.local.get('AI_Top_p');
+//    Top_p = result.AI_Top_p;
+//}
+//async function loadTopK() {
+//    const result = await chrome.storage.local.get('AI_Top_k');
+//    Top_k = result.AI_Top_k;
+//}
 
 /**
  * Vervangt alle blokken van 2 of meer spaties in de tekst door unieke placeholders.
@@ -1068,22 +1128,44 @@ function addtoClipBoardClicked(event) {
     }
 }
 
-function copyToClipBoard(detailRow) {
-    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);
-    if (e != null) {
-        var content = e.querySelector("span.original-raw").innerText;
-        if (content != null) {
-            navigator.clipboard.writeText(content);
-            toastbox("info", "Copy original to clipboard<br>" + content, "2500", "Copy");
-        }
-        else {
-            toastbox("error", "No text found to copy", "1200", "Error");
-        }
-    }
-    else {
+async function copyToClipBoard(detailRow) {
+    const e = document.querySelector(
+        `#editor-${detailRow} div.editor-panel__left div.panel-content`
+    );
+
+    if (!e) {
         toastbox("error", "No text found to copy", "1200", "Error");
+        return;
+    }
+
+    const span = e.querySelector("span.original-raw");
+    if (!span || !span.innerText) {
+        toastbox("error", "No text found to copy", "1200", "Error");
+        return;
+    }
+
+    const content = span.innerText;
+
+    try {
+        await navigator.clipboard.writeText(content);
+        toastbox(
+            "info",
+            "Copy original to clipboard<br>" + content,
+            "2500"
+            
+        );
+    } catch (err) {
+        console.error("Clipboard write failed:", err);
+
+        toastbox(
+            "error",
+            "Clipboard blocked by browser or policy",
+            "2000",
+            "Error"
+        );
     }
 }
+
 
 function addCheckBox() {
     var BulkButton;

@@ -7,10 +7,10 @@ var dbDeepL;
 var jsstoreCon;
 var myGlotDictStat;
 var interCept = false;
-var strictValidation = true
+var strictValidation = false
 var StartObserver = true;
 var LocRecCout
-var autoCopyClipBoard;
+var autoCopyClipBoard
 var LoadGloss;
 var DispCount;
 var is_pte;
@@ -21,7 +21,13 @@ var GLOBAL_GLOSSARY = []; // globale variabele bovenin content script
 var no_period = false;
 var spaceMap = {}; // this will hold the space mappings for the current session
 var Top_p = 0.1
-var Top_k = 1 
+var Top_k = 1.
+var translator = ""// Declare the global variable
+var DefGlossary = true;
+var RecCount = 0;
+var showHistory = false;
+var DispClipboard 
+var strictValidation
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -136,6 +142,57 @@ function setupTooltipHandler() {
             }, 2000);
         }
     });
+
+  // Luister naar alle clicks op het document
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('button.panel-header-actions__next.with-tooltip');
+    if (!button) return;
+
+    // action netjes trimmen
+    let action = button.textContent.trim().replace(/\s+/g, ' ');
+    
+    // Zoek het eerstvolgende <tr> vanaf de button
+    let tr = button.closest('tr'); // eerst de huidige <tr> vinden
+    if (!tr) return;
+
+    let nextTr = tr.nextElementSibling; // het volgende <tr> element
+    if (nextTr) {
+        rowId = nextTr.getAttribute("row");
+         const autoClip = toBoolean(autoCopyClipBoard);
+         if (autoClip) {
+            copyToClipBoard(rowId);
+        }
+       
+    } else {
+        console.log('Geen volgende TR gevonden');
+    }
+});
+
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('button.panel-header-actions__previous.with-tooltip');
+    if (!button) return;
+
+    // action netjes trimmen
+    let action = button.textContent.trim().replace(/\s+/g, ' ');
+    
+    // huidige tr
+    let tr = button.closest('tr');
+    if (!tr) return;
+
+    // twee rijen terug
+    let secondPrevTr = tr.previousElementSibling?.previousElementSibling;
+
+    if (secondPrevTr) {
+        let rowId = secondPrevTr.getAttribute("row");
+        const autoClip = toBoolean(autoCopyClipBoard);
+        if (autoClip) {
+            copyToClipBoard(rowId);
+        }
+    } else {
+        console.log('Geen tweede vorige TR gevonden');
+    }
+});
+
 
 
   document.addEventListener("keydown", (event) => {
@@ -266,10 +323,8 @@ async function startFullScript(textarea) {
     const myCustomEvent = new CustomEvent('myCustomEvent', {
         detail: { message: 'This is a custom event!' }
     });
-    // We need to set Top_p and Top_k first
-    await loadTopP();
-    await loadTopK();
-    
+
+    await initPublicVars()
 
     let is_loaded = await loadGlossaries(myCustomEvent);
 
@@ -323,10 +378,7 @@ else {
     db = myOpenDB(db);
 }
 
-var translator; // Declare the global variable
-var DefGlossary = true;
-var RecCount = 0;
-var showHistory;
+
 
 // Use chrome.local.get to retrieve the value
 if (typeof (Storage) !== "undefined") {
@@ -345,46 +397,6 @@ if (interCept === null || (interCept !== "true" && interCept !== "false")) {
 
 sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
 
-
-chrome.storage.local.get('showHistory', async function (result) {
-    showHistory = result.showHistory; // Assign the value to the global variable
-});
-chrome.storage.local.get('transsel', async function (result) {
-    translator = result.transsel; // Assign the value to the global variable
-});
-
-chrome.storage.local.get('noPeriod', async function (result) {
-    no_period = result.noPeriod; // Assign the value to the global variable
-   return no_period
-});
-
-
-chrome.storage.local.get('DefGlossary', async function (result) {
-    DefGlossary = result.DefGlossary; // Assign the value to the global variable
-});
-
-chrome.storage.local.get('strictValidate', async function (result) {
-    strictValidation = result.strictValidate; // Assign the value to the global variable
-    // we get a sting so make it a boolean
-    if (strictValidation == "true") {
-        strictValidation = true
-    }
-    else {
-        strictValidation = false
-    }
-});
-
-
-chrome.storage.local.get('autoCopyClip', async function (result) {
-    autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
-    // we get a sting so make it a boolean
-    if (autoCopyClipBoard == true) {
-        autoCopyClipBoard = true
-    }
-    else {
-        autoCopyClipBoard = false
-    }
-});
 
 const setToonDiff = async function (obj) {
     return new Promise((resolve, reject) => {
@@ -996,8 +1008,27 @@ document.addEventListener("keydown", async function (event) {
 // PSS added this one to be able to see if the Details button is clicked
 // 16-06-2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 const el = document.getElementById("translations");
-if (el != null) {
+  if (el != null) {
+
     el.addEventListener("click", (event) => {
+        const target = event.target;
+        //console.debug("target:",target)
+       if (target.closest(".translation-actions__save.button.is-primary")) {
+         
+          // Zoek het eerstvolgende <tr> vanaf de save button
+         let tr = target.closest('tr'); // eerst de huidige <tr> vinden
+         if (!tr) return;
+           let nextTr = tr.nextElementSibling; // het volgende <tr> element
+           if (nextTr) {
+               rowId = nextTr.getAttribute("row");
+               const autoClip = toBoolean(autoCopyClipBoard);
+               if (autoClip) {
+                   copyToClipBoard(rowId);
+               }
+           }
+           
+        }
+        //console.debug("we have a button click:",event)
         checkbuttonClick(event);
     });
 }
@@ -1005,6 +1036,7 @@ if (el != null) {
 const el3 = document.getElementById("translations");
 if (el3 != null) {
     el3.addEventListener("click", checkactionClick());
+    
 }
 
 //Add option link
@@ -1494,7 +1526,7 @@ async function translatedButton() {
     DispGloss.onclick = DispGlossClicked;
     DispGloss.innerText = __("DispGloss");
     
-    let DispClipboard = document.createElement("a");
+    DispClipboard = document.createElement("a");
     DispClipboard.href = "#";
     DispClipboard.style.visibility = 'hidden'
     DispClipboard.className = "DispClipboard-button";
@@ -2085,13 +2117,12 @@ function impFileClicked(event) {
         }
     );
 }
-
-function translatePageClicked(event) {
+ function translatePageClicked(event) {
     event.preventDefault();
     var formal;
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyTranslateio", "apikeyLingvanex", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "GeminiPrompt"],
-        function (data) {
+        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral", "apikeyClaude", "apikeyTranslateio", "apikeyLingvanex", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "GeminiPrompt"],
+        async function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                     if (data.transsel != "undefined") {
@@ -2109,9 +2140,18 @@ function translatePageClicked(event) {
                         var deeplGlossary = localStorage.getItem('deeplGlossary');
                         var OpenAITone = data.OpenAITone;
                         // OpenAiGloss is populated from the DeepL glossary within indexedDB
+                       // console.debug("select:",data.transsel)
                         OpenAiGloss = data.OpenAiGloss;
-    
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt);
+                        if (data.transsel == "LMStudio") {
+                           result = await checkModelAndContinue(data.ollamaModel);
+                           if (!result) {
+                              //if (progressbar) {
+                            //  progressbar.style.display = "none";
+                              // }
+                           return
+        }
+    }
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI,data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect,data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2579,6 +2619,7 @@ function addtoClipBoardClicked(event) {
 
 // 18-06-2021 PSS added function to find the new rowId after clicking "approve", "reject" ,"fuzzy", and "save" 
 function checkactionClick(event) {
+    //console.debug("we have an event:",event)
     if (event != undefined) {
         // 19-06-2021 PSS changed the type to classname to prevent possible translation issue
         let classname = event.target.getAttribute("class");
@@ -2617,7 +2658,7 @@ function checkactionClick(event) {
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 async function checkbuttonClick(event) {
-    // event.preventDefault(event);
+
     var textareaElem;
     var translateButton;
     var editor;
@@ -2637,6 +2678,7 @@ async function checkbuttonClick(event) {
     let locale = checkLocale() || 'en';
     var myLocale = locale
     var target = event.target;
+  //  var ClipCopied    
      // console.debug("buttonclick")
     // Check if the clicked element is the copy-suggestion button
     if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta') || target.classList.contains('translation-suggestion__translation')) {
@@ -2648,20 +2690,11 @@ async function checkbuttonClick(event) {
                 onCopySuggestionClicked(target, rowId, replaceVerbs);
             });
 
-
-
-
-
         } else {
             console.warn('No row found for the clicked copy button.');
         }
     }
-    else {
-        if (target.classList.contains('textareas active')) {
-        console.debug("we are in editor")
-    }
-       // addTranslateButtons(rowId)
-    }
+    
    
    // console.debug("after check copy")
     if (event != undefined) {
@@ -2684,9 +2717,11 @@ async function checkbuttonClick(event) {
 
         //console.debug("action:",action)
         // we do need to make sure that we are in the editor, not meta or discussion
-        if (action == "Details" || action == "✓Details" || FireFoxAction == "Details") {
+        //console.debug("action:", action)
+         if (action == "Details" || action == "✓Details" || FireFoxAction == "Details") {
+        //if (action == "Details" || action == "✓Details" || FireFoxAction == "Details" || action == 'Meta' || action.startsWith('Others')) {
             mytarget = event.target.parentElement.parentElement;
-            // defensive programming
+           
             if (mytarget != null) {
                 rowId = mytarget.getAttribute("row");
             }
@@ -2708,7 +2743,11 @@ async function checkbuttonClick(event) {
             await waitForMyElement(`#editor-${rowId}`, 3000, "2685").then(async(res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
-                    //console.debug("myrec:",myrec)
+                      const autoClip = toBoolean(autoCopyClipBoard);
+                    if (autoClip) { 
+                       copyToClipBoard(rowId)       
+                    }
+                
                     mytextarea = myrec.getElementsByClassName('foreign-text'); 
                     //console.debug("textarea:",mytextarea)
                     let mytranslation = mytextarea[0].innerHTML
@@ -2776,6 +2815,7 @@ async function checkbuttonClick(event) {
             if (myrec != null) {
                 myrec = await document.querySelector(`#editor-${rowId}`);
                 // console.debug("editor:",editor)
+              
                 mytextarea = await myrec.getElementsByClassName('foreign-text')
                 // console.debug("mytext:",mytextarea,myrec)
                 if (typeof textarea != 'undefined') {
@@ -2796,11 +2836,8 @@ async function checkbuttonClick(event) {
                 newRowId = rowId.split("-")[0] + "_1"
                 //console.debug("newrowId:",newRowId)
                 pluralTextarea = myrec.querySelector(`#translation_${newRowId}`);
-                pluralpresent = myrec.querySelector(`.editor-panel__left .source-string__plural .original-raw`);
-                if (autoCopyClipBoard) {
-                    copyToClipBoard(detailRow)
-                }
-
+                pluralpresent = myrec.querySelector(`.editor-panel__left .source-string__plural .original-raw`)
+               
                 if (pluralTextarea != "") {
                     if (detail_glossary) {
                         // This one is started to detect changes in plural
@@ -3128,9 +3165,9 @@ function translateEntryClicked(event) {
         rowId = newrowId;
     }
     
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiSelect", "GeminiPrompt", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral","apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiSelect", "GeminiPrompt", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt"], function (data) {
         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-        
+       // console.debug("select:",data.MistralSelect)
         if (data.ForceFormal != true) {
             formal = checkFormal(false);
         }
@@ -3146,7 +3183,7 @@ function translateEntryClicked(event) {
         //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
        // console.debug("geminiSel:",data.GeminiSelect)
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyClaude,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt);
         }
         else {
             messageBox("error", "You need to set the parameter for Destination language");
@@ -3235,7 +3272,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             if (!is_pte) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
                 // if there is no checkbox, we do not need to add the input to it and alter the columns
-                if (checkBx != null) {
+                if (checkBx != null && checkBx != 'undefined') {
                     inputBox = document.querySelector("#preview-" + rowId + " td input")
                     mycheckbox = document.createElement('input');
                     mycheckbox.setAttribute("type", "checkbox");
@@ -3247,7 +3284,10 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                     let myrec = document.querySelector(`#editor-${rowId}`);
                     // We need to expand the amount of columns otherwise the editor is to small
                     var tds = myrec.getElementsByTagName("td")[0];
-                    tds.setAttribute("colspan", 5);
+                    //console.debug("tds:", tds)
+                    if (tds == null) {
+                        tds.setAttribute("colspan", 5);
+                    }
                 }
             }
 
@@ -4712,13 +4752,15 @@ function showOldstringLabel(originalElem, currcount, wait, rejec, fuz, old, curr
 
 function addCheckButton(rowId, checkElem, lineNo) {
     var currentcel = document.querySelector(`#preview-${rowId} td.priority`);
-    //console.debug("we add a checkbutton",currentcel,rowId,lineNo)
+    //console.debug("we add a checkbutton", currentcel, rowId, lineNo)
+    //console.debug("checkElem in addCheckButton:", checkElem) 
     // we came from translate entry, so there is no save button
     let SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button");
     if (SavelocalButton == null) {
         SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button-disabled");
     }
     if (currentcel != null) {
+        //console.debug("checkElem:", checkElem) 
         if (checkElem == null) {
             separator1 = document.createElement("div");
             separator1.setAttribute("class", "checkElem_save");
@@ -6223,6 +6265,7 @@ function gd_wait_table_alter() {
                     const row_is_preview = addedNode.classList.contains("preview");
                     const row_is_editor = addedNode.classList.contains("editor");
                     const is_new_translation = mutation.previousSibling && mutation.previousSibling.matches(".editor.untranslated");
+                    const is_new_waiting = mutation.previousSibling && mutation.previousSibling.matches(".editor.status-waiting");
                     status_has_changed = false;
                     if (row_is_editor && mutation.previousSibling && mutation.previousSibling.matches('[class*="status-"]')) {
                         let status_before = "";
@@ -6241,10 +6284,58 @@ function gd_wait_table_alter() {
                         else {
                             // we need to determine the row to add the buttons
                             //If a new editor is opened we need the buttons for translation
-                            const preview = addedNode.nextElementSibling;
-                            const next_editor = preview.nextElementSibling;
-                            let myrow = next_editor.getAttribute('row')
-                            addTranslateButtons(myrow);
+                            const editor = addedNode.nextElementSibling;
+                            if (editor != null) {
+                                //console.debug('preview:', preview);
+                                let newrow = editor.getAttribute('row');
+                                let prevPreview = document.querySelector("#preview-" + newrow); 
+                                // we need to set the preview color to is waiting
+                                
+                                let newPrevRow = prevPreview.getAttribute("row")
+                                // here we need to check if the checkbox is present
+                                let checkBx = document.querySelector("#preview-" + newPrevRow + " .myCheckBox");
+                                var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+                                if (!is_pte) {
+                                    prevPreview.style.backgroundColor = "#b5eeee";
+                                    // if there is no checkbox, we do not need to add the input to it and alter the columns
+                                    if (checkBx == null) {
+                                        inputBox = document.querySelector("#preview-" + newPrevRow + " td input")
+                                        mycheckbox = document.createElement('input');
+                                        mycheckbox.setAttribute("type", "checkbox");
+                                        mycheckbox.setAttribute("name", "selected-row[]");
+                                        // if the inputBox is already present, we do not need to add it again
+                                        if (inputBox == null) {
+                                            var x = prevPreview.insertCell(0);
+                                            x.className = "myCheckBox";
+                                        }
+                                        let myrec = document.querySelector(`#editor-${newPrevRow}`);
+                                        // We need to expand the amount of columns otherwise the editor is to small
+                                        var tds = myrec.getElementsByTagName("td")[0];
+                                        //console.debug("tds:", tds)
+                                        if (tds == null) {
+                                            tds.setAttribute("colspan", 5);
+                                        }
+                                    }
+                                }
+
+                        }
+                        // console.debug("Auto close disabled, previous:",is_new_waiting); 
+                        if (editor != null) {
+                                const next_editor = editor.nextElementSibling;
+                                if (next_editor != null) {
+                                    let myrow = next_editor.getAttribute('row')
+                                    //console.debug("myrow for translate buttons:", myrow)
+                                    if (myrow != null && myrow != undefined) {
+                                        addTranslateButtons(myrow);
+                                    }
+                                }
+                                else {
+                                    console.debug("no next editor found")
+                                }
+                            }
+                            else {
+                                  console.debug("no preview found")
+                            }
                         }
                      });
                 });

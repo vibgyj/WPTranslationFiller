@@ -122,3 +122,15 @@ Version 3.4.53 Removed quotes around the text to translate for LMstudio
 Version 3.4.54 Fixeed an issue with reverting placeholders for LMstudio
 Version 3.4.54 Added Top_P and Top_k parameters to the settings page
 Version 3.4.54 Added Top_p and Top_k as paramters to Gemini translation
+Version 3.4.55 Fixed crashing when boolean "Disable autoclose was set"
+Version 3.4.56 if autoclose is disabled, then after saving the preview did not get the checbox added
+Version 3.4.57 Added clipboard function to the errors in the editor bx
+Version 3.4.58 Checkboxes no longer working as they should do
+Version 3.4.59 Clipbord message now also shown if "save" button is used
+Version 3.4.60 myvar werd door LLmstudio alsnog vervangen!
+Version 3.4.61 made the alert window a bit wider
+Version 3.4.61 increased retry timer for LMStudio translation
+Vwrsion 3.4.62 Implemented Mistral API
+Version 3.4.62 Improved speed of translation by removing debug statements from the background.js
+Version 3.4.63 Moved checking the models for LMstudio into the higher calling functions
+Version 3.4.63 Improved the flow of translatePage

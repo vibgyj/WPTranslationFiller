@@ -35,6 +35,7 @@ let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
+let apikeyMistralTextbox = document.getElementById("Mistral_api_key");
 let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
 let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
@@ -43,6 +44,7 @@ let apikeyLingvanexTextbox = document.getElementById("Lingvanex_api_key");
 let apikeyGeminiTextbox = document.getElementById("gemini_api_key");
 let transselectBox = document.getElementById("transselect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
+let MistralselectBox = document.getElementById("MistralSelect");
 let ClaudselectBox = document.getElementById("ClaudSelect");
 let OllamaselectBox = document.getElementById("Ollama_model");
 let GeminiselectBox = document.getElementById("GeminiSelect");
@@ -93,7 +95,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -195,6 +197,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
+    apikeyMistralTextbox.value = data.apikeyMistral;
     apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
     apikeyTranslateioTextbox.value = data.apikeyTranslateio
     apikeyClaudeTextbox.value = data.apikeyClaude;
@@ -222,6 +225,15 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     }
     else {
         OpenAIselectBox.value = data.OpenAISelect;
+    }
+    if (typeof data.MistralSelect == 'undefined') {
+       MistralselectBox.value = "mistral-small-latest";
+    }
+    else if (data.MistralSelect == "") {
+        MistralselectBox.value = "mistral-small-latest";
+    }
+    else {
+        MistralselectBox.value = data.MistralSelect;
     }
     
     if (typeof data.GeminiSelect == 'undefined') {
@@ -473,6 +485,7 @@ button.addEventListener("click", function () {
     //}
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
+    let apikeyMistral = apikeyMistralTextbox.value;
     let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
     let apikeyTranslationio = apikeyTranslateioTextbox.value;
     let apikeyClaude = apikeyClaudeTextbox.value;
@@ -508,6 +521,15 @@ button.addEventListener("click", function () {
     }
     else {
         OpenAIsel = OpenAIselectBox.value;
+    }
+    if (typeof MistralselectBox.value == "undefined") {
+        Mistralsel = "mistral-small-latest";
+    }
+    else if (MistralselectBox.value == "") {
+        MistralAIsel = "mistral-small-latest";
+    }
+    else {
+        Mistralsel = MistralselectBox.value;
     }
      if (typeof ClaudselectBox.value == "undefined") {
         Claudsel = "claude-3-5-haiku-latest";
@@ -630,6 +652,7 @@ button.addEventListener("click", function () {
     else {
         autoCopyClipBoard = "false";
     }
+
     if (document.querySelector("#disable-auto-close:checked") !== null) {
         let autoCopyClip_Set = document.querySelector("#disable-auto-close:checked");
         showClose = autoCopyClip_Set.checked;
@@ -658,6 +681,7 @@ button.addEventListener("click", function () {
             apikey: apikey,
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
+            apikeyMistral: apikeyMistral,
             apikeyMicrosoft: apikeyMicrosoft,
             apikeyDeepSeek: apikeyDeepSeek,
             apikeyTranslateio: apikeyTranslationio,
@@ -666,6 +690,7 @@ button.addEventListener("click", function () {
             apikeyLingvanex: apikeyLingvanex,
             apikeyGemini: apikeyGemini,
             GeminiSelect: Geminisel,
+            MistralSelect: Mistralsel,
             ClaudSelect: Claudsel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,

@@ -42,7 +42,7 @@
 .alert-frame {
     background: #fff;
     min-height: 400px;
-    min-width: 400px;
+    min-width: 500px;
     box-shadow: 5px 5px 10px rgb(0, 0, 0, 0.2);
     border-radius: 10px;
     animation: open-frame 0.3s linear;
