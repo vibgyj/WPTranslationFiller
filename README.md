@@ -40,7 +40,7 @@ If any bugs/problems are found, [please add an issue](https://github.com/vibgyj/
 5. For other functionality check the Wiki pages.
 
 # Git versioning
-1. git Extended tag 3.4.39
+1. git Extended tag 3.4.66
 
 ## Contributions
 This repository is provided for reference and transparency only.
