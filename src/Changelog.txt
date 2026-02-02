@@ -138,3 +138,4 @@ Version 3.4.64 Added timer for LMstudio fetch into options
 Version 3.4.65 Copytoclipboard was activated sometimes
 Version 3.4.65 Incorrect message of LMStudio model missing when going into translateentry
 Version 3.4.66 Added LibrTranslate API for localhost
+Version 3.4.67 Created a new branch on Github Extended-V27
