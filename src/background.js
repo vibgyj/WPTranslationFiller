@@ -446,7 +446,8 @@ else if (request.action === "LMStudio_translate") {
                 repeat_penalty,
                 do_not_complete,
                 Top_p,
-                Top_k
+                Top_k,
+                LMStudioWait
             } = request.data;
 
             (async () => {
@@ -504,7 +505,7 @@ else if (request.action === "LMStudio_translate") {
                     const res = await fetchWithTimeoutAndRetry(
                         url,
                         options,
-                        15000, // timeout per retry in ms
+                        LMStudioWait, // timeout per retry in ms
                         5      // max retries
                     );
 

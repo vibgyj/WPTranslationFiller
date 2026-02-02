@@ -134,3 +134,7 @@ Vwrsion 3.4.62 Implemented Mistral API
 Version 3.4.62 Improved speed of translation by removing debug statements from the background.js
 Version 3.4.63 Moved checking the models for LMstudio into the higher calling functions
 Version 3.4.63 Improved the flow of translatePage
+Version 3.4.64 Added timer for LMstudio fetch into options
+Version 3.4.65 Copytoclipboard was activated sometimes
+Version 3.4.65 Incorrect message of LMStudio model missing when going into translateentry
+Version 3.4.66 Added LibrTranslate API for localhost

@@ -1,4 +1,34 @@
-﻿async function checkModelAndContinue(modelName) {
+﻿async function isLibreTranslateRunning({
+    host = "http://127.0.0.1",
+    port = 5000,
+    timeoutMs = 1500
+} = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const response = await fetch(`${host}:${port}/languages`, {
+            method: "GET",
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        // LibreTranslate returns JSON array of languages
+        if (!response.ok) return false;
+
+        const data = await response.json();
+        return Array.isArray(data) && data.length > 0;
+
+    } catch (err) {
+        // fetch failed / timeout / connection refused
+        return false;
+    }
+}
+
+
+
+async function checkModelAndContinue(modelName) {
     try {
         const isLoaded = await new Promise((resolve, reject) => {
             chrome.runtime.sendMessage(
@@ -53,7 +83,7 @@ async function initPublicVars() {
    result = await chrome.storage.local.get('AI_Top_k');
    Top_k = result.AI_Top_k;
    result = await chrome.storage.local.get('autoCopyClip')
-    autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
+   autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
    result = await chrome.storage.local.get('strictValidate')
    strictValidation = result.strictValidate; // Assign the value to the global variable
 

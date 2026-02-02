@@ -66,6 +66,7 @@ let TMwaitValue = document.getElementById("tmWait");
 let OpenAIwaitValue = document.getElementById("OpenAIWait");
 let DeepLwaitValue = document.getElementById("DeepLWait");
 let bulkWaitValue = document.getElementById("bulkWait");
+let LMkWaitValue = document.getElementById("LMStudioTimeout");
 let TMtresholdValue = document.getElementById("TMtreshold");
 let myScreenWidthValue = document.getElementById("screenWidth");
 let verbsTextbox = document.getElementById("text_verbs");
@@ -95,7 +96,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
     
   //  if (data.DownloadPath != null) {
   //      DownloadTextbox.value = data.DownloadPath
@@ -137,7 +138,15 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         OpenAIWait.value = OpenAIWaitVal;
 
     }
-    if (typeof data.bulkWait == "undefined") {
+
+    if (typeof data.LMStudioWait == "undefined") {
+        LMWait = 20000;
+    }
+    else {
+       LMkWaitValue.value = data.LMStudioWait;
+    }
+
+     if (typeof data.bulkWait == "undefined") {
         bulkWait = 1000;
     }
     else {
@@ -716,6 +725,7 @@ button.addEventListener("click", function () {
             DeepLWait:DeepLVal,
             OpenAIWait: OpenAIVal,
             bulkWait: bulkWaitVal,
+            LMStudioWait: LMkWaitValue.value,
             TMtreshold:TMtresholdVal,
             interXHR: inter,
             LtKey: LtToolKeyTextbox.value,

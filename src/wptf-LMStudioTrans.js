@@ -1,5 +1,5 @@
 ﻿// LMStudio translate
-async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt){
+async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,LMStudioWait){
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     
     // Replace glossary and language names
@@ -32,7 +32,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
     let glossary_tokens = estimateMaxTokens(glossaryString);
    // let max_Tokens = estimateMaxTokens(originalPreProcessed);
     originalPreProcessed = applyGlossaryMap(originalPreProcessed, convertedGlossary)
-    console.debug("preprocessed:originalPreProcessed:",originalPreProcessed)
+    //console.debug("preprocessed:originalPreProcessed:",originalPreProcessed)
     // text is within the prompt and must be replaced by the text to ranslate
     let transAct_ID = await generateTranslateID()
     //console.debug("ID:",transAct_ID)
@@ -43,7 +43,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
     let max_Tokens = estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = estimateMaxTokens(myprompt);
     max_Tokens = max_Tokens + prompt_tokens
-     const start = Date.now()
+    const start = Date.now()
                     return new Promise((resolve, reject) => {
                         chrome.runtime.sendMessage({
                             action: "LMStudio_translate",
@@ -59,10 +59,13 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                 repeat_penalty: 1,         
                                 do_not_complete: 1,
                                 Top_p,
-                                Top_k
+                                Top_k,
+                                LMStudioWait
                             }
                         }, (response) => {
                             //console.debug("LMStudio response:", response);
+                            const duration = ((Date.now() - start) / 1000).toFixed(2);
+                              console.debug("Time after fetch:", duration)
                             if (!response) {
                                 hideTranslationSpinner();
                                 if (typeof response != 'undefined') {
@@ -77,58 +80,60 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                 }
                                 return "NOK";
                             }
-                           if (!response.ok) {
-                               const rawErr = response.error?.trim() || "LMStudio translation failed";
-                               //console.debug("response:", response)
-                               //console.debug("response error:",response.text)
-                               const errMsg = response.text
-                              
-                               hideTranslationSpinner();
-                               messageBox("error", "There has been an error: " + `${errMsg}` + "<br> possible caused by a CORS error<br>Start the server with 'lms server start --cors'");
-                               let progressbar = document.querySelector(".indeterminate-progress-bar");
-                              if (progressbar) {
-                                progressbar.style.display = "none";
-                              }
-                              return "NOK";
-                            }
-                            const duration = ((Date.now() - start) / 1000).toFixed(2);
-                           console.debug("Duur:",duration)
-                            translatedText = response.text
-                            translatedText = normalizeExtraNewlines(original, translatedText)
-                             let convertedGlossary = GLOBAL_GLOSSARY;
-                             if (convertedGlossary) {
-                                translatedText = applyOpenAiGlossary(
-                                translatedText,
-                                convertedGlossary
-                                  );
-                            }
-                           // console.debug("LMStudio Translated Text:", translatedText);
-                                let myTranslatedText = postProcessTranslation(
-                                 original,
-                                 translatedText,
-                                 replaceVerb,
-                                originalPreProcessed,
-                                "LMstudio",
-                                convertToLower,
-                                spellCheckIgnore,
-                                destlang
-                                    );
+                            else if (!response.ok) {
+                                //const rawErr = response.error?.trim() || "LMStudio translation failed";
+                                //console.debug("response:", response)
+                                //console.debug("response error:",response.text)
+                                const errMsg = response.text
 
-                               let current = "untranslated"
-                               processTransl(
-                                 original,
-                                 myTranslatedText,
-                                 destlang,
-                                 record,
-                                 rowId,
-                                 transtype,
-                                 plural_line,
-                                 locale,
-                                 convertToLower,
-                                current
-                            );
-                                 hideTranslationSpinner();
-                           resolve(response.translation);
+                                hideTranslationSpinner();
+                                messageBox("error", "There has been an error: " + `${errMsg}` + "<br> possible caused by a CORS error<br>Start the server with 'lms server start --cors'");
+                                let progressbar = document.querySelector(".indeterminate-progress-bar");
+                                if (progressbar) {
+                                    progressbar.style.display = "none";
+                                }
+                                return "NOK";
+                            }
+                            else {
+                                //const duration = ((Date.now() - start) / 1000).toFixed(2);
+                               // console.debug("Duur:", duration)
+                                translatedText = response.text
+                                translatedText = normalizeExtraNewlines(original, translatedText)
+                                let convertedGlossary = GLOBAL_GLOSSARY;
+                                if (convertedGlossary) {
+                                    translatedText = applyOpenAiGlossary(
+                                        translatedText,
+                                        convertedGlossary
+                                    );
+                                }
+                                // console.debug("LMStudio Translated Text:", translatedText);
+                                let myTranslatedText = postProcessTranslation(
+                                    original,
+                                    translatedText,
+                                    replaceVerb,
+                                    originalPreProcessed,
+                                    "LMstudio",
+                                    convertToLower,
+                                    spellCheckIgnore,
+                                    destlang
+                                );
+
+                                let current = "untranslated"
+                                processTransl(
+                                    original,
+                                    myTranslatedText,
+                                    destlang,
+                                    record,
+                                    rowId,
+                                    transtype,
+                                    plural_line,
+                                    locale,
+                                    convertToLower,
+                                    current
+                                );
+                                hideTranslationSpinner();
+                                resolve(response.translation);
+                            }
                         })
                     })
 }

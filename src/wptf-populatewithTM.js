@@ -186,7 +186,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
     await sleep(1000); // wait a bit for populating the table
     //console.debug("Threshold:",TMtreshold)
     var copyClip = false
-    if (autoCopyClipBoard) {
+    if (toBoolean(autoCopyClipBoard)) {
         copyClip = false;
         autoCopyClipBoard = false;
     }
@@ -274,7 +274,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
             //console.debug("transtype:",transtype)
             if (transtype == "single") {
                 if (!toTranslate) {
-                    if (autoCopyClipBoard) {
+                    if (toBoolean(autoCopyClipBoard)) {
                         copyClip = false;
                         autoCopyClipBoard = false;
                     }
