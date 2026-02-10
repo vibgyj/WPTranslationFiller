@@ -84,6 +84,8 @@ async function initPublicVars() {
    Top_k = result.AI_Top_k;
    result = await chrome.storage.local.get('autoCopyClip')
    autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
+   result = await chrome.storage.local.get('DisableAutoClose')
+   DisableAutoClose = await result.DisableAutoClose
    result = await chrome.storage.local.get('strictValidate')
    strictValidation = result.strictValidate; // Assign the value to the global variable
 

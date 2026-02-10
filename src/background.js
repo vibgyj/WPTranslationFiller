@@ -1,12 +1,15 @@
 ﻿// background.js
 //console.debug("background loaded")
 function encodeBase64(text) {
-    // Convert UTF-8 string to base64
-    return btoa(unescape(encodeURIComponent(text)));
+    // Convert UTF-8 string to Base64 (no deprecated APIs)
+    return btoa(
+        String.fromCharCode(...new TextEncoder().encode(text))
+    );
 }
 function decodeBase64(encoded) {
-    // Convert base64 back to UTF-8 string
-    return decodeURIComponent(escape(atob(encoded)));
+    // Convert Base64 back to UTF-8 string (no deprecated APIs)
+    const bytes = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
 }
 
 
@@ -195,6 +198,73 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true;
     }
+    else if (request.action == "NLPCloud") {
+        (async () => {
+            try {
+                const dataToSend = { ...request.data };
+                const apiKey = dataToSend.apiKey;
+                const originalText = dataToSend.text;
+                const target = "nld_Latn";
+                const source = "eng_Latn";
+
+                // 1. Split zinnen + separators (layout behouden)
+                const sentenceRegex = /([^\n.!?]+[.!?]?)([\s\n\t]*)/g;
+                const parts = [];
+                let match;
+
+                while ((match = sentenceRegex.exec(originalText)) !== null) {
+                    const sentence = match[1].trimEnd();
+                    const separator = match[2] || "";
+
+                    if (sentence.length === 0) continue;
+
+                    parts.push({ sentence, separator });
+                }
+
+                let finalText = "";
+
+                // 2. Per zin vertalen
+                for (const { sentence, separator } of parts) {
+                    const resp = await fetch(
+                        "https://api.nlpcloud.io/v1/nllb-200-3-3b/translation",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": "Bearer " + apiKey
+                            },
+                            body: JSON.stringify({
+                                text: sentence,
+                                source,
+                                target
+                            })
+                        }
+                    );
+
+                    if (!resp.ok) {
+                        const msg = await resp.text();
+                        sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
+                        return;
+                    }
+
+                    const data = await resp.json();
+                    const translatedText = data.translation_text || "";
+
+                    // 3. Quotes cleanup 
+                    const cleaned = cleanTranslation(translatedText);
+
+                    finalText += cleaned + separator;
+                }
+
+                sendResponse({ result: finalText });
+
+            } catch (err) {
+                sendResponse({ error: err.toString() });
+            }
+        })();
+
+        return true; // keep sendResponse alive
+    }
     else if (request.action == "Mistral") {
          (async () => {
         try {
@@ -314,14 +384,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                let messages = [
                     { role: 'system', content: systemPrompt },
                    { role: 'user', content: 'Translate the provided text without any comment or instruction' },
-                   { role: 'user', content: `translate this: ${text}` }
+                   { role: 'user', content: `${text}` }
                   ];
 
                   var bodyToSend = {
                   model: model,
                   messages: messages,
                   stream: false,
-                 options: { emperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1 ,top_p: myTop_p,  top_k: myTop_k}
+                  think: false,
+                 options: { temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: do_not_complete ,top_p: myTop_p,  top_k: myTop_k}
                  };
                 //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
@@ -1323,4 +1394,50 @@ async function fetchWithTimeoutAndRetry(
                         setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
                     )
                 ]);
-            }
+}
+
+function cleanTranslation(str) {
+ if (!str) return "";
+
+    str = str.trim();
+
+    // 1. Verwijder quotes aan begin van string
+    while (str.startsWith('"') || str.startsWith("'")) {
+        str = str.slice(1).trim();
+    }
+
+    // 2. Verwijder quotes vlak voor het laatste teken als dat een punt, vraagteken of uitroepteken is
+    const lastChar = str.slice(-1);
+    if ([".", "!", "?"].includes(lastChar)) {
+        if (str[str.length - 2] === '"' || str[str.length - 2] === "'") {
+            str = str.slice(0, -2) + lastChar;
+        }
+    } else {
+        // verwijder quotes aan het einde als er geen punt is
+        while (str.endsWith('"') || str.endsWith("'")) {
+            str = str.slice(0, -1).trim();
+        }
+    }
+
+    // 3. Los eventuele escaped quotes binnenin op
+    str = str.replace(/\\"/g, '"').replace(/\\'/g, "'");
+
+    return str;
+}
+function splitSentencesWithSeparators(text) {
+    const regex = /([^\n.!?]+[.!?]?)([\s\n\t]*)/g;
+
+    const parts = [];
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+        const sentence = match[1].trimEnd();
+        const separator = match[2] || "";
+
+        if (sentence.length === 0) continue;
+
+        parts.push({ sentence, separator });
+    }
+
+    return parts;
+}

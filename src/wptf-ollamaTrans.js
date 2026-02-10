@@ -5,8 +5,6 @@
  * Uses the AI Glossary database for rich translation context
  */
 
-// Wrapper function that reads Ollama settings from storage
-// This simplifies integration by not requiring all function signatures to be modified
 async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt) {
     var myTranslatedText = "";
     //let mymodel = "gpt-oss:20b"
@@ -14,12 +12,13 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     // Replace glossary and language names
     //console.debug("Ollama Prompt before replacements:", openAiGloss)
-    let convertedGlossary = convertGlossaryForOllamaMerged(openAiGloss)
+    let convertedGlossary = await convertGlossaryForOllamaMerged(openAiGloss)
+    //console.debug("spellCheckIgnore:", spellCheckIgnore) 
     //let newConverted = convertGlossaryToQuoted(convertedGlossary)
     //console.debug("Ollama Converted Glossary:", convertedGlossary)
-    let myprompt = ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
+    let myprompt = await ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     
-    myprompt = myprompt.replaceAll("{{tone}}", OpenAITone);
+    myprompt = await myprompt.replaceAll("{{tone}}", OpenAITone);
      if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
      else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
      else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
@@ -28,18 +27,19 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
      else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
      else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
      else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-     else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+     else myprompt = await myprompt.replaceAll("{{toLanguage}}", destlang);
     //console.debug("Ollama Prompt after replacements:", myprompt);
     if (toBoolean(is_editor)) {
         showTranslationSpinner(__("Fetching translation…"));
     }
      
     let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
-    //console.debug("Ollama Pre-processed Original:", originalPreProcessed); 
+    originalPreProcessed = await applyGlossaryMap(originalPreProcessed, convertedGlossary)
+    console.debug("Ollama Pre-processed Original:", originalPreProcessed); 
     //originalPreProcessed = '"""' + originalPreProcessed + '"""';
     //console.debug("Ollama Pre-processed Original:", originalPreProcessed);
-    let max_Tokens = estimateMaxTokens(originalPreProcessed);
-    let prompt_tokens = estimateMaxTokens(myprompt);
+    let max_Tokens = await estimateMaxTokens(originalPreProcessed);
+    let prompt_tokens = await estimateMaxTokens(myprompt);
     max_Tokens = max_Tokens + prompt_tokens
     
                     return new Promise((resolve, reject) => {
@@ -59,7 +59,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 Top_p,
                                 Top_k
                             }
-                        }, (response) => {
+                        }, async (response) => {
                            // console.debug("response:",response)
 							
                             if (!response) {
@@ -86,7 +86,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                               return "NOK";
                            }
                             translatedText = response.translation
-							translatedText = normalizeExtraNewlines(original, translatedText)
+							translatedText = await normalizeExtraNewlines(original, translatedText)
                              let convertedGlossary = GLOBAL_GLOSSARY;
                              if (convertedGlossary) {
                                 translatedText = applyOpenAiGlossary(
@@ -94,7 +94,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 convertedGlossary
                                   );
                             }
-                                 myTranslatedText = postProcessTranslation(
+                                 myTranslatedText = await postProcessTranslation(
                                  original,
                                  translatedText,
                                  replaceVerb,
@@ -107,7 +107,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                      //console.debug("Ollama Translated Text:", myTranslatedText)
                            
                                let current = "untranslated"
-                               processTransl(
+                               await processTransl(
                                  original,
                                  myTranslatedText,
                                  destlang,

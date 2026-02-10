@@ -10,7 +10,7 @@ async function transLibre(original, destlang, record, OpenAIPrompt, replacePreVe
     translatedText = translated
     //console.debug("Vertaling:", translated);
     if (translated != null) {
-        translatedText = normalizeExtraNewlines(originalPreProcessed, translatedText)
+        translatedText = await normalizeExtraNewlines(originalPreProcessed, translatedText)
         let convertedGlossary = GLOBAL_GLOSSARY;
         if (convertedGlossary) {
             translatedText = applyOpenAiGlossary(
@@ -18,20 +18,20 @@ async function transLibre(original, destlang, record, OpenAIPrompt, replacePreVe
                 convertedGlossary
             );
         }
-        // console.debug("LMStudio Translated Text:", translatedText);
-        let myTranslatedText = postProcessTranslation(
+        console.debug("LibreTrans tTranslated text:", translatedText);
+        let myTranslatedText = await postProcessTranslation(
             original,
             translatedText,
             replaceVerb,
             originalPreProcessed,
-            "LMstudio",
+            "LibreTrans",
             convertToLower,
             spellCheckIgnore,
             destlang
         );
-
+        console.debug("mytranslatedText:", myTranslatedText)
         let current = "untranslated"
-        processTransl(
+       await processTransl(
             original,
             myTranslatedText,
             destlang,
@@ -43,11 +43,13 @@ async function transLibre(original, destlang, record, OpenAIPrompt, replacePreVe
             convertToLower,
             current
         );
+        return myTranslatedText
     }
     else {
-        console.debug("We did not get a translation")
+        //console.debug("We did not get a translation")
+        return "NO TRANSLATION"
     }
-    return translated
+    
 }
 
 async function translateLibre(text, source = "en", target = "nl") {
@@ -61,7 +63,7 @@ async function translateLibre(text, source = "en", target = "nl") {
                 q: text,
                 source: source,
                 target: target,
-                format: "text"
+                format: "html"
             })
         });
 
