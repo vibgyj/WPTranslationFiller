@@ -7,15 +7,11 @@
 
 async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt) {
     var myTranslatedText = "";
-    //let mymodel = "gpt-oss:20b"
     // Ensure ollamaModel has a valid value, fallback to default
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     // Replace glossary and language names
-    //console.debug("Ollama Prompt before replacements:", openAiGloss)
     let convertedGlossary = await convertGlossaryForOllamaMerged(openAiGloss)
-    //console.debug("spellCheckIgnore:", spellCheckIgnore) 
     //let newConverted = convertGlossaryToQuoted(convertedGlossary)
-    //console.debug("Ollama Converted Glossary:", convertedGlossary)
     let myprompt = await ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     
     myprompt = await myprompt.replaceAll("{{tone}}", OpenAITone);

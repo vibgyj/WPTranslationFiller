@@ -401,7 +401,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
 
 
-    //console.debug("after replacing special_var:",translatedText)
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
@@ -472,7 +471,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 index++;
             }
         }
-
 
     }
     else if (translator == "deepl") {
