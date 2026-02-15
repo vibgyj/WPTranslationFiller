@@ -16,7 +16,7 @@
         }
 
         .container {
-            max-width: 700px;
+            max-width: 800px;
             margin: auto;
             font-size: 12pt;
         }
@@ -30,7 +30,7 @@
             text-align: left;
             background-color: #04AA6D;
             color: white;
-            width: 600px;
+            width: 800px;
         }
 
         #footer td,
@@ -41,38 +41,41 @@
         }
 
         #google_api_key {
-            width: 350px;
+            width: 400px;
         }
 
         #deepl_api_key {
-            width: 350px;
+            width: 400px;
         }
 
         #deepseek_api_key {
-            width: 350px;
+            width: 400px;
         }
         #Translateio_api_key {
-            width: 350px;
+            width: 400px;
         }
 
         #microsoft_api_key {
-            width: 350px;
+            width: 400px;
         }
 
         #OpenAI_api_key {
-            width: 350px;
+            width: 400px;
+        }
+        #Mistral_api_key {
+            width: 400px;
         }
         #Claude_api_key {
-            width: 350px;
+            width: 400px;
         }
         #Lingvanex_api_key {
-            width: 350px;
+            width: 400px;
         }
         #Ollama_api_key {
-            width: 350px;
+            width: 400px;
         }
         #gemini_api_key {
-            width: 350px;
+            width: 400px;
         }
 
         #glossary_file {
@@ -220,11 +223,12 @@
                 letter-spacing: 1px;
                 color: #eaeaea;
                 background-color: #0085ba;
-                /*background-color: rgba(0,0,0,.3); */
                 padding: .5rem;
                 border-radius: 5px;
                 min-width: 315px;
+                white-space: pre-line; /* ← DE sleutel */
             }
+
             /* Show the tooltip text when you mouse over the tooltip container */
             .tooltip:hover::before {
                 opacity: 1;
@@ -262,7 +266,7 @@
         <table id="options">
             <tr>
                 <td>
-                    <label for="gemii_api_key">Gemini API Key</label>
+                    <label for="gemini_api_key">Gemini API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
@@ -287,6 +291,16 @@
                 <td>
                     <div class="form-input">
                         <input id="microsoft_api_key" type="text" value="Microsoft-api key->" placeholder="Microsoft API key" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="Mistral_api_key">Mistral API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Mistral_api_key" type="text" value="mistral-api key->" placeholder="Mistral API key" />
                     </div>
                 </td>
             </tr>
@@ -377,7 +391,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="Ollama_model" type="text" value="Ollama model->" />
+                        <input style="width:300px" id="Ollama_model" type="text" value="Ollama model->" />
                     </div>
                 </td>
             </tr>
@@ -416,11 +430,33 @@
             </tr>
             <tr>
                 <td>
-                    <label for="OpenAIselect">Select a model for OpenAI:</label>
+                    <label for="Mistral">Select a model for Mistral:</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <select title="Select a model for OpenAI" name="OpenAIsel" id="OpenAIselect">
+                        <select title="Select a model for Mistral" name="MistralSel" id="MistralSelect">
+                            <option value="mistral-small-2506">mistral-small-2506</option>
+                            <option value="magistral-small-2509">magistral-small-2509</option>
+                            <option value="mistral-small-latest">mistral-small-latest</option>
+                            <option value="mistral-large-2512">mistral-large-2512</option>
+                            <option value=" ministral-8b-2512"> ministral-8b-2512</option>
+                            <option value="ministral-14b-2512">ministral-14b-2512</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="OpenAIselect">Select a model for AI:</label>
+                    <span class="tooltip" data-tooltip="This line is for setting the parameters for AI&#10;
+                                                        Set the temp near zero for all of the models&#10;
+                                                        Set the Top_p value to 0.9&#10;
+                                                        Set the Top_k to 40&#10;
+                                                        Visit the models site for the exact values">?</span>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for AI" name="OpenAIsel" id="OpenAIselect">
                             <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                             <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
                             <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
@@ -439,8 +475,13 @@
                             <option value="gpt-5.1-mini">gpt-5.1-mini</option>
                             <option value="gpt-5.1-nano">gpt-5.1-nano</option>
                         </select>
-                        <label for="OpenAI_temp">temperature:</label>
+                        <label for="OpenAI_temp">temp:</label>
+
                         <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
+                        <label for="AI Top_p">Top_p:</label>
+                        <input type="number" min="0" max="1" step=".1" id="AI_Top_p" value="0.1" />
+                        <label for="AI Top_k">Top_k:</label>
+                        <input type="number" min="0" max="150" step="1" id="AI_Top_k" value="1" />
                     </div>
                 </td>
             </tr>
@@ -474,9 +515,11 @@
                             <option value="deepseek">DeepSeek</option>
                             <option value="gemini">Gemini</option>
                             <option value="google">Google</option>
+                            <option value="LibreTrans">LibreTrans</option>
                             <option value="lingvanex">Lingvanex</option>
                             <option value="LMStudio">LMstudio</option>
                             <option value="microsoft">Microsoft</option>
+                            <option value="Mistral">Mistral</option>
                             <option value="OpenAI">OpenAI</option>
                             <option value="translation_io">translationio</option>
                             <option value="Claude">Claud</option>
@@ -616,6 +659,9 @@
                     <div class="form-input">
                         <input id="TMtreshold" type="number" min="80" max="100" value="90" />
                         <span class="tooltip" data-tooltip="Change this if the results for TM are not OK">?</span>
+                        <label style="margin: 17px" for="LMstudio">LMstudio timout</label>
+                        <input style="margin: 18px; width: 45px" id="LMStudioTimeout" type="text" value="200000" />
+                        <span class="tooltip" data-tooltip="Change this when you get no results back">?</span>
                     </div>
                 </td>
             </tr>
@@ -634,7 +680,7 @@
         </table>
         <div class="form-input">
             <label for="text_openai_prompt">AI prompt</label>
-            <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated">?</span>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated for OpenAi and Mistral">?</span>
             <textarea id="text_openai_prompt"></textarea>
         </div>
         <div class="form-input">

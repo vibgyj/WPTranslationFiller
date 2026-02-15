@@ -1,4 +1,166 @@
-﻿
+﻿async function isLibreTranslateRunning({
+    host = "http://127.0.0.1",
+    port = 5000,
+    timeoutMs = 1500
+} = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const response = await fetch(`${host}:${port}/languages`, {
+            method: "GET",
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        // LibreTranslate returns JSON array of languages
+        if (!response.ok) return false;
+
+        const data = await response.json();
+        return Array.isArray(data) && data.length > 0;
+
+    } catch (err) {
+        // fetch failed / timeout / connection refused
+        return false;
+    }
+}
+
+
+
+async function checkModelAndContinue(modelName) {
+    try {
+        const isLoaded = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(
+                { action: "CheckModelLMs", model: modelName },
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        reject(chrome.runtime.lastError);
+                        return;
+                    }
+                    resolve(response); // true of false
+                }
+            );
+        });
+
+        if (!isLoaded) {
+             messageBox("error", __(`The model: "${modelName}" is not loaded.<br>Please load the model first`));
+            //alert(`Het model "${modelName}" is niet geladen!`);
+            return false; // 🔹 signaleren aan de aanroepende functie
+        }
+
+        // Model is geladen, de functie kan verder
+        //console.debug(`Het model "${modelName}" is geladen. Verder gaan...`);
+       return true
+
+        return true; // 🔹 resultaat teruggeven
+    } catch (err) {
+        console.debug("Fout bij check:", err.message);
+         messageBox("error", __(`The model: "${modelName}" is not loaded.<br>Or server is not running<br>Please load the model first`));
+       // alert("Er is een fout opgetreden bij het controleren van het model.");
+        return false; // fout signaleren
+    }
+}
+
+function generateTranslateID() {
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[-:.TZ]/g, ""); // 20260128T084512 -> 20260128084512
+    const random = Math.floor(Math.random() * 1000); // kleine random voor zekerheid
+    return `translate-${timestamp}-${random}`;
+}
+
+async function initPublicVars() {
+   var result = await chrome.storage.local.get('showHistory') 
+   showHistory = result.showHistory; // Assign the value to the global variable
+   result = await  chrome.storage.local.get('transsel')
+   translator = result.transsel; // Assign the value to the global variable
+   result = await chrome.storage.local.get('noPeriod')
+   no_period = result.noPeriod; // Assign the value to the global variable
+   result = await chrome.storage.local.get('DefGlossary')
+   DefGlossary = result.DefGlossary; // Assign the value to the global variable
+   result = await chrome.storage.local.get('AI_Top_p');
+   Top_p = result.AI_Top_p;
+   result = await chrome.storage.local.get('AI_Top_k');
+   Top_k = result.AI_Top_k;
+   result = await chrome.storage.local.get('autoCopyClip')
+   autoCopyClipBoard = result.autoCopyClip; // Assign the value to the global variable
+   result = await chrome.storage.local.get('strictValidate')
+   strictValidation = result.strictValidate; // Assign the value to the global variable
+
+}
+
+//async function loadTopP() {
+//    const result = await chrome.storage.local.get('AI_Top_p');
+//    Top_p = result.AI_Top_p;
+//}
+//async function loadTopK() {
+//    const result = await chrome.storage.local.get('AI_Top_k');
+//    Top_k = result.AI_Top_k;
+//}
+
+/**
+ * Vervangt alle blokken van 2 of meer spaties in de tekst door unieke placeholders.
+ * @param {string} original - de originele tekst waarin spatieblokken vervangen moeten worden
+ * @returns {object} - { original: tekst met placeholders, spaceMap: mapping van placeholders naar spatieblokken }
+ */
+function replaceMultiSpaces(original) {
+    const spaceMap = {};
+    let index = 0;
+
+    original = original.replace(/ {2,}/g, match => {
+        const key = `[[placeholder2_${index}]]`; // unieke key
+        spaceMap[key] = match;
+        index++;
+        return key;
+    });
+
+    return { original, spaceMap };
+}
+
+function restorePlaceholders(translatedText, placeholderMap) {
+    if (!placeholderMap || Object.keys(placeholderMap).length === 0) {
+        return translatedText;
+    }
+
+    // Sorteer DESC (belangrijk!)
+    const tokens = Object.keys(placeholderMap).sort((a, b) => {
+        const ai = Number(a.match(/\d+/)[0]);
+        const bi = Number(b.match(/\d+/)[0]);
+        return bi - ai;
+    });
+
+    for (const token of tokens) {
+        const originalValue = placeholderMap[token];
+
+        // Match uitsluitend [[mVar_N]] met optionele whitespace
+        // ✔ [[mVar_5]]
+        // ✔ [[ mVar_5 ]]
+        // ✘ mVar_5
+        // ✘ %7$s
+        const safeRegex = new RegExp(
+            "\\[\\[\\s*" +
+            token.replace("[[", "").replace("]]", "") +
+            "\\s*\\]\\]",
+            "g"
+        );
+
+        translatedText = translatedText.replace(safeRegex, originalValue);
+    }
+
+    return translatedText;
+}
+
+function restoreMultiSpaces(text, spaceMap) {
+    for (const key in spaceMap) {
+        text = text.replaceAll(key, spaceMap[key]);
+    }
+    return text;
+}
+
+
+
+
+
 /**
  * Applies a flat glossary mapping to a string.
  * Matches exact words (case-insensitive) and replaces them.
@@ -996,22 +1158,44 @@ function addtoClipBoardClicked(event) {
     }
 }
 
-function copyToClipBoard(detailRow) {
-    let e = document.querySelector(`#editor-${detailRow} div.editor-panel__left div.panel-content`);
-    if (e != null) {
-        var content = e.querySelector("span.original-raw").innerText;
-        if (content != null) {
-            navigator.clipboard.writeText(content);
-            toastbox("info", "Copy original to clipboard<br>" + content, "2500", "Copy");
-        }
-        else {
-            toastbox("error", "No text found to copy", "1200", "Error");
-        }
-    }
-    else {
+async function copyToClipBoard(detailRow) {
+    const e = document.querySelector(
+        `#editor-${detailRow} div.editor-panel__left div.panel-content`
+    );
+
+    if (!e) {
         toastbox("error", "No text found to copy", "1200", "Error");
+        return;
+    }
+
+    const span = e.querySelector("span.original-raw");
+    if (!span || !span.innerText) {
+        toastbox("error", "No text found to copy", "1200", "Error");
+        return;
+    }
+
+    const content = span.innerText;
+
+    try {
+        await navigator.clipboard.writeText(content);
+        toastbox(
+            "info",
+            "Copy original to clipboard<br>" + content,
+            "2500"
+            
+        );
+    } catch (err) {
+        console.error("Clipboard write failed:", err);
+
+        toastbox(
+            "error",
+            "Clipboard blocked by browser or policy",
+            "2000",
+            "Error"
+        );
     }
 }
+
 
 function addCheckBox() {
     var BulkButton;

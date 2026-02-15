@@ -103,7 +103,9 @@ async function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
-   // console.debug("translator:",translator)
+    // prereplverb contains the verbs to replace before translation
+    // console.debug("translator:",translator)
+    //console.debug("original:", original)
     if (translator != "lingvanex" && translator != "LMstudio") {
         const charmatches = original.matchAll(specialChar);
         if (charmatches != null) {
@@ -119,20 +121,11 @@ async function preProcessOriginal(original, preverbs, translator) {
             }
         }
     }
-    
-    // prereplverb contains the verbs to replace before translation
-    for (let i = 0; i < preverbs.length; i++) {
-        if (!CheckUrl(original, preverbs[i][0])) {
-            // We need to remove the word provided
-            if (preverbs[i][0].startsWith("#remove")) {
-                original = removeWord(original, preverbs[i][1])
-                //console.debug("original after:",original)
-            }
-            original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
-        }
-    }
+
+   
     // 15-05-2021 PSS added check for translator
-    if (translator == "google") {
+
+    else if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
             index = 0;
@@ -220,6 +213,8 @@ async function preProcessOriginal(original, preverbs, translator) {
             index++;
         }
 
+
+        
         // We need to remove markup that contains & and ; otherwise translation will fail
         let markupmatches = original.match(markupRegex)
         if (markupmatches != null) {
@@ -231,13 +226,23 @@ async function preProcessOriginal(original, preverbs, translator) {
             }
         }
 
-        translatedText
-            .replace(/\t/g, "__TAB__")
-            .replace(/\r\n/g, "__CRLF__")
-            .replace(/\n/g, "__LF__");
 
     }
     else if (translator == "LMstudio") {
+       
+        //console.debug("original:",original)
+        
+         // We need to remove markup that contains & and ; otherwise translation will fail
+        let markupmatches = original.match(markupRegex)
+        if (markupmatches != null) {
+            index = 1;
+            for (const markupmatch of markupmatches) {
+                //console.debug("before:",markupmatch)
+                original = original.replace(markupmatch, `{myymark_var${index}}`);
+                index++;
+            }
+        }
+
 
         const linkmatches = original.match(linkRegex);
 
@@ -254,7 +259,7 @@ async function preProcessOriginal(original, preverbs, translator) {
 
         // Store placeholder mappings for post-replacement
 
-        let index = 1;
+        index = 1;
         placeholderMap = {};
         // Replace each match with a unique token and store original
         const matches = [...original.matchAll(placeholderRegex)];
@@ -271,27 +276,23 @@ async function preProcessOriginal(original, preverbs, translator) {
         original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
            if (match === '\t') return `mytab`;
              return `<code>placeholder${index}</code>`;
-          });
+        });
 
-       
-     //   original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
-    //    if (match === '\t') {
-    //       return `<mytab${index++}>`;
-     //   }
-     //   return `<mylinefeed${index++}>`;
-     //   });
-
-
-         // We need to remove markup that contains & and ; otherwise translation will fail
-        let markupmatches = original.match(markupRegex)
-        if (markupmatches != null) {
-            index = 1;
-            for (const markupmatch of markupmatches) {
-                //console.debug("before:",markupmatch)
-                original = original.replace(markupmatch, `{mymark_var${index}}`);
-                index++;
+        for (let i = 0; i < preverbs.length; i++) {
+        if (!CheckUrl(original, preverbs[i][0])) {
+            // We need to remove the word provided
+            if (preverbs[i][0].startsWith("#remove")) {
+                original = removeWord(original, preverbs[i][1])
+                //console.debug("original after:",original)
             }
+            original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
         }
+    }
+
+        const result = replaceMultiSpaces(original);
+        original = result.original; // original bevat nu de tekst met [[Space_X]] placeholders
+        spaceMap = result.spaceMap;
+
         //console.debug("preProcessOrigineel LMstudio:", original) 
 
     }
@@ -309,7 +310,7 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
        
     }
-    console.debug("preProcessOriginal result:", original)
+    //console.debug("preProcessOriginal result:", original)
     return original;
 }
 
@@ -424,13 +425,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     }
     else if (translator == "deepl") {
-        //console.debug("placeholdemap:",placeholderMap)
-        //console.debug("we are in Deepl!!!")
         for (const token in placeholderMap) {
-            // console.debug("token:",token)
             const originalValue = placeholderMap[token];
 
-            //     // Make token safe for regex use
+            // Make token safe for regex use
             const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             // Replace all occurrences in translatedText
@@ -476,13 +474,16 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 
     }
     else if (translator  == "LMstudio") {
-        // We need to replace & back 
+        // We need to replace & back \
+        // We need to restore multiple spaces first
+        translatedText = restoreMultiSpaces(translatedText, spaceMap);
+        
         //console.debug("we are in LMstudio:",translatedText)
         const markupmatches = original.match(markupRegex);
         index = 1;
         if (markupmatches != null) {
             for (const markupmatch of markupmatches) {
-                translatedText = translatedText.replace(`{mymark_var${index}}`, markupmatch);
+                translatedText = translatedText.replace(`{myymark_var${index}}`, markupmatch);
                 index++;
             }
         }
@@ -502,26 +503,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
         // placeholderMap = { token: origineleWaarde }
-
-        for (const [token, originalValue] of Object.entries(placeholderMap)) {
-           // zoek in de vertaalde tekst varianten van de token
-           // LLM kan bijv. [[mVar_1]] -> [mVar_1], of "mVar_1", of [[ mVar_1 ]]
-           const variants = [
-           token,                               // zoals verstuurd
-           token.replace(/\[/g, "").replace(/\]/g, ""), // zonder brackets
-           token.replace(/\[\[/g, "[").replace(/\]\]/g, "]"), // enkel bracket genormaliseerd
-           token.replace(/\s+/g, ""),           // whitespace verwijderd
-           token.replace(/"/g, ""),             // quotes verwijderd
-        ];
-
-    for (const variant of variants) {
-        if (translatedText.includes(variant)) {
-            translatedText = translatedText.replaceAll(variant, originalValue);
-        }
-    }
-}
-
-
+        translatedText = restorePlaceholders(translatedText, placeholderMap)
+       
       
     }
     else if (translator == "OpenAI") {
@@ -800,16 +783,16 @@ function replace_mVar(original, translatedNewText, specialChar) {
     return translatedNewText;
 }
 
-function restorePlaceholders(text, placeholderMap) {
+//function restorePlaceholders(text, placeholderMap) {
     // Vervang tokens terug in omgekeerde volgorde (veilig tegen nesting)
-    const tokens = Object.keys(placeholderMap).sort().reverse();
+ //   const tokens = Object.keys(placeholderMap).sort().reverse();
 
-    for (const token of tokens) {
-        text = text.replaceAll(token, placeholderMap[token]);
-    }
+ //   for (const token of tokens) {
+  //      text = text.replaceAll(token, placeholderMap[token]);
+  //  }
 
-    return text;
-}
+  //  return text;
+//}
 
 
 
@@ -1463,7 +1446,7 @@ async function compairWithSuggestion(is_pte, convertToLower, spellCheckIgnore, l
     });
 
     const tableRows = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content");
-    console.debug("Total records found:", tableRows.length);
+   // console.debug("Total records found:", tableRows.length);
 
     let matchCount = 0;
 
@@ -1658,7 +1641,7 @@ async function findDuplicates() {
     const tableRows = document.querySelectorAll(
         "tr.editor div.editor-panel__left div.panel-content"
     );
-    console.debug("Total records found:", tableRows.length);
+    //console.debug("Total records found:", tableRows.length);
 
     const seen = new Map();
     let duplicateCount = 0;
@@ -3728,7 +3711,7 @@ async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplac
                 toTranslate = checkComments(comment.trim());
             }
             if (!toTranslate) {
-                if (autoCopyClipBoard) {
+                if (toBoolean(autoCopyClipBoard)) {
                     copyClip = false;
                     autoCopyClipBoard = false;
                 }
@@ -4104,7 +4087,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt, MistralSelect,LMStudioWait) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -4218,7 +4201,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 // console.debug("current:",current)
                 //console.debug("myTranslated:",myTranslated)
                 //console.debug("handle_plural 4152:",openAiGloss)
-                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt)
+                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait)
 
                 editorElem = editor.querySelector("textarea.foreign-text");
                // console.debug("pretranslated before validate:")
@@ -4313,7 +4296,11 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             //console.log('Handling a single type...');
             transtype = 'single'
             plural_line = 0
-            if (transsel == "translation_io") {
+            if (transsel == "LibreTrans") {
+                  is_editor = false
+                  result = await transLibre(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
+            }
+            else if (transsel == "translation_io") {
                 is_entry = true
                 result = await translateWithGolinguist(original, "nl-nl", record, row, apikeyTranslateio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
 
@@ -4410,6 +4397,25 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     }
                 }
             }
+            else if (transsel == "Mistral") {
+                        let editor = true;
+                        result = await MistralTranslate(original, destlang, record, apikeyMistral, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
             else if (transsel == "OpenAI") {
                 result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
                 //console.debug("result:",result)
@@ -4478,7 +4484,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             } 
             else if (transsel === "LMStudio") {
                         let is_editor = false
-                        result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,LMStudioWait);
                         hideTranslationSpinner();
                     } 
             await  mark_as_translated(row, current, true, rawPreview);
@@ -4537,7 +4543,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
     }
 }
                              
-async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt) {
+async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
     let debug = false
     var myTranslatedText;
     if (debug == true) {
@@ -4555,6 +4561,13 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             result = await translateWithGolinguist(plural, "nl-nl", record, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
 
         }
+        else if (transsel == "LibreTrans") {
+                        console.debug("we translate with libre")
+                        is_editor = false
+                        result = await transLibre(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
+                        console.debug("result:",result)
+                    
+                    }
         else if (transsel == "google") {
             result = await googleTranslate(plural, destlang, record, apikey, replacePreVerb, row, transtype, plural_line, locale, convertToLower, editor, spellCheckIgnore, false);
             if (errorstate == "Error 400") {
@@ -4642,6 +4655,25 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                 }
             }
         }
+        else if (transsel == "Mistral") {
+                        let editor = true;
+                        result = await MistralTranslate(plural, destlang, record, apikeyMistral, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
         else if (transsel == "OpenAI") {
             result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
 
@@ -4682,7 +4714,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         }
         else if (transsel === "LMStudio") {
                         let is_editor = false
-                        result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        result = await translateWithLMStudio(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,LMStudioWait);
                         hideTranslationSpinner();
                         if (result == "NOK") {
                             stop = true;
@@ -4691,7 +4723,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                     } 
          else if (transsel === "gemini") {
                         let is_editor = false
-                        result = await translateWithGemini(original, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
+                        result = await translateWithGemini(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
                          console.debug("result gemini:", result)
                          if (result == "NOK") {
                             stop = true;
@@ -4853,9 +4885,16 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     pretrans = await findTransline(plural, destlang);
     //console.debug("pretrans:",pretrans)
     if (pretrans == "notFound") {
-         if (transsel == "translation_io") {
+        if (transsel == "LibreTrans") {
+                        console.debug("we translate with libre")
+                        is_editor = false
+                        result = await transLibre(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
+                        console.debug("result:",result)
+                    
+                    }
+        else if (transsel == "translation_io") {
                         is_entry = true
-                        result = await translateWithGolinguist(plural, "nl-nl", record, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
+                        result = await translateWithGolinguist(plural, "nl-nl", record, row, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
                     }
         else if (transsel == "google") {
@@ -4944,7 +4983,26 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                         //alert("There has been some uncatched error: " + errorstate);
                     }
                 }
-            }
+         }
+            else if (transsel == "Mistral") {
+                        let editor = true;
+                        result = await MistralTranslate(plural, destlang, record, apikeyMistral, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
         else if (transsel == "OpenAI") {
             result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
 
@@ -5004,7 +5062,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         }
         else if (transsel === "LMStudio") {
                 let is_editor = false
-                result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,LMStudioWait);
                 hideTranslationSpinner();
                 if (result == "NOK") {
                     stop = true;
@@ -5127,32 +5185,36 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt) {
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
     //console.debug("We started translatePage")
-    var translate;
-    var transtype = "";
-    var plural_line = "";
-    var plural_present = "";
-    var record = "";
-    var row = "";
-    var newrow;
-    var rowfound = "";
-    var preview = "";
-    var previewElem;
-    var pretrans;
-    var timeout = 1000;
-    var mytimeout = 1000;
+   // var translate;
+   // var transtype = "";
+   // var plural_line = "";
+   // var plural_present = "";
+   // var record = "";
+  //  var row = "";
+  ////  var newrow;
+  //  var rowfound = "";
+  //  var preview = "";
+  //  var previewElem;
+  //  var pretrans;
     var vartime = 100;
     var stop = false;
     var editor = false;
     var counter = 0;
     var myrecCount = 0;
-    var previewClass;
-    var localRow;
-    var mytransType = "none"
+ //   var previewClass;
+ //   var localRow;
+ //   var mytransType = "none"
     var myheader = document.querySelector('header');
-    
-    //console.debug("transType at start:",mytransType)
+    //console.debug("select:",MistralSelect)
+    //console.debug("transsel at start:",transsel)
+    if (transsel == "LMStudio") {
+        result = await checkModelAndContinue(ollamaModel);
+        if (!result) {
+            return
+        }
+    }
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
@@ -5171,16 +5233,17 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
         inprogressbar.style = ""
         progressbar.style.display = 'block';
     }
+    
     //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
     if (transsel == 'OpenAI') {
         vartime = convertToNumber(openAIWait);
     }
-    else if (transsel == "LMstudio") {
+    else if (transsel == "LMStudio") {
         vartime = convertToNumber(openAIWait);
     }
 
     //console.debug("DeepL:",transsel,DeepLWait)
-    if (transsel == 'deepl') {
+    else if (transsel == 'deepl') {
         // console.debug("we have deepl")
         timeout=0
         vartime = convertToNumber(DeepLWait)
@@ -5231,94 +5294,97 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             const progressbar = document.querySelector(".indeterminate-progress-bar");
 
             let counter = 0;
-  //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+            //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
             //const progressbar = document.querySelector(".indeterminate-progress-bar");
-  //await delay(vartime); // Wait the delay before starting this iteration
-  for (const record of myrecCount) {
-   //  await delay(vartime); // Wait the delay before starting next iteration
-    counter++;
-    let mytransType = "none";
-    const rowfound = record.id;
-    const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
-    const row = match ? match[1] : null;
+            //await delay(vartime); // Wait the delay before starting this iteration
+            for (const record of myrecCount) {
+                await delay(vartime); // Wait the delay before starting next iteration
+                counter++;
+                let mytransType = "none";
+                const rowfound = record.id;
+                const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
+                const row = match ? match[1] : null;
 
-    if (!row) {
-      console.debug(`No match found for record id: ${rowfound}`);
-      continue;  // Skip to next record
-    }
+               if (!row) {
+                  console.debug(`No match found for record id: ${rowfound}`);
+                  continue;  // Skip to next record
+               }
     
-    try {
-      mytransType = await handleType(
-        row,
-        record,
-        destlang,
-        transsel,
-        apikey,
-        apikeyDeepl,
-        apikeyDeepSeek,
-        apikeyMicrosoft,
-        apikeyOpenAI,
-        apikeyClaude,
-        apikeyTranslateio,
-        OpenAIPrompt,
-        transsel,
-        destlang,
-        postTranslationReplace,
-        preTranslationReplace,
-        formal,
-        convertToLower,
-        DeeplFree,
-        completedCallback,
-        OpenAISelect,
-        openAIWait,
-        OpenAItemp,
-        spellCheckIgnore,
-        deeplGlossary,
-        OpenAITone,
-        DeepLWait,
-        openAiGloss,
-        counter,
-        editor,
-        ClaudePrompt,
-        ClaudModel,
-        apikeyOllama,
-        LocalOllama,
-        ollamaModel,
-        ollamaPrompt,
-        apikeyLingvanex,
-        apikeyGemini,
-        GeminiModel,
-        GeminiPrompt
-       );
+              try {
+                mytransType = await handleType(
+                row,
+                record,
+                destlang,
+                transsel,
+                apikey,
+                apikeyDeepl,
+                apikeyDeepSeek,
+                apikeyMicrosoft,
+                apikeyOpenAI,
+                apikeyMistral,
+                apikeyClaude,
+                apikeyTranslateio,
+                OpenAIPrompt,
+                transsel,
+                destlang,
+                postTranslationReplace,
+                preTranslationReplace,
+                formal,
+                convertToLower,
+                DeeplFree,
+                completedCallback,
+                OpenAISelect,
+                openAIWait,
+                OpenAItemp,
+                spellCheckIgnore,
+                deeplGlossary,
+                OpenAITone,
+                DeepLWait,
+                openAiGloss,
+                counter,
+                editor,
+                ClaudePrompt,
+                ClaudModel,
+                apikeyOllama,
+                LocalOllama,
+                ollamaModel,
+                ollamaPrompt,
+                apikeyLingvanex,
+                apikeyGemini,
+                GeminiModel,
+                GeminiPrompt,
+                MistralSelect,
+                LMStudioWait
+               );
         
-    } catch (err) {
-      console.error(`Translation failed for row ${row}:`, err);
-    }
+            } catch (err) {
+               console.error(`Translation failed for row ${row}:`, err);
+            }
       
-      if (mytransType == "stop") {
-          if (translateButton) {
-        translateButton.classList.add("translated");
-        translateButton.innerText = __("Translated");
-      }
+            if (mytransType == "stop") {
+               if (translateButton) {
+                  translateButton.classList.add("translated");
+                  translateButton.innerText = __("Translated");
+               }
 
-      if (progressbar) {
-        progressbar.style.display = "none";
-      }
-          break
-      }
-    // When all rows are translated
-    if (counter === myrecCount.length) {
-      if (translateButton) {
-        translateButton.classList.add("translated");
-        translateButton.innerText = __("Translated");
-      }
+               if (progressbar) {
+                 progressbar.style.display = "none";
+               }
+               break
+            }
+            // When all rows are translated
+           if (counter === myrecCount.length) {
+             if (translateButton) {
+                translateButton.classList.add("translated");
+                translateButton.innerText = __("Translated");
+             }
 
-      if (progressbar) {
-        progressbar.style.display = "none";
-      }
-      messageBox("info", __("Translation is ready"));
-    }
-  }
+             if (progressbar) {
+                progressbar.style.display = "none";
+              }
+              messageBox("info", __("Translation is ready"));
+           }
+          }
         }
         else {
             messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
@@ -5520,22 +5586,30 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
     var translateButton;
     var result;
     errorstate = "OK"
     var textareaElem;
     locale = checkLocale();
     let myprompt = OpenAIPrompt
+    if (transsel == "LMStudio") {
+        result = await checkModelAndContinue(ollamaModel);
+        if (!result) {
+            return
+        }
+    }
+    const libreRunning = await isLibreTranslateRunning();
 
-   // console.debug("model:",GeminiModel)
-    //transsel= 'deepseek'
-    // addTranslateButtons(rowId);
-    //console.debug("6163:",openAiGloss)
-    //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
-    //console.debug("apiKey ollama:", apikeyOllama)
-    //console.debug("Local ollama:", LocalOllama) 
-    
+    if (libreRunning) {
+       console.log("✅ LibreTranslate draait lokaal");
+      // gebruik LibreTranslate
+    } else {
+         messageBox("error", "LibreTranslate server is not running!</br>Start the server to continue " + errorstate);
+        console.debug("❌ LibreTranslate niet beschikbaar");
+        // fallback: DeepL / OpenAI / etc.
+       return
+     }
     currWindow = window.self;
     if (typeof (Storage) !== "undefined") {
         interCept = localStorage.getItem("interXHR");
@@ -5628,9 +5702,16 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 let pretrans = await findTransline(original, destlang);
                 //console.debug("pretrans:",pretrans)
                 //console.debug("original",original," ",destlang)
-                //console.debug("transsel:",transsel)
+               // console.debug("transsel:",transsel)
                 if (pretrans == "notFound") {
-                    if (transsel == "translation_io") {
+                    if (transsel == "LibreTrans") {
+                        console.debug("we translate with libre")
+                        is_editor = true
+                        result = await transLibre(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
+                        console.debug("result:",result)
+                    
+                    }
+                    else if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
 
@@ -5652,31 +5733,6 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         is_entry = true
                         deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         //console.debug("result:",errorstate)
-                        // if (result == 'Error 403') {
-                        //     messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
-                        // }
-                        //  else if (result == 'Error 404') {
-                        //   messageBox("error", "Error in translation received status 404 The requested resource could not be found.<br>Or the glossary provided is not present<br>" + deeplGlossary);
-                        //   translateButton = document.querySelector(`#translate-${rowId}-translation-entry-my-button`);
-                        // if row is already translated the rowId has different format, so we need to search with this different format
-                        //   if (translateButton == null) {
-                        //       translateButton = document.querySelector(`#translate-${rowId}--translation-entry-my-button`);
-                        //   }
-                        //   translateButton.className += " translated_error";
-                        //   translateButton.innerText = __("Error");
-                        // }
-                        // else if (result == "Error 400") {
-                        //     messageBox("error", "Error in translation received status 400 with readyState == 3<br>Language: " + destlang + " not supported!");
-                        // }
-                        // else if (errorstate == "Error 456") {
-                        //     messageBox("error", __("Error 456 Quota exceeded. The character limit has been reached"));
-                        // }
-                        // else {
-                        //   if (errorstate != "OK" && errorstate !=false) {
-                        //       messageBox("error", "There has been some uncatched error: " + errorstate);
-                        // alert("There has been some uncatched error: " + errorstate);
-                        //   }
-                        //}
 
                     }
                     else if (transsel == "microsoft") {
@@ -5734,6 +5790,25 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                             }
                         }
                     }
+                    else if (transsel == "Mistral") {
+                        let editor = true;
+                        result = await MistralTranslate(original, destlang, e, apikeyMistral, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
                     else if (transsel == "Claude") {
                         let editor = true
                        
@@ -5774,7 +5849,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     
                     else if (transsel === "LMStudio") {
                         let is_editor = true
-                        result = await translateWithLMStudio(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        result = await translateWithLMStudio(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,LMStudioWait);
                         hideTranslationSpinner();
                     } 
                     showButton = document.getElementById("translate-" + rowId + "-translocal-entry-local-button")
@@ -5857,8 +5932,14 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 let pretrans = await findTransline(original, destlang);
                 plural_line = "2";
                 if (pretrans == "notFound") {
-
-                    if (transsel == "translation_io") {
+                    if (transsel == "LibreTrans") {
+                        console.debug("we translate with libre")
+                        is_editor = true
+                        result = await transLibre(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
+                        console.debug("result:",result)
+                    
+                    }
+                    else if (transsel == "translation_io") {
                         is_entry = true
                         result = await translateWithGolinguist(original, "nl-nl", e, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
                         
@@ -5875,6 +5956,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         }
                     }
                     else if (transsel == "deepl") {
+                        
                         // console.debug("language:",destlang)
                         //console.debug("we translate plural_line:",plural_line)
                         result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
@@ -5932,6 +6014,25 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                             }
                         }
                     }
+                    else if (transsel == "Mistral") {
+                        let editor = true;
+                        result = await MistralTranslate(original, destlang, e, apikeyMistral, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
                     else if (transsel == "OpenAI") {
                         let editor = true;
                         result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
@@ -5973,7 +6074,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     } 
                     else if (transsel === "LMStudio") {
                         let is_editor = true
-                        result = await translateWithLMStudio(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
+                        result = await translateWithLMStudio(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,LMStudioWait);
                         hideTranslationSpinner();
                     } 
                 }
@@ -6057,7 +6158,7 @@ async function saveLocal() {
     vartime = 100;
     var MycopyClip;
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    if (autoCopyClipBoard) {
+    if (toBoolean(autoCopyClipBoard)) {
         MycopyClip = true;
     }
     autoCopyClipBoard = false;
@@ -6185,7 +6286,7 @@ function walkThroughTable(selector, interval) {
                             if (current.innerText == 'waiting' || current.innerText == 'transFill') {
                                 //console.debug("we have a waiting")
                                 // 06-07-2023 PSS changed to not open the editor anymore
-                                if (autoCopyClipBoard) {
+                                if (toBoolean(autoCopyClipBoard)) {
                                     MycopyClip = true;
                                 }
                                 autoCopyClipBoard = false;
@@ -6512,7 +6613,7 @@ async function saveLocal_2(bulk_timer = 0) {
         glotpress_suggest.classList.remove("disabled");
 
         // Manage clipboard flag (preserve original behaviour)
-        if (autoCopyClipBoard) My1copyClip = true;
+        if (toBoolean(autoCopyClipBoard)) My1copyClip = true;
         autoCopyClipBoard = false;
 
         const t_start = perfNow();

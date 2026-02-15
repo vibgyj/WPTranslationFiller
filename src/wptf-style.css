@@ -1,4 +1,4 @@
-
+﻿
 #wpft-translation-spinner {
     position: fixed;
     inset: 0;
@@ -1689,41 +1689,49 @@ button[disabled] {
     }
 }
 
-/** This container is used for the toast messages */
 .toast-container {
     top: 15px;
     right: 15px;
     min-width: 300px;
-    overflow: hidden;
+    max-width: 600px; /* voorkom extreem brede toasts */
+    width: fit-content; /* laat container meegroeien */
     position: fixed;
     border-radius: 5px;
-    box-shadow: 0 0 20px rgb(0, 0, 0, 0.2);
+    box-shadow: 0 0 20px rgb(0 0 0 / 20%);
     animation: open-toast 0.3s linear;
     z-index: 999999;
+    overflow: visible; /* belangrijk, zodat toast-frame kan groeien */
 }
 
 .toast-frame {
-    padding: 5px 5px;
+    padding: 10px 15px;
     display: flex;
-    min-width: 300px;
-    height: 60px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    align-items: center ;
-    flex-wrap: wrap;
+    flex-direction: row; /* horizontale layout */
+    align-items: flex-start; /* tekst start bovenin */
+    flex-wrap: wrap; /* inhoud kan naar meerdere regels */
+    min-width: 500px;
+    height: auto; /* laat frame mee groeien */
+    border-radius: 10px;
+    word-break: break-word; /* lange woorden afbreken */
+    overflow-wrap: anywhere;
+    background-color: rgba(0,0,0,0.8); /* voorbeeld achtergrond */
 }
 
 .toast-img {
     height: 40px;
+    flex-shrink: 0; /* afbeelding krimpt niet */
+    margin-right: 10px;
 }
 
 .toast-message {
-    font-size: 14px !important;
-    font-family: "Open Sans", sans-serif;
-    font-weight: 600;
     font-size: 15px;
+    font-weight: 600;
     color: #fff;
-    margin-left: 20px;
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word; /* tekst afbreken */
+    overflow-wrap: anywhere;
+    max-width: 800px; /* voorkom dat toast te breed wordt */
 }
 
 .toast-close {

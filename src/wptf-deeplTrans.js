@@ -45,7 +45,7 @@ async function translateText(
     return new Promise((resolve) => {
 
         function sendRequest() {
-            chrome.runtime.sendMessage({ action: "translate", url, body: requestBody }, (translated) => {
+            chrome.runtime.sendMessage({ action: "DeepL", url, body: requestBody }, (translated) => {
                 if (chrome.runtime.lastError) {
                     console.error("Chrome runtime error:", chrome.runtime.lastError.message);
                     resolve(`DeepL request failed: ${chrome.runtime.lastError.message}`);
