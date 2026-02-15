@@ -88,6 +88,8 @@ async function initPublicVars() {
    DisableAutoClose = await result.DisableAutoClose
    result = await chrome.storage.local.get('strictValidate')
    strictValidation = result.strictValidate; // Assign the value to the global variable
+   result = await chrome.storage.local.get('DebugMode')
+   DebugMode = result.DebugMode; // Assign the value to the global variable
 
 }
 

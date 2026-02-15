@@ -29,6 +29,7 @@ var showHistory = false;
 var DispClipboard
 var strictValidation
 var DisableautoClose = false
+var DebugMode = false
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -654,7 +655,7 @@ document.addEventListener("keydown", async function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "F3")) {
         event.preventDefault();
-            chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
+            chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", apikeyNLP, "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
 
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
                     if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -1996,7 +1997,7 @@ function tmTransClicked(event) {
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
     event.preventDefault();
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyNLP", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"], function (data) {
        
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
 
@@ -2010,7 +2011,7 @@ function localTransClicked(event) {
                         let OpenAItemp = parseFloat(data.OpenAItemp);
                         //console.debug("localTrans:", data.OpenAiGloss)
                         myGlossary = data.OpenAiGloss
-                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, data.apikeyOpenAI, data.OpenAIPrompt, data.OpenAISelect, data.OpenAITone, OpenAItemp, data.apikeyClaude, data.ClaudePrompt, myGlossary, data.ClaudModel);
+                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, data.apikeyOpenAI, data.OpenAIPrompt, data.OpenAISelect, data.OpenAITone, OpenAItemp, data.apikeyClaude, data.ClaudePrompt, myGlossary, data.ClaudModel,data.apikeyNLP);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2809,11 +2810,25 @@ async function checkbuttonClick(event) {
                         else {
                             detail_glossary = false
                         }
+                        const clickEvent = new MouseEvent('click', {
+                          bubbles: true,
+                          cancelable: true,
+                          button: 0
+                        });
+                        //mytextarea = myrec.getElementsByClassName('foreign-text'); 
+                       // console.debug("Dispatching click event to textarea:", mytextarea[0])
+                        mytextarea[0].dispatchEvent(clickEvent);
+                        //sleep(1000);
+                       // let scribens = document.querySelector(`scribens-ui`);
+                       // console.debug("scribens_button:", scribens)
+                       // let scribens_button = scribens.querySelector("main-button")
+                       // console.debug("scribens_button:", scribens_button)
                     }
                     else {
                         mytextarea = document.querySelector(`#editor-${rowId} .foreign-text autosize`);
                        // console.debug("mytext2:", mytextarea)
                     }
+                    
                 }
                 else { console.debug("editor not found:", res) }
             })
@@ -6601,7 +6616,7 @@ async function handleMutation(mutationsList, observer) {
     textareaElem?.focus();
     //console.debug("translation:",translation)
     if (!translation) {
-        console.debug("we have no translation!")
+        if (toBoolean(DebugMode)) console.debug("we have no translation in editor!");
         return;
     }
 

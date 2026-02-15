@@ -1,5 +1,4 @@
-﻿
-/**
+﻿/**
  * This file includes all functions for translating commonly used
  */
 var currWindow = "";
@@ -104,9 +103,22 @@ async function preProcessOriginal(original, preverbs, translator) {
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
     // prereplverb contains the verbs to replace before translation
-    // console.debug("translator:",translator)
-    //console.debug("original:", original)
-    if (translator != "lingvanex" && translator != "LMstudio") {
+   // console.debug("translator:",translator)
+    // console.debug("original:", original).
+
+    // We need to replace the preverbs before sending the text to the API, otherwise the API's will not translate the text because of the presence of the formal words
+    for (let i = 0; i < preverbs.length; i++) {
+        if (!CheckUrl(original, preverbs[i][0])) {
+            // We need to remove the word provided
+            if (preverbs[i][0].startsWith("#remove")) {
+                original = removeWord(original, preverbs[i][1])
+                //console.debug("original after:",original)
+            }
+            original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
+        }
+    }
+
+    if (translator != "lingvanex" && translator != "LMstudio" && translator != "NLPCLoud") {
         const charmatches = original.matchAll(specialChar);
         if (charmatches != null) {
             // we need to start with 1 otherwise translation API's alter the zero value
@@ -125,7 +137,7 @@ async function preProcessOriginal(original, preverbs, translator) {
    
     // 15-05-2021 PSS added check for translator
 
-    else if (translator == "google") {
+    if (translator == "google") {
         const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
             index = 0;
@@ -136,6 +148,30 @@ async function preProcessOriginal(original, preverbs, translator) {
             }
         }
         original = replacePlaceholdersBeforeTranslation(original);
+    }
+    else if (translator == "NLPCLoud") {
+            const charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            // we need to start with 1 otherwise translation API's alter the zero value
+            let index = 1;
+            for (const charmatch of charmatches) {
+                // Replace the found match with a DeepL-safe placeholder
+                original = original.replace(
+                    charmatch[0],
+                    `YYY${index}`
+                );
+                index++;
+            }
+        }
+        const linkmatches = original.match(linkRegex);
+
+        if (linkmatches != null) {
+          let index = 1;
+           for (const match of linkmatches) {
+               original = original.replace(match, `XXX${index}`);
+              index++;
+            }
+       }
     }
     else if (translator == "deepl") {
 
@@ -175,7 +211,6 @@ async function preProcessOriginal(original, preverbs, translator) {
                 index++;
             }
         }
-        //console.debug("preProcessOrigineel:", original)
 
     }
     else if (translator == "microsoft") {
@@ -213,7 +248,15 @@ async function preProcessOriginal(original, preverbs, translator) {
             index++;
         }
 
+        const linkmatches = original.match(linkRegex);
 
+        if (linkmatches != null) {
+          let index = 1;
+           for (const match of linkmatches) {
+               original = original.replace(match, `linkvar${index}`);
+              index++;
+            }
+       }
         
         // We need to remove markup that contains & and ; otherwise translation will fail
         let markupmatches = original.match(markupRegex)
@@ -278,16 +321,6 @@ async function preProcessOriginal(original, preverbs, translator) {
              return `<code>placeholder${index}</code>`;
         });
 
-        for (let i = 0; i < preverbs.length; i++) {
-        if (!CheckUrl(original, preverbs[i][0])) {
-            // We need to remove the word provided
-            if (preverbs[i][0].startsWith("#remove")) {
-                original = removeWord(original, preverbs[i][1])
-                //console.debug("original after:",original)
-            }
-            original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
-        }
-    }
 
         const result = replaceMultiSpaces(original);
         original = result.original; // original bevat nu de tekst met [[Space_X]] placeholders
@@ -310,6 +343,7 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
        
     }
+    
     //console.debug("preProcessOriginal result:", original)
     return original;
 }
@@ -353,9 +387,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     var formal = checkFormal(false);
     const verbMap = Object.fromEntries(replaceVerb.map(v => [v[0], v[1]]));
     const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
-    //console.debug("verbRegex:",verbRegex)
-    let debug = false;
-    if (debug == true) {
+   
+    if (toBoolean(DebugMode)) {
         console.debug("original: ", original);
         console.debug("translatedText :", translatedText);
         console.debug("replaceVerb :", replaceVerb);
@@ -417,10 +450,28 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         });
         // Controleer of het originele tekst eindigt met newline
-        const hasTrailingNewline = /\r?\n$/.test(original);
+       // const hasTrailingNewline = /\r?\n$/.test(original);
 
         translatedText = normalizeExtraNewlines(original, translatedText)
         translatedText = removeTrailingNewline(translatedText)
+
+        const linkmatches = original.match(linkRegex);
+        //console.debug("linkmatches:",linkmatches)
+        if (linkmatches != null) {
+            index = 1;
+            for (const match of linkmatches) {
+                translatedText = translatedText.replace(`linkvar${index}`, match);
+                index++;
+            }
+        }
+        const markupmatches = original.match(markupRegex);
+        index = 1;
+        if (markupmatches != null) {
+            for (const markupmatch of markupmatches) {
+                translatedText = translatedText.replace(`{mymark_var${index}}`, markupmatch);
+                index++;
+            }
+        }
 
 
     }
@@ -553,6 +604,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
+    //console.debug("spellCheckIgnore before check_hyphen:", spellCheckIgnore) 
     translatedText = check_hyphen(translatedText, spellCheckIgnore);
     //console.debug("aftercheck_hyphen:",translatedText)
     // check if there is a blank after the tag 
@@ -597,7 +649,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                     // Build regex WITHOUT word boundaries, so tokens like {aap} will match
                     const wordRegex = new RegExp(safeWord, 'g');
                     translatedText = translatedText.replace(wordRegex, replacement);
-                    translatedText = correctSentence(translatedText, spellCheckIgnore);
+                   // translatedText = correctSentence(translatedText, spellCheckIgnore);
                 }
 
             }
@@ -616,7 +668,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                     const wordRegex = new RegExp(safeWord, 'g');
 
                     translatedText = translatedText.replace(wordRegex, replacement);
-                    translatedText = correctSentence(translatedText, spellCheckIgnore);
+                   // translatedText = correctSentence(translatedText, spellCheckIgnore);
                 }
             }
         }
@@ -643,7 +695,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 const wordRegex = new RegExp(safeWord, 'g');
 
                 translatedText = translatedText.replace(wordRegex, replacement);
-                translatedText = correctSentence(translatedText, spellCheckIgnore);
+               // translatedText = correctSentence(translatedText, spellCheckIgnore);
 
                 //console.debug("replacing:", searchWord, "->", replacement);
             }
@@ -729,28 +781,39 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             index++;
         }
     }
-   // console.debug("after replace_mVar:", translatedNewText)
-   //  var charmatches = original.matchAll(specialChar);
-   // if (charmatches != null) {
-    //    let index = 1;
-     //   for (const charmatch of charmatches) {
-            // Put back the original matched value
-         //   translatedNewText = translatedNewText.replace(
-           //     `<mVal${index}>`,
-           //     charmatch
-           // );
-          //  index++;
-       // }
-   // }
-    //console.debug("before replace_special_var:", translatedNewText)
-    // charmatches = [...original.matchAll(specialChar)]; // array van matches
+    
+    if (translator == "NLPCLoud") {
+       
+       let charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            let index = 1;
+            for (const charmatch of charmatches) {
+                // Put back the original matched value
+                translatedNewText = translatedNewText.replace(
+                    `YYY${index}`,
+                    charmatch
+                );
+                index++;
+            }
+        }
+        const linkmatches = original.match(linkRegex);
+
+        if (linkmatches != null) {
+            index = 1;
+            for (const match of linkmatches) {
+                translatedNewText = translatedNewText.replace(`XXX${index}`, match);
+                index++;
+            }
+        }
+    }
+   
     // PSS 05-02-2026 modified the replace_special_var to handle all html tags properly
     translatedNewText = replace_special_var(original, translatedNewText, specialChar)
-    console.debug("after replace_special_var:", translatedNewText)
     let processedText = translatedNewText;
     // This function below restores the placeholders for Deepl and Google so also __[mVar_1__]
     translatedNewText = restorePlaceholders(processedText, placeholderMap);
-    //console.debug("after post: ",translatedNewText)
+    translatedNewText = correctSentence(translatedNewText, spellCheckIgnore);
+    if (toBoolean(DebugMode)) console.debug("postProcessTranslation end:" ,translatedNewText);
     return translatedNewText;
 }
 
@@ -762,7 +825,7 @@ function replace_special_var(original, translatedNewText, specialChar) {
     const placeholders = [...translatedNewText.matchAll(/<x id="special_var\d+"><\/x>/g)];
 
     if (originalTags.length !== placeholders.length) {
-        console.warn(
+        console.debug(
             `Mismatch: original tags=${originalTags.length}, placeholders=${placeholders.length}`
         );
         // Optional: fallback or try best effort
@@ -837,120 +900,120 @@ function removeWord(sentence, searchWord) {
 }
 // # We do not want to replace anything if it is a URL
 function correctSentence(translatedText, ignoreList) {
-    // Check if text is only URL (your existing function)
-    let myURL = isOnlyURL(translatedText);
-    if (myURL) {
-        return translatedText;  // Return early if only URL
-    }
+    if (isOnlyURL(translatedText)) return translatedText;
 
-    if (!ignoreList || typeof ignoreList !== "string") {
-        ignoreList = "";
-    }
+    if (!ignoreList || typeof ignoreList !== "string") ignoreList = "";
 
-    // Convert ignore list into an array and map for fast case-insensitive lookup
-    let ignoreArray = ignoreList.split(/\r?\n/).map(word => word.trim()).filter(word => word);
-    let ignoreMap = new Map();
-    ignoreArray.forEach(word => ignoreMap.set(word.toLowerCase(), word));
+    const ignoreArray = ignoreList
+        .split(/\r?\n/)
+        .map(w => w.trim())
+        .filter(Boolean);
 
-    // Split text into text parts and tags
-    let tagRegex = /<[^>]*>/g;
-    let textParts = translatedText.split(tagRegex);
-    let tags = translatedText.match(tagRegex) || [];
+    if (ignoreArray.length === 0) return translatedText;
 
-    let correctedParts = [];
+    // Build a map for exact casing
+    const ignoreMap = new Map();
+    ignoreArray.forEach(w => ignoreMap.set(w.toLowerCase(), w));
+
+    // Single regex for all ignore words
+    const escapedWords = ignoreArray.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const ignoreRegex = new RegExp(`\\b(${escapedWords.join("|")})\\b`, "gi");
+
+    // Split text into HTML tags and text parts
+    const tagRegex = /<[^>]*>/g;
+    const textParts = translatedText.split(tagRegex);
+    const tags = translatedText.match(tagRegex) || [];
+
+    const correctedParts = [];
 
     textParts.forEach((part, idx) => {
-        // Split text part by word boundaries preserving punctuation
-        let words = part.split(/\b/);
 
-        let correctedWords = words.map((word, index) => {
-            let lowerWord = word.toLowerCase();
-            let inUrl = isWordInUrl(lowerWord, translatedText); // ✅ Check only once
-
-            // Capitalize if previous word ends with ? or !, and word not in ignore list or URL
-            if (index > 0 && /[?!]/.test(words[index - 1])) {
-                if (!inUrl && !ignoreMap.has(lowerWord)) {
-                    word = word.charAt(0).toUpperCase() + word.slice(1);
-                }
-            }
-
-            // Replace with ignoreMap value if it exists and is not inside a URL
-            if (ignoreMap.has(lowerWord) && !inUrl) {
-                return ignoreMap.get(lowerWord);
-            }
-
-            return word;
+        // 1️⃣ Extract URLs
+        const urls = [];
+        let tempText = part.replace(/https?:\/\/[^\s]+/g, (url) => {
+            urls.push(url);
+            return `__URL_${urls.length - 1}__`;
         });
 
-        correctedParts.push(correctedWords.join(''));
+        // 2️⃣ Replace ignore words using exact casing from map
+        tempText = tempText.replace(ignoreRegex, (match) => {
+            const key = match.toLowerCase();
+            return ignoreMap.get(key) || match;
+        });
 
-        // Reinsert HTML tag if present at this position
-        if (idx < tags.length) {
-            correctedParts.push(tags[idx]);
-        }
+        // 3️⃣ Capitalize first letter of sentences (if not already capitalized by ignore replacement)
+        tempText = tempText.replace(/(^|[.?!]\s+)([a-z])/g, (m, prefix, letter) => prefix + letter.toUpperCase());
+
+        // 4️⃣ Restore URLs
+        urls.forEach((url, i) => {
+            tempText = tempText.replace(`__URL_${i}__`, url);
+        });
+
+        correctedParts.push(tempText);
+
+        if (idx < tags.length) correctedParts.push(tags[idx]);
     });
 
-    // Join all corrected parts (text + tags) and return
     return correctedParts.join('');
 }
+
 
 
 // Helper function to detect URLs
 function isOnlyURL(text) {
     return /^(https?|ftp|file):\/\/[^\s<>"]+$/.test(text);
 }
-
 function check_hyphen(translatedText, spellCheckIgnore) {
-    var lines = [];
-    var myword;
-    if (typeof spellCheckIgnore != 'undefined') {
-        lines = spellCheckIgnore.split("\n");
+    if (toBoolean(DebugMode)) console.debug("check_hyphen:" ,translatedText);
+
+    // Build normalized ignore list
+    let lines = [];
+    if (typeof spellCheckIgnore !== "undefined") {
+        lines = spellCheckIgnore
+            .split(/\r?\n/)
+            .map(l => l.trim())
+            .filter(Boolean);
     }
-    let capsArray = []
-    let wordsArray = translatedText.split(' ')
+
+    let capsArray = [];
+
+    // Split sentence by spaces
+    let wordsArray = translatedText.split(' ');
+
     wordsArray.forEach(word => {
-        //console.debug("word:", word)
-        if (word != "->") {
-            myword = word.split("-");
-            //console.debug("myword:",myword)
-            if (myword.length == 1) {
-                // we need to check what char the word ends, otherwise it will not be found in the ignore list
-                if (word.endsWith(".") || word.endsWith(":") || word.endsWith(";") || word.endsWith("!") || word.endsWith("?") || word.endsWith(",")) {
-                    checkword = word.substr(0, word.length - 1)
-                }
-                else {
-                    checkword = word
-                }
-            }
-            else {
-                //we need to remove wrong characters at the start of the word
-                if (myword[0].startsWith("(")) {
-                    checkword = myword[0].substr(1, myword[0].length)
-                }
-                else {
-                    checkword = myword[0];
-                }
-            }
-            // check if the word is in the ignore list, if not we remove the "-" by a blank as it does not belong into the word
-            // but we should not do that within a link!!
-            //console.debug("in :", lines.indexOf(checkword))
-            if (lines.indexOf(checkword) != -1) {
-                // console.debug("we found in ignorelist:",checkword,word)
-                if (word != "--" && word != "-")
-                    // if the word is a URL we do not remove the "-"
-                    // if (word.substr('http') == -1) {
-                    word = word.replace("-", " ")
-                // }
-            }
-            capsArray.push(word)
+        if (word === "->") {
+            capsArray.push(word);
+            return;
         }
-        else {
-            capsArray.push(word)
+
+        // Normalize all hyphens (ASCII, non-breaking, en dash, em dash)
+        word = word.replace(/[\u2010\u2011\u2012\u2013\u2014]/g, "-");
+
+        // Remove trailing punctuation for checkword
+        let strippedWord = word.replace(/[.:;!?\,]+$/g, "");
+
+        // Use first part before hyphen for checkword
+        let firstPart = strippedWord.split("-")[0];
+
+        // Remove opening parenthesis if present
+        if (firstPart.startsWith("(")) {
+            firstPart = firstPart.substr(1);
         }
-    })
-    converted = capsArray.join(' ');
-    //console.debug("converted:",converted)
-    return converted
+
+        // Check if any ignore word matches the start of this word
+        if (lines.some(ignore => firstPart === ignore)) {
+            // Replace hyphen with space (except "--" or "-")
+            if (word !== "--" && word !== "-") {
+                word = word.replace("-", " ");
+            }
+        }
+
+        capsArray.push(word);
+    });
+
+    const converted = capsArray.join(' ');
+    if (toBoolean(DebugMode)) console.debug("check_hypend end:" ,converted);
+    return converted;
 }
 
 function capt(word) {
@@ -2696,7 +2759,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced, repl_array }
 }
 
-async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree,apikeyOpenAI, OpenAIPrompt, OpenAISelect, OpenAITone, OpenAItemp,apikeyClaude, ClaudePrompt, openAiGloss,ClaudModel) {
+async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree,apikeyOpenAI, OpenAIPrompt, OpenAISelect, OpenAITone, OpenAItemp,apikeyClaude, ClaudePrompt, openAiGloss,ClaudModel,apikeyNLP) {
     
     //console.time("translation")
     var translate;
@@ -2880,7 +2943,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                         spellCheckIgnore = ""
                         //console.debug("before handle_plural:",row)
                         //console.debug("handle_plural 2764:",openAiGloss)
-                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel)
+                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel)
                         editorElem = editor.querySelector("textarea.foreign-text");
                         // console.debug("pretranslated before validate:")
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
@@ -4575,8 +4638,8 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             break;
     }
      console.debug("DispClipBoard:",autoCopyClipBoard)
-}
-                             
+} 
+
 async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
     let debug = false
     var myTranslatedText;
@@ -4815,7 +4878,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         
         myTranslatedText = pretrans
         // console.debug("pretrans:",myTranslatedText)
-       //console.debug("row:",row)
+       // console.debug("row:",row)
         let rowId = row.split("-")[0];
         //console.debug("rowId:", rowId)
        // console.debug("pretranslated current:",current)
@@ -4869,7 +4932,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             // 30-10-2021 PSS added a fix for issue #154
             // console.debug("previewtext 4415:", myTranslatedText)
             ////console.debug("record:", record, rowId, row)
-            //console.debug("row:",  rowId)
+           // console.debug("row:",  rowId)
             textareaElem1 = record.querySelector("#translation_" + rowId + "_0");
             //console.debug("textareaElem1:",textareaElem1)
             textareaElem1.innerText = myTranslatedText;
@@ -5587,8 +5650,8 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     translatedText = replaceVerbInTranslation(original, text, replaceVerb, debug = false)
     // posprocess the translation
     translatedText = postProcessTranslation(original, translatedText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
-    
-    //console.debug("translatedtext:",translatedText)
+    translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+    if (toBoolean(DebugMode)) console.debug("Checkentry:" ,translatedText);
     textareaElem = editor.querySelector("textarea.foreign-text");
     if (textareaElem != null && typeof textareaElem != "undefined") {
         textareaElem.innerText = translatedText;
@@ -5613,6 +5676,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
             let pluralText = textareaElem1.value;
             translatedText = postProcessTranslation(original, pluralText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
             translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+            console.debug("translatedtext in checkentry:",translatedText)
             textareaElem1.value = translatedText
         }
     }
@@ -5775,7 +5839,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 let pretrans = await findTransline(original, destlang);
                 //console.debug("pretrans:",pretrans)
                 //console.debug("original",original," ",destlang)
-               // console.debug("transsel:",transsel)
+                // console.debug("transsel:",transsel)
                 if (pretrans == "notFound") {
                     if (transsel == "LibreTrans") {
                         console.debug("we translate with libre")
@@ -5883,9 +5947,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         }
                     }
                     else if (transsel == "NLPCloud") {
-                        console.debug("we start NLPCloud")
-                        let editor = true;
-                        result = await NLPCloudTranslate(original, destlang, e, apikeyNLP, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        
+                        result = await NLPCloudTranslate(original, destlang, e, apikeyNLP, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, true, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, true, openAiGloss);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");

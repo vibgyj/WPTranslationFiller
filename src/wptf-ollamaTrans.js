@@ -28,16 +28,15 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
      else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
      else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
      else myprompt = await myprompt.replaceAll("{{toLanguage}}", destlang);
-    //console.debug("Ollama Prompt after replacements:", myprompt);
+
     if (toBoolean(is_editor)) {
         showTranslationSpinner(__("Fetching translation…"));
     }
      
     let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
     originalPreProcessed = await applyGlossaryMap(originalPreProcessed, convertedGlossary)
-    console.debug("Ollama Pre-processed Original:", originalPreProcessed); 
-    //originalPreProcessed = '"""' + originalPreProcessed + '"""';
-    //console.debug("Ollama Pre-processed Original:", originalPreProcessed);
+    if (toBoolean(DebugMode)) console.debug("Ollama Pre-processed Original:", originalPreProcessed);
+
     let max_Tokens = await estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = await estimateMaxTokens(myprompt);
     max_Tokens = max_Tokens + prompt_tokens
@@ -60,7 +59,6 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 Top_k
                             }
                         }, async (response) => {
-                           // console.debug("response:",response)
 							
                             if (!response) {
                                 hideTranslationSpinner();
@@ -104,7 +102,6 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                 spellCheckIgnore,
                                 destlang
                                     );
-                                     //console.debug("Ollama Translated Text:", myTranslatedText)
                            
                                let current = "untranslated"
                                await processTransl(

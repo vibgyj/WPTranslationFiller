@@ -20,11 +20,11 @@ async function MistralTranslate(original, destlang, record, apikeyMistral, OpenA
     errorstate = "OK";
     
     // Preprocess original
-    var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "Mistral");
     
     // Wait the timeout delay if needed
     await delay(timeout);
-    console.debug("select:",MistralSelect)
+    //console.debug("select:",MistralSelect)
     // Await the translation call
     var result = await getMistralTrans(original, destlang, record, apikeyMistral, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     

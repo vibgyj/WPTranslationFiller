@@ -90,7 +90,7 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
                 else {
                     //console.debug("status:", response.status) 
                     if (response.error.includes('456')) {
-                        messageBox("info", "Quota exceeded<br>The character limit has been reached<br>" + response.error)
+                        messageBox("info", "Quota exceeded<br>The character limit has been reached<br>Or you need to delete the current glossary first!" + response.error)
                     }
                     else {
                         messageBox("info", "We did get a result of the request<br>" + response.error)

@@ -204,9 +204,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const dataToSend = { ...request.data };
                 const apiKey = dataToSend.apiKey;
                 const originalText = dataToSend.text;
-                const target = "nld_Latn";
+                const target = dataToSend.target;
                 const source = "eng_Latn";
-
+                let top_p = dataToSend.top_p || 1.0;
+                let top_k = dataToSend.top_k || 50;
+                let temparature = dataToSend.temparature || 0.0;
                 // 1. Split zinnen + separators (layout behouden)
                 const sentenceRegex = /([^\n.!?]+[.!?]?)([\s\n\t]*)/g;
                 const parts = [];
@@ -236,7 +238,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             body: JSON.stringify({
                                 text: sentence,
                                 source,
-                                target
+                                target, 
+                                top_p,
+                                top_k,
+                                temparature
+
                             })
                         }
                     );
@@ -807,6 +813,7 @@ else if (request.action === "LMStudio_translate") {
         return true; // important for async response
 
     }
+
 
 else if (request.action == "Lingvanex") {
         (async () => {

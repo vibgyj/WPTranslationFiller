@@ -20,97 +20,102 @@ async function NLPCloudTranslate(original, destlang, record, apikeyNLP, OpenAIPr
     errorstate = "OK";
     
     // Preprocess original
-    var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
-    
+    //console.debug("preprocess with:",preverbs)
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "NLPCLoud");
+    //console.debug("NLPCloud originalPreProcessed:", originalPreProcessed)
     // Wait the timeout delay if needed
-    await delay(timeout);
-    console.debug("select:",MistralSelect)
+   // await delay(timeout);
+    //console.debug("select:",MistralSelect)
     // Await the translation call
-    var result = await getNLPCloudTrans(original, destlang, record, apikeyNLP, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    var result = await getNLPCloudTrans(original, destlang, record, apikeyNLP, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     
     // You can handle errorstate or result here if needed
     return result;
 }
 
 
-
-
 async function getNLPCloudTrans(
-  original, language, record, apikeyNLP, OpenAIPrompt,
-  originalPreProcessed, rowId, transtype, plural_line, formal,
-  locale, convertToLower, editor, counter, MistralSelect,
-  OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
+    original, language, record, apikeyNLP, OpenAIPrompt,
+    originalPreProcessed, rowId, transtype, plural_line, formal,
+    locale, convertToLower, editor, counter, MistralSelect,
+    OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
 ) {
-    var show_debug = true
-  var text =""
-  var myTtranslatedText = "";
-  let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-    let prevstate = current ? current.innerText : "";
     
-  let destlang = language;
+    if (toBoolean(editor)) {
+        showTranslationSpinner(__("Fetching translation…"));
+    }
+    var show_debug = true
+    var text = ""
+    var targetLang = "";
+    var myTtranslatedText = "";
+    let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+    let prevstate = current ? current.innerText : "";
+
+    let destlang = language;
     language = language.toUpperCase();
     var messages;
 
-  let tempPrompt = OpenAIPrompt + '\n'
+   // let tempPrompt = OpenAIPrompt + '\n'
     let myprompt = "";
 
-  // Handle tone and language in prompt
-  if (OpenAITone === 'formal') {
+
     if (destlang === 'nl') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
-    } else if (destlang === 'de') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
-    } else if (destlang === 'fr') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
-    } else {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+        targetLang = "nld_Latn";
     }
-  } else {
-    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
-  }
-
-  // Replace glossary and language names
-  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss);
-
-  if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
-     else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
-     else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-     else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian'); 
-     else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
-     else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
-     else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
-     else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-     else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+    else if (destlang === 'de') {
+        targetLang = "deu_Latn";
+    }
+    else if (destlang === 'fr') {
+        targetLang = "fra_Latn";
+    }
+    else if (destlang === 'uk') {
+        targetLang = "ukr_Cyrl";
+    }
+    else if (destlang === 'es') {
+        targetLang = "spa_Latn";
+    }
+    else if (destlang === 'it') {
+        targetLang = "ita_Latn";
+    }
+    else if (destlang === 'pt') {
+        targetLang = "por_Latn";
+    }
+    else if (destlang === 'ru') {
+        targetLang = "rus_Cyrl";
+    }
+    else {
+       // myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+    }
 
   if (!originalPreProcessed) {
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
-  originalPreProcessed = `"${originalPreProcessed}"`;
-  let maxTokens = estimateMaxTokens(originalPreProcessed);
-  let prompt_tokens = estimateMaxTokens(myprompt);
-  max_Tokens = maxTokens + prompt_tokens
-  //console.debug("originalPreProcessed:",originalPreProcessed)
-  messages = [
-    { role: 'system', content: myprompt },
-    { role: 'user', content: `translate this: ${originalPreProcessed}` }
-  ];
+  
+ // let max_Tokens = estimateMaxTokens(originalPreProcessed);
+  //let prompt_tokens = estimateMaxTokens(myprompt);
+   // max_Tokens = maxTokens + prompt_tokens
+
+ // messages = [
+ //   { role: 'system', content: myprompt },
+ //   { role: 'user', content: `translate this: ${originalPreProcessed}` }
+ // ];
     
-    const mymodel = MistralSelect.toLowerCase();
- //  if (show_debug) console.debug("Model selected:",mymodel);
+    
+    const source = "eng_Latn";
     let dataNew = {};
     // the below set needs to be improved 
     dataNew = {
-      model: mymodel, 
-      messages,
-      max_tokens: max_Tokens,
+     // messages,
+     // max_tokens: max_Tokens,
       n: 1,
       temperature: OpenAItemp,
       frequency_penalty: 0,
       presence_penalty: 0,
-      top_p:Top_p,
+      top_p: Top_p,
+      top_k: Top_k,
       apiKey: apikeyNLP,
       text: originalPreProcessed,
-      target: "nl"
+      target: targetLang
 
     };
    
@@ -123,9 +128,10 @@ async function getNLPCloudTrans(
                 (res) => resolve(res)
             );
        });
-        console.debug("NLPCloud proxy raw result:", result)
+        //console.debug("NLPCloud proxy raw result:", result)
        if (!result) {
-        console.debug("NLPCLoud proxy returned undefined");
+          // console.debug("NLPCLoud proxy returned undefined");
+         hideTranslationSpinner();
         return "NOK";
     }
 
@@ -136,6 +142,7 @@ async function getNLPCloudTrans(
            const match = result.error.match(/Request failed \((\d+)\)/);
           // console.debug("message:",result.error)
            const statusCode = match ? match[1] : "unknown";
+            hideTranslationSpinner();
            //console.debug("Editor:",editor)
             if (statusCode == '400') {
                if (editor) {
@@ -241,7 +248,7 @@ async function getNLPCloudTrans(
     if (show_debug) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
     const durationSec = ((Date.now() - start) / 1000).toFixed(2);
     if (show_debug) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
-
+     hideTranslationSpinner();
     return "OK";
 
     } catch (err) {
