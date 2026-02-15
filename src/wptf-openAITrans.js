@@ -122,8 +122,8 @@ async function getTransAI(
             model: mymodel,
             messages,
             max_completion_tokens: max_Tokens,
-            top_p: Top_p,
-            top_k: Top_k,
+            top_p: Number(Top_p),
+            top_k: Number(Top_k),
             frequency_penalty: 0,
             presence_penalty: 0,
             reasoning_effort: 'minimal',
@@ -137,7 +137,7 @@ async function getTransAI(
             model: mymodel,
             messages,
             max_completion_tokens: max_Tokens,
-            top_p: 1,
+            top_p: Number(Top_p),
             frequency_penalty: 0,
             presence_penalty: 0,
             reasoning_effort: 'none',
@@ -155,7 +155,7 @@ async function getTransAI(
       temperature: OpenAItemp,
       frequency_penalty: 0,
       presence_penalty: 0,
-      top_p: 0.5,
+      top_p: Number(Top_p),
      apiKey: apikeyOpenAI,
 
     };

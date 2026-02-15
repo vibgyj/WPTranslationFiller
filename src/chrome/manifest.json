@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.65",
+  "version": "3.4.76",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -84,6 +84,7 @@
       "js": [
         "wptf-functions.js",
         "wptf-LMStudioTrans.js",
+        "wptf-NLPCloudTrans.js",
         "wptf-GeminiTrans.js",
         "wptf-lingvanexTrans.js",
         "wptf-ollamaTrans.js",

@@ -62,6 +62,9 @@
         #OpenAI_api_key {
             width: 400px;
         }
+        #nlpcloud_api_key {
+            width: 400px;
+        }
         #Mistral_api_key {
             width: 400px;
         }
@@ -286,6 +289,16 @@
             </tr>
             <tr>
                 <td>
+                    <label for="nlpcloud_api_key">NLPCloud API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="nlpcloud_api_key" type="text" value="NLPCloud-api key->" placeholder="NLPCloud API key" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="microsoft_api_key">Microsoft API Key</label>
                 </td>
                 <td>
@@ -402,12 +415,12 @@
                 <td>
                     <div class="form-input">
                         <select title="Select a model for Claude" name="ClaudSel" id="ClaudSelect">
-                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+                            <option value="claude-haiku-4-5 ">claude-haiku-4-5 </option>
                             <option value="claude-2">claude-2</option>
                             <option value="claude-instant-1">claude-instant-1</option>
-                            <option value="claude-opus-4-5-20251101">claude-opus-4-5-20251101</option>
+                            <option value="claude-opus-4-6" ">claude-opus-4-6</option>
                             <option value="claude-sonnet-4-5-20250929">claude-sonnet-4-5-20250929</option>
-                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+                            <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
                         </select>
                     </div>
                 </td>
@@ -517,6 +530,7 @@
                             <option value="google">Google</option>
                             <option value="LibreTrans">LibreTrans</option>
                             <option value="lingvanex">Lingvanex</option>
+                            <option value="NLPCloud">NLPCLoud</option>
                             <option value="LMStudio">LMstudio</option>
                             <option value="microsoft">Microsoft</option>
                             <option value="Mistral">Mistral</option>
@@ -738,10 +752,10 @@ You,Je
         <table style="width: 100%; table-layout: fixed;">
             <tr>
                 <td>
-                  <label class="labeled-checkbox">
-                      <input type="checkbox" id="Auto-LT-spellcheck">
-                      <span>Auto spellcheck after pagecheck</span>
-                  </label>
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="Auto-LT-spellcheck">
+                        <span>Auto spellcheck after pagecheck</span>
+                    </label>
                 </td>
                 <td style="padding-left: 5%;">
                     <label class="labeled-checkbox">
@@ -751,13 +765,24 @@ You,Je
 
                 </td>
 
-        </tr>
+            </tr>
         </table>
-        
-        <label class="labeled-checkbox">
-            <input type="checkbox" id="Auto-review-OpenAI">
-            <span>Auto review with OpenAi after pagecheck</span>
-        </label>
+        <table style="width: 100%; table-layout: fixed;">
+         <tr>
+            <td>
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="Auto-review-OpenAI">
+                    <span>Auto review with OpenAi after pagecheck</span>
+                </label>
+            </td>
+            <td style="padding-left: 5%;">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="debugmode">
+                    <span>Debug mode</span>
+                </label>
+            </td>
+          </tr>
+        </table>
         <label class="labeled-checkbox">
             <input type="checkbox" id="comp-translations">
             <span>Compare translations</span>

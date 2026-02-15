@@ -3,7 +3,6 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     
     // Replace glossary and language names
-    //console.debug("Ollama Prompt before replacements:", openAiGloss)
     let convertedGlossary = convertGlossaryForOllamaMerged(openAiGloss)
    // let convertedGlossary = convertGlossaryForOllama(openAiGloss)
    // let convertedGlossary = convertGlossaryListToWordsFormat(openAiGloss)
@@ -29,17 +28,12 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
     let originalPreProcessed = await preProcessOriginal(original, preverbs, "LMstudio");
     
     const glossaryString = JSON.stringify(convertedGlossary);
-    let glossary_tokens = estimateMaxTokens(glossaryString);
-   // let max_Tokens = estimateMaxTokens(originalPreProcessed);
     originalPreProcessed = applyGlossaryMap(originalPreProcessed, convertedGlossary)
-    //console.debug("preprocessed:originalPreProcessed:",originalPreProcessed)
+    if (toBoolean(DebugMode)) console.debug("LMstudio start preprocessed:" ,originalPreProcessed);
     // text is within the prompt and must be replaced by the text to ranslate
     let transAct_ID = await generateTranslateID()
-    //console.debug("ID:",transAct_ID)
     myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
     myprompt = myprompt.replaceAll("{translateID}",transAct_ID)
-    //console.debug("Final LMstudio Prompt:", myprompt)
-    //console.debug("after replacing glossary words:", originalPreProcessed) 
     let max_Tokens = estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = estimateMaxTokens(myprompt);
     max_Tokens = max_Tokens + prompt_tokens
@@ -63,7 +57,6 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                 LMStudioWait
                             }
                         }, (response) => {
-                            //console.debug("LMStudio response:", response);
                             const duration = ((Date.now() - start) / 1000).toFixed(2);
                               console.debug("Time after fetch:", duration)
                             if (!response) {
@@ -81,9 +74,6 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                 return "NOK";
                             }
                             else if (!response.ok) {
-                                //const rawErr = response.error?.trim() || "LMStudio translation failed";
-                                //console.debug("response:", response)
-                                //console.debug("response error:",response.text)
                                 const errMsg = response.text
 
                                 hideTranslationSpinner();
@@ -95,10 +85,11 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                 return "NOK";
                             }
                             else {
-                                //const duration = ((Date.now() - start) / 1000).toFixed(2);
-                               // console.debug("Duur:", duration)
+                                if (DebugMode) console.debug("LMStudio after request:" ,translatedText);
+                                
                                 translatedText = response.text
                                 translatedText = normalizeExtraNewlines(original, translatedText)
+                                console.debug("after translation:",translatedText)
                                 let convertedGlossary = GLOBAL_GLOSSARY;
                                 if (convertedGlossary) {
                                     translatedText = applyOpenAiGlossary(
@@ -106,7 +97,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                         convertedGlossary
                                     );
                                 }
-                                // console.debug("LMStudio Translated Text:", translatedText);
+                                
                                 let myTranslatedText = postProcessTranslation(
                                     original,
                                     translatedText,
@@ -117,7 +108,6 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                     spellCheckIgnore,
                                     destlang
                                 );
-
                                 let current = "untranslated"
                                 processTransl(
                                     original,
@@ -131,6 +121,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                     convertToLower,
                                     current
                                 );
+                                
                                 hideTranslationSpinner();
                                 resolve(response.translation);
                             }

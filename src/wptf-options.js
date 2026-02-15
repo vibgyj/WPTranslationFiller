@@ -36,6 +36,7 @@ let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let apikeyMistralTextbox = document.getElementById("Mistral_api_key");
+let apikeyNLPTextbox = document.getElementById("nlpcloud_api_key");
 let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
 let apikeyTranslateioTextbox = document.getElementById("Translateio_api_key");
 let apikeyClaudeTextbox = document.getElementById("Claude_api_key");
@@ -90,21 +91,22 @@ let showAutoClipboard = document.getElementById("auto-copy-clipboard");
 let showDisableClose = document.getElementById("disable-auto-close");
 let showLocalOllama = document.getElementById("ollama-local");
 let showNoPeriodCheckbox = document.getElementById("no-period");
+let showdDebugModeCheckbox = document.getElementById("debugmode");
 
 document.getElementById('show-changelog-link').addEventListener('click', function (e) {
     e.preventDefault(); // Prevent the default link behavior
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile","glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary","WPTFscreenWidth","strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod"], function (data) {
-    
-  //  if (data.DownloadPath != null) {
-  //      DownloadTextbox.value = data.DownloadPath
-  //  }
-  //  else {
-  //      DownloadTextbox.value = "C:\Temp"
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode"], function (data) {
+
+    //  if (data.DownloadPath != null) {
+    //      DownloadTextbox.value = data.DownloadPath
     //  }
-  //console.debug("DeeplFree:",DeeplFree)
+    //  else {
+    //      DownloadTextbox.value = "C:\Temp"
+    //  }
+    //console.debug("DeeplFree:",DeeplFree)
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -143,10 +145,10 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         LMWait = 20000;
     }
     else {
-       LMkWaitValue.value = data.LMStudioWait;
+        LMkWaitValue.value = data.LMStudioWait;
     }
 
-     if (typeof data.bulkWait == "undefined") {
+    if (typeof data.bulkWait == "undefined") {
         bulkWait = 1000;
     }
     else {
@@ -212,6 +214,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeyClaudeTextbox.value = data.apikeyClaude;
     apikeyLingvanexTextbox.value = data.apikeyLingvanex;
     apikeyGeminiTextbox.value = data.apikeyGemini;
+    if (data.apikeyNLP == null && typeof apikeyNLP == "undefined") {
+        apikeyNLPTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeyNLPTextbox.value = data.apikeyNLP;
+    }
 
     if (data.apikeyOllama == null && typeof data.apikeyOllama == "undefined") {
         apikeyOllamaTextbox.value = "Enter key or leave empty";
@@ -453,6 +461,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
            showNoPeriodCheckbox.checked = false;
         }
     }
+    if (data.DebugMode != "null") {
+        if (data.DebugMode == true) {
+            showdDebugModeCheckbox.checked = true;
+        }
+        else {
+           showdDebugModeCheckbox.checked = false;
+        }
+    }
     if (data.LocalOllama != "null" && typeof data.LocalOllama != "undefined") {
         if (data.LocalOllama == true) {
             showLocalOllama.checked = true;
@@ -501,6 +517,7 @@ button.addEventListener("click", function () {
     let apikeyOllama = apikeyOllamaTextbox.value;
     let apikeyLingvanex = apikeyLingvanexTextbox.value;
     let apikeyGemini = apikeyGeminiTextbox.value;
+    let apikeyNLP = apikeyNLPTextbox.value;
     
     if (typeof transselectBox.value == "undefined") {
          transsel = "google";
@@ -683,6 +700,13 @@ button.addEventListener("click", function () {
     else { 
         showNoPeriod = "false";
     }
+    if (document.querySelector("#debugmode:checked") !== null) {
+        let showDebugMode_Set = document.querySelector("#debugmode:checked");
+        showDebugMode = showDebugMode_Set.checked;
+    }
+    else { 
+        showDebugMode = "false";
+    }
     console.debug("AI top p val:", AI_Top_p_Val)
     console.debug("AI top k val:", AI_Top_k_Val)
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
@@ -696,6 +720,7 @@ button.addEventListener("click", function () {
             apikeyTranslateio: apikeyTranslationio,
             apikeyClaude: apikeyClaude,
             apikeyOllama: apikeyOllama,
+            apikeyNLP: apikeyNLP,
             apikeyLingvanex: apikeyLingvanex,
             apikeyGemini: apikeyGemini,
             GeminiSelect: Geminisel,
@@ -743,7 +768,8 @@ button.addEventListener("click", function () {
             LocalOllama: localOllama,
             noPeriod: showNoPeriod,
             AI_Top_k: AI_Top_k_Val,
-            AI_Top_p: AI_Top_p_Val
+            AI_Top_p: AI_Top_p_Val,
+            DebugMode: showDebugMode
         });
 
         if (glossaryFile.value !== "") {

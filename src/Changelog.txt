@@ -138,3 +138,16 @@ Version 3.4.64 Added timer for LMstudio fetch into options
 Version 3.4.65 Copytoclipboard was activated sometimes
 Version 3.4.65 Incorrect message of LMStudio model missing when going into translateentry
 Version 3.4.66 Added LibrTranslate API for localhost
+Version 3.4.67 Created a new branch on Github Extended-V27
+Version 3.4.67 CopyToClipboard issue finally fixed
+Version 3.4.68 Fixed a problem with a warning that LibreTrans is not loaded
+Version 3.4.69 Under circumstances LibreTranslate did not remove placeholders properly
+Version 3.4.70 LibreTranslate translated placeholders because type "text" was used, now changed to "html"
+Version 3.4.71 Also with HTML as type it went wrong, so altered the function to replace the placeholders with unique tags, and then replace them back after translation, this way they are not altered during translation
+Version 3.4.72 Added NLP Cloud translation API
+Version 3.4.72 Pretranslate replace was on the wrong place, it is now at the beginnenof pretranslate
+Version 3.4.72 Preserve words was not working in large sentences containing URL's
+Version 3.4.73 Improved debugging by adding a boolean which can be set within the options to show the full error message instead of a generic one
+Version 3.4.74 Check-hyphen did not work properly
+Version 3.4.75 Plurals were not longer processed if they come from local database
+Version 3.4.76 Improved Ollama behavior with links

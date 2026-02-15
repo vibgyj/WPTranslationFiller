@@ -28,6 +28,8 @@ var RecCount = 0;
 var showHistory = false;
 var DispClipboard
 var strictValidation
+var DisableautoClose = false
+var DebugMode = false
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -147,7 +149,7 @@ function setupTooltipHandler() {
 document.addEventListener('click', (event) => {
     const button = event.target.closest('button.panel-header-actions__next.with-tooltip');
     if (!button) return;
-
+    console.debug("ook deze")
     // action netjes trimmen
     let action = button.textContent.trim().replace(/\s+/g, ' ');
     
@@ -171,7 +173,7 @@ document.addEventListener('click', (event) => {
 document.addEventListener('click', (event) => {
     const button = event.target.closest('button.panel-header-actions__previous.with-tooltip');
     if (!button) return;
-
+    console.debug("of deze")
     // action netjes trimmen
     let action = button.textContent.trim().replace(/\s+/g, ' ');
     
@@ -326,7 +328,8 @@ async function startFullScript(textarea) {
     });
 
     await initPublicVars()
-    //console.debug("DispClipBoard:",autoCopyClipBoard)
+    //console.debug("DispClipBoard:", autoCopyClipBoard)
+    //console.debug("DisableAutoClose:",DisableAutoClose)
 
     let is_loaded = await loadGlossaries(myCustomEvent);
 
@@ -652,7 +655,7 @@ document.addEventListener("keydown", async function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "F3")) {
         event.preventDefault();
-            chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
+            chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", apikeyNLP, "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
 
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
                     if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -1014,7 +1017,6 @@ const el = document.getElementById("translations");
 
     el.addEventListener("click", (event) => {
         const target = event.target;
-        //console.debug("target:",target)
        if (target.closest(".translation-actions__save.button.is-primary")) {
          
           // Zoek het eerstvolgende <tr> vanaf de save button
@@ -1023,9 +1025,11 @@ const el = document.getElementById("translations");
            let nextTr = tr.nextElementSibling; // het volgende <tr> element
            if (nextTr) {
                rowId = nextTr.getAttribute("row");
-               let autoClip = toBoolean(autoCopyClipBoard);
-               if (autoClip) {
-                   copyToClipBoard(rowId);
+               if (toBoolean(DisableautoClose)) {
+                   let autoClip = toBoolean(autoCopyClipBoard);
+                   if (autoClip) {
+                       copyToClipBoard(rowId);
+                   }
                }
            }
            
@@ -1993,7 +1997,7 @@ function tmTransClicked(event) {
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
     event.preventDefault();
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyNLP", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"], function (data) {
        
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
 
@@ -2007,7 +2011,7 @@ function localTransClicked(event) {
                         let OpenAItemp = parseFloat(data.OpenAItemp);
                         //console.debug("localTrans:", data.OpenAiGloss)
                         myGlossary = data.OpenAiGloss
-                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, data.apikeyOpenAI, data.OpenAIPrompt, data.OpenAISelect, data.OpenAITone, OpenAItemp, data.apikeyClaude, data.ClaudePrompt, myGlossary, data.ClaudModel);
+                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, data.apikeyOpenAI, data.OpenAIPrompt, data.OpenAISelect, data.OpenAITone, OpenAItemp, data.apikeyClaude, data.ClaudePrompt, myGlossary, data.ClaudModel,data.apikeyNLP);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2123,7 +2127,7 @@ function impFileClicked(event) {
     event.preventDefault();
     var formal;
     chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral", "apikeyClaude", "apikeyTranslateio", "apikeyLingvanex", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "GeminiPrompt","LMStudioWait"],
+        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral", "apikeyClaude", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP" ,"OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "GeminiPrompt","LMStudioWait"],
         async function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -2153,7 +2157,7 @@ function impFileClicked(event) {
                            return
         }
     }
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI,data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect,data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt,data.LMStudioWait);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI,data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect,data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt,data.LMStudioWait);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2745,7 +2749,7 @@ async function checkbuttonClick(event) {
             await waitForMyElement(`#editor-${rowId}`, 3000, "2685").then(async(res) => {
                 if (res != "Time-out reached") {
                     myrec = document.querySelector(`#editor-${rowId}`);
-                      let autoClip = toBoolean(autoCopyClipBoard);
+                    let autoClip = toBoolean(autoCopyClipBoard);
                     if (autoClip) { 
                        copyToClipBoard(rowId)       
                     }
@@ -2806,11 +2810,25 @@ async function checkbuttonClick(event) {
                         else {
                             detail_glossary = false
                         }
+                        const clickEvent = new MouseEvent('click', {
+                          bubbles: true,
+                          cancelable: true,
+                          button: 0
+                        });
+                        //mytextarea = myrec.getElementsByClassName('foreign-text'); 
+                       // console.debug("Dispatching click event to textarea:", mytextarea[0])
+                        mytextarea[0].dispatchEvent(clickEvent);
+                        //sleep(1000);
+                       // let scribens = document.querySelector(`scribens-ui`);
+                       // console.debug("scribens_button:", scribens)
+                       // let scribens_button = scribens.querySelector("main-button")
+                       // console.debug("scribens_button:", scribens_button)
                     }
                     else {
                         mytextarea = document.querySelector(`#editor-${rowId} .foreign-text autosize`);
                        // console.debug("mytext2:", mytextarea)
                     }
+                    
                 }
                 else { console.debug("editor not found:", res) }
             })
@@ -3167,7 +3185,7 @@ function translateEntryClicked(event) {
         rowId = newrowId;
     }
     
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral","apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "GeminiSelect", "GeminiPrompt", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt", "LMStudioWait"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral","apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiSelect", "GeminiPrompt", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt", "LMStudioWait"], function (data) {
         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
        // console.debug("select:",data.MistralSelect)
         if (data.ForceFormal != true) {
@@ -3185,7 +3203,7 @@ function translateEntryClicked(event) {
         //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
        // console.debug("geminiSel:",data.GeminiSelect)
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude,data.apikeyNLP,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait);
         }
         else {
             messageBox("error", "You need to set the parameter for Destination language");
@@ -4798,7 +4816,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
 
 
 async function savetranslateEntryClicked(event) {
-    var debug = true
+    var debug = false
     var myWindow;
     var autoCopySwitchedOff = false;
     const perfNow = () => performance.now();
@@ -4822,7 +4840,7 @@ async function savetranslateEntryClicked(event) {
             status.innerText = "waiting"
             // 24-03-2022 PSS modified the saving of a record because the toast was sometimes remaining on screen issue #197
             //setTimeout(async() => {
-                if (autoCopyClipBoard) {
+                if (toBoolean(autoCopyClipBoard)) {
                     autoCopySwitchedOff = true
                     autoCopyClipBoard = false
                 }
@@ -4851,7 +4869,8 @@ async function savetranslateEntryClicked(event) {
                    
                    });    
             }
-            if (autoCopySwitchedOff) {
+           
+            if (toBoolean(autoCopySwitchedOff)) { 
                     autoCopyClipBoard = true
                     autoCopySwitchedOff = false
             }
@@ -6278,10 +6297,11 @@ function gd_wait_table_alter() {
                     }
                    
                     chrome.storage.local.get(["DisableAutoClose"], function (data) {
-                        const disable = String(data.DisableAutoClose) === "true"; // normalize to boolean
+                        const disable = toBoolean(data.DisableAutoClose)
+                        // const disable = String(data.DisableAutoClose) === "true"; // normalize to boolean
                         // Run gd_wait_table_alter if toggle is NOT explicitly true
                         if (!disable) {
-                            gd_auto_hide_next_editor(addedNode);
+                           gd_auto_hide_next_editor(addedNode);
                         }
                         else {
                             // we need to determine the row to add the buttons
@@ -6596,7 +6616,7 @@ async function handleMutation(mutationsList, observer) {
     textareaElem?.focus();
     //console.debug("translation:",translation)
     if (!translation) {
-        console.debug("we have no translation!")
+        if (toBoolean(DebugMode)) console.debug("we have no translation in editor!");
         return;
     }
 
