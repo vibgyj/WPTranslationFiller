@@ -52,13 +52,13 @@ describe("Google translation - processPlaceholderSpaces", function () {
 
     expect(
       processPlaceholderSpaces(
-        "[0] emos [1] txet ereh",
-        "[0]emos [1] txet ereh"))
-      .toEqual("[0] emos [1] txet ereh");
+        "[0] cow [1] mytext here",
+        "[0]cow [1] mytext here"))
+      .toEqual("[0] cow [1] mytext here");
   });
 
   it("should add/remove space around placeholders", function () {
-    // This one below shifts the [0] because a blank was added before and removed one behind [1] 
+    // This one below shifts the {0} because a blank was added before and removed one behind {1} 
     expect(
       processPlaceholderSpaces(
         "some text[0] here [1]",
@@ -69,6 +69,6 @@ describe("Google translation - processPlaceholderSpaces", function () {
         processPlaceholderSpaces(
           "Add Products to [0] Category",
           "Producten toevoegen aan categorie [0]"))
-        .toEqual("Producten toevoegen aan categorie [0] ");
+        .toEqual("Producten toevoegen aan categorie [0]");
   });
 });

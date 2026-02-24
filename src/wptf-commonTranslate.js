@@ -86,7 +86,8 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
     }
 }
                        //new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
-const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi);
+// const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi);
+const placeHolderRegex = /%(\d+\$?)?[a-z]|&#\d{1,4};|&#x[\da-fA-F]{1,4};|&\w{2,6};|%\w+%/gi;
 const linkRegex = /(https?|ftp|file):\/\/[^\s]+/gi;
 // the below regex did not work for links
 //const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
@@ -103,8 +104,8 @@ async function preProcessOriginal(original, preverbs, translator) {
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
     // prereplverb contains the verbs to replace before translation
-   // console.debug("translator:",translator)
-    // console.debug("original:", original).
+    //console.debug("translator:",translator)
+    //console.debug("original:", original)
 
     // We need to replace the preverbs before sending the text to the API, otherwise the API's will not translate the text because of the presence of the formal words
     for (let i = 0; i < preverbs.length; i++) {
@@ -118,7 +119,7 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
     }
 
-    if (translator != "lingvanex" && translator != "LMstudio" && translator != "NLPCLoud") {
+    if (translator != "lingvanex" && translator != "LMstudio" && translator != "NLPCLoud" && translator != "google") {
         const charmatches = original.matchAll(specialChar);
         if (charmatches != null) {
             // we need to start with 1 otherwise translation API's alter the zero value
@@ -138,16 +139,20 @@ async function preProcessOriginal(original, preverbs, translator) {
     // 15-05-2021 PSS added check for translator
 
     if (translator == "google") {
-        const matches = original.matchAll(placeHolderRegex);
-        if (matches != null) {
-            index = 0;
-            for (const match of matches) {
-                original = original.replace(match, `[${index}]`);
+      //  const matches = original.matchAll(placeHolderRegex);
+       // if (matches != null) {
+       //     index = 0;
+          //  for (const match of matches) {
+           //     original = original.replace(match, `[${index}]`);
 
-                index++;
-            }
-        }
-        original = replacePlaceholdersBeforeTranslation(original);
+              //  index++;
+           // }
+        // }
+      let index = 0;
+         preprocessed = original.replace(placeHolderRegex, () => `[${index++}]`);
+         original = preprocessed;
+        console.debug("original after replacing placeholders for google:", original)
+       //original = replacePlaceholdersBeforeTranslation(original);
     }
     else if (translator == "NLPCLoud") {
             const charmatches = original.matchAll(specialChar);
@@ -185,14 +190,14 @@ async function preProcessOriginal(original, preverbs, translator) {
         // The above replacements are put into the specialchar regex for all api's
         // 1) Define your regex for all the placeholders you care about:
         // Match placeholders (like %1$s, &#123;, %placeholder%, etc.)
-        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
+        //const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
 
         // Store placeholder mappings for post-replacement
 
         index = 0;
         placeholderMap = {};
         // Replace each match with a unique token and store original
-        const matches = [...original.matchAll(placeholderRegex)];
+        const matches = [...original.matchAll(placeHolderRegex)];
         for (const match of matches) {
             const token = `<x id="var${index}"/>`;
             original = original.replace(match[0], token);
@@ -211,6 +216,7 @@ async function preProcessOriginal(original, preverbs, translator) {
                 index++;
             }
         }
+        console.debug("original after replacing placeholders for deepl:", original)
 
     }
     else if (translator == "microsoft") {
@@ -315,7 +321,7 @@ async function preProcessOriginal(original, preverbs, translator) {
         }
         //console.debug("after replacing placeholders for LMstudio:", original)
         //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
-        index = 1;
+        index = 1   ;
         original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
            if (match === '\t') return `mytab`;
              return `<code>placeholder${index}</code>`;
@@ -389,31 +395,39 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
    
     if (toBoolean(DebugMode)) {
-        console.debug("original: ", original);
-        console.debug("translatedText :", translatedText);
-        console.debug("replaceVerb :", replaceVerb);
-        console.debug("originalPreProcessed :", originalPreProcessed);
-        console.debug("spellCheckIgnore :", spellCheckIgnore);
-        console.debug("translator :", translator);
+        console.debug("postProc original: ", original);
+        console.debug("postProc translatedText :", translatedText);
+       // console.debug("postProc replaceVerb :", replaceVerb);
+        console.debug("postProc originalPreProcessed :", originalPreProcessed);
+       // console.debug("postProc spellCheckIgnore :", spellCheckIgnore);
+        console.debug("postProc translator :", translator);
+       // console.debug("postProc Formal: ",formal)
     }
     if (originalPreProcessed != "") {
-        translatedText =  processPlaceholderSpaces(originalPreProcessed, translatedText);
+        translatedText = processPlaceholderSpaces(originalPreProcessed, translatedText);
     }
+    else {
+        translatedText = translatedText 
+    }
+    if (toBoolean(DebugMode)) console.debug("postProcessTranslation after processPlaceholderSpaces" ,translatedText);
 
 
     // 09-05-2021 PSS fixed issue  #67 a problem where Google adds two blanks within the placeholder
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
+        console.debug("we are in google post process", translatedText)
+        console.debug("original:", original)
         const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
-            index = 0;
-            for (const match of matches) {
-                translatedText = translatedText.replaceAll(`{${index}}`, match);
-                index++;
-            }
+          let index = 0;
+          for (const match of matches) {
+             translatedText = translatedText.replaceAll(`[${index}]`, match[0]);  // <-- match[0] ipv match
+            index++;
+          }
         }
-        translatedText =  restorePlaceholdersAfterTranslation(translatedText, original)
+        console.debug("we are in google post process after replacing", "'"+ translatedText + "'")
+        //translatedText =  restorePlaceholdersAfterTranslation(translatedText, original)
     }
     else if (translator == "lingvanex") {
         // We need to put back the %s etc
@@ -483,7 +497,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             // Replace all occurrences in translatedText
             translatedText = translatedText.replace(new RegExp(escapedToken, 'g'), originalValue);
         }
-
+        console.debug("translated after replacing placeholders for deepl:", translatedText)
         // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
         const markupmatches = original.match(markupRegex);
         index = 1;
@@ -520,7 +534,19 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         //     index++;
         // }
         // }
-
+         const matches = original.matchAll(placeHolderRegex);
+        if (matches != null) {
+          let index = 0;
+          for (const match of matches) {
+             translatedText = translatedText.replaceAll(`<x id="var${index}"/>`, match[0]);  // <-- match[0] ipv match
+            index++;
+          }
+        }
+        console.debug("postProcess translated after replacing placeholders for deepl:", translatedText) 
+    }
+    else if (translator == "gemini") {
+        let previewNewText = translatedText
+        
     }
     else if (translator  == "LMstudio") {
         // We need to replace & back \
@@ -555,6 +581,30 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         translatedText = restorePlaceholders(translatedText, placeholderMap)
        
       
+    }
+    else if (translator == "NLPCLoud") {
+       
+       let charmatches = original.matchAll(specialChar);
+        if (charmatches != null) {
+            let index = 1;
+            for (const charmatch of charmatches) {
+                // Put back the original matched value
+                translatedNewText = translatedNewText.replace(
+                    `YYY${index}`,
+                    charmatch
+                );
+                index++;
+            }
+        }
+        const linkmatches = original.match(linkRegex);
+
+        if (linkmatches != null) {
+            index = 1;
+            for (const match of linkmatches) {
+                translatedNewText = translatedNewText.replace(`XXX${index}`, match);
+                index++;
+            }
+        }
     }
     else if (translator == "OpenAI") {
        // const matches = original.matchAll(placeHolderRegex);
@@ -597,12 +647,13 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (translatedText.startsWith("'") == true && translatedText.endsWith('"') == true) {
             if (original.startsWith("'") != true && original.endsWith('"') != true)
                 translatedText = translatedText.substring(1, translatedText.length)
-            translatedText = translatedText.substring(0, translatedText.length - 1)
+                translatedText = translatedText.substring(0, translatedText.length - 1)
         }
     }
     //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
     //console.debug("spellCheckIgnore before check_hyphen:", spellCheckIgnore) 
+    //console.debug("before check_hyphen:", translatedText) 
     translatedText = check_hyphen(translatedText, spellCheckIgnore);
     //console.debug("aftercheck_hyphen:",translatedText)
     // check if there is a blank after the tag 
@@ -619,7 +670,13 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     if (pos != -1) {
         translatedText = translatedText.replace("> .", ">");
     }
-
+     if (locale == "nl" || locale == "nl-be") {
+         // reordering of the sentence
+         //console.debug("before fixUILabelSmart:", translatedText)
+         if (toBoolean(Rearrange_Sentences)){
+             translatedText = fixUILabelSmart(translatedText);
+         }
+     }
 
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
     // console.debug("befor convert to lower:", translatedText)
@@ -676,15 +733,14 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // console.debug("convert off:",convertToLower)
         //console.debug("conversion lowercase is off")
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
+       
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-       // console.debug("checkurl before:",translatedText)
+        //console.debug("checkurl before:",translatedText)
         for (let i = 0; i < replaceVerb.length; i++) {
             const searchWord = replaceVerb[i][0];
             const replacement = replaceVerb[i][1];
-            //console.debug("searchword:",searchWord)
             // Skip if inside URL or button tekst in <button>
             let inUrl = isInsideButtonOrUrl(translatedText, searchWord)
-            //let inUrl = CheckUrl(translatedText, searchWord);
             if (!inUrl) {
                 // Escape regex special chars in search word
                 const safeWord = escapeRegex(searchWord);
@@ -702,10 +758,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
 
         }
-        // console.debug("final translation:", translatedText);
-
+       
     }
-   // console.debug("checkurl after:",translatedText)
+    
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -740,6 +795,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             }
         }
     }
+
     if (locale == "nl" || locale == "nl-be") {
         pos = translatedText.indexOf("; ");
         if (pos != -1) {
@@ -756,86 +812,65 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             return linkmatches[parseInt(n) - 1] || _;
         });
     }
-    // console.debug("before checking start/end:", translatedText)
+     if (toBoolean(DebugMode)) console.debug("postProcessTranslation before check_start_end" ,translatedText);
     // check if the returned translation does have the same start/ending as the original
     let previewNewText = translatedText
-    result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
-   //console.debug("after checking:", result, result.translatedText)
-    translatedText = result.translatedText;
+    //result = check_start_end(translatedText, previewNewText, 0, "", original, "", 0);
+    //translatedText = result.translatedText;
+     if (toBoolean(DebugMode)) console.debug("postProcessTranslation after check_start_end" ,translatedText);
+    //console.debug("before enforceAllCaps:", translatedText)
     translatedNewText = enforceAllCaps(original, translatedText)
-    
+    //console.debug("after enforceAllCaps:", translatedNewText)
     // we need to put back the special chars like #, \n, \t etc mostly for Deepl
     translatedNewText = replace_mVar(original, translatedNewText, specialChar)
 
-    var charmatches = original.matchAll(specialChar);
-    if (charmatches != null) {
-        let index = 1;
-        for (const charmatch of charmatches) {
-            // Put back the original matched value
-            translatedNewText = translatedNewText.replace(
-                `<x id="special_var${index}"/>`,
-                charmatch
-            );
-            index++;
-        }
-    }
-    
-    if (translator == "NLPCLoud") {
-       
-       let charmatches = original.matchAll(specialChar);
-        if (charmatches != null) {
-            let index = 1;
-            for (const charmatch of charmatches) {
-                // Put back the original matched value
-                translatedNewText = translatedNewText.replace(
-                    `YYY${index}`,
-                    charmatch
-                );
-                index++;
-            }
-        }
-        const linkmatches = original.match(linkRegex);
-
-        if (linkmatches != null) {
-            index = 1;
-            for (const match of linkmatches) {
-                translatedNewText = translatedNewText.replace(`XXX${index}`, match);
-                index++;
-            }
-        }
-    }
    
     // PSS 05-02-2026 modified the replace_special_var to handle all html tags properly
-    translatedNewText = replace_special_var(original, translatedNewText, specialChar)
-    let processedText = translatedNewText;
-    // This function below restores the placeholders for Deepl and Google so also __[mVar_1__]
-    translatedNewText = restorePlaceholders(processedText, placeholderMap);
-    translatedNewText = correctSentence(translatedNewText, spellCheckIgnore);
+     if (toBoolean(DebugMode)) console.debug("postProcessTranslation before specialvar" ,translatedNewText);
+     translatedNewText = replace_special_var(original, translatedNewText, specialChar)
+     if (toBoolean(DebugMode)) console.debug("postProcessTranslation after specialvar" ,translatedNewText);
+     let processedText = translatedNewText;
+     // This function below restores the placeholders for Deepl and Google so also __[mVar_1__]
+     translatedNewText = restorePlaceholders(processedText, placeholderMap);
+
+    //We need to check if the original sentence starts with uppercase and if so, we need to correct the translated sentence to start with uppercase as well, but only if the first word is not in the ignore list
+    let originalUpperCase = isStartsWithUpperCase(original)
+    //console.debug("originalUpperCase:", originalUpperCase)
+    if (toBoolean(DebugMode)) console.debug("postProcessTranslation before correctSentence" ,translatedNewText);
+    translatedNewText = correctSentence(translatedNewText, spellCheckIgnore, originalUpperCase);
+    
+    result = check_start_end(translatedNewText, translatedNewText, 0, "", original, "", 0);
+    translatedNewText = result.translatedText;
     if (toBoolean(DebugMode)) console.debug("postProcessTranslation end:" ,translatedNewText);
     return translatedNewText;
 }
 
-function replace_special_var(original, translatedNewText, specialChar) {
-     // 1. Extract all original tags in order
+function replace_special_var(original, translatedNewText) {
+    // 1. Alle originele tags in volgorde
     const originalTags = [...original.matchAll(/<[^>]+>/g)].map(m => m[0]);
 
-    // 2. Extract placeholders in translation
-    const placeholders = [...translatedNewText.matchAll(/<x id="special_var\d+"><\/x>/g)];
+    // 2. Robuuste regex voor DeepL placeholders
+    // - <x> of <X>
+    // - id, ID, Id
+    // - spaties rond =
+    // - self-closing <x ... /> of normaal <x ...></x>
+    const placeholderRegex = /<x\s+id\s*=\s*"special_var\d+"\s*(?:\/>|><\/x>)/gi;
+
+    // 3. Vind alle placeholders
+    const placeholders = [...translatedNewText.matchAll(placeholderRegex)];
 
     if (originalTags.length !== placeholders.length) {
         console.debug(
             `Mismatch: original tags=${originalTags.length}, placeholders=${placeholders.length}`
         );
-        // Optional: fallback or try best effort
-        // return translatedNewText; // safe fallback
+        // fallback of best effort
     }
 
     let i = 0;
-    return translatedNewText.replace(/<x id="special_var\d+"><\/x>/g, () => {
-        return originalTags[i++] || ""; // replace sequentially
+    return translatedNewText.replace(placeholderRegex, () => {
+        return originalTags[i++] || ""; // vervang sequentieel
     });
 }
-
 function replace_mVar(original, translatedNewText, specialChar) {
     charmatches = [...original.matchAll(specialChar)]; // array van matches
     
@@ -897,66 +932,65 @@ function removeWord(sentence, searchWord) {
     return modifiedSentence;
 }
 // # We do not want to replace anything if it is a URL
-function correctSentence(translatedText, ignoreList) {
+function correctSentence(translatedText, ignoreList, originalUpperCase) {
+    if (!translatedText || typeof translatedText !== "string") return translatedText;
     if (isOnlyURL(translatedText)) return translatedText;
 
-    if (!ignoreList || typeof ignoreList !== "string") ignoreList = "";
-
-    const ignoreArray = ignoreList
+    // --- 1️⃣ Parse ignore list ---
+    const ignoreArray = (ignoreList || "")
         .split(/\r?\n/)
         .map(w => w.trim())
         .filter(Boolean);
 
-    if (ignoreArray.length === 0) return translatedText;
-
-    // Build a map for exact casing
     const ignoreMap = new Map();
     ignoreArray.forEach(w => ignoreMap.set(w.toLowerCase(), w));
 
-    // Single regex for all ignore words
     const escapedWords = ignoreArray.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    const ignoreRegex = new RegExp(`\\b(${escapedWords.join("|")})\\b`, "gi");
+    const ignoreRegex = escapedWords.length ? new RegExp(`\\b(${escapedWords.join("|")})\\b`, "gi") : null;
 
-    // Split text into HTML tags and text parts
-    const tagRegex = /<[^>]*>/g;
-    const textParts = translatedText.split(tagRegex);
-    const tags = translatedText.match(tagRegex) || [];
+    // --- 2️⃣ Split into tokens (text + HTML tags) ---
+    const tokens = translatedText.split(/(<[^>]*>)/g); // tags als aparte items
 
-    const correctedParts = [];
+    const correctedTokens = tokens.map((token, idx) => {
+        // Skip HTML tags
+        if (/^<[^>]*>$/.test(token)) return token;
 
-    textParts.forEach((part, idx) => {
+        let temp = token;
 
-        // 1️⃣ Extract URLs
+        // --- 2a️⃣ Preserve URLs ---
         const urls = [];
-        let tempText = part.replace(/https?:\/\/[^\s]+/g, (url) => {
+        temp = temp.replace(/https?:\/\/[^\s]+/g, url => {
             urls.push(url);
             return `__URL_${urls.length - 1}__`;
         });
 
-        // 2️⃣ Replace ignore words using exact casing from map
-        tempText = tempText.replace(ignoreRegex, (match) => {
-            const key = match.toLowerCase();
-            return ignoreMap.get(key) || match;
-        });
+        // --- 2b️⃣ Replace ignore words ---
+        if (ignoreRegex) {
+            temp = temp.replace(ignoreRegex, match => ignoreMap.get(match.toLowerCase()) || match);
+        }
 
-        // 3️⃣ Capitalize first letter of sentences (if not already capitalized by ignore replacement)
-        tempText = tempText.replace(/(^|[.?!]\s+)([a-z])/g, (m, prefix, letter) => prefix + letter.toUpperCase());
+        // --- 2c️⃣ Capitalize sentences safely ---
+        if (toBoolean(originalUpperCase)) {
+            temp = temp.replace(/(^|[.?!]\s+)([a-z])/g, (m, prefix, letter) => {
+                // Check vorige token: als het een HTML-tag is, skip capitalisatie
+                const prevToken = idx > 0 ? tokens[idx - 1] : "";
+                if (/^<[^>]*>$/.test(prevToken)) return m;
 
-        // 4️⃣ Restore URLs
+                return prefix + letter.toUpperCase();
+            });
+        }
+
+        // --- 2d️⃣ Restore URLs ---
         urls.forEach((url, i) => {
-            tempText = tempText.replace(`__URL_${i}__`, url);
+            temp = temp.replace(`__URL_${i}__`, url);
         });
 
-        correctedParts.push(tempText);
-
-        if (idx < tags.length) correctedParts.push(tags[idx]);
+        return temp;
     });
 
-    return correctedParts.join('');
+    // --- 3️⃣ Rebuild text with HTML tags ---
+    return correctedTokens.join("");
 }
-
-
-
 // Helper function to detect URLs
 function isOnlyURL(text) {
     return /^(https?|ftp|file):\/\/[^\s<>"]+$/.test(text);
@@ -1575,7 +1609,7 @@ async function compairWithSuggestion(is_pte, convertToLower, spellCheckIgnore, l
         if (singularLocal !== "notFound") {
             const formal = checkFormal(false);
             setPostTranslationReplace(data.postTranslationReplace, formal);
-            singularLocal = replaceVerbInTranslation(singularOriginal, singularLocal, replaceVerb, false);
+            singularLocal = replaceVerbInTranslation(singularOriginal, singularLocal, replaceVerb, false, formal);
             singularLocal = await postProcessTranslation(
                 singularOriginal,
                 singularLocal,
@@ -1597,7 +1631,7 @@ async function compairWithSuggestion(is_pte, convertToLower, spellCheckIgnore, l
             if (pluralLocal !== "notFound") {
                 const formal = checkFormal(false);
                 setPostTranslationReplace(data.postTranslationReplace, formal);
-                pluralLocal = replaceVerbInTranslation(pluralOriginal, pluralLocal, replaceVerb, false);
+                pluralLocal = replaceVerbInTranslation(pluralOriginal, pluralLocal, replaceVerb, false, formal);
                 pluralLocal = await postProcessTranslation(
                     pluralOriginal,
                     pluralLocal,
@@ -2532,10 +2566,10 @@ function replElements(translatedText, previewNewText, replaceVerb, repl_verb, co
 function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow) {
     repl_array = [];
     var mark;
-    let debug = false;
+    
 
-    if (debug == true) {
-        console.debug("value1:", translatedText)
+    if (toBoolean(DebugMode)) {
+        console.debug("value1:", "'" + translatedText + "'")
         console.debug("value2:", previewNewText)
         console.debug("value3:", "countreplaced: ", counter)
         console.debug("value4:" + "repl_verb: ", repl_verb)
@@ -2559,13 +2593,15 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
             }
         }
         if (original.endsWith("  ")) {
-             console.debug("Original end with blanc!" + original);
-            // console.debug("Preview:",previewNewText);
+            if (toBoolean(DebugMode)) { console.debug("Original ends with double blanc!" + "'" + original + "'") };
             if (!previewNewText.endsWith("  ")) {
-                //  console.debug("Preview does not end with blanc!", previewNewText);
-                previewNewText = previewNewText + " ";
-                translatedText = translatedText + " ";
-                repl_verb += myrow + ": blanc after added" + "<br>";
+                // remove any blank at the end of the preview before adding two blanks, otherwise we can end up with three blanks at the end
+                previewNewText = previewNewText.replace(/ +$/, '');
+                translatedText = translatedText.replace(/ +$/, '');
+                //  console.debug("Preview does not end with double blanc!", previewNewText);
+                previewNewText = previewNewText + "  ";
+                translatedText = translatedText + "  ";
+                repl_verb += myrow + ": blancs after added" + "<br>";
                 countReplaced++;
                 replaced = true;
             }
@@ -2609,8 +2645,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         }
         // 29-07-2023 PSS we need to check if the original does not end with three dots otherwise one period will be added or removed
         if (!original.endsWith('\u2026') && !original.endsWith('\u002e\u002e\u002e')) {
-            //console.debug("no_period value:", no_period)
-            if (no_period == "false") {
+            if (!toBoolean(no_period)) {
                 if (original.endsWith(".")) {
                     if (!previewNewText.endsWith(".")) {
 
@@ -2961,8 +2996,9 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                     let previewNewText = myTranslated;
                    
                     // check if the returned translation does have the same start/ending as the original
-                    if (myTranslated != "No suggestions") {
-                        translatedText = check_start_end(myTranslated, previewNewText, 0, "", original, "", 0).translatedText
+                        if (myTranslated != "No suggestions") {
+                            translatedText = myTranslated;
+                        //translatedText = check_start_end(myTranslated, previewNewText, 0, "", original, "", 0).translatedText
                     }
                     else {
                         translatedText = "No suggestions"
@@ -2972,7 +3008,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                     
                     // We need to replace non formal with formal verbs if populating formal with local records
                     if (formal) {
-                        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+                        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
                     }
                     else {
                         mytranslatedText = translatedText
@@ -4291,22 +4327,18 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 // we have no plural, so the translation can be written directly into the preview
                 //console.debug("my:",myTranslated)
                 if (formal) {
-                   translated = await replaceVerbInTranslation(original, myTranslated, replaceVerb, debug = false)
+                   translated = await replaceVerbInTranslation(original, myTranslated, replaceVerb, debug = false, formal)
                  }              
                 else {
                    //console.debug("single:",myTranslated)
                     translated = myTranslated
                 }
-                 translated = postProcessTranslation(original, translated, replaceVerb, translated, "tranlatepage", convertToLower, spellCheckIgnore, locale);
+                translated = postProcessTranslation(original, translated, replaceVerb, translated, "translatepage", convertToLower, spellCheckIgnore, locale);
                 rawPreview = document.querySelector(`#preview-${row}`)
                 textareaElem = rawPreview.getElementsByClassName("translation foreign-text");
                 textareaElem[0].innerText = translated
                 textareaElem[0].value = translated
                 textareaElem[0].textContent = translated
-                // check if the returned translation does have the same start/ending as the original
-                if (translated != "No suggestions") {
-                    result = await check_start_end(translated, "", 0, "", original, "", 0);
-                }
 
                 record = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
                 await processTransl(original, translated, locale, record, row, transtype, plural_line, locale, false, current)
@@ -5175,7 +5207,8 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                   
          } 
          else if (transsel === "gemini") {
-                 let is_editor = false
+            let is_editor = true
+            console.debug("we translate with gemini plural")
                  result = await translateWithGemini(original, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
                  if (result == "NOK") {
                      stop = true;
@@ -5337,7 +5370,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var myheader = document.querySelector('header');
     //console.debug("select:",MistralSelect)
     //console.debug("transsel at start:",transsel)
-    console.debug("apikeyNLP:", apikeyNLP) 
     if (transsel == "LMStudio") {
         result = await checkModelAndContinue(ollamaModel);
         if (!result) {
@@ -5645,11 +5677,13 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
     let text = editor.querySelector("textarea.foreign-text").value;
     let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
     checkTranslateButton.className = "checktranslation-entry-my-button"
-    translatedText = replaceVerbInTranslation(original, text, replaceVerb, debug = false)
+    if (toBoolean(DebugMode)) console.debug("Checkentry before replace:" ,text);
+    translatedText = replaceVerbInTranslation(original, text, replaceVerb, debug = false, formal)
     // posprocess the translation
-    translatedText = postProcessTranslation(original, translatedText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
-    translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
-    if (toBoolean(DebugMode)) console.debug("Checkentry:" ,translatedText);
+    translatedText = postProcessTranslation(original, translatedText, replaceVerb, translatedText, "checkEntry", convertToLower, spellCheckIgnore, locale);
+    if (toBoolean(DebugMode)) console.debug("Checkentry before replace:" ,translatedText);
+    translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
+    if (toBoolean(DebugMode)) console.debug("Checkentry after replace:" ,translatedText);
     textareaElem = editor.querySelector("textarea.foreign-text");
     if (textareaElem != null && typeof textareaElem != "undefined") {
         textareaElem.innerText = translatedText;
@@ -5673,7 +5707,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
             textareaElem1 = editor.querySelector("textarea#translation_" + newrowId + "_1");
             let pluralText = textareaElem1.value;
             translatedText = postProcessTranslation(original, pluralText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
-            translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+            translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
             console.debug("translatedtext in checkentry:",translatedText)
             textareaElem1.value = translatedText
         }
@@ -6027,14 +6061,10 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     toastbox("info", "Local translation found", "1000", "Saving");
 
                       if (formal) {
-                         translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+                         translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
                       }
                     translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, "", locale);
 
-                    // check if the returned translation does have the same start/ending as the original
-                    if (translatedText != "No suggestions") {
-                        result = await check_start_end(translatedText, "", 0, "", original, "", 0);
-                    }
                     //let textareaElem = e.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
                     textareaElem.value = translatedText;
@@ -6060,7 +6090,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 //let textareaElem = e.querySelector("textarea.foreign-text");
                
                 if (formal) {
-                    translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+                    translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
                 }
                 textareaElem.innerText = translatedText;
                 textareaElem.value = translatedText;
@@ -6240,6 +6270,12 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                        let originals = [original]
                         const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower,locale,OpenAItemp,ClaudModel);
                      
+                    }
+                    else if (transsel === "gemini") {
+                        let is_editor = true
+
+                        result = await translateWithGemini(original, destlang, e, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, spellCheckIgnore, is_editor, apikeyGemini, GeminiModel, GeminiPrompt);
+                        //console.debug("result gemini:", result)
                     }
                     else if (transsel === "Ollama") {
                         let is_editor = true
@@ -7108,7 +7144,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     var formal = checkFormal(false);
     const start = Date.now()
 
-    if (debug == true) {
+    if (toBoolean(DebugMode)) {
         console.debug("processTransl translatedText:", translatedText)
         console.debug("processTransl ends with blank:",translatedText.endsWith(" "))
         console.debug("processTransl record:", record)
@@ -7122,21 +7158,14 @@ async function processTransl (original, translatedText, language, record, rowId,
         }
 
     }
-    if (formal) {
-        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false)
+    if (toBoolean(formal)) {
+        mytranslatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
     }
     else {
         mytranslatedText = translatedText
     }
 
-    //console.debug("processTransl before check_start_end Iin processtranslation",mytranslatedText)
-    // PSS 17-01 This one called from translate entry  
-  //  result = check_start_end(mytranslatedText, mytranslatedText, 0, "", original, "", 0);
-    // PSS 17-01 This one is double as it is already done in postProcessTranslation
-   // console.debug("result:", result.translatedText.endsWith(" "))
-   //  mytranslatedText = result.translatedText
-    //console.debug("processTransl ends with blank after replacce:",mytranslatedText.endsWith(" "))
-    //translatedText = restoreCase(original, translatedText);
+  
     if (transtype == "single") {
         let isPlural = false
         //console.debug("processTransl:",record)
@@ -7438,12 +7467,122 @@ async function processTransl (original, translatedText, language, record, rowId,
     previousCurrent.innerText = "transFill";
     previousCurrent.value = "transFill";
     const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (show_debug) console.debug("processtransl is finished: ",duration);
+    if (toBoolean(DebugMode)) console.debug("processtransl is finished: ",duration, " "+mytranslatedText);
     return "OK";
 }
 
-// PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks
+
 function processPlaceholderSpaces(originalPreProcessed, translatedText) {
+    if (!originalPreProcessed) return translatedText;
+
+    // Match both DeepL (<x id="var0"/>) and Google ([0]) style placeholders
+    const placeholderRegex = /<x id="var\d+"\/>|\[\d+\]/g;
+
+    const orgMatches = [...originalPreProcessed.matchAll(placeholderRegex)].map(m => {
+        const index = m.index;
+        return {
+            placeholder: m[0],
+            leadingSpace: index > 0 && originalPreProcessed[index - 1] === ' ',
+            trailingSpace:
+                index + m[0].length < originalPreProcessed.length &&
+                originalPreProcessed[index + m[0].length] === ' '
+        };
+    });
+
+    let result = translatedText;
+
+    for (const { placeholder, leadingSpace, trailingSpace } of orgMatches) {
+        let transIndex = result.indexOf(placeholder);
+        if (transIndex === -1) continue;
+
+        console.debug(`DEBUG Placeholder ${placeholder}: "${result}"`);
+
+        // ---- Leading space ----
+        const hasLeading = transIndex > 0 && result[transIndex - 1] === ' ';
+        if (!leadingSpace && hasLeading) {
+            // Remove spaces that are not in original
+            let start = transIndex - 1;
+            while (start >= 0 && result[start] === ' ') start--;
+            result = result.slice(0, start + 1) + result.slice(transIndex);
+            transIndex = start + 1;
+        }
+        // If original had leading space, leave it — do not insert
+
+        // ---- Trailing space ----
+        const endPos = transIndex + placeholder.length;
+        const hasTrailing = endPos < result.length && result[endPos] === ' ';
+
+        if (trailingSpace && !hasTrailing) {
+            // Insert missing space if original has it
+            result = result.slice(0, endPos) + ' ' + result.slice(endPos);
+        } else if (!trailingSpace && hasTrailing) {
+            // Remove extra space if original does not have it
+            let end = endPos;
+            while (end < result.length && result[end] === ' ') end++;
+            result = result.slice(0, endPos) + result.slice(end);
+        }
+    }
+
+    if (toBoolean(DebugMode)) console.debug("processPlaceholderSpaces result:", result);
+
+    return result;
+}
+function good_workingprocessPlaceholderSpaces(originalPreProcessed, translatedText) {
+    if (!originalPreProcessed) return translatedText;
+
+    // Match placeholders like <x id="var0"/>
+    const placeholderRegex = /<x id="var\d+"\/>/g;
+
+    const orgMatches = [...originalPreProcessed.matchAll(placeholderRegex)].map(m => {
+        const index = m.index;
+        return {
+            placeholder: m[0],
+            leadingSpace: index > 0 && originalPreProcessed[index - 1] === ' ',
+            trailingSpace:
+                index + m[0].length < originalPreProcessed.length &&
+                originalPreProcessed[index + m[0].length] === ' '
+        };
+    });
+
+    let result = translatedText;
+
+    for (const { placeholder, leadingSpace, trailingSpace } of orgMatches) {
+        let transIndex = result.indexOf(placeholder);
+        if (transIndex === -1) continue;
+
+        console.debug(`DEBUG Placeholder ${placeholder}: "${result}"`);
+
+        // ---- Leading space ----
+        const hasLeading = transIndex > 0 && result[transIndex - 1] === ' ';
+        if (!leadingSpace && hasLeading) {
+            // Remove spaces that are not in original
+            let start = transIndex - 1;
+            while (start >= 0 && result[start] === ' ') start--;
+            result = result.slice(0, start + 1) + result.slice(transIndex);
+            transIndex = start + 1;
+        }
+        // If original had leading space, leave it — do not insert
+
+        // ---- Trailing space ----
+        const endPos = transIndex + placeholder.length;
+        const hasTrailing = endPos < result.length && result[endPos] === ' ';
+
+        if (trailingSpace && !hasTrailing) {
+            // Insert missing space if original has it
+            result = result.slice(0, endPos) + ' ' + result.slice(endPos);
+        } else if (!trailingSpace && hasTrailing) {
+            // Remove extra space if original does not have it
+            let end = endPos;
+            while (end < result.length && result[end] === ' ') end++;
+            result = result.slice(0, endPos) + result.slice(end);
+        }
+    }
+
+    console.debug("DEBUG processPlaceholderSpaces result:", result);
+    return result;
+}
+// PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks
+function working_processPlaceholderSpaces(originalPreProcessed, translatedText) {
    // console.debug("translatedText:", translatedText) 
     if (originalPreProcessed == "") {
         //console.debug("preprocessed empty");
@@ -7456,7 +7595,8 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     while (counter < 20) {
         // PSS 03-03-2021 find if the placeholder is present and at which position
         found = originalPreProcessed.search("[" + counter + "]");
-        // console.debug("processPlaceholderSpaces found start:", found, " ", "[" + counter + "]");
+        console.debug("OriginalPreprocessed:", originalPreProcessed)
+        console.debug("processPlaceholderSpaces original found start:", found, " ", "[" + counter + "]");
         if (found == -1) {
             break;
         }
@@ -7484,7 +7624,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
         counter = 0;
         while (counter < 20) {
             found = translatedText.search("[" + counter + "]");
-            //console.debug("processPlaceholderSpaces found in translatedText start:", found, " ", "[" + counter + "]");
+            console.debug("processPlaceholderSpaces found in translatedText start:", found, " ", "[" + counter + "]");
             if (found == -1) {
                 break;
             }
@@ -7526,7 +7666,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
                         if (!(transval.startsWith(" "))) {
                             // 24-03-2021 PSS found another problem when the placeholder is at the start of the line
                             found = translatedText.search("[" + counter + "]");
-                            // console.debug('processPlaceholderSpaces found at :', found);
+                            console.debug('processPlaceholderSpaces found at :', found);
                             if (found != 1) {
                                 console.debug("processPlaceholderSpaces in trans no blank before!!!");
                                 repl = transval.substr(0, 1) + " " + transval.substr(1,);
@@ -7597,6 +7737,7 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
         //console.debug("processPlaceholderBlank no placeholders found",translatedText);
         return translatedText;
     }
+    console.debug("processPlaceholderSpaces final result:", translatedText);
     return translatedText;
 }
 
@@ -7731,14 +7872,13 @@ async function onCopySuggestionClicked(target,rowId) {
         let text = editor.querySelector("textarea.foreign-text").value;
         setPostTranslationReplace(data.postTranslationReplace, formal)
         if (formal) {
-            translatedText = await replaceVerbInTranslation(original, text, replaceVerb, debug = false)
+            translatedText = await replaceVerbInTranslation(original, text, replaceVerb, debug = false, formal)
         }
         else {
             translatedText = text
         }
         translatedText = await  postProcessTranslation(original, translatedText, replaceVerb, translatedText, "checkEntry", convertToLower, spellCheckIgnore, locale);
-        result = await check_start_end(translatedText, translatedText, 0, "", original, "", 0);
-        translatedText = result.translatedText
+       
         if (textareaElem != null && typeof textareaElem != "undefined") {
           textareaElem.innerText = translatedText;
           textareaElem.value = translatedText;

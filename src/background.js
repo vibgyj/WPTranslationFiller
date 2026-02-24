@@ -354,7 +354,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       // Ollama translation
  else if (request.action === "ollama_translate") {
-    console.debug("Ollama translation request received");
+    //-console.debug("Ollama translation request received:");
     
     (async () => {
         try {
@@ -372,20 +372,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 Top_p,
                 Top_k
             } = request.data;
-            console.debug("model:", model);
+            //console.debug("model:", model);
+           // console.debug("prompt:", systemPrompt); 
             let myTop_p = parseInt(Top_p)
             let myTop_k = parseInt(Top_k) 
             if (!text) return sendResponse({ success: false, error: "Text is missing" });
             if (!model) return sendResponse({ success: false, error: "Model is missing" });
             if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
-            console.debug("original:",text)
+            //console.debug("original:",text)
             const myLocal = toBoolean(useLocal);
             let tone = "informal"
             // === Local translation path ===
-            if (myLocal) {
+            if (toBoolean(myLocal)) {
                 
                 // console.debug("prompt:", systemPrompt)
-               // console.debug("text to translate:", text)
+                //console.debug("text to translate:", text)
                // text = "'" + text + "'";
                let messages = [
                     { role: 'system', content: systemPrompt },
@@ -403,7 +404,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
-                    console.debug("Local Ollama result:", result.translation);
+                    //console.debug("Local Ollama result:", result.translation);
                     
                     sendResponse({
                         success: true,
@@ -1216,7 +1217,7 @@ const StorageWrapper = (() => {
         chrome.runtime.onInstalled.addListener((details) => {
             const currentVersion = chrome.runtime.getManifest().version;
             if (details.reason === "update" && details.previousVersion !== currentVersion) {
-                console.log(`Extension updated from ${details.previousVersion} → ${currentVersion}`);
+                console.debug(`Extension updated from ${details.previousVersion} → ${currentVersion}`);
                 backupStorage();
             }
         });
@@ -1251,7 +1252,8 @@ async function callLocalOllama(bodyToSend) {
         });
         
         const data = await resp.json();
-        console.debug("Local Ollama response:", data); 
+        //console.debug("Local Ollama response:", data); 
+
         if (!resp.ok) {
             return {
                 success: false,
@@ -1388,7 +1390,7 @@ async function fetchWithTimeoutAndRetry(
                         lastError = new Error(result.error || "Unknown local Ollama error");
                     } catch (err) {
                         lastError = err;
-                        console.warn(`Attempt ${i + 1} failed: ${err.message}`);
+                        console.debug(`Attempt ${i + 1} failed: ${err.message}`);
                     }
                 }
                 throw lastError;

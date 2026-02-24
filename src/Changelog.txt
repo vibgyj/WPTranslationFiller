@@ -151,3 +151,20 @@ Version 3.4.73 Improved debugging by adding a boolean which can be set within th
 Version 3.4.74 Check-hyphen did not work properly
 Version 3.4.75 Plurals were not longer processed if they come from local database
 Version 3.4.76 Improved Ollama behavior with links
+Version 3.4.76 Improved check_start_end function so it now correctly checks the blanks at the end of the line
+Version 3.4.76 There were informal words converted to formal in the suggestions, which is wrong, so now added a check to prevent that
+Version 3.4.76 The first word in a sentence was converted to uppercase, while the original was not starting with an uppercase, so now added a check to prevent that
+Version 3.4.77 Improved replacing words in the translations, as the formal word 'alsjeblieft' and 'selecteren' were replaced on the wrong place
+Version 3.4.78 Added a toggle to revert the sentences replacement function "Ctrl+shift+ S"
+Version 3.4.78 Improved the rearragement of words in sentence
+Version 3.4.79 Added a checkbox into the editor to show that rearrangement is applied
+Version 3.4.80 The tooltip of the rearrangement checkbox was not shown properly
+Version 3.4.81 Made the rearrange checkmark static
+Version 3.4.82 Tabs werden niet goed verwerkt door de functie enforeallCaps
+Version 3.4.82 Full verbs were not replaced properly
+Version 3.4.82 Because enforceallCaps was not working properly the text "id" was replaced with "ID" which is wrong, so now added a check to prevent that
+Version 3.4.83 Fixed a problem where there was a capital set after <br/>
+Version 3.4.83 Fixed a rearrange problem where uitschakelen was added instead of inschakelen
+Version 3.4.84 Improved the rearrangement function, it now also checks for words like "Verhoog" and "verwijder" and moves them to the right place
+Version 3.4.84 Improved removing blanks after and before placeholders 
+Version 3.8.84 Improved the test runner, now it is compatible with the current functions used, and adde DeepL tests

@@ -1,23 +1,90 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Jasmine Spec Runner v3.6.0</title>
+    <meta charset="utf-8">
+    <title>Jasmine Spec Runner v3.6.0</title>
 
-  <link rel="shortcut icon" type="image/png" href="jasmine-3.6.0/jasmine_favicon.png">
-  <link rel="stylesheet" href="jasmine-3.6.0/jasmine.css">
+    <link rel="shortcut icon" type="image/png" href="jasmine-3.6.0/jasmine_favicon.png">
+    <link rel="stylesheet" href="jasmine-3.6.0/jasmine.css">
 
-  <script src="jasmine-3.6.0/jasmine.js"></script>
-  <script src="jasmine-3.6.0/jasmine-html.js"></script>
-  <script src="jasmine-3.6.0/boot.js"></script>
+    <script src="jasmine-3.6.0/jasmine.js"></script>
+    <script src="jasmine-3.6.0/jasmine-html.js"></script>
+    <script src="jasmine-3.6.0/boot.js"></script>
 
-  <!-- include source files here... -->
-  <script src="src/googleTranslate.js"></script>
+    <!-- Include all source files here in correct order -->
+    <script src="src/wptf-functions.js"></script>
+    <script src="src/wptf-googleTrans.js"></script>
+    <script src="src/wptf-deeplTrans.js"></script>
+    <script src="src/wptf-commonTranslate.js"></script> <!-- <-- bestand met postProcessTranslation -->
+    <!-- Zorg dat postProcessTranslation globaal beschikbaar is -->
+    <script>
+        if (typeof postProcessTranslation !== 'undefined') {
+            window.postProcessTranslation = postProcessTranslation;
+        }
+    </script>
 
-  <!-- include spec files here... -->
-  <script src="spec/googleTranslate_preProcessOriginal_Spec.js"></script>
-  <script src="spec/googleTranslate_postProcessTranslation_Spec.js"></script>
-  <script src="spec/googleTranslate_processPlaceholderSpaces_Spec.js"></script>
+    <!-- Custom Jasmine Reporter om diffs te tonen -->
+    <script>
+        (function () {
+            function highlightDiff(actual, expected) {
+                let result = '';
+                const maxLength = Math.max(actual.length, expected.length);
+                for (let i = 0; i < maxLength; i++) {
+                    const a = actual[i] || '';
+                    const e = expected[i] || '';
+                    if (a === e) {
+                        result += a;
+                    } else {
+                        if (a) result += `<span style="background-color: rgba(255,0,0,0.3);">${a}</span>`;
+                        if (e) result += `<span style="background-color: rgba(0,255,0,0.3);">${e}</span>`;
+                    }
+                }
+                return result;
+            }
+
+            const diffReporter = {
+                specDone: function (result) {
+                    if (result.status === 'failed') {
+                        const container = document.getElementById('diffContainer') || (() => {
+                            const div = document.createElement('div');
+                            div.id = 'diffContainer';
+                            div.style.fontFamily = 'monospace';
+                            div.style.whiteSpace = 'pre-wrap';
+                            div.style.marginTop = '20px';
+                            div.style.padding = '10px';
+                            div.style.borderTop = '2px solid #333';
+                            document.body.appendChild(div);
+                            return div;
+                        })();
+
+                        const title = document.createElement('div');
+                        title.innerHTML = `<strong>${result.fullName} failed:</strong>`;
+                        container.appendChild(title);
+
+                        result.failedExpectations.forEach(fe => {
+                            const actual = fe.actual !== undefined ? fe.actual : '';
+                            const expected = fe.expected !== undefined ? fe.expected : '';
+                            const diffHtml = highlightDiff(actual, expected);
+
+                            const diffDiv = document.createElement('div');
+                            diffDiv.innerHTML = diffHtml;
+                            container.appendChild(diffDiv);
+                        });
+                    }
+                }
+            };
+
+            jasmine.getEnv().addReporter(diffReporter);
+        })();
+    </script>
+
+    <!-- Include spec files here -->
+    <script src="spec/googleTranslate_preProcessOriginal_spec.js"></script>
+    <script src="spec/googleTranslate_postProcessTranslation_spec.js"></script>
+    <script src="spec/deeplTranslate_preProcessOriginal_spec.js"></script>
+    <script src="spec/deeplTranslate_postProcessTranslation_spec.js"></script>
+    <script src="spec/general_Rearrange_sentences_spec.js"></script>
+
 
 </head>
 

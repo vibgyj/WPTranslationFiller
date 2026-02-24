@@ -30,6 +30,7 @@ var DispClipboard
 var strictValidation
 var DisableautoClose = false
 var DebugMode = false
+var Rearrange_Sentences = true
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -330,7 +331,8 @@ async function startFullScript(textarea) {
     await initPublicVars()
     //console.debug("DispClipBoard:", autoCopyClipBoard)
     //console.debug("DisableAutoClose:",DisableAutoClose)
-
+    startToggleListener();
+    addCheckmarkClickListener();
     let is_loaded = await loadGlossaries(myCustomEvent);
 
     if (is_loaded === "success") {
@@ -1976,6 +1978,7 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
+                        
                         result = populateWithTM(data.apikey, data.apikeyDeep, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower, data.spellCheckIgnore, data.TMtreshold, interCept);
                     }
                     else {
@@ -2743,7 +2746,17 @@ async function checkbuttonClick(event) {
                     else { console.debug("not found:", res) }
                 });
             }
-            addTranslateButtons(rowId);
+             addTranslateButtons(rowId);
+            
+          
+             // Toggle visuele state
+             //console.debug("Rearrange_Sentences:", toBoolean(Rearrange_Sentences))
+             if (toBoolean(Rearrange_Sentences)) {
+                 let header = await document.querySelector(`#editor-${rowId} .panel-header`);
+                  updatePanelCheckmarks();
+               //  addCheckmarkClickListener();
+                 //header.classList.toggle('has-checkmark');
+             }
             let checkTranslateButton = await document.querySelector(`#editor-${rowId} .checktranslation-entry-my-button`)
             checkTranslateButton.className = "checktranslation-entry-my-button"
             await waitForMyElement(`#editor-${rowId}`, 3000, "2685").then(async(res) => {
@@ -3184,7 +3197,7 @@ function translateEntryClicked(event) {
         newrowId = rowId.concat("-", myrowId);
         rowId = newrowId;
     }
-    
+    let editor = document.querySelector(`#editor-${rowId}`);
     chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral","apikeyClaude", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiSelect", "GeminiPrompt", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt", "LMStudioWait"], function (data) {
         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
        // console.debug("select:",data.MistralSelect)

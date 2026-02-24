@@ -143,7 +143,7 @@ async function populateWithTM(
             StartObserver = true;
             return;
         }
-
+       // console.debug("processTM formal:", formal) 
         await processTM(
             myrecCount,
             destlang,
@@ -160,6 +160,7 @@ async function populateWithTM(
             interCept
         );
     } else {
+        //console.debug("processTM formal:", formal) 
         await processTM(
             myrecCount,
             destlang,
@@ -341,9 +342,6 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                 textFound = "No suggestions"
                                 updateStyle(textareaElem, result, "", showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
                             }
-                            // Treat timeout as no suggestions for further processing
-                            // (replace suggestionResult value)
-                            //suggestionResult = "nosuggestions";
                         }
 
                         
@@ -365,27 +363,30 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     else {
                                         textFound = check_hyphen(rawTranslation, spellCheckIgnore);
                                     }
-                                    if (formal) {
-                                        textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false)
+                                    if (toBoolean(formal)) {
+                                        // This one is double 
+                                        //textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false, formal)
                                     }
-                                   // console.debug("text:",textFound)
+                                    
                                     if (previewName != null) {
                                         previewName.innerText = textFound
                                         previewName.value = textFound
                                     }
                                     let textareaElem = editor.querySelector("textarea.foreign-text");
-                                    //console.debug("texarea:", textareaElem)
+                                   
                                     if (textareaElem != null) {
                                         textareaElem.innerText = textFound;
                                         textareaElem.innerHTML = textFound;
                                         textareaElem.textContent = textFound;
-                                        checkEntry(rowId, postTranslationReplace, formal, convertToLower, true, spellCheckIgnore);
+                                        // this is to mark the record as TM filled
+                                        checkEntry(rowId, postTranslationReplace, toBoolean(formal), convertToLower, true, spellCheckIgnore);
                                     }
                                     
-                                    if (debug == true) {
+                                    if (toBoolean(DebugMode)) {
                                         console.debug("✅ Found TM suggestion element for record:", rowId);
                                         console.debug("Clean translation:", cleanTranslation);
                                         console.debug("Raw translation:", rawTranslation);
+                                         console.debug("TextFound:", textFound);
                                         console.debug("Outer HTML:", suggestionResult.outerHTML);
                                     }
 
@@ -400,6 +401,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     status.innerText = "transFill";
                                     status.value = "transFill";
                                     current.innerText = 'transFill'
+                                    //console.debug("before processTransl: ",cleanTranslation)
                                      record = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
                                      await processTransl(original, cleanTranslation, locale, record, rowId, transtype, plural_line, locale, false, current)
 
@@ -425,6 +427,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                 status.value = "transFill";
                                 if (convertToLower == true) {
                                     textFound = convert_lower(rawTranslation, spellCheckIgnore)
+                                    textFound = check_hyphen(textFound, spellCheckIgnore);
                                 }
                                 else {
                                     textFound = check_hyphen(rawTranslation, spellCheckIgnore);
@@ -432,11 +435,12 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                 editor = document.querySelector(`#editor-${rowId}`)
             
                                 original = editor.querySelector("span.original-raw").innerText;
-                                if (formal) {
-                                    textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false)
+                                if (toBoolean(formal)) {
+                                    // PSS this one is double
+                                    //textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false, formal)
                                 }
-                                debug = false
-                                if (debug == true) {
+                               
+                                if (toBoolean(DebugMode)) {
                                     console.debug("Clean translation:", cleanTranslation);
                                     console.debug("Raw translation:", rawTranslation);
                                     console.debug("textFound:", textFound)

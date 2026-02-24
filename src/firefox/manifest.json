@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler",
-  "version": "3.4.76",
+  "version": "3.4.84",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"

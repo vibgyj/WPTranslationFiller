@@ -55,7 +55,7 @@ async function getTransAI(
   locale, convertToLower, editor, counter, OpenAISelect,
   OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
 ) {
-  var show_debug = true
+  var show_debug = false
   var myTtranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     let prevstate = current ? current.innerText : "";
@@ -236,7 +236,8 @@ async function getTransAI(
     if (show_debug) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
 
    const data = result.result; // raw proxy response
-   let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
+        let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
+        
    if (text === '""' || text === "") {
        text = "No suggestions";
    }
@@ -253,7 +254,8 @@ async function getTransAI(
         convertToLower,
         spellCheckIgnore,
         locale
-       );
+        );
+        
     const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
     if (show_debug) console.debug(`[${new Date().toISOString()}] myTranslatedText postprocessed ${duration2}s`, myTranslatedText);
 

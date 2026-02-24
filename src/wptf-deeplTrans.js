@@ -59,6 +59,7 @@ async function translateText(
                         replaceVerb, spellCheckIgnore, transtype, plural_line,
                         locale, convertToLower, deepLcurrent, destlang
                     ).then(processedData => {
+                        //console.debug("Processed data:", processedData); 
                         resolve(processedData === "OK" ? "OK" : processedData);
                     }).catch(err => {
                         console.error("Error in processData:", err);
@@ -129,6 +130,7 @@ async function translateText(
 
 async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, DeepLWait) {
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "deepl");
+    if (toBoolean(DebugMode)) console.debug("DeepL Pre-processed Original:", originalPreProcessed)
     //console.debug("deeplGlossary:",deeplGlossary)
     language = language.toUpperCase();
    
