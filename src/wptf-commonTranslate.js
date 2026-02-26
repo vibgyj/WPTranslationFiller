@@ -216,7 +216,7 @@ async function preProcessOriginal(original, preverbs, translator) {
                 index++;
             }
         }
-        console.debug("original after replacing placeholders for deepl:", original)
+        //console.debug("original after replacing placeholders for deepl:", original)
 
     }
     else if (translator == "microsoft") {
@@ -497,7 +497,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             // Replace all occurrences in translatedText
             translatedText = translatedText.replace(new RegExp(escapedToken, 'g'), originalValue);
         }
-        console.debug("translated after replacing placeholders for deepl:", translatedText)
+        //console.debug("translated after replacing placeholders for deepl:", translatedText)
         // We need to replace & and ; before sending the string to DeepL, because DeepL does not hanle them but crashes
         const markupmatches = original.match(markupRegex);
         index = 1;
@@ -542,7 +542,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             index++;
           }
         }
-        console.debug("postProcess translated after replacing placeholders for deepl:", translatedText) 
+        //console.debug("postProcess translated after replacing placeholders for deepl:", translatedText) 
     }
     else if (translator == "gemini") {
         let previewNewText = translatedText
@@ -846,29 +846,17 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 }
 
 function replace_special_var(original, translatedNewText) {
-    // 1. Alle originele tags in volgorde
     const originalTags = [...original.matchAll(/<[^>]+>/g)].map(m => m[0]);
-
-    // 2. Robuuste regex voor DeepL placeholders
-    // - <x> of <X>
-    // - id, ID, Id
-    // - spaties rond =
-    // - self-closing <x ... /> of normaal <x ...></x>
     const placeholderRegex = /<x\s+id\s*=\s*"special_var\d+"\s*(?:\/>|><\/x>)/gi;
 
-    // 3. Vind alle placeholders
-    const placeholders = [...translatedNewText.matchAll(placeholderRegex)];
-
-    if (originalTags.length !== placeholders.length) {
-        console.debug(
-            `Mismatch: original tags=${originalTags.length}, placeholders=${placeholders.length}`
-        );
-        // fallback of best effort
+    if (originalTags.length === 0) {
+        // Original had no real tags — placeholders represent \n
+        return translatedNewText.replace(placeholderRegex, '\n');
     }
 
     let i = 0;
     return translatedNewText.replace(placeholderRegex, () => {
-        return originalTags[i++] || ""; // vervang sequentieel
+        return originalTags[i++] || '';
     });
 }
 function replace_mVar(original, translatedNewText, specialChar) {
@@ -4581,10 +4569,10 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     let originals = [original]
                     //console.debug("handle_plural 4377:",openAiGloss)
                     const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, record, row, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp,ClaudModel);
-
-                    if (results.success) {
-                        // Use result.translation
-                       // console.debug(results.translation);
+                    
+                    if (!results[0].success) {
+                        messageBox("error", "There has been some uncatched error: " + results[0].error);
+                        return 'stop'
                     } else {
                         // Handle error
                         // console.error(results);

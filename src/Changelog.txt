@@ -168,3 +168,5 @@ Version 3.4.83 Fixed a rearrange problem where uitschakelen was added instead of
 Version 3.4.84 Improved the rearrangement function, it now also checks for words like "Verhoog" and "verwijder" and moves them to the right place
 Version 3.4.84 Improved removing blanks after and before placeholders 
 Version 3.8.84 Improved the test runner, now it is compatible with the current functions used, and adde DeepL tests
+Version 3.8.85 Fixed an issue with newlines in Ollama transtlations
+VErsion 3.8.85 Fixed a problem with Claude requests limit

@@ -405,10 +405,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
                     //console.debug("Local Ollama result:", result.translation);
-                    
+                    const translated = result.translation
+
+                     // 3. Quotes cleanup 
+                    const translatedText = cleanTranslation(translated);
+                    console.debug("translatedText:",translatedText)
                     sendResponse({
                         success: true,
-                        translation: result.translation
+                        translation: translatedText
                     });
                 } catch (err) {
                     sendResponse({
@@ -683,12 +687,13 @@ else if (request.action === "LMStudio_translate") {
             
             const respText = await resp.text().catch(() => '');
             // debug raw response if you need
-            console.debug("Claude raw response:", respText);
+            //console.debug("Claude raw response:", respText);
             
             if (!resp.ok) {
                 // try to parse structured error, otherwise return text
                 try {
                     const json = JSON.parse(respText);
+                    //console.debug("Claude error response JSON:", json)
                     sendResponse({ success: false, error: json.error?.message || JSON.stringify(json) });
                 } catch {
                     sendResponse({ success: false, error: respText || `HTTP ${resp.status}` });
@@ -1252,7 +1257,7 @@ async function callLocalOllama(bodyToSend) {
         });
         
         const data = await resp.json();
-        //console.debug("Local Ollama response:", data); 
+        console.debug("Local Ollama response:", data); 
 
         if (!resp.ok) {
             return {
