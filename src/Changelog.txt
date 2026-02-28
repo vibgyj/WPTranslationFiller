@@ -170,3 +170,6 @@ Version 3.4.84 Improved removing blanks after and before placeholders
 Version 3.8.84 Improved the test runner, now it is compatible with the current functions used, and adde DeepL tests
 Version 3.8.85 Fixed an issue with newlines in Ollama transtlations
 VErsion 3.8.85 Fixed a problem with Claude requests limit
+Version 3.8.86 Renamed the extension within the code to "WordPress Translation Filler Extended"
+Version 3.8.87 Fixed two issues with spaces behind placeholders
+Version 3.8.87 Improved the test scripts, so they are now more stable

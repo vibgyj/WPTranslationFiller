@@ -393,7 +393,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     var formal = checkFormal(false);
     const verbMap = Object.fromEntries(replaceVerb.map(v => [v[0], v[1]]));
     const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
-   
+    console.debug("postprocessOriginal:", original) 
     if (toBoolean(DebugMode)) {
         console.debug("postProc original: ", original);
         console.debug("postProc translatedText :", translatedText);
@@ -819,13 +819,16 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //translatedText = result.translatedText;
      if (toBoolean(DebugMode)) console.debug("postProcessTranslation after check_start_end" ,translatedText);
     //console.debug("before enforceAllCaps:", translatedText)
+    
     translatedNewText = enforceAllCaps(original, translatedText)
+    
     //console.debug("after enforceAllCaps:", translatedNewText)
     // we need to put back the special chars like #, \n, \t etc mostly for Deepl
     translatedNewText = replace_mVar(original, translatedNewText, specialChar)
-
+    console.debug("postprocessOriginal:", original) 
    
     // PSS 05-02-2026 modified the replace_special_var to handle all html tags properly
+    console.debug("before replace_special_var:", original)
      if (toBoolean(DebugMode)) console.debug("postProcessTranslation before specialvar" ,translatedNewText);
      translatedNewText = replace_special_var(original, translatedNewText, specialChar)
      if (toBoolean(DebugMode)) console.debug("postProcessTranslation after specialvar" ,translatedNewText);
@@ -846,19 +849,19 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 }
 
 function replace_special_var(original, translatedNewText) {
-    const originalTags = [...original.matchAll(/<[^>]+>/g)].map(m => m[0]);
-    const placeholderRegex = /<x\s+id\s*=\s*"special_var\d+"\s*(?:\/>|><\/x>)/gi;
-
-    if (originalTags.length === 0) {
-        // Original had no real tags — placeholders represent \n
-        return translatedNewText.replace(placeholderRegex, '\n');
+    const specialChar = /<[^>]+>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|#/gi;
+    const placeholderMap = {};
+    let index = 1;
+    for (const charmatch of original.matchAll(specialChar)) {
+        placeholderMap[`special_var${index}`] = charmatch[0];
+        index++;
     }
-
-    let i = 0;
-    return translatedNewText.replace(placeholderRegex, () => {
-        return originalTags[i++] || '';
+    const placeholderRegex = /<x\s+id\s*=\s*"(special_var\d+)"\s*(?:\/>|><\/x>)/gi;
+    return translatedNewText.replace(placeholderRegex, (match, id) => {
+        return placeholderMap[id] ?? match;
     });
 }
+
 function replace_mVar(original, translatedNewText, specialChar) {
     charmatches = [...original.matchAll(specialChar)]; // array van matches
     
@@ -7469,8 +7472,10 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     const orgMatches = [...originalPreProcessed.matchAll(placeholderRegex)].map(m => {
         const index = m.index;
         return {
-            placeholder: m[0],
-            leadingSpace: index > 0 && originalPreProcessed[index - 1] === ' ',
+            placeholder:  m[0],
+            leadingSpace:
+                index > 0 &&
+                originalPreProcessed[index - 1] === ' ',
             trailingSpace:
                 index + m[0].length < originalPreProcessed.length &&
                 originalPreProcessed[index + m[0].length] === ' '
@@ -7483,28 +7488,32 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
         let transIndex = result.indexOf(placeholder);
         if (transIndex === -1) continue;
 
-        console.debug(`DEBUG Placeholder ${placeholder}: "${result}"`);
+        if (toBoolean(DebugMode)) console.debug(`DEBUG Placeholder ${placeholder}: "${result}"`);
 
         // ---- Leading space ----
         const hasLeading = transIndex > 0 && result[transIndex - 1] === ' ';
+
         if (!leadingSpace && hasLeading) {
-            // Remove spaces that are not in original
+            // Remove leading spaces that are not in original
             let start = transIndex - 1;
             while (start >= 0 && result[start] === ' ') start--;
             result = result.slice(0, start + 1) + result.slice(transIndex);
             transIndex = start + 1;
+        } else if (leadingSpace && !hasLeading) {
+            // Insert missing leading space that original has but translation lost
+            result = result.slice(0, transIndex) + ' ' + result.slice(transIndex);
+            transIndex += 1;
         }
-        // If original had leading space, leave it — do not insert
 
         // ---- Trailing space ----
-        const endPos = transIndex + placeholder.length;
+        const endPos    = transIndex + placeholder.length;
         const hasTrailing = endPos < result.length && result[endPos] === ' ';
 
-        if (trailingSpace && !hasTrailing) {
-            // Insert missing space if original has it
+        if (trailingSpace && !hasTrailing && endPos < result.length) {
+            // Insert missing trailing space — only if there is content after the placeholder
             result = result.slice(0, endPos) + ' ' + result.slice(endPos);
         } else if (!trailingSpace && hasTrailing) {
-            // Remove extra space if original does not have it
+            // Remove extra trailing spaces
             let end = endPos;
             while (end < result.length && result[end] === ' ') end++;
             result = result.slice(0, endPos) + result.slice(end);
@@ -7512,9 +7521,9 @@ function processPlaceholderSpaces(originalPreProcessed, translatedText) {
     }
 
     if (toBoolean(DebugMode)) console.debug("processPlaceholderSpaces result:", result);
-
     return result;
 }
+
 function good_workingprocessPlaceholderSpaces(originalPreProcessed, translatedText) {
     if (!originalPreProcessed) return translatedText;
 
