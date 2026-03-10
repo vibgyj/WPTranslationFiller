@@ -115,6 +115,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             apikeydeeplCheckbox.checked = false
         }
     }
+    console.debug("TMwait in storage:", data.TMwait) 
     if (typeof data.TMwait == "undefined") {
         TMwait = 500;
     }

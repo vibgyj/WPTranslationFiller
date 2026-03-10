@@ -1,52 +1,4 @@
-﻿// --- Lijst van toegestane werkwoorden die mogen worden herschikt ---
-const allowedVerbs = [
-    "Beheer",
-    "Selecteer",
-    "Voeg",
-    "Wijzig",
-    "Bekijk",
-    "Verwijder",
-    "Show",
-    "Hide",
-    "Inschakelen",
-    "Schakel", 
-    "Uitschakelen",
-    "Verlaat",
-    "Weergeven"
-];
-
-// Mapping naar infinitief
-const irregularVerbs = {
-    "Beheer": "beheren",
-    "Selecteer": "selecteren",
-    "Voeg": "toevoegen",
-    "Wijzig": "wijzigen",
-    "Bekijk": "bekijken",
-    "Verwijder": "verwijderen",
-    "Show": "tonen",
-    "Hide": "verbergen",
-    "Inschakelen": "inschakelen",
-    "Schakel": "uitschakelen",
-    "Uitschakelen": "uitschakelen",
-    "Ontgrendel": "ontgrendelen",
-    "Verlaat": "verlaten",
-    "Weergeven": "weergeven"
-};
-
-// Werkwoorden die naar het einde van de zin verplaatst mogen worden
-const moveToEndVerbs = [
-    "Selecteer", "Voeg", "Wijzig", "Bekijk", "Verwijder", "Show", "Hide", "Weergeven", "Inschakelen"
-];
-
-// Separabele delen mapping
-const separableParts = { 
-    "Voeg": "toe", 
-    "Verwijder": "uit", 
-    "Bekijk": "aan", 
-    "Show": "up" 
-};
-
-
+﻿
 // --- Hoofdfunctie ---
 function fixUILabelSmart(text) {
     if (!text || typeof text !== "string") return text;
@@ -61,10 +13,12 @@ function fixUILabelSmart(text) {
     };
 
     const infinitives = {
+        "Kies": "kiezen", 
         "Schakel": "uitschakelen",
         "Zet": "aanzetten",
         "Voer": "uitvoeren",
         "Voeg": "toevoegen",
+        "Volg": "volgen", 
         "Maak": "maken",
         "Selecteer": "selecteren",
         "Bekijk": "bekijken",
@@ -1472,6 +1426,53 @@ function addCheckBox() {
         }
     }
 }
+function setcheckBox() {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    // if the translator is a PTE than we do not need to add the extra checkboxes
+    if (!is_pte) {
+        //document.getElementsByClassName("myCheckBox").checked = true;
+
+        document.querySelectorAll("tr.preview").forEach((preview, i) => {
+            // if (!is_pte) {
+            console.debug("preview:", preview)
+            //rowchecked = preview.getElementsByClassName("myCheckBox");
+            console.debug("rowchecked:", preview.querySelector('td.myCheckBox'))
+            rowchecked = preview.querySelector('td.myCheckBox');
+            rowChecked = rowchecked.querySelector("input") 
+            console.debug("rowChecked:", rowChecked) 
+            if (rowChecked.checked != null) {
+                if (!rowChecked.checked) {
+                    if (preview.classList.contains("untranslated")) {
+                        rowChecked.checked = true;
+                    }
+                   
+                }
+                else {
+                    
+                    preview.getElementsByClassName("myCheckBox")[0].checked = false;
+                   
+                }
+            }
+            // }
+        });
+    }
+    else {
+        document.querySelectorAll("tr.preview").forEach((preview, i) => {
+            // if (!is_pte) {
+            rowchecked = preview.querySelector("th input");
+            if (rowchecked != null) {
+                if (!rowchecked.checked) {
+                    if (preview.classList.contains("untranslated")){
+                        preview.querySelector("th input").checked = true;
+                    }
+                    
+                }
+            }
+            // }
+        });
+    }
+}
+
 
 function setmyCheckBox(event) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -1923,6 +1924,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
             glossary_word = old_status.getElementsByClassName("glossary-word")
         }
         if (checkbox[0] != null) {
+            
             my_line_counter = checkbox[0].querySelector("div.line-counter")
             // mark lines with glossary word into checkbox
             if (glossary_word.length != 0) {
@@ -1950,7 +1952,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
                     mycheckbox[0].title = "Has glossary word"
                 }
             }
-            // mycheckbox[0].textContent = rowcount
+            
         }
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;

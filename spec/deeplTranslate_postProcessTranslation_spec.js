@@ -144,5 +144,20 @@ describe("DeepL translation - postProcessTranslation", function () {
         });
 
     });
+    // ---------------------------------------------------------------------------
+    // Special character handling
+    // ---------------------------------------------------------------------------
+    describe("special character handling", function () {
+        it("should replace the # char", function () {
+            const original = "Select card #1";
+            const preprocessed = 'Select card <x id="special_var1"/>';
+            // Translator added extra space before var3
+            const translatedText = 'Select card <x id="special_var1"/>1';
+            const expected = "Select card #1";
+
+            const result = callPostProcess(original, translatedText, [], preprocessed);
+            expect(result).toEqual(expected);
+        })
+    })
 
 });

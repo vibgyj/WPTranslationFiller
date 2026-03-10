@@ -184,7 +184,7 @@ async function populateWithTM(
 
 // Process each record sequentially with proper awaits
 async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, preTranslationReplace, convertToLower, formal, spellCheckIgnore, TMtreshold, transsel, GlotPressBulkButton, FetchLiDelay, interCept) {
-    await sleep(1000); // wait a bit for populating the table
+    await sleep(500); // wait a bit for populating the table
     //console.debug("Threshold:",TMtreshold)
     var copyClip = false
     if (toBoolean(autoCopyClipBoard)) {
@@ -232,14 +232,24 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
     for (let i = 0; i < myrecCount; i++) {
         const previewRow = previewRows[i];
         if (!previewRow) continue;
+         
         //console.debug("we are processing:",counter)
         counter++
         transtype = "single";
         plural_line = "0";
         let rowId = previewRow.getAttribute("row")
         // 18-07-2025 PSS we need to check if the row is not null
-        if (rowId != null && rowId !="") {
+        if (rowId != null && rowId != "") {
             const preview = document.querySelector(`#preview-${rowId}`);
+            if (is_pte) {
+               rowchecked = preview.querySelector(".checkbox input");
+            }
+            else {
+              rowchecked = preview.querySelector(".myCheckBox input");
+            }
+            let translated = false
+            
+            // We need this to open the editor if it is closed, as TM will not be loaded if the editor is closed
             const editoropen = preview?.querySelector("td.actions .edit");
             let record = document.querySelector(`#editor-${rowId}`)
             editor = document.querySelector(`#editor-${rowId}`)
@@ -261,7 +271,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
             }
             let toTranslate = true
             let element = editor.querySelector(".source-details__comment");
-
+            let TMFound = false
             if (element != null) {
                 let comment = editor.querySelector(".source-details__comment p").innerText;
                 comment = comment.replace(/(\r\n|\n|\r)/gm, "");
@@ -313,7 +323,6 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                         transname.className = "trans_name_div";
                         transname.innerText = __("URL, name of theme or plugin or author!");
                         // In case of a plugin/theme name we need to set the button to blue
-                        translated = true
                         //mark_as_translated(row, current, translated, preview)
                     }
                     translated = true
@@ -321,37 +330,38 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                    // await mark_as_translated(rowId, current, translated, preview)
                   
                     result = await validateEntry(destlang, textareaElem, false, false, rowId, locale, record, false, DefGlossary);
-                   // await processTransl(original, translatedText, locale, record, row, transtype, plural_line, locale, false, current)
+                    await processTransl(original, translatedText, locale, record, rowId, transtype, plural_line, locale, false, current)
                     await mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
                     await mark_as_translated(rowId, current, translated, preview)
 
                 }
                 else {
                     if (editoropen) {
-                        editoropen.click();
-
+                        await editoropen.click();
+                       //console.debug("TMwait:", TMwait) 
                         let suggestionResult = await waitforTM(rowId, TMwait);
-                        //console.debug("suggestion:",suggestionResult)
-                        if (suggestionResult == "notfound" && suggestionResult == "nosuggestions") {
-                            //console.debug("Timed out waiting for TM suggestion element for record:", rowId);
 
+                        if (suggestionResult == "notfound" || suggestionResult == "nosuggestions") {
+                            //console.debug("Timed out waiting for TM suggestion element for record:", rowId)
                             //console.debug("preview:", previewName)
                             if (previewName != null) {
                                 previewName.innerText = "No suggestions"
                                 previewName.value = "No suggestions"
                                 textFound = "No suggestions"
-                                updateStyle(textareaElem, result, "", showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                                await updateStyle(textareaElem, result, "", showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                                if (rowchecked != null) {
+                                    rowchecked.checked = false;
+                                }
                             }
-                        }
 
-                        
+                        }
                         else if (suggestionResult instanceof Element) {
                             const scoreText = suggestionResult.querySelector(".translation-suggestion__score")?.textContent.trim();
                             let score = scoreText ? parseInt(scoreText.replace("%", ""), 10) : 0;
                             //console.debug("score:",score)
                             if (TMswitch != "true") {
                                 if (score >= TMtreshold) {
-                                    //console.debug(`✅ TM suggestion accepted (score: ${score}%) for record: ${rowId}`);
+                                   //console.debug(`✅ TM suggestion accepted (score: ${score}%) for record: ${rowId}`);
 
                                     foundTM++
                                     const cleanTranslation = suggestionResult.querySelector(".translation-suggestion__translation")?.textContent.trim();
@@ -363,34 +373,16 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     else {
                                         textFound = check_hyphen(rawTranslation, spellCheckIgnore);
                                     }
-                                    if (toBoolean(formal)) {
-                                        // This one is double 
-                                        //textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false, formal)
-                                    }
-                                    
-                                    if (previewName != null) {
-                                        previewName.innerText = textFound
-                                        previewName.value = textFound
-                                    }
-                                    let textareaElem = editor.querySelector("textarea.foreign-text");
-                                   
-                                    if (textareaElem != null) {
-                                        textareaElem.innerText = textFound;
-                                        textareaElem.innerHTML = textFound;
-                                        textareaElem.textContent = textFound;
-                                        // this is to mark the record as TM filled
-                                        checkEntry(rowId, postTranslationReplace, toBoolean(formal), convertToLower, true, spellCheckIgnore);
-                                    }
-                                    
+
                                     if (toBoolean(DebugMode)) {
                                         console.debug("✅ Found TM suggestion element for record:", rowId);
                                         console.debug("Clean translation:", cleanTranslation);
                                         console.debug("Raw translation:", rawTranslation);
-                                         console.debug("TextFound:", textFound);
+                                        console.debug("TextFound:", textFound);
                                         console.debug("Outer HTML:", suggestionResult.outerHTML);
                                     }
 
-                                  //  result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
+                                    //  result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
                                     let showDiff = false
                                     let old_status = "current"
                                     let showHistory = false
@@ -401,9 +393,8 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     status.innerText = "transFill";
                                     status.value = "transFill";
                                     current.innerText = 'transFill'
-                                    //console.debug("before processTransl: ",cleanTranslation)
-                                     record = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
-                                     await processTransl(original, cleanTranslation, locale, record, rowId, transtype, plural_line, locale, false, current)
+                                    record = document.querySelector(`#editor-${rowId}`);
+                                    await processTransl(original, textFound, locale, record, rowId, transtype, plural_line, locale, false, current)
 
                                 }
                                 else {
@@ -412,7 +403,13 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                         previewName.innerText = __("Below threshold: ") + score
                                         previewName.value = "Below threshold: " + score
                                         let newurl = ""
-                                        updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                                        await updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
+                                        if (rowchecked != null) {
+                                            //if (rowchecked.checked) {
+                                            rowchecked.checked = false;
+                                            // }
+
+                                        }
                                     }
                                 }
                             }
@@ -433,13 +430,9 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     textFound = check_hyphen(rawTranslation, spellCheckIgnore);
                                 }
                                 editor = document.querySelector(`#editor-${rowId}`)
-            
+
                                 original = editor.querySelector("span.original-raw").innerText;
-                                if (toBoolean(formal)) {
-                                    // PSS this one is double
-                                    //textFound = await replaceVerbInTranslation(original, textFound, replaceVerb, debug = false, formal)
-                                }
-                               
+
                                 if (toBoolean(DebugMode)) {
                                     console.debug("Clean translation:", cleanTranslation);
                                     console.debug("Raw translation:", rawTranslation);
@@ -447,43 +440,29 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                 }
 
                                 let textareaElem = editor.querySelector("textarea.foreign-text");
-                                //console.debug("texarea:", textareaElem)
-                                if (textareaElem != null) {
-                                    textareaElem.innerText = textFound;
-                                    textareaElem.innerHTML = textFound;
-                                    textareaElem.textContent = textFound;
-                                    checkEntry(rowId, postTranslationReplace, formal, convertToLower, true, spellCheckIgnore);
-                                }
-                                previewName.innerText = textFound
-                                previewName.value = textFound
+                                
                                 current.innerText = 'transFill'
                                 let newurl = ""
+                               
+                                translated = true
+                                record = document.querySelector(`#editor-${rowId}`);
+                                await processTransl(original, textFound, locale, record, rowId, transtype, plural_line, locale, false, current)
+                                await mark_as_translated(rowId, current, translated, preview)
                                 result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
-
-                                await mark_as_translated(rowId, current, textFound, preview)
                                 updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)
 
                             }
-                            if (score >= TMtreshold) {
-                                // We need to set the checkbox here, as processTransl thinks we are in editor
-                                if (is_pte) {
-                                    rowchecked = preview.querySelector(".checkbox input");
-                                }
-                                else {
-                                    rowchecked = preview.querySelector(".myCheckBox input");
-                                }
 
-                                if (rowchecked != null) {
-                                    if (!rowchecked.checked) {
-                                        rowchecked.checked = true;
-                                    }
-                                }
-                            }
                         }
-                       // else {
+                        // else {
                         //    console.debug("Unexpected result from waitforTM:", suggestionResult);
-                      //  }
+                        //  }
                         //editor.style.removeProperty("display");
+                    }
+                    else {
+                            if (rowchecked != null) {
+                                rowchecked.checked = false;
+                            }
                     }
 
                     if (counter == myrecCount) {
@@ -515,7 +494,10 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                 }
             }
             else {
-               // console.debug("We have a plural")
+                // console.debug("We have a plural")
+               if (rowchecked != null) {
+                     rowchecked.checked = false;
+                }
             }
 
             if (foundTM == 0 && counter == myrecCount) {

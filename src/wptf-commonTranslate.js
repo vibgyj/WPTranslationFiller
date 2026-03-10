@@ -393,7 +393,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     var formal = checkFormal(false);
     const verbMap = Object.fromEntries(replaceVerb.map(v => [v[0], v[1]]));
     const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
-    console.debug("postprocessOriginal:", original) 
+    //console.debug("postprocessOriginal:", original) 
     if (toBoolean(DebugMode)) {
         console.debug("postProc original: ", original);
         console.debug("postProc translatedText :", translatedText);
@@ -416,8 +416,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     translatedText = translatedText.replaceAll("  ]", "]");
     // This section replaces the placeholders so they become html entities
     if (translator == "google") {
-        console.debug("we are in google post process", translatedText)
-        console.debug("original:", original)
+        
         const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
           let index = 0;
@@ -524,16 +523,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 index++;
             }
         }
-        // const charmatches = original.matchAll(specialChar);
-        // if (charmatches != null) {
-        //   index = 1;
-        //   for (const charmatch of charmatches) {
-        //console.debug("char:", charmatch)
-        //    translatedText = translatedText.replace(`{special_var${index}}`, charmatch);
-        //     translatedText = translatedText.replace(`{Special_var${index}}`, charmatch);
-        //     index++;
-        // }
-        // }
+        
          const matches = original.matchAll(placeHolderRegex);
         if (matches != null) {
           let index = 0;
@@ -652,10 +642,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
-    //console.debug("spellCheckIgnore before check_hyphen:", spellCheckIgnore) 
-    //console.debug("before check_hyphen:", translatedText) 
     translatedText = check_hyphen(translatedText, spellCheckIgnore);
-    //console.debug("aftercheck_hyphen:",translatedText)
     // check if there is a blank after the tag 
     pos = translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -672,16 +659,12 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
      if (locale == "nl" || locale == "nl-be") {
          // reordering of the sentence
-         //console.debug("before fixUILabelSmart:", translatedText)
          if (toBoolean(Rearrange_Sentences)){
              translatedText = fixUILabelSmart(translatedText);
          }
      }
 
     // for short sentences sometimes the Capital is not removed starting from the first one, so correct that if param is set
-    // console.debug("befor convert to lower:", translatedText)
-    //console.debug("before:", translatedText)
-
     if (convertToLower == true) {
         translatedText = convert_lower(translatedText, spellCheckIgnore);
         // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
@@ -825,10 +808,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("after enforceAllCaps:", translatedNewText)
     // we need to put back the special chars like #, \n, \t etc mostly for Deepl
     translatedNewText = replace_mVar(original, translatedNewText, specialChar)
-    console.debug("postprocessOriginal:", original) 
    
     // PSS 05-02-2026 modified the replace_special_var to handle all html tags properly
-    console.debug("before replace_special_var:", original)
+    
      if (toBoolean(DebugMode)) console.debug("postProcessTranslation before specialvar" ,translatedNewText);
      translatedNewText = replace_special_var(original, translatedNewText, specialChar)
      if (toBoolean(DebugMode)) console.debug("postProcessTranslation after specialvar" ,translatedNewText);
@@ -5359,6 +5341,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
  //   var localRow;
  //   var mytransType = "none"
     var myheader = document.querySelector('header');
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     //console.debug("select:",MistralSelect)
     //console.debug("transsel at start:",transsel)
     if (transsel == "LMStudio") {
@@ -5451,93 +5434,111 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             //await delay(vartime); // Wait the delay before starting this iteration
             for (const record of myrecCount) {
                 await delay(vartime); // Wait the delay before starting next iteration
-                counter++;
+
                 let mytransType = "none";
                 const rowfound = record.id;
                 const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
                 const row = match ? match[1] : null;
+                preview = getPreview(row)
+                if (is_pte) {
+                    checkset = preview.querySelector(".checkbox input");
+                }
+                else {
+                    checkset = preview.querySelector(".myCheckBox input");
+                }
+                
+                if (!row) {
+                    console.debug(`No match found for record id: ${rowfound}`);
+                    continue;  // Skip to next record
+                }
 
-               if (!row) {
-                  console.debug(`No match found for record id: ${rowfound}`);
-                  continue;  // Skip to next record
-               }
-    
-              try {
-                mytransType = await handleType(
-                row,
-                record,
-                destlang,
-                transsel,
-                apikey,
-                apikeyDeepl,
-                apikeyDeepSeek,
-                apikeyMicrosoft,
-                apikeyOpenAI,
-                apikeyMistral,
-                apikeyClaude,
-                apikeyTranslateio,
-                apikeyNLP,
-                OpenAIPrompt,
-                transsel,
-                destlang,
-                postTranslationReplace,
-                preTranslationReplace,
-                formal,
-                convertToLower,
-                DeeplFree,
-                completedCallback,
-                OpenAISelect,
-                openAIWait,
-                OpenAItemp,
-                spellCheckIgnore,
-                deeplGlossary,
-                OpenAITone,
-                DeepLWait,
-                openAiGloss,
-                counter,
-                editor,
-                ClaudePrompt,
-                ClaudModel,
-                apikeyOllama,
-                LocalOllama,
-                ollamaModel,
-                ollamaPrompt,
-                apikeyLingvanex,
-                apikeyGemini,
-                GeminiModel,
-                GeminiPrompt,
-                MistralSelect,
-                LMStudioWait
-               );
-        
-            } catch (err) {
-               console.error(`Translation failed for row ${row}:`, err);
-            }
-      
-            if (mytransType == "stop") {
-               if (translateButton) {
-                  translateButton.classList.add("translated");
-                  translateButton.innerText = __("Translated");
-               }
+                counter++;
+                if (checkset.checked == true) {
+                    try {
+                        mytransType = await handleType(
+                            row,
+                            record,
+                            destlang,
+                            transsel,
+                            apikey,
+                            apikeyDeepl,
+                            apikeyDeepSeek,
+                            apikeyMicrosoft,
+                            apikeyOpenAI,
+                            apikeyMistral,
+                            apikeyClaude,
+                            apikeyTranslateio,
+                            apikeyNLP,
+                            OpenAIPrompt,
+                            transsel,
+                            destlang,
+                            postTranslationReplace,
+                            preTranslationReplace,
+                            formal,
+                            convertToLower,
+                            DeeplFree,
+                            completedCallback,
+                            OpenAISelect,
+                            openAIWait,
+                            OpenAItemp,
+                            spellCheckIgnore,
+                            deeplGlossary,
+                            OpenAITone,
+                            DeepLWait,
+                            openAiGloss,
+                            counter,
+                            editor,
+                            ClaudePrompt,
+                            ClaudModel,
+                            apikeyOllama,
+                            LocalOllama,
+                            ollamaModel,
+                            ollamaPrompt,
+                            apikeyLingvanex,
+                            apikeyGemini,
+                            GeminiModel,
+                            GeminiPrompt,
+                            MistralSelect,
+                            LMStudioWait
+                        );
 
-               if (progressbar) {
-                 progressbar.style.display = "none";
-               }
-               break
+                    } catch (err) {
+                        console.error(`Translation failed for row ${row}:`, err);
+                    }
+
+                    if (mytransType == "stop") {
+                        if (translateButton) {
+                            translateButton.classList.add("translated");
+                            translateButton.innerText = __("Translated");
+                        }
+
+                        if (progressbar) {
+                            progressbar.style.display = "none";
+                        }
+                        break
+                    }
+                    // When all rows are translated
+                    if (counter === myrecCount.length) {
+                        if (translateButton) {
+                            translateButton.classList.add("translated");
+                            translateButton.innerText = __("Translated");
+                        }
+
+                        if (progressbar) {
+                            progressbar.style.display = "none";
+                        }
+                        messageBox("info", __("Translation is ready"));
+                    }
+                }
             }
-            // When all rows are translated
-           if (counter === myrecCount.length) {
              if (translateButton) {
-                translateButton.classList.add("translated");
-                translateButton.innerText = __("Translated");
-             }
-
-             if (progressbar) {
-                progressbar.style.display = "none";
-              }
-              messageBox("info", __("Translation is ready"));
-           }
-          }
+                            translateButton.classList.add("translated");
+                            translateButton.innerText = __("Translated");
+                        }
+            if (progressbar) {
+                            progressbar.style.display = "none";
+                        }
+                        messageBox("info", __("Translation is ready"));
         }
         else {
             messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
@@ -7134,6 +7135,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     var textareaElem4;
     var formal = checkFormal(false);
     const start = Date.now()
+    var mytranslatedText;
 
     if (toBoolean(DebugMode)) {
         console.debug("processTransl translatedText:", translatedText)
@@ -7155,7 +7157,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     else {
         mytranslatedText = translatedText
     }
-
+    //console.debug("processTransl mytranslatedText:", mytranslatedText)
   
     if (transtype == "single") {
         let isPlural = false
@@ -7179,23 +7181,26 @@ async function processTransl (original, translatedText, language, record, rowId,
             inputElement.focus();    // Focus the input to show the cursor
         }
         
-        if (current.innerText != "waiting" && current.innerText != "fuzzy") {
-            preview = await record.previousElementSibling
-        }
-        else {
-            preview = await getPreview(rowId)
+       // if (current.innerText != "waiting" && current.innerText != "fuzzy") {
+      //      preview = await record.previousElementSibling
+       // }
+       // else {
+       //     preview = await getPreview(rowId)
             //preview = await document.querySelector("#preview-" + myRowId)
-        }
+       // }
       
-        if (typeof preview != "undefined" && preview != null) {
+       
+        preview = await getPreview(rowId)
+        //console.debug("preview:", preview)
+         if (typeof preview != "undefined" && preview != null) {
             td_preview = preview.querySelector("td.translation");
         }
         else {
             console.debug("problem with preview:", preview, myRowId)
         }
-        
         // if we are in a single editor without preview, then no need to set the preview text
         if (td_preview != null) {
+            //console.debug("we set the preview text:", mytranslatedText)
             td_preview.innerText = mytranslatedText;
             td_preview.innerValue = mytranslatedText;
         }

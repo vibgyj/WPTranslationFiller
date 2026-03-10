@@ -334,7 +334,7 @@ async function startFullScript(textarea) {
     startToggleListener();
     addCheckmarkClickListener();
     let is_loaded = await loadGlossaries(myCustomEvent);
-
+    
     if (is_loaded === "success") {
         doValidation();
     } else {
@@ -359,6 +359,7 @@ function doValidation() {
         if (data.showHistory != "null") {
             let locale = checkLocale();
             validatePage(data.destlang, data.showHistory, locale, data.showTransDiff, data.DefGlossary);
+           // setcheckBox()
             if (data.showHistory === true) {
                 const currentURL = window.location.href;
                 if (!currentURL.includes("untranslated") && !check_untranslated()) {
@@ -697,6 +698,7 @@ document.addEventListener("keydown", async function (event) {
                             //var locale = checkLocale();
                             convertToLow = data.convertToLower;
                             var DeeplFree = data.DeeplFree;
+                            //console.debug("TMwait value:", data.TMwait)
                             if (typeof data.TMwait == "undefined") {
                                 var TMwait = 500;
                             }
@@ -1960,8 +1962,9 @@ async function copyOrgClicked(event) {
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
-    event.preventDefault();
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "TMtreshold","ClaudModel"], function (data) {
+    //event.preventDefault();
+    //console.debug("we are in tmTransClicked") 
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "TMtreshold","ClaudModel","TMwait"], function (data) {
        
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
 
@@ -1978,7 +1981,6 @@ function tmTransClicked(event) {
                         else {
                             var TMwait = data.TMwait;
                         }
-                        
                         result = populateWithTM(data.apikey, data.apikeyDeep, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower, data.spellCheckIgnore, data.TMtreshold, interCept);
                     }
                     else {
@@ -2399,6 +2401,7 @@ function old_loadGlossary(event) {
                     if (data.showHistory != "null") {
                         let locale = checkLocale();
                         validatePage(data.destlang, data.showHistory, locale, data.showTransDiff);
+                        //setcheckBox()
                         if (data.showHistory == true) {
                             // Get the current URL
                             const currentURL = window.location.href;
@@ -3300,9 +3303,10 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
     // we need to take care that the save button is not added twice
     //myrec = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     // pss 12-10-2023 this one needs to be improved as we now have the record containing the editor details
+    
     if (typeof checkElem == "object") {
         if (SavelocalButton == null) {
-            if (!is_pte) {
+            if (!toBoolean(is_pte)) {
                 let checkBx = document.querySelector("#preview-" + rowId + " .myCheckBox");
                 // if there is no checkbox, we do not need to add the input to it and alter the columns
                 if (checkBx != null && checkBx != 'undefined') {
@@ -3314,6 +3318,12 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                     if (inputBox == null) {
                         checkBx.appendChild(mycheckbox);
                     }
+                    const myPreview = getPreview(rowId)
+                    // If the table is populated with untranslated records, then we need to check the checkbox for the untranslated record
+                    if (myPreview.classList.contains("untranslated")) {
+                        inputBox = document.querySelector("#preview-" + rowId + " td input")
+                        inputBox.checked = true
+                    }
                     let myrec = document.querySelector(`#editor-${rowId}`);
                     // We need to expand the amount of columns otherwise the editor is to small
                     var tds = myrec.getElementsByTagName("td")[0];
@@ -3322,6 +3332,15 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                         tds.setAttribute("colspan", 5);
                     }
                 }
+            }
+            else {
+                
+                const myPreview = getPreview(rowId)
+                    // If the table is populated with untranslated records, then we need to check the checkbox for the untranslated record
+                    if (myPreview.classList.contains("untranslated")) {
+                        inputBox = myPreview.querySelector("th input")
+                        inputBox.checked = true
+                    }
             }
 
             // check for the status of the record
@@ -3349,6 +3368,13 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                     if (inputBox == null) {
                         checkBx.appendChild(mycheckbox);
                     }
+                    const myPreview = getPreview(rowId)
+                    // If the table is populated with untranslated records, then we need to check the checkbox for the untranslated record
+                    if (myPreview.classList.contains("untranslated")) {
+                        inputBox = document.querySelector("#preview-" + rowId + " td input")
+                        inputBox.checked = true
+                    }
+                    
                     let myrec = document.querySelector(`#editor-${rowId}`);
                     // We need to expand the amount of columns otherwise the editor is to small
                     var tds = myrec.getElementsByTagName("td")[0];

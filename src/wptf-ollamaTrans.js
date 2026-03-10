@@ -37,7 +37,8 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
     let prompt_tokens = await estimateMaxTokens(myprompt);
     max_Tokens = max_Tokens + prompt_tokens
     
-                    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
+                       
                         chrome.runtime.sendMessage({
                             action: "ollama_translate",
                             data: {
@@ -78,7 +79,8 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                hideTranslationSpinner();
                               messageBox("error", "There has been an error: " +  `${errMsg}`);
                               return "NOK";
-                           }
+                            }
+                           
                             translatedText = response.translation
 							translatedText = await normalizeExtraNewlines(original, translatedText)
                              let convertedGlossary = GLOBAL_GLOSSARY;

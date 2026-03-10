@@ -169,7 +169,14 @@ Version 3.4.84 Improved the rearrangement function, it now also checks for words
 Version 3.4.84 Improved removing blanks after and before placeholders 
 Version 3.8.84 Improved the test runner, now it is compatible with the current functions used, and adde DeepL tests
 Version 3.8.85 Fixed an issue with newlines in Ollama transtlations
-VErsion 3.8.85 Fixed a problem with Claude requests limit
+Version 3.8.85 Fixed a problem with Claude requests limit
 Version 3.8.86 Renamed the extension within the code to "WordPress Translation Filler Extended"
 Version 3.8.87 Fixed two issues with spaces behind placeholders
 Version 3.8.87 Improved the test scripts, so they are now more stable
+Version 3.8.89 Added a test for DeepL replacing the char #
+Version 3.8.90 Fixed a problem with TM, it copied an original behind the translated text
+Version 3.8.90 Added translating only when the original is ticketed as "to be translated"
+Version 3.8.91 The checkbox was not set when the translator is not a PTE/GTE
+Version 3.8.92 translatePage was reporting to early to be finished
+Version 3.8.93 Removed ticked previews in PopulateWithTM, as they are not needed and cause confusion
+Version 3.8.93 Improved populateWithTM it was not updating the preview correctly
