@@ -52,6 +52,7 @@
   "Export CSV": "Esporta CSV",
   "Export database in progress": "Esportazione del database in corso",
   "Export database done amount of records exported: ": "Esportazione del database completata, numero di record esportati: ",
+  "ExportPo": "Exportazione po",
   "Fetching translation…": "Recupero della traduzione…",
   "File is not a csv!": "Il file non è un CSV!",
   "FindDup": "Duplicati",

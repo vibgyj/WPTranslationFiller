@@ -52,6 +52,7 @@
   "Export CSV": "Exportă CSV",
   "Export database in progress": "Exportul bazei de date este în curs",
   "Export database done amount of records exported: ": "Export bază de date finalizat, număr de înregistrări exportate: ",
+  "ExportPo": "Export po",
   "Fetching translation…": "Se obține traducerea…",
   "File is not a csv!": "Fișierul nu este un CSV!",
   "FindDup": "Duplicate",

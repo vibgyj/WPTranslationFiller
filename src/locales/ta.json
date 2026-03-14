@@ -52,6 +52,7 @@
   "Export CSV": "CSV ஏற்றுமதி",
   "Export database in progress": "தரவுதள ஏற்றுமதி நடைபெறுகிறது",
   "Export database done amount of records exported: ": "தரவுதள ஏற்றுமதி முடிந்தது, ஏற்றுமதி செய்யப்பட்ட பதிவுகளின் எண்ணிக்கை: ",
+  "ExportPo": "Export po",
   "Fetching translation…": "மொழிபெயர்ப்பை பெறுகிறது…",
   "File is not a csv!": "கோப்பு CSV அல்ல!",
   "FindDup": "நகல்களை கண்டறி",

@@ -51,6 +51,7 @@
   "Export CSV": "Експорт CSV",
   "Export database in progress": "Експорт бази даних виконується",
   "Export database done amount of records exported: ": "Експорт бази даних завершено, кількість експортованих записів: ",
+  "ExportPo": "ЕкспортПо",
   "Fetching translation…": "Отримання перекладу…",
   "FindDup": "Дублікати",
   "Glossary switch": "Перемикання глосарія",

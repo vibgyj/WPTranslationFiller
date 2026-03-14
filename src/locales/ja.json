@@ -52,6 +52,7 @@
   "Export CSV": "CSVをエクスポート",
   "Export database in progress": "データベースのエクスポート中",
   "Export database done amount of records exported: ": "データベースのエクスポート完了、エクスポートされたレコード数：",
+  "ExportPo": "Export po",
   "Fetching translation…": "翻訳を取得中…",
   "File is not a csv!": "ファイルはCSVではありません！",
   "FindDup": "重複を検索",

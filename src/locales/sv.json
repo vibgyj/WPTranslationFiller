@@ -52,6 +52,7 @@
   "Export CSV": "Exportera CSV",
   "Export database in progress": "Databasexport pågår",
   "Export database done amount of records exported: ": "Databasexport klar, antal exporterade poster: ",
+  "ExportPo": "Export po",
   "Fetching translation…": "Hämtar översättning…",
   "File is not a csv!": "Filen är inte en CSV!",
   "FindDup": "Dubbletter",

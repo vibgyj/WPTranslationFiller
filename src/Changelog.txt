@@ -186,3 +186,4 @@ Version 3.8.96 Copy original did not wait for the answer given in the message bo
 Version 3.8.97 Copy to local did refresh the page, causing suggested translations with TM to disappear, now it does not refresh the page
 Version 3.8.98 Added id indonesian language
 Version 3.8.98 Added translation files
+Version 3.9.00 Improved translation files, added missing translations and fixed some wrong ones 

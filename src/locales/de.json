@@ -51,6 +51,7 @@
   "Export CSV": "CSV exportieren",
   "Export database in progress": "Datenbankexport läuft",
   "Export database done amount of records exported: ": "Datenbankexport abgeschlossen, Anzahl exportierter Datensätze: ",
+  "ExportPo": "Export po",
   "Fetching translation…": "Übersetzung wird abgerufen…",
   "FindDup": "Duplikate",
   "GlossStatus": "Glossarstatus",
