@@ -115,6 +115,7 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             apikeydeeplCheckbox.checked = false
         }
     }
+    console.debug("TMwait in storage:", data.TMwait) 
     if (typeof data.TMwait == "undefined") {
         TMwait = 500;
     }
@@ -282,6 +283,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         OllamaselectBox.value = data.ollamaModel;
     }
     destLangTextbox.value = data.destlang;
+    // select synchroniseren met input
+if ([...langselect.options].some(opt => opt.value === destLangTextbox.value)) {
+    langselect.value = destLangTextbox.value;
+} else {
+    langselect.selectedIndex = -1; // geen match
+}
     uploadedFile.innerText = `${data.glossaryFile}`;
     uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
     verbsTextbox.value = data.postTranslationReplace;
@@ -1384,4 +1391,25 @@ async function showChangelog() {
   }
 }
 
+input = document.getElementById("destination_lang");
+const select = document.getElementById("langselect");
 
+// select → input
+select.addEventListener("change", function () {
+    input.value = this.value;
+});
+
+// input → select
+input.addEventListener("input", function () {
+    const value = this.value.toLowerCase();
+
+    for (let option of select.options) {
+        if (option.value === value) {
+            select.value = value;
+            return;
+        }
+    }
+
+    // geen match → selectie leeg maken
+    select.selectedIndex = -1;
+});

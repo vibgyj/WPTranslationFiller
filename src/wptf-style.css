@@ -1,4 +1,71 @@
-﻿
+﻿/* checkmark span */
+/* Zorg dat checkmark positionering context heeft */
+/* Checkmark badge */
+.panel-header .checkmark {
+    position: relative;
+    display: inline-block;
+    margin-left: 8px;
+    padding: 3px 6px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 0 3px rgba(0,0,0,0.3);
+    vertical-align: middle;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+    /* ACTIVE = groen */
+    .panel-header .checkmark.active {
+        background-color: #28a745;
+    }
+
+    /* INACTIVE = rood */
+    .panel-header .checkmark.inactive {
+        background-color: #dc3545;
+    }
+
+    /* Tooltip box */
+    .panel-header .checkmark::before {
+        content: attr(data-check-tooltip);
+        position: absolute;
+        bottom: 135%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #007bff; /* BLAUW */
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        white-space: pre;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+        z-index: 1000;
+    }
+
+    /* Tooltip arrow */
+    .panel-header .checkmark::after {
+        content: "";
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: #007bff transparent transparent transparent;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        pointer-events: none;
+    }
+
+    /* Show tooltip on hover */
+    .panel-header .checkmark:hover::before,
+    .panel-header .checkmark:hover::after {
+        opacity: 1;
+    }
+
 #wpft-translation-spinner {
     position: fixed;
     inset: 0;

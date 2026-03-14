@@ -1,4 +1,4 @@
-describe("Google translation - postProcessTranslation", function () {
+describe("DeepL translation - postProcessTranslation", function () {
 
     // ---------------------------------------------------------------------------
     // Shared test configuration — reset before every test so no state leaks
@@ -6,14 +6,15 @@ describe("Google translation - postProcessTranslation", function () {
     let translator;
 
     beforeEach(function () {
-        window.DebugMode            = false;
-        window.no_period            = false;
-        window.Rearrange_Sentences  = false;
-        translator                  = "google";
+        // Reset every mutable global your code depends on
+        window.DebugMode         = false;   // disable debug noise during tests
+        window.no_period         = false;
+        window.Rearrange_Sentences = false;
+        translator               = "deepl";
     });
 
     // ---------------------------------------------------------------------------
-    // Helper: wraps postProcessTranslation with shared defaults
+    // Helper: builds the default extra args so every call is consistent
     // ---------------------------------------------------------------------------
     function callPostProcess(original, translatedText, replaceVerb, originalPreProcessed, overrides) {
         const defaults = {
@@ -41,8 +42,8 @@ describe("Google translation - postProcessTranslation", function () {
     // ---------------------------------------------------------------------------
     describe("placeholder replacement", function () {
 
-        const MIXED_ORIGINAL     = "%1$s some &quot; random%d text %l";
-        const MIXED_PREPROCESSED = "[0] some [1] random[2] text [3]";
+        const MIXED_ORIGINAL          = "%1$s some &quot; random%d text %l";
+        const MIXED_PREPROCESSED      = '<x id="var0"/> some <x id="var1"/> random<x id="var2"/> text <x id="var3"/>';
 
         it("should restore placeholders when translation is unchanged (basic)", function () {
             const result = callPostProcess(MIXED_ORIGINAL, MIXED_PREPROCESSED, [], MIXED_PREPROCESSED);
@@ -55,23 +56,34 @@ describe("Google translation - postProcessTranslation", function () {
         });
 
         it("should restore placeholders — anchor tag pattern (%1$s...%2$s)", function () {
-            const original      = "Save your API Key you have received by email or you can get it on your %1$sImagify account page%2$s.";
-            const preprocessed  = "Save your API Key you have received by email or you can get it on your [0]Imagify account page[1].";
-            // Translator added a space before [1]
-            const translatedText = "Save your API Key you have received by email or you can get it on your [0]Imagify account page [1].";
-            const expected      = original;
+            const original          = "Save your API Key you have received by email or you can get it on your %1$sImagify account page%2$s.";
+            const preprocessed      = 'Save your API Key you have received by email or you can get it on your <x id="var0"/>Imagify account page<x id="var1"/>.';
+            const expected          = original;
 
-            expect(callPostProcess(original, translatedText, [], preprocessed)).toEqual(expected);
+            const result = callPostProcess(original, preprocessed, [], preprocessed);
+            expect(result).toEqual(expected);
         });
 
-        it("should restore placeholders — extra spaces around placeholders in translation", function () {
-            const original       = "No files yet. Do you want to %1$sscan your selected folders%3$s for new files or launch a %2$sbulk optimization%3$s directly?";
-            const preprocessed   = "No files yet. Do you want to [0]scan your selected folders[1] for new files or launch a [2]bulk optimization[3] directly?";
-            // Translator added spaces around [2] and [3]
-            const translatedText = "No files yet. Do you want to [0]scan your selected folders[1] for new files or launch a [2] bulk optimization [3] directly?";
-            const expected       = original;
+        it("should restore placeholders — space dropped AFTER closing placeholder in translation", function () {
+            const original         = "No files yet. Do you want to %1$sscan your selected folders%3$s for new files or launch a %2$sbulk optimization%3$s directly?";
+            const preprocessed     = 'No files yet. Do you want to <x id="var0"/>scan your selected folders<x id="var1"/> for new files or launch a <x id="var2"/>bulk optimization<x id="var3"/> directly?';
+            // Translator dropped the space before "directly"
+            const translatedText   = 'No files yet. Do you want to <x id="var0"/>scan your selected folders<x id="var1"/> for new files or launch a <x id="var2"/>bulk optimization<x id="var3"/>directly?';
+            const expected         = original;
 
-            expect(callPostProcess(original, translatedText, [], preprocessed)).toEqual(expected);
+            const result = callPostProcess(original, translatedText, [], preprocessed);
+            expect(result).toEqual(expected);
+        });
+
+        it("should restore placeholders — extra space BEFORE closing placeholder in translation", function () {
+            const original         = "No files yet. Do you want to %1$sscan your selected folders%3$s for new files or launch a %2$sbulk optimization%3$s directly?";
+            const preprocessed     = 'No files yet. Do you want to <x id="var0"/>scan your selected folders<x id="var1"/> for new files or launch a <x id="var2"/>bulk optimization<x id="var3"/> directly?';
+            // Translator added extra space before var3
+            const translatedText   = 'Nog geen bestanden. Do you want to <x id="var0"/>scan your selected folders<x id="var1"/> for new files or launch a <x id="var2"/>bulk optimization <x id="var3"/> directly?';
+            const expected         = "Nog geen bestanden. Do you want to %1$sscan your selected folders%3$s for new files or launch a %2$sbulk optimization%3$s directly?";
+
+            const result = callPostProcess(original, translatedText, [], preprocessed);
+            expect(result).toEqual(expected);
         });
 
     });
@@ -132,5 +144,20 @@ describe("Google translation - postProcessTranslation", function () {
         });
 
     });
+    // ---------------------------------------------------------------------------
+    // Special character handling
+    // ---------------------------------------------------------------------------
+    describe("special character handling", function () {
+        it("should replace the # char", function () {
+            const original = "Select card #1";
+            const preprocessed = 'Select card <x id="special_var1"/>';
+            // Translator added extra space before var3
+            const translatedText = 'Select card <x id="special_var1"/>1';
+            const expected = "Select card #1";
+
+            const result = callPostProcess(original, translatedText, [], preprocessed);
+            expect(result).toEqual(expected);
+        })
+    })
 
 });

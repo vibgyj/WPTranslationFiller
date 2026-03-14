@@ -1,4 +1,196 @@
-﻿async function isLibreTranslateRunning({
+﻿
+// --- Hoofdfunctie ---
+function fixUILabelSmart(text) {
+    if (!text || typeof text !== "string") return text;
+
+    if (toBoolean(DebugMode)) console.debug("fixUILabelSmart start:", text);
+
+    const separableParts = {
+        "Schakel": ["uit", "in"],
+        "Zet": ["aan"],
+        "Voer": ["uit"],
+        "Voeg": ["toe"]
+    };
+
+    const infinitives = {
+        "Kies": "kiezen", 
+        "Schakel": "uitschakelen",
+        "Zet": "aanzetten",
+        "Voer": "uitvoeren",
+        "Voeg": "toevoegen",
+        "Volg": "volgen", 
+        "Maak": "maken",
+        "Selecteer": "selecteren",
+        "Bekijk": "bekijken",
+        "Verhoog": "verhogen", 
+        "Verwijder": "verwijderen",
+        "Wijzig": "wijzigen"
+    };
+
+    const capitalizeFirstLetter = (str) =>
+        str.charAt(0).toUpperCase() + str.slice(1);
+
+    // --- Split zinnen ---
+    const sentenceRegex = /([^.!?]+)([.!?]+)?(\s*)/g;
+    let match;
+    let sentences = [];
+    while ((match = sentenceRegex.exec(text)) !== null) {
+        sentences.push({ content: match[1], punct: match[2] || "", space: match[3] || "" });
+    }
+    if (sentences.length === 0) sentences = [{ content: text, punct: "", space: "" }];
+
+    let first = sentences[0].content.trim();
+    const firstWordMatch = first.match(/^(\S+)/);
+    if (!firstWordMatch) return text;
+
+    const firstWordRaw = firstWordMatch[1];
+    const firstWord = firstWordRaw.replace(/[^\p{L}]/gu, "");
+
+    const infinitiveEntry = Object.entries(infinitives).find(([verb]) => verb.toLowerCase() === firstWord.toLowerCase());
+    if (!infinitiveEntry) return text;
+    let infinitive = infinitiveEntry[1];
+
+    const separableEntry = Object.entries(separableParts).find(([verb]) => verb.toLowerCase() === firstWord.toLowerCase());
+
+    let finalFirst = first;
+
+    // ========================================
+    // 🔹 FIX: "Selecteer [object] als|wanneer|om …"
+    // ========================================
+    if (firstWord.toLowerCase() === "selecteer") {
+        const specialMatch = first.match(/^Selecteer\s+(.+?)\s+(als|wanneer|om)\b(.*)$/i);
+        if (specialMatch) {
+            const object = specialMatch[1].trim();
+            const voegwoord = specialMatch[2];
+            const rest = specialMatch[3];
+
+            // Zet infinitief direct achter object
+            finalFirst = `${object} ${infinitive} ${voegwoord}${rest}`;
+            finalFirst = finalFirst.replace(/\s+/g, " ").trim();
+            finalFirst = capitalizeFirstLetter(finalFirst);
+
+            sentences[0].content = finalFirst;
+
+            const finalResult = sentences.map(s => s.content + s.punct + s.space).join("");
+            if (toBoolean(DebugMode)) console.debug("fixUILabelSmart final result:", finalResult);
+            return finalResult;
+        }
+    }
+
+    // -----------------------------
+    // 1️⃣ Separable werkwoorden
+    // -----------------------------
+    if (separableEntry) {
+        for (const part of separableEntry[1]) {
+            const regexPart = new RegExp(`^\\s*${firstWordRaw}\\s+(.+?)\\s+${part}(?=\\s|$)`, "i");
+            const matchPart = first.match(regexPart);
+            if (matchPart) {
+                const middle = matchPart[1].trim();
+                let rest = first.replace(regexPart, "").trim();
+
+                if (firstWordRaw.toLowerCase() === "schakel") {
+                    if (part.toLowerCase() === "in") infinitive = "inschakelen";
+                    if (part.toLowerCase() === "uit") infinitive = "uitschakelen";
+                }
+
+                finalFirst = middle + " " + infinitive + (rest ? " " + rest : "");
+                finalFirst = finalFirst.replace(/\s+/g, " ").trim();
+                finalFirst = capitalizeFirstLetter(finalFirst);
+                sentences[0].content = finalFirst;
+                break;
+            }
+        }
+    } else {
+        // -----------------------------
+        // 2️⃣ Normaal werkwoord
+        // -----------------------------
+        let remainder = first.replace(new RegExp("^\\s*" + firstWordRaw + "\\s*", "i"), "");
+        finalFirst = remainder.trim() + " " + infinitive;
+        finalFirst = finalFirst.replace(/\s+/g, " ").trim();
+        finalFirst = capitalizeFirstLetter(finalFirst);
+        sentences[0].content = finalFirst;
+    }
+
+    // -----------------------------
+    // 3️⃣ Overige zinnen capitalizen
+    // -----------------------------
+    for (let i = 1; i < sentences.length; i++) {
+        const leading = sentences[i].space || "";
+        const contentTrim = sentences[i].content.trim();
+        sentences[i].content = leading + capitalizeFirstLetter(contentTrim);
+    }
+
+    const finalResult = sentences.map(s => s.content + s.punct + s.space).join("");
+    if (toBoolean(DebugMode)) console.debug("fixUILabelSmart final result:", finalResult);
+    return finalResult;
+}
+function capitalizeFirstLetter(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Start de listener voor Ctrl + Shift + S
+function startToggleListener() {
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 's') {
+            Rearrange_Sentences = !Rearrange_Sentences;
+           // console.log("Rearrange_Sentences is now:", Rearrange_Sentences);
+            toastbox("info", `Rearrange sentences is now: ${Rearrange_Sentences}`, "3500");
+
+            updatePanelCheckmarks();
+            event.preventDefault();
+        }
+    });
+}
+function updatePanelCheckmarks() {
+    document.querySelectorAll('.panel-header').forEach(header => {
+
+        let checkmark = header.querySelector('.checkmark');
+
+        // Maak checkmark altijd aanwezig
+        if (!checkmark) {
+            checkmark = document.createElement('span');
+            checkmark.className = 'checkmark';
+            checkmark.textContent = '✓';
+            header.appendChild(checkmark);
+        }
+
+        const isActive = Boolean(Rearrange_Sentences);
+
+        // Toggle class
+        checkmark.classList.toggle('active', isActive);
+        checkmark.classList.toggle('inactive', !isActive);
+
+        // Tooltip tekst aanpassen
+        checkmark.setAttribute(
+            'data-check-tooltip',
+            isActive
+                ? 'Rearrange sentences is ACTIVE\nClick to disable'
+                : 'Rearrange sentences is INACTIVE\nClick to enable'
+        );
+    });
+}
+function addCheckmarkClickListener() {
+    document.addEventListener('click', function(event) {
+    const checkmark = event.target.closest('.panel-header .checkmark');
+    if (!checkmark) return;
+
+    Rearrange_Sentences = !Rearrange_Sentences;
+
+   // console.log("Rearrange_Sentences toggled:", Rearrange_Sentences);
+
+    updatePanelCheckmarks();
+   });
+}
+
+function getRowIdFromTarget(target) {
+    const editorElement = target.closest('[id^="editor-"]');
+    if (!editorElement) return null;
+
+    return editorElement.id.replace('editor-', '');
+}
+
+async function isLibreTranslateRunning({
     host = "http://127.0.0.1",
     port = 5000,
     timeoutMs = 1500
@@ -215,13 +407,20 @@ function escapeRegexKey(str) {
 }
 
 
-
 /**
  * Escapes regex metacharacters in glossary keys
  */
 function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function escapeRegExpForPronouns(word) {
+  return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 
 function replaceAt(text, searchValue, replacementValue) {
     if (!text || !searchValue) return text;
@@ -282,33 +481,30 @@ function normalizeExtraNewlines(originalText, translatedText) {
 function enforceAllCaps(source, translated) {
     const sourceWords = source.split(/\s+/);
 
+    // Vind alle echte ALL CAPS woorden in het origineel
     const allCapsWords = Array.from(new Set(
         sourceWords.filter(w => /^[A-Z0-9]+(?:[-_][A-Z0-9]+)*$/.test(w))
     ));
 
-    // 1. Extract and mask URLs
-    const urls = [];
-    let masked = translated.replace(
-        /\b(?:https?:\/\/|www\.)[^\s]+/gi,
-        url => {
-            urls.push(url);
-            return `__URL_${urls.length - 1}__`;
-        }
-    );
+    // 1. Masker URLs en placeholders (alles tussen < en >)
+    const masks = [];
+    let masked = translated.replace(/<[^>]+>|(?:https?:\/\/|www\.)[^\s]+/gi, match => {
+        masks.push(match);
+        return `__MASK_${masks.length - 1}__`;
+    });
 
-    // 2. Enforce ALL CAPS outside URLs only
+    // 2. Enforce ALL CAPS buiten masks
     allCapsWords.forEach(word => {
         const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const re = new RegExp(`\\b${escapedWord}\\b`, 'gi');
         masked = masked.replace(re, m => m.toUpperCase());
     });
 
-    // 3. Restore URLs
-    let result = masked.replace(/__URL_(\d+)__/g, (_, i) => urls[i]);
+    // 3. Restore masks
+    let result = masked.replace(/__MASK_(\d+)__/g, (_, i) => masks[i]);
 
     return result;
 }
-
 function convertGlossaryForOllama(input) {
     if (!input) return '';
 
@@ -384,15 +580,6 @@ function convertArrowGlossaryToArray(glossaryString) {
     return result;
 }
 
-
-function escapeRegExp(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-
-function escapeRegExp(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 const toBoolean = (value) => {
     if (typeof value === "boolean") return value;
@@ -615,9 +802,6 @@ function estimateMaxTokens(text) {
     return Math.max(estimated, 300); // minimum 200 to
 }
 
-function escapeRegExpForPronouns(word) {
-  return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 function enableInterceptSuggestions() {
     localStorage.setItem('interSuggestions', 'true');
@@ -647,7 +831,7 @@ function insertAlstublieftIfPlease(original, dutch) {
 }
 
 
-function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
+function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, formal = false) {
     const markerBase = "__REPLACE_";
     let markerIndex = 0;
 
@@ -663,7 +847,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
     let engSentences = engMatches.map(m => m[1] + m[2]);
     let dutchSentences = dutMatches.map(m => m[1] + m[2]);
 
-    if (debug) {
+    if (toBoolean(DebugMode)) {
         console.debug("English split:", engSentences);
         console.debug("Dutch split:", dutchSentences);
     }
@@ -694,7 +878,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
         engSentences = adjustedEngSentences;
         english = adjustedEnglish;
 
-        if (debug) {
+        if (toBoolean(DebugMode)) {
             console.debug("Adjusted English split:", engSentences);
             console.debug("Adjusted English text:", english);
         }
@@ -719,7 +903,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
         const rest = words.slice(1).map(w => w.toLowerCase());
         const normalizedEnglish = [firstWord, ...rest];
 
-        if (debug) {
+        if (toBoolean(DebugMode)) {
             console.debug(`\n--- Sentence ${i + 1} ---`);
             console.debug("English words (normalized):", normalizedEnglish);
             console.debug("Dutch before replacement:", dut);
@@ -735,7 +919,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
 
             const [, informal, formal] = matchEntry;
 
-            if (debug) {
+            if (toBoolean(DebugMode)) {
                 console.debug(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formal}"`);
             }
 
@@ -772,7 +956,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
             }
         });
 
-        if (debug) {
+        if (toBoolean(DebugMode)) {
             console.debug("Dutch after marker insertion:", dut);
         }
 
@@ -790,38 +974,42 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
     const foundEnglishPronouns = new Set(
         engSentences.join(" ").toLowerCase().match(/\b(you|your|yours)\b/g) || []
     );
+  // === Step 3b: Extra pass ONLY when formal mode is active ===
+if (formal === true) {
 
-    validReplacements.forEach(([en, informal, formal]) => {
-        if (!foundEnglishPronouns.has(en.toLowerCase())) return; // skip if not in original English
-        let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'gi');
-        finalResult = finalResult.replace(matchRegex, (match, punct, space, offset) => {
+    const leftoverInformals = validReplacements
+        .map(([, informal]) => escapeRegex(informal))
+        .join("|");
+
+    const leftoverRegex = new RegExp(
+        `\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`,
+        "gi"
+    );
+
+    finalResult = finalResult.replace(
+        leftoverRegex,
+        (match, informal, punct, space, offset) => {
+
+            const replacementPair = validReplacements.find(
+                ([, inf]) => inf.toLowerCase() === informal.toLowerCase()
+            );
+
+            if (!replacementPair) return match;
+
+            const formalWord = replacementPair[2];
+
             const before = finalResult.slice(0, offset);
-            const isSentenceStart = /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
+            const isSentenceStart =
+                /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
+
             const replacementFinal = isSentenceStart
-                ? formal.charAt(0).toUpperCase() + formal.slice(1)
-                : formal.toLowerCase();
+                ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
+                : formalWord.toLowerCase();
+
             return replacementFinal + (punct || '') + (space || '');
-        });
-    });
-
-    // === Step 3b: Extra pass to replace any leftover informal pronouns in Dutch unconditionally ===
-    const leftoverInformals = validReplacements.map(([, informal]) => informal).join("|");
-    const leftoverRegex = new RegExp(`\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`, "gi");
-
-    finalResult = finalResult.replace(leftoverRegex, (match, informal, punct, space, offset) => {
-        // Find formal replacement for this informal pronoun
-        const replacementPair = validReplacements.find(([ , inf]) => inf.toLowerCase() === informal.toLowerCase());
-        if (!replacementPair) return match; // safety check
-
-        const formal = replacementPair[2];
-        const before = finalResult.slice(0, offset);
-        const isSentenceStart = /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
-        const replacementFinal = isSentenceStart
-            ? formal.charAt(0).toUpperCase() + formal.slice(1)
-            : formal.toLowerCase();
-
-        return replacementFinal + (punct || '') + (space || '');
-    });
+        }
+    );
+}
 
     // === Step 4: International polite word insertion (HTML-safe) ===
     const politeEntry = replaceVerbs.find(entry =>
@@ -839,7 +1027,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
             const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
                 .filter(m => m[1].trim() || m[2].trim())
                 .map(m => m[1] + m[2]);
-
+            //console.debug("Final Dutch sentences for polite insertion:", finalDutchSentences)
             for (let i = 0; i < finalEngSentences.length; i++) {
                 if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
                     let sentence = finalDutchSentences[i];
@@ -885,7 +1073,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true) {
         if (debug) console.debug("No polite word mapping found in replaceVerbs, skipping polite insertion.");
     }
 
-    if (debug) {
+    if (toBoolean(DebugMode)) {
         console.debug("\n=== FINAL RESULT ===");
         console.debug(finalResult);
     }
@@ -1238,8 +1426,55 @@ function addCheckBox() {
         }
     }
 }
+function setcheckBox() {
+    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    // if the translator is a PTE than we do not need to add the extra checkboxes
+    if (!is_pte) {
+        //document.getElementsByClassName("myCheckBox").checked = true;
+
+        document.querySelectorAll("tr.preview").forEach((preview, i) => {
+            rowchecked = preview.querySelector('td.myCheckBox');
+            rowChecked = rowchecked.querySelector("input") 
+            if (rowChecked.checked != null) {
+                if (!rowChecked.checked) {
+                    if (preview.classList.contains("untranslated")) {
+                        rowChecked.checked = true;
+                    }
+                }
+                else {
+                    rowChecked.checked = false;
+                }
+            }
+        });
+    }
+    else {
+        document.querySelectorAll("tr.preview").forEach((preview, i) => {
+            // if (!is_pte) {
+            rowchecked = preview.querySelector("th input");
+            if (rowchecked != null) {
+                if (!rowchecked.checked) {
+                    if (preview.classList.contains("untranslated")) {
+                        preview.querySelector("th input").checked = true;
+                    }
+                }
+                else {
+                    if (preview.classList.contains("untranslated")){
+                        preview.querySelector("th input").checked = false;
+                    }
+                }
+
+            }
+            // }
+        });
+    }
+}
+
 
 function setmyCheckBox(event) {
+     //if (event) {
+     //   event.preventDefault();
+    //   }
+    console.debug("setmyCheckBox called, event:", event);
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     // if the translator is a PTE than we do not need to add the extra checkboxes
     if (!is_pte) {
@@ -1689,6 +1924,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
             glossary_word = old_status.getElementsByClassName("glossary-word")
         }
         if (checkbox[0] != null) {
+            
             my_line_counter = checkbox[0].querySelector("div.line-counter")
             // mark lines with glossary word into checkbox
             if (glossary_word.length != 0) {
@@ -1716,7 +1952,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
                     mycheckbox[0].title = "Has glossary word"
                 }
             }
-            // mycheckbox[0].textContent = rowcount
+            
         }
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;
@@ -1968,9 +2204,10 @@ function close_toast() {
 
 async function messageBox(type, message) {
     currWindow = window.self;
+    let title = __("Message")
     await cuteAlert({
         type: type,
-        title: "Message",
+        title: title,
         message: message,
         buttonText: "OK",
         myWindow: currWindow,
@@ -2230,7 +2467,7 @@ async function handlePlural2() {
 
 }
 
-function replacePlaceholdersBeforeTranslation(text) {
+async function replacePlaceholdersBeforeTranslation(text) {
     let counter = 0;
     return text.replace(/%(\d{1,2})?\$?[sdl]/gi, (match) => {
         return `__PH_${counter++}__`;
@@ -2243,4 +2480,35 @@ function restorePlaceholdersAfterTranslation(text, originalText) {
     return text.replace(/__PH_(\d+)__/g, () => {
         return placeholders[counter++] || '';
     });
+}
+
+function checkFormal(formal) {
+    const locString = window.location.href;
+    formal = (!locString.includes("default"));
+    return formal
+}
+
+/**
+ * Geeft een eenvoudige diff tussen twee strings:
+ * Verschillen worden gemarkeerd met [expected|actual]
+ */
+function logStringDiff(expected, actual) {
+    const expectedWords = expected.split(/\s+/);
+    const actualWords = actual.split(/\s+/);
+
+    const maxLen = Math.max(expectedWords.length, actualWords.length);
+    const result = [];
+
+    for (let i = 0; i < maxLen; i++) {
+        const e = expectedWords[i] ?? "";
+        const a = actualWords[i] ?? "";
+
+        if (e === a) {
+            result.push(e);
+        } else {
+            result.push(`[${e}|${a}]`);
+        }
+    }
+
+    console.debug("Diff:", result.join(" "));
 }

@@ -921,7 +921,9 @@ async function resetDB() {
 
 function clearData(event) {
     // open a read/write db transaction, ready for clearing the data
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     currWindow = window.self;
     cuteAlert({
         type: "question",
@@ -961,7 +963,9 @@ function clearData(event) {
 }
 
 function deleteDB(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     currWindow = window.self;
 
     cuteAlert({

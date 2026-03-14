@@ -85,7 +85,6 @@ Examples:
         temperature = 0.3
     } = options;
 
-    const show_debug = false;
 
     // Build base prompt
     const basePrompt = this.buildSystemPrompt(glossary, formal, destinationLanguage);
@@ -104,8 +103,8 @@ ${text}
 Do NOT provide explanations, comments, or extra text. Output ONLY the literal translation.
 `;
 
-    if (show_debug) console.debug("=== Final system prompt sent to Claude ===\n", systemWithText);
-    console.debug("text:",text)
+    if (toBoolean(DebugMode)) console.debug("=== Final system prompt sent to Claude ===\n", systemWithText);
+    //console.debug("text:",text)
     const dataToSend = {
         apiKey: this.apiKey,
         apiVersion: this.apiVersion,
@@ -174,7 +173,7 @@ async function translateLineByLine(
     Model
 ) {
     const results = [];
-    const show_debug = true;
+
     const translator = new ClaudeTranslator(apiKey, {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
@@ -228,16 +227,11 @@ async function translateLineByLine(
             temperature: temp,
             model: Model
         });
-
+        //console.debug("Claude translation result:", result); 
         if (result.success) {
             const duration = ((Date.now() - start) / 1000).toFixed(2);
-            if (show_debug) console.debug("Claude proxy response (raw):", result.translation," ",duration);
-            results.push({
-                id: original.id,
-                original: originalText,
-                translation: result.translation,
-                success: true
-            });
+            if (toBoolean(DebugMode)) console.debug("Claude proxy response (raw):", result.translation," ",duration);
+         
 
             let myTranslatedText = await postProcessTranslation(
                 original,
@@ -262,9 +256,15 @@ async function translateLineByLine(
                 convertToLower,
                 current
             );
+            results.push({
+                id: original.id,
+                original: originalText,
+                translation: result.translation,
+                success: true
+            });
         } else {
             const errMsg = result.error || "Unknown error";
-            console.error(`Translation error for ID ${original.id}: ${errMsg}`);
+            //console.debug(`Translation error for ID ${original.id}: ${errMsg}`);
             results.push({
                 id: original.id,
                 original: originalText,
@@ -275,7 +275,7 @@ async function translateLineByLine(
 
         // Add delay between requests to avoid rate limiting (except last item)
         if (i < originals.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+            await new Promise(resolve => setTimeout(resolve, 500)); // 500 msec delay
         }
     }
 

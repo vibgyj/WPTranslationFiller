@@ -317,7 +317,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const dataToSend = { ...request.data }; // copy newData
                 const apiKey = dataToSend.apiKey;       // extract the key
                 delete dataToSend.apiKey;               // remove it from the body
-
+                //console.debug("model:", dataToSend.model) 
                 const resp = await fetch("https://api.openai.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
@@ -326,13 +326,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     },
                     body: JSON.stringify(dataToSend)
                 });
+               // console.debug("response status:", resp) 
                 if (!resp.ok) {
                     // Return error message instead of raw response
                     const msg = await resp.text();
                     sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
                     return;
                 }
-
+                console.debug("response status:", resp) 
                 let data;
                 const contentType = resp.headers.get("content-type") || "";
                 if (contentType.includes("application/json")) {
@@ -354,10 +355,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       // Ollama translation
  else if (request.action === "ollama_translate") {
-    console.debug("Ollama translation request received");
+    //-console.debug("Ollama translation request received:");
     
     (async () => {
         try {
+            var start = Date.now()
             var {
                 text,
                 target_lang,
@@ -370,23 +372,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 repeat_penalty,
                 do_not_complete,
                 Top_p,
-                Top_k
+                Top_k,
             } = request.data;
-            console.debug("model:", model);
+            //console.debug("model:", model);
+           // console.debug("prompt:", systemPrompt); 
             let myTop_p = parseInt(Top_p)
             let myTop_k = parseInt(Top_k) 
             if (!text) return sendResponse({ success: false, error: "Text is missing" });
             if (!model) return sendResponse({ success: false, error: "Model is missing" });
             if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
-            console.debug("original:",text)
+            //console.debug("original:",text)
             const myLocal = toBoolean(useLocal);
             let tone = "informal"
+            console.debug("text:", text); 
             // === Local translation path ===
-            if (myLocal) {
-                
-                // console.debug("prompt:", systemPrompt)
-               // console.debug("text to translate:", text)
-               // text = "'" + text + "'";
+            if (toBoolean(myLocal)) {
+               const myTime = 12000000; // in ms
                let messages = [
                     { role: 'system', content: systemPrompt },
                    { role: 'user', content: 'Translate the provided text without any comment or instruction' },
@@ -398,16 +399,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                   messages: messages,
                   stream: false,
                   think: false,
-                 options: { temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: do_not_complete ,top_p: myTop_p,  top_k: myTop_k}
+                 options: { temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: do_not_complete ,top_p: myTop_p,  top_k: myTop_k, keep_alive: myTime}
                  };
                 //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
-                    console.debug("Local Ollama result:", result.translation);
-                    
+                    //console.debug("Local Ollama result:", result.translation);
+                    const translated = result.translation
+                     const duration = ((Date.now() - start) / 1000).toFixed(2);
+                           let show_debug = true
+                           if (show_debug) console.debug("Ollama proxy response (raw):", result.translation," ",duration);
+                     // 3. Quotes cleanup 
+                    const translatedText = cleanTranslation(translated);
+                    //console.debug("translatedText:",translatedText)
                     sendResponse({
                         success: true,
-                        translation: result.translation
+                        translation: translatedText
                     });
                 } catch (err) {
                     sendResponse({
@@ -682,12 +689,13 @@ else if (request.action === "LMStudio_translate") {
             
             const respText = await resp.text().catch(() => '');
             // debug raw response if you need
-            console.debug("Claude raw response:", respText);
+            //console.debug("Claude raw response:", respText);
             
             if (!resp.ok) {
                 // try to parse structured error, otherwise return text
                 try {
                     const json = JSON.parse(respText);
+                    //console.debug("Claude error response JSON:", json)
                     sendResponse({ success: false, error: json.error?.message || JSON.stringify(json) });
                 } catch {
                     sendResponse({ success: false, error: respText || `HTTP ${resp.status}` });
@@ -1216,7 +1224,7 @@ const StorageWrapper = (() => {
         chrome.runtime.onInstalled.addListener((details) => {
             const currentVersion = chrome.runtime.getManifest().version;
             if (details.reason === "update" && details.previousVersion !== currentVersion) {
-                console.log(`Extension updated from ${details.previousVersion} → ${currentVersion}`);
+                console.debug(`Extension updated from ${details.previousVersion} → ${currentVersion}`);
                 backupStorage();
             }
         });
@@ -1252,6 +1260,7 @@ async function callLocalOllama(bodyToSend) {
         
         const data = await resp.json();
         console.debug("Local Ollama response:", data); 
+
         if (!resp.ok) {
             return {
                 success: false,
@@ -1377,32 +1386,112 @@ async function fetchWithTimeoutAndRetry(
     throw lastError;
 }
 
-// === Helper: retry loop ===
-            async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 12000) {
-                let lastError = null;
-                for (let i = 0; i < maxRetries; i++) {
-                    try {
-                        console.debug(`Local Ollama attempt ${i + 1} of ${maxRetries}`);
-                        const result = await callLocalWithTimeout(body, timeoutMs);
-                        if (result.success) return result;
-                        lastError = new Error(result.error || "Unknown local Ollama error");
-                    } catch (err) {
-                        lastError = err;
-                        console.warn(`Attempt ${i + 1} failed: ${err.message}`);
-                    }
-                }
-                throw lastError;
+/// === Globale status voor warm model ===
+let modelWarm = false;
+let warmUpPromise = null;
+
+// =====================
+// Helper: local call met timeout + abort support
+// =====================
+async function callLocalWithTimeout(body, timeoutMs = 12000) {
+    if (!body?.model) {
+        throw new Error("callLocalWithTimeout: body.model is required");
     }
-               // === Helper: local call with timeout ===
-            async function callLocalWithTimeout(body, timeoutMs) {
-                return Promise.race([
-                    await callLocalOllama(body),
-                    new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error(`Local Ollama timeout after ${timeoutMs} ms`)), timeoutMs)
-                    )
-                ]);
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const result = await callLocalOllama(body, { signal, keep_alive: timeoutMs });
+        return result;
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            throw new Error(`Local Ollama timeout after ${timeoutMs} ms`);
+        }
+        throw err;
+    } finally {
+        clearTimeout(timeoutId);
+    }
 }
 
+// =====================
+// Helper: retry loop
+// =====================
+async function callLocalWithRetry(body, maxRetries = 3, timeoutMs = 12000) {
+    if (!body?.model) {
+        throw new Error("callLocalWithRetry: body.model is required");
+    }
+
+    let lastError = null;
+
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            console.debug(`Local Ollama attempt ${i + 1} of ${maxRetries}`);
+            const result = await callLocalWithTimeout(body, timeoutMs);
+
+            if (result?.success) return result;
+            lastError = new Error(result?.error || "Unknown local Ollama error");
+        } catch (err) {
+            lastError = err;
+            console.debug(`Attempt ${i + 1} failed: ${err.message}`);
+        }
+    }
+
+    throw lastError;
+}
+
+// =====================
+// Warm-up helper
+// =====================
+async function warmUpModel(body, keepAliveMs = 60000) {
+    if (!body?.model) {
+        console.warn("warmUpModel: body.model is required");
+        return;
+    }
+
+    if (modelWarm) return warmUpPromise; // al bezig of klaar
+
+    warmUpPromise = (async () => {
+        try {
+            console.debug(`Warming up Ollama model "${body.model}"...`);
+            const warmBody = { ...body, prompt: "warm-up" };
+            await callLocalOllama(warmBody, { keep_alive: keepAliveMs });
+            modelWarm = true;
+            console.debug(`Model "${body.model}" is warm and ready.`);
+        } catch (err) {
+            console.warn("Warm-up failed:", err.message);
+        }
+    })();
+
+    return warmUpPromise;
+}
+
+// =====================
+// Periodiek model warm houden
+// =====================
+function startKeepAliveInterval(body, intervalMs = 30000) {
+    if (!body?.model) {
+        console.warn("startKeepAliveInterval: body.model is required");
+        return;
+    }
+
+    setInterval(() => {
+        if (!modelWarm) return;
+
+        const keepAliveBody = { ...body, prompt: "keep-alive" };
+
+        callLocalOllama(keepAliveBody, { keep_alive: intervalMs + 5000 })
+            .catch(() => {}); // fouten negeren
+    }, intervalMs);
+}
+
+// === Voor gebruik in app ===
+//(async () => {
+//    await warmUpModel(60000);        // eerste warming-up
+//    startKeepAliveInterval(30000);   // periodiek warm houden
+//})();
 function cleanTranslation(str) {
  if (!str) return "";
 
