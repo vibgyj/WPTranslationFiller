@@ -184,7 +184,9 @@ function submitClicked(myWindow, consistsWindow) {
 }
 
 function startsearch(currWindow, curloc, locale, consistsWindow) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     var myWindow = currWindow;
     var wind;
     var searchverb = currWindow.document.getElementById("myForm").elements.namedItem("searchfor").value;
@@ -337,7 +339,9 @@ function startsearch(currWindow, curloc, locale, consistsWindow) {
             });
         }
         else {
-            event.preventDefault();
+             if (event) {
+               event.preventDefault();
+             }
             cuteAlert({
                 type: "error",
                 title: "Message",

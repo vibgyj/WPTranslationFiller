@@ -317,7 +317,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const dataToSend = { ...request.data }; // copy newData
                 const apiKey = dataToSend.apiKey;       // extract the key
                 delete dataToSend.apiKey;               // remove it from the body
-
+                //console.debug("model:", dataToSend.model) 
                 const resp = await fetch("https://api.openai.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
@@ -326,13 +326,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     },
                     body: JSON.stringify(dataToSend)
                 });
+               // console.debug("response status:", resp) 
                 if (!resp.ok) {
                     // Return error message instead of raw response
                     const msg = await resp.text();
                     sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
                     return;
                 }
-
+                console.debug("response status:", resp) 
                 let data;
                 const contentType = resp.headers.get("content-type") || "";
                 if (contentType.includes("application/json")) {

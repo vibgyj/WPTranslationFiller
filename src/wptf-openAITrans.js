@@ -23,7 +23,7 @@ async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPromp
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
     
     // Wait the timeout delay if needed
-    await delay(timeout);
+   // await delay(timeout);
     
     // Await the translation call
     var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
@@ -86,15 +86,16 @@ async function getTransAI(
   myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss);
 
   if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
-     else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
-     else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-     else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian'); 
-     else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
-     else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
-     else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
-     else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-     else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
-
+  else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
+  else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
+  else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian'); 
+  else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
+  else if (destlang === 'id') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Indonesian');
+  else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
+  else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
+  else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
+  else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+   // console.debug("Final prompt for OpenAI:", myprompt)
   if (!originalPreProcessed) {
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
@@ -117,7 +118,7 @@ async function getTransAI(
    if (show_debug) console.debug("Model selected:",mymodel);
   let dataNew = {};
 
-    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
+    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano" ) {
         dataNew = {
             model: mymodel,
             messages,
@@ -132,7 +133,8 @@ async function getTransAI(
             prompt_cache_key: 'WPTF translation',
         };
     }
-    else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano") { 
+    
+    else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano"  || mymodel === "gpt-5.4") { 
          dataNew = {
             model: mymodel,
             messages,
@@ -144,6 +146,21 @@ async function getTransAI(
             verbosity: 'low',
             apiKey: apikeyOpenAI,
             prompt_cache_key: 'WPTF translation',
+        };
+    }
+    else if (mymodel === "gpt-5.3-chat-latest" ) { 
+         dataNew = {
+            model: mymodel,
+            messages,
+            max_completion_tokens: max_Tokens,
+            top_p: Number(Top_p),
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            reasoning_effort: 'medium',
+            verbosity: 'low',
+            apiKey: apikeyOpenAI,
+            prompt_cache_key: 'WPTF translation'
+           
         };
   }
   else {
@@ -179,12 +196,23 @@ async function getTransAI(
 
        if (result.error) {
         const duration = ((Date.now() - start) / 1000).toFixed(2);
-           if (show_debug) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
+           if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
             // Example of result.error: "Request failed (401): <some text>"
            const match = result.error.match(/Request failed \((\d+)\)/);
            const statusCode = match ? match[1] : "unknown";
            //console.debug("Editor:",editor)
-           if (statusCode == '401') {
+           if (statusCode == '400') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode} <br>${result.error}`
+                   );
+               }
+               else {
+                   return `Error 400`;
+               }
+           }
+           else if (statusCode == '401') {
                if (editor) {
                    messageBox(
                        "warning",
@@ -204,6 +232,17 @@ async function getTransAI(
                }
                else {
                    return `Request failed with status ${statusCode}. Country not supported!`;
+               }
+           }
+            if (statusCode == '404') {
+               if (editor) {
+                   messageBox(
+                       "warning",
+                       `Request failed with status ${statusCode}. Please check your license!<br> ${result.error}`
+                   );
+               }
+               else {
+                   return `Error 401`;
                }
            }
            else if (statusCode == '429') {
@@ -233,7 +272,7 @@ async function getTransAI(
            }
     }
     const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (show_debug) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
+    if (toBoolean(DebugMode)) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
 
    const data = result.result; // raw proxy response
         let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
@@ -257,7 +296,7 @@ async function getTransAI(
         );
         
     const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
-    if (show_debug) console.debug(`[${new Date().toISOString()}] myTranslatedText postprocessed ${duration2}s`, myTranslatedText);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] myTranslatedText postprocessed ${duration2}s`, myTranslatedText);
 
     //if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
     const start2 = Date.now()
@@ -275,9 +314,9 @@ async function getTransAI(
     );
 
      const duration3 = ((Date.now() - start2) / 1000).toFixed(2);
-    if (show_debug) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
     const durationSec = ((Date.now() - start) / 1000).toFixed(2);
-    if (show_debug) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
 
     return "OK";
 

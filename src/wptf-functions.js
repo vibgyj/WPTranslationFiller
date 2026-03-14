@@ -1433,27 +1433,18 @@ function setcheckBox() {
         //document.getElementsByClassName("myCheckBox").checked = true;
 
         document.querySelectorAll("tr.preview").forEach((preview, i) => {
-            // if (!is_pte) {
-            console.debug("preview:", preview)
-            //rowchecked = preview.getElementsByClassName("myCheckBox");
-            console.debug("rowchecked:", preview.querySelector('td.myCheckBox'))
             rowchecked = preview.querySelector('td.myCheckBox');
             rowChecked = rowchecked.querySelector("input") 
-            console.debug("rowChecked:", rowChecked) 
             if (rowChecked.checked != null) {
                 if (!rowChecked.checked) {
                     if (preview.classList.contains("untranslated")) {
                         rowChecked.checked = true;
                     }
-                   
                 }
                 else {
-                    
-                    preview.getElementsByClassName("myCheckBox")[0].checked = false;
-                   
+                    rowChecked.checked = false;
                 }
             }
-            // }
         });
     }
     else {
@@ -1462,11 +1453,16 @@ function setcheckBox() {
             rowchecked = preview.querySelector("th input");
             if (rowchecked != null) {
                 if (!rowchecked.checked) {
-                    if (preview.classList.contains("untranslated")){
+                    if (preview.classList.contains("untranslated")) {
                         preview.querySelector("th input").checked = true;
                     }
-                    
                 }
+                else {
+                    if (preview.classList.contains("untranslated")){
+                        preview.querySelector("th input").checked = false;
+                    }
+                }
+
             }
             // }
         });
@@ -1475,6 +1471,10 @@ function setcheckBox() {
 
 
 function setmyCheckBox(event) {
+     //if (event) {
+     //   event.preventDefault();
+    //   }
+    console.debug("setmyCheckBox called, event:", event);
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     // if the translator is a PTE than we do not need to add the extra checkboxes
     if (!is_pte) {
@@ -2204,9 +2204,10 @@ function close_toast() {
 
 async function messageBox(type, message) {
     currWindow = window.self;
+    let title = __("Message")
     await cuteAlert({
         type: type,
-        title: "Message",
+        title: title,
         message: message,
         buttonText: "OK",
         myWindow: currWindow,

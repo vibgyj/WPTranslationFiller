@@ -5337,11 +5337,11 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     var editor = false;
     var counter = 0;
     var myrecCount = 0;
- //   var previewClass;
- //   var localRow;
- //   var mytransType = "none"
+    const is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    const checkboxSelector = is_pte ? '.checkbox input' : '.myCheckBox input';
+    const checkedCount = Array.from(document.querySelectorAll(checkboxSelector)).filter(e => e.checked).length;
     var myheader = document.querySelector('header');
-    var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+    
     //console.debug("select:",MistralSelect)
     //console.debug("transsel at start:",transsel)
     if (transsel == "LMStudio") {
@@ -5429,116 +5429,251 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             const progressbar = document.querySelector(".indeterminate-progress-bar");
 
             let counter = 0;
-            //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-            //const progressbar = document.querySelector(".indeterminate-progress-bar");
-            //await delay(vartime); // Wait the delay before starting this iteration
-            for (const record of myrecCount) {
-                await delay(vartime); // Wait the delay before starting next iteration
+            const currWindow = window.self;
+            if (checkedCount === 0) {
+                // prompt to select all
+                let title = __("Translatepage");
+                return cuteAlert({
+                    type: "question",
+                    title: title,
+                    message: __("There are no records selected, <br>are you sure you want to select all records?"),
+                    confirmText: __("Confirm"),
+                    cancelText: __("Cancel"),
+                    myWindow: currWindow
+                }).then(async (e) => {
+                    if (e === "confirm") {
+                        await  setcheckBox();
+                        let noDiff = false
+                        await setToonDiff({ toonDiff: noDiff });
+                        for (const record of myrecCount) {
+                      //  await delay(vartime); // Wait the delay before starting next iteration
 
-                let mytransType = "none";
-                const rowfound = record.id;
-                const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
-                const row = match ? match[1] : null;
-                preview = getPreview(row)
-                if (is_pte) {
-                    checkset = preview.querySelector(".checkbox input");
-                }
-                else {
-                    checkset = preview.querySelector(".myCheckBox input");
-                }
-                
-                if (!row) {
-                    console.debug(`No match found for record id: ${rowfound}`);
-                    continue;  // Skip to next record
-                }
-
-                counter++;
-                if (checkset.checked == true) {
-                    try {
-                        mytransType = await handleType(
-                            row,
-                            record,
-                            destlang,
-                            transsel,
-                            apikey,
-                            apikeyDeepl,
-                            apikeyDeepSeek,
-                            apikeyMicrosoft,
-                            apikeyOpenAI,
-                            apikeyMistral,
-                            apikeyClaude,
-                            apikeyTranslateio,
-                            apikeyNLP,
-                            OpenAIPrompt,
-                            transsel,
-                            destlang,
-                            postTranslationReplace,
-                            preTranslationReplace,
-                            formal,
-                            convertToLower,
-                            DeeplFree,
-                            completedCallback,
-                            OpenAISelect,
-                            openAIWait,
-                            OpenAItemp,
-                            spellCheckIgnore,
-                            deeplGlossary,
-                            OpenAITone,
-                            DeepLWait,
-                            openAiGloss,
-                            counter,
-                            editor,
-                            ClaudePrompt,
-                            ClaudModel,
-                            apikeyOllama,
-                            LocalOllama,
-                            ollamaModel,
-                            ollamaPrompt,
-                            apikeyLingvanex,
-                            apikeyGemini,
-                            GeminiModel,
-                            GeminiPrompt,
-                            MistralSelect,
-                            LMStudioWait
-                        );
-
-                    } catch (err) {
-                        console.error(`Translation failed for row ${row}:`, err);
+                    let mytransType = "none";
+                    const rowfound = record.id;
+                    const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
+                    const row = match ? match[1] : null;
+                    preview = getPreview(row)
+                    if (is_pte) {
+                        checkset = preview.querySelector(".checkbox input");
+                    }
+                    else {
+                        checkset = preview.querySelector(".myCheckBox input");
                     }
 
-                    if (mytransType == "stop") {
-                        if (translateButton) {
-                            translateButton.classList.add("translated");
-                            translateButton.innerText = __("Translated");
-                        }
-
-                        if (progressbar) {
-                            progressbar.style.display = "none";
-                        }
-                        break
+                    if (!row) {
+                        console.debug(`No match found for record id: ${rowfound}`);
+                        continue;  // Skip to next record
                     }
-                    // When all rows are translated
-                    if (counter === myrecCount.length) {
-                        if (translateButton) {
-                            translateButton.classList.add("translated");
-                            translateButton.innerText = __("Translated");
+
+                    counter++;
+                    if (checkset.checked == true) {
+                        try {
+                            mytransType = await handleType(
+                                row,
+                                record,
+                                destlang,
+                                transsel,
+                                apikey,
+                                apikeyDeepl,
+                                apikeyDeepSeek,
+                                apikeyMicrosoft,
+                                apikeyOpenAI,
+                                apikeyMistral,
+                                apikeyClaude,
+                                apikeyTranslateio,
+                                apikeyNLP,
+                                OpenAIPrompt,
+                                transsel,
+                                destlang,
+                                postTranslationReplace,
+                                preTranslationReplace,
+                                formal,
+                                convertToLower,
+                                DeeplFree,
+                                completedCallback,
+                                OpenAISelect,
+                                openAIWait,
+                                OpenAItemp,
+                                spellCheckIgnore,
+                                deeplGlossary,
+                                OpenAITone,
+                                DeepLWait,
+                                openAiGloss,
+                                counter,
+                                editor,
+                                ClaudePrompt,
+                                ClaudModel,
+                                apikeyOllama,
+                                LocalOllama,
+                                ollamaModel,
+                                ollamaPrompt,
+                                apikeyLingvanex,
+                                apikeyGemini,
+                                GeminiModel,
+                                GeminiPrompt,
+                                MistralSelect,
+                                LMStudioWait
+                            );
+
+                        } catch (err) {
+                            console.error(`Translation failed for row ${row}:`, err);
                         }
 
-                        if (progressbar) {
-                            progressbar.style.display = "none";
+                        if (mytransType == "stop") {
+                            if (translateButton) {
+                                translateButton.classList.add("translated");
+                                translateButton.innerText = __("Translated");
+                            }
+
+                            if (progressbar) {
+                                progressbar.style.display = "none";
+                            }
+                            break
                         }
-                        messageBox("info", __("Translation is ready"));
+                        // When all rows are translated
+                        if (counter === myrecCount.length) {
+                            if (translateButton) {
+                                translateButton.classList.add("translated");
+                                translateButton.innerText = __("Translated");
+                            }
+
+                            if (progressbar) {
+                                progressbar.style.display = "none";
+                            }
+                            messageBox("info", __("Translation is ready"));
+                        }
                     }
                 }
+                if (translateButton) {
+                    translateButton.classList.add("translated");
+                    translateButton.innerText = __("Translated");
+                }
+                if (progressbar) {
+                    progressbar.style.display = "none";
+                }
+                messageBox("info", __("Translation is ready"));
+
+                       // await saveLocal_2(bulk_timer);
+                    } else {
+                         if (progressbar) {
+                                progressbar.style.display = "none";
+                        }
+                       
+                        messageBox("info", __("Translatepage cancelled"));
+                    }
+                });
+            } else {
+                //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                //const progressbar = document.querySelector(".indeterminate-progress-bar");
+                //await delay(vartime); // Wait the delay before starting this iteration
+                for (const record of myrecCount) {
+                    await delay(vartime); // Wait the delay before starting next iteration
+
+                    let mytransType = "none";
+                    const rowfound = record.id;
+                    const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
+                    const row = match ? match[1] : null;
+                    preview = getPreview(row)
+                    if (is_pte) {
+                        checkset = preview.querySelector(".checkbox input");
+                    }
+                    else {
+                        checkset = preview.querySelector(".myCheckBox input");
+                    }
+
+                    if (!row) {
+                        console.debug(`No match found for record id: ${rowfound}`);
+                        continue;  // Skip to next record
+                    }
+
+                    counter++;
+                    if (checkset.checked == true) {
+                        try {
+                            mytransType = await handleType(
+                                row,
+                                record,
+                                destlang,
+                                transsel,
+                                apikey,
+                                apikeyDeepl,
+                                apikeyDeepSeek,
+                                apikeyMicrosoft,
+                                apikeyOpenAI,
+                                apikeyMistral,
+                                apikeyClaude,
+                                apikeyTranslateio,
+                                apikeyNLP,
+                                OpenAIPrompt,
+                                transsel,
+                                destlang,
+                                postTranslationReplace,
+                                preTranslationReplace,
+                                formal,
+                                convertToLower,
+                                DeeplFree,
+                                completedCallback,
+                                OpenAISelect,
+                                openAIWait,
+                                OpenAItemp,
+                                spellCheckIgnore,
+                                deeplGlossary,
+                                OpenAITone,
+                                DeepLWait,
+                                openAiGloss,
+                                counter,
+                                editor,
+                                ClaudePrompt,
+                                ClaudModel,
+                                apikeyOllama,
+                                LocalOllama,
+                                ollamaModel,
+                                ollamaPrompt,
+                                apikeyLingvanex,
+                                apikeyGemini,
+                                GeminiModel,
+                                GeminiPrompt,
+                                MistralSelect,
+                                LMStudioWait
+                            );
+
+                        } catch (err) {
+                            console.error(`Translation failed for row ${row}:`, err);
+                        }
+
+                        if (mytransType == "stop") {
+                            if (translateButton) {
+                                translateButton.classList.add("translated");
+                                translateButton.innerText = __("Translated");
+                            }
+
+                            if (progressbar) {
+                                progressbar.style.display = "none";
+                            }
+                            break
+                        }
+                        // When all rows are translated
+                        if (counter === myrecCount.length) {
+                            if (translateButton) {
+                                translateButton.classList.add("translated");
+                                translateButton.innerText = __("Translated");
+                            }
+
+                            if (progressbar) {
+                                progressbar.style.display = "none";
+                            }
+                            messageBox("info", __("Translation is ready"));
+                        }
+                    }
+                }
+                if (translateButton) {
+                    translateButton.classList.add("translated");
+                    translateButton.innerText = __("Translated");
+                }
+                if (progressbar) {
+                    progressbar.style.display = "none";
+                }
+                messageBox("info", __("Translation is ready"));
             }
-             if (translateButton) {
-                            translateButton.classList.add("translated");
-                            translateButton.innerText = __("Translated");
-                        }
-            if (progressbar) {
-                            progressbar.style.display = "none";
-                        }
-                        messageBox("info", __("Translation is ready"));
         }
         else {
             messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
@@ -6741,6 +6876,7 @@ async function saveLocal_2(bulk_timer = 0) {
     }
 
     // Final cleanup & summary
+    // The command below makes the screen empty
     hideIncompletePreviewRows();
     hideUntranslatedPreviewRows();
     disableInterceptSuggestions();
@@ -6751,7 +6887,7 @@ async function saveLocal_2(bulk_timer = 0) {
         StartObserver = true;
         const read = __("We have read:");
         const saved = __(" records and saved:");
-        await messageBox_reload("info", `${read} ${line_read} ${saved} ${counter}`);
+        await messageBox("info", `${read} ${line_read} ${saved} ${counter}`);
         if (My1copyClip) autoCopyClipBoard = true;
     } else {
         if (debug) console.debug("no progressbar!");
@@ -7900,7 +8036,10 @@ async function onCopySuggestionClicked(target,rowId) {
     })
 }
 
-async function copyOrgRecords() {
+async function copyOrgRecords(event) {
+     if (event) {
+        event.preventDefault();
+     }
     var counter = 0;
     var row;
     RecCount = 0;
@@ -7946,20 +8085,27 @@ async function copyOrgRecords() {
     RecCount = counter
     if (RecCount != 0) {
         let errMessage = __("Records are processed: ")
-        let infoMessage = __("Bulk copy originals")
-        cuteAlert({
-            type: "info",
+        let infoMessage = __("Bulk copy originals<br> Select Confirm to save them")
+       await cuteAlert({
+            type: "question",
             title: infoMessage,
             message: errMessage + RecCount,
             confirmText: "Confirm",
             cancelText: "Cancel",
             myWindow: currWindow
-        })
+        }).then((e) => {
+            if (e === "confirm") {
+                startBulkSave()
+            } else {
+                messageBox("info", __("Records not saved"));
+            }
+        });
     }
     else {
+        // alert("Debug: keuzebox is net getoond. Keuze ")
         let errMessage = __("No records are processed, as you did not select them! ")
         let infoMessage = __("Bulk copy originals")
-        cuteAlert({
+        await cuteAlert({
             type: "error",
             title: infoMessage,
             message: errMessage + RecCount,
@@ -7967,5 +8113,6 @@ async function copyOrgRecords() {
             cancelText: "Cancel",
             myWindow: currWindow
         })
-    }
+       // alert("Debug: keuzebox is net getoond. Keuze = e")
+     }
 }

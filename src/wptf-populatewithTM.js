@@ -97,7 +97,7 @@ async function populateWithTM(
     TMtreshold,
     interCept
 ) {
-
+    // event.preventDefault();
     //console.debug("Starting Translation Memory process...");
     //console.debug("TMtreshold:",TMtreshold)
     setPostTranslationReplace(postTranslationReplace);
@@ -328,9 +328,10 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                     translated = true
                     foundTM++
                    // await mark_as_translated(rowId, current, translated, preview)
-                  
+                    let mytranslatedText = await  postProcessTranslation(original, translatedText, replaceVerb, translatedText, "populateWithTM", convertToLower, spellCheckIgnore, locale);
+                    console.debug("mytranslatedText:", mytranslatedText)
+                    await processTransl(original, mytranslatedText, locale, record, rowId, transtype, plural_line, locale, false, current)
                     result = await validateEntry(destlang, textareaElem, false, false, rowId, locale, record, false, DefGlossary);
-                    await processTransl(original, translatedText, locale, record, rowId, transtype, plural_line, locale, false, current)
                     await mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
                     await mark_as_translated(rowId, current, translated, preview)
 
@@ -394,7 +395,9 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     status.value = "transFill";
                                     current.innerText = 'transFill'
                                     record = document.querySelector(`#editor-${rowId}`);
-                                    await processTransl(original, textFound, locale, record, rowId, transtype, plural_line, locale, false, current)
+                                    let mytranslatedText = await  postProcessTranslation(original, textFound, replaceVerb, textFound, "populateWithTM", convertToLower, spellCheckIgnore, locale);
+                                   // console.debug("mytranslatedText:", mytranslatedText)
+                                    await processTransl(original, mytranslatedText, locale, record, rowId, transtype, plural_line, locale, false, current)
 
                                 }
                                 else {
@@ -446,7 +449,9 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                
                                 translated = true
                                 record = document.querySelector(`#editor-${rowId}`);
-                                await processTransl(original, textFound, locale, record, rowId, transtype, plural_line, locale, false, current)
+                                let mytranslatedText = await  postProcessTranslation(original, textFound, replaceVerb, translatedText, "populateWithTM", convertToLower, spellCheckIgnore, locale);
+                                //console.debug("mytranslatedText:", mytranslatedText)
+                                await processTransl(original, mytranslatedText, locale, record, rowId, transtype, plural_line, locale, false, current)
                                 await mark_as_translated(rowId, current, translated, preview)
                                 result = await validateEntry(destlang, textareaElem, "", "", rowId, locale, editor, false);
                                 updateStyle(textareaElem, result, newurl, showHistory, false, false, rowId, editor, false, false, textFound, [], "transFill", "old", false)

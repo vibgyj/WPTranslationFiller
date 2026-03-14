@@ -200,7 +200,9 @@ document.addEventListener('click', (event) => {
 
   document.addEventListener("keydown", (event) => {
   if (event.key.toLowerCase() === "r" && event.ctrlKey && event.shiftKey) {
-    event.preventDefault();
+    if (event) {
+        event.preventDefault();
+    }
     console.log("Starting tests (Ctrl + Shift + R)...");
 
     // Create and style the button
@@ -359,7 +361,7 @@ function doValidation() {
         if (data.showHistory != "null") {
             let locale = checkLocale();
             validatePage(data.destlang, data.showHistory, locale, data.showTransDiff, data.DefGlossary);
-           // setcheckBox()
+           
             if (data.showHistory === true) {
                 const currentURL = window.location.href;
                 if (!currentURL.includes("untranslated") && !check_untranslated()) {
@@ -497,9 +499,11 @@ fileSelector.setAttribute("type", "file");
 document.addEventListener("keydown", async function (event) {
     // PSS 31-07-2021 added new function to scrape consistency tool
     if (event.altKey && event.shiftKey && (event.key === "&")) {
+        if (event) {
+        event.preventDefault();
+        }
         var org_verb;
         var wrong_verb;
-        event.preventDefault();
         chrome.storage.local.get(["destlang"],
             function (data) {
                 is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -530,11 +534,15 @@ document.addEventListener("keydown", async function (event) {
     }
 
     if (event.altKey && event.shiftKey && (event.key === "?")) {
+        if (event) {
         event.preventDefault();
+        }
         await handleStats();
     }
     if (event.altKey && event.shiftKey && (event.key === "*")) {
+        if (event) {
         event.preventDefault();
+        }
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         chrome.storage.local.get(["bulkWait"], async function (data) {
             let bulkWait = data.bulkWait
@@ -559,7 +567,9 @@ document.addEventListener("keydown", async function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "+")) {
         // This switches convert to lowercase on
+        if (event) {
         event.preventDefault();
+        }
         chrome.storage.local.set({
             convertToLower: true
         });
@@ -573,7 +583,9 @@ document.addEventListener("keydown", async function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "-")) {
         // This switches convert to lowercase off
+        if (event) {
         event.preventDefault();
+        }
         chrome.storage.local.set({
             convertToLower: false
         });
@@ -587,12 +599,16 @@ document.addEventListener("keydown", async function (event) {
     }
     if (event.altKey && event.shiftKey && (event.key === "%")) {
         // copy to clipboard
+        if (event) {
         event.preventDefault();
+        }
         copyToClipBoard(detailRow);
     }
     if (event.altKey && event.shiftKey && (event.key === "U")) {
         // import .po file
+        if (event) {
         event.preventDefault();
+        }
         chrome.storage.local.get(["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
             function (data) {
                 var allrows = [];
@@ -637,27 +653,37 @@ document.addEventListener("keydown", async function (event) {
         );
     }
     if (event.altKey && event.shiftKey && (event.key === "#")) {
+        if (event) {
         event.preventDefault();
+        }
         // Make bulk checkbox active for non PTE
         setmyCheckBox(event);
     }
     if (event.altKey && event.shiftKey && (event.key === "@")) {
+        if (event) {
         event.preventDefault();
+        }
         // Make bulk checkbox not active for non PTE
         deselectCheckBox(event);
     }
     if (event.altKey && event.shiftKey && (event.key === "F1")) {
+        if (event) {
         event.preventDefault();
+        }
         // Reset database
         result = resetDB();
     }
     if (event.altKey && event.shiftKey && (event.key === "F2")) {
+        if (event) {
         event.preventDefault();
+        }
         // Delete database
         result = deleteDB();
     }
     if (event.altKey && event.shiftKey && (event.key === "F3")) {
+        if (event) {
         event.preventDefault();
+        }
             chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", apikeyNLP, "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss"], function (data) {
 
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
@@ -685,7 +711,9 @@ document.addEventListener("keydown", async function (event) {
     }
 
     if (event.altKey && event.shiftKey && (event.key === "F5")) {
+        if (event) {
         event.preventDefault();
+        }
         chrome.storage.local.get(
             ["apikey", "apikeyDeepl", "apikeyMicrosoft", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "showHistory", "showTransDiff", "convertToLower", "DeeplFree", "TMwait", "spellCheckIgnore"],
             function (data) {
@@ -723,7 +751,9 @@ document.addEventListener("keydown", async function (event) {
     }
 
     if (event.altKey && event.shiftKey && (event.key === "F6")) {
+        if (event) {
         event.preventDefault();
+        }
         var rule = {
             "id": 1,
             "priority": 1,
@@ -773,7 +803,9 @@ document.addEventListener("keydown", async function (event) {
     }
 
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
+        if (event) {
         event.preventDefault();
+        }
         // Use chrome.local.get to retrieve the value
         interCept = localStorage.getItem("interXHR");
 
@@ -799,12 +831,16 @@ document.addEventListener("keydown", async function (event) {
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F9")) {
+        if (event) {
         event.preventDefault();
+        }
         SwitchTMClicked();
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F10")) {
+        if (event) {
         event.preventDefault();
+        }
         //$(document).ready(function () {
         var mysimple = window['wpgpt_load_history_status'];
         alert("Editor options:" + mysimple)
@@ -813,7 +849,9 @@ document.addEventListener("keydown", async function (event) {
     };
 
     if (event.altKey && event.shiftKey && (event.key === "F11")) {
+        if (event) {
         event.preventDefault();
+        }
         toastbox("info", "checkFormal is started wait for the result!!", "2000", "CheckFormal");
         var dataFormal = 'Je hebt, U heeft\nje kunt, u kunt\nHeb je,Heeft u\nhelpen je,helpen u\nWil je,Wilt u\nom je,om uw\nkun je,kunt u\nzoals je,zoals u\nJe ,U \nje ,u \njouw,uw\nmet je,met uw\n';
         checkPageClicked(event);
@@ -836,7 +874,9 @@ document.addEventListener("keydown", async function (event) {
 
 
     if (event.altKey && event.shiftKey && (event.key === "S" || event.key === "s")) {
+        if (event) {
         event.preventDefault();
+        }
         chrome.storage.local.get(
             ["LtKey", "LtUser", "LtLang", "LtFree", "spellCheckIgnore"],
             function (data) {
@@ -917,7 +957,9 @@ document.addEventListener("keydown", async function (event) {
         });
     }
     if (event.altKey && event.shiftKey && (event.key === "A" || event.key === "a")) {
+        if (event) {
         event.preventDefault();
+        }
 
         let rowId = document.querySelector("#editor");
         
@@ -937,7 +979,9 @@ document.addEventListener("keydown", async function (event) {
 
     if (event.altKey && (event.key === "r" || event.key === "R")) {
         // PSS 29-07-2021 added a new function to replace verbs from the command line, or through a script collecting the links issue #111
+        if (event) {
         event.preventDefault();
+        }
         var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
         // issue #133 block non PTE/GTE users from using this function
         //if (is_pte) {
@@ -1088,13 +1132,17 @@ document.addEventListener('click', function (event) {
     // Check if the clicked element is the link that should open the modal
     if (event.target.id == 'openModalLink') {
         // Prevent the default action of the link
+        if (event) {
         event.preventDefault();
+        }
         // Create and open the modal
         createAndOpenModal();
     }
     else if (event.target.id == 'openOptionsLink') {
         // Prevent the default action of the link
+        if (event) {
         event.preventDefault();
+        }
         // Create and open the modal
         openOptionsPage();
     }
@@ -1262,7 +1310,7 @@ async function translatedButton() {
     checkAllButton.href = "#";
     checkAllButton.style.visible = 'hidden'
     checkAllButton.className = "selectAll-button";
-    checkAllButton.onclick = setmyCheckBox;
+    checkAllButton.onclick = setCheckBox;
     checkAllButton.innerText = __("Select all");
     checkAllContainer.appendChild(checkAllButton)
     checkAllContainer.appendChild(classToolTip)
@@ -1823,7 +1871,9 @@ function SwitchGlossClicked(event) {
 }
 
 function SwitchTMClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
 
     const formal = checkFormal(false);
     const currentSwitch = localStorage.getItem("switchTM") === "true";
@@ -1892,12 +1942,14 @@ async function myOpenDB(db) {
 }
 
 async function myDeepLDB(dbDeepL) {
-    dbDeepLOpen = await openDeepLDatabase(dbDeepL)
+       dbDeepLOpen = await openDeepLDatabase(dbDeepL)
     return dbDeepLOpen
 }
 
 async function startBulkSave(event) {
-    event.preventDefault(event);
+    if (event) {
+        event.preventDefault();
+    }
 
     let sampleObject1 = {
         'toonDiff': true
@@ -1943,9 +1995,18 @@ async function startBulkSave(event) {
 }
 
 async function savetolocalClicked(event) {
+    if (event) {
+        event.preventDefault();
+     }
     await bulkSaveToLocal();
 }
 
+async function setCheckBox(event) {
+    if (event) {
+         await setcheckBox(event);
+        event.preventDefault();
+     }
+}
 
 async function compairClicked(event) {
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
@@ -1957,12 +2018,17 @@ async function compairClicked(event) {
 }
 
 async function copyOrgClicked(event) {
+     if (event) {
+        event.preventDefault();
+        }
     await copyOrgRecords()
 }
 
 // 12-05-2022 PSS addid this function to start translating from translation memory button
 function tmTransClicked(event) {
-    //event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     //console.debug("we are in tmTransClicked") 
     chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "TMtreshold","ClaudModel","TMwait"], function (data) {
        
@@ -2001,7 +2067,9 @@ function tmTransClicked(event) {
 
 //12-05-2022 PSS added this function to start local translating with button
 function localTransClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyClaude", "apikeyNLP", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel"], function (data) {
        
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined') {
@@ -2081,7 +2149,9 @@ function impLocDataseClicked(event) {
 }
 
 function impFileClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     chrome.storage.local.get(
         ["apikey", "destlang", "postTranslationReplace", "preTranslationReplace"],
         function (data) {
@@ -2129,7 +2199,9 @@ function impFileClicked(event) {
     );
 }
  function translatePageClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     var formal;
     chrome.storage.local.get(
         ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyMistral", "apikeyClaude", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP" ,"OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "GeminiPrompt","LMStudioWait"],
@@ -2186,7 +2258,9 @@ function checkFormal(formal) {
 }
 
 async function checkPageClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     var formal = checkFormal(false);
     chrome.storage.local.get(
         ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower", "showHistory", "showTransDiff"],
@@ -2204,7 +2278,9 @@ async function checkPageClicked(event) {
 }
 
 function exportPageClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     chrome.storage.local.get(
         ["apikey", "destlang"],
         function (data) {
@@ -2216,7 +2292,9 @@ function exportPageClicked(event) {
 }
 
 function exportPoClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        };
     chrome.storage.local.get(
         ["apikey", "destlang"],
         function (data) {
@@ -2296,132 +2374,6 @@ async function loadGlossaries() {
     }
 }
 
-function old_loadGlossary(event) {
-    //event.preventDefault()
-    //glossary = [];
-    chrome.storage.local.get(["glossary", "glossaryA", "glossaryB", "glossaryC"
-        , "glossaryD", "glossaryE", "glossaryF", "glossaryG", "glossaryH", "glossaryI"
-        , "glossaryJ", "glossaryK", "glossaryL", "glossaryM", "glossaryN", "glossaryO"
-        , "glossaryP", "glossaryQ", "glossaryR", "glossaryS", "glossaryT", "glossaryU"
-        , "glossaryV", "glossaryW", "glossaryX", "glossaryY", "glossaryZ", "destlang"],
-        function (data) {
-            if (typeof data.glossary != "undefined") {
-                loadSet(glossary, data.glossary);
-                loadSet(glossary, data.glossaryA);
-                loadSet(glossary, data.glossaryB);
-                loadSet(glossary, data.glossaryC);
-                loadSet(glossary, data.glossaryD);
-                loadSet(glossary, data.glossaryE);
-                loadSet(glossary, data.glossaryF);
-                loadSet(glossary, data.glossaryG);
-                loadSet(glossary, data.glossaryH);
-                loadSet(glossary, data.glossaryI);
-                loadSet(glossary, data.glossaryJ);
-                loadSet(glossary, data.glossaryK);
-                loadSet(glossary, data.glossaryL);
-                loadSet(glossary, data.glossaryM);
-                loadSet(glossary, data.glossaryN);
-                loadSet(glossary, data.glossaryO);
-                loadSet(glossary, data.glossaryP);
-                loadSet(glossary, data.glossaryQ);
-                loadSet(glossary, data.glossaryR);
-                loadSet(glossary, data.glossaryS);
-                loadSet(glossary, data.glossaryT);
-                loadSet(glossary, data.glossaryU);
-                loadSet(glossary, data.glossaryV);
-                loadSet(glossary, data.glossaryW);
-                loadSet(glossary, data.glossaryX);
-                loadSet(glossary, data.glossaryY);
-                loadSet(glossary, data.glossaryZ);
-
-                glossary.sort(function (a, b) {
-                    // to sort by descending order
-                    return b.key.length - a.key.length;
-                });
-                //console.debug("gloss length:", glossary, length)
-            }
-            else {
-                messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
-                return;
-            }
-        })
-
-    //glossary1 = [];
-    chrome.storage.local.get(["glossary1", "glossary1A", "glossary1B", "glossary1C"
-        , "glossary1D", "glossary1E", "glossary1F", "glossary1G", "glossary1H", "glossary1I"
-        , "glossary1J", "glossary1K", "glossary1L", "glossary1M", "glossary1N", "glossary1O"
-        , "glossary1P", "glossary1Q", "glossary1R", "glossary1S", "glossary1T", "glossary1U"
-        , "glossary1V", "glossary1W", "glossary1X", "glossary1Y", "glossary1Z", "destlang"],
-        function (data) {
-            //console.debug("second gloss:",data.glossary1)
-            if (typeof data.glossary1 != "undefined") {
-                loadSet1(glossary1, data.glossary1);
-                loadSet1(glossary1, data.glossary1A);
-                loadSet1(glossary1, data.glossary1B);
-                loadSet1(glossary1, data.glossary1C);
-                loadSet1(glossary1, data.glossary1D);
-                loadSet1(glossary1, data.glossary1E);
-                loadSet1(glossary1, data.glossary1F);
-                loadSet1(glossary1, data.glossary1G);
-                loadSet1(glossary1, data.glossary1H);
-                loadSet1(glossary1, data.glossary1I);
-                loadSet1(glossary1, data.glossary1J);
-                loadSet1(glossary1, data.glossary1K);
-                loadSet1(glossary1, data.glossary1L);
-                loadSet1(glossary1, data.glossary1M);
-                loadSet1(glossary1, data.glossary1N);
-                loadSet1(glossary1, data.glossary1O);
-                loadSet1(glossary1, data.glossary1P);
-                loadSet1(glossary1, data.glossary1Q);
-                loadSet1(glossary1, data.glossary1R);
-                loadSet1(glossary1, data.glossary1S);
-                loadSet1(glossary1, data.glossary1T);
-                loadSet1(glossary1, data.glossary1U);
-                loadSet1(glossary1, data.glossary1V);
-                loadSet1(glossary1, data.glossary1W);
-                loadSet1(glossary1, data.glossary1X);
-                loadSet1(glossary1, data.glossary1Y);
-                loadSet1(glossary1, data.glossary1Z);
-
-                glossary1.sort(function (a, b) {
-                    // to sort by descending order
-                    return b.key.length - a.key.length;
-                });
-                // console.debug("glossary1:", glossary1.length)
-
-            }
-            else {
-                messageBox("error", "Your second glossary is not loaded because no file is loaded!!");
-                //return ;
-            }
-
-            //console.debug("gloss length before:", glossary1)
-            if (glossary.length > 1) {
-                chrome.storage.local.get(["showHistory", 'destlang', 'showTransDiff', 'DefGlossary'], function (data, event) {
-                    if (data.showHistory != "null") {
-                        let locale = checkLocale();
-                        validatePage(data.destlang, data.showHistory, locale, data.showTransDiff);
-                        //setcheckBox()
-                        if (data.showHistory == true) {
-                            // Get the current URL
-                            const currentURL = window.location.href;
-                            // Check if the URL contains "untranslated, and also check if we come from other location with untranslated
-                            if (!currentURL.includes("untranslated") && !check_untranslated()) {
-                                validateOld(data.showTransDiff);
-                            }
-                        }
-                    }
-                });
-            }
-            else {
-                messageBox("error", "Your default glossary is not loaded because no file is loaded!!");
-                //return;
-            }
-        });
-    let glossary_loaded = "OK"
-    let glossary1_loaded = "OK"
-    return { glossary_loaded, glossary1_loaded };
-}
 
 
 function loadSet(targetArray, sourceArray) {
@@ -2548,7 +2500,9 @@ Show_RecCount();
 
 // 08-05-2021 PSS added import of records into local database
 function importPageClicked(event) {
-    event.preventDefault();
+     if (event) {
+        event.preventDefault();
+        }
     fileSelector.click();
     fileSelector.addEventListener("change", (event) => {
         fileList = event.target.files;
@@ -2670,7 +2624,10 @@ function checkactionClick(event) {
 // 04-04-2021 PSS issue #24 added this function to fix the problem with no "translate button in single"
 // 16 - 06 - 2021 PSS fixed this function checkbuttonClick to prevent double buttons issue #74
 async function checkbuttonClick(event) {
-
+    // Do not use event.preventDefault() here as it stops setting the checkboxes
+    // if (event) {
+     //   event.preventDefault();
+     //   }
     var textareaElem;
     var translateButton;
     var editor;
