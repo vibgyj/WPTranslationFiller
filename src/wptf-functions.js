@@ -1,4 +1,8 @@
 ﻿
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 // --- Hoofdfunctie ---
 function fixUILabelSmart(text) {
     if (!text || typeof text !== "string") return text;
@@ -80,9 +84,12 @@ function fixUILabelSmart(text) {
     // -----------------------------
     // 1️⃣ Separable werkwoorden
     // -----------------------------
-    if (separableEntry) {
+      if (separableEntry) {
         for (const part of separableEntry[1]) {
-            const regexPart = new RegExp(`^\\s*${firstWordRaw}\\s+(.+?)\\s+${part}(?=\\s|$)`, "i");
+            const regexPart = new RegExp(
+            `^\\s*${escapeRegex(firstWordRaw)}\\s+(.+?)\\s+${escapeRegex(part)}(?=\\s|$)`,
+           "i"
+        );
             const matchPart = first.match(regexPart);
             if (matchPart) {
                 const middle = matchPart[1].trim();
@@ -831,7 +838,9 @@ function insertAlstublieftIfPlease(original, dutch) {
 }
 
 
+// v4 - strip brackets from English words so "(You" matches "You"
 function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, formal = false) {
+    //console.debug("Starting replaceVerbInTranslation with:", { english, dutch, replaceVerbs, debug, formal });
     const markerBase = "__REPLACE_";
     let markerIndex = 0;
 
@@ -852,7 +861,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         console.debug("Dutch split:", dutchSentences);
     }
 
-    // --- NEW STEP: Adjust English commas if sentence counts differ ---
+    // --- Adjust English commas if sentence counts differ ---
     if (engSentences.length !== dutchSentences.length) {
         let engCommaCount = (english.match(/,/g) || []).length;
         const dutCommaCount = (dutch.match(/,/g) || []).length;
@@ -862,16 +871,12 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         let adjustedEngSentences = engSentences;
 
         while (adjustedEngSentences.length !== dutchSentences.length && engCommaCount > dutCommaCount) {
-            // Remove the first comma in the string (replace only the first)
             adjustedEnglish = adjustedEnglish.replace(',', '');
-
-            // Re-split adjusted English text
             adjustedEngMatches = [...adjustedEnglish.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
             adjustedEngSentences = adjustedEngMatches.map(m => m[1] + m[2]);
 
             let newEngCommaCount = (adjustedEnglish.match(/,/g) || []).length;
-
-            if (newEngCommaCount === engCommaCount) break; // No comma removed, avoid infinite loop
+            if (newEngCommaCount === engCommaCount) break;
             engCommaCount = newEngCommaCount;
         }
 
@@ -883,15 +888,26 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
             console.debug("Adjusted English text:", english);
         }
     }
-    // --- End of new comma adjustment step ---
 
     const updatedSentences = [];
     const markerReplacements = [];
 
-    // Keep only valid 3-item entries, then normalize (trim) each part to avoid stray-space bugs.
+    // Keep only valid 3-item entries, normalize: trim + lowercase the formal value
     const validReplacements = replaceVerbs
-      .filter(entry => Array.isArray(entry) && entry.length === 3)
-      .map(([en, inf, form]) => [typeof en === 'string' ? en.trim() : en, typeof inf === 'string' ? inf.trim() : inf, typeof form === 'string' ? form.trim() : form]);
+        .filter(entry => Array.isArray(entry) && entry.length === 3)
+        .map(([en, inf, form]) => [
+            typeof en === 'string' ? en.trim() : en,
+            typeof inf === 'string' ? inf.trim() : inf,
+            typeof form === 'string' ? form.trim().toLowerCase() : form  // ← normalized to lowercase
+        ]);
+
+    // Helper: determine if a position in text is at a sentence start
+    // Considers: start of string, after .?!, and after .?! followed by (
+    const isAtSentenceStart = (text) => {
+        return /^\s*$/.test(text) ||
+               /[.?!]\s*$/.test(text) ||
+               /[.?!]\s*\(\s*$/.test(text);
+    };
 
     // === Step 1: Pronoun replacement (per English match, preserves mapping) ===
     for (let i = 0; i < dutchSentences.length; i++) {
@@ -901,7 +917,8 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         const words = eng.trim().split(/\s+/);
         const firstWord = words[0] || "";
         const rest = words.slice(1).map(w => w.toLowerCase());
-        const normalizedEnglish = [firstWord, ...rest];
+        // Strip leading/trailing brackets and punctuation so "(You" matches "You"
+        const normalizedEnglish = [firstWord, ...rest].map(w => w.replace(/^[()\[\]{}"']+|[()\[\]{}"']+$/g, ''));
 
         if (toBoolean(DebugMode)) {
             console.debug(`\n--- Sentence ${i + 1} ---`);
@@ -911,38 +928,36 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
 
         let replacementsThisSentence = [];
 
-        // Process in English word order
         normalizedEnglish.forEach((word) => {
-            // Match against trimmed english mapping key
             const matchEntry = validReplacements.find(([en]) => typeof en === 'string' && en === word);
             if (!matchEntry) return;
 
-            const [, informal, formal] = matchEntry;
+            const [, informal, formalWord] = matchEntry;
 
             if (toBoolean(DebugMode)) {
-                console.debug(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formal}"`);
+                console.debug(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formalWord}"`);
             }
 
-            // Use trimmed informal in regex (case-insensitive), no global flag here (replace first occurrence per English match)
             let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'i');
             if (matchRegex.test(dut)) {
-                dut = dut.replace(matchRegex, (match, punct, space) => {
+                dut = dut.replace(matchRegex, (match, punct, space, offset) => {
                     if (debug) {
                         console.debug("Matched informal:", match);
                     }
 
                     const marker = `${markerBase}${markerIndex}_0__`;
-
-                    // Extract matched informal portion (case-insensitive)
                     const informalFound = match.match(new RegExp(`^${escapeRegex(informal)}`, 'i'))[0];
 
-                    // Check if first letter is uppercase
-                    const isCapitalized = informalFound[0] === informalFound[0].toUpperCase();
+                    // Check sentence position (after .?! or opening bracket, or start of string)
+                    const precedingText = dut.slice(0, offset);
+                    const isCapitalized = isAtSentenceStart(precedingText) ||
+                        (informalFound[0] !== informalFound[0].toLowerCase() &&
+                         informalFound[0] === informalFound[0].toUpperCase());
 
-                    // Capitalize formal replacement if needed
+                    // formalWord is already lowercase, capitalize only when needed
                     const replacementFinal = isCapitalized
-                        ? formal.charAt(0).toUpperCase() + formal.slice(1)
-                        : formal;
+                        ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
+                        : formalWord;
 
                     replacementsThisSentence.push({ marker, replacement: replacementFinal + (punct || '') });
                     markerIndex++;
@@ -964,54 +979,58 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         updatedSentences.push(dut);
     }
 
+    //console.debug("Before step 2:", updatedSentences);
+
     // === Step 2: Apply all marker replacements ===
     let finalResult = updatedSentences.join("");
     markerReplacements.forEach(({ marker, replacement }) => {
         finalResult = finalResult.replace(marker, replacement);
     });
 
-    // === Step 3: Final cleanup of any remaining informal forms ===
+    //console.debug("After step 2:", updatedSentences);
+
     const foundEnglishPronouns = new Set(
         engSentences.join(" ").toLowerCase().match(/\b(you|your|yours)\b/g) || []
     );
-  // === Step 3b: Extra pass ONLY when formal mode is active ===
-if (formal === true) {
 
-    const leftoverInformals = validReplacements
-        .map(([, informal]) => escapeRegex(informal))
-        .join("|");
+    //console.debug("Before step 3:", updatedSentences);
 
-    const leftoverRegex = new RegExp(
-        `\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`,
-        "gi"
-    );
+    // === Step 3b: Extra pass ONLY when formal mode is active ===
+    if (formal === true) {
+        const leftoverInformals = validReplacements
+            .map(([, informal]) => escapeRegex(informal))
+            .join("|");
 
-    finalResult = finalResult.replace(
-        leftoverRegex,
-        (match, informal, punct, space, offset) => {
+        const leftoverRegex = new RegExp(
+            `\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`,
+            "gi"
+        );
 
-            const replacementPair = validReplacements.find(
-                ([, inf]) => inf.toLowerCase() === informal.toLowerCase()
-            );
+        finalResult = finalResult.replace(
+            leftoverRegex,
+            (match, informal, punct, space, offset) => {
+                const replacementPair = validReplacements.find(
+                    ([, inf]) => inf.toLowerCase() === informal.toLowerCase()
+                );
+                if (!replacementPair) return match;
 
-            if (!replacementPair) return match;
+                const formalWord = replacementPair[2]; // already lowercase from validReplacements
 
-            const formalWord = replacementPair[2];
+                const before = finalResult.slice(0, offset);
+                const isSentenceStart = isAtSentenceStart(before);
 
-            const before = finalResult.slice(0, offset);
-            const isSentenceStart =
-                /^\s*$/.test(before) || /[.?!]\s*$/.test(before);
+                const replacementFinal = isSentenceStart
+                    ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
+                    : formalWord;
 
-            const replacementFinal = isSentenceStart
-                ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
-                : formalWord.toLowerCase();
+                return replacementFinal + (punct || '') + (space || '');
+            }
+        );
+    }
 
-            return replacementFinal + (punct || '') + (space || '');
-        }
-    );
-}
+    //console.debug("After step 3:", finalResult);
 
-    // === Step 4: International polite word insertion (HTML-safe) ===
+    // === Step 4: Polite word insertion (HTML-safe) ===
     const politeEntry = replaceVerbs.find(entry =>
         Array.isArray(entry) && entry.length === 2 && /please/i.test(entry[0])
     );
@@ -1027,38 +1046,27 @@ if (formal === true) {
             const finalDutchSentences = [...finalResult.matchAll(sentenceSplitRegex)]
                 .filter(m => m[1].trim() || m[2].trim())
                 .map(m => m[1] + m[2]);
-            //console.debug("Final Dutch sentences for polite insertion:", finalDutchSentences)
+
             for (let i = 0; i < finalEngSentences.length; i++) {
                 if (new RegExp(`\\b${escapeRegex(politeEnglish)}\\b`, 'i').test(finalEngSentences[i])) {
                     let sentence = finalDutchSentences[i];
 
-                    // Skip if polite word already exists
                     if (new RegExp(`\\b${escapeRegex(politeTarget)}\\b`, 'i').test(sentence)) continue;
 
-                    // Preserve any leading HTML tags
                     const htmlTagPattern = /^(\s*<[^>]+>\s*)+/;
                     const match = sentence.match(htmlTagPattern);
                     const insertPos = match ? match[0].length : 0;
 
-                    // Work only on the text part (after HTML tags)
                     const leadingTags = sentence.slice(0, insertPos);
                     const textPart = sentence.slice(insertPos).trim();
-
-                    // Split into words
                     const words = textPart.split(/\s+/);
 
                     if (words.length > 0) {
-                        let insertAfterIndex = 0; // default: after first word
-
-                        // If the second word is "het" (case-insensitive), insert after that instead
+                        let insertAfterIndex = 0;
                         if (words.length > 1 && words[1].toLowerCase() === "het") {
                             insertAfterIndex = 1;
                         }
-
-                        // Insert polite word
                         words.splice(insertAfterIndex + 1, 0, politeTarget);
-
-                        // Rebuild sentence
                         sentence = leadingTags + words.join(" ");
                     }
 
@@ -1078,11 +1086,9 @@ if (formal === true) {
         console.debug(finalResult);
     }
 
+    //console.debug("Finished replaceVerbInTranslation:", finalResult);
     return finalResult;
 }
-
-
-
 function preparePlaceholdersForTranslation(input, replaceVerbs) {
   const placeholderTagMap = {};
   let output = input;
@@ -1450,10 +1456,10 @@ function setcheckBox() {
     else {
         document.querySelectorAll("tr.preview").forEach((preview, i) => {
             // if (!is_pte) {
-            rowchecked = preview.querySelector("th input");
+            let rowchecked = preview.querySelector("th.checkbox");
             if (rowchecked != null) {
                 if (!rowchecked.checked) {
-                    if (preview.classList.contains("untranslated")) {
+                    if (preview.classList.contains("untranslated") || preview.classList.contains("status-fuzzy")) {
                         preview.querySelector("th input").checked = true;
                     }
                 }
@@ -2511,4 +2517,184 @@ function logStringDiff(expected, actual) {
     }
 
     console.debug("Diff:", result.join(" "));
+}
+
+    function extractPlaceholders(text) {
+    const pattern = /%(?:\d+\$)?[sd]/g;
+    return text.match(pattern) || [];
+}
+
+function countOccurrences(arr) {
+    return arr.reduce((acc, val) => {
+        acc[val] = (acc[val] || 0) + 1;
+        return acc;
+    }, {});
+}
+
+function extractPlaceholders(text) {
+    const pattern = /%(?:\d+\$)?[sd]/g;
+    return text.match(pattern) || [];
+}
+
+function countOccurrences(arr) {
+    return arr.reduce((acc, val) => {
+        acc[val] = (acc[val] || 0) + 1;
+        return acc;
+    }, {});
+}
+
+function checkPlaceholders(original, translation, lang = "translation",LineNo) {
+    const origPlaceholders  = extractPlaceholders(original);
+    const transPlaceholders = extractPlaceholders(translation);
+
+    const origCount  = countOccurrences(origPlaceholders);
+    const transCount = countOccurrences(transPlaceholders);
+
+    const allKeys = new Set([...Object.keys(origCount), ...Object.keys(transCount)]);
+
+    const missing = [];
+    const extra   = [];
+
+    for (const key of allKeys) {
+        const oCount = origCount[key] || 0;
+        const tCount = transCount[key] || 0;
+
+        if (tCount < oCount) {
+            for (let i = 0; i < oCount - tCount; i++) missing.push(key);
+        } else if (tCount > oCount) {
+            for (let i = 0; i < tCount - oCount; i++) extra.push(key);
+        }
+    }
+
+   // if (!missing.length && !extra.length) {
+   //     PlaceholderLog.push({ type: "ok",   text: `[${lang}] ✓ Placeholders match.` });
+   //     return true;
+   // }
+
+    if (missing.length) {
+        PlaceholderLog.push({ type: "error", text: `[${lang}] ✗ Missing placeholder(s) in translation: [${missing.join(", ")}]` });
+        PlaceholderLog.push({ type: "info",  text: `  Original:    ${original}` });
+        PlaceholderLog.push({ type: "info",  text: `  Translation: ${translation}` });
+    }
+    if (extra.length) {
+        PlaceholderLog.push({ type: "error", text: `[${lang}] ✗ Extra placeholder(s) in translation: [${extra.join(", ")}]` });
+        PlaceholderLog.push({ type: "info",  text: `  Original:    ${original}` });
+        PlaceholderLog.push({ type: "info",  text: `  Translation: ${translation}` });
+    }
+
+    return false;
+}
+function showPlaceholderLog(position = "top-right") {
+    // Remove existing panel if present
+    const existing = document.getElementById("placeholder-log-iframe");
+    if (existing) existing.remove();
+
+    const positionStyles = {
+        "top-left":     "top: 20px; left: 20px;",
+        "top-right":    "top: 20px; right: 20px;",
+        "bottom-left":  "bottom: 20px; left: 20px;",
+        "bottom-right": "bottom: 20px; right: 20px;",
+    };
+
+    const posStyle = positionStyles[position] || positionStyles["top-right"];
+
+    // Build the log rows as HTML
+    const rows = PlaceholderLog.map(entry => {
+        const color =
+            entry.type === "ok"    ? "#2e7d32" :
+            entry.type === "error" ? "#c62828" : "#555";
+        return `<div style="
+            padding: 4px 6px;
+            font-family: monospace;
+            font-size: 13px;
+            color: ${color};
+            border-bottom: 1px solid #eee;
+            white-space: pre;
+        ">${entry.text}</div>`;
+    }).join("");
+
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: sans-serif; background: #fff; }
+                #header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 12px;
+                    background: #1565c0;
+                    color: #fff;
+                    font-size: 14px;
+                    font-weight: bold;
+                    cursor: move;
+                    user-select: none;
+                }
+                #close-btn {
+                    background: transparent;
+                    border: 1px solid #fff;
+                    color: #fff;
+                    cursor: pointer;
+                    padding: 2px 8px;
+                    border-radius: 3px;
+                    font-size: 13px;
+                }
+                #close-btn:hover { background: #c62828; border-color: #c62828; }
+                #log-body { overflow-y: auto; max-height: 340px; padding: 4px 0; }
+            </style>
+        </head>
+        <body>
+            <div id="header">
+                📋 Placeholder Check Results
+                <button id="close-btn" onclick="window.parent.document.getElementById('placeholder-log-iframe').remove()">✕ Close</button>
+            </div>
+            <div id="log-body">${rows || '<div style="padding:10px;color:#888;">No entries logged.</div>'}</div>
+        </body>
+        </html>
+    `;
+
+    // Create the iframe
+    const iframe = document.createElement("iframe");
+    iframe.id = "placeholder-log-iframe";
+    iframe.style.cssText = `
+        position: fixed;
+        ${posStyle}
+        width: 560px;
+        height: 400px;
+        border: 2px solid #1565c0;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        z-index: 999999;
+        background: white;
+    `;
+
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+
+    // Drag support
+    const header = iframe.contentDocument.getElementById("header");
+    let isDragging = false, startX, startY, origLeft, origTop;
+
+    header.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = iframe.getBoundingClientRect();
+        origLeft = rect.left;
+        origTop  = rect.top;
+        iframe.style.right  = "auto";
+        iframe.style.bottom = "auto";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        iframe.style.left = (origLeft + e.clientX - startX) + "px";
+        iframe.style.top  = (origTop  + e.clientY - startY) + "px";
+    });
+
+    document.addEventListener("mouseup", () => { isDragging = false; });
 }

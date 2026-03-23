@@ -692,16 +692,40 @@ else if (request.action === "LMStudio_translate") {
             //console.debug("Claude raw response:", respText);
             
             if (!resp.ok) {
-                // try to parse structured error, otherwise return text
-                try {
-                    const json = JSON.parse(respText);
-                    //console.debug("Claude error response JSON:", json)
-                    sendResponse({ success: false, error: json.error?.message || JSON.stringify(json) });
-                } catch {
-                    sendResponse({ success: false, error: respText || `HTTP ${resp.status}` });
-                }
-                return;
-            }
+    try {
+        // Parse the error JSON response
+        const json = JSON.parse(respText);
+        //console.debug("Claude error response JSON:", json);
+
+        // Handle structured Anthropic error format: { type, error: { type, message } }
+        let errorMessage;
+        if (json.error?.message) {
+            const errorType = json.error.type || "unknown_error";
+            errorMessage = `[${errorType}] ${json.error.message}`;
+        } else {
+            errorMessage = JSON.stringify(json);
+        }
+
+        sendResponse({
+            success: false,
+            error: errorMessage,
+            errorType: json.error?.type || null,      // e.g. "rate_limit_error"
+            requestId: json.request_id || null,        // useful for debugging
+            status: resp.status
+        });
+
+    } catch {
+        // Fallback if response body isn't valid JSON
+        sendResponse({
+            success: false,
+            error: respText || `HTTP ${resp.status}`,
+            errorType: null,
+            requestId: null,
+            status: resp.status
+        });
+    }
+    return;
+}
             
             // parse JSON
             let respData;

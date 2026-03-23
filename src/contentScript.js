@@ -31,7 +31,7 @@ var strictValidation
 var DisableautoClose = false
 var DebugMode = false
 var Rearrange_Sentences = true
-
+var PlaceholderLog =[]
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
 });
@@ -49,6 +49,7 @@ if (typeof addon_translations == 'undefined') {
 
 async function loadTranslations(language) {
     try {
+       // console.debug(`Attempting to load translations for language: ${language}`)
         const url = chrome.runtime.getURL(`locales/${language}.json`);
         const res = await fetch(url);
         addon_translations = await res.json();
@@ -69,19 +70,29 @@ async function loadTranslations(language) {
 
 // Function to get the translated string
 function __(key) {
+    //console.debug(`Translating key: "${key}"`)
+    //console.debug(`Current translation:`, addon_translations[key])
     return addon_translations[key] || key; // Return the translation or the key if not found
 }
 
 
 async function initTranslations(event) {
-    let userLang = checkLocale() || 'en-gb';
-    if (typeof addon_translations.length == 'undefined') {
-        await loadTranslations(userLang); // Load Dutch translations (or any other language)
-    }
-    else {
-        console.debug("Language is already present")
-    }
-    await translatedButton()
+    chrome.storage.local.get(["noUI"], async function (data) {
+        let userLang = checkLocale() || 'en-gb';
+        if (!toBoolean(data.noUI)) {
+
+            if (typeof addon_translations.length == 'undefined') {
+                await loadTranslations(userLang); // Load Dutch translations (or any other language)
+            }
+            else {
+                console.debug("Language is already present")
+            }
+        }
+        else {
+             await loadTranslations("en-gb")
+        }
+        await translatedButton()
+    })
 }
 
 // The below is necessary to get the focus into the editor if it is opened straight from the menu
@@ -297,11 +308,12 @@ async function startFullScript(textarea) {
     var rowId = 0
     var myEditor = ""
     currWindow = window.self;
-    initTranslations();
+    await initTranslations();
+   // sleep(1000)
     mytextarea = textarea[0].firstChild.nextElementSibling;
-    myEditor = findEditorRow(mytextarea)
+    myEditor = await findEditorRow(mytextarea)
     rowId = await myEditor ? myEditor.getAttribute('row') : null;
-    
+    //console.debug(`Found editor row with ID: ${rowId}`)
     start_editor_mutation_server(textarea, "Details", "");
     pluralpresent = document.querySelector(`#editor-${rowId} div.textareas[data-plural-index="1"]`)
     if (pluralpresent != null) {
@@ -315,8 +327,7 @@ async function startFullScript(textarea) {
     mytextarea.focus();
     adjustLayoutScreen();
     setupTooltipHandler();
-    // This needs to be called to get buttons in the first record when directly opened from the table
-     addTranslateButtons(rowId)
+    
     const clickEvent = new MouseEvent('click', {
         bubbles: true,
         cancelable: true,
@@ -335,6 +346,8 @@ async function startFullScript(textarea) {
     //console.debug("DisableAutoClose:",DisableAutoClose)
     startToggleListener();
     addCheckmarkClickListener();
+    // This needs to be called to get buttons in the first record when directly opened from the table
+     addTranslateButtons(rowId)
     let is_loaded = await loadGlossaries(myCustomEvent);
     
     if (is_loaded === "success") {
@@ -1123,8 +1136,9 @@ if (divMenu != null) {
 
 
 function openOptionsPage(event) {
-    const url = chrome.runtime.getURL("wptf-options.html");
-    window.open(url)
+     let Locale = checkLocale() || 'en-gb';
+    const url = chrome.runtime.getURL(`wptf-options.html?lang=${Locale}`);
+    window.open(url);
 }
 
 // Example: Listen for clicks on a link to trigger opening the modal
@@ -1144,6 +1158,7 @@ document.addEventListener('click', function (event) {
         event.preventDefault();
         }
         // Create and open the modal
+
         openOptionsPage();
     }
 });
@@ -1540,7 +1555,7 @@ async function translatedButton() {
             SwitchGlossButton.style.color = "white"
         }
         else {
-            SwitchGlossButton.innerText = "SecGlos";
+            SwitchGlossButton.innerText = __("SecGlos");
             SwitchGlossButton.style.background = "orange"
         }
     });
@@ -2413,9 +2428,8 @@ function loadSet1(targetArray, sourceArray) {
 function addTranslateButtons(rowId) {
     //16 - 06 - 2021 PSS fixed this function addTranslateButtons to prevent double buttons issue #74
     // This function adds the buttons for the editor
-    //for (let e of document.querySelectorAll("tr.editor")) {
-    //let rowId = e.getAttribute("row");
-    //console.debug("we add the buttons on row:",rowId)
+    //console.debug("we add the buttons on row:", rowId)
+    
     let panelHeaderActions = document.querySelector("#editor-" + rowId + " .panel-header .panel-header-actions");
     //console.debug("panelHeaderActions:",panelHeaderActions)
     if (panelHeaderActions != null) {
@@ -2424,11 +2438,11 @@ function addTranslateButtons(rowId) {
             currentcel.innerText = "";
         }
         let panelTransMenu = document.querySelector(`#editor-${rowId} .panelTransMenu`);
-        //console.debug("panelTrans:",panelTransMenu)
         var newTransDiv = document.querySelector(`#editor-${rowId} .panel-header`);
         if (panelTransMenu == null) {
             newTransDiv.insertAdjacentHTML("afterend", '<div class="panelTransMenu">');
             let panelTransDiv = document.querySelector("#editor-" + rowId + " div.panelTransMenu");
+            let panelHeader = document.querySelector("#editor-" + rowId + " .panel-header");
             let translateButton = createElementWithId("my-button", `translate-${rowId}-translation-entry-my-button`);
             translateButton.href = "#";
             translateButton.className = "translation-entry-my-button";
@@ -2465,18 +2479,28 @@ function addTranslateButtons(rowId) {
             LocalCaseButton.style.cursor = "pointer";
             panelTransDiv.insertBefore(LocalCaseButton, panelTransDiv.childNodes[0]);
 
-            let TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
-            TranslocalButton.className = "translocal-entry-local-button";
-            TranslocalButton.innerText = __("Local");
-            TranslocalButton.style.visibility = "hidden";
-            panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
-
             let MissinglocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-missing-button`);
             MissinglocalButton.className = "translocal-entry-missing-button";
             MissinglocalButton.innerText = __("Missing glossary entry");
             MissinglocalButton.style.visibility = "hidden";
             MissinglocalButton.style.animation = "blinking 1s infinite";
-            panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
+            let newh3 = panelHeader.querySelector("h3");
+            let newspan = document.createElement("span");
+            newspan.appendChild(MissinglocalButton);
+            newh3.appendChild(newspan);
+            //panelTransDiv.insertBefore(MissinglocalButton, panelTransDiv.childNodes[0]);
+
+            let TranslocalButton = createElementWithId("local-button", `translate-${rowId}-translocal-entry-local-button`);
+            TranslocalButton.className = "translocal-entry-local-button";
+            TranslocalButton.innerText = __("Local");
+            TranslocalButton.style.visibility = "hidden";
+            let h3 = panelHeader.querySelector("h3");
+            let span = document.createElement("span");
+            span.appendChild(TranslocalButton);
+            h3.appendChild(span);
+           // panelTransDiv.insertBefore(TranslocalButton, panelTransDiv.childNodes[0]);
+
+           
 
             let translationActions = document.querySelector("#editor-" + rowId + " div.editor-panel__left .panel-content .translation-actions");
             let panelCont = document.createElement("copy-button");
@@ -2707,12 +2731,10 @@ async function checkbuttonClick(event) {
                 });
             }
              addTranslateButtons(rowId);
-            
           
              // Toggle visuele state
-             //console.debug("Rearrange_Sentences:", toBoolean(Rearrange_Sentences))
+             let header = await document.querySelector(`#editor-${rowId} .panel-header`);
              if (toBoolean(Rearrange_Sentences)) {
-                 let header = await document.querySelector(`#editor-${rowId} .panel-header`);
                   updatePanelCheckmarks();
                //  addCheckmarkClickListener();
                  //header.classList.toggle('has-checkmark');
@@ -2737,7 +2759,10 @@ async function checkbuttonClick(event) {
                            mytextarea[0].innerHTML = pretrans
                             mytextarea[0].innerText = pretrans
                            // activate the Local label
-                           document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
+                            // document.getElementById("translate-" + rowId + "-translocal-entry-local-button").style.visibility = "visible";
+                            let localButton = await header.querySelector(`.translocal-entry-local-button`)
+                           // console.debug("localButton:", localButton)
+                           localButton.style.visibility = "visible";
 
                         }
                     }
@@ -2747,18 +2772,10 @@ async function checkbuttonClick(event) {
                         mytextarea[0].style.height = newHeight + "px"; // Layout write
                     });
 
-
-                    //    setTimeout(() => {
-                    //const textarea = document.querySelector(`#editor-${rowId}`);; // Adjust this selector if needed
-
-                    // if (textarea) {
                     mytextarea[0].addEventListener("click", (e) => {
-                        //console.debug("Textarea clicked");
                         if (detail_glossary) {
-                            //console.debug("We are starting the observer:", mytextarea)
                             // We need to start the mutation server, if the textarea is clicked on
                             let leftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
-                            //console.debug("before mutation:", leftPanel)
                             start_editor_mutation_server(mytextarea, action, leftPanel)
                         }
                        // mytextarea = textarea.getElementsByClassName('foreign-text')
@@ -2770,11 +2787,15 @@ async function checkbuttonClick(event) {
                        
                     });
 
-                    //console.debug("mytext in open:",mytextarea)
                     if (typeof mytextarea != 'undefined') {
-                        // console.debug("mytext:", mytextarea,"2270")
                         detail_preview = getPreview(rowId)
-                        //detail_preview = document.querySelector(`#preview-${rowId}`);
+                        let localLabel = detail_preview.querySelector(`.trans_local_div`)
+                        if (localLabel != null) {
+                            let header = await document.querySelector(`#editor-${rowId} .panel-header`);
+                            let localButton = await header.getElementsByClassName("translocal-entry-local-button")
+                            localButton[0].style.visibility = "visible";
+                        }
+                        
                         detail_glossary = detail_preview.querySelector(`.glossary-word`)
                         //console.debug("detail_glossary:",detail_glossary)
                         if (detail_glossary != null) {

@@ -19,6 +19,58 @@ link.href = chrome.runtime.getURL("wptf-cute-alert.css");
 
 document.getElementsByTagName("head")[0].appendChild(link);
 
+document.addEventListener("DOMContentLoaded", async () => {
+            chrome.storage.local.get(["noUI"], async function (data) {
+    // let userLang = checkLocale() || 'en-gb';
+    console.debug("Checking if UI should be loaded, noUI value:", data.noUI);
+                if (!toBoolean(data.noUI)) {
+
+                    try {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const locale = urlParams.get("lang") || "en";
+                        const response = await fetch(`locales/options/${locale}.json`);
+                        const translations = await response.json();
+
+                        // Functie om een element tekst te vertalen, recursief
+                        function translateElement(el) {
+                            if (el.nodeType === Node.TEXT_NODE) {
+                                const key = el.textContent.trim();
+                                if (translations[key] !== undefined) {
+                                    el.textContent = translations[key];
+                                }
+                            } else if (el.nodeType === Node.ELEMENT_NODE) {
+                                // Voor input velden
+                                if (el.tagName.toLowerCase() === "input" && el.type !== "checkbox") {
+                                    const key = el.value.trim();
+                                    if (translations[key] !== undefined) {
+                                        el.value = translations[key];
+                                    }
+                                }
+
+                                // Voor tooltip data-tooltip
+                                if (el.hasAttribute("data-tooltip")) {
+                                    const key = el.getAttribute("data-tooltip").trim();
+                                    if (translations[key] !== undefined) {
+                                        el.setAttribute("data-tooltip", translations[key]);
+                                    }
+                                }
+
+                                // Recursief naar kinderen
+                                el.childNodes.forEach(translateElement);
+                            }
+                        }
+
+                        // Start vertalen vanaf container
+                        const container = document.getElementById("container");
+                        if (container) translateElement(container);
+
+                        console.log(`Loaded translations for locale: ${locale}`);
+                    } catch (err) {
+                        console.error("Error loading translations:", err);
+                    }
+                }
+        });
+})
 const rangeInput = document.getElementById(('screenWidth'));
 const rangeValue = document.getElementById(('rangeValue'));
 
@@ -61,7 +113,7 @@ let glossarySecondFile = document.getElementById("glossary_file_second");
 let LtToolKeyTextbox = document.getElementById("languagetool_key");
 let LtToolUserTextbox = document.getElementById("languagetool_user");
 let LtToolLangTextbox = document.getElementById("languagetool_language");
-let LtToolLangCheckbox = document.getElementById("LangToolFree");
+let LtToolLangCheckbox = document.getElementById("LangTool_Free");
 //let DownloadTextbox = document.getElementById("Download_path");
 let TMwaitValue = document.getElementById("tmWait");
 let OpenAIwaitValue = document.getElementById("OpenAIWait");
@@ -92,21 +144,15 @@ let showDisableClose = document.getElementById("disable-auto-close");
 let showLocalOllama = document.getElementById("ollama-local");
 let showNoPeriodCheckbox = document.getElementById("no-period");
 let showdDebugModeCheckbox = document.getElementById("debugmode");
+let showdNoUICheckbox = document.getElementById("NoUI");
 
 document.getElementById('show-changelog-link').addEventListener('click', function (e) {
     e.preventDefault(); // Prevent the default link behavior
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI"], function (data) {
 
-    //  if (data.DownloadPath != null) {
-    //      DownloadTextbox.value = data.DownloadPath
-    //  }
-    //  else {
-    //      DownloadTextbox.value = "C:\Temp"
-    //  }
-    //console.debug("DeeplFree:",DeeplFree)
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -115,7 +161,6 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
             apikeydeeplCheckbox.checked = false
         }
     }
-    console.debug("TMwait in storage:", data.TMwait) 
     if (typeof data.TMwait == "undefined") {
         TMwait = 500;
     }
@@ -401,6 +446,7 @@ if ([...langselect.options].some(opt => opt.value === destLangTextbox.value)) {
             LtToolLangCheckbox.checked = true;
         }
         else {
+
             LtToolLangCheckbox.checked = false;
         }
     }
@@ -460,6 +506,7 @@ if ([...langselect.options].some(opt => opt.value === destLangTextbox.value)) {
            showDisableClose.checked = false;
         }
     }
+   
     if (data.noPeriod != "null") {
         if (data.noPeriod == true) {
             showNoPeriodCheckbox.checked = true;
@@ -475,6 +522,17 @@ if ([...langselect.options].some(opt => opt.value === destLangTextbox.value)) {
         else {
            showdDebugModeCheckbox.checked = false;
         }
+    }
+    if (data.noUI != "null") {
+        if (data.noUI == true) {
+            showdNoUICheckbox.checked = true;
+        }
+        else {
+            showdNoUICheckbox.checked = false;
+        }
+    }
+    else {
+        showdNoUICheckbox.checked = false;
     }
     if (data.LocalOllama != "null" && typeof data.LocalOllama != "undefined") {
         if (data.LocalOllama == true) {
@@ -507,14 +565,7 @@ button.addEventListener("click", function () {
     } else {
          showDeepl = "false";
    }
-    //if (document.querySelector("#DeeplFree:checked") !== null) {
-   //     console.debug("in save :", document.querySelector("#DeeplFree:checked"))
-    //    let showDeeplFree = document.querySelector("#DeeplFree:checked");
-    //    showDeepl = showDeeplFree.checked;
-   // }
-   // else {
-   //     showDeepl = "false";
-    //}
+   
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
     let apikeyMistral = apikeyMistralTextbox.value;
@@ -633,8 +684,8 @@ button.addEventListener("click", function () {
     else {
        let inter = parrotActive;
     }
-    if (document.querySelector("#LangToolFree:checked") !== null) {
-        let LtFreeSet = document.querySelector("#LangToolFree:checked");
+    if (document.querySelector("#LangTool_Free:checked") !== null) {
+        let LtFreeSet = document.querySelector("#LangTool_Free:checked");
         LtFreeChecked = LtFreeSet.checked;
     }
     else {
@@ -714,8 +765,14 @@ button.addEventListener("click", function () {
     else { 
         showDebugMode = "false";
     }
-    console.debug("AI top p val:", AI_Top_p_Val)
-    console.debug("AI top k val:", AI_Top_k_Val)
+    if (document.querySelector("#NoUI:checked") !== null) {
+        let showNoUI_Set = document.querySelector("#NoUI:checked");
+        showNoUI = showNoUI_Set.checked;
+    }
+    else { 
+        showNoUI = "false";
+    }
+    
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
@@ -776,7 +833,8 @@ button.addEventListener("click", function () {
             noPeriod: showNoPeriod,
             AI_Top_k: AI_Top_k_Val,
             AI_Top_p: AI_Top_p_Val,
-            DebugMode: showDebugMode
+            DebugMode: showDebugMode,
+            noUI: showNoUI
         });
 
         if (glossaryFile.value !== "") {
@@ -1269,6 +1327,7 @@ function export_verbs_csv() {
 }
 
 function setPostTranslationReplace(postTranslationReplace) {
+
     replaceVerb = [];
     const lines = postTranslationReplace.trim().split("\n");
     lines.forEach(line => {
@@ -1286,21 +1345,33 @@ var obj_csv = {
     dataFile:[]
     };
 
-let input = document.getElementById("importPost");
-input.addEventListener("change", function () {   
-if (input.files && input.files[0]) {
-    let reader = new FileReader();
-        // 18-05-2021 PSS altered this to read as text, otherwise it converts characters
-        reader.readAsText(input.files[0]);
+const importInput = document.getElementById("importPost");
+
+importInput.addEventListener("change", function (event) {
+
+    console.debug("we are importing");
+
+    if (importInput.files && importInput.files[0]) {
+
+        let reader = new FileReader();
+        reader.readAsText(importInput.files[0]);
+
         reader.onload = function (e) {
-        obj_csv.size = e.total;
-        obj_csv.dataFile = e.target.result;
-        document.getElementById("text_verbs").value = "";
-        parseData(obj_csv.dataFile);
-    };
-   }
+
+            obj_csv.size = e.total;
+            obj_csv.dataFile = e.target.result;
+
+            document.getElementById("text_verbs").value = "";
+            parseData(obj_csv.dataFile);
+        };
+
+    } else {
+        messageBox("error", "No file selected or file could not be read.");
+    }
+
 });
 function parseData(data) {
+   
     let lbreak = data.split("\n");
     let verbsText = "";
 
@@ -1338,7 +1409,7 @@ function messageBox(type, message) {
 }
 
 async function showChangelog() {
-  console.debug("We are showing it");
+  //console.debug("We are showing it");
 
   try {
     const response = await fetch(chrome.runtime.getURL('/Changelog.txt'));
@@ -1413,3 +1484,11 @@ input.addEventListener("input", function () {
     // geen match → selectie leeg maken
     select.selectedIndex = -1;
 });
+const toBoolean = (value) => {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+        return value.toLowerCase() === "true" || value === "1";
+    }
+    if (typeof value === "number") return value === 1;
+    return false;
+};

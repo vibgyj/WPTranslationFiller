@@ -513,7 +513,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // Deepl does remove tabs so we need to replace them after sending them to the API
         translatedText = translatedText.replaceAll("<x>mytb</x>", "\t");
         translatedText = translatedText.replaceAll("<x>semicolon</x>", ";");
-
+        translatedText = translatedText.replaceAll(" &gt; ", " > ");
+        translatedText = translatedText.replaceAll(" &gt", " >");
         const linkmatches = original.match(linkRegex);
 
         if (linkmatches != null) {
@@ -1867,7 +1868,8 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     var previewElem1;
     var previewElem2;
     var prev_trans;
-    var checkboxCounter=0
+    var checkboxCounter = 0
+
     //var spellcheckIgnore = [];
     var repl_verb = []; //contains the list of found and replaced words
     const template = `
@@ -1981,11 +1983,17 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         if (transtype == "single") {
                             // Fetch the translations
                             let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
+                            let myPreview = getPreview(row)
+                            
+                            let LineNo = myPreview.getElementsByClassName("text-line-counter")[0].innerText;
+                            //let LineNo = document.querySelector("#line-counter .text-line-counter");
+                            
                             // let element = e.querySelector(".source-details__comment");
                             let textareaElem = e.querySelector("textarea.foreign-text");
                             //console.debug("textareaELem:",textareaElem)
                             translatedText = textareaElem.innerText;
                             //console.debug("translatedText:",translatedText)
+                            myLog = checkPlaceholders(original,  translatedText,LineNo)
                             prev_trans = textareaElem.innerText;
 
                             if (translatedText != "No suggestions" && translatedText != "") {
@@ -2301,6 +2309,10 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                         progressbar.style.display = "none";
                     }
                 }
+            }
+            //console.debug("lengte:", PlaceholderLog.length)
+            if (PlaceholderLog.length > 0) {
+                showPlaceholderLog()
             }
         }
         else {
@@ -3889,8 +3901,8 @@ async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplac
                                     let previewName = preview.querySelector("td.translation");
                                     //console.debug("preview:", previewName)
                                     if (previewName != null) {
-                                        previewName.innerText = "No suggestions"
-                                        previewName.value = "No suggestions"
+                                        previewName.innerText = __("No suggestions")
+                                        previewName.value = __("No suggestions")
                                     }
                                     select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
                                     var status = select.querySelector("dd");
@@ -3906,8 +3918,8 @@ async function old_processTM(myrecCount, destlang, TMwait, postTranslationReplac
                         let previewName = preview.querySelector("td.translation");
                         //console.debug("preview:", previewName)
                         if (previewName != null) {
-                            previewName.innerText = "No suggestions"
-                            previewName.value = "No suggestions"
+                            previewName.innerText = __("No suggestions")
+                            previewName.value = __("No suggestions")
                         }
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
                         var status = select.querySelector("dd");
@@ -4640,7 +4652,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             console.debug('Unknown type.');
             break;
     }
-     console.debug("DispClipBoard:",autoCopyClipBoard)
+    // console.debug("DispClipBoard:",autoCopyClipBoard)
 } 
 
 async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
@@ -4662,10 +4674,10 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
 
         }
         else if (transsel == "LibreTrans") {
-            console.debug("we translate with libre")
+            //console.debug("we translate with libre")
             is_editor = false
             result = await transLibre(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
-            console.debug("result:", result)
+            //console.debug("result:", result)
 
         }
         else if (transsel == "NLPCloud") {
@@ -5373,6 +5385,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     if (transsel == 'OpenAI') {
         vartime = convertToNumber(openAIWait);
     }
+    else if (transsel == 'Claude') {
+        vartime = convertToNumber(openAIWait);
+    }
     else if (transsel == "LMStudio") {
         vartime = convertToNumber(openAIWait);
     }
@@ -5452,9 +5467,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     const rowfound = record.id;
                     const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
                     const row = match ? match[1] : null;
-                    preview = getPreview(row)
+                            preview = getPreview(row)
                     if (is_pte) {
-                        checkset = preview.querySelector(".checkbox input");
+                        checkset = preview.querySelector("th.checkbox input");
                     }
                     else {
                         checkset = preview.querySelector(".myCheckBox input");

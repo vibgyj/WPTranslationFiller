@@ -10,7 +10,7 @@ async function translateText(
     deepLcurrent, DeepLWait = 0
 ) {
     destlang = destlang.toUpperCase();
-
+    console.debug("preprocessed original in translateText:", originalPreProcessed) 
     const formal_value = formal ? "prefer_more" : "prefer_less";
     const mycontext = formal
         ? "This text is a legal message"
@@ -54,15 +54,16 @@ async function translateText(
 
                 // Success
                 if (translated && Array.isArray(translated.translations)) {
+                    //console.debug("Processed data:", translated.translations); 
                     processData(
                         translated, original, record, row, originalPreProcessed,
                         replaceVerb, spellCheckIgnore, transtype, plural_line,
                         locale, convertToLower, deepLcurrent, destlang
                     ).then(processedData => {
-                        //console.debug("Processed data:", processedData); 
+                        
                         resolve(processedData === "OK" ? "OK" : processedData);
                     }).catch(err => {
-                        console.error("Error in processData:", err);
+                        //console.error("Error in processData:", err);
                         resolve(`Processing error: ${err.message}`);
                     });
                     return;

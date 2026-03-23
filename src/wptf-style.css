@@ -144,7 +144,7 @@ mymarker {
     text-align: right;
     border-bottom: 1px solid;
     border-color: #72777c;
-    top: 132px;
+    top: 120px;
 }
 
 .indeterminate-progress-bar {
@@ -340,6 +340,7 @@ mymarker {
 }
 
 .wptfNavBarCont .translation-filler-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -351,7 +352,7 @@ mymarker {
 }
 
 .wptfNavBarCont .translation-filler-button::before {
-      content: '\f326';
+  
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -430,6 +431,7 @@ mymarker {
 
 
 .wptfNavBarCont .selectAll-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -440,6 +442,7 @@ mymarker {
     border-radius: 5px !important;
 }
 .wptfNavBarCont .local-trans-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -451,7 +454,6 @@ mymarker {
 }
 
 .wptfNavBarCont .local-trans-button::before {
-      content: '\f326';
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -505,6 +507,7 @@ mymarker {
 
 
 .wptfNavBarCont .compair-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -520,7 +523,6 @@ mymarker {
     }
 
     .wptfNavBarCont .compair-button::before {
-        content: '\f326';
         -webkit-font-smoothing: antialiased;
         display: inline-block;
         font: normal 20px/1 'dashicons';
@@ -572,6 +574,7 @@ mymarker {
 
 
 .wptfNavBarCont .check_translation-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -587,7 +590,6 @@ mymarker {
 }
 
 .wptfNavBarCont .check_translation-button::before {
-      content: '\f326';
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -638,6 +640,7 @@ mymarker {
 }
 
 .wptfNavBarCont .tm-trans-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -653,7 +656,6 @@ mymarker {
 }
 
 .wptfNavBarCont .tm-trans-button::before {
-      content: '\f326';
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -704,6 +706,7 @@ mymarker {
 }
 
 .wptfNavBarCont .impLoc-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -719,7 +722,6 @@ mymarker {
 }
 
 .wptfNavBarCont .impLoc-button::before {
-      content: '\f326';
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -770,6 +772,7 @@ mymarker {
 }
 
 .wptfNavBarCont .import_translation-button {
+    font-size: 0.875em !important;
     background: darkcyan;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -785,7 +788,6 @@ mymarker {
 }
     
 .wptfNavBarCont .import_translation-button::before {
-      content: '\f326';
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -794,6 +796,7 @@ mymarker {
 }
 
 .wptfNavBarCont .export_translation-button {
+    font-size: 0.875em !important;
     background: darkcyan;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -805,6 +808,7 @@ mymarker {
 }
 
 .wptfNavBarCont .export_translation-po-button {
+    font-size: 0.875em !important;
     background: darkcyan;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -815,7 +819,6 @@ mymarker {
     border-radius: 5px !important;
 }
 .wptfNavBarCont .export_translation-button::before {
-      content: '\f326';
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -827,6 +830,7 @@ mymarker {
 }
 
 .wptfNavBarCont .convLoc-button {
+    font-size: 0.875em !important;
     background: darkgreen;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -838,6 +842,8 @@ mymarker {
 }
 
 .wptfNavBarCont .save_tolocal-button {
+    font-size: 0.875em !important;
+    font-size: 0.875em !important;
     background: darkgreen;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -848,6 +854,7 @@ mymarker {
     border-radius: 5px !important;
 }
 .wptfNavBarCont .bulksave-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -859,6 +866,7 @@ mymarker {
 }
 
 .wptfNavBarCont .copy_org-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -870,6 +878,7 @@ mymarker {
 }
 
 .wptfNavBarCont .tm-trans-button.foreighn {
+    font-size: 0.875em !important;
     background: grey;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -881,6 +890,7 @@ mymarker {
 }
 
 .wptfNavBarCont .stats-button {
+    font-size: 0.875em !important;
     background: blue;
     color: white !important;
     padding: 5px 5px 5px 5px;
@@ -892,7 +902,6 @@ mymarker {
 }
 
 .wptfNavBarCont .stats-button::before {
-      content: '\f326';
       -webkit-font-smoothing: antialiased;
       display: inline-block;
       font: normal 20px/1 'dashicons';
@@ -926,7 +935,8 @@ mymarker {
     font-size: 0.875em !important;
 }
 
-    .paging .Find-Dup-button {
+.paging .Find-Dup-button {
+        font-size: 0.875em !important;
         background: blue;
         color: white !important;
         margin-left: 2px;
@@ -935,17 +945,19 @@ mymarker {
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
- 
+}
 
-    .paging .Find-Dup-button:hover {
+
+.paging .Find-Dup-button:hover {
+            font-size: 0.875em !important;
             background: darkgray !important;
-        }
+}
 
-   
+
 
 
 .paging .UpperCase-button.uppercase {
+        font-size: 0.875em !important;
         background: green;
         color: white !important;
         margin-left: 2px;
@@ -954,9 +966,10 @@ mymarker {
         border-color: grey !important;
         border-radius: 5px !important;
         /*z-index :0 !important;*/
-}
+    }
 
 .paging .UpperCase-button {
+        font-size: 0.875em !important;
         background: white;
         color: black !important;
         margin-left: 2px;
@@ -971,7 +984,8 @@ mymarker {
     z-index:0;
 }
 
-    .paging .LoadGloss-button-red {
+.paging .LoadGloss-button-red {
+        font-size: 0.875em !important;
         background: red;
         color: white !important;
         margin-left: 2px;
@@ -979,9 +993,10 @@ mymarker {
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
+}
 
-    .paging .LoadGloss-button-green {
+.paging .LoadGloss-button-green {
+        font-size: 0.875em !important;
         background: green;
         color: white !important;
         margin-left: 2px;
@@ -989,9 +1004,10 @@ mymarker {
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
+}
 
-   .paging .Switch-Gloss-button {
+.paging .Switch-Gloss-button {
+        font-size: 0.875em !important;
         background: green;
         margin-left: 2px;
         margin-right: 2px;
@@ -999,15 +1015,17 @@ mymarker {
         border-color: grey !important;
         border-radius: 5px !important;
     }
-    .paging .tm-disable-button {
+.paging .tm-disable-button {
+        font-size: 0.875em !important;
         background: green;
         margin-left: 2px;
         margin-right: 2px;
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
-    .paging .DispClipboard-button {
+}
+.paging .DispClipboard-button {
+        font-size: 0.875em !important;
         background: green;
         color: white !important;
         margin-left: 2px;
@@ -1015,27 +1033,30 @@ mymarker {
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
+}
 
-    .paging .DispCount-button {
+.paging .DispCount-button {
+        font-size: 0.875em !important;
         background: white;
         margin-left: 2px;
         margin-right: 2px;
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
+}
 
-    .paging .Switch-TM-button {
+.paging .Switch-TM-button {
+        font-size: 0.875em !important;
         background: green;
         margin-left: 2px;
         margin-right: 2px;
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
+}
 
-    .paging .menu-item-wptf_wiki {
+.paging .menu-item-wptf_wiki {
+        font-size: 0.875em !important;
         background: blue;
         color: white !important;
         margin-left: 2px;
@@ -1044,23 +1065,24 @@ mymarker {
         border: 2px solid !important;
         border-color: grey !important;
         border-radius: 5px !important;
-    }
+}
 /* below function can to be removed if GlotPress has improved the behavior of the edit screen*/
 .panel-header__bubble {
     padding: 1px 1px !important;
 }
 
 .translation-entry-my-button {
-    content: '\f326';
     width: auto;
     height: 22px !important;
-    padding: 4px !important;
+    padding: 2px !important;
     background-color: blue;
     color: white;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
     margin: 0.2em !important;
+    position: relative;
+    top: 6px; /* verplaats de knop 6px naar beneden */
 }
 
 .translation-entry-my-button:focus {
@@ -1073,7 +1095,6 @@ mymarker {
 }
 
 .translation-entry-my-button::before {
-    content: '\f326';
     -webkit-font-smoothing: antialiased;
     display: inline-block;
     font: normal 20px/1 'dashicons';
@@ -1154,13 +1175,15 @@ mymarker {
 .localcase-entry-my-button {
     width: auto;
     height: 22px !important;
-    padding: 4px !important;
+    padding: 2px !important;
     background-color: blue;
     color: white;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
     margin: 0.2em !important;
+    position: relative;
+    top: 6px; /* verplaats de knop 6px naar beneden */
 }
 
 .localcase-entry-my-button:focus {
@@ -1173,7 +1196,6 @@ mymarker {
 }
 
 .localcase-entry-my-button::before {
-        content: '\f326';
         -webkit-font-smoothing: antialiased;
         display: inline-block;
         font: normal 20px/1 'dashicons';
@@ -1185,13 +1207,15 @@ mymarker {
 .addtranslation-entry-my-button {
     width: auto;
     height: 22px !important;
-    padding: 4px !important;
+    padding: 2px !important;
     background-color: blue;
     color: white;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
     margin: 0.2em !important;
+    position: relative;
+    top: 6px; /* verplaats de knop 6px naar beneden */
 }
 
 .addtranslation-entry-my-button:focus {
@@ -1204,7 +1228,6 @@ mymarker {
 }
 
 .addtranslation-entry-my-button::before {
-        content: '\f326';
         -webkit-font-smoothing: antialiased;
         display: inline-block;
         font: normal 20px/1 'dashicons';
@@ -1219,13 +1242,15 @@ mymarker {
 .checktranslation-entry-my-button {
     width: auto;
     height: 22px !important;
-    padding: 4px !important;
+    padding: 2px !important;
     background-color: blue;
     color: white;
     border: 2px solid !important;
     border-color: grey !important;
     border-radius: 5px !important;
     margin: 0.2em !important;
+    position: relative;
+    top: 6px; /* verplaats de knop 6px naar beneden */
 }
 
     .checktranslation-entry-my-button:focus {
@@ -1238,7 +1263,6 @@ mymarker {
     }
 
     .checktranslation-entry-my-button::before {
-        content: '\f326';
         -webkit-font-smoothing: antialiased;
         display: inline-block;
         font: normal 20px/1 'dashicons';
@@ -1253,7 +1277,7 @@ mymarker {
 
 .translocal-entry-missing-button {
     width: auto;
-    height: 22px !important;
+    height: 18px !important;
     padding: 4px !important;
     background: darkcyan;
     color: white;
@@ -1261,11 +1285,12 @@ mymarker {
     border-color: grey !important;
     border-radius: 5px !important;
     margin: 0.2em !important;
+    margin-left: 8px;
 }
 
 .translocal-entry-local-button {
     width: auto;
-    height: 22px !important;
+    height: 18px !important;
     padding: 4px !important;
     background: darkcyan;
     color: white;
@@ -1273,6 +1298,7 @@ mymarker {
     border-color: grey !important;
     border-radius: 5px !important;
     margin: 0.2em !important;
+    margin-left: 8px;
 }
 
 .my-translocal-entry-local-button {

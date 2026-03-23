@@ -116,19 +116,60 @@ Do NOT provide explanations, comments, or extra text. Output ONLY the literal tr
     };
 
     const result = await callClaude(dataToSend);
+       // console.debug("Claude response:", result)
+        if (!result.success) {
+            if (result.errorType === "rate_limit_error") {
+                console.debug("Rate limit hit:", result.error);
+                // e.g. show user a friendly message, trigger retry with backoff
+                 const delay = this.retryDelay * attempt;
+                console.debug(`API Overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
+                await this.sleep(delay);
+                return this.translate(text, options, attempt + 1);
+            } else if (result.errorType === "authentication_error") {
+                console.debug("Auth failed — check API key");
+            } else {
+                console.debug("Claude API error:", result.error);
+            }
 
-    // Handle rate limiting / overloaded errors with retry
-    if (result.error && result.error.includes("Overloaded") && attempt < this.maxRetries) {
-        const delay = this.retryDelay * attempt;
-        console.debug(`API Overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
-        await this.sleep(delay);
-        return this.translate(text, options, attempt + 1);
+           if (result.errorType === "rate_limit_error") {
+             if (attempt >= this.maxRetries) {
+                console.debug(`Rate limit: max retries (${this.maxRetries}) reached. Giving up.`);
+                 throw new Error(`Rate limit exceeded after ${this.maxRetries} attempts: ${result.error}`);
+               return "Stop"
+           }
+
+    const delay = this.retryDelay * attempt;
+    console.debug(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
+    await this.sleep(delay);
+    return this.translate(text, options, attempt + 1);
+
+} else if (result.errorType === "overloaded_error") {
+    // Anthropic also returns this type when servers are busy
+    if (attempt >= this.maxRetries) {
+        console.warn(`API overloaded: max retries (${this.maxRetries}) reached. Giving up.`);
+        throw new Error(`API overloaded after ${this.maxRetries} attempts: ${result.error}`);
     }
 
-    if (!result || result.error) {
-        return { success: false, error: result?.error || "Unknown error" };
-    }
+    const delay = this.retryDelay * attempt;
+    console.debug(`API overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
+    await this.sleep(delay);
+    return this.translate(text, options, attempt + 1);
 
+} else if (result.errorType === "authentication_error") {
+    // No point retrying auth errors
+    console.error("Auth failed — check API key");
+    throw new Error(`Authentication failed: ${result.error}`);
+
+} else {
+    // Non-retryable error
+    console.error("Claude API error:", result.error);
+    throw new Error(`Claude API error [${result.errorType}]: ${result.error}`);
+}
+
+            if (!result || result.error) {
+                return { success: false, error: result?.error || "Unknown error" };
+            }
+        }
     // Clean any unwanted formatting Claude might add
     let translation = result.translation;
     if (translation) {
@@ -178,7 +219,7 @@ async function translateLineByLine(
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
         maxRetries: 3,      // Retry up to 3 times on overload
-        retryDelay: 500    // Start with 1 second, then 2s, then 3s
+        retryDelay: 2000    // Start with 1 second, then 2s, then 3s
     });
     
     // Convert glossary string to object

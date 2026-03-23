@@ -340,7 +340,7 @@
             </tr>
             <tr>
                 <td>
-                    <label for="deepl_api_key">Deepl API Key</label>
+                    <label for="deepl_api_key">DeepL API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
@@ -575,9 +575,9 @@
                     <div class="form-input">
                         <input id="destination_lang" type="text" value="nl" />
                         <span class="tooltip" data-tooltip="Use the id from the list of languages provided by the API translator in lowercase">?</span>
-              
-                    
-                   
+
+
+
                         <select title="Select a language" name="langsel" id="langselect">
                             <option value="bn">Bengali</option>
                             <option value="ca">Catalan</option>
@@ -606,298 +606,310 @@
                             <option value="zh">Chinese</option>
                         </select>
                     </div>
-               
-    
-             </tr>
-    <tr>
-        <td>
-            <label for="glossary_file">Glossary File default(csv)</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input id="glossary_file" type="file" />
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label>File uploaded at date</label>
-        </td>
-        <td colspan="1">
-            <div>
-                <span style="width:320px" id="glossary_file_uploaded"></span>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="glossary_file_second">Glossary File second (csv)</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input id="glossary_file_second" type="file" />
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label>File uploaded at date</label>
-        </td>
-        <td colspan="1">
-            <div>
-                <span style="width:320px" id="glossary_file_second_uploaded"></span>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="languagetool_key">Languagetool Key</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input style="width:320px" id="languagetool_key" type="text" value="-api key->" />
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="LangToolFree">Set this for languagetool free</label>
-        </td>
-        <td>
-            <label>
-                <input type="checkbox" id="LangToolFree">
-                <span class="tooltip" data-tooltip="Set this for using languagetool free">?</span>
-            </label>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="languagetool_user">Languagetool user</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input style="width:320px" id="languagetool_user" type="text" value="-user name->" />
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="languagetool_language">Languagetool language</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input style="width:120px" id="languagetool_language" type="text" value="-language-> nl-NL" placeholder="Enter language in format xx-XX" />
-            </div>
-        </td>
-    </tr>
 
-    <tr>
-        <td>
-            <label for="tmWait">TM waiting time</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input id="tmWait" type="text" value="500" />
-                <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
-                <label style="margin: 10px" for="OpenAIWait">OpenAI waiting time</label>
-                <input id="OpenAIWait" type="text" value="10" />
-                <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="bulkWait">Bulk and DeepL save waiting time</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input id="bulkWait" type="text" value="1000" />
-                <span class="tooltip" data-tooltip="Change this when bulk save skips records">?</span>
-                <label style="margin: 15px" for="DeepLWait">DeepL waiting time</label>
-                <input id="DeepLWait" type="text" value="5" />
-                <span class="tooltip" data-tooltip="Change this when DeepL skips records">?</span>
 
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="TMtreshold">TM treshold</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input id="TMtreshold" type="number" min="80" max="100" value="90" />
-                <span class="tooltip" data-tooltip="Change this if the results for TM are not OK">?</span>
-                <label style="margin: 17px" for="LMstudio">LMstudio timout</label>
-                <input style="margin: 18px; width: 45px" id="LMStudioTimeout" type="text" value="200000" />
-                <span class="tooltip" data-tooltip="Change this when you get no results back">?</span>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <label for="screenWidth">Screen witdth in %</label>
-        </td>
-        <td>
-            <div class="form-input">
-                <input type="range" id="screenWidth" value="90" min="0" max="100" />
-                <span id="rangeValue">90</span>
-                <span class="tooltip" data-tooltip="Change this value to alter the width of the table">?</span>
-            </div>
-        </td>
-    </tr>
-    </table>
-    <div class="form-input">
-        <label for="text_openai_prompt">AI prompt</label>
-        <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated for OpenAi and Mistral">?</span>
-        <textarea id="text_openai_prompt"></textarea>
-    </div>
-    <div class="form-input">
-        <label for="text_openai_review">AI review prompt</label>
-        <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
-        <textarea id="text_openai_review"></textarea>
-    </div>
-    <div class="form-input">
-        <label for="text_claude_prompt">Claude prompt</label>
-        <span class="tooltip" data-tooltip="With the value of this field the prompt for Claude will be populated">?</span>
-        <textarea id="text_claude_prompt"></textarea>
-    </div>
-    <div class="form-input">
-        <label for="text_ollama_prompt">Ollama/LMstudio prompt</label>
-        <span class="tooltip" data-tooltip="With the value of this field the prompt for Ollama will be populated">?</span>
-        <textarea id="text_ollama_prompt"></textarea>
-    </div>
-    <div class="form-input">
-        <label for="text_gemini_prompt">Gemini prompt</label>
-        <span class="tooltip" data-tooltip="With the value of this field the prompt for Gemini will be populated">?</span>
-        <textarea id="text_gemini_prompt"></textarea>
-    </div>
-    <div class="form-input">
-        <label for="text_pre_verbs">Pre Translation Replace</label>
-        <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
-        <textarea id="text_pre_verbs">Your,Je
+            </tr>
+            <tr>
+                <td>
+                    <label for="glossary_file">Glossary File default(csv)</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="glossary_file" type="file" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>File uploaded at date</label>
+                </td>
+                <td colspan="1">
+                    <div>
+                        <span style="width:320px" id="glossary_file_uploaded"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="glossary_file_second">Glossary File second (csv)</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="glossary_file_second" type="file" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>File uploaded at date</label>
+                </td>
+                <td colspan="1">
+                    <div>
+                        <span style="width:320px" id="glossary_file_second_uploaded"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="languagetool_key">Languagetool Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input style="width:320px" id="languagetool_key" type="text" value="-api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="LangTool_Free">Languagetool Free</label>
+                </td>
+                <td>
+                    <label>
+                        <input type="checkbox" id="LangTool_Free">
+                        <span class="tooltip" data-tooltip="Set this for using languagetool free">?</span>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="languagetool_user">Languagetool user</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input style="width:320px" id="languagetool_user" type="text" value="-user name->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="languagetool_language">Languagetool language</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input style="width:120px" id="languagetool_language" type="text" value="-language-> nl-NL" placeholder="Enter language in format xx-XX" />
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <label for="tmWait">TM waiting time</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="tmWait" type="text" value="500" />
+                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
+                        <label style="margin: 22px" for="OpenAIWait">OpenAI waiting time</label>
+                        <input id="OpenAIWait" type="text" value="10" />
+                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="bulkWait">Bulk and DeepL save waiting time</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="bulkWait" type="text" value="1000" />
+                        <span class="tooltip" data-tooltip="Change this when bulk save skips records">?</span>
+                        <label style="margin: 15px" for="DeepLWait">DeepL waiting time</label>
+                        <input id="DeepLWait" type="text" value="5" />
+                        <span class="tooltip" data-tooltip="Change this when DeepL skips records">?</span>
+
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="TMtreshold">TM treshold</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="TMtreshold" type="number" min="80" max="100" value="90" />
+                        <span class="tooltip" data-tooltip="Change this if the results for TM are not OK">?</span>
+                        <label style="margin: 13px" for="LMstudio">LMstudio timout</label>
+                        <input style="margin: 10px; width: 45px" id="LMStudioTimeout" type="text" value="200000" />
+                        <span class="tooltip" data-tooltip="Change this when you get no results back">?</span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="screenWidth">Screen witdth in %</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input type="range" id="screenWidth" value="90" min="0" max="100" />
+                        <span id="rangeValue">90</span>
+                        <span class="tooltip" data-tooltip="Change this value to alter the width of the table">?</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <div class="form-input">
+            <label for="text_openai_prompt">AI prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated for OpenAi and Mistral">?</span>
+            <textarea id="text_openai_prompt"></textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_openai_review">AI review prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
+            <textarea id="text_openai_review"></textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_claude_prompt">Claude prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt for Claude will be populated">?</span>
+            <textarea id="text_claude_prompt"></textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_ollama_prompt">Ollama/LMstudio prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt for Ollama will be populated">?</span>
+            <textarea id="text_ollama_prompt"></textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_gemini_prompt">Gemini prompt</label>
+            <span class="tooltip" data-tooltip="With the value of this field the prompt for Gemini will be populated">?</span>
+            <textarea id="text_gemini_prompt"></textarea>
+        </div>
+        <div class="form-input">
+            <label for="text_pre_verbs">Pre Translation Replace</label>
+            <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
+            <textarea id="text_pre_verbs">Your,Je
 You,Je
             </textarea>
-    </div>
-    <div class="form-input">
-        <label for="text_verbs">Post Translation Replace</label>
-        <span class="tooltip" data-tooltip="With this table you can replace verbs after sending them to the translator API">?</span>
-        <textarea id="text_verbs">wrong1,right1
+        </div>
+        <div class="form-input">
+            <label for="text_verbs">Post Translation Replace</label>
+            <span class="tooltip" data-tooltip="With this table you can replace verbs after sending them to the translator API">?</span>
+            <textarea id="text_verbs">wrong1,right1
             </textarea>
-    </div>
-    <div class="form-input">
-        <label for="text_ignore_verbs">Spellcheck ignore words</label>
-        <span class="tooltip" data-tooltip="With this table you can ignore verbs for spellchecking">?</span>
-        <textarea id="text_ignore_verbs">WooCommerce
+        </div>
+        <div class="form-input">
+            <label for="text_ignore_verbs">Spellcheck ignore words</label>
+            <span class="tooltip" data-tooltip="With this table you can ignore verbs for spellchecking">?</span>
+            <textarea id="text_ignore_verbs">WooCommerce
             </textarea>
-    </div>
-    <fieldset>
-        <label class="form-input">
-            <span for="export_verbs">Export post translation verbs </span>
-            <button type="button" id="exportverbs">Export verbs</button>
-        </label>
-    </fieldset>
-    <fieldset>
-        <label id="dvImportSegments" class="fileupload ">
-            <span>Upload post translation replace CSV File</span>
-            <input id="importPost" type="file" />
-        </label>
-    </fieldset>
-    <br />
-    <table style="width: 100%; table-layout: fixed;">
-        <tr>
-            <td>
-                <label class="labeled-checkbox">
-                    <input type="checkbox" id="Auto-LT-spellcheck">
-                    <span>Auto spellcheck after pagecheck</span>
-                </label>
+        </div>
+        <fieldset>
+            <label class="form-input">
+                <span for="export_verbs">Export post translation verbs </span>
+                <button type="button" id="exportverbs">Export verbs</button>
+            </label>
+        </fieldset>
+        <fieldset>
+            <label id="dvImportSegments" class="fileupload ">
+                <span>Upload post translation replace CSV File</span>
+                <input id="importPost" type="file" />
+            </label>
+        </fieldset>
+        <br />
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="width:500px">
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="Auto-LT-spellcheck">
+                        <span>Auto spellcheck after pagecheck</span>
+                    </label>
+                </td>
+                <td style="padding-left: 5%;">
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="no-period">
+                        <span>No period</span>
+                    </label>
+
+                </td>
+
+            </tr>
+        </table>
+        <table style="width: 100%; table-layout: fixed;">
+            <tr>
+                <td style="width:500px">
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="Auto-review-OpenAI">
+                        <span>Auto review with OpenAi after pagecheck</span>
+                    </label>
+                </td>
+                <td style="padding-left: 5%;">
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="debugmode">
+                        <span>Debug mode</span>
+                    </label>
+                </td>
+            </tr>
+        </table>
+        <table style="width: 100%; table-layout: fixed;">
+          <tr>
+            <td style="width:500px">
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="comp-translations">
+                <span>Compare translations</span>
+            </label>
             </td>
             <td style="padding-left: 5%;">
                 <label class="labeled-checkbox">
-                    <input type="checkbox" id="no-period">
-                    <span>No period</span>
-                </label>
-
-            </td>
-
-        </tr>
-    </table>
-    <table style="width: 100%; table-layout: fixed;">
-        <tr>
-            <td>
-                <label class="labeled-checkbox">
-                    <input type="checkbox" id="Auto-review-OpenAI">
-                    <span>Auto review with OpenAi after pagecheck</span>
+                    <input type="checkbox" id="NoUI">
+                    <span>No UI translation</span>
                 </label>
             </td>
-            <td style="padding-left: 5%;">
-                <label class="labeled-checkbox">
-                    <input type="checkbox" id="debugmode">
-                    <span>Debug mode</span>
-                </label>
-            </td>
-        </tr>
-    </table>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="comp-translations">
-        <span>Compare translations</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="show-convertToLower">
-        <span>Convert words to lowercase except first word</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="Force-formal">
-        <span>Force to use formal tone</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="show-glotDictGlos">
-        <span>Show GlotDict</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="show-history">
-        <span>Show history</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="use-default-glossary">
-        <span>Use default glossary</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="use-strict-validation">
-        <span>Use strict validation</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="auto-copy-clipboard">
-        <span>auto copy to clipboard</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="disable-auto-close">
-        <span>Disable autoclose editor</span>
-    </label>
-    <label class="labeled-checkbox">
-        <input type="checkbox" id="ollama-local">
-        <span>Use local Ollama</span>
-    </label>
-    <br />
-    <table id="footer">
-        <tr>
-            <td>
-                <div class="savebutton">
-                    <input id="save" type="button" value="Save" />
-                </div>
-            </td>
-            <td>
-                <div class="wptf-info">
-                    <a rel="noopener" href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
-                </div>
-            </td>
-            <td>
-                <div class="wptf-info">
-                    <a href="#" id="show-changelog-link">View Changelog</a>
-                </div>
-            </td>
-        </tr>
-    </table>
+          </tr>
+        </table>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="show-convertToLower">
+                <span>Convert words to lowercase except first word</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="Force-formal">
+                <span>Force to use formal tone</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="show-glotDictGlos">
+                <span>Show GlotDict</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="show-history">
+                <span>Show history</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="use-default-glossary">
+                <span>Use default glossary</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="use-strict-validation">
+                <span>Use strict validation</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="auto-copy-clipboard">
+                <span>auto copy to clipboard</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="disable-auto-close">
+                <span>Disable autoclose editor</span>
+            </label>
+            <label class="labeled-checkbox">
+                <input type="checkbox" id="ollama-local">
+                <span>Use local Ollama</span>
+            </label>
+            <br />
+            <table id="footer">
+                <tr>
+                    <td>
+                        <div class="savebutton">
+                            <input id="save" type="button" value="Save" />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="wptf-info">
+                            <a rel="noopener" href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="wptf-info">
+                            <a href="#" id="show-changelog-link">View Changelog</a>
+                        </div>
+                    </td>
+                </tr>
+            </table>
     </div>
 </body>
 </html>
