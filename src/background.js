@@ -14,6 +14,7 @@ function decodeBase64(encoded) {
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    //console.debug("Received message:", request);
     if (request.action === "CheckModelLMs") {
 
        const model = request.model;
@@ -333,7 +334,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
                     return;
                 }
-                console.debug("response status:", resp) 
+                //console.debug("response status:", resp) 
                 let data;
                 const contentType = resp.headers.get("content-type") || "";
                 if (contentType.includes("application/json")) {
@@ -350,7 +351,104 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // keep sendResponse alive for async
     }
+    else if (request.action === "groq") {
+        (async () => {
+            try {
+                const dataToSend = { ...request.data }; // copy newData
+                const apiKey = dataToSend.apiKey;       // extract the key
+                delete dataToSend.apiKey;               // remove it from the body
+                //console.debug("model:", dataToSend.model) 
+                const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + apiKey
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+               // console.debug("response status:", resp) 
+                if (!resp.ok) {
+                    // Return error message instead of raw response
+                    const msg = await resp.text();
+                    sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
+                    return;
+                }
+                //console.debug("response status:", resp) 
+                let data;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    data = await resp.json();
+                } else {
+                    data = await resp.text();
+                }
 
+                sendResponse({ result: data });
+            } catch (err) {
+                sendResponse({ error: err.toString() });
+            }
+        })();
+
+        return true; // keep sendResponse alive for async
+    }
+    else if (request.action === "openRouter") {
+    (async () => {
+        try {
+            const start = Date.now();
+
+            const dataToSend = request.data;
+            const apiKey = dataToSend.apiKey;
+
+            // remove sensitive field before sending
+            delete dataToSend.apiKey;
+
+            const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + apiKey,
+                    "HTTP-Referer": "http:localhost",
+                    "X-Title": "WP Translation Filler Extended"
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            if (!resp.ok) {
+                const msg = await resp.text();
+                sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
+                return;
+            }
+
+            const contentType = resp.headers.get("content-type") || "";
+            let data;
+
+            if (contentType.includes("application/json")) {
+                data = await resp.json();
+            } else {
+                data = await resp.text();
+            }
+
+            // 🔥 extract ONLY what you actually need (major performance win)
+            const result =
+                data?.choices?.[0]?.message?.content ??
+                "";
+            console.debug("result:", result) 
+            const duration = ((Date.now() - start) / 1000).toFixed(2);
+
+            const DebugMode = true;
+            if (DebugMode) {
+                console.debug("openRouter response time:", duration + "s");
+            }
+
+            // 🔥 minimal IPC payload (avoids structured clone overhead)
+            sendResponse({ result });
+
+        } catch (err) {
+            sendResponse({ error: err.toString() });
+        }
+    })();
+
+    return true;
+}
     
 
       // Ollama translation
@@ -404,7 +502,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
-                    //console.debug("Local Ollama result:", result.translation);
+                    console.debug("Local Ollama result:", result.translation);
                     const translated = result.translation
                      const duration = ((Date.now() - start) / 1000).toFixed(2);
                            let show_debug = true
@@ -1146,6 +1244,18 @@ else if (request.action == "Lingvanex") {
         // Return true to indicate asynchronous response
         return true;
     }
+    else if (request.action === 'fetchFavorites') {
+    (async () => {
+        try {
+            const res  = await fetch(request.url, { credentials: 'include' });
+            const html = await res.text();
+            sendResponse({ success: true, html });
+        } catch (err) {
+            sendResponse({ success: false, error: err.message });
+        }
+    })();
+    return true;
+}
 
         
     })
@@ -1273,17 +1383,26 @@ StorageWrapper.init();
  * @returns {Promise<Object>} - Object containing translation in message.content or error
  */
 async function callLocalOllama(bodyToSend) {
+    const LOCAL_CHAT_URL = "http://127.0.0.1:11434/api/chat";
     try {
-        const LOCAL_CHAT_URL = "http://127.0.0.1:11434/api/chat";
-        
+        console.debug("Sending chat request to local Ollama:", bodyToSend);
         const resp = await fetch(LOCAL_CHAT_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(bodyToSend)
         });
-        
-        const data = await resp.json();
-        console.debug("Local Ollama response:", data); 
+
+        let data;
+        try {
+            data = await resp.json();
+        } catch (parseErr) {
+            // Response was not JSON (probably blocked or 403 HTML)
+            return {
+                success: false,
+                error: `Invalid JSON response (HTTP ${resp.status})`,
+                raw: await resp.text() // toon de ruwe inhoud voor debug
+            };
+        }
 
         if (!resp.ok) {
             return {
@@ -1292,7 +1411,7 @@ async function callLocalOllama(bodyToSend) {
                 raw: data
             };
         }
-        
+
         if (!data.message?.content) {
             return {
                 success: false,
@@ -1300,14 +1419,15 @@ async function callLocalOllama(bodyToSend) {
                 raw: data
             };
         }
-        
+
         return {
             success: true,
             translation: data.message.content,
             raw: data
         };
-        
+
     } catch (err) {
+        console.debug("Error calling local Ollama:", err);
         return {
             success: false,
             error: err?.message || String(err)
@@ -1366,7 +1486,7 @@ async function stopLocalModelSession(model) {
 async function fetchWithTimeoutAndRetry(
     url,
     options,
-    timeoutPerRetryMs = 15000,
+    timeoutPerRetryMs = 30000,
     maxRetries = 3
 ) {
     let lastError;
@@ -1429,6 +1549,7 @@ async function callLocalWithTimeout(body, timeoutMs = 12000) {
 
     try {
         const result = await callLocalOllama(body, { signal, keep_alive: timeoutMs });
+        console.debug("callLocalWithTimeout result:", result);
         return result;
     } catch (err) {
         if (err.name === 'AbortError') {

@@ -7,13 +7,31 @@
 
 async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt) {
     var myTranslatedText = "";
+
     // Ensure ollamaModel has a valid value, fallback to default
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     // Replace glossary and language names
-    let convertedGlossary = await convertGlossaryForOllamaMerged(openAiGloss)
-    //let newConverted = convertGlossaryToQuoted(convertedGlossary)
-    let myprompt = await ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     
+    //console.debug("Converted Glossary for Ollama:", convertedGlossary);
+    //let newConverted = convertGlossaryToQuoted(convertedGlossary)
+    let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
+   
+    if (toBoolean(DebugMode)) console.debug("Ollama Pre-processed Original:", originalPreProcessed);
+    // compact glossary (IMPORTANT IMPROVEMENT)
+    //console.debug("Original glossary:", openAiGloss)
+    const filteredGloss = pruneGlossary(
+       openAiGloss,
+       originalPreProcessed,
+       record
+     );
+   // console.debug("Filtered glossary (line breaks):", filteredGloss)
+    const compactGloss = filteredGloss.replace(/\n+/g, "|");
+    console.debug("Filtered glossary:", compactGloss)
+    let convertedGlossary = await convertGlossaryForOllamaMerged(compactGloss)
+    //originalPreProcessed = await applyGlossaryMap(originalPreProcessed, convertedGlossary)
+  // Replace glossary and language names
+    let myprompt = await ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
+    //myprompt = ollamaPrompt
     myprompt = await myprompt.replaceAll("{{tone}}", OpenAITone);
      if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
      else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
@@ -24,18 +42,16 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
      else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
      else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
      else myprompt = await myprompt.replaceAll("{{toLanguage}}", destlang);
-
+    //console.debug("Ollama Prompt after replacements:", myprompt);
     if (toBoolean(is_editor)) {
         showTranslationSpinner(__("Fetching translation…"));
     }
      
-    let originalPreProcessed = await preProcessOriginal(original, preverbs, "Ollama");
-    originalPreProcessed = await applyGlossaryMap(originalPreProcessed, convertedGlossary)
-    if (toBoolean(DebugMode)) console.debug("Ollama Pre-processed Original:", originalPreProcessed);
-
+    
+    //console.debug("originalPreProcessed:", originalPreProcessed)
     let max_Tokens = await estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = await estimateMaxTokens(myprompt);
-    max_Tokens = max_Tokens + prompt_tokens
+    max_Tokens = max_Tokens
     
     return new Promise((resolve, reject) => {
                        
@@ -91,16 +107,16 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                                   );
                             }
                                  myTranslatedText = await postProcessTranslation(
-                                 original,
-                                 translatedText,
-                                 replaceVerb,
-                                originalPreProcessed,
-                                "Ollama",
-                                convertToLower,
-                                spellCheckIgnore,
-                                destlang
-                                    );
-                           
+                                    original,
+                                    translatedText,
+                                    replaceVerb,
+                                    originalPreProcessed,
+                                    "Ollama",
+                                    convertToLower,
+                                    spellCheckIgnore,
+                                    destlang
+                                  );
+                            
                                let current = "untranslated"
                                await processTransl(
                                  original,

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler Extended",
-  "version": "3.5.6",
+  "version": "3.5.20",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -62,6 +62,8 @@
     "*://generativelanguage.googleapis.com/*",
     "*://agw.golinguist.com/*",
     "*://translate.wordpress.org/*",
+    "*://api.wordpress.org/*",
+    "*://profiles.wordpress.org/*",
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",
     "*://api.deepseek.com/*",
@@ -83,16 +85,17 @@
         "https://translate.wordpress.org/*"
       ],
       "js": [
+        "wptf-inject.js",
         "wptf-functions.js",
         "wptf-NLPCloudTrans.js",
         "wptf-LMStudioTrans.js",
         "wptf-GeminiTrans.js",
+        "wptf-groqTrans.js",
         "wptf-lingvanexTrans.js",
         "wptf-ollamaTrans.js",
         "wptf-translatio_io.js",
         "wptf-buildstats.js",
         "wptf-database.js",
-        "wptf-inject.js",
         "wptf-deeplGloss.js",
         "wptf-mark_glossary.js",
         "wptf-spellcheck.js",
@@ -103,6 +106,7 @@
         "jsstore.worker.js",
         "wptf-ClaudeTrans.js",
         "wptf-openAITrans.js",
+        "wptf-openRouter.js",
         "wptf-deeplTrans.js",
         "wptf-DeepSeekTrans.js",
         "wptf-LibreTrans.js",
@@ -116,6 +120,7 @@
         "wptf-populatewithTM.js",
         "wptf-testResults.js",
         "wptf-testRunner.js",
+        "wptf_Fetch_themes.js",
         "contentScript.js"
       ],
       "css": [

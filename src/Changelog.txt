@@ -28,173 +28,18 @@ Version 3.3.95 put the below contents in your posttranslation replace at the top
 ##form:Wil u,Wilt u
 ##form:zullen u ,zullen uw 
 Version 3.3.95 the list above is necessary to convert standard translation to formal
-Version 3.3.96 When a sentence has a comma, then the conversion fo rformal is not working properly
-Version 3.3.97 When using local, and there is a plural, then the first line was populated with "notFound"
-Version 3.3.98 Fixed a problem when the original contains a crlf, the second part was no longer present in Formal
-Version 3.3.98 Fixed a problem with adding a blank after translation and replacing "je" in formal
-Version 3.3.98 Fixed a problem with wrong replacements of "%1$s", "%2$s" when there were more then one present
-Version 3.3.99 Added auto insert "Please"  -> "alstulieft" for formal if the original contains "Please" Add "##form:Please,alstublieft" to your postreplace list. or different translation if not nl_NL locale
-Version 3.4.1 Refactored bulk save, so now it does not skip records, unless it is already translated equally
-Version 3.4.2 Added a test runner for testing the conversion to formal
-Version 3.4.3 Fixed replacing ignore words into url
-Version 3.4.3 Added suppressing calls to fetch suggestions when performing bulk save
-Version 3.4.3 Improved formal conversion, when a sentence is shorter then English
-Version 3.4.4 Added a toggle to prevent closing the next editor
-Version 3.4.5 Buttons were not added when the next editor was opened
-Version 3.4.6 Deepl still did translate placeholders, so now converted to xml tags
-Version 3.4.7 Import and export of DeepL glossary now includes the locale
-Version 3.4.8 Removed wrong label from preview in plural record
-Version 3.4.9 Added population of the editor field with local DB record if no translation is present
-Version 3.4.10 Fixed word replacing regardless of it being present in an url
-Version 3.4.11 Replace function did not replace vars with chars like { }
-Version 3.4.12 Import postreplace file did no longer work
-Version 3.4.12 Moved the function to replace links
-Version 3.4.13 DeepL did not handle replacement vars like {special_var} properly
-Version 3.4.14 The database modal did not find texts containing cr/lf
-Version 3.4.15 Moved inserting "alstublieft" to third position if "het" is present in the Dutch translation
-Version 3.4.16 Added DeepSeek translation
-Version 3.4.17 Added languageio golinguist.com
-Version 3.4.18 Fixed several issues in populatewithTM
-Version 3.4.19 Fixed wrong API selection
-Version 3.4.20 Added marking found TM records
-Version 3.4.20 Added marking missing glossary words in editor when performing a copy from suggestions
-Version 3.4.21 Fixed a problem with populating plurals, wrong compaire and wrong second plural lookup
-Version 3.4.22 When a text contains two links the first link is duplicated
-Version 3.4.23 Added function to copy originals into the translation
-Version 3.4.24 Prevent local storage to disappear when updating
-Version 3.4.24 OpenAI translation caused CORS errors
-Version 3.4.24 Page translation with a wrong OpenAI key generated errors during each original
-Version 3.4.25 Modified stats function, it now shows a table and exports to CSV
-Version 3.4.26 In Firefox the stats window did not work
-Version 3.4.27 Added option to show only projects the user is PTE for within the Stats function
-Version 3.4.28 Improved DeepL translation, it now catches 429 to many requests error
-Version 3.4.28 Improved formal conversion
-Version 3.4.28 Added formal conversion into checkentry
-Version 3.4.29 Added new function to compair suggestions agains the local database
-Version 3.4.29 Added new function to find duplicates within the current translations
-Version 3.4.30 Improved indicating wrong plurals
-Version 3.4.31 Indicating duplicate records used a fixed locale, which is wrong
-Version 3.4.32 Single records not in the database but with duplicates where not marked RED
-Version 3.4.33 Moved the editor a bit so you can see the result of populateWithTM
-Version 3.4.33 Added label if there is a waiting for a current string which is the same
-Version 3.4.33 Added new OpenAI model 5.1
-Version 3.4.33 Added new API Claude for translation
-Version 3.4.34 Improved Claude translation
-Version 3.4.34 fixed an error when opening the details of a record
-Version 3.4.35 Plurals where no longer populated when pretranslated
-Version 3.4.36 Plural error when no translation was in pretrans
-Version 3.4.37 Fixed a problem with copying from suggestions when the original contains quotes
-Version 3.4.37 Added Claud selection of models
-Version 3.4.37 Improved replacing words that are in <button>..</button>
-Version 3.4.38 Added Ollama translation API
-Version 3.4.38 Added Ollama prompt
-Version 3.4.38 Fixed a typo "Compair" to "Compare" props to zenideas
-Version 3.4.39 Added text suggestions done by zenideas
-Version 3.4.39 Fixed not translating first row with TM
-Version 3.4.39 Added a retry to the Olllama fetch call
-Version 3.4.39 Added extra parameter to the body of the Ollama request "repeat_penalty": 1.1
-Version 3.4.39 Postreplace did not work with Ollama
-Version 3.4.40 Added Linvanex translation API
-Version 3.4.40 Added preventing text between code tags to be translated
-Version 3.4.40 Fixed a problem with translation with Microsoft
-Version 3.4.40 Fixed Google translation no longer working due to CORS
-Version 3.4.40 fixed Bengali translation with DeepL not working (Bengali is in Beta)
-Version 3.4.40 added language Bengali
-Version 3.4.41 Fixed error handling Google
-Version 3.4.42 Chrome refused the upload due to mentioning Google etc, so removed thatt
-Version 3.4.42 Added Gemini translation API
-Version 3.4.43 Fixed a problem with replacing blanks at the start or end of the translation
-Version 3.4.44 Fixed a problem within the replacing of converting to uppecase, URLS where altered
-Version 3.4.44 Added LMStudio as API
-Version 3.4.45 Modified labels in the options page
-Version 3.4.46 Altered the endpoints of Deepl due to new API structure
-Version 3.4.47 Improved handling of placeholders like '<x id="var1"/>', they were altered during translation
-Version 3.4.47 Modified the Firefox manifest to version, added the LMstudion js file
-Version 3.4.48 Added retries for LMstudio in background script
-Version 3.4.49 Added OpenAIWait to slow down LMstudio calls
-Version 3.4.50 Fixed a problem with not replacing "special_var" type of placeholders"
-Version 3.4.51 Fixed replacing problem with LMstudio when placeholders are present
-Version 3.4.51 Fixed issue 365 GitHub adding a period when language is Bengali
-Version 3.4.51 Fixed issue model adding extra line feeds with LMstudio
-Version 3.4.52 Fixed plural not translated properly with LMstudio
-Version 3.4.52 Added parameters to LMstudio calls like Top_p and Top_k
-Version 3.4.53 Removed quotes around the text to translate for LMstudio
-Version 3.4.54 Fixeed an issue with reverting placeholders for LMstudio
-Version 3.4.54 Added Top_P and Top_k parameters to the settings page
-Version 3.4.54 Added Top_p and Top_k as paramters to Gemini translation
-Version 3.4.55 Fixed crashing when boolean "Disable autoclose was set"
-Version 3.4.56 if autoclose is disabled, then after saving the preview did not get the checbox added
-Version 3.4.57 Added clipboard function to the errors in the editor bx
-Version 3.4.58 Checkboxes no longer working as they should do
-Version 3.4.59 Clipbord message now also shown if "save" button is used
-Version 3.4.60 myvar werd door LLmstudio alsnog vervangen!
-Version 3.4.61 made the alert window a bit wider
-Version 3.4.61 increased retry timer for LMStudio translation
-Vwrsion 3.4.62 Implemented Mistral API
-Version 3.4.62 Improved speed of translation by removing debug statements from the background.js
-Version 3.4.63 Moved checking the models for LMstudio into the higher calling functions
-Version 3.4.63 Improved the flow of translatePage
-Version 3.4.64 Added timer for LMstudio fetch into options
-Version 3.4.65 Copytoclipboard was activated sometimes
-Version 3.4.65 Incorrect message of LMStudio model missing when going into translateentry
-Version 3.4.66 Added LibrTranslate API for localhost
-Version 3.4.67 Created a new branch on Github Extended-V27
-Version 3.4.67 CopyToClipboard issue finally fixed
-Version 3.4.68 Fixed a problem with a warning that LibreTrans is not loaded
-Version 3.4.69 Under circumstances LibreTranslate did not remove placeholders properly
-Version 3.4.70 LibreTranslate translated placeholders because type "text" was used, now changed to "html"
-Version 3.4.71 Also with HTML as type it went wrong, so altered the function to replace the placeholders with unique tags, and then replace them back after translation, this way they are not altered during translation
-Version 3.4.72 Added NLP Cloud translation API
-Version 3.4.72 Pretranslate replace was on the wrong place, it is now at the beginnenof pretranslate
-Version 3.4.72 Preserve words was not working in large sentences containing URL's
-Version 3.4.73 Improved debugging by adding a boolean which can be set within the options to show the full error message instead of a generic one
-Version 3.4.74 Check-hyphen did not work properly
-Version 3.4.75 Plurals were not longer processed if they come from local database
-Version 3.4.76 Improved Ollama behavior with links
-Version 3.4.76 Improved check_start_end function so it now correctly checks the blanks at the end of the line
-Version 3.4.76 There were informal words converted to formal in the suggestions, which is wrong, so now added a check to prevent that
-Version 3.4.76 The first word in a sentence was converted to uppercase, while the original was not starting with an uppercase, so now added a check to prevent that
-Version 3.4.77 Improved replacing words in the translations, as the formal word 'alsjeblieft' and 'selecteren' were replaced on the wrong place
-Version 3.4.78 Added a toggle to revert the sentences replacement function "Ctrl+shift+ S"
-Version 3.4.78 Improved the rearragement of words in sentence
-Version 3.4.79 Added a checkbox into the editor to show that rearrangement is applied
-Version 3.4.80 The tooltip of the rearrangement checkbox was not shown properly
-Version 3.4.81 Made the rearrange checkmark static
-Version 3.4.82 Tabs werden niet goed verwerkt door de functie enforeallCaps
-Version 3.4.82 Full verbs were not replaced properly
-Version 3.4.82 Because enforceallCaps was not working properly the text "id" was replaced with "ID" which is wrong, so now added a check to prevent that
-Version 3.4.83 Fixed a problem where there was a capital set after <br/>
-Version 3.4.83 Fixed a rearrange problem where uitschakelen was added instead of inschakelen
-Version 3.4.84 Improved the rearrangement function, it now also checks for words like "Verhoog" and "verwijder" and moves them to the right place
-Version 3.4.84 Improved removing blanks after and before placeholders 
-Version 3.4.84 Improved the test runner, now it is compatible with the current functions used, and adde DeepL tests
-Version 3.4.85 Fixed an issue with newlines in Ollama transtlations
-Version 3.4.85 Fixed a problem with Claude requests limit
-Version 3.4.86 Renamed the extension within the code to "WordPress Translation Filler Extended"
-Version 3.4.87 Fixed two issues with spaces behind placeholders
-Version 3.4.87 Improved the test scripts, so they are now more stable
-Version 3.4.89 Added a test for DeepL replacing the char #
-Version 3.4.90 Fixed a problem with TM, it copied an original behind the translated text
-Version 3.4.90 Added translating only when the original is ticketed as "to be translated"
-Version 3.4.91 The checkbox was not set when the translator is not a PTE/GTE
-Version 3.4.92 translatePage was reporting to early to be finished
-Version 3.4.93 Removed ticked previews in PopulateWithTM, as they are not needed and cause confusion
-Version 3.4.93 Improved populateWithTM it was not updating the preview correctly
-Version 3.4.95 Added a dropdown list for languages in the options page
-Version 3.4.96 When no records were selected and confirming to select all, then the "select all" was not working
-Version 3.4.96 Copy original did not wait for the answer given in the message box
-Version 3.4.97 Copy to local did refresh the page, causing suggested translations with TM to disappear, now it does not refresh the page
-Version 3.4.98 Added id indonesian language
-Version 3.4.98 Added translation files
-Version 3.4.99 Improved translation files, added missing translations and fixed some wrong ones 
-Version 3.5.0 On the settings page the import is now working again
-Version 3.5.0 Deepl replaces " > " with " &gt; ", which is wrong, so now added a check to prevent that
-Version 3.5.0 Added new toggle to not translate the UI
-Version 3.5.1 Modified the position of the buttons within the editor
-Version 3.5.1 Modified the size of all buttons
-Version 3.5.2 Removed the pictogram shown within the buttons to save space
-Version 3.5.3 Added translation of the Settings page
-Version 3.5.4 Fixed a problem with unclosed group in the regex to handle verbs
-Version 3.5.4 Fixed missing translations in the settings page
-Version 3.5.5 Fixed a formal conversion issue.
-Version 3.5.6 Added a function to check if the amount of placeholders in the original and translation are the same, if not it shows a warning message
+Version 3.5.10 Fixed a problem with loading the translations. There were two checkLocale functions, and the wrong one was called, which caused the translations to not load properly
+Version 3.5.11 Added backup and restore of the settings
+Version 3.5.12 Added check on hyphens in checkpage
+Version 3.5.12 Added find new original for user with favorites especially for translators who have a lot of projects, this way they can easily find new originals that need translation
+Version 3.5.13 Added rules to the Firefox manifest to allow the extension to access the profile page
+Version 3.5.14 Added debug info when translating with ollama locally
+Version 3.5.15 Fixed wrong locale indication when in 'dev' searching for new originals
+Version 3.5.15 fixed showing English texts in the UI, previous fix was removed from wptf_FetchThemes, and added to the correct place in the code
+Version 3.5.16 fixed a problem with handling the glossary, because wptf-inject was removed from the manifest, the glossary was not working properly, now added a new function to fetch the glossary from the local storage and use it in the translation functions
+Version 3.5.17 Fixed a problem with ollama local and translating a plural
+Version 3.5.17 Added new field to find projects with zero translations
+Version 3.5.18 Added openRouter as API for translation
+Version 3.5.19 Improved glossary and prompt behavior for openAI, LMstudio, and Ollama, they were not using the glossary and prompt properly, now added a function to fetch the glossary and prompt from the local storage and use it in the translation functions
+Version 3.5.19 Added new function to check start and end of the string for spaces, exclamation marks, question marks
+Version 3.5.20 Added groq API for translation with divers models

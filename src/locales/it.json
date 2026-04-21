@@ -113,6 +113,7 @@
   "This function checks the page for missing verbs and if set starts spellchecking": "Questa funzione controlla la pagina per i verbi mancanti e, se impostato, avvia il controllo ortografico",
   "This is the function to compare the suggestion with the local entry": "Questo pulsante avvia il confronto del suggerimento con la voce locale",
   "This is the function to copy originals  with selected items": "Questo pulsante avvierà la funzione per copiare gli originali degli elementi selezionati",
+  "This is the function to fetch newly added originals": "This is the function to fetch newly added originals",
   "This function populates the table with translations from the local database": "Questo pulsante avvia il riempimento della tabella con le traduzioni dal database locale",
   "This is the function to save all suggestions selected in bulk": "Questo pulsante avvia il salvataggio in blocco di tutti i suggerimenti selezionati",
   "This is the function to populate the local database with selected items": "Questo pulsante avvierà il riempimento del database locale con gli elementi selezionati",

@@ -114,6 +114,7 @@
   "This function checks the page for missing verbs and if set starts spellchecking": "Deze knop start de controle van de pagina voor ontbrekende woorden, en indien ingesteld start de spellingcontrole",
   "This is the function to compare the suggestion with the local entry": "Deze knop start het vergelijken van de suggestie met de waarde in de lokale DB",
   "This is the function to copy originals  with selected items": "Deze knop start het kopiëren van geselecteerde originelen naar de vertaling",
+  "This is the function to fetch newly added originals": "Deze functie zoekt alle nieuw toegevoegde originals",
   "This function populates the table with translations from the local database": "Deze knop start het vullen van de tabel met vertalingen uit de lokale database",
   "This is the function to save all suggestions selected in bulk": "Deze knop slaat alle suggesties in bulk op",
   "This is the function to populate the local database with selected items": "Deze knop start het vullen van de lokale database met geselecteerde items",

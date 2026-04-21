@@ -1,13 +1,15 @@
 ﻿// LMStudio translate
 async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,LMStudioWait){
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
-    
+    let originalPreProcessed = await preProcessOriginal(original, preverbs, "LMstudio");
     // Replace glossary and language names
-    let convertedGlossary = convertGlossaryForOllamaMerged(openAiGloss)
-   // let convertedGlossary = convertGlossaryForOllama(openAiGloss)
-   // let convertedGlossary = convertGlossaryListToWordsFormat(openAiGloss)
-   // console.debug("Glossary:", convertedGlossary)
-    
+    const filteredGloss = pruneGlossary(
+       openAiGloss,
+       originalPreProcessed,
+       record
+     );
+    let convertedGlossary = convertGlossaryForOllamaMerged(filteredGloss)
+  
     let myprompt = ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     
     myprompt = myprompt.replaceAll("{{tone}}", OpenAITone);
@@ -25,18 +27,18 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
         showTranslationSpinner(__("Fetching translation…"));
     }
      
-    let originalPreProcessed = await preProcessOriginal(original, preverbs, "LMstudio");
     
-    const glossaryString = JSON.stringify(convertedGlossary);
-    originalPreProcessed = applyGlossaryMap(originalPreProcessed, convertedGlossary)
+    //const glossaryString = JSON.stringify(convertedGlossary);
+   // originalPreProcessed = applyGlossaryMap(originalPreProcessed, convertedGlossary)
     if (toBoolean(DebugMode)) console.debug("LMstudio start preprocessed:" ,originalPreProcessed);
     // text is within the prompt and must be replaced by the text to ranslate
     let transAct_ID = await generateTranslateID()
     myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
-    myprompt = myprompt.replaceAll("{translateID}",transAct_ID)
+    myprompt = myprompt.replaceAll("{translateID}", transAct_ID)
+    //console.debug("Final prompt for LMStudio:", myprompt)
     let max_Tokens = estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = estimateMaxTokens(myprompt);
-    max_Tokens = max_Tokens + prompt_tokens
+    max_Tokens = max_Tokens 
     const start = Date.now()
                     return new Promise((resolve, reject) => {
                         chrome.runtime.sendMessage({
@@ -58,7 +60,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                             }
                         }, (response) => {
                             const duration = ((Date.now() - start) / 1000).toFixed(2);
-                              console.debug("Time after fetch:", duration)
+                             // console.debug("Time after fetch:", duration)
                             if (!response) {
                                 hideTranslationSpinner();
                                 if (typeof response != 'undefined') {
@@ -85,11 +87,11 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                                 return "NOK";
                             }
                             else {
-                                if (DebugMode) console.debug("LMStudio after request:" ,translatedText);
+                                if (toBoolean(DebugMode)) console.debug("LMStudio after request:" ,translatedText);
                                 
                                 translatedText = response.text
                                 translatedText = normalizeExtraNewlines(original, translatedText)
-                                console.debug("after translation:",translatedText)
+                                //console.debug("after translation:",translatedText)
                                 let convertedGlossary = GLOBAL_GLOSSARY;
                                 if (convertedGlossary) {
                                     translatedText = applyOpenAiGlossary(

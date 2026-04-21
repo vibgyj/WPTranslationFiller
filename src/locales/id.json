@@ -114,6 +114,7 @@
   "This function checks the page for missing verbs and if set starts spellchecking": "Fungsi ini memeriksa halaman untuk kata kerja yang hilang dan jika diatur memulai pemeriksaan ejaan",
   "This is the function to compare the suggestion with the local entry": "Fungsi ini membandingkan saran dengan entry lokal",
   "This is the function to copy originals  with selected items": "Fungsi ini menyalin asli dengan item yang dipilih",
+  "This is the function to fetch newly added originals": "This is the function to fetch newly added originals",
   "This function populates the table with translations from the local database": "Fungsi ini mengisi tabel dengan terjemahan dari database lokal",
   "This is the function to save all suggestions selected in bulk": "Fungsi ini menyimpan semua saran yang dipilih secara massal",
   "This is the function to populate the local database with selected items": "Fungsi ini mengisi database lokal dengan item yang dipilih",

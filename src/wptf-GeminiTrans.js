@@ -1,7 +1,7 @@
 /**
  * Calls Gemini via background.js
  */
-async function translateWithGemini(original, destlang, e, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, spellCheckIgnore, is_editor, apiKeyGemini, GeminiModel,GeminiPrompt) {
+async function translateWithGemini(original, destlang, record, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, spellCheckIgnore, is_editor, apiKeyGemini, GeminiModel,GeminiPrompt) {
     
      let  myprompt = GeminiPrompt
      if (destlang === "nl") myprompt = myprompt.replaceAll("{{toLanguage}}", "Dutch");
@@ -28,18 +28,27 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
   } else {
     myprompt = myprompt.replaceAll("{{tone}}", geminiTone);
     }
- 
- 
-
-    var convertedGlossary = GLOBAL_GLOSSARY;
-    myprompt = myprompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
-    
     let originalPreProcessed = await preProcessOriginal(
         original,
         replacePreVerb,
         "gemini"
     ); 
     originalPreProcessed = originalPreProcessed + '\u200B'
+   // console.debug("Glossary:", GLOBAL_GLOSSARY) 
+       const filteredGloss = pruneGlossary(
+       GLOBAL_GLOSSARY,
+       originalPreProcessed,
+       record
+     );
+    //console.debug("Filtered glossary (line breaks):", filteredGloss)
+  //  const compactGloss = filteredGloss.replace(/\n+/g, "|");
+    //console.debug("Filtered glossary:", compactGloss)
+  // Replace glossary and language names
+  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", filteredGloss);
+  //  var convertedGlossary = GLOBAL_GLOSSARY;
+ //   myprompt = myprompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
+    
+   
     let sourceLang = "en"
     let targetLang = destlang
       const prompt = `
@@ -51,7 +60,7 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
     formal = false
     let max_Tokens = estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = estimateMaxTokens(prompt);
-    max_Tokens = max_Tokens + prompt_tokens
+    max_Tokens = max_Tokens
     return new Promise((resolve) => {
         chrome.runtime.sendMessage(
             {
@@ -95,12 +104,12 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
 
                 var translatedText = response.translation;
                 
-                if (convertedGlossary) {
-                    translatedText = applyOpenAiGlossary(
-                        translatedText,
-                        convertedGlossary
-                    );
-                }
+               // if (convertedGlossary) {
+                //    translatedText = applyOpenAiGlossary(
+                  //      translatedText,
+                   //     convertedGlossary
+                    //);
+               // }
                
                 let finalText = postProcessTranslation(
                     original,
@@ -117,7 +126,7 @@ async function translateWithGemini(original, destlang, e, replacePreVerb, rowId,
                     original,
                     finalText,
                     destlang,
-                    e,
+                    record,
                     rowId,
                     transtype,
                     plural_line,

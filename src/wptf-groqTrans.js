@@ -15,10 +15,9 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
+async function groqTranslate(original, destlang, record, apikeygroq, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
     var timeout = 50;
     errorstate = "OK";
-    
     // Preprocess original
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
     
@@ -26,7 +25,7 @@ async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPromp
    // await delay(timeout);
     
     // Await the translation call
-    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    var result = await getTransgroq(original, destlang, record, apikeygroq, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     
     // You can handle errorstate or result here if needed
     return result;
@@ -49,10 +48,10 @@ async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, 
 }
 
 
-async function getTransAI(
-  original, language, record, apikeyOpenAI, OpenAIPrompt,
+async function getTransgroq(
+  original, language, record, apikeygroq, OpenAIPrompt,
   originalPreProcessed, rowId, transtype, plural_line, formal,
-  locale, convertToLower, editor, counter, OpenAISelect,
+  locale, convertToLower, editor, counter, groqSelect,
   OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
 ) {
     //console.debug("Starting getTransAI with original:", record, "language:", language, "rowId:", rowId);
@@ -119,12 +118,13 @@ async function getTransAI(
     { role: 'user', content: `translate this: ${originalPreProcessed}` }
   ];
 
-  if (OpenAISelect === 'undefined' || !OpenAISelect) {
-    messageBox("error", "You did not set the OpenAI model!<br> Please check your options");
+  if (groqSelect === 'undefined' || !groqSelect) {
+    messageBox("error", "You did not set the groq model!<br> Please check your options");
     return "NOK";
   }
  // reasoning={"effort": "minimal"}
-    const mymodel = OpenAISelect.toLowerCase();
+    const mymodel = groqSelect.toLowerCase();
+    
    if (show_debug) console.debug("Model selected:",mymodel);
   let dataNew = {};
 
@@ -139,7 +139,7 @@ async function getTransAI(
             presence_penalty: 0,
             reasoning_effort: 'minimal',
             verbosity: 'low',
-            apiKey: apikeyOpenAI,
+            apiKey: apikeygroq,
             prompt_cache_key: 'WPTF translation',
         };
     }
@@ -154,7 +154,7 @@ async function getTransAI(
             presence_penalty: 0,
             reasoning_effort: 'none',
             verbosity: 'low',
-            apiKey: apikeyOpenAI,
+            apiKey: apikeygroq,
             prompt_cache_key: 'WPTF translation',
         };
     }
@@ -168,7 +168,7 @@ async function getTransAI(
             presence_penalty: 0,
             reasoning_effort: 'medium',
             verbosity: 'low',
-            apiKey: apikeyOpenAI,
+            apiKey: apikeygroq,
             prompt_cache_key: 'WPTF translation'
            
         };
@@ -183,7 +183,7 @@ async function getTransAI(
       frequency_penalty: 0,
       presence_penalty: 0,
       top_p: Number(Top_p),
-     apiKey: apikeyOpenAI,
+     apiKey: apikeygroq,
 
     };
   }
@@ -194,13 +194,13 @@ async function getTransAI(
         //console.debug("We start call at :",start)
         const result = await new Promise((resolve) => {
             chrome.runtime.sendMessage(
-                { action: "OpenAI", data: dataNew }, // send only the data
+                { action: "groq", data: dataNew }, // send only the data
                 (res) => resolve(res)
             );
        });
 
        if (!result) {
-        console.debug("OpenAI proxy returned undefined");
+        console.debug("groq proxy returned undefined");
         return "NOK";
     }
 
@@ -282,7 +282,7 @@ async function getTransAI(
            }
     }
     const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
+    if (toBoolean(DebugMode)) console.debug("groq proxy response (raw):", result.result," ",duration);
 
    const data = result.result; // raw proxy response
         let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
@@ -299,7 +299,7 @@ async function getTransAI(
         text,
         replaceVerb,
         originalPreProcessed,
-        "OpenAI",
+        "groq",
         convertToLower,
         spellCheckIgnore,
         locale
@@ -331,7 +331,7 @@ async function getTransAI(
     return "OK";
 
     } catch (err) {
-        console.error("Fetch OpenAI failed:", err);
+        console.error("Fetch groq failed:", err);
         return null;
     }
 

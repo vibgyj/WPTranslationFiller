@@ -437,6 +437,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     else if (translator == "Ollama") {
+        //console.debug("we are in Ollama post process before replacing placeholders:", translatedText)
+        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
         // We need to put back the %s etc
         for (const token in placeholderMap) {
             const originalValue = placeholderMap[token];
@@ -484,7 +486,15 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 index++;
             }
         }
-
+          const ollamamatches = original.matchAll(placeHolderRegex);
+        if (ollamamatches != null) {
+            let index = 0;
+            for (const match of ollamamatches) {
+                translatedText = translatedText.replaceAll(`<x id="var${index}"/>`, match[0]);  // <-- match[0] ipv match
+                translatedText = translatedText.replaceAll(`<x id="var${index}">`, match[0]);  // <-- match[0] ipv match
+                index++;
+            }
+        }
     }
     else if (translator == "deepl") {
         for (const token in placeholderMap) {
@@ -598,6 +608,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
     }
     else if (translator == "OpenAI") {
+        
        // const matches = original.matchAll(placeHolderRegex);
        // index = 1;
         //console.debug("translated in OpenAI:",translatedText)
@@ -641,9 +652,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.substring(0, translatedText.length - 1)
         }
     }
-    //If convert to lower is not true, we need to check if there are hyphens present which do not belong there (word is in ignore list)
-    // removing the hyphens is also done in lower_case function, so this needs improvement in future
-    translatedText = check_hyphen(translatedText, spellCheckIgnore);
+    
     // check if there is a blank after the tag 
     pos = translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -688,7 +697,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                     // Build regex WITHOUT word boundaries, so tokens like {aap} will match
                     const wordRegex = new RegExp(safeWord, 'g');
                     translatedText = translatedText.replace(wordRegex, replacement);
-                   // translatedText = correctSentence(translatedText, spellCheckIgnore);
+                    //translatedText = correctSentence(translatedText, spellCheckIgnore);
                 }
 
             }
@@ -733,7 +742,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 const wordRegex = new RegExp(safeWord, 'g');
 
                 translatedText = translatedText.replace(wordRegex, replacement);
-               // translatedText = correctSentence(translatedText, spellCheckIgnore);
+                //translatedText = correctSentence(translatedText, spellCheckIgnore);
 
                 //console.debug("replacing:", searchWord, "->", replacement);
             }
@@ -824,7 +833,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("originalUpperCase:", originalUpperCase)
     if (toBoolean(DebugMode)) console.debug("postProcessTranslation before correctSentence" ,translatedNewText);
     translatedNewText = correctSentence(translatedNewText, spellCheckIgnore, originalUpperCase);
-    
+    // removing the hyphens is also done in lower_case function, so this needs improvement in future
+    translatedNewText = check_hyphen(translatedNewText, spellCheckIgnore);
+    //console.debug("after check hyphen:", translatedNewText)
     result = check_start_end(translatedNewText, translatedNewText, 0, "", original, "", 0);
     translatedNewText = result.translatedText;
     if (toBoolean(DebugMode)) console.debug("postProcessTranslation end:" ,translatedNewText);
@@ -909,7 +920,10 @@ function removeWord(sentence, searchWord) {
 function correctSentence(translatedText, ignoreList, originalUpperCase) {
     if (!translatedText || typeof translatedText !== "string") return translatedText;
     if (isOnlyURL(translatedText)) return translatedText;
-
+    // removing the hyphens is also done in lower_case function, so this needs improvement in future
+    translatedText = check_hyphen(translatedText, ignoreList);
+                                
+    
     // --- 1️⃣ Parse ignore list ---
     const ignoreArray = (ignoreList || "")
         .split(/\r?\n/)
@@ -1984,23 +1998,28 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             // Fetch the translations
                             let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
                             let myPreview = getPreview(row)
-                            
-                            let LineNo = myPreview.getElementsByClassName("text-line-counter")[0].innerText;
-                            //let LineNo = document.querySelector("#line-counter .text-line-counter");
-                            
-                            // let element = e.querySelector(".source-details__comment");
+
+
+
                             let textareaElem = e.querySelector("textarea.foreign-text");
                             //console.debug("textareaELem:",textareaElem)
                             translatedText = textareaElem.innerText;
                             //console.debug("translatedText:",translatedText)
-                            myLog = checkPlaceholders(original,  translatedText,LineNo)
+                            let LineNo = myPreview.getElementsByClassName("text-line-counter")[0];
+                            //let LineNo = document.querySelector("#line-counter .text-line-counter");
+                            if (LineNo != null && LineNo != "undefined") {
+                                LineNo = LineNo.innerText;
+                                myLog = checkPlaceholders(original, translatedText, LineNo)
+                            }
+
                             prev_trans = textareaElem.innerText;
 
                             if (translatedText != "No suggestions" && translatedText != "") {
                                 previewNewText = textareaElem.innerText;
                                 let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                                // PSS we need to check for missing periods en blanks before replacing verbs 
-                                //console.debug("before check_start:",translatedText)
+                                // PSS we need to check for missing periods en blanks before replacing verbs
+                               
+                                //console.debug("check start and end for:", translatedText)
                                 result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
                                 //console.debug("result:",result)
                                 replaced = result.replaced;
@@ -2018,7 +2037,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     }
 
                                     await markElements(preview, repl_array, original, spellcheckIgnore, repl_array, translatedText);
-                                    
+
                                     // 09-09-2022 PSS fix for issue #244
                                     if (currec != null) {
                                         var current = currec.querySelector("span.panel-header__bubble");
@@ -2037,11 +2056,12 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false)
                                 }
 
+                                
                                 // Need to replace the existing html before replacing the verbs! issue #124
                                 // previewNewText = previewNewText.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
                                 // let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
-                                //console.debug("result 1387:",result)
+                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows,spellcheckIgnore);
+                                //console.debug("result 2054:",result)
                                 previewNewText = result.previewNewText;
                                 translatedText = result.translatedText;
                                 // countreplaced += result.countreplaced;
@@ -2101,7 +2121,11 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                         await markElements(preview, repl_verb, orgText, spellcheckIgnore, repl_array, prev_trans);
                                     }
                                 }
-
+                                //translatedText = check_hyphen(translatedText, spellcheckIgnore)
+                                //console.debug("after check_hypen:", translatedText) 
+                                //textareaElem.innerText = translatedText;
+                                //textareaElem.value = translatedText;
+                                //preview.innerText = DOMPurify.sanitize(translatedText);
                             }
                             else {
                                 replaced = false;
@@ -2134,7 +2158,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     // if current translation we need to split the rownumber
                                     let newrowId = row.split("-")[0];
                                     textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_0");
-                                   // let editor_text = result.previewNewText.replace("S")
+                                    // let editor_text = result.previewNewText.replace("S")
                                     textareaElem1.innerText = result.previewNewText;
                                     textareaElem1.value = result.previewNewText;
                                     // PSS this needs to be improved
@@ -2160,7 +2184,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
                                 }
 
-                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
+                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows,spellcheckIgnore);
                                 replaced = result.replaced;
                                 orgText = result.orgText;
                                 if (replaced) {
@@ -2182,72 +2206,80 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                                     // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
                                     await markElements(previewElem1, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
                                 }
+                                
                             }
                             // here is plural 2
-                            previewNewText = previewElem2.innerText;
-                            translatedText = previewElem2.innerText;
-                            if (translatedText != "No suggestions") {
-                                result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
-                                replaced = result.replaced;
-                                repl_array = result.repl_array;
-                                if (replaced) {
-                                    mypreview.classList.replace("status-current", "status-waiting");
-                                    mypreview.classList.add("wptf-translated");
-                                    recWordCount += result.countReplaced;
-                                    repl_verb = result.repl_verb;
-                                    previewElem2.innerHTML = result.previewNewText
-                                    previewElem2.innerText = result.previewNewText
-                                    previewElem2.value = result.previewNewText
-                                    // we have updatet the text of the first plural, so we need to update the var
-                                    previewNewText = result.previewNewText
-                                    let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                                    // if current translation we need to split the rownumber
-                                    let newrowId = row.split("-")[0];
-                                    textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
-                                    textareaElem1.innerText = result.previewNewText;
-                                    textareaElem1.value = result.previewNewText;
-                                    // PSS this needs to be improved
-                                    let repl = []
-                                    let rec = '.,.'
-                                    repl.push(rec.split(","))
-                                    //rec = ' , '
-                                    // repl.push(rec.split(","))
-                                    // await markElements(previewElem, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
-                                    // 09-09-2022 PSS fix for issue #244
-                                    if (currec != null) {
-                                        var current = currec.querySelector("span.panel-header__bubble");
-                                        var prevstate = current.innerText;
-                                        current.innerText = "transFill";
+                          
+                            if (previewElem2 != null) {
+                                previewNewText = previewElem2.innerText;
+                                translatedText = previewElem2.innerText;
+
+                                if (translatedText != "No suggestions") {
+                                    result = await check_start_end(translatedText, previewNewText, recWordCount, repl_verb, original, replaced, countrows);
+                                    replaced = result.replaced;
+                                    repl_array = result.repl_array;
+                                    if (replaced) {
+                                        mypreview.classList.replace("status-current", "status-waiting");
+                                        mypreview.classList.add("wptf-translated");
+                                        recWordCount += result.countReplaced;
+                                        repl_verb = result.repl_verb;
+                                        previewElem2.innerHTML = result.previewNewText
+                                        previewElem2.innerText = result.previewNewText
+                                        previewElem2.value = result.previewNewText
+                                        // we have updatet the text of the first plural, so we need to update the var
+                                        previewNewText = result.previewNewText
+                                        let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                        // if current translation we need to split the rownumber
+                                        let newrowId = row.split("-")[0];
+                                        textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
+                                        textareaElem1.innerText = result.previewNewText;
+                                        textareaElem1.value = result.previewNewText;
+                                        // PSS this needs to be improved
+                                        let repl = []
+                                        let rec = '.,.'
+                                        repl.push(rec.split(","))
+                                        //rec = ' , '
+                                        // repl.push(rec.split(","))
+                                        // await markElements(previewElem, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
+                                        // 09-09-2022 PSS fix for issue #244
+                                        if (currec != null) {
+                                            var current = currec.querySelector("span.panel-header__bubble");
+                                            var prevstate = current.innerText;
+                                            current.innerText = "transFill";
+                                        }
+                                        // Only update the style if verbs are replaced!!
+                                        let wordCount = recWordCount;
+                                        let percent = 10;
+                                        let toolTip = "";
+                                        result = { wordCount, percent, toolTip };
+                                        old_status = document.querySelector("#preview-" + row);
+                                        updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
+                                        // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
                                     }
-                                    // Only update the style if verbs are replaced!!
-                                    let wordCount = recWordCount;
-                                    let percent = 10;
-                                    let toolTip = "";
-                                    result = { wordCount, percent, toolTip };
-                                    old_status = document.querySelector("#preview-" + row);
-                                    updateStyle(textareaElem, result, "", 'True', false, false, row, e, showHistory, true, translatedText, repl_array, prev_trans, old_status, false);
-                                    // updateStyle(textareaElem, result, "", 'True', false, false, row,e,showHistory,true,orginal,repl_array,prev_trans);
+                                    result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows,spellcheckIgnore);
+                                    replaced = result.replaced;
+                                    orgText = result.orgText;
+                                    if (replaced) {
+                                        recWordCount += result.countreplaced;
+                                        repl_verb = result.repl_verb
+                                        previewElem2.innerHTML = result.previewNewText
+                                        previewElem2.innerText = result.previewNewText
+                                        previewElem2.value = result.previewNewText
+                                        previewNewText = result.previewNewText;
+                                        let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
+                                        // if current translation we need to split the rownumber
+                                        let newrowId = row.split("-")[0];
+                                        textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
+                                        textareaElem1.innerText = translatedText;
+                                        textareaElem1.value = previewNewText;
+                                        // Highlight all keywords found in the page, so loop through the replacement array
+                                        // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
+                                        await markElements(previewElem2, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
+                                    }
                                 }
-                                result = await replElements(translatedText, previewNewText, replaceVerb, repl_verb, "", original, countrows);
-                                replaced = result.replaced;
-                                orgText = result.orgText;
-                                if (replaced) {
-                                    recWordCount += result.countreplaced;
-                                    repl_verb = result.repl_verb
-                                    previewElem2.innerHTML = result.previewNewText
-                                    previewElem2.innerText = result.previewNewText
-                                    previewElem2.value = result.previewNewText
-                                    previewNewText = result.previewNewText;
-                                    let g = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-content`);
-                                    // if current translation we need to split the rownumber
-                                    let newrowId = row.split("-")[0];
-                                    textareaElem1 = g.querySelector("textarea#translation_" + newrowId + "_1");
-                                    textareaElem1.innerText = translatedText;
-                                    textareaElem1.value = previewNewText;
-                                    // Highlight all keywords found in the page, so loop through the replacement array
-                                    // 16-04-2023 fix for issue #293 marking of replaced words did not work anymore
-                                    await markElements(previewElem2, repl_array, orgText, spellcheckIgnore, repl_array, translatedText);
-                                }
+                            }
+                            else {
+                                console.debug("We do not have a second text within the plural")
                             }
                         }
                         if (replaced) {
@@ -2521,33 +2553,96 @@ async function markElements_previous(preview, replaceVerb, orgText, spellcheckIg
     }
 }
 
-function replElements(translatedText, previewNewText, replaceVerb, repl_verb, countreplaced, original, countrows) {
-    repl_array = []
+function replElements(
+    translatedText,
+    previewNewText,
+    replaceVerb,
+    repl_verb,
+    countreplaced,
+    original,
+    countrows,
+    spellcheckIgnore
+) {
     var replaced = false;
-    var orgText = translatedText
+    var orgText = translatedText;
+    var repl_array = [];
+
+    // --- Stap 1: vervangingen volgens replaceVerb ---
     for (let i = 0; i < replaceVerb.length; i++) {
-        // PSS solution for issue #291
-        replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+        replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",");
+
         if (translatedText.includes(replaceVerb[i][0])) {
-            // Enhencement issue #123
-            // fix for replacing verbs in url issue #290 check if the string does contain an URL
             if (!CheckUrl(translatedText, replaceVerb[i][0])) {
+
                 previewNewText = previewNewText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
                 translatedText = translatedText.replaceAll(replaceVerb[i][0], replaceVerb[i][1]);
+
                 repl_verb += countrows + " : " + replaceVerb[i][0] + "->" + replaceVerb[i][1] + "<br>";
                 repl_array.push(replaceVerb[i]);
+
                 countreplaced++;
                 replaced = true;
             }
         }
     }
-    if (i == 2) {
-        replaced = false
-    }
-    //console.debug("repl_array:",repl_array)
-    return { replaced, previewNewText, translatedText, countreplaced, orgText, repl_verb, repl_array };
-}
 
+    if (i == 2) replaced = false;
+
+    // --- Stap 2: koppeltekens check (met correcte registratie) ---
+    let lines = [];
+    if (typeof spellcheckIgnore !== "undefined") {
+        lines = spellcheckIgnore
+            .split(/\r?\n/)
+            .map(l => l.trim())
+            .filter(Boolean);
+    }
+
+    let wordsArray = translatedText.split(' ');
+
+    wordsArray.forEach(word => {
+        if (word === "->") return;
+
+        let normalizedWord = word.replace(/[\u2010\u2011\u2012\u2013\u2014]/g, "-");
+
+        let strippedWord = normalizedWord.replace(/[.:;!?\,]+$/g, "");
+        let firstPart = strippedWord.split("-")[0];
+
+        if (firstPart.startsWith("(")) {
+            firstPart = firstPart.substr(1);
+        }
+
+        if (lines.some(ignore => firstPart === ignore)) {
+            if (normalizedWord.includes("-") && normalizedWord !== "--" && normalizedWord !== "-") {
+
+                let newWord = normalizedWord.replace(/-/g, " ");
+                let hyphenCount = (normalizedWord.match(/-/g) || []).length;
+
+                // 🔥 vervang in beide teksten
+                translatedText = translatedText.replaceAll(normalizedWord, newWord);
+                previewNewText = previewNewText.replaceAll(normalizedWord, newWord);
+
+                // 🔥 CRUCIAAL: toevoegen aan repl_array
+                repl_array.push([normalizedWord, newWord]);
+
+                // logging + count
+                repl_verb += countrows + " : " + normalizedWord + "->" + newWord + "<br>";
+                countreplaced += hyphenCount;
+
+                replaced = true;
+            }
+        }
+    });
+
+    return {
+        replaced,
+        previewNewText,
+        translatedText,
+        countreplaced,
+        orgText,
+        repl_verb,
+        repl_array
+    };
+}
 function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow) {
     repl_array = [];
     var mark;
@@ -2777,7 +2872,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
     return { translatedText, previewNewText, countReplaced, repl_verb, replaced, repl_array }
 }
 
-async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree,apikeyOpenAI, OpenAIPrompt, OpenAISelect, OpenAITone, OpenAItemp,apikeyClaude, ClaudePrompt, openAiGloss,ClaudModel,apikeyNLP) {
+async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree,apikeyOpenAI, OpenAIPrompt, OpenAISelect, OpenAITone, OpenAItemp,apikeyClaude, ClaudePrompt, openAiGloss,ClaudModel,apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeyNLP,apikeyOpenRouter,OpenRouterSelect) {
     
     //console.time("translation")
     var translate;
@@ -2961,7 +3056,8 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
                         spellCheckIgnore = ""
                         //console.debug("before handle_plural:",row)
                         //console.debug("handle_plural 2764:",openAiGloss)
-                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel)
+                        
+                        await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect,OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel,apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeygroq,groqSelect)
                         editorElem = editor.querySelector("textarea.foreign-text");
                         // console.debug("pretranslated before validate:")
                         select = document.querySelector(`#editor-${row} div.editor-panel__right div.panel-content .meta`);
@@ -4179,8 +4275,8 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt, MistralSelect,LMStudioWait) {
-  
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI,apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt, MistralSelect,LMStudioWait,apikeygroq,groqSelect) {
+    
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
     let myoriginal = record.querySelector("div.editor-panel__left div.panel-content span.original-raw");
@@ -4293,7 +4389,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 // console.debug("current:",current)
                 //console.debug("myTranslated:",myTranslated)
                 //console.debug("handle_plural 4152:",openAiGloss)
-                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait)
+                await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI,apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect,OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait, apikeygroq, groqSelect)
 
                 editorElem = editor.querySelector("textarea.foreign-text");
                // console.debug("pretranslated before validate:")
@@ -4526,6 +4622,25 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                                 //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
+            }
+            else if (transsel == "openRouter") {
+                let editor = false; 
+                        result = await openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
                     }
             else if (transsel == "OpenAI") {
                 result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
@@ -4558,6 +4673,25 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
 
                 }
             }
+            else if (transsel == "groq") {
+                 let editor = false;
+                 result = await groqTranslate(original, destlang, record, apikeygroq, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                 if (result == "Error 401") {
+                           messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                 }
+                 else if (result == "Error 403") {
+                          messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                          //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                  }
             else if (transsel == "Claude") {
                 let editor = true
 
@@ -4642,7 +4776,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             //console.debug("pretrans 4351:",pretrans)
             //console.debug("plur:",plural)
             //console.debug("handle_plural 4432:",openAiGloss)
-            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt)
+            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect,OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeygroq,groqSelect)
             editorElem = editor.querySelector("textarea.foreign-text");
 
             await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
@@ -4655,7 +4789,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
     // console.debug("DispClipBoard:",autoCopyClipBoard)
 } 
 
-async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
+async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI,apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect,OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeygroq,groqSelect) {
     let debug = false
     var myTranslatedText;
     if (debug == true) {
@@ -4807,6 +4941,25 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                                 //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
+        }
+        else if (transsel == "openRouter") {
+                        let editor = false; 
+                        result = await openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
                     }
         else if (transsel == "OpenAI") {
             result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
@@ -4835,6 +4988,25 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                 }
             }
         }
+        else if (transsel == "groq") {
+                 let editor = false;
+                 result = await groqTranslate(plural, destlang, record, apikeygroq, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                 if (result == "Error 401") {
+                           messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                 }
+                 else if (result == "Error 403") {
+                          messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                          //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                  }
         else if (transsel === "lingvanex") {
                         let is_editor = true
                         result = await translateWithLingvanex(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyLingvanex);
@@ -4969,12 +5141,10 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             }
 
             textareaElem3 = record.querySelector("textarea#translation_" + rowId + "_3");
-            //console.debug("elem3:", textareaElem3)
             if (textareaElem3 != null) {
                 plural = plural + "_03"
                 let pretrans = await findTransline(plural, destlang);
                 if (pretrans != null) {
-                    //console.debug("res:", pretrans)
                     myTranslatedText = pretrans
                     textareaElem3.innerText = myTranslatedText;
                     textareaElem3.value = myTranslatedText;
@@ -4982,8 +5152,6 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             }
 
             let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) .translation-text");
-            //console.debug("previewElem 4549:", previewElem)
-           // console.debug("previewtext:", pretrans)
             if (previewElem != null) {
                 previewElem.innerText =pretrans;
                 previewElem.value = pretrans;
@@ -5022,7 +5190,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         if (transsel == "LibreTrans") {
                         console.debug("we translate with libre")
                         is_editor = false
-                        result = await transLibre(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
+                        result = await transLibre(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
                         console.debug("result:",result)
                     
                     }
@@ -5033,7 +5201,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         }
         else if (transsel == "NLPCloud") {
                     let editor = true;
-                    result = await NLPCloudTranslate(original, destlang, record, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                    result = await NLPCloudTranslate(plural, destlang, record, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", MistralSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
                     if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -5158,6 +5326,25 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                                 //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
+        }
+                    else if (transsel == "openRouter") {
+                        let editor = false; 
+                        result = await openRouterTranslate(plural, destlang, record, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
                     }
         else if (transsel == "OpenAI") {
             result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
@@ -5185,7 +5372,26 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                     //alert("There has been some uncatched error: " + errorstate);
                 }
             }
-         }
+        }
+         else if (transsel == "groq") {
+                 let editor = false;
+                 result = await groqTranslate(plural, destlang, record, apikeygroq, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                 if (result == "Error 401") {
+                           messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                 }
+                 else if (result == "Error 403") {
+                          messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                          //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                  }
         else if (transsel === "lingvanex") {
                   let is_editor = true
                   result = await translateWithLingvanex(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyLingvanex);
@@ -5194,7 +5400,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
          else if (transsel === "gemini") {
             let is_editor = true
             console.debug("we translate with gemini plural")
-                 result = await translateWithGemini(original, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
+                 result = await translateWithGemini(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
                  if (result == "NOK") {
                      stop = true;
                      return "stop"
@@ -5213,13 +5419,13 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
              }
         }
         else if (transsel === "Ollama") {
-             let is_editor = is_Editor
+            let is_editor = is_Editor
             result = await translateWithOllama(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt);
             hideTranslationSpinner();   
         }
         else if (transsel === "LMStudio") {
                 let is_editor = false
-                result = await translateWithLMStudio(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,LMStudioWait);
+                result = await translateWithLMStudio(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,LMStudioWait);
                 hideTranslationSpinner();
                 if (result == "NOK") {
                     stop = true;
@@ -5342,8 +5548,8 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
-   
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait, apikeyOpenRouter,OpenRouterSelect,apikeygroq, groqSelect) {
+    console.debug("groqSelect:", groqSelect) 
     var vartime = 100;
     var stop = false;
     var editor = false;
@@ -5354,8 +5560,6 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
     const checkedCount = Array.from(document.querySelectorAll(checkboxSelector)).filter(e => e.checked).length;
     var myheader = document.querySelector('header');
     
-    //console.debug("select:",MistralSelect)
-    //console.debug("transsel at start:",transsel)
     if (transsel == "LMStudio") {
         result = await checkModelAndContinue(ollamaModel);
         if (!result) {
@@ -5480,9 +5684,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                         continue;  // Skip to next record
                     }
 
-                    counter++;
+                            counter++;
                     if (checkset.checked == true) {
                         try {
+                             
                             mytransType = await handleType(
                                 row,
                                 record,
@@ -5493,6 +5698,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 apikeyDeepSeek,
                                 apikeyMicrosoft,
                                 apikeyOpenAI,
+                                apikeyOpenRouter,
                                 apikeyMistral,
                                 apikeyClaude,
                                 apikeyTranslateio,
@@ -5507,6 +5713,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 DeeplFree,
                                 completedCallback,
                                 OpenAISelect,
+                                OpenRouterSelect,
                                 openAIWait,
                                 OpenAItemp,
                                 spellCheckIgnore,
@@ -5527,7 +5734,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 GeminiModel,
                                 GeminiPrompt,
                                 MistralSelect,
-                                LMStudioWait
+                                LMStudioWait,
+                                apikeygroq,
+                                groqSelect
+
                             );
 
                         } catch (err) {
@@ -5604,36 +5814,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                     counter++;
                     if (checkset.checked == true) {
                         try {
-                            mytransType = await handleType(
-                                row,
-                                record,
-                                destlang,
-                                transsel,
-                                apikey,
-                                apikeyDeepl,
-                                apikeyDeepSeek,
-                                apikeyMicrosoft,
-                                apikeyOpenAI,
-                                apikeyMistral,
-                                apikeyClaude,
-                                apikeyTranslateio,
-                                apikeyNLP,
-                                OpenAIPrompt,
-                                transsel,
-                                destlang,
-                                postTranslationReplace,
-                                preTranslationReplace,
-                                formal,
-                                convertToLower,
-                                DeeplFree,
-                                completedCallback,
-                                OpenAISelect,
-                                openAIWait,
-                                OpenAItemp,
-                                spellCheckIgnore,
-                                deeplGlossary,
-                                OpenAITone,
-                                DeepLWait,
+                            mytransType = await handleType(row, record, destlang,   transsel,  apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt,transsel, destlang, postTranslationReplace,preTranslationReplace,formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait,
                                 openAiGloss,
                                 counter,
                                 editor,
@@ -5648,7 +5829,9 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                 GeminiModel,
                                 GeminiPrompt,
                                 MistralSelect,
-                                LMStudioWait
+                                LMStudioWait,
+                                apikeygroq,
+                                groqSelect
                             );
 
                         } catch (err) {
@@ -5893,14 +6076,14 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeyOpenRouter,OpenRouterSelect,apikeygroq,groqSelect) {
     var translateButton;
     var result;
     errorstate = "OK"
     var textareaElem;
     locale = checkLocale();
     let myprompt = OpenAIPrompt
-
+    
     if (transsel == "LMStudio") {
         result = await checkModelAndContinue(ollamaModel);
         if (!result) {
@@ -6085,6 +6268,44 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     else if (transsel == "OpenAI") {
                         let editor = true;
                         result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
+                    else if (transsel == "groq") {
+                        let editor = true;
+                        result = await groqTranslate(original, destlang, e, apikeygroq, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
+                    else if (transsel == "openRouter") {
+                        let editor = true;
+                        result = await openRouterTranslate(original, destlang, e, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -6379,6 +6600,25 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                             }
                         }
                     }
+                    else if (transsel == "openRouter") {
+                        let editor = true;
+                        result = await openRouterTranslate(original, destlang, e, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
                     else if (transsel == "OpenAI") {
                         let editor = true;
                         result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
@@ -6391,6 +6631,25 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                             //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
                         }
                         else {
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                                //alert("There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
+                    else if (transsel == "groq") {
+                        let editor = true;
+                        result = await groqTranslate(original, destlang, e, apikeygroq, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                            // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
+                        }
+                        else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                            //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
+                        }
+                        else {
+                            // console.debug("errorstate:",errorstate)
                             if (errorstate != "OK") {
                                 messageBox("error", "There has been some uncatched error: " + errorstate);
                                 //alert("There has been some uncatched error: " + errorstate);
@@ -8130,4 +8389,84 @@ async function copyOrgRecords(event) {
         })
        // alert("Debug: keuzebox is net getoond. Keuze = e")
      }
+}
+
+function checkBlankLabels() {
+  const rows = document.querySelectorAll(".preview.status-waiting");
+
+  rows.forEach(row => {
+    const originalText = row.querySelector(".original-text")?.textContent ?? "";
+    const previewText = row.querySelector(".translation-text")?.textContent ?? "";
+
+    const origStartsWithBlank = originalText.startsWith(" ");
+    const origEndsWithBlank = originalText.endsWith(" ");
+    const previewStartsWithBlank = previewText.startsWith(" ");
+    const previewEndsWithBlank = previewText.endsWith(" ");
+
+    const origEndsWithPeriod = originalText.endsWith(".");
+    const previewEndsWithPeriod = previewText.endsWith(".");
+
+    const origEndsWithQuestion = originalText.endsWith("?");
+    const previewEndsWithQuestion = previewText.endsWith("?");
+
+    const origEndsWithExclamation = originalText.endsWith("!");
+    const previewEndsWithExclamation = previewText.endsWith("!");
+
+    const labels = [];
+
+    if (origStartsWithBlank && !previewStartsWithBlank) {
+      labels.push("Missing start blank in preview");
+    }
+    if (!origStartsWithBlank && previewStartsWithBlank) {
+      labels.push("Additional blank at start");
+    }
+    if (origEndsWithBlank && !previewEndsWithBlank) {
+      labels.push("Missing blank at the end");
+    }
+    if (!origEndsWithBlank && previewEndsWithBlank) {
+      labels.push("Additional blank at the end");
+    }
+    if (origEndsWithPeriod && !previewEndsWithPeriod) {
+      labels.push("Missing period in preview");
+    }
+    if (!origEndsWithPeriod && previewEndsWithPeriod) {
+      labels.push("Additional period in preview");
+    }
+    if (origEndsWithQuestion && !previewEndsWithQuestion) {
+      labels.push("Missing question mark in preview");
+    }
+    if (!origEndsWithQuestion && previewEndsWithQuestion) {
+      labels.push("Additional question mark in preview");
+    }
+    if (origEndsWithExclamation && !previewEndsWithExclamation) {
+      labels.push("Missing exclamation mark in preview");
+    }
+    if (!origEndsWithExclamation && previewEndsWithExclamation) {
+      labels.push("Additional exclamation mark in preview");
+    }
+
+    const translationSpan = row.querySelector(".translation-text");
+    if (translationSpan && labels.length > 0) {
+      const br1 = document.createElement("br");
+      const br2 = document.createElement("br");
+      const labelsContainer = document.createElement("span");
+      labelsContainer.className = "blank-labels";
+      labelsContainer.style.backgroundColor = "#fff3cd";
+      labelsContainer.style.color = "#856404";
+      labelsContainer.style.padding = "2px 6px";
+      labelsContainer.style.borderRadius = "4px";
+      labelsContainer.style.fontSize = "0.85em";
+
+      labels.forEach(labelText => {
+        const label = document.createElement("span");
+        label.className = "blank-label";
+        label.textContent = labelText;
+        labelsContainer.appendChild(label);
+      });
+
+      translationSpan.insertAdjacentElement("afterend", labelsContainer);
+      translationSpan.insertAdjacentElement("afterend", br2);
+      translationSpan.insertAdjacentElement("afterend", br1);
+    }
+  });
 }

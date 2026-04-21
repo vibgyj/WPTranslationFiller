@@ -113,6 +113,7 @@
   "This function checks the page for missing verbs and if set starts spellchecking": "இந்த செயல்பாடு பக்கத்தில் இல்லாத வினைச்சொற்களை சரிபார்க்கும், அமைக்கப்பட்டிருந்தால் எழுத்துப்பிழை சரிபார்ப்பை தொடங்கும்",
   "This is the function to compare the suggestion with the local entry": "இந்த பொத்தான் பரிந்துரையை உள்ளூர் உள்ளீட்டுடன் ஒப்பிடத் தொடங்கும்",
   "This is the function to copy originals  with selected items": "இந்த பொத்தான் தேர்ந்தெடுக்கப்பட்ட உருப்படிகளின் மூலங்களை நகலெடுக்கும் செயல்பாட்டை தொடங்கும்",
+  "This is the function to fetch newly added originals": "This is the function to fetch newly added originals",
   "This function populates the table with translations from the local database": "இந்த பொத்தான் உள்ளூர் தரவுதளத்திலிருந்து மொழிபெயர்ப்புகளுடன் அட்டவணையை நிரப்பத் தொடங்கும்",
   "This is the function to save all suggestions selected in bulk": "இந்த பொத்தான் தேர்ந்தெடுக்கப்பட்ட அனைத்து பரிந்துரைகளையும் மொத்தமாக சேமிக்கத் தொடங்கும்",
   "This is the function to populate the local database with selected items": "இந்த பொத்தான் தேர்ந்தெடுக்கப்பட்ட உருப்படிகளுடன் உள்ளூர் தரவுதளத்தை நிரப்பத் தொடங்கும்",

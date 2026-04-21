@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler Extended",
-  "version": "3.5.6",
+  "version": "3.5.19",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -88,6 +88,8 @@
     "*://api-free.deepl.com/*",
     "*://api.deepl.com/*",
     "*://api.deepseek.com/*",
+    "*://api.wordpress.org/*",
+    "*://profiles.wordpress.org/*",
     "*://translation.googleapis.com/*",
     "*://translate.wordpress.org/*",
     "*://api.languagetool.org/*",
@@ -132,6 +134,7 @@
         "wptf-commonTranslate.js",
         "wptf-ClaudeTrans.js",
         "wptf-openAITrans.js",
+        "wptf-openRouter.js",
         "wptf-deeplTrans.js",
         "wptf-DeepSeekTrans.js",
         "wptf-LibreTrans.js",
@@ -143,6 +146,7 @@
         "wptf-database-maintenance.js",
         "wptf-populatewithTM.js",
         "wptf-testRunner.js",
+        "wptf_Fetch_themes.js",
         "contentScript.js"
       ],
       "css": [ "wptf-style.css" ]

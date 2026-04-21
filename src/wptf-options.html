@@ -52,7 +52,9 @@
         #deepseek_api_key {
             width: 400px;
         }
-
+        #groq_api_key {
+            width: 400px;
+        }
         #Translateio_api_key {
             width: 400px;
         }
@@ -86,6 +88,9 @@
         }
 
         #gemini_api_key {
+            width: 400px;
+        }
+        #openRouter_api_key {
             width: 400px;
         }
 
@@ -184,6 +189,22 @@
             width: 200px;
             padding: 5px 0;
             background-color: #04AA6D;
+        }
+        #backupSettings {
+            
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            padding: 5px 0;
+            background-color: lightblue;
+        }
+        #restoreSettings {
+            
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            padding: 5px 0;
+            background-color: lightblue;
         }
 
         #save {
@@ -284,9 +305,13 @@
 <body>
     <div class="container" id="container">
 
+
         <div class="backbutton">
             <input id="backbutton" type="button" value="Close options page" />
         </div>
+        <button id="backupSettings">Backup Settings</button>
+        <button id="restoreSettings">Restore Settings</button>
+        <input type="file" id="restoreFile" accept=".json" style="display:none;">
         <table id="options">
             <tr>
                 <td>
@@ -308,6 +333,17 @@
                     </div>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <label for="groq_api_key">groq API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="groq_api_key" type="text" value="groq-api key->" placeholder="groq API key" />
+                    </div>
+                </td>
+            </tr>
+
             <tr>
                 <td>
                     <label for="nlpcloud_api_key">NLPCloud API Key</label>
@@ -376,6 +412,16 @@
                 <td>
                     <div class="form-input">
                         <input id="OpenAI_api_key" type="text" value="OpenAI-api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="openRouter_api_key">openRouter API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="openRouter_api_key" type="text" value="openRouter-api key->" />
                     </div>
                 </td>
             </tr>
@@ -465,6 +511,21 @@
             </tr>
             <tr>
                 <td>
+                    <label for="groqSelect">Select a model for groq:</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for groq" name="groqSel" id="groqSelect">
+                            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+                            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+                            <option value="meta-illama-scout-17b-instant">meta-illama-scout-17b-instant</option>
+                           
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="Mistral">Select a model for Mistral:</label>
                 </td>
                 <td>
@@ -480,9 +541,39 @@
                     </div>
                 </td>
             </tr>
+
             <tr>
                 <td>
-                    <label for="OpenAIselect">Select a model for AI:</label>
+                    <label for="OpenRouterselect">Select a model for openRouter:</label>
+                    <span class="tooltip" data-tooltip="This line is for setting the parameters for openRouter&#10;
+                                             Set the temp near zero for all of the models&#10;
+                                             Set the Top_p value to 0.9&#10;
+                                             Set the Top_k to 40&#10;
+                                             Visit the models site for the exact values">?</span>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for openRouter" name="OpenRoutersel" id="OpenRouterSelect">
+                            <option value="gpt-oss-20b">gpt-oss-20b</option>
+                            <option value="openai/gpt-oss-120b:free">openai/gpt-oss-120b:free</option>
+                            <option value="openrouter/free">openrouter/free uses free models</option>
+                            <option value="google/gemma-3-12b-it:free">gemma-3-12b-it:free</option>
+                            <option value="google/gemma-3n-e4b-it:free">gemma-3n-e4b-it:free</option>
+                            <option value="google/gemma-4-31b-it:free">gemma-4-31bn-e4b-it:free</option>
+                            <option value="meta-llama/llama-3.3-70b-instruct:free">meta-llama/llama-3.3-70b-instruct:free</option>
+                            <option value="minimax/minimax-m2.5:free">minimax/minimax-m2.5:free</option>
+                            <option value="nvidia/nemotron-nano-9b-v2:free">nvidia/nemotron-nano-9b-v2:free</option>
+                            <option value="liquid/lfm-2.5-1.2b-instruct:free">liquid/lfm-2.5-1.2b-instruct:free</option>
+                        </select>
+
+                    </div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td>
+                    <label for="OpenAIselect">Select a model for openAI:</label>
                     <span class="tooltip" data-tooltip="This line is for setting the parameters for AI&#10;
                                                         Set the temp near zero for all of the models&#10;
                                                         Set the Top_p value to 0.9&#10;
@@ -491,7 +582,7 @@
                 </td>
                 <td>
                     <div class="form-input">
-                        <select title="Select a model for AI" name="OpenAIsel" id="OpenAIselect">
+                        <select title="Select a model for opeAI" name="OpenAIsel" id="OpenAIselect">
                             <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                             <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
                             <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
@@ -552,6 +643,7 @@
                             <option value="deepseek">DeepSeek</option>
                             <option value="gemini">Gemini</option>
                             <option value="google">Google</option>
+                            <option value="groq">groq</option>
                             <option value="LibreTrans">LibreTrans</option>
                             <option value="lingvanex">Lingvanex</option>
                             <option value="NLPCloud">NLPCLoud</option>
@@ -559,6 +651,7 @@
                             <option value="microsoft">Microsoft</option>
                             <option value="Mistral">Mistral</option>
                             <option value="OpenAI">OpenAI</option>
+                            <option value="openRouter">openRouter</option>
                             <option value="translation_io">translationio</option>
                             <option value="Claude">Claud</option>
                             <option value="Ollama">Ollama</option>
@@ -839,77 +932,77 @@ You,Je
             </tr>
         </table>
         <table style="width: 100%; table-layout: fixed;">
-          <tr>
-            <td style="width:500px">
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="comp-translations">
-                <span>Compare translations</span>
-            </label>
-            </td>
-            <td style="padding-left: 5%;">
-                <label class="labeled-checkbox">
-                    <input type="checkbox" id="NoUI">
-                    <span>No UI translation</span>
-                </label>
-            </td>
-          </tr>
+            <tr>
+                <td style="width:500px">
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="comp-translations">
+                        <span>Compare translations</span>
+                    </label>
+                </td>
+                <td style="padding-left: 5%;">
+                    <label class="labeled-checkbox">
+                        <input type="checkbox" id="NoUI">
+                        <span>No UI translation</span>
+                    </label>
+                </td>
+            </tr>
         </table>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="show-convertToLower">
-                <span>Convert words to lowercase except first word</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="Force-formal">
-                <span>Force to use formal tone</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="show-glotDictGlos">
-                <span>Show GlotDict</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="show-history">
-                <span>Show history</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="use-default-glossary">
-                <span>Use default glossary</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="use-strict-validation">
-                <span>Use strict validation</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="auto-copy-clipboard">
-                <span>auto copy to clipboard</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="disable-auto-close">
-                <span>Disable autoclose editor</span>
-            </label>
-            <label class="labeled-checkbox">
-                <input type="checkbox" id="ollama-local">
-                <span>Use local Ollama</span>
-            </label>
-            <br />
-            <table id="footer">
-                <tr>
-                    <td>
-                        <div class="savebutton">
-                            <input id="save" type="button" value="Save" />
-                        </div>
-                    </td>
-                    <td>
-                        <div class="wptf-info">
-                            <a rel="noopener" href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="wptf-info">
-                            <a href="#" id="show-changelog-link">View Changelog</a>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="show-convertToLower">
+            <span>Convert words to lowercase except first word</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="Force-formal">
+            <span>Force to use formal tone</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="show-glotDictGlos">
+            <span>Show GlotDict</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="show-history">
+            <span>Show history</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="use-default-glossary">
+            <span>Use default glossary</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="use-strict-validation">
+            <span>Use strict validation</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="auto-copy-clipboard">
+            <span>auto copy to clipboard</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="disable-auto-close">
+            <span>Disable autoclose editor</span>
+        </label>
+        <label class="labeled-checkbox">
+            <input type="checkbox" id="ollama-local">
+            <span>Use local Ollama</span>
+        </label>
+        <br />
+        <table id="footer">
+            <tr>
+                <td>
+                    <div class="savebutton">
+                        <input id="save" type="button" value="Save" />
+                    </div>
+                </td>
+                <td>
+                    <div class="wptf-info">
+                        <a rel="noopener" href="https://github.com/vibgyj/WPTranslationFiller/wiki" target="_blank">Wiki documentation</a>
+                    </div>
+                </td>
+                <td>
+                    <div class="wptf-info">
+                        <a href="#" id="show-changelog-link">View Changelog</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 </html>

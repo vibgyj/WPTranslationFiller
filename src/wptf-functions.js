@@ -1,4 +1,102 @@
-﻿
+﻿function adjustLayoutScreen() {
+    // Retrieve value from chrome local storage
+    chrome.storage.local.get(['WPTFscreenWidth'], function (result) {
+        // Access the stored value
+        var myScreenWidth;
+        myScreenWidth = result.WPTFscreenWidth;
+        var screenWidth = window.innerWidth;
+        //console.debug("screenWidth:", screenWidth)
+        var gpContentElement = document.querySelector('.gp-content');
+        //console.debug("found setting:",myScreenWidth)
+        // Perform actions based on the stored value
+        if (myScreenWidth === null) {
+            // set the deafault value
+            if (screenWidth == 1455) {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+            else {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+
+        } else if (typeof myScreenWidth == 'undefined') {
+            if (screenWidth == 1455) {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+            else {
+                myScreenWidth = '90%';
+                // Apply the new max-width style with !important
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+                chrome.storage.local.set({
+                    WPTFscreenWidth: '90'
+                });
+            }
+
+        }
+        else {
+            // Generate the new max-width style based on the stored value
+            // Apply the new max-width style with !important
+            myScreenWidth = myScreenWidth + "%"
+            if (gpContentElement != null) {
+                gpContentElement.style.setProperty('max-width', myScreenWidth, 'important');
+            }
+        }
+    });
+}
+function checkLocale() {
+    // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
+    const localeString = window.location.href;
+    let local = localeString.split("/");
+    //console.debug("length locale:",local.length,local)
+    if (local.length == 8) {
+        locale = local[4];
+    }
+    else if (local.length == 9) {
+        // if we are not within the tanslation table, the locale is at a different position
+        if (local.includes("locale")) {
+            locale = local[4];
+            //console.debug("we found 4")
+        }
+        else {
+            locale = local[6];
+        }
+    }
+    else if (local.length == 10) {
+        if (local.includes("import-translations")) {
+            locale = local[6];
+        }
+        else {
+            locale = local[7];
+        }
+    }
+    else if (local.length == 11) {
+        if (local.includes("import-translations")) {
+            locale = local[7];
+        }
+        else {
+            locale = local[8];
+        }
+    }
+    else {
+        console.debug("Locale string:", localeString)
+        locale = "en-gb";
+    }
+    return locale;
+}
 
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -17,6 +115,7 @@ function fixUILabelSmart(text) {
     };
 
     const infinitives = {
+        "Activeer": "activeren", 
         "Kies": "kiezen", 
         "Schakel": "uitschakelen",
         "Zet": "aanzetten",
@@ -1885,17 +1984,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
             }
         }
     }
-    // await set_glotdict_style().then(function (myGlotDictStat) {
-    //console.debug("glotdict:", myGlotDictStat)
-    // Use the retrieved data here or export it as needed
-    // increase the timeout if buttons from GlotDict are not shown
-    // this set when the checkbox show GlotDict is set
-    // var increaseWith = 0
-    // var timeout = 0;
-    // if (myGlotDictStat) {
-    //  timeout = 100;
-    // increaseWith = 50
-    // }
+    
     myGlotDictStat = await set_glotdict_style();
 
     // 2. Determine timeout based on result
@@ -2543,45 +2632,46 @@ function countOccurrences(arr) {
     }, {});
 }
 
-function checkPlaceholders(original, translation, lang = "translation",LineNo) {
-    const origPlaceholders  = extractPlaceholders(original);
-    const transPlaceholders = extractPlaceholders(translation);
+function checkPlaceholders(original, translation, lang = "translation", LineNo) {
+    if (translation != null && translation.trim() != "") {
+        const origPlaceholders = extractPlaceholders(original);
+        const transPlaceholders = extractPlaceholders(translation);
 
-    const origCount  = countOccurrences(origPlaceholders);
-    const transCount = countOccurrences(transPlaceholders);
+        const origCount = countOccurrences(origPlaceholders);
+        const transCount = countOccurrences(transPlaceholders);
 
-    const allKeys = new Set([...Object.keys(origCount), ...Object.keys(transCount)]);
+        const allKeys = new Set([...Object.keys(origCount), ...Object.keys(transCount)]);
 
-    const missing = [];
-    const extra   = [];
+        const missing = [];
+        const extra = [];
 
-    for (const key of allKeys) {
-        const oCount = origCount[key] || 0;
-        const tCount = transCount[key] || 0;
+        for (const key of allKeys) {
+            const oCount = origCount[key] || 0;
+            const tCount = transCount[key] || 0;
 
-        if (tCount < oCount) {
-            for (let i = 0; i < oCount - tCount; i++) missing.push(key);
-        } else if (tCount > oCount) {
-            for (let i = 0; i < tCount - oCount; i++) extra.push(key);
+            if (tCount < oCount) {
+                for (let i = 0; i < oCount - tCount; i++) missing.push(key);
+            } else if (tCount > oCount) {
+                for (let i = 0; i < tCount - oCount; i++) extra.push(key);
+            }
+        }
+
+        // if (!missing.length && !extra.length) {
+        //     PlaceholderLog.push({ type: "ok",   text: `[${lang}] ✓ Placeholders match.` });
+        //     return true;
+        // }
+
+        if (missing.length) {
+            PlaceholderLog.push({ type: "error", text: `[${lang}] ✗ Missing placeholder(s) in translation: [${missing.join(", ")}]` });
+            PlaceholderLog.push({ type: "info", text: `  Original:    ${original}` });
+            PlaceholderLog.push({ type: "info", text: `  Translation: ${translation}` });
+        }
+        if (extra.length) {
+            PlaceholderLog.push({ type: "error", text: `[${lang}] ✗ Extra placeholder(s) in translation: [${extra.join(", ")}]` });
+            PlaceholderLog.push({ type: "info", text: `  Original:    ${original}` });
+            PlaceholderLog.push({ type: "info", text: `  Translation: ${translation}` });
         }
     }
-
-   // if (!missing.length && !extra.length) {
-   //     PlaceholderLog.push({ type: "ok",   text: `[${lang}] ✓ Placeholders match.` });
-   //     return true;
-   // }
-
-    if (missing.length) {
-        PlaceholderLog.push({ type: "error", text: `[${lang}] ✗ Missing placeholder(s) in translation: [${missing.join(", ")}]` });
-        PlaceholderLog.push({ type: "info",  text: `  Original:    ${original}` });
-        PlaceholderLog.push({ type: "info",  text: `  Translation: ${translation}` });
-    }
-    if (extra.length) {
-        PlaceholderLog.push({ type: "error", text: `[${lang}] ✗ Extra placeholder(s) in translation: [${extra.join(", ")}]` });
-        PlaceholderLog.push({ type: "info",  text: `  Original:    ${original}` });
-        PlaceholderLog.push({ type: "info",  text: `  Translation: ${translation}` });
-    }
-
     return false;
 }
 function showPlaceholderLog(position = "top-right") {
@@ -2697,4 +2787,141 @@ function showPlaceholderLog(position = "top-right") {
     });
 
     document.addEventListener("mouseup", () => { isDragging = false; });
+}
+function pruneGlossary(openAiGloss, originalPreProcessed, original) {
+
+  const isArrayFormat = Array.isArray(openAiGloss);
+
+  // -----------------------------
+  // STEP 1: NORMALIZE INPUT
+  // -----------------------------
+  let entries = [];
+
+  if (isArrayFormat) {
+    entries = openAiGloss.map(([k, v]) => ({
+      source: String(k).toLowerCase(),
+      target: String(v)
+    }));
+  } else {
+    entries = (openAiGloss || "")
+      .split(/,\s*/)
+      .map(e => {
+        const parts = e.split(/->|=|:/);
+        return {
+          source: (parts[0] || "")
+            .replace(/["']/g, "")
+            .trim()
+            .toLowerCase(),
+          target: (parts[1] || "")
+            .replace(/["']/g, "")
+            .trim()
+        };
+      })
+      .filter(e => e.source && e.target);
+  }
+
+  //console.debug("NORMALIZED ENTRIES:", entries);
+
+  const text = (originalPreProcessed || "").toLowerCase();
+
+  const escapeRegExp = (str) =>
+    str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const matchesText = (key) => {
+    return new RegExp(`\\b${escapeRegExp(key)}\\b`, 'i').test(text);
+  };
+
+  // -----------------------------
+  // STEP 2: FIND MATCHES IN OPENAI
+  // -----------------------------
+  const result = [];
+  const matchedKeys = new Set();
+
+  for (const entry of entries) {
+    if (matchesText(entry.source)) {
+      result.push(entry);
+      matchedKeys.add(entry.source);
+      console.debug(`[OPENAI] ${entry.source} -> ${entry.target}`);
+    }
+  }
+
+  // -----------------------------
+  // STEP 3: ONLY IF NEEDED → DOM
+  // -----------------------------
+  let domMap = new Map();
+
+  if (original) {
+    const container =
+      original?.getElementsByClassName?.("source-string__singular")?.[0]
+      || new DOMParser().parseFromString(original || "", "text/html");
+
+    const nodes = container?.querySelectorAll?.(".glossary-word") || [];
+
+    nodes.forEach(node => {
+      const key = node.textContent.trim().toLowerCase();
+      const raw = node.getAttribute("data-translations");
+
+      if (!raw) return;
+
+      try {
+        const data = JSON.parse(raw.replace(/&quot;/g, '"'));
+        const translation = data?.[0]?.translation;
+
+        if (translation) {
+          domMap.set(key, translation);
+        }
+      } catch (e) {}
+    });
+  }
+
+  console.debug("DOM MAP:", domMap);
+
+  // -----------------------------
+  // STEP 4: ADD MISSING FROM DOM
+  // -----------------------------
+  for (const [key, value] of domMap.entries()) {
+
+    if (matchedKeys.has(key)) continue;
+
+    if (matchesText(key)) {
+      result.push({
+        source: key,
+        target: value
+      });
+      console.debug(`[DOM] ${key} -> ${value}`);
+    } else {
+      console.debug(`[DOM SKIP - NOT IN TEXT] ${key}`);
+    }
+  }
+
+  // -----------------------------
+  // STEP 5: RETURN SAME FORMAT
+  // -----------------------------
+  if (isArrayFormat) {
+    const output = result.flatMap(e => {
+      if (!e.target.includes("/")) {
+        return [[e.source, e.target]];
+      }
+
+      return e.target.split("/")
+        .map(v => [e.source, v.trim()]);
+    });
+
+    console.debug("FINAL ARRAY OUTPUT:", output);
+    return output;
+  }
+
+  const output = result
+    .flatMap(e => {
+      if (!e.target.includes("/")) {
+        return [`"${e.source}" -> "${e.target}"`];
+      }
+
+      return e.target.split("/")
+        .map(v => `"${e.source}" -> "${v.trim()}"`);
+    })
+    .join(", ");
+
+  console.debug("FINAL STRING OUTPUT:", output);
+  return output;
 }

@@ -1,5 +1,5 @@
 ﻿/**
- * This file includes all functions for translating with the deepL API and uses a promise
+ * This file includes all functions for translating with the openRouter API and uses a promise
  * It depends on commonTranslate for additional translation functions
  */
 // Call this at the start of your translation batch loop
@@ -15,10 +15,10 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
+async function openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenCloudSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
     var timeout = 50;
     errorstate = "OK";
-    
+    //console.debug("Starting openRouterTranslate for rowId:", rowId, "original:", original)
     // Preprocess original
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
     
@@ -26,13 +26,13 @@ async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPromp
    // await delay(timeout);
     
     // Await the translation call
-    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    var result = await getopenRouter(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenCloudSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     
     // You can handle errorstate or result here if needed
     return result;
 }
 
-async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
+async function openRouterReview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
     // First we have to preprocess the original to remove unwanted chars
     //var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
     var originalPreProcessed = original;
@@ -49,13 +49,12 @@ async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, 
 }
 
 
-async function getTransAI(
-  original, language, record, apikeyOpenAI, OpenAIPrompt,
+async function getopenRouter(
+  original, language, record, apikeyOpenRouter, OpenAIPrompt,
   originalPreProcessed, rowId, transtype, plural_line, formal,
-  locale, convertToLower, editor, counter, OpenAISelect,
+  locale, convertToLower, editor, counter,OpenRouterSelect,
   OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
 ) {
-    //console.debug("Starting getTransAI with original:", record, "language:", language, "rowId:", rowId);
   var show_debug = false
   var myTtranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
@@ -69,65 +68,67 @@ async function getTransAI(
     let myprompt = "";
 
   // Handle tone and language in prompt
-  if (OpenAITone === 'formal') {
-    if (destlang === 'nl') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
-    } else if (destlang === 'de') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
-    } else if (destlang === 'fr') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
-    } else {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
-    }
-  } else {
-    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
-  }
-   // compact glossary (IMPORTANT IMPROVEMENT)
-    //console.debug("Original glossary:", openAiGloss)
-    const filteredGloss = pruneGlossary(
-       openAiGloss,
-       originalPreProcessed,
-       record
-     );
-   // console.debug("Filtered glossary (line breaks):", filteredGloss)
-    const compactGloss = filteredGloss.replace(/\n+/g, "|");
-    //console.debug("Filtered glossary:", compactGloss)
-  // Replace glossary and language names
-  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss);
-    //console.debug("Prompt after glossary replacement:", myprompt)
-  if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
-  else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
-  else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-  else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian'); 
-  else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
-  else if (destlang === 'id') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Indonesian');
-  else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
-  else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
-  else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-  else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
-   // console.debug("Final prompt for OpenAI:", myprompt)
-  if (!originalPreProcessed) {
-    originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
-  }
-  originalPreProcessed = `"${originalPreProcessed}"`;
-  let maxTokens = estimateMaxTokens(originalPreProcessed);
-  //let prompt_tokens = estimateMaxTokens(myprompt);
-  max_Tokens = maxTokens
-  //console.debug("originalPreProcessed:",originalPreProcessed)
-  messages = [
-    { role: 'system', content: myprompt },
-    { role: 'user', content: `translate this: ${originalPreProcessed}` }
-  ];
+  let basePrompt = tempPrompt;
 
-  if (OpenAISelect === 'undefined' || !OpenAISelect) {
-    messageBox("error", "You did not set the OpenAI model!<br> Please check your options");
+if (OpenAITone === 'formal') {
+  if (destlang === 'nl') {
+    basePrompt = basePrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
+  } else if (destlang === 'de') {
+    basePrompt = basePrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
+  } else if (destlang === 'fr') {
+    basePrompt = basePrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
+  } else {
+    basePrompt = basePrompt.replaceAll("{{tone}}", OpenAITone);
+  }
+} else {
+  basePrompt = basePrompt.replaceAll("{{tone}}", OpenAITone);
+}
+
+basePrompt = basePrompt.replaceAll("{{toLanguage}}",
+  destlang === 'nl' ? 'Dutch' :
+  destlang === 'de' ? 'German' :
+  destlang === 'fr' ? 'French' :
+  destlang === 'uk' ? 'Ukrainian' :
+  destlang === 'es' ? 'Spanish' :
+  destlang === 'id' ? 'Indonesian' :
+  destlang === 'it' ? 'Italian' :
+  destlang === 'pt' ? 'Portuguese' :
+  destlang === 'ru' ? 'Russian' :
+  destlang
+);
+
+    // compact glossary (IMPORTANT IMPROVEMENT)
+    //console.debug("Original glossary:", openAiGloss)
+    const filteredGloss = pruneGlossary(openAiGloss, originalPreProcessed,record);
+    //console.debug("Filtered glossary (line breaks):", filteredGloss)
+const compactGloss = filteredGloss.replace(/\n+/g, "|");
+    console.debug("Filtered glossary:", compactGloss)
+const content = 
+`INSTRUCTIONS:
+${basePrompt}
+GLOSSARY:
+${compactGloss}
+SOURCE_TEXT:
+${originalPreProcessed}
+RULE:
+Return only translation.`;
+
+messages = [
+  {
+    role: "user",
+    content
+  }
+];
+
+  if (OpenRouterSelect === 'undefined' || !OpenRouterSelect) {
+    messageBox("error", "You did not set the OpenRouter model!<br> Please check your options");
     return "NOK";
   }
  // reasoning={"effort": "minimal"}
-    const mymodel = OpenAISelect.toLowerCase();
+    const mymodel = OpenRouterSelect.toLowerCase();
    if (show_debug) console.debug("Model selected:",mymodel);
   let dataNew = {};
-
+    //mymodel= "openrouter/free"
     if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano" ) {
         dataNew = {
             model: mymodel,
@@ -139,7 +140,7 @@ async function getTransAI(
             presence_penalty: 0,
             reasoning_effort: 'minimal',
             verbosity: 'low',
-            apiKey: apikeyOpenAI,
+            apiKey: apikeyOpenRouter,
             prompt_cache_key: 'WPTF translation',
         };
     }
@@ -154,7 +155,7 @@ async function getTransAI(
             presence_penalty: 0,
             reasoning_effort: 'none',
             verbosity: 'low',
-            apiKey: apikeyOpenAI,
+            apiKey: apikeyOpenRouter,
             prompt_cache_key: 'WPTF translation',
         };
     }
@@ -168,7 +169,7 @@ async function getTransAI(
             presence_penalty: 0,
             reasoning_effort: 'medium',
             verbosity: 'low',
-            apiKey: apikeyOpenAI,
+            apiKey:apikeyOpenRouter,
             prompt_cache_key: 'WPTF translation'
            
         };
@@ -177,13 +178,13 @@ async function getTransAI(
     dataNew = {
       model: mymodel, 
       messages,
-      max_tokens: max_Tokens,
+      
       n: 1,
       temperature: OpenAItemp,
       frequency_penalty: 0,
       presence_penalty: 0,
       top_p: Number(Top_p),
-     apiKey: apikeyOpenAI,
+     apiKey:apikeyOpenRouter,
 
     };
   }
@@ -194,19 +195,20 @@ async function getTransAI(
         //console.debug("We start call at :",start)
         const result = await new Promise((resolve) => {
             chrome.runtime.sendMessage(
-                { action: "OpenAI", data: dataNew }, // send only the data
+                { action: "openRouter", data: dataNew }, // send only the data
                 (res) => resolve(res)
             );
        });
-
+       let duration = ((Date.now() - start) / 1000).toFixed(2);
+       if (toBoolean(DebugMode)) console.debug("openRouter proxy response (raw):", result.result," ",duration);
        if (!result) {
-        console.debug("OpenAI proxy returned undefined");
+        console.debug("openRouter proxy returned undefined");
         return "NOK";
     }
 
        if (result.error) {
         const duration = ((Date.now() - start) / 1000).toFixed(2);
-           if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
+           if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] "openRouter proxy error:" ${duration}s`, result.error);
             // Example of result.error: "Request failed (401): <some text>"
            const match = result.error.match(/Request failed \((\d+)\)/);
            const statusCode = match ? match[1] : "unknown";
@@ -281,11 +283,11 @@ async function getTransAI(
                return `Request failed with status ${statusCode}. Some undefined error happened!`;
            }
     }
-    const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug("OpenAI proxy response (raw):", result.result," ",duration);
+    duration = ((Date.now() - start) / 1000).toFixed(2);
+    if (toBoolean(DebugMode)) console.debug("openRouter proxy response (raw):", result.result," ",duration);
 
-   const data = result.result; // raw proxy response
-        let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
+   //const data = result.result; // raw proxy response
+       let text = result.result || "";
         
    if (text === '""' || text === "") {
        text = "No suggestions";
@@ -299,7 +301,7 @@ async function getTransAI(
         text,
         replaceVerb,
         originalPreProcessed,
-        "OpenAI",
+        "openRouter",
         convertToLower,
         spellCheckIgnore,
         locale
@@ -354,7 +356,7 @@ async function getTransAI(
 
 
 
-async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
+async function reviewopenRouter(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
     var row = "";
     var ul = "";
     var current = "";
@@ -422,10 +424,9 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
         "top_p": 1
     }
 
-    // var url = "https://api.openai.com/v1/engines/text-davinci-edit-001/edits";
-    // var link = "https://api.openai.com/v1/chat/completions";
-    var link = "https://api.openai.com/v1/chat/completions";
-    //var url = "https://api.openai.com/v1/edits";
+    
+    var link = "https://api.openrouter.ai/v1/chat/completions";
+    
 
     //console.debug("link:",link)
     const response = fetch(link, {
@@ -717,5 +718,4 @@ async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt
     }
     return errorstate
 }
-
 

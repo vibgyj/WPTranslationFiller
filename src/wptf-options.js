@@ -86,7 +86,9 @@ let apikeyTextbox = document.getElementById("google_api_key");
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
+let apikeygroqTextbox = document.getElementById("groq_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
+let apikeyOpenRouterTextbox = document.getElementById("openRouter_api_key");
 let apikeyMistralTextbox = document.getElementById("Mistral_api_key");
 let apikeyNLPTextbox = document.getElementById("nlpcloud_api_key");
 let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
@@ -96,7 +98,9 @@ let apikeyOllamaTextbox = document.getElementById("Ollama_api_key");
 let apikeyLingvanexTextbox = document.getElementById("Lingvanex_api_key");
 let apikeyGeminiTextbox = document.getElementById("gemini_api_key");
 let transselectBox = document.getElementById("transselect");
-let OpenAIselectBox = document.getElementById("OpenAIselect");
+let OpenAIselectBox = document.getElementById("OpenAIselect"); 
+let groqselectBox = document.getElementById("groqSelect");
+let OpenRouterselectBox = document.getElementById("OpenRouterSelect");
 let MistralselectBox = document.getElementById("MistralSelect");
 let ClaudselectBox = document.getElementById("ClaudSelect");
 let OllamaselectBox = document.getElementById("Ollama_model");
@@ -151,7 +155,7 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "ClaudSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI"], function (data) {
 
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
@@ -254,17 +258,25 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
+    apikeygroqTextbox.value = data.apikeygroq;
+    apikeyOpenRouterTextbox.value = data.apikeyOpenRouter;
     apikeyMistralTextbox.value = data.apikeyMistral;
     apikeyDeepSeekTextbox.value = data.apikeyDeepSeek;
     apikeyTranslateioTextbox.value = data.apikeyTranslateio
     apikeyClaudeTextbox.value = data.apikeyClaude;
     apikeyLingvanexTextbox.value = data.apikeyLingvanex;
     apikeyGeminiTextbox.value = data.apikeyGemini;
-    if (data.apikeyNLP == null && typeof apikeyNLP == "undefined") {
+    if (data.apikeyNLP == null && typeof data.apikeyNLP == "undefined") {
         apikeyNLPTextbox.value = "Enter key or leave empty";
     }
     else {
         apikeyNLPTextbox.value = data.apikeyNLP;
+    }
+    if (data.apikeygroq == null && typeof data.apikeygroq == "undefined") {
+        apikeygroqTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeygroqTextbox.value = data.apikeygroq;
     }
 
     if (data.apikeyOllama == null && typeof data.apikeyOllama == "undefined") {
@@ -280,6 +292,17 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         transselectBox.value = data.transsel;
     }
+
+    if (typeof data.OpenRouterSelect == 'undefined') {
+        OpenRouterselectBox.value = "openrouter/free";
+    }
+    else if (data.OpenRouterSelect == "") {
+        OpenRouterselectBox.value = "openrouter/free";
+    }
+    else {
+        OpenRouterselectBox.value = data.OpenRouterSelect;
+    }
+
     if (typeof data.OpenAISelect == 'undefined') {
         OpenAIselectBox.value = "gpt-3.5-turbo";
     }
@@ -289,6 +312,17 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         OpenAIselectBox.value = data.OpenAISelect;
     }
+
+    if (typeof data.groqSelect == 'undefined') {
+        groqselectBox.value = "llama-3.3-70b-versatile";
+    }
+    else if (data.groqSelect == "") {
+        groqselectBox.value = "llama-3.3-70b-versatile";
+    }
+    else {
+        groqselectBox.value = data.groqSelect;
+    }
+
     if (typeof data.MistralSelect == 'undefined') {
        MistralselectBox.value = "mistral-small-latest";
     }
@@ -568,6 +602,8 @@ button.addEventListener("click", function () {
    
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeyOpenAI = apikeyOpenAITextbox.value;
+    let apikeygroq = apikeygroqTextbox.value;
+    let apikeyOpenRouter = apikeyOpenRouterTextbox.value;
     let apikeyMistral = apikeyMistralTextbox.value;
     let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
     let apikeyTranslationio = apikeyTranslateioTextbox.value;
@@ -597,6 +633,16 @@ button.addEventListener("click", function () {
         OpenAITone = OpenAIToneBox.value;
     }
 
+    if (typeof OpenRouterselectBox.value == "undefined") {
+        OpenRoutersel = "openrouter/free";
+    }
+    else if (OpenRouterselectBox.value == "") {
+        OpenRoutersel = "openrouter/free";
+    }
+    else {
+        OpenRoutersel = OpenRouterselectBox.value;
+    }
+
     if (typeof OpenAIselectBox.value == "undefined") {
         OpenAIsel = "GPT-3.5-turbo";
     }
@@ -606,6 +652,17 @@ button.addEventListener("click", function () {
     else {
         OpenAIsel = OpenAIselectBox.value;
     }
+
+    if (typeof groqselectBox.value == "undefined") {
+        groqsel = "llama-3.3-70b-versatile";
+    }
+    else if (groqselectBox.value == "") {
+        groqsel = "llama-3.3-70b-versatile";
+    }
+    else {
+        groqsel = groqselectBox.value;
+    }
+
     if (typeof MistralselectBox.value == "undefined") {
         Mistralsel = "mistral-small-latest";
     }
@@ -778,6 +835,8 @@ button.addEventListener("click", function () {
             apikey: apikey,
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
+            apikeygroq: apikeygroq,
+            apikeyOpenRouter: apikeyOpenRouter,
             apikeyMistral: apikeyMistral,
             apikeyMicrosoft: apikeyMicrosoft,
             apikeyDeepSeek: apikeyDeepSeek,
@@ -794,6 +853,8 @@ button.addEventListener("click", function () {
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
             OpenAISelect: OpenAIsel,
+            groqSelect: groqsel,
+            OpenRouterSelect: OpenRoutersel,
             ollamaModel: OllamaselectBox.value.trim(),
             OpenAITone:OpenAITone,
             OpenAItemp: OpenAItempVal,
@@ -1492,3 +1553,94 @@ const toBoolean = (value) => {
     if (typeof value === "number") return value === 1;
     return false;
 };
+
+    // ============================================================
+// BACKUP & RESTORE SETTINGS
+// ============================================================
+
+document.getElementById("backupSettings").addEventListener("click", function () {
+    chrome.storage.local.get(null, function (data) {
+        const keysToBackup = [
+            "apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek",
+            "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama",
+            "apikeyLingvanex", "apikeyGemini", "apikeyNLP",
+            "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "ollamaPrompt", "reviewPrompt",
+            "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "ollamaModel",
+            "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k",
+            "OpenAIWait", "DeepLWait", "LMStudioWait", "TMwait", "bulkWait",
+            "transsel", "destlang",
+            "glossaryFile", "glossaryFileSecond",
+            "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore",
+            "showHistory", "showTransDiff", "glotDictGlos", "convertToLower",
+            "DeeplFree", "TMtreshold", "interXHR",
+            "LtKey", "LtUser", "LtLang", "LtFree",
+            "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary",
+            "WPTFscreenWidth", "strictValidate", "autoCopyClip", "DisableAutoClose",
+            "LocalOllama", "noPeriod", "DebugMode", "noUI"
+        ];
+
+        const backup = {};
+        keysToBackup.forEach(key => {
+            if (typeof data[key] !== "undefined") {
+                backup[key] = data[key];
+            }
+        });
+
+        const now = new Date();
+        const dateStr = now.toISOString().split("T")[0];
+        const filename = `wptf_settings_backup_${dateStr}.json`;
+
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        messageBox("info", "Settings backup created:<br><strong>" + filename + "</strong>" +"<br>The glossary files are not within the backup!<br>You need to load them again after restoring!");
+    });
+});
+
+document.getElementById("restoreSettings").addEventListener("click", function () {
+    document.getElementById("restoreFile").click();
+});
+
+document.getElementById("restoreFile").addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    if (!file) {
+        messageBox("error", "No file selected.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const restored = JSON.parse(e.target.result);
+
+            // Basic validation: check it looks like a WPTF backup
+            if (typeof restored !== "object" || Array.isArray(restored)) {
+                throw new Error("Invalid backup file format.");
+            }
+
+            chrome.storage.local.set(restored, function () {
+                if (chrome.runtime.lastError) {
+                    messageBox("error", "Restore failed:<br>" + chrome.runtime.lastError.message);
+                    return;
+                }
+
+                // Reload the page to reflect restored values in all form fields
+                messageBox("info", "Settings restored successfully!<br>The page will reload to apply the restored settings.");
+                setTimeout(() => location.reload(), 2000);
+            });
+
+        } catch (err) {
+            messageBox("error", "Failed to read backup file:<br>" + err.message);
+        }
+    };
+    reader.readAsText(file);
+
+    // Reset so same file can be re-selected if needed
+    event.target.value = "";
+});

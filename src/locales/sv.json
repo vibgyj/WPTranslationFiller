@@ -114,6 +114,7 @@
   "This function checks the page for missing verbs and if set starts spellchecking": "Denna funktion kontrollerar sidan för saknade verb och startar stavningskontroll om aktiverad",
   "This is the function to compare the suggestion with the local entry": "Denna funktion jämför förslaget med lokal post",
   "This is the function to copy originals with selected items": "Denna funktion kopierar original med valda objekt",
+  "This is the function to fetch newly added originals": "This is the function to fetch newly added originals",
   "This function populates the table with translations from the local database": "Denna funktion fyller tabellen med översättningar från lokal databas",
   "This is the function to save all suggestions selected in bulk": "Denna funktion sparar alla valda förslag i bulk",
   "This is the function to populate the local database with selected items": "Denna funktion fyller lokal databas med valda objekt",

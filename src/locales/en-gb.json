@@ -113,6 +113,7 @@
   "This function checks the page for missing verbs and if set starts spellchecking": "This Function Checks the Page for Missing Verbs and If Set Starts Spellchecking",
   "This is the function to compare the suggestion with the local entry": "This Button Starts Comparing the Suggestion with the Local Entry",
   "This is the function to copy originals  with selected items": "This Button Will Start the Function to Copy Originals with Selected Items",
+  "This is the function to fetch newly added originals": "This is the function to fetch newly added originals",
   "This function populates the table with translations from the local database": "This Button Starts Populating the Table with Translations from the Local Database",
   "This is the function to save all suggestions selected in bulk": "This Button Starts Bulksaving All Suggestions Selected",
   "This is the function to populate the local database with selected items": "This Button Will Start Populating the Local Database with Selected Items",

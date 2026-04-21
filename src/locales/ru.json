@@ -113,6 +113,7 @@
   "This function checks the page for missing verbs and if set starts spellchecking": "Эта функция проверяет страницу на отсутствующие глаголы и при необходимости запускает проверку орфографии",
   "This is the function to compare the suggestion with the local entry": "Эта кнопка запускает сравнение предложения с локальной записью",
   "This is the function to copy originals  with selected items": "Эта кнопка запустит функцию копирования оригиналов выбранных элементов",
+  "This is the function to fetch newly added originals": "This is the function to fetch newly added originals",
   "This function populates the table with translations from the local database": "Эта кнопка запускает заполнение таблицы переводами из локальной БД",
   "This is the function to save all suggestions selected in bulk": "Эта кнопка запускает массовое сохранение всех выбранных предложений",
   "This is the function to populate the local database with selected items": "Эта кнопка запустит заполнение локальной БД выбранными элементами",

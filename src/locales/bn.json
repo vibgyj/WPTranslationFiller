@@ -108,6 +108,7 @@
   "This function populates the table with translations from the local database": "লোকাল ডাটাবেজ থেকে পাওয়া অনুবাদের মাধ্যমে টেবিলটি পূরণ করে",
   "This is the function to compaire the suggestion with the local entry": "স্থানীয় ভুক্তির সাথে প্রস্তাবিত অনুবাদের তুলনা করবে",
   "This is the function to copy originals  with selected items": "নির্বাচিত আইটেমগুলোতে মূল টেক্সট অনুলিপি করবে",
+  "This is the function to fetch newly added originals": "This is the function to fetch newly added originals",
   "This is the function to save all suggestions selected in bulk": "নির্বাচিত সকল প্রস্তাবনা গুচ্ছাকারে সংরক্ষণ করুন",
   "This is the function to populate the local database with selected items": "নির্বাচিত আইটেমগুলোর মাধ্যমে লোকাল ডাটাবেজ পূরণ করবে",
   "This function translates the table with translations from the API": "API থেকে পাওয়া অনুবাদের মাধ্যমে টেবিলটি অনুবাদ করবে।",
