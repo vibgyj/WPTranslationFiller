@@ -108,15 +108,17 @@ async function getTransAI(
    // console.debug("Final prompt for OpenAI:", myprompt)
   if (!originalPreProcessed) {
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
-  }
-  originalPreProcessed = `"${originalPreProcessed}"`;
+    }
+  myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
+ // originalPreProcessed = `"${originalPreProcessed}"`;
   let maxTokens = estimateMaxTokens(originalPreProcessed);
   //let prompt_tokens = estimateMaxTokens(myprompt);
   max_Tokens = maxTokens
   //console.debug("originalPreProcessed:",originalPreProcessed)
   messages = [
-    { role: 'system', content: myprompt },
-    { role: 'user', content: `translate this: ${originalPreProcessed}` }
+    //{ role: 'system', content: myprompt },
+      //{ role: 'user', content: `translate this: ${originalPreProcessed}` }
+    { role: 'user', content: myprompt }
   ];
 
   if (OpenAISelect === 'undefined' || !OpenAISelect) {

@@ -370,7 +370,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (!resp.ok) {
                     // Return error message instead of raw response
                     const msg = await resp.text();
+                    console.debug("Groq error response:", msg);
                     sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
+                    stop = true
                     return;
                 }
                 //console.debug("response status:", resp) 
@@ -381,10 +383,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 } else {
                     data = await resp.text();
                 }
-
+                console.debug("data:", data) 
                 sendResponse({ result: data });
             } catch (err) {
                 sendResponse({ error: err.toString() });
+                stop = true
             }
         })();
 

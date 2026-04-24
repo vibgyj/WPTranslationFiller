@@ -43,3 +43,8 @@ Version 3.5.18 Added openRouter as API for translation
 Version 3.5.19 Improved glossary and prompt behavior for openAI, LMstudio, and Ollama, they were not using the glossary and prompt properly, now added a function to fetch the glossary and prompt from the local storage and use it in the translation functions
 Version 3.5.19 Added new function to check start and end of the string for spaces, exclamation marks, question marks
 Version 3.5.20 Added groq API for translation with divers models
+Version 3.5.21 Added js entry for groq into manifest for Firefox
+Version 3.5.22 Fixed a problem with showing the iMap for missing placeholders
+Version 3.5.22 Fixed a problem where the missing placeholders check was checking the text "No suggestions"
+Version 3.5.22 Fixed translation with groq no stopping on error 429
+Version 3.5.23 Added missing texts in the settings page

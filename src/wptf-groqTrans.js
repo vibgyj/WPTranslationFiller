@@ -19,7 +19,7 @@ async function groqTranslate(original, destlang, record, apikeygroq, OpenAIPromp
     var timeout = 50;
     errorstate = "OK";
     // Preprocess original
-    var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "groq");
     
     // Wait the timeout delay if needed
    // await delay(timeout);
@@ -108,14 +108,18 @@ async function getTransgroq(
   if (!originalPreProcessed) {
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
-  originalPreProcessed = `"${originalPreProcessed}"`;
+    //  originalPreProcessed = `"${originalPreProcessed}"`;
+    console.debug("Original pre-processed text before inserting into prompt:", originalPreProcessed)
+  myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
   let maxTokens = estimateMaxTokens(originalPreProcessed);
   //let prompt_tokens = estimateMaxTokens(myprompt);
   max_Tokens = maxTokens
   //console.debug("originalPreProcessed:",originalPreProcessed)
   messages = [
-    { role: 'system', content: myprompt },
-    { role: 'user', content: `translate this: ${originalPreProcessed}` }
+   // { role: 'system', content: myprompt },
+      // { role: 'user', content: `translate this: ${originalPreProcessed}` }
+      { role: 'user', content: myprompt }
+
   ];
 
   if (groqSelect === 'undefined' || !groqSelect) {
@@ -198,9 +202,9 @@ async function getTransgroq(
                 (res) => resolve(res)
             );
        });
-
+       
        if (!result) {
-        console.debug("groq proxy returned undefined");
+       // console.debug("groq proxy returned undefined");
         return "NOK";
     }
 
@@ -208,10 +212,13 @@ async function getTransgroq(
         const duration = ((Date.now() - start) / 1000).toFixed(2);
            if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
             // Example of result.error: "Request failed (401): <some text>"
+          // const match = result.error.match(/Request failed \((\d+)\)/);
+          // const statusCode = match ? match[1] : "unknown";
+           //console.debug("Editor:",editor).
            const match = result.error.match(/Request failed \((\d+)\)/);
-           const statusCode = match ? match[1] : "unknown";
-           //console.debug("Editor:",editor)
-           if (statusCode == '400') {
+           const statusCode = match ? parseInt(match[1]) : null;
+           
+           if (statusCode == 400) {
                if (editor) {
                    messageBox(
                        "warning",
@@ -222,7 +229,7 @@ async function getTransgroq(
                    return `Error 400`;
                }
            }
-           else if (statusCode == '401') {
+           else if (statusCode == 401) {
                if (editor) {
                    messageBox(
                        "warning",
@@ -233,7 +240,7 @@ async function getTransgroq(
                    return `Error 401`;
                }
            }
-           else if (statusCode == '403') {
+           else if (statusCode == 403) {
                if (editor) {
                    messageBox(
                        "warning",
@@ -244,7 +251,7 @@ async function getTransgroq(
                    return `Request failed with status ${statusCode}. Country not supported!`;
                }
            }
-            if (statusCode == '404') {
+            if (statusCode == 404) {
                if (editor) {
                    messageBox(
                        "warning",
@@ -255,18 +262,21 @@ async function getTransgroq(
                    return `Error 401`;
                }
            }
-           else if (statusCode == '429') {
+            else if (statusCode == 429) {
                if (editor) {
                    messageBox(
                        "warning",
                        `Request failed with status ${statusCode}. Rate limit reached!`
                    );
+                  
+                   return "Error 429";
                }
                else {
-                   return `Request failed with status ${statusCode}. Rate limit reached!`;
+                   //console.debug("Error 429")
+                   return "Error 429";
                }
            }
-           else if (statusCode == '500') {
+           else if (statusCode == 500) {
                if (editor) {
                    messageBox(
                        "warning",

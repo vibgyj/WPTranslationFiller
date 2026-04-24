@@ -2633,7 +2633,7 @@ function countOccurrences(arr) {
 }
 
 function checkPlaceholders(original, translation, lang = "translation", LineNo) {
-    if (translation != null && translation.trim() != "") {
+    if (translation != null && translation.trim() != "" && translation != "No suggestions") {
         const origPlaceholders = extractPlaceholders(original);
         const transPlaceholders = extractPlaceholders(translation);
 
@@ -2675,8 +2675,7 @@ function checkPlaceholders(original, translation, lang = "translation", LineNo) 
     return false;
 }
 function showPlaceholderLog(position = "top-right") {
-    // Remove existing panel if present
-    const existing = document.getElementById("placeholder-log-iframe");
+    const existing = document.getElementById("placeholder-log-panel");
     if (existing) existing.remove();
 
     const positionStyles = {
@@ -2703,52 +2702,10 @@ function showPlaceholderLog(position = "top-right") {
         ">${entry.text}</div>`;
     }).join("");
 
-    const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: sans-serif; background: #fff; }
-                #header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 8px 12px;
-                    background: #1565c0;
-                    color: #fff;
-                    font-size: 14px;
-                    font-weight: bold;
-                    cursor: move;
-                    user-select: none;
-                }
-                #close-btn {
-                    background: transparent;
-                    border: 1px solid #fff;
-                    color: #fff;
-                    cursor: pointer;
-                    padding: 2px 8px;
-                    border-radius: 3px;
-                    font-size: 13px;
-                }
-                #close-btn:hover { background: #c62828; border-color: #c62828; }
-                #log-body { overflow-y: auto; max-height: 340px; padding: 4px 0; }
-            </style>
-        </head>
-        <body>
-            <div id="header">
-                📋 Placeholder Check Results
-                <button id="close-btn" onclick="window.parent.document.getElementById('placeholder-log-iframe').remove()">✕ Close</button>
-            </div>
-            <div id="log-body">${rows || '<div style="padding:10px;color:#888;">No entries logged.</div>'}</div>
-        </body>
-        </html>
-    `;
-
-    // Create the iframe
-    const iframe = document.createElement("iframe");
-    iframe.id = "placeholder-log-iframe";
-    iframe.style.cssText = `
+    // Create a div instead of an iframe
+    const panel = document.createElement("div");
+    panel.id = "placeholder-log-panel";
+    panel.style.cssText = `
         position: fixed;
         ${posStyle}
         width: 560px;
@@ -2758,32 +2715,68 @@ function showPlaceholderLog(position = "top-right") {
         box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         z-index: 999999;
         background: white;
+        display: flex;
+        flex-direction: column;
+        font-family: sans-serif;
     `;
 
-    document.body.appendChild(iframe);
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(html);
-    iframe.contentDocument.close();
+    panel.innerHTML = `
+        <div id="placeholder-log-header" style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #1565c0;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: move;
+            user-select: none;
+            border-radius: 3px 3px 0 0;
+            flex-shrink: 0;
+        ">
+            📋 Placeholder Check Results
+            <button style="
+                background: transparent;
+                border: 1px solid #fff;
+                color: #fff;
+                cursor: pointer;
+                padding: 2px 8px;
+                border-radius: 3px;
+                font-size: 13px;
+            ">✕ Close</button>
+        </div>
+        <div style="
+            overflow-y: auto;
+            flex: 1;
+            padding: 4px 0;
+        ">${rows || '<div style="padding:10px;color:#888;">No entries logged.</div>'}</div>
+    `;
+
+    document.body.appendChild(panel);
+
+    // Close button
+    panel.querySelector("button").addEventListener("click", () => panel.remove());
 
     // Drag support
-    const header = iframe.contentDocument.getElementById("header");
+    const header = panel.querySelector("#placeholder-log-header");
     let isDragging = false, startX, startY, origLeft, origTop;
 
     header.addEventListener("mousedown", (e) => {
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
-        const rect = iframe.getBoundingClientRect();
+        const rect = panel.getBoundingClientRect();
         origLeft = rect.left;
         origTop  = rect.top;
-        iframe.style.right  = "auto";
-        iframe.style.bottom = "auto";
+        panel.style.right  = "auto";
+        panel.style.bottom = "auto";
     });
 
     document.addEventListener("mousemove", (e) => {
         if (!isDragging) return;
-        iframe.style.left = (origLeft + e.clientX - startX) + "px";
-        iframe.style.top  = (origTop  + e.clientY - startY) + "px";
+        panel.style.left = (origLeft + e.clientX - startX) + "px";
+        panel.style.top  = (origTop  + e.clientY - startY) + "px";
     });
 
     document.addEventListener("mouseup", () => { isDragging = false; });

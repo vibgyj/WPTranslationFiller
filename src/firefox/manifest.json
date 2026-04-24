@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler Extended",
-  "version": "3.5.19",
+  "version": "3.5.23",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -124,6 +124,7 @@
         "wptf-database.js",
         "wptf-inject.js",
         "wptf-deeplGloss.js",
+        "wptf-groqTrans.js",
         "wptf-mark_glossary.js",
         "wptf-spellcheck.js",
         "wptf-purify.min.js",

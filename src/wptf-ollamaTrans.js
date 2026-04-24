@@ -26,7 +26,7 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
      );
    // console.debug("Filtered glossary (line breaks):", filteredGloss)
     const compactGloss = filteredGloss.replace(/\n+/g, "|");
-    console.debug("Filtered glossary:", compactGloss)
+    //console.debug("Filtered glossary:", compactGloss)
     let convertedGlossary = await convertGlossaryForOllamaMerged(compactGloss)
     //originalPreProcessed = await applyGlossaryMap(originalPreProcessed, convertedGlossary)
   // Replace glossary and language names
