@@ -1931,12 +1931,12 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
     var myglossary = ""
     //console.debug("Is formal:",formal)
     if (formal == true) {
-        //console.debug("we have formal")
-        DefGlossary == true
+        console.debug("we have formal")
+        DefGlossary == false
         myglossary = glossary1
     }
     else {
-        DefGlossary == false
+        DefGlossary == true
         myglossary = glossary
     }
     //console.debug("validatePage glossary:",myglossary)
@@ -2782,9 +2782,9 @@ function showPlaceholderLog(position = "top-right") {
     document.addEventListener("mouseup", () => { isDragging = false; });
 }
 function pruneGlossary(openAiGloss, originalPreProcessed, original) {
-
+    console.debug("Pruning glossary with input:", openAiGloss);
   const isArrayFormat = Array.isArray(openAiGloss);
-
+    console.debug("Pruning glossary with input format:", isArrayFormat ? "Array of pairs" : "String", openAiGloss);
   // -----------------------------
   // STEP 1: NORMALIZE INPUT
   // -----------------------------

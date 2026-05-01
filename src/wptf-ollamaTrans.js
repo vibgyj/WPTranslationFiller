@@ -7,7 +7,26 @@
 
 async function translateWithOllama(original, destlang, record, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt) {
     var myTranslatedText = "";
-
+    /****************************************************
+ * LOCALE → LANGUAGE NAME
+ ****************************************************/
+const LOCALE_TO_LANGUAGE = {
+    af: "Afrikaans",   ar: "Arabic",      bg: "Bulgarian",
+    bn: "Bengali",     cs: "Czech",        da: "Danish",
+    de: "German",      el: "Greek",        es: "Spanish",
+    et: "Estonian",    fa: "Persian",      fi: "Finnish",
+    fr: "French",      he: "Hebrew",       hi: "Hindi",
+    hr: "Croatian",    hu: "Hungarian",    hy: "Armenian",
+    id: "Indonesian",  it: "Italian",      ja: "Japanese",
+    ka: "Georgian",    ko: "Korean",       lt: "Lithuanian",
+    lv: "Latvian",     mk: "Macedonian",   ms: "Malay",
+    nl: "Dutch",       no: "Norwegian",    pl: "Polish",
+    pt: "Portuguese",  ro: "Romanian",     ru: "Russian",
+    sk: "Slovak",      sl: "Slovenian",    sq: "Albanian",
+    sr: "Serbian",     sv: "Swedish",      th: "Thai",
+    tr: "Turkish",     uk: "Ukrainian",    ur: "Urdu",
+    vi: "Vietnamese",  zh: "Chinese"
+};
     // Ensure ollamaModel has a valid value, fallback to default
     let mymodel = (typeof ollamaModel === "string" && ollamaModel.trim()) ? ollamaModel : "gemma3:27b";
     // Replace glossary and language names
@@ -31,17 +50,14 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
     //originalPreProcessed = await applyGlossaryMap(originalPreProcessed, convertedGlossary)
   // Replace glossary and language names
     let myprompt = await ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
+    myprompt =  await myprompt.replaceAll("{{TEXT}}", originalPreProcessed);
     //myprompt = ollamaPrompt
     myprompt = await myprompt.replaceAll("{{tone}}", OpenAITone);
-     if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
-     else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
-     else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-     else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian'); 
-     else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
-     else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
-     else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
-     else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-     else myprompt = await myprompt.replaceAll("{{toLanguage}}", destlang);
+    
+     const resolvedLanguage = LOCALE_TO_LANGUAGE[destlang] ?? destlang;
+
+     myprompt = await myprompt.replaceAll("{{toLanguage}}", resolvedLanguage);
+
     //console.debug("Ollama Prompt after replacements:", myprompt);
     if (toBoolean(is_editor)) {
         showTranslationSpinner(__("Fetching translation…"));
@@ -59,7 +75,6 @@ async function translateWithOllama(original, destlang, record, OpenAIPrompt, pre
                             action: "ollama_translate",
                             data: {
                                 text: originalPreProcessed,                          // string to translate
-                                target_lang: destlang,               // optional, can be ignored by background
                                 apiKey: apikeyOllama,                   // your API key
                                 systemPrompt:myprompt,                // string, e.g., "Translate EN → NL, formal"
                                 model: mymodel,          // example model, must exist

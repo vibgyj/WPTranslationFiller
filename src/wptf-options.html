@@ -129,6 +129,9 @@
         #bulkWait {
             width: 50px;
         }
+        #BatchSize {
+            width: 40px;
+        }
 
         #OpenAI_temp {
             width: 40px;
@@ -516,14 +519,14 @@
                 <td>
                     <div class="form-input">
                         <select title="Select a model for groq" name="groqSel" id="groqSelect">
-                           
+
                             <option value="qwen/qwen3-32b">qwen/qwen3-32b</option>
                             <option value="openai/gpt-oss-safeguard-20b">openai/gpt-oss-safeguard-20b</option>
                             <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
                             <option value="llama3-70b-instruct">llama-3.3-70b-instruct</option>
                             <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
                             <option value="meta-llama/Llama-4-Scout-17B-16E-Instruct">meta-llama/Llama-4-Scout-17B-16E-Instruct</option>
-                            
+
                         </select>
                     </div>
                 </td>
@@ -555,6 +558,7 @@
                                              Set the Top_k to 40&#10;
                                              Visit the models site for the exact values">?</span>
                 </td>
+
                 <td>
                     <div class="form-input">
                         <select title="Select a model for openRouter" name="OpenRoutersel" id="OpenRouterSelect">
@@ -672,8 +676,6 @@
                         <input id="destination_lang" type="text" value="nl" />
                         <span class="tooltip" data-tooltip="Use the id from the list of languages provided by the API translator in lowercase">?</span>
 
-
-
                         <select title="Select a language" name="langsel" id="langselect">
                             <option value="bn">Bengali</option>
                             <option value="ca">Catalan</option>
@@ -786,6 +788,20 @@
                     </div>
                 </td>
             </tr>
+
+            <tr>
+                <td>
+                    <label for="BatchSize">Batch Size</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="BatchSize" type="number" min="1" max="100" step="1" value="10" />
+                        <span class="tooltip" data-tooltip="Change this when you get to many rate errors<br>Batch is amount of lines to use">?</span>
+                        <label style="margin: 22px" for="BatchSize">Size of Batches</label>
+                    </div>
+                </td>
+            </tr>
+
 
             <tr>
                 <td>

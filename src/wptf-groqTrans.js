@@ -1,731 +1,348 @@
-﻿/**
- * This file includes all functions for translating with the deepL API and uses a promise
- * It depends on commonTranslate for additional translation functions
- */
-// Call this at the start of your translation batch loop
+﻿/****************************************************
+ * START / END BATCH FLAGS
+ ****************************************************/
 function startTranslationBatch() {
-  localStorage.setItem('openai_prompt_sent', 'false');
+    localStorage.setItem('openai_prompt_sent', 'false');
 }
 
-// Call this at the end of your translation batch loop or when needed
 function endTranslationBatch() {
-  localStorage.removeItem('openai_prompt_sent');
+    localStorage.removeItem('openai_prompt_sent');
 }
+
 function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function groqTranslate(original, destlang, record, apikeygroq, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
-    var timeout = 50;
-    errorstate = "OK";
-    // Preprocess original
-    var originalPreProcessed = await preProcessOriginal(original, preverbs, "groq");
-    
-    // Wait the timeout delay if needed
-   // await delay(timeout);
-    
-    // Await the translation call
-    var result = await getTransgroq(original, destlang, record, apikeygroq, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
-    
-    // You can handle errorstate or result here if needed
-    return result;
+/****************************************************
+ * NORMALIZE (alleen voor glossary matching)
+ ****************************************************/
+function normalizeGlossaryText(str) {
+    return (str || "")
+        .toLowerCase()
+        .replace(/&amp;/g, "&")
+        .replace(/[^a-z0-9\s]/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
-async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
-    // First we have to preprocess the original to remove unwanted chars
-    //var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
-    var originalPreProcessed = original;
-    //errorstate = "NOK"
-    if (apikeyOpenAI != "") {
-        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview);
-    }
-    else {
+/****************************************************
+ * PRUNE GLOSSARY
+ ****************************************************/
+function pruneGlossary(openAiGloss, originalPreProcessed, original) {
 
-        errorstate = "No apikey provided!"
-    }
-        //console.debug("OpenAI errorstate:",errorstate,result)
-    return errorstate;
-}
+    const isArrayFormat = Array.isArray(openAiGloss);
+    let entries = [];
 
-
-async function getTransgroq(
-  original, language, record, apikeygroq, OpenAIPrompt,
-  originalPreProcessed, rowId, transtype, plural_line, formal,
-  locale, convertToLower, editor, counter, groqSelect,
-  OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
-) {
-    //console.debug("Starting getTransAI with original:", record, "language:", language, "rowId:", rowId);
-  var show_debug = false
-  var myTtranslatedText = "";
-  let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-    let prevstate = current ? current.innerText : "";
-    
-  let destlang = language;
-    language = language.toUpperCase();
-    var messages;
-
-  let tempPrompt = OpenAIPrompt + '\n'
-    let myprompt = "";
-
-  // Handle tone and language in prompt
-  if (OpenAITone === 'formal') {
-    if (destlang === 'nl') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
-    } else if (destlang === 'de') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
-    } else if (destlang === 'fr') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
+    if (isArrayFormat) {
+        entries = openAiGloss.map(([k, v]) => ({
+            source: String(k).toLowerCase(),
+            target: String(v)
+        }));
     } else {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+        entries = (openAiGloss || "")
+            .split(/,\s*/)
+            .map(e => {
+                const parts = e.split(/->|=|:/);
+                return {
+                    source: (parts[0] || "").replace(/["']/g, "").trim().toLowerCase(),
+                    target: (parts[1] || "").replace(/["']/g, "").trim()
+                };
+            })
+            .filter(e => e.source && e.target);
     }
-  } else {
-    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
-  }
-   // compact glossary (IMPORTANT IMPROVEMENT)
-    //console.debug("Original glossary:", openAiGloss)
-    const filteredGloss = pruneGlossary(
-       openAiGloss,
-       originalPreProcessed,
-       record
-     );
-   // console.debug("Filtered glossary (line breaks):", filteredGloss)
-    const compactGloss = filteredGloss.replace(/\n+/g, "|");
-    //console.debug("Filtered glossary:", compactGloss)
-  // Replace glossary and language names
-  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss);
-    //console.debug("Prompt after glossary replacement:", myprompt)
-  if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
-  else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
-  else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-  else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian'); 
-  else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
-  else if (destlang === 'id') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Indonesian');
-  else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
-  else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
-  else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-  else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
-   // console.debug("Final prompt for OpenAI:", myprompt)
-  if (!originalPreProcessed) {
-    originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
-  }
-    //  originalPreProcessed = `"${originalPreProcessed}"`;
-    console.debug("Original pre-processed text before inserting into prompt:", originalPreProcessed)
-  myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
-  let maxTokens = estimateMaxTokens(originalPreProcessed);
-  //let prompt_tokens = estimateMaxTokens(myprompt);
-  max_Tokens = maxTokens
-  //console.debug("originalPreProcessed:",originalPreProcessed)
-  messages = [
-   // { role: 'system', content: myprompt },
-      // { role: 'user', content: `translate this: ${originalPreProcessed}` }
-      { role: 'user', content: myprompt }
 
-  ];
+    const text = (originalPreProcessed || "").toLowerCase();
+    const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matchesText = (key) => new RegExp(`\\b${escapeRegExp(key)}\\b`, 'i').test(text);
 
-  if (groqSelect === 'undefined' || !groqSelect) {
-    messageBox("error", "You did not set the groq model!<br> Please check your options");
-    return "NOK";
-  }
- // reasoning={"effort": "minimal"}
-    const mymodel = groqSelect.toLowerCase();
-    
-   if (show_debug) console.debug("Model selected:",mymodel);
-  let dataNew = {};
+    const result = [];
+    const matchedKeys = new Set();
 
-    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano" ) {
-        dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: Number(Top_p),
-            top_k: Number(Top_k),
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'minimal',
-            verbosity: 'low',
-            apiKey: apikeygroq,
-            prompt_cache_key: 'WPTF translation',
-        };
+    for (const entry of entries) {
+        if (matchesText(entry.source)) {
+            result.push(entry);
+            matchedKeys.add(entry.source);
+        }
     }
-    
-    else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano"  || mymodel === "gpt-5.4") { 
-         dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: Number(Top_p),
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'none',
-            verbosity: 'low',
-            apiKey: apikeygroq,
-            prompt_cache_key: 'WPTF translation',
-        };
-    }
-    else if (mymodel === "gpt-5.3-chat-latest" ) { 
-         dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: Number(Top_p),
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'medium',
-            verbosity: 'low',
-            apiKey: apikeygroq,
-            prompt_cache_key: 'WPTF translation'
-           
-        };
-  }
-  else {
-    dataNew = {
-      model: mymodel, 
-      messages,
-      max_tokens: max_Tokens,
-      n: 1,
-      temperature: OpenAItemp,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      top_p: Number(Top_p),
-     apiKey: apikeygroq,
 
+    // Fallback DOM (optioneel)
+    if (original) {
+        const container =
+            original?.getElementsByClassName?.("source-string__singular")?.[0]
+            || new DOMParser().parseFromString(original || "", "text/html");
+
+        const nodes = container?.querySelectorAll?.(".glossary-word") || [];
+
+        nodes.forEach(node => {
+            const key = node.textContent.trim().toLowerCase();
+            const raw = node.getAttribute("data-translations");
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw.replace(/&quot;/g, '"'));
+                const translation = data?.[0]?.translation;
+                if (translation && !matchedKeys.has(key) && matchesText(key)) {
+                    result.push({ source: key, target: translation });
+                }
+            } catch (e) {}
+        });
+    }
+
+    return result.map(e => `"${e.source}" -> "${e.target}"`).join("\n");
+}
+
+/****************************************************
+ * LOCALE → LANGUAGE NAME
+ ****************************************************/
+const LOCALE_TO_LANGUAGE = {
+    af: "Afrikaans",   ar: "Arabic",      bg: "Bulgarian",
+    bn: "Bengali",     cs: "Czech",        da: "Danish",
+    de: "German",      el: "Greek",        es: "Spanish",
+    et: "Estonian",    fa: "Persian",      fi: "Finnish",
+    fr: "French",      he: "Hebrew",       hi: "Hindi",
+    hr: "Croatian",    hu: "Hungarian",    hy: "Armenian",
+    id: "Indonesian",  it: "Italian",      ja: "Japanese",
+    ka: "Georgian",    ko: "Korean",       lt: "Lithuanian",
+    lv: "Latvian",     mk: "Macedonian",   ms: "Malay",
+    nl: "Dutch",       no: "Norwegian",    pl: "Polish",
+    pt: "Portuguese",  ro: "Romanian",     ru: "Russian",
+    sk: "Slovak",      sl: "Slovenian",    sq: "Albanian",
+    sr: "Serbian",     sv: "Swedish",      th: "Thai",
+    tr: "Turkish",     uk: "Ukrainian",    ur: "Urdu",
+    vi: "Vietnamese",  zh: "Chinese"
+};
+
+/****************************************************
+ * CORE TRANSLATION
+ ****************************************************/
+async function getTransgroq(
+    original,
+    language,
+    record,
+    apikeygroq,
+    OpenAIPrompt,
+    originalPreProcessed,
+    rowId,
+    transtype,
+    plural_line,
+    formal,
+    locale,
+    convertToLower,
+    editor,
+    counter,
+    groqSelect,
+    OpenAItemp,
+    spellCheckIgnore,
+    OpenAITone,
+    is_editor,
+    openAiGloss
+) {
+    const resolvedLanguage = LOCALE_TO_LANGUAGE[language] ?? language;
+
+    /****************************************************
+     * PRUNED GLOSSARY
+     ****************************************************/
+    const prunedGlossary = pruneGlossary(openAiGloss, originalPreProcessed, null) || "";
+
+    /****************************************************
+     * BUILD PROMPT
+     * Uses compact format: i = rowId, t = text to translate
+     * Expected response:   i = rowId, tr = translation
+     ****************************************************/
+    const promptItems = JSON.stringify([{ i: rowId, t: originalPreProcessed }]);
+
+    const prompt = OpenAIPrompt
+        .replace(/\{\{toLanguage\}\}/g, resolvedLanguage)
+        .replace(/\{\{tone\}\}/g,       OpenAITone ?? "")
+        .replace(/\{\{text\}\}/g,       promptItems)
+        .replace(/\{\{glossary\}\}/g,   prunedGlossary);
+
+    const data = {
+        model: groqSelect,
+        messages: [{ role: "user", content: prompt }],
+        temperature: OpenAItemp,
+        top_p: 1,
+        apiKey: apikeygroq
     };
-  }
-  
-  
-    try {
-        const start = Date.now()
-        //console.debug("We start call at :",start)
-        const result = await new Promise((resolve) => {
-            chrome.runtime.sendMessage(
-                { action: "groq", data: dataNew }, // send only the data
-                (res) => resolve(res)
-            );
-       });
-       
-       if (!result) {
-       // console.debug("groq proxy returned undefined");
+
+    /****************************************************
+     * CALL MODEL
+     ****************************************************/
+    const result = await new Promise(resolve => {
+        chrome.runtime.sendMessage({ action: "groq", data }, res => resolve(res));
+    });
+
+    if (!result || result.error) {
+        const code = extractGroqErrorCode(result?.error);
+        if (code == 429) {
+            messageBox("error", "You have exceeded your rate limit!<br>");
+        } else {
+            messageBox("error", "There has been some uncatched error<br>" + result?.error);
+        }
         return "NOK";
     }
 
-       if (result.error) {
-        const duration = ((Date.now() - start) / 1000).toFixed(2);
-           if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
-            // Example of result.error: "Request failed (401): <some text>"
-          // const match = result.error.match(/Request failed \((\d+)\)/);
-          // const statusCode = match ? match[1] : "unknown";
-           //console.debug("Editor:",editor).
-           const match = result.error.match(/Request failed \((\d+)\)/);
-           const statusCode = match ? parseInt(match[1]) : null;
-           
-           if (statusCode == 400) {
-               if (editor) {
-                   messageBox(
-                       "warning",
-                       `Request failed with status ${statusCode} <br>${result.error}`
-                   );
-               }
-               else {
-                   return `Error 400`;
-               }
-           }
-           else if (statusCode == 401) {
-               if (editor) {
-                   messageBox(
-                       "warning",
-                       `Request failed with status ${statusCode}. Please check your license!`
-                   );
-               }
-               else {
-                   return `Error 401`;
-               }
-           }
-           else if (statusCode == 403) {
-               if (editor) {
-                   messageBox(
-                       "warning",
-                       `Request failed with status ${statusCode}. Country not supported!`
-                   );
-               }
-               else {
-                   return `Request failed with status ${statusCode}. Country not supported!`;
-               }
-           }
-            if (statusCode == 404) {
-               if (editor) {
-                   messageBox(
-                       "warning",
-                       `Request failed with status ${statusCode}. Please check your license!<br> ${result.error}`
-                   );
-               }
-               else {
-                   return `Error 401`;
-               }
-           }
-            else if (statusCode == 429) {
-               if (editor) {
-                   messageBox(
-                       "warning",
-                       `Request failed with status ${statusCode}. Rate limit reached!`
-                   );
-                  
-                   return "Error 429";
-               }
-               else {
-                   //console.debug("Error 429")
-                   return "Error 429";
-               }
-           }
-           else if (statusCode == 500) {
-               if (editor) {
-                   messageBox(
-                       "warning",
-                       `Request failed with status ${statusCode}. Server issue!`
-                   );
-               }
-               else {
-                   return `Request failed with status ${statusCode}. Server issue!`;
-               }
-           }
-           else {
-               return `Request failed with status ${statusCode}. Some undefined error happened!`;
-           }
-    }
-    const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug("groq proxy response (raw):", result.result," ",duration);
+    /****************************************************
+     * PARSE RESPONSE
+     * Accepts both "tr" (correct) and "t" (model used
+     * input key by mistake) as the translation key.
+     ****************************************************/
+    let raw = result?.result?.choices?.[0]?.message?.content ?? "";
 
-   const data = result.result; // raw proxy response
-        let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
-        
-   if (text === '""' || text === "") {
-       text = "No suggestions";
-   }
+    try {
+        raw = raw
+            .replace(/<think>[\s\S]*?<\/think>/g, "")
+            .replace(/```json\s*/gi, "")
+            .replace(/```/g, "")
+            .trim();
 
-    // Post-processing after successful result
-    const start1 = Date.now()
-    //console.debug("text received:",text)
-    myTranslatedText = await postProcessTranslation(
-        original,
-        text,
-        replaceVerb,
-        originalPreProcessed,
-        "groq",
-        convertToLower,
-        spellCheckIgnore,
-        locale
+        // Robustly parse the response — the model sometimes:
+        // 1. Adds an extra closing brace e.g. ...value"}}]} instead of ...value"}]}
+        // 2. Double-escapes quotes in XML attributes e.g. <x id=\\"var\\"/>
+        // Strategy: try direct parse, then progressively fix known issues.
+        let json = null;
+        const candidates = [
+            raw,
+            raw.replace(/\}\}\]/g, "}]"),           // fix extra closing brace before ]
+            raw.replace(/\}\}\]\}/g, "}]}"),         // fix extra closing brace at end
+        ];
+
+        for (const candidate of candidates) {
+            try {
+                json = JSON.parse(candidate);
+                break;
+            } catch(e) {}
+        }
+
+        // Last resort: scan all } positions from end to find valid JSON
+        if (!json) {
+            const start = raw.indexOf("{");
+            if (start !== -1) {
+                for (let end = raw.length - 1; end >= start; end--) {
+                    if (raw[end] !== "}") continue;
+                    try {
+                        json = JSON.parse(raw.substring(start, end + 1));
+                        break;
+                    } catch(e) {}
+                }
+            }
+        }
+
+        if (!json) {
+            console.error("[Groq] Parse failed after all fixes:", raw);
+            return "NOK";
+        }
+
+        if (!Array.isArray(json.results)) {
+            console.error("[Groq] No results array in response:", raw);
+            return "NOK";
+        }
+
+        // Remap "t" → "tr" if model used the input key by mistake
+        for (const r of json.results) {
+            if (!("tr" in r) && "t" in r) r.tr = r.t;
+        }
+
+        const item = json.results.find(r => String(r.i) === String(rowId));
+
+        if (!item) {
+            console.error("[Groq] No matching id:", rowId, json.results);
+            return "NOK";
+        }
+
+        const finalText = await postProcessTranslation(
+            original,
+            item.tr,
+            replaceVerb,
+            originalPreProcessed,
+            "groq",
+            convertToLower,
+            spellCheckIgnore,
+            locale
         );
-        
-    const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] myTranslatedText postprocessed ${duration2}s`, myTranslatedText);
 
-    //if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
-    const start2 = Date.now()
-    await processTransl(
+        await processTransl(
+            original,
+            finalText,
+            language,
+            record,
+            rowId,
+            transtype,
+            plural_line,
+            locale,
+            convertToLower,
+            editor
+        );
+
+        return "OK";
+
+    } catch (err) {
+        console.error("[Groq] Parse error:", err, raw);
+        return "NOK";
+    }
+}
+
+/****************************************************
+ * ENTRY WRAPPER
+ ****************************************************/
+async function groqTranslate(
+    original,
+    destlang,
+    record,
+    apikeygroq,
+    OpenAIPrompt,
+    preverbs,
+    rowId,
+    transtype,
+    plural_line,
+    formal,
+    locale,
+    convertToLower,
+    editor,
+    counter,
+    groqSelect,
+    OpenAItemp,
+    spellCheckIgnore,
+    OpenAITone,
+    is_editor,
+    openAiGloss
+) {
+    const originalPreProcessed = await preProcessOriginal(original, preverbs, "groq");
+
+    return await getTransgroq(
         original,
-        myTranslatedText,
-        language,
+        destlang,
         record,
+        apikeygroq,
+        OpenAIPrompt,
+        originalPreProcessed,
         rowId,
         transtype,
         plural_line,
+        formal,
         locale,
         convertToLower,
-        current
+        editor,
+        counter,
+        groqSelect,
+        OpenAItemp,
+        spellCheckIgnore,
+        OpenAITone,
+        is_editor,
+        openAiGloss
     );
-
-     const duration3 = ((Date.now() - start2) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
-    const durationSec = ((Date.now() - start) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
-
-    return "OK";
-
-    } catch (err) {
-        console.error("Fetch groq failed:", err);
-        return null;
-    }
-
-    console.debug("result:")
-  //  if (!OpenAiResponse.ok) {
-      // error object from OpenAI might be in data.error.message
-   //   const errorMsg = data?.error?.message || `HTTP error ${response.status}`;
-  //    if (editor) messageBox("error", `OpenAI API Error: ${errorMsg}`);
-  //    if (show_debug) console.error("OpenAI API error:", errorMsg);
-  //    return "NOK";
-  //  }
-
-  
- // } catch (error) {
- //   if (editor) messageBox("error", "OpenAI API fetch error: " + error.message);
- //   if (show_debug) console.error("OpenAI fetch error:", error);
- //   return "NOK";
- // }
 }
 
-
-
-async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
-    var row = "";
-    var ul = "";
-    var current = "";
-    var prevstate = "";
-    var pluralpresent = "";
-    var responseObj = "";
-    var textareaElem = "";
-    var select = "";
-    var textareaElem1 = "";
-    var previewElem = "";
-    //var preview = "";
-    var status = "";
-    var error;
-    var data;
-    var link;
-    var timeout = 1000;
-    //console.debug("origpre:", originalPreProcessed)
-    // PSS 09-07-2021 additional fix for issue #102 plural not updated
-    current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-    prevstate = current.innerText;
-    language = language.toUpperCase();
-    // $openai_query.= 'For the english text  "'.$original_singular. '", is "'.$translation. '" a correct translation in '.$gp_locale -> english_name. '?';
-    //console.debug("Review prompt:", reviewPrompt)
-    var prompt = reviewPrompt.replace('placeholder_original', original)
-    prompt = prompt.replace('placeholder_translated',translatedText)
-    //var prompt = 'I want you to act as a translation reviewer for the provided English text: "' + original + '", translated into Dutch text: "' + translatedText + '". Please check if all words are completely translated, review the interpunctuation to match the English text, and ensure that placeholders are accurately preserved. Please maintain HTML in their respective places. Please answer with "Yes" or "No".'
-    //  var prompt = 'I want you to act as translation improver. I do not want you to explain improvements. Give the answer in English. For the English text  "' + original + '", is "' + translatedText + '\" the correct translation in "Dutch"?';
-    // console.debug("prompt:", prompt)
-    //var prompt = encodeURIComponent(prompt);
-    originalPreProcessed = "'" + originalPreProcessed + "'" + "|\n"
-    var message = [{ 'role': 'user', 'content': prompt }];
-    let mymodel = "gpt-3.5-turbo"
-    var data1 = {
-        messages: message,
-        model: mymodel,
-        max_tokens: 1000,
-        n: 1,
-        temperature: 0,
-        frequency_penalty: 0,
-        presence_penalty: 0,
-        top_p: 0,
-        stop: '|\n',
-    }
-
-  //  var mydata = {
-   //     "model": "text-davinci-003",
-   //     "prompt": "${prompt}",
-    //    "temperature": 0,
-    //    "max_tokens": 1000,
-   //     "top_p": 1,
-  //      "frequency_penalty": 0,
-  //      "presence_penalty": 0
-  //  }
-    var newdata = {
-        "model": "text-davinci-edit-001",
-        "input": originalPreProcessed,
-        "instruction": prompt,
-        "temperature": 0,
-        "top_p": 1
-    }
-    var data = {
-        "model": "text-davinci-003",
-        "prompt": "Translate into Dutch\n\n${originalPreProcessed}",
-        "temperature": 0,
-        "top_p": 1
-    }
-
-    // var url = "https://api.openai.com/v1/engines/text-davinci-edit-001/edits";
-    // var link = "https://api.openai.com/v1/chat/completions";
-    var link = "https://api.openai.com/v1/chat/completions";
-    //var url = "https://api.openai.com/v1/edits";
-
-    //console.debug("link:",link)
-    const response = fetch(link, {
-        body: JSON.stringify(data1),
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-            Authorization: "Bearer " + apikeyOpenAI,
-        },
-    })
-        .then(async response => {
-            const isJson = response.headers.get('content-type')?.includes('application/json');
-            data = isJson && await response.json();
-            //console.debug("Response:", data);
-            // check for error response
-            if (!response.ok) {
-                // get error message from body or default to response status
-                //console.debug("data:", data, response.status)
-                if (typeof data != "undefined") {
-                    errorstate = "NOK"
-                    error = [data, error, response.status, errorstate];
-                }
-                else {
-                    let message = 'Noresponse';
-                    data = "noData";
-                    errorstate = "NOK"
-                    error = [data, message, response.status, errorstate];
-                }
-                return Promise.reject(error);
-            }
-            else {
-                errorstate = "OK";
-                //We do have a result so process it
-                //console.debug('result:', data);
-                open_ai_response = data.choices[0];
-                if (typeof open_ai_response.message.content != 'undefined') {
-                    let text = open_ai_response.message.content;
-                    //console.debug("text:", text,original,translatedText);
-                    if (text.indexOf("Yes") != -1) {
-                        // We need to remove the existing checkmark if present
-                        if (preview.innerHTML.startsWith('\u{2705}')){
-                            preview.innerHTML = preview.innerHTML.replace('\u{2705}',"")
-                        }
-                        preview.innerHTML = '\u{2705}' + " " + preview.innerHTML
-                        
-                    }
-                    else {
-                        if (preview.innerHTML.startsWith('\u{26A0}}')) {
-                            preview.innerHTML = preview.innerHTML.replace('\u{26A0}', "")
-                        }
-                        preview.innerHTML = '\u{26A0}' + " "+ preview.innerHTML
-                    }
-                    return Promise.resolve(errorstate)
-                }
-                else {
-                    text = "No text received"
-                    console.debug("No text received!")
-                    errorstate = "NOK";
-                }
-                return Promise.resolve(errorstate)
-            }
-        })
-        .catch(error => {
-            //console.debug("error:",error)
-            if (error[2] == "400") {
-                errorstate = "Error 400";
-                if (editor) {
-                    messageBox("error", "Error 400:" + error[0].error.message)
-                }
-            }
-            else if (error[2] == "401") {
-                errorstate = "Error 401";
-                if (editor) {
-                    messageBox("error", "Error 401 Authorization failed.Please supply a valid auth_key parameter.")
-                }
-            }
-            else if (error[2] == '404') {
-                alert("Error 404 The requested resource could not be found.")
-                errorstate = "Error 404";
-            }
-            else if (error[2] == '429') {
-                if (editor) {
-                    messageBox("error", "The model: " + mymodel + " is currently overloaded with other requests")
-                }
-                errorstate = "Error 429" + error[0].error.message;
-            }
-            else if (error[2] == '456') {
-                //alert("Error 456 Quota exceeded. The character limit has been reached")
-                errorstate = "Error 456";
-            }
-            else if (error[2] == '503') {
-                messageBox("error", "The server cannot handle the request")
-                //alert("Error 456 Quota exceeded. The character limit has been reached")
-                errorstate = "Error 503";
-            }
-            else {
-                if (editor) {
-                    messageBox("error", "Some uncatched error has been found." + error[0])
-                }
-                if (error != "undefined") {
-                    if (error[0] != 'undefined') {
-                        errorstate = error[0].error.message
-
-                    }
-                    else {
-                        console.debug("error[0] is undefined! ", error)
-                        errorstate = "NOK";
-                    }
-                }
-                else {
-                    errorstate = "OK";
-                }
-            }
-
-            // console.debug("return of errorstate:", errorstate)
-            return errorstate;
-        }).then(err => {
-            //console.debug("in then:", err);
-            if (typeof err != "undefined") {
-                let errorstate = err; return errorstate
-            }
-            else {
-                console.debug("found err:", err)
-            }
-
-        })
-
+/****************************************************
+ * ERROR CODE EXTRACTOR
+ ****************************************************/
+function extractGroqErrorCode(err) {
+    if (!err) return "unknown_error";
+    if (typeof err === "string") return err;
+    return (
+        err.code ||
+        err.error?.code ||
+        err.status ||
+        err.error?.status ||
+        "unknown_error"
+    );
 }
-
-async function startreviewOpenAI(apikeyOpenAI,destlang,OpenAIPrompt,reviewPrompt) {
-    
-    var replaced = false;
-    var row;
-    var newrowId;
-    var myrow;
-    var transtype;
-    var toTranslate;
-    var found_verbs;
-    const countfound = 0
-    var myresult;
-    var timeout = 100;
-    var replaced = false;
-    var translatedText = "";
-    var repl_verb = [];
-    var end_table;
-    var countrows = 0;
-    var result;
-    var countreplaced = 0;
-    var checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-    var progressbar;
-    checkButton.innerText = "Checking";
-    
-    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-    if (checkButton.className == "check_translation-button") {
-        checkButton.className += " started";
-    }
-    else {
-        // console.debug("checkbutton2:", typeof checkButton)
-        if (typeof checkbutton != null) {
-            checkButton.classList.remove("check_translation-button", "started", "translated");
-            checkButton.classList.remove("check_translation-button", "restarted", "translated");
-            checkButton.className = "check_translation-button restarted";
-        }
-        else {
-            checkButton.className = "check_translation-button started"
-        }
-    }
-    //toastbox("info", "OpenAI review is started wait for the result!!", "3000", "Review");
-    var myheader = document.querySelector('header');
-    
-    const template = `
-    <div class="indeterminate-progress-bar">
-        <div class="indeterminate-progress-bar__progress"></div>
-    </div>
-    `;
-
-    progressbar = document.querySelector(".indeterminate-progress-bar");
-    //console.debug("progressbar:", progressbar)
-    if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
-        // progressbar = document.querySelector(".indeterminate-progress-bar");
-        // progressbar.style.display = 'block;';
-    }
-    else {
-        progressbar.style.display = 'block';
-    }
-    // We need to know the amount of rows to show the finished message at the end of the process
-    var table = document.getElementById("translations");
-    var tr = table.rows;
-    //var tbodyRowCount = table.tBodies[0].rows.length;
-    var tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
-    for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
-        countrows++;
-        setTimeout(async function (timeout, countrows) {
-        end_table = false;
-        found_verbs = [];
-        replaced = false;
-        let original = e.querySelector("span.original-raw").innerText;
-        let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
-        row = rowfound.split("-")[1];
-        let newrow = rowfound.split("-")[2];
-        if (typeof newrow != "undefined") {
-            newrowId = row.concat("-", newrow);
-            row = newrowId;
-        }
-        else {
-            rowfound = e.querySelector(`div.translation-wrapper textarea`).id;
-            row = rowfound.split("_")[1];
-        }
-        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header span.panel-header__bubble`);
-        // We only need to process the actual lines not the untranslated
-        if (currec.innerText == "transFill" || currec.innerText == "current" || currec.innerText == "waiting") {
-            //  setTimeout(async function (timeout, errorstate, countrows) {
-            let spanmissing = document.querySelector(`#preview-${row} span.missing`);
-            // If the page does not contain translations, we do not need to handle them
-            //console.debug("spanmissing:",spanmissing)
-            if (spanmissing == null) {
-                // 30-08-2021 PSS fix for issue # 125
-                let precomment = e.querySelector(".source-details__comment p");
-                if (precomment != null) {
-                    comment = precomment.innerText;
-                    comment = comment.replace(/(\r\n|\n|\r)/gm, "");
-                    toTranslate = checkComments(comment.trim());
-                }
-                else {
-                    toTranslate = true;
-                }
-                if (toTranslate == true) {
-                    // Check if it is a plural
-                    // If in the original field "Singular is present we have a plural translation                
-                    var pluralpresent = document.querySelector(`#preview-${row} .translation.foreign-text li:nth-of-type(1) span.translation-text`);
-                    if (pluralpresent != null) {
-                        transtype = "plural";
-                    }
-                    else {
-                        transtype = "single";
-                    }
-
-                    if (transtype == "single") {
-                        // Fetch the translations
-                        let element = e.querySelector(".source-details__comment");
-                        let textareaElem = e.querySelector("textarea.foreign-text");
-                        translatedText = textareaElem.innerHTML;
-                        // Enhencement issue #123
-                       // previewNewText = textareaElem.innerText;
-                        var preview = document.querySelector("#preview-" + row + " td.translation");
-                        let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                        plural_line=""
-                        if (apikeyOpenAI != "") {
-                            if (translatedText != "") {
-                                result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt,reviewPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview);
-                                //console.debug("Result:", result)
-                            }
-                        }  
-                        errorstate = result;
-                    }
-                    else {
-                        let previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1) span.translation-text");
-                        previewNewText = previewElem.innerText;
-                        translatedText = previewElem.innerText;
-                        //console.debug("plural1 found:",previewElem,translatedText);
-                        currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                       
-                        // plural line 2
-                        previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(2) span.translation-text");
-                        //console.debug("plural2:", previewNewText, translatedText);  
-                    }
-                }
-            }
-        }
-        
-        }, timeout);
-        timeout += 1000;
-        if (countrows == tableRecords) {
-            // Translation replacement completed
-            checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
-            checkButton.classList.remove("started");
-            checkButton.className += " translated";
-            checkButton.innerText = "Checked";
-            checkButton.className += " ready";  
-            setTimeout(() => {
-                close_toast();
-                toastbox("info", "OpenAI review ready wait till all records are flagged!", "2000", "OpenAI review");
-                progressbar = document.querySelector(".indeterminate-progress-bar");
-                progressbar.style.display = "none";
-            }, 200);
-            
-        }
-    }
-    return errorstate
-}
-
-

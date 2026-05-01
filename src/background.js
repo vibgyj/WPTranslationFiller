@@ -351,48 +351,82 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // keep sendResponse alive for async
     }
-    else if (request.action === "groq") {
-        (async () => {
-            try {
-                const dataToSend = { ...request.data }; // copy newData
-                const apiKey = dataToSend.apiKey;       // extract the key
-                delete dataToSend.apiKey;               // remove it from the body
-                //console.debug("model:", dataToSend.model) 
-                const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+   else if (request.action === "groq") {
+    console.trace("GROQ ORIGIN TRACE");
+    console.log("GROQ ACTION PAYLOAD:", request);
+    const handleGroq = async () => {
+        try {
+            const dataToSend = { ...request.data };
+            const apiKey = dataToSend.apiKey;
+            delete dataToSend.apiKey;
+
+            const resp = await fetch(
+                "https://api.groq.com/openai/v1/chat/completions",
+                {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": "Bearer " + apiKey
                     },
                     body: JSON.stringify(dataToSend)
-                });
-               // console.debug("response status:", resp) 
-                if (!resp.ok) {
-                    // Return error message instead of raw response
-                    const msg = await resp.text();
-                    console.debug("Groq error response:", msg);
-                    sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
-                    stop = true
-                    return;
                 }
-                //console.debug("response status:", resp) 
-                let data;
-                const contentType = resp.headers.get("content-type") || "";
-                if (contentType.includes("application/json")) {
-                    data = await resp.json();
-                } else {
-                    data = await resp.text();
-                }
-                console.debug("data:", data) 
-                sendResponse({ result: data });
-            } catch (err) {
-                sendResponse({ error: err.toString() });
-                stop = true
-            }
-        })();
+            );
 
-        return true; // keep sendResponse alive for async
-    }
+            console.debug("response status:", resp.status);
+
+            // Forward rate-limit headers so the content script can
+            // use the exact reset times instead of guessing.
+            const rateLimitHeaders = {
+                limitRequests:      resp.headers.get("x-ratelimit-limit-requests"),
+                limitTokens:        resp.headers.get("x-ratelimit-limit-tokens"),
+                remainingRequests:  resp.headers.get("x-ratelimit-remaining-requests"),
+                remainingTokens:    resp.headers.get("x-ratelimit-remaining-tokens"),
+                resetRequests:      resp.headers.get("x-ratelimit-reset-requests"),
+                resetTokens:        resp.headers.get("x-ratelimit-reset-tokens")
+            };
+
+            console.debug("rate-limit headers:", rateLimitHeaders);
+
+            const contentType = resp.headers.get("content-type") || "";
+
+            if (!resp.ok) {
+                const errorText = await resp.text();
+                console.debug("Groq error response:", errorText);
+                sendResponse({
+                    ok: false,
+                    rateLimit: rateLimitHeaders,
+                    error: {
+                        status: resp.status,
+                        message: errorText
+                    }
+                });
+                return;
+            }
+
+            let data = contentType.includes("application/json")
+                ? await resp.json()
+                : await resp.text();
+
+            console.debug("data:", data);
+            sendResponse({
+                ok: true,
+                rateLimit: rateLimitHeaders,
+                result: data
+            });
+
+        } catch (err) {
+            console.debug("Groq fetch error:", err);
+            sendResponse({
+                ok: false,
+                error: {
+                    message: err.toString()
+                }
+            });
+        }
+    };
+    handleGroq();
+    return true;
+}
     else if (request.action === "openRouter") {
     (async () => {
         try {
@@ -463,7 +497,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             var start = Date.now()
             var {
                 text,
-                target_lang,
                 model,
                 systemPrompt,
                 max_tokens,
@@ -484,24 +517,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (!systemPrompt) return sendResponse({ success: false, error: "System prompt is missing" });
             //console.debug("original:",text)
             const myLocal = toBoolean(useLocal);
-            let tone = "informal"
-            console.debug("text:", text); 
+             
             // === Local translation path ===
             if (toBoolean(myLocal)) {
                const myTime = 12000000; // in ms
-               let messages = [
-                    { role: 'system', content: systemPrompt },
-                   { role: 'user', content: 'Translate the provided text without any comment or instruction' },
-                   { role: 'user', content: `${text}` }
-                  ];
+              let messages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: text }
+];
 
-                  var bodyToSend = {
-                  model: model,
-                  messages: messages,
-                  stream: false,
-                  think: false,
-                 options: { temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: do_not_complete ,top_p: myTop_p,  top_k: myTop_k, keep_alive: myTime}
-                 };
+var bodyToSend = {
+    model: model,
+    messages: messages,
+    stream: false,
+    think: false,
+    options: { temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: do_not_complete, top_p: myTop_p, top_k: myTop_k, keep_alive: myTime }
+};
                 //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
@@ -511,7 +542,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                            let show_debug = true
                            if (show_debug) console.debug("Ollama proxy response (raw):", result.translation," ",duration);
                      // 3. Quotes cleanup 
-                    const translatedText = cleanTranslation(translated);
+                    let translatedText = cleanTranslation(translated);
+                    translatedText = translatedText
+    .replace(/^[#*\s]*(vertaling|translation|output|result)[:#*\s]*/i, '')
+    .replace(/`/g, '');  // ← no trim, only backticks removed
                     //console.debug("translatedText:",translatedText)
                     sendResponse({
                         success: true,
@@ -1380,11 +1414,6 @@ const StorageWrapper = (() => {
 // Initialize wrapper
 StorageWrapper.init();
 
-/**
- * Call local Ollama instance for translation
- * @param {Object} bodyToSend - The chat body including model, messages, temperature, etc.
- * @returns {Promise<Object>} - Object containing translation in message.content or error
- */
 async function callLocalOllama(bodyToSend) {
     const LOCAL_CHAT_URL = "http://127.0.0.1:11434/api/chat";
     try {
@@ -1395,15 +1424,17 @@ async function callLocalOllama(bodyToSend) {
             body: JSON.stringify(bodyToSend)
         });
 
+        // Read the body ONCE as text first
+        const rawText = await resp.text();
+
         let data;
         try {
-            data = await resp.json();
+            data = JSON.parse(rawText);
         } catch (parseErr) {
-            // Response was not JSON (probably blocked or 403 HTML)
             return {
                 success: false,
                 error: `Invalid JSON response (HTTP ${resp.status})`,
-                raw: await resp.text() // toon de ruwe inhoud voor debug
+                raw: rawText
             };
         }
 
@@ -1415,19 +1446,18 @@ async function callLocalOllama(bodyToSend) {
             };
         }
 
-        if (!data.message?.content) {
-            return {
-                success: false,
-                error: "No content returned from Ollama",
-                raw: data
-            };
-        }
-
-        return {
-            success: true,
-            translation: data.message.content,
-            raw: data
-        };
+      if (!data.message?.content) {
+    return {
+        success: false,
+        error: "No content returned from Ollama",
+        raw: data
+    };
+}
+return {
+    success: true,
+    translation: data.message.content,
+    raw: data
+};
 
     } catch (err) {
         console.debug("Error calling local Ollama:", err);

@@ -101,6 +101,7 @@ const GoogleRegex = /%(\d{1,2})?\$?[sdl]/gi;
 
 async function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
+
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
     // prereplverb contains the verbs to replace before translation
@@ -115,6 +116,7 @@ async function preProcessOriginal(original, preverbs, translator) {
                 original = removeWord(original, preverbs[i][1])
                 //console.debug("original after:",original)
             }
+            //console.debug("preProcessOriginal before replacing preverbs:", original)
             original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
         }
     }
@@ -241,7 +243,7 @@ async function preProcessOriginal(original, preverbs, translator) {
 
     }
     else if (translator == "groq") {
-        console.debug("we are in groq pre process:", original)
+       
         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
         index = 0;
         placeholderMap = {};
@@ -409,6 +411,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     const verbMap = Object.fromEntries(replaceVerb.map(v => [v[0], v[1]]));
     const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
     //console.debug("postprocessOriginal:", original) 
+    //console.debug("postprocesstranslation:", translatedText)
     if (toBoolean(DebugMode)) {
         console.debug("postProc original: ", original);
         console.debug("postProc translatedText :", translatedText);
@@ -858,7 +861,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("after check hyphen:", translatedNewText)
     result = check_start_end(translatedNewText, translatedNewText, 0, "", original, "", 0);
     translatedNewText = result.translatedText;
-    if (toBoolean(DebugMode)) console.debug("postProcessTranslation end:" ,translatedNewText);
+    if (toBoolean(DebugMode)) console.debug("postProcessTranslation end:", translatedNewText);
+    //console.debug("postProcessTranslation final:", translatedNewText);
     return translatedNewText;
 }
 
@@ -4295,7 +4299,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI,apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt, MistralSelect,LMStudioWait,apikeygroq,groqSelect) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI,apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt, MistralSelect,LMStudioWait,apikeygroq,groqSelect) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -5590,352 +5594,375 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait, apikeyOpenRouter,OpenRouterSelect,apikeygroq, groqSelect) {
-   
-    var vartime = 100;
-    var stop = false;
-    var editor = false;
-    var counter = 0;
-    var myrecCount = 0;
-    const is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
-    const checkboxSelector = is_pte ? '.checkbox input' : '.myCheckBox input';
-    const checkedCount = Array.from(document.querySelectorAll(checkboxSelector)).filter(e => e.checked).length;
+async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait, apikeyOpenRouter,OpenRouterSelect,apikeygroq, groqSelect,groqBatchSize) {
     var myheader = document.querySelector('header');
-    
-    if (transsel == "LMStudio") {
-        result = await checkModelAndContinue(ollamaModel);
-        if (!result) {
-            return
-        }
-    }
     const template = `
     <div class="indeterminate-progress-bar">
         <div class="indeterminate-progress-bar__progress"></div>
     </div>
     `;
-    progressbar = document.querySelector(".indeterminate-progress-bar");
-    inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
-    //console.debug("glos:", openAiGloss)
-    if (progressbar == null) {
-        myheader.insertAdjacentHTML('afterend', template);
-        // progressbar = document.querySelector(".indeterminate-progress-bar");
-        //progressbar.style.display = 'block;';
-    }
-    else {
-        // we need to remove the style of inprogress to see the animation again
-        inprogressbar.style = ""
-        progressbar.style.display = 'block';
-    }
-    
-    //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
-    if (transsel == 'OpenAI') {
-        vartime = convertToNumber(openAIWait);
-    }
-    else if (transsel == 'Claude') {
-        vartime = convertToNumber(openAIWait);
-    }
-    else if (transsel == 'groq') {
-        vartime = convertToNumber(openAIWait);
-    }
-    else if (transsel == "LMStudio") {
-        vartime = convertToNumber(openAIWait);
-    }
-
-    //console.debug("DeepL:",transsel,DeepLWait)
-    else if (transsel == 'deepl') {
-        // console.debug("we have deepl")
-        timeout=0
-        vartime = convertToNumber(DeepLWait)
-    }
-    locale = checkLocale();
-    // We need to fetch the setting for mocking
-
-    if (typeof (Storage) !== "undefined") {
-        interCept = localStorage.getItem("interXHR");
-    }
-    else {
-        interCept = false;
-        //console.debug("Cannot read localstorage, set intercept to false");
-    }
-
-    // Check if the value exists and is either "true" or "false"
-    if (interCept === null || (interCept !== "true" && interCept !== "false")) {
-        // If the value is not present or not a valid boolean value, set it to false
-        interCept = false;
-        localStorage.setItem("interXHR", interCept);
-    }
-
-    sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
-
-    // 19-06-2021 PSS added animated button for translation at translatePage
-    let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-    if (translateButton != null) {
-        translateButton.innerText = __("Translate");
-    }
-    //console.debug("Button classname:", translateButton.className);
-    // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
-    if (translateButton.className == "translation-filler-button") {
-        translateButton.className += " started";
-    }
-    else {
-        translateButton.classList.remove("translation-filler-button", "started", "translated");
-        translateButton.classList.remove("translation-filler-button", "restarted", "translated");
-        translateButton.className = "translation-filler-button restarted";
-    }
-    if (typeof postTranslationReplace != "undefined" && postTranslationReplace.length != 0) {
-        if (typeof preTranslationReplace != "undefined" && preTranslationReplace.length != 0) {
-            // PSS 21-07-2022 Currently when using formal, the translation is still default #225
-            setPostTranslationReplace(postTranslationReplace, formal);
-            setPreTranslationReplace(preTranslationReplace);
-            myrecCount = document.querySelectorAll("tr.editor")
-            tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
-            const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-            const progressbar = document.querySelector(".indeterminate-progress-bar");
-
-            let counter = 0;
-            const currWindow = window.self;
-            if (checkedCount === 0) {
-                // prompt to select all
-                let title = __("Translatepage");
-                return cuteAlert({
-                    type: "question",
-                    title: title,
-                    message: __("There are no records selected, <br>are you sure you want to select all records?"),
-                    confirmText: __("Confirm"),
-                    cancelText: __("Cancel"),
-                    myWindow: currWindow
-                }).then(async (e) => {
-                    if (e === "confirm") {
-                        await  setcheckBox();
-                        let noDiff = false
-                        await setToonDiff({ toonDiff: noDiff });
-                        for (const record of myrecCount) {
-                      //  await delay(vartime); // Wait the delay before starting next iteration
-
-                    let mytransType = "none";
-                    const rowfound = record.id;
-                    const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
-                    const row = match ? match[1] : null;
-                            preview = getPreview(row)
-                    if (is_pte) {
-                        checkset = preview.querySelector("th.checkbox input");
-                    }
-                    else {
-                        checkset = preview.querySelector(".myCheckBox input");
-                    }
-
-                    if (!row) {
-                        console.debug(`No match found for record id: ${rowfound}`);
-                        continue;  // Skip to next record
-                    }
-
-                            counter++;
-                    if (checkset.checked == true) {
-                        try {
-                             
-                            mytransType = await handleType(
-                                row,
-                                record,
-                                destlang,
-                                transsel,
-                                apikey,
-                                apikeyDeepl,
-                                apikeyDeepSeek,
-                                apikeyMicrosoft,
-                                apikeyOpenAI,
-                                apikeyOpenRouter,
-                                apikeyMistral,
-                                apikeyClaude,
-                                apikeyTranslateio,
-                                apikeyNLP,
-                                OpenAIPrompt,
-                                transsel,
-                                destlang,
-                                postTranslationReplace,
-                                preTranslationReplace,
-                                formal,
-                                convertToLower,
-                                DeeplFree,
-                                completedCallback,
-                                OpenAISelect,
-                                OpenRouterSelect,
-                                openAIWait,
-                                OpenAItemp,
-                                spellCheckIgnore,
-                                deeplGlossary,
-                                OpenAITone,
-                                DeepLWait,
-                                openAiGloss,
-                                counter,
-                                editor,
-                                ClaudePrompt,
-                                ClaudModel,
-                                apikeyOllama,
-                                LocalOllama,
-                                ollamaModel,
-                                ollamaPrompt,
-                                apikeyLingvanex,
-                                apikeyGemini,
-                                GeminiModel,
-                                GeminiPrompt,
-                                MistralSelect,
-                                LMStudioWait,
-                                apikeygroq,
-                                groqSelect
-
-                            );
-
-                        } catch (err) {
-                            console.error(`Translation failed for row ${row}:`, err);
-                        }
-
-                        if (mytransType == "stop") {
-                            if (translateButton) {
-                                translateButton.classList.add("translated");
-                                translateButton.innerText = __("Translated");
-                            }
-
-                            if (progressbar) {
-                                progressbar.style.display = "none";
-                            }
-                            break
-                        }
-                        // When all rows are translated
-                        if (counter === myrecCount.length) {
-                            if (translateButton) {
-                                translateButton.classList.add("translated");
-                                translateButton.innerText = __("Translated");
-                            }
-
-                            if (progressbar) {
-                                progressbar.style.display = "none";
-                            }
-                            messageBox("info", __("Translation is ready"));
-                        }
-                    }
-                }
-                if (translateButton) {
-                    translateButton.classList.add("translated");
-                    translateButton.innerText = __("Translated");
-                }
-                if (progressbar) {
-                    progressbar.style.display = "none";
-                }
-                messageBox("info", __("Translation is ready"));
-
-                       // await saveLocal_2(bulk_timer);
-                    } else {
-                         if (progressbar) {
-                                progressbar.style.display = "none";
-                        }
-                       
-                        messageBox("info", __("Translatepage cancelled"));
-                    }
-                });
-            } else {
-                //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
-                //const progressbar = document.querySelector(".indeterminate-progress-bar");
-                //await delay(vartime); // Wait the delay before starting this iteration
-                for (const record of myrecCount) {
-                    await delay(vartime); // Wait the delay before starting next iteration
-
-                    let mytransType = "none";
-                    const rowfound = record.id;
-                    const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
-                    const row = match ? match[1] : null;
-                    preview = getPreview(row)
-                    if (is_pte) {
-                        checkset = preview.querySelector(".checkbox input");
-                    }
-                    else {
-                        checkset = preview.querySelector(".myCheckBox input");
-                    }
-
-                    if (!row) {
-                        console.debug(`No match found for record id: ${rowfound}`);
-                        continue;  // Skip to next record
-                    }
-
-                    counter++;
-                    if (checkset.checked == true) {
-                        try {
-                            mytransType = await handleType(row, record, destlang,   transsel,  apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt,transsel, destlang, postTranslationReplace,preTranslationReplace,formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait,
-                                openAiGloss,
-                                counter,
-                                editor,
-                                ClaudePrompt,
-                                ClaudModel,
-                                apikeyOllama,
-                                LocalOllama,
-                                ollamaModel,
-                                ollamaPrompt,
-                                apikeyLingvanex,
-                                apikeyGemini,
-                                GeminiModel,
-                                GeminiPrompt,
-                                MistralSelect,
-                                LMStudioWait,
-                                apikeygroq,
-                                groqSelect
-                            );
-
-                        } catch (err) {
-                            console.error(`Translation failed for row ${row}:`, err);
-                        }
-
-                        if (mytransType == "stop") {
-                            if (translateButton) {
-                                translateButton.classList.add("translated");
-                                translateButton.innerText = __("Translated");
-                            }
-
-                            if (progressbar) {
-                                progressbar.style.display = "none";
-                            }
-                            break
-                        }
-                        // When all rows are translated
-                        if (counter === myrecCount.length) {
-                            if (translateButton) {
-                                translateButton.classList.add("translated");
-                                translateButton.innerText = __("Translated");
-                            }
-
-                            if (progressbar) {
-                                progressbar.style.display = "none";
-                            }
-                            messageBox("info", __("Translation is ready"));
-                        }
-                    }
-                }
-                if (translateButton) {
-                    translateButton.classList.add("translated");
-                    translateButton.innerText = __("Translated");
-                }
-                if (progressbar) {
-                    progressbar.style.display = "none";
-                }
-               // if (mytransType != "stop") {
-               //      messageBox("info", __("Translation is ready"));
-               // }
-            }
+        progressbar = document.querySelector(".indeterminate-progress-bar");
+        inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
+        //console.debug("glos:", openAiGloss)
+        if (progressbar == null) {
+            myheader.insertAdjacentHTML('afterend', template);
+            // progressbar = document.querySelector(".indeterminate-progress-bar");
+            //progressbar.style.display = 'block;';
         }
         else {
-            messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
+            // we need to remove the style of inprogress to see the animation again
+            inprogressbar.style = ""
+            progressbar.style.display = 'block';
+        }
+    if (transsel == "groq") {
+       
+        result = await translatePageGroq(
+        apikeygroq,
+        OpenAIPrompt,
+        transsel,
+        destlang,
+        preTranslationReplace,
+        postTranslationReplace,
+        formal,
+        convertToLower,
+        groqSelect,
+        OpenAItemp,
+        spellCheckIgnore,
+        OpenAITone,
+        openAiGloss,
+        groqBatchSize)
+    }
+    else {
+       
+        var vartime = 100;
+        var stop = false;
+        var editor = false;
+        var counter = 0;
+        var myrecCount = 0;
+        const is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
+        const checkboxSelector = is_pte ? '.checkbox input' : '.myCheckBox input';
+        const checkedCount = Array.from(document.querySelectorAll(checkboxSelector)).filter(e => e.checked).length;
+        
+
+        if (transsel == "LMStudio") {
+            result = await checkModelAndContinue(ollamaModel);
+            if (!result) {
+                return
+            }
+        }
+        
+
+        //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
+        if (transsel == 'OpenAI') {
+            vartime = convertToNumber(openAIWait);
+        }
+        else if (transsel == 'Claude') {
+            vartime = convertToNumber(openAIWait);
+        }
+        else if (transsel == 'groq') {
+            vartime = convertToNumber(openAIWait);
+        }
+        else if (transsel == "LMStudio") {
+            vartime = convertToNumber(openAIWait);
+        }
+
+        //console.debug("DeepL:",transsel,DeepLWait)
+        else if (transsel == 'deepl') {
+            // console.debug("we have deepl")
+            timeout = 0
+            vartime = convertToNumber(DeepLWait)
+        }
+        locale = checkLocale();
+        // We need to fetch the setting for mocking
+
+        if (typeof (Storage) !== "undefined") {
+            interCept = localStorage.getItem("interXHR");
+        }
+        else {
+            interCept = false;
+            //console.debug("Cannot read localstorage, set intercept to false");
+        }
+
+        // Check if the value exists and is either "true" or "false"
+        if (interCept === null || (interCept !== "true" && interCept !== "false")) {
+            // If the value is not present or not a valid boolean value, set it to false
+            interCept = false;
+            localStorage.setItem("interXHR", interCept);
+        }
+
+        sendMessageToInjectedScript({ action: 'updateInterceptRequests', interceptRequests: interCept });
+
+        // 19-06-2021 PSS added animated button for translation at translatePage
+        let translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+        if (translateButton != null) {
+            translateButton.innerText = __("Translate");
+        }
+        //console.debug("Button classname:", translateButton.className);
+        // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated
+        if (translateButton.className == "translation-filler-button") {
+            translateButton.className += " started";
+        }
+        else {
+            translateButton.classList.remove("translation-filler-button", "started", "translated");
+            translateButton.classList.remove("translation-filler-button", "restarted", "translated");
+            translateButton.className = "translation-filler-button restarted";
+        }
+        if (typeof postTranslationReplace != "undefined" && postTranslationReplace.length != 0) {
+            if (typeof preTranslationReplace != "undefined" && preTranslationReplace.length != 0) {
+                // PSS 21-07-2022 Currently when using formal, the translation is still default #225
+                setPostTranslationReplace(postTranslationReplace, formal);
+                setPreTranslationReplace(preTranslationReplace);
+                
+                myrecCount = document.querySelectorAll("tr.editor")
+                tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
+                const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                const progressbar = document.querySelector(".indeterminate-progress-bar");
+
+                let counter = 0;
+                const currWindow = window.self;
+                if (checkedCount === 0) {
+                    // prompt to select all
+                    let title = __("Translatepage");
+                    return cuteAlert({
+                        type: "question",
+                        title: title,
+                        message: __("There are no records selected, <br>are you sure you want to select all records?"),
+                        confirmText: __("Confirm"),
+                        cancelText: __("Cancel"),
+                        myWindow: currWindow
+                    }).then(async (e) => {
+                        if (e === "confirm") {
+                            await setcheckBox();
+                            let noDiff = false
+                            await setToonDiff({ toonDiff: noDiff });
+                            for (const record of myrecCount) {
+                                //  await delay(vartime); // Wait the delay before starting next iteration
+
+                                let mytransType = "none";
+                                const rowfound = record.id;
+                                const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
+                                const row = match ? match[1] : null;
+                                preview = getPreview(row)
+                                if (is_pte) {
+                                    checkset = preview.querySelector("th.checkbox input");
+                                }
+                                else {
+                                    checkset = preview.querySelector(".myCheckBox input");
+                                }
+
+                                if (!row) {
+                                    console.debug(`No match found for record id: ${rowfound}`);
+                                    continue;  // Skip to next record
+                                }
+
+                                counter++;
+                                if (checkset.checked == true) {
+                                    try {
+
+                                        mytransType = await handleType(
+                                            row,
+                                            record,
+                                            destlang,
+                                            transsel,
+                                            apikey,
+                                            apikeyDeepl,
+                                            apikeyDeepSeek,
+                                            apikeyMicrosoft,
+                                            apikeyOpenAI,
+                                            apikeyOpenRouter,
+                                            apikeyMistral,
+                                            apikeyClaude,
+                                            apikeyTranslateio,
+                                            apikeyNLP,
+                                            OpenAIPrompt,
+                                            transsel,
+                                            destlang,
+                                            postTranslationReplace,
+                                            preTranslationReplace,
+                                            formal,
+                                            convertToLower,
+                                            DeeplFree,
+                                            OpenAISelect,
+                                            OpenRouterSelect,
+                                            openAIWait,
+                                            OpenAItemp,
+                                            spellCheckIgnore,
+                                            deeplGlossary,
+                                            OpenAITone,
+                                            DeepLWait,
+                                            openAiGloss,
+                                            counter,
+                                            editor,
+                                            ClaudePrompt,
+                                            ClaudModel,
+                                            apikeyOllama,
+                                            LocalOllama,
+                                            ollamaModel,
+                                            ollamaPrompt,
+                                            apikeyLingvanex,
+                                            apikeyGemini,
+                                            GeminiModel,
+                                            GeminiPrompt,
+                                            MistralSelect,
+                                            LMStudioWait,
+                                            apikeygroq,
+                                            groqSelect
+
+                                        );
+
+                                    } catch (err) {
+                                        console.error(`Translation failed for row ${row}:`, err);
+                                    }
+
+                                    if (mytransType == "stop") {
+                                        if (translateButton) {
+                                            translateButton.classList.add("translated");
+                                            translateButton.innerText = __("Translated");
+                                        }
+
+                                        if (progressbar) {
+                                            progressbar.style.display = "none";
+                                        }
+                                        break
+                                    }
+                                    // When all rows are translated
+                                    if (counter === myrecCount.length) {
+                                        if (translateButton) {
+                                            translateButton.classList.add("translated");
+                                            translateButton.innerText = __("Translated");
+                                        }
+
+                                        if (progressbar) {
+                                            progressbar.style.display = "none";
+                                        }
+                                        messageBox("info", __("Translation is ready"));
+                                    }
+                                }
+                            }
+                            if (translateButton) {
+                                translateButton.classList.add("translated");
+                                translateButton.innerText = __("Translated");
+                            }
+                            if (progressbar) {
+                                progressbar.style.display = "none";
+                            }
+                            messageBox("info", __("Translation is ready"));
+
+                            // await saveLocal_2(bulk_timer);
+                        } else {
+                            if (progressbar) {
+                                progressbar.style.display = "none";
+                            }
+
+                            messageBox("info", __("Translatepage cancelled"));
+                        }
+                    });
+                } else {
+                    //const translateButton = document.querySelector(".wptfNavBarCont a.translation-filler-button");
+                    //const progressbar = document.querySelector(".indeterminate-progress-bar");
+                    //await delay(vartime); // Wait the delay before starting this iteration
+                    for (const record of myrecCount) {
+                        await delay(vartime); // Wait the delay before starting next iteration
+
+                        let mytransType = "none";
+                        const rowfound = record.id;
+                        const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
+                        const row = match ? match[1] : null;
+                        preview = getPreview(row)
+                        if (is_pte) {
+                            checkset = preview.querySelector(".checkbox input");
+                        }
+                        else {
+                            checkset = preview.querySelector(".myCheckBox input");
+                        }
+
+                        if (!row) {
+                            console.debug(`No match found for record id: ${rowfound}`);
+                            continue;  // Skip to next record
+                        }
+
+                        counter++;
+                        if (checkset.checked == true) {
+                            try {
+                                mytransType = await handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI, apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait,
+                                    openAiGloss,
+                                    counter,
+                                    editor,
+                                    ClaudePrompt,
+                                    ClaudModel,
+                                    apikeyOllama,
+                                    LocalOllama,
+                                    ollamaModel,
+                                    ollamaPrompt,
+                                    apikeyLingvanex,
+                                    apikeyGemini,
+                                    GeminiModel,
+                                    GeminiPrompt,
+                                    MistralSelect,
+                                    LMStudioWait,
+                                    apikeygroq,
+                                    groqSelect
+                                );
+
+                            } catch (err) {
+                                console.error(`Translation failed for row ${row}:`, err);
+                            }
+
+                            if (mytransType == "stop") {
+                                if (translateButton) {
+                                    translateButton.classList.add("translated");
+                                    translateButton.innerText = __("Translated");
+                                }
+
+                                if (progressbar) {
+                                    progressbar.style.display = "none";
+                                }
+                                break
+                            }
+                            // When all rows are translated
+                            if (counter === myrecCount.length) {
+                                if (translateButton) {
+                                    translateButton.classList.add("translated");
+                                    translateButton.innerText = __("Translated");
+                                }
+
+                                if (progressbar) {
+                                    progressbar.style.display = "none";
+                                }
+                                messageBox("info", __("Translation is ready"));
+                            }
+                        }
+                    }
+                    if (translateButton) {
+                        translateButton.classList.add("translated");
+                        translateButton.innerText = __("Translated");
+                    }
+                    if (progressbar) {
+                        progressbar.style.display = "none";
+                    }
+                    // if (mytransType != "stop") {
+                    //      messageBox("info", __("Translation is ready"));
+                    // }
+                }
+            }
+            else {
+                messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!"));
+                // 07-07-2021 Fix for issue #98
+                translateButton = document.querySelector(".paging a.translation-filler-button");
+                translateButton.className += " after_error";
+            }
+        } else {
+            messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
             // 07-07-2021 Fix for issue #98
             translateButton = document.querySelector(".paging a.translation-filler-button");
             translateButton.className += " after_error";
         }
-    } else {
-        messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
-        // 07-07-2021 Fix for issue #98
-        translateButton = document.querySelector(".paging a.translation-filler-button");
-        translateButton.className += " after_error";
+
+        //console.debug("translatePage ready")
+        if (progressbar) {
+            progressbar.style.display = "none";
+        }
     }
-    //console.debug("translatePage ready")
-    if (progressbar) {
-        progressbar.style.display = "none";
-      }
 }
 
 
@@ -6030,7 +6057,7 @@ function check_span_missing(row, plural_line) {
 
 }
 
-async function checkEntry(rowId, postTranslationReplace, formal, convertToLower, completedCallback, spellCheckIgnore) {
+async function checkEntry(rowId, postTranslationReplace, formal, convertToLower, spellCheckIgnore) {
     var translatedText;
     var formal = checkFormal(false);
     var editor;
@@ -6123,11 +6150,11 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 }
 
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, completedCallback, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeyOpenRouter,OpenRouterSelect,apikeygroq,groqSelect) {
+async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss,ClaudModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt, apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeyOpenRouter,OpenRouterSelect,apikeygroq,groqSelect) {
     var translateButton;
     var result;
     errorstate = "OK"
-    var textareaElem;
+    let myTextareaElem = ""
     locale = checkLocale();
     let myprompt = OpenAIPrompt
     
@@ -6225,17 +6252,20 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             // PSS 09-03-2021 added check to see if we need to translate
             let toTranslate = true;
             // Check if the comment is present, if not then it will block the request for the details name etc.   
+            
             let element = e.querySelector(".source-details__comment");
             if (element != null) {
                 // Fetch the comment with name
                 let comment = e.querySelector("#editor-" + rowId + " .source-details__comment p").innerText;
                 toTranslate = checkComments(comment.trim());
             }
-            textareaElem = e.querySelector("textarea.foreign-text");
-            textareaElem.innerText = "";
-            textareaElem.value = "";
+             
+            myTextareaElem = e.querySelector("textarea.foreign-text");
+            
+            myTextareaElem.innerText = "";
+            myTextareaElem.value = "";
             requestAnimationFrame(() => {
-                textareaElem.style.height = "auto"
+                myTextareaElem.style.height = "auto"
             });
             if (toTranslate) {
                 // console.debug("we need to translate");
@@ -6476,8 +6506,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     translatedText = await postProcessTranslation(original, translatedText, replaceVerb, "", "", convertToLower, "", locale);
 
                     //let textareaElem = e.querySelector("textarea.foreign-text");
-                    textareaElem.innerText = translatedText;
-                    textareaElem.value = translatedText;
+                    myTextareaElem.innerText = translatedText;
+                    myTextareaElem.value = translatedText;
 
                     current.innerText = "transFill";
                     current.value = "transFill";
@@ -6502,8 +6532,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 if (formal) {
                     translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
                 }
-                textareaElem.innerText = translatedText;
-                textareaElem.value = translatedText;
+                myTextareaElem.innerText = translatedText;
+                myTextareaElem.value = translatedText;
                 current.innerText = "transFill";
                 current.value = "transFill";
 
@@ -6776,7 +6806,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             let myleftPanel = await document.querySelector(`#editor-${rowId} .editor-panel__left`)
             //remove_all_gloss(markleftPanel, false)
             // we need to validate the results from local as well, to remove the glossary markings if present
-            result = await validateEntry(destlang, textareaElem, "", false, rowId, locale, e, false, DefGlossary);
+            result = await validateEntry(destlang, myTextareaElem, "", false, rowId, locale, e, false, DefGlossary);
            
             //mark_glossary(myleftPanel, "", textareaElem.textContent, rowId, false)
 
@@ -6789,11 +6819,11 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             // translateButton.innerText = "Translated";
             //validateEntry(destlang, textareaElem, "", "", rowId);
 
-            if (completedCallback) {
-                let textareaElem = e.querySelector("textarea.foreign-text");
-                let translatedText = textareaElem.value;
-                completedCallback(original, translatedText);
-            }
+           // if (completedCallback) {
+           //     myTextareaElem = e.querySelector("textarea.foreign-text");
+           //     let translatedText = myTextareaElem.value;
+             //   completedCallback(original, translatedText);
+          //  }
         }
         else {
             messageBox("error", __("Your pretranslate replace verbs are not populated add at least on line!!"));

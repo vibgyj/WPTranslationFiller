@@ -1,7 +1,40 @@
 ﻿// This script handles all necessary functions to mark a glossary word
 
 // Create glossArray from span elements
-function createGlossArray(spanElements) {
+function createGlossArray(spanElements, newGloss) {
+    const glossArray = [];
+    let glossIndexCounter = 0;
+
+    for (const span of spanElements) {
+        const originalWord = span.textContent.trim().toLowerCase();
+        
+        // Look up the word in newGloss map
+        const translations = newGloss.get(originalWord);
+        
+        console.debug("createGlossArray lookup:", originalWord, translations);
+        
+        // Skip if not in glossary or has no translations
+        if (!translations || translations.length === 0) continue;
+        
+        // Flatten all translation variants
+        const allVariants = translations
+            .flat()
+            .map(t => t.trim().toLowerCase())
+            .filter(Boolean);
+
+        if (allVariants.length > 0) {
+            glossArray.push({
+                word: allVariants,
+                originalWord: originalWord,
+                glossIndex: glossIndexCounter++,
+                span: span  // store reference to the actual span element
+            });
+        }
+    }
+
+    return glossArray;
+}
+function oldcreateGlossArray(spanElements) {
     const glossArray = [];
     let glossIndexCounter = 0;
 
@@ -274,6 +307,7 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
                 if (originalInUrl) return; // skip
             }
 
+
             // STEP 2 – if untranslated word is in text but not translated
             if (lowerOriginal && translation.includes(lowerOriginal)) {
                 const originalIsTranslation = lowerVariants.includes(lowerOriginal);
@@ -296,11 +330,12 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
             if (allInUrls) return; // avoid reporting
 
             // STEP 5 – variants not in text or URL → truly missing
-            missingTranslations.push({
-                glossIndex: glossWords.indexOf(entry),
-                word: entry.word,
-                missingCount
-            });
+           missingTranslations.push({
+    glossIndex: glossWords.indexOf(entry),
+    word: entry.word,
+    missingCount,
+    span: entry.span  // add this
+});
         });
     }
 
@@ -491,6 +526,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
             myglossary = glossary1;
         }
         newGloss = createNewGlossArray(myglossary);
+        console.debug("newGloss:", newGloss) 
         let markleftPanel = myleftPanel;
         if (markleftPanel != null) {
             singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
@@ -518,7 +554,8 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
                 for (let spancnt = 1; spancnt < spansArray.length; spancnt++) {
                     spansArray[spancnt].setAttribute('gloss-index', spancnt);
                 }
-                let glossWords = createGlossArray(spansArray, newGloss);
+                glossWords = createGlossArray(spansArray, newGloss);
+                console.debug("glossWords:", glossWords)  // <-- add this
                 dutchText = translation;
 
                 if (isPlural == false) {
@@ -557,7 +594,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
     var glossWords
     var dutchText
     var spansArray = []
-    var markleftPanel =""
+    var markleftPanel = ""
     var missingTranslations = [];
     let locale = checkLocale() || 'en-gb'
     let FoundURL = isOnlyURL(translation);
@@ -567,23 +604,20 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
         myglossary = glossary1;
     }
     newGloss = createNewGlossArray(myglossary);
-    // We do not want to mark text in an URL
+
     if (!FoundURL) {
         if (translation != "") {
-            // we need to have the leftPanel from preview to mark it
             markleftPanel = await document.querySelector(`#preview-${rowId} .original-text`)
             if (DefGlossary == true) {
                 myglossary = glossary
-            }
-            else {
+            } else {
                 myglossary = glossary1
             }
-            
+
             if (markleftPanel != null) {
-                
                 singlepresent = markleftPanel.innerText;
                 singularText = markleftPanel.innerText;
-                // we do not need to collect info for plural if it is not a plural
+
                 if (isPlural == true) {
                     pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
                     pluralText = pluralpresent.getElementsByClassName('original')[0]
@@ -591,57 +625,52 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                         spansPlural = pluralpresent.getElementsByClassName("glossary-word")
                     }
                 }
-                else {
-                  //  console.debug("markLeftPanel:", markleftPanel)
-                  //  console.debug("preview:", preview)
-                  //  console.debug("row:", rowId)
-                  //  await remove_all_gloss(markleftPanel, preview, false, rowId);
-                }
+
                 if (singlepresent != null) {
                     spansSingular = markleftPanel.getElementsByClassName("glossary-word")
                 }
 
                 if (isPlural == true) {
                     spans = spansPlural
-                }
-                else {
+                } else {
                     spans = spansSingular
                 }
-            
+
                 if (spans.length > 0) {
-                    wordCount = spans.length
                     spansArray = Array.from(spans)
                     for (spancnt = 1; spancnt < (spansArray.length); spancnt++) {
                         spansArray[spancnt].setAttribute('gloss-index', spancnt);
                     }
                     glossWords = createGlossArray(spansArray, newGloss)
+                    console.debug("glossWords:", glossWords)
                     dutchText = translation
+
                     if (isPlural == false) {
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
-                        //console.debug("missing:",missingTranslations)
                         if (missingTranslations.length > 0) {
                             document.addEventListener("mouseover", (event) => {
                                 const tooltip = document.querySelector(".ui-tooltip");
-
                                 if (tooltip) {
-                                    tooltip.style.display = "block"; // Ensure it appears first
+                                    tooltip.style.display = "block";
                                     setTimeout(() => {
                                         if (!tooltip.matches(":hover")) {
-                                            tooltip.style.display = "none"; // Hide only if not hovered
+                                            tooltip.style.display = "none";
                                         }
-                                    }, 2000); // Adjust timing as needed
+                                    }, 2000);
                                 }
                             });
 
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                            spansArray[glossIndex].classList.add('highlight');
+                            // Use span reference directly instead of glossIndex position
+                            missingTranslations.forEach(({ word, glossIndex, span }) => {
+                                if (span) {
+                                    span.classList.add('highlight');
+                                }
                             });
-                            // To make it easy to report all records with missing keywords, we set the boolean in the first row
+
                             rawPreview = document.querySelector(`#preview-${rowId}`)
                             if (is_pte) {
                                 rowchecked = rawPreview.querySelector(".checkbox input");
-                            }
-                            else {
+                            } else {
                                 rowchecked = rawPreview.querySelector(".myCheckBox input");
                             }
                             if (is_pte) {
@@ -651,29 +680,19 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                                     }
                                 }
                             }
-                            
                         }
-                    }
-
-                    else {
-                        
+                    } else {
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
                         if (missingTranslations.length > 0) {
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                //spansArray[glossIndex].classList.add('highlight')
+                            missingTranslations.forEach(({ word, glossIndex, span }) => {
+                                // plural highlighting placeholder
                             });
                         }
                     }
                 }
             }
         }
-        else {
-            //console.debug("We do not have a translation!!!")
-        }
     }
-    
-
-
 }
 
 function filterMissingGlossarySpans(englishText, dutchText, glossWords, locale = 'nl') {

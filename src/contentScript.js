@@ -2269,7 +2269,7 @@ function impFileClicked(event) {
         }
     var formal;
      chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude","apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP" ,"OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect","GeminiPrompt","LMStudioWait"],
+        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude","apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP" ,"OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect","GeminiPrompt","LMStudioWait", "groqBatchSize"],
         async function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined' || typeof data.apikeyOpenRouter != "undefined" && data.apikeyOpenRouter != "" && data.transsel == "openRouter" ) {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -2300,7 +2300,7 @@ function impFileClicked(event) {
                            }
                         }
                         
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI,data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, data.OpenAISelect,data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt,data.LMStudioWait, data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq,data.groqSelect);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI,data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect,data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt,data.LMStudioWait, data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq,data.groqSelect, data.groqBatchSize);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -3195,7 +3195,7 @@ function checktranslateEntryClicked(event) {
         var OpenAItemp = parseFloat(data.OpenAItemp);
         var deeplGlossary = localStorage.getItem('deeplGlossary');
         var OpenAITone = data.OpenAITone
-        checkEntry(rowId, data.postTranslationReplace, formal, data.convertToLower, translationComplete, data.spellCheckIgnore);
+        checkEntry(rowId, data.postTranslationReplace, formal, data.convertToLower, data.spellCheckIgnore);
     });
 }
 
@@ -3248,7 +3248,7 @@ function translateEntryClicked(event) {
         //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
        // console.debug("geminiSel:",data.GeminiSelect)
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude,data.apikeyNLP,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, translationComplete, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait,data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq, data.groqSelect);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude,data.apikeyNLP,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait,data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq, data.groqSelect);
         }
         else {
             messageBox("error", "You need to set the parameter for Destination language");
@@ -5122,36 +5122,9 @@ function isGlossaryWordInTranslation(translation, variant, locale) {
 
 
 
-function oldcreateGlossArray(spansArray, map) {
-    var glossaryWord = []
-    //console.debug("map:",map)
-    for (spancnt = 0; spancnt < (spansArray.length); spancnt++) {
-        glossText = spansArray[spancnt]
-        glossText = glossText.textContent
-        wordToFind = glossText.toLowerCase()
-        thisresult = findByKey(map, wordToFind)
-        //thisresult = findByKey(map, glossText)
-        //console.debug("thisresult after find in map",thisresult)
-        // console.debug("found in array:", thisresult[0], spancnt)
-        if (thisresult != null) {
-            glossaryWord.push({
-                word: thisresult,
-                glossIndex: spancnt
-            });
-        }
-        else {
-            glossaryWord.push({
-                word: wordToFind,
-                glossIndex: spancnt
-            });
-        }
-    }
-    //console.debug("glossaryword:",glossaryWord)
-    return glossaryWord
-}
 
 
-
+ 
 function validate(language, original, translation, locale, showDiff, rowId, isPlural, DefGlossary) {
     //console.debug("validate started!!")
     var count = 0;
@@ -5189,7 +5162,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
         console.debug("showDiff:", showDiff)
     }
     //DefGlossary = true
-    if (DefGlossary == true) {
+    if (toBoolean(DefGlossary) == true) {
         myglossary = glossary
     }
     else {
@@ -5233,6 +5206,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                 if (spans.length > 0) {
                     spansArray = Array.from(spans)
                     glossWords = createGlossArray(spansArray, newGloss)
+                    console.debug("glossWords:", glossWords)  // <-- add this
                     missingTranslations =  findAllMissingWords(translation, glossWords, locale)
                     //console.debug("We have missing words:",missingTranslations,missingTranslations.length)
                     if (missingTranslations.length != 0) {
@@ -5258,16 +5232,15 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                     }
                     
                     //console.debug("We have no missing glossary words percentage: ", newpercentage)
-                    wordCount = spans.length
+                    wordCount = glossWords.length
                     percent = newpercentage
-                    newText = ""
                     return { wordCount, foundCount, percent, toolTip, newText };
 
                     //console.debug("houston we have a glossary")
                     //console.debug("spans:", spansSingular)
-                    wordCount = spans.length
+                   // wordCount = spans.length
                     //console.debug("span length:", spans.length)
-                    var spansArray = Array.from(spans)
+                    var spansArray = Array.from(spans
                     for (spancnt = 0; spancnt < (spansArray.length); spancnt++) {
                         // console.debug("loop through glossary links:",)                      
                         myfoundCount = 0
@@ -6720,6 +6693,7 @@ async function handleMutation(mutationsList, observer) {
     }
 
     const glossWords = createGlossArray(spansArray, newGloss);
+    console.debug("glossWords:", glossWords)  // <-- add this
     missingTranslations = await findAllMissingWords(translation, glossWords, locale)
     //console.debug("missing in handlemutation:",missingTranslations)
     const toolTipLines = [];
@@ -6805,6 +6779,7 @@ function MutationsPlural(mutationsList, observer) {
         // Add gloss-index attribute and remove previous highlights
         spansArray = Array.from(spans);
         glossWords = createGlossArray(spansArray, newGloss);
+        console.debug("glossWords:", glossWords)  // <-- add this
         for (let spancnt = 0; spancnt < spansArray.length; spancnt++) {
             spansArray[spancnt].setAttribute('gloss-index', spancnt);
             spansArray[spancnt].classList.remove('highlight');
