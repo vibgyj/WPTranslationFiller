@@ -555,3 +555,415 @@ function truncate(str, max) {
 
 // Single entry point
 //loadRecentOriginals(currentPage);
+    // ---------------------------------------------------------------------------
+// loadEditorProjects — show projects where the current user is Translation Editor
+// Concurrency constants (tune here if translate.wordpress.org throttles you):
+const EDITOR_LIST_CONCURRENCY    = 5;   // parallel fetches for project list pages
+const EDITOR_CONTRIB_CONCURRENCY = 3;   // parallel fetches for contributors pages
+// ---------------------------------------------------------------------------
+
+async function loadEditorProjects() {
+
+  stopRequested = false;
+
+  // This function only needs LOCALE and WP_USERNAME — use its own settings screen
+  if (!LOCALE || !WP_USERNAME) {
+    showEditorSettings();
+    return;
+  }
+
+  console.log(`[WP Editor Projects] Starting — locale: ${LOCALE}, user: ${WP_USERNAME}`);
+
+  const existing = document.getElementById('wp-originals-overlay');
+  if (existing) existing.remove();
+
+  const container = document.createElement('div');
+  container.id = 'wp-originals-overlay';
+  container.style.cssText = `
+    position: fixed; top: 10px; right: 10px;
+    width: 420px; max-height: 85vh; overflow-y: auto;
+    background: white; border: 1px solid #ccc;
+    padding: 14px; z-index: 99999; font-size: 13px;
+    font-family: sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    border-radius: 6px;
+  `;
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <strong>🛡️ My editor projects (${LOCALE})</strong>
+      <button id="btn-quit" style="
+        background:#cc0000; color:white; border:none;
+        padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
+      ">✕ Quit</button>
+    </div>
+    <p style="color:#555; margin:10px 0 14px;">Select which project type to scan:</p>
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:6px;">
+      <button id="btn-themes" style="
+        background:#0073aa; color:white; border:none;
+        padding:8px 20px; border-radius:4px; cursor:pointer; font-size:13px;
+      ">🎨 Themes</button>
+      <button id="btn-plugins" style="
+        background:#0073aa; color:white; border:none;
+        padding:8px 20px; border-radius:4px; cursor:pointer; font-size:13px;
+      ">🔌 Plugins</button>
+    </div>
+  `;
+  document.body.appendChild(container);
+
+  document.getElementById('btn-quit').addEventListener('click', () => {
+    stopRequested = true;
+    container.remove();
+  });
+  document.getElementById('btn-themes').addEventListener('click', () => {
+    runEditorScan('themes', container);
+  });
+  document.getElementById('btn-plugins').addEventListener('click', () => {
+    runEditorScan('plugins', container);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Lightweight settings screen — only asks for Locale and Username
+// ---------------------------------------------------------------------------
+
+function showEditorSettings() {
+  const existing = document.getElementById('wp-originals-overlay');
+  if (existing) existing.remove();
+
+  const container = document.createElement('div');
+  container.id = 'wp-originals-overlay';
+  container.style.cssText = `
+    position: fixed; top: 10px; right: 10px;
+    width: 420px; background: white; border: 1px solid #ccc;
+    padding: 14px; z-index: 99999; font-size: 13px;
+    font-family: sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    border-radius: 6px;
+  `;
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <strong>🛡️ My editor projects — Settings</strong>
+      <button id="btn-quit" style="
+        background:#cc0000; color:white; border:none;
+        padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
+      ">✕ Quit</button>
+    </div>
+
+    <label style="display:block; margin-bottom:6px;"><strong>Locale:</strong></label>
+    <input id="input-locale" type="text" value="${LOCALE || 'nl'}" style="
+      width: 100%; box-sizing:border-box; padding:5px 8px;
+      border:1px solid #ccc; border-radius:4px; margin-bottom:12px;
+    "/>
+
+    <label style="display:block; margin-bottom:6px;"><strong>WordPress.org username:</strong></label>
+    <input id="input-username" type="text" value="${WP_USERNAME || ''}" placeholder="e.g. your WordPress login" style="
+      width: 100%; box-sizing:border-box; padding:5px 8px;
+      border:1px solid #ccc; border-radius:4px; margin-bottom:6px;
+    "/>
+    <small style="color:#888; display:block; margin-bottom:16px;">
+      ⚠️ You must be logged into wordpress.org in this browser.
+    </small>
+
+    <button id="btn-start" style="
+      width:100%; background:#0073aa; color:white; border:none;
+      padding:8px 0; border-radius:4px; cursor:pointer;
+      font-size:14px; font-weight:bold;
+    ">▶ Start</button>
+  `;
+  document.body.appendChild(container);
+
+  document.getElementById('btn-quit').addEventListener('click', () => {
+    container.remove();
+  });
+
+  document.getElementById('btn-start').addEventListener('click', () => {
+    LOCALE      = document.getElementById('input-locale').value.trim() || 'nl';
+    WP_USERNAME = document.getElementById('input-username').value.trim();
+
+    if (!WP_USERNAME) {
+      document.getElementById('input-username').style.borderColor = 'red';
+      return;
+    }
+
+    console.log(`[WP Editor Projects] Settings — locale: ${LOCALE}, user: ${WP_USERNAME}`);
+    loadEditorProjects();
+  });
+}
+
+// ---------------------------------------------------------------------------
+
+async function runEditorScan(projectType, container) {
+
+  stopRequested = false;
+
+  console.log(`[WP Editor Projects] Scanning ${projectType} — locale: ${LOCALE}`);
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <strong>🛡️ My editor projects — ${projectType === 'themes' ? '🎨 Themes' : '🔌 Plugins'} (${LOCALE})</strong>
+      <div style="display:flex; gap:6px;">
+        <button id="btn-back" style="
+          background:#888; color:white; border:none;
+          padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
+        ">⬅ Back</button>
+        <button id="btn-quit" style="
+          background:#cc0000; color:white; border:none;
+          padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
+        ">✕ Quit</button>
+      </div>
+    </div>
+    <div id="progress"  style="color:#888; font-size:12px; margin:4px 0;"></div>
+    <div id="progress2" style="color:#aaa; font-size:11px; margin:2px 0;"></div>
+    <hr style="margin:8px 0;">
+    <div id="results"></div>
+    <div id="footer" style="margin-top:10px; text-align:center;"></div>
+  `;
+
+  document.getElementById('btn-quit').addEventListener('click', () => {
+    stopRequested = true;
+    container.remove();
+  });
+  document.getElementById('btn-back').addEventListener('click', () => {
+    stopRequested = true;
+    loadEditorProjects();
+  });
+
+  const progress  = document.getElementById('progress');
+  const progress2 = document.getElementById('progress2');
+  const results   = document.getElementById('results');
+  const footer    = document.getElementById('footer');
+
+  try {
+
+    // -----------------------------------------------------------------------
+    // PHASE 1 — Collect all project slugs/names from the locale list pages.
+    //           Fetch page 1 first to learn totalPages, then batch the rest
+    //           EDITOR_LIST_CONCURRENCY pages at a time.
+    // -----------------------------------------------------------------------
+
+    const baseUrl = `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/`;
+
+    progress.textContent  = `🔄 Phase 1/2 — Fetching ${projectType} list, page 1…`;
+    progress2.textContent = '';
+
+    // Parse one list-page HTML → [{ slug, name }, …] and whether a next page exists
+    const parseListPage = (html) => {
+      const doc      = new DOMParser().parseFromString(html, 'text/html');
+      const projects = [];
+      doc.querySelectorAll('.project').forEach(div => {
+        const classes   = [...div.classList];
+        const slugClass = classes.find(c => c.startsWith(`project-wp-${projectType}-`));
+        if (!slugClass) return;
+        const slug   = slugClass.replace(`project-wp-${projectType}-`, '');
+        const nameEl = div.querySelector('.project-name h4 a');
+        const name   = nameEl ? nameEl.textContent.trim() : slug;
+        projects.push({ slug, name });
+      });
+      // Stop when there is no "next" arrow link in the pagination
+      const hasNextPage = !!doc.querySelector('.paging a.next');
+      return { projects, hasNextPage };
+    };
+
+    // Pagination only has prev/next arrows so we don't know the total upfront.
+    // Strategy: fetch pages in batches of EDITOR_LIST_CONCURRENCY at a time.
+    // If any page in the batch has no "next" link, that was the last page — stop.
+    let allProjects  = [];
+    let batchStart   = 1;
+    let reachedEnd   = false;
+
+    while (!stopRequested && !reachedEnd) {
+      const batchPages = Array.from({ length: EDITOR_LIST_CONCURRENCY }, (_, i) => batchStart + i);
+
+      progress.textContent  = `🔄 Phase 1/2 — Fetching ${projectType} list: pages ${batchStart}–${batchStart + EDITOR_LIST_CONCURRENCY - 1}…`;
+      progress2.textContent = `${allProjects.length} projects collected so far`;
+
+      // Fetch all pages in this batch in parallel
+      const batchResults = await Promise.all(batchPages.map(async (pageNum) => {
+        try {
+          const res  = await fetch(`${baseUrl}?page=${pageNum}`);
+          const html = await res.text();
+          return { pageNum, ...parseListPage(html) };
+        } catch (e) {
+          console.warn(`[WP Editor Projects] List page ${pageNum} error:`, e);
+          return { pageNum, projects: [], hasNextPage: false };
+        }
+      }));
+
+      // Add results in page order, stop at the first page with no next link
+      for (const result of batchResults) {
+        allProjects.push(...result.projects);
+        if (!result.hasNextPage) {
+          console.log(`[WP Editor Projects] Last page: ${result.pageNum} — done collecting.`);
+          reachedEnd = true;
+          break;
+        }
+      }
+
+      progress2.textContent = `${allProjects.length} projects collected so far`;
+      batchStart += EDITOR_LIST_CONCURRENCY;
+    }
+
+    console.log(`[WP Editor Projects] Finished collecting — ${allProjects.length} projects total`);
+
+    if (stopRequested) {
+      progress.textContent  = '🛑 Stopped.';
+      progress2.textContent = '';
+      return;
+    }
+
+    console.log(`[WP Editor Projects] Total projects to check: ${allProjects.length}`);
+
+    if (allProjects.length === 0) {
+      progress.textContent  = `✅ No ${projectType} found for locale ${LOCALE}.`;
+      progress2.textContent = '';
+      return;
+    }
+
+    // -----------------------------------------------------------------------
+    // PHASE 2 — Fetch the locale+project page for each project and check for
+    //           the user in .locale-project-contributors-editors.
+    //           Matches are appended to the popup live as they are found.
+    // -----------------------------------------------------------------------
+
+    progress.textContent  = `🔍 Phase 2/2 — Checking ${allProjects.length} project pages…`;
+    progress2.textContent = `0 / ${allProjects.length} checked — 0 editor projects found`;
+
+    let checked      = 0;
+    let editorCount  = 0;
+    const foundProjects = []; // collect for export
+
+    // Retry up to 3 times on network failure
+    const fetchWithRetry = async (url, retries = 3) => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const r = await fetch(url);
+          return r;
+        } catch (e) {
+          if (attempt === retries) throw e;
+          await new Promise(res => setTimeout(res, attempt * 1000));
+        }
+      }
+    };
+
+    await runWithConcurrency(allProjects, EDITOR_CONTRIB_CONCURRENCY, async ({ slug, name }) => {
+      if (stopRequested) return;
+
+      // The locale+project page is where PTE info lives per locale
+      const localeUrl = projectType === 'plugins'
+        ? `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/${slug}/stable/`
+        : `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/${slug}/`;
+
+      const translateLink = localeUrl;
+
+      try {
+        const res = await fetchWithRetry(localeUrl);
+        if (!res.ok) {
+          console.warn(`[${slug}] Locale project page returned ${res.status}`);
+          return;
+        }
+
+        const html        = await res.text();
+        const doc         = new DOMParser().parseFromString(html, 'text/html');
+
+        // PTE info is in .locale-project-contributors-group.locale-project-contributors-editors
+        const editorGroup = doc.querySelector(
+          '.locale-project-contributors-group.locale-project-contributors-editors'
+        );
+
+        if (!editorGroup) return;
+
+        const isEditor = [...editorGroup.querySelectorAll('a')].some(a =>
+          (a.getAttribute('href') || '').toLowerCase()
+            .includes(`/profiles.wordpress.org/${WP_USERNAME.toLowerCase()}/`)
+        );
+
+        if (!isEditor) return;
+
+        // ✅ Found one — append immediately so the user sees results live
+        editorCount++;
+        foundProjects.push({ name, url: translateLink });
+        const block = document.createElement('div');
+        block.style.cssText = 'margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px;';
+        block.innerHTML = `
+          <strong>🛡️ ${name}</strong>
+          <a href="${translateLink}" target="_blank"
+             style="font-size:11px; margin-left:6px; color:#0073aa;">
+            → translate
+          </a>
+        `;
+        results.appendChild(block);
+
+      } catch (e) {
+        console.error(`[${slug}] Project page check error:`, e);
+      } finally {
+        checked++;
+        progress2.textContent =
+          `${checked} / ${allProjects.length} checked — ${editorCount} editor project(s) found`;
+      }
+    });
+
+    if (!stopRequested) {
+      progress.textContent  = editorCount > 0
+        ? `✅ Done — you are Translation Editor for ${editorCount} ${projectType}.`
+        : `✅ Done — no ${projectType} found where you are Translation Editor.`;
+      progress2.textContent = `${allProjects.length} projects checked.`;
+
+      console.log(`[WP Editor Projects] Finished. Editor for ${editorCount} project(s).`);
+
+      if (editorCount === 0) {
+        footer.innerHTML = `<em style="color:#888;">
+          Make sure you are logged into wordpress.org and your username is set correctly.
+        </em>`;
+      } else {
+        // Export button
+        const exportBtn = document.createElement('button');
+        exportBtn.textContent = '⬇️ Export list as CSV';
+        exportBtn.style.cssText = `
+          background:#0073aa; color:white; border:none;
+          padding:6px 14px; border-radius:4px;
+          cursor:pointer; font-size:13px; margin-top:6px;
+        `;
+        exportBtn.addEventListener('click', () => {
+          const rows = ['Name,URL'];
+          foundProjects.forEach(p => {
+            // Quote name in case it contains commas
+            rows.push(`"${p.name.replace(/"/g, '""')}","${p.url}"`);
+          });
+          const csv  = rows.join('\n');
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const a    = document.createElement('a');
+          a.href     = URL.createObjectURL(blob);
+          a.download = `editor-projects-${LOCALE}-${projectType}.csv`;
+          a.click();
+          URL.revokeObjectURL(a.href);
+        });
+        footer.appendChild(exportBtn);
+      }
+
+    } else {
+      progress.textContent  = '🛑 Stopped.';
+      progress2.textContent =
+        `${checked} / ${allProjects.length} checked — ${editorCount} editor project(s) found so far.`;
+    }
+
+  } catch (err) {
+    console.error('[WP Editor Projects] Fatal error:', err);
+    results.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Generic concurrency limiter.
+// Runs asyncFn over every item in the array, keeping at most `limit`
+// promises in-flight at the same time.  Order of completion is not guaranteed.
+// ---------------------------------------------------------------------------
+async function runWithConcurrency(items, limit, asyncFn) {
+  const queue   = [...items];
+  const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
+    while (queue.length > 0) {
+      const item = queue.shift();
+      await asyncFn(item);
+    }
+  });
+  await Promise.all(workers);
+}

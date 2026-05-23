@@ -54,3 +54,10 @@ Version 3.5.26 Fixed glossary handling in both line by line and batch translatio
 Version 3.5.27 added plural handling for groq translation
 Version 3.5.28 Modified the prompt and handling of the data sent to groq, removed the line numbering, added that into the ID
 Version 3.5.29 Improved marking missing glossaries
+Version 3.5.30 Fixed not marking "website" as missing glossary because of the "site" in it, now it checks for the whole word instead of just part of it
+Version 3.5.30 Fixed a problem with wrong formal conversion
+Version 3.5.31 Modified the function findallmissingglossary to check for the whole word instead of just part of it, this way it won't mark words as missing glossary if they contain a glossary word but are not the same
+Version 3.5.32 Added new function to find projects you are PTE for, this way you can easily find projects where you can help with translations
+Version 3.5.33 Removed the checkmark when using the save button on the translation page after clicking the save button
+Version 3.5.34 Separated the openAI review function
+Version 3.5.35 Fixed replacing words between brackets and curly brackets, there was a problem with the regex that was used to replace the words, now it uses a different regex that should work better

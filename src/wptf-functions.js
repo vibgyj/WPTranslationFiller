@@ -92,7 +92,7 @@ function checkLocale() {
         }
     }
     else {
-        console.debug("Locale string:", localeString)
+       // console.debug("Locale string:", localeString)
         locale = "en-gb";
     }
     return locale;
@@ -997,7 +997,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         .map(([en, inf, form]) => [
             typeof en === 'string' ? en.trim() : en,
             typeof inf === 'string' ? inf.trim() : inf,
-            typeof form === 'string' ? form.trim().toLowerCase() : form  // ← normalized to lowercase
+            typeof form === 'string' ? form.trim().toLowerCase() : form  // normalized to lowercase
         ]);
 
     // Helper: determine if a position in text is at a sentence start
@@ -1078,56 +1078,58 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         updatedSentences.push(dut);
     }
 
-    //console.debug("Before step 2:", updatedSentences);
-
     // === Step 2: Apply all marker replacements ===
     let finalResult = updatedSentences.join("");
     markerReplacements.forEach(({ marker, replacement }) => {
         finalResult = finalResult.replace(marker, replacement);
     });
 
-    //console.debug("After step 2:", updatedSentences);
-
-    const foundEnglishPronouns = new Set(
-        engSentences.join(" ").toLowerCase().match(/\b(you|your|yours)\b/g) || []
-    );
-
-    //console.debug("Before step 3:", updatedSentences);
+    const engText = engSentences.join(" ");
 
     // === Step 3b: Extra pass ONLY when formal mode is active ===
     if (formal === true) {
-        const leftoverInformals = validReplacements
-            .map(([, informal]) => escapeRegex(informal))
-            .join("|");
+        // Only include entries whose English key actually appears in the English text.
+        // This prevents replacing Dutch words like "je" when there is no corresponding
+        // "your"/"you" in the English source (e.g. "How can we help you?" has "you" as
+        // object pronoun, not possessive — but "Hoe kunnen we je helpen?" should stay as-is
+        // because there is no "your" in the English text).
+        const filteredReplacements = validReplacements.filter(([en]) => {
+            if (typeof en !== 'string') return false;
+            return new RegExp(`\\b${escapeRegex(en)}\\b`, 'i').test(engText);
+        });
 
-        const leftoverRegex = new RegExp(
-            `\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`,
-            "gi"
-        );
+        if (filteredReplacements.length > 0) {
+            const leftoverInformals = filteredReplacements
+                .map(([, informal]) => escapeRegex(informal))
+                .join("|");
 
-        finalResult = finalResult.replace(
-            leftoverRegex,
-            (match, informal, punct, space, offset) => {
-                const replacementPair = validReplacements.find(
-                    ([, inf]) => inf.toLowerCase() === informal.toLowerCase()
-                );
-                if (!replacementPair) return match;
+            const leftoverRegex = new RegExp(
+                `\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`,
+                "gi"
+            );
 
-                const formalWord = replacementPair[2]; // already lowercase from validReplacements
+            finalResult = finalResult.replace(
+                leftoverRegex,
+                (match, informal, punct, space, offset) => {
+                    const replacementPair = filteredReplacements.find(
+                        ([, inf]) => inf.toLowerCase() === informal.toLowerCase()
+                    );
+                    if (!replacementPair) return match;
 
-                const before = finalResult.slice(0, offset);
-                const isSentenceStart = isAtSentenceStart(before);
+                    const formalWord = replacementPair[2]; // already lowercase from validReplacements
 
-                const replacementFinal = isSentenceStart
-                    ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
-                    : formalWord;
+                    const before = finalResult.slice(0, offset);
+                    const isSentenceStart = isAtSentenceStart(before);
 
-                return replacementFinal + (punct || '') + (space || '');
-            }
-        );
+                    const replacementFinal = isSentenceStart
+                        ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
+                        : formalWord;
+
+                    return replacementFinal + (punct || '') + (space || '');
+                }
+            );
+        }
     }
-
-    //console.debug("After step 3:", finalResult);
 
     // === Step 4: Polite word insertion (HTML-safe) ===
     const politeEntry = replaceVerbs.find(entry =>
@@ -1828,91 +1830,6 @@ function oldnormalizeText(text) {
 
 
 
-//------------------------------------------------------------------------------
-
-async function wrongmark_glossary(myleftPanel, toolTip, translation, rowId, isPlural) {
-    // If already processing, exit early
-    var dutchText=""
-    if (isProcessing) return;
-
-    isProcessing = true;  // Set the flag to indicate processing is in progress
-
-    try {
-        var missingTranslations = [];
-        if (translation != "") {
-            if (DefGlossary == true) {
-                myglossary = glossary;
-            } else {
-                myglossary = glossary1;
-            }
-            newGloss = createNewGlossArray(myglossary);
-
-            let markleftPanel = myleftPanel;
-            if (markleftPanel != null) {
-                singlepresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
-                singularText = singlepresent.getElementsByClassName('original')[0];
-                if (isPlural == true) {
-                    pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
-                    pluralText = pluralpresent.getElementsByClassName('original')[0];
-                    if (pluralpresent != null) {
-                        spansPlural = pluralpresent.getElementsByClassName("glossary-word");
-                    }
-                }
-                if (singlepresent != null) {
-                    spansSingular = singlepresent.getElementsByClassName("glossary-word");
-                }
-
-                if (isPlural == true) {
-                    spans = spansPlural;
-                } else {
-                    spans = spansSingular;
-                }
-
-                if (spans.length > 0) {
-                    let spansArray = Array.from(spans);
-                    for (let spancnt = 1; spancnt < spansArray.length; spancnt++) {
-                        spansArray[spancnt].setAttribute('gloss-index', spancnt);
-                    }
-                    let glossWords = createGlossArray(spansArray, newGloss);
-                    dutchText = translation;
-
-                    if (isPlural == false) {
-                       // await remove_all_gloss(markleftPanel, false);
-                        missingTranslations = [];
-                        missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
-                        //missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
-
-                        if (missingTranslations.length > 0) {
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                spansArray[glossIndex].classList.add('highlight');
-                            });
-                       // } else {
-                        //    await remove_all_gloss(markleftPanel, false);
-                        }
-                    }
-
-                    if (isPlural == true) {
-                        //await remove_all_gloss(markleftPanel, true);
-                        missingTranslations = [];
-                        missingTranslations = await findMissingTranslations(glossWords, original, dutchText, newGloss, "nl");
-
-                        if (missingTranslations.length > 0) {
-                            missingTranslations.forEach(({ word, glossIndex }) => {
-                                spansArray[glossIndex].classList.add('highlight');
-                            });
-                      //  } else {
-                      //      await remove_all_gloss(markleftPanel, true);
-                        }
-                    }
-                }
-            }
-        } else {
-            console.debug("We do not have a translation!!!");
-        }
-    } finally {
-        isProcessing = false;  // Reset the flag to allow future executions
-    }
-}
 
 
 async function validatePage(language, showHistory, locale, showDiff, DefGlossary) {
@@ -1931,7 +1848,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
     var myglossary = ""
     //console.debug("Is formal:",formal)
     if (formal == true) {
-        console.debug("we have formal")
+       // console.debug("we have formal")
         DefGlossary == false
         myglossary = glossary1
     }

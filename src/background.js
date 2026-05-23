@@ -437,7 +437,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             // remove sensitive field before sending
             delete dataToSend.apiKey;
-
+            console.debug("openRouter request payload:", dataToSend)
             const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {

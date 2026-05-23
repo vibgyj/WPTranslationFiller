@@ -164,7 +164,7 @@ document.addEventListener('click', (event) => {
     if (!button) return;
     console.debug("ook deze")
     // action netjes trimmen
-    let action = button.textContent.trim().replace(/\s+/g, ' ');
+   // let action = button.textContent.trim().replace(/\s+/g, ' ');
     
     // Zoek het eerstvolgende <tr> vanaf de button
     let tr = button.closest('tr'); // eerst de huidige <tr> vinden
@@ -1138,6 +1138,15 @@ c.id = "fetchNewlink"
 c.appendChild(link);
 fetchNewlink.className = 'menu-item wptf_fetchnew_menu'
 
+let fetchPTElink = document.createElement("li");
+var d = document.createElement('a');
+d.href = "#"
+//b.target = "_self";
+link = document.createTextNode("Fetch PTE");
+d.id = "fetchPTElink"
+d.appendChild(link);
+fetchPTElink.className = 'menu-item wptf_fetchpte_menu'
+
 //here we add the links into the divMenu
 var divMenu = document.querySelector("#menu-headline-nav");
 if (divMenu != null) {
@@ -1147,6 +1156,8 @@ if (divMenu != null) {
     divMenu.appendChild(databaselink);
     fetchNewlink.appendChild(c)
     divMenu.appendChild(fetchNewlink);
+    fetchPTElink.appendChild(d)
+    divMenu.appendChild(fetchPTElink);
 }
 
 
@@ -1183,6 +1194,15 @@ document.addEventListener('click', function (event) {
         }
 
         fetchNewClicked();
+    }
+    else if (event.target.id == 'fetchPTElink') {
+        console.debug("Fetch PTE clicked") 
+        // Prevent the default action of the link
+        if (event) {
+        event.preventDefault();
+        }
+
+        fetchPTEClicked();
     }
 });
 
@@ -1480,7 +1500,7 @@ async function translatedButton() {
     compairContainer.appendChild(classToolTip)
 
 
-     let fetchNewContainer = document.createElement("div")
+    let fetchNewContainer = document.createElement("div")
     fetchNewContainer.className = 'button-tooltip'
     classToolTip = document.createElement("span")
     classToolTip.className = 'tooltiptext'
@@ -1495,6 +1515,23 @@ async function translatedButton() {
     fetchNewButton.innerText = __("FetchNew");
     fetchNewContainer.appendChild(fetchNewButton)
     fetchNewContainer.appendChild(classToolTip)
+
+
+    let fetchPTEContainer = document.createElement("div")
+    fetchPTEContainer.className = 'button-tooltip'
+    classToolTip = document.createElement("span")
+    classToolTip.className = 'tooltiptext'
+    classToolTip.innerText = __("This is the function to fetch PTE projects")
+
+    let fetchPTEButton = document.createElement("a");
+    fetchPTEButton.href = "#";
+    fetchPTEButton.style.visible = 'hidden'
+    fetchPTEButton.id = "FetchPTE";
+    fetchPTEButton.className = "fetchpte-button";
+    fetchPTEButton.onclick = fetchPTEClicked;
+    fetchPTEButton.innerText = __("Fetch PTE");
+    fetchPTEContainer.appendChild(fetchPTEButton)
+    fetchPTEContainer.appendChild(classToolTip)
 
 
     let statsContainer = document.createElement("div")
@@ -1533,6 +1570,7 @@ async function translatedButton() {
         copyOrgButton.style.visibility = 'visible'
         compairButton.style.visibility = 'visible'
         fetchNewButton.style.visibility = 'visible'
+        fetchPTEButton.style.visibility = 'visible'
 
     });
 
@@ -1551,7 +1589,8 @@ async function translatedButton() {
             divNavBar.appendChild(bulksaveContainer);
         }
         divNavBar.appendChild(copyOrgContainer);
-        divNavBar.appendChild(fetchNewContainer);
+       // divNavBar.appendChild(fetchNewContainer);
+      //  divNavBar.appendChild(fetchPTEContainer);
         if (statsContainer != null) {
             divNavBar.appendChild(statsContainer);
         }
@@ -2074,6 +2113,14 @@ async function compairClicked(event) {
     });
 }
 
+
+async function fetchPTEClicked(event) {
+    console.debug("Fetch PTE clicked 2") 
+    if (event) {
+        event.preventDefault();
+    }
+    await loadEditorProjects(currentPage);
+}
 async function fetchNewClicked(event) {
     if (event) {
         event.preventDefault();
@@ -2269,7 +2316,7 @@ function impFileClicked(event) {
         }
     var formal;
      chrome.storage.local.get(
-        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude","apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP" ,"OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect","GeminiPrompt","LMStudioWait", "groqBatchSize"],
+        ["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude","apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP" ,"OpenAIPrompt", "ClaudePrompt", "ClaudSelect", "OpenAISelect","OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama","LocalOllama", "ollamaModel","ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect","GeminiPrompt","LMStudioWait", "groqBatchSize"],
         async function (data) {
             if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined' || typeof data.apikeyOpenRouter != "undefined" && data.apikeyOpenRouter != "" && data.transsel == "openRouter" ) {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
@@ -2300,7 +2347,7 @@ function impFileClicked(event) {
                            }
                         }
                         
-                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI,data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect,data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudModel,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt,data.LMStudioWait, data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq,data.groqSelect, data.groqBatchSize);
+                        translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI,data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect,data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, data.DeepLWait, OpenAiGloss, data.ClaudePrompt,data.ClaudSelect,data.apikeyOllama,data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex,data.apikeyGemini, data.GeminiSelect,data.GeminiPrompt,data.LMStudioWait, data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq,data.groqSelect, data.groqBatchSize);
                     }
                     else {
                         messageBox("error", "You need to set the translator API");
@@ -2329,10 +2376,13 @@ async function checkPageClicked(event) {
         }
     var formal = checkFormal(false);
     chrome.storage.local.get(
-        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower", "showHistory", "showTransDiff"],
+        ["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "postTranslationReplace", "preTranslationReplace", "convertToLower", "showHistory", "showTransDiff",  "openAiGloss"],
         async function (data) {
             try {
-                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI,"",data.spellCheckIgnore);
+                await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, "", data.spellCheckIgnore, showHistory, data.apikeyOpenAI, data.OpenAIPrompt, data.reviewPrompt);
+                if (data.Auto_review_OpenAI == true) {
+                    await reviewPage(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt, data.reviewPrompt, data.OpenAiGloss);
+                }
                 if (data.Auto_spellcheck == true) {
                     await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
                 }
@@ -2723,15 +2773,17 @@ async function checkbuttonClick(event) {
     var myLocale = locale
     var target = event.target;
   //  var ClipCopied    
-     // console.debug("buttonclick")
     // Check if the clicked element is the copy-suggestion button
     if (target.classList.contains('copy-suggestion') || target.classList.contains('translation-suggestion__translation-meta') || target.classList.contains('translation-suggestion__translation')) {
         const row = target.closest('tr');
         const rowId = row?.id;
+        var formal = checkFormal(false);
         if (rowId) {
             chrome.storage.local.get(["postTranslationReplace", "formal"], function (data) {
-                replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, data.formal);
-                onCopySuggestionClicked(target, rowId, replaceVerbs);
+
+                replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, formal);
+                setPostTranslationReplace(data.postTranslationReplace, formal);
+                onCopySuggestionClicked(target, rowId, replaceVerb);
             });
 
         } else {
@@ -2827,6 +2879,7 @@ async function checkbuttonClick(event) {
                         if (detail_glossary) {
                             // We need to start the mutation server, if the textarea is clicked on
                             let leftPanel = document.querySelector(`#editor-${rowId} .editor-panel__left`)
+                            //console.debug("We are starting the observer:", leftPanel)
                             start_editor_mutation_server(mytextarea, action, leftPanel)
                         }
                        // mytextarea = textarea.getElementsByClassName('foreign-text')
@@ -4313,7 +4366,7 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                         if (res != null) {
                             SavelocalButton = res.SavelocalButton
                             SavelocalButton.disabled = false;
-                            SavelocalButton.innerText = button_name;
+                             savetranslateEntryClicked.innerText = button_name;
                             SavelocalButton.onclick = savetranslateEntryClicked;
                         }
                         checkElem.style.backgroundColor = "purple";
@@ -4884,6 +4937,7 @@ function addCheckButton(rowId, checkElem, lineNo) {
 
 
 async function savetranslateEntryClicked(event) {
+    // PSS
     var debug = false
     var myWindow;
     var autoCopySwitchedOff = false;
@@ -5004,6 +5058,15 @@ async function savetranslateEntryClicked(event) {
             SavelocalButton.disabled = true;
             SavelocalButton.display = "none";
         }
+        const preview = document.querySelector(`#preview-${rowId}`);
+            if (is_pte) {
+                rowchecked = preview.querySelector(".checkbox input");
+                rowchecked.checked = false;
+            }
+            else {
+                rowchecked = preview.querySelector(".myCheckBox input");
+                rowchecked.checked = false;
+            }
     }
     //  });
    
@@ -5206,7 +5269,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                 if (spans.length > 0) {
                     spansArray = Array.from(spans)
                     glossWords = createGlossArray(spansArray, newGloss)
-                    console.debug("glossWords:", glossWords)  // <-- add this
+                    //console.debug("glossWords:", glossWords)  // <-- add this
                     missingTranslations =  findAllMissingWords(translation, glossWords, locale)
                     //console.debug("We have missing words:",missingTranslations,missingTranslations.length)
                     if (missingTranslations.length != 0) {
@@ -5240,7 +5303,7 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
                     //console.debug("spans:", spansSingular)
                    // wordCount = spans.length
                     //console.debug("span length:", spans.length)
-                    var spansArray = Array.from(spans
+                    var spansArray = Array.from(spans)
                     for (spancnt = 0; spancnt < (spansArray.length); spancnt++) {
                         // console.debug("loop through glossary links:",)                      
                         myfoundCount = 0
@@ -6512,7 +6575,7 @@ function start_editor_mutation_server(textarea, action, leftPanel) {
         textarea[0] instanceof Node ? textarea[0] : null;
 
     if (!targetNode) {
-       // console.debug("start_editor_mutation_server: textarea is not valid");
+        console.debug("start_editor_mutation_server: textarea is not valid");
         return;
     }
 
@@ -6662,6 +6725,7 @@ async function handleMutation(mutationsList, observer) {
     }
 
     const glossaryToUse = DefGlossary ? glossary : glossary1;
+    //console.debug("glossaryToUse:", glossaryToUse)
     const newGloss = createNewGlossArray(glossaryToUse);
 
     let spansSingular = [], spansPlural = [], spans = [];
@@ -6693,7 +6757,8 @@ async function handleMutation(mutationsList, observer) {
     }
 
     const glossWords = createGlossArray(spansArray, newGloss);
-    console.debug("glossWords:", glossWords)  // <-- add this
+    //console.debug("glossWords:", glossWords)  // <-- add this
+    //console.debug("translation for validation:", translation)
     missingTranslations = await findAllMissingWords(translation, glossWords, locale)
     //console.debug("missing in handlemutation:",missingTranslations)
     const toolTipLines = [];
@@ -6779,7 +6844,7 @@ function MutationsPlural(mutationsList, observer) {
         // Add gloss-index attribute and remove previous highlights
         spansArray = Array.from(spans);
         glossWords = createGlossArray(spansArray, newGloss);
-        console.debug("glossWords:", glossWords)  // <-- add this
+        //console.debug("glossWords:", glossWords)  // <-- add this
         for (let spancnt = 0; spancnt < spansArray.length; spancnt++) {
             spansArray[spancnt].setAttribute('gloss-index', spancnt);
             spansArray[spancnt].classList.remove('highlight');

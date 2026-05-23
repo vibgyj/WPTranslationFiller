@@ -1,324 +1,530 @@
-﻿// Call Claude via background script
+/****************************************************
+ * CLAUDE BULK TRANSLATE PAGE
+ * Modelled on translatePageGroq — same row scanning,
+ * same immediate/batch split, same post-processing.
+ * Only the API call and response parsing differ.
+ ****************************************************/
+
+/****************************************************
+ * TEMPLATE ENGINE  (shared with Groq convention)
+ ****************************************************/
+function applyClaudePromptBase(prompt, toLanguage, tone) {
+    // Support both {{toLanguage}} and ${destinationLanguage} placeholder styles
+    return prompt
+        .replace(/\{\{toLanguage\}\}/g,       toLanguage ?? "")
+        .replace(/\$\{destinationLanguage\}/g, toLanguage ?? "")
+        .replace(/\{\{tone\}\}/g,             tone ?? "");
+}
+
+function applyClaudePromptBatch(basePrompt, text, glossary) {
+    return basePrompt
+        .replace(/\{\{text\}\}/g,     text    ?? "")
+        .replace(/\{\{glossary\}\}/g, glossary ?? "");
+}
+
+/****************************************************
+ * SPELLCHECK HELPER
+ * spellCheckIgnore can arrive as a string, array, or
+ * undefined — normalise to string for postProcess
+ ****************************************************/
+function normalizeSpellCheckIgnore(val) {
+    if (typeof val === 'string') return val;
+    if (Array.isArray(val))      return val.join(',');
+    return '';
+}
+
+/****************************************************
+ * CLAUDE API CALL
+ ****************************************************/
 async function callClaude(data) {
     return new Promise(resolve => {
         chrome.runtime.sendMessage({ action: "ClaudeAI", data }, response => {
-            if (!response) {
-                resolve({ success: false, error: "No response from background script" });
-            } else {
-                resolve(response);
-            }
+            resolve(response ?? { success: false, error: "No response from background script" });
         });
     });
 }
 
-class ClaudeTranslator {
-    constructor(apiKey, options = {}) {
-        this.apiKey = apiKey;
-        this.model = options.model || 'claude-haiku-4-5-20251001';
-        this.apiVersion = '2023-06-01';
-        this.maxRetries = options.maxRetries || 3;
-        this.retryDelay = options.retryDelay || 1000;
-        this.max_Tokens = options.max_tokens || 1024;
+/****************************************************
+ * CLAUDE CALL WITH RETRY + BACKOFF
+ ****************************************************/
+async function callClaudeWithRetry(promptText, apiKey, model, temp, maxRetries = 3) {
+    let attempt = 0;
+    console.debug("model", model);
+
+    while (true) {
+        const result = await callClaude({
+            apiKey,
+            apiVersion:   '2023-06-01',
+            model,
+            systemPrompt: promptText,
+            text:         '.',          // required by background-script validation
+            max_tokens:   4096,
+            temperature:  parseFloat(temp) || 0.0,
+        });
+
+        if (result.success) return result;
+
+        const retryable = result.errorType === 'rate_limit_error'
+                       || result.errorType === 'overloaded_error';
+
+        if (!retryable || attempt >= maxRetries) return result;
+
+        const waitMs = (attempt + 1) * 2000;
+        let remaining = Math.ceil(waitMs / 1000);
+
+        console.warn(`[Claude] ${result.errorType} — waiting ${remaining}s before attempt ${attempt + 2}/${maxRetries + 1}`);
+
+        function updateSpinner(sec) {
+            hideTranslationSpinner();
+            showTranslationSpinner(__("Rate limited — retrying in " + sec + "s"));
+        }
+
+        updateSpinner(remaining);
+        const ticker = setInterval(() => {
+            remaining--;
+            if (remaining > 0) updateSpinner(remaining);
+        }, 1000);
+
+        await new Promise(r => setTimeout(r, waitMs));
+        clearInterval(ticker);
+        attempt++;
     }
-
-    // Helper to sleep/wait
-    async sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // Build the base prompt with glossary and formal/informal tone
-    buildSystemPrompt(glossary = {}, formal = false, destinationLanguage = 'Dutch') {
-        const glossaryEntries = Object.entries(glossary)
-            .map(([key, value]) => `${key}=${value}`)
-            .join(', ');
-
-        const tone = formal ? 'u/uw' : 'je/jij';
-
-        return `You are a translation machine. Your ONLY job is to translate text from English to ${destinationLanguage}.
-
-**Rules:**
-1. Use ${tone} (${formal ? 'formal' : 'informal'} tone)
-2. Glossary: ${glossaryEntries || 'none'}
-3. Follow ${destinationLanguage} grammar (word order, conjugations, capitalization)
-4. Keep HTML tags unchanged
-5. Remove __ (underscores) from text
-6. Preserve CAPS exactly
-7. Preserve singular/plural exactly (Section → Sectie, NOT Secties)
-8. Don't translate: URLs, Branch names, variables (%1$s, {var}, etc.), Latin text
-9. Dates: DD-MM-YYYY with ${destinationLanguage} month/day names, 24-hour time
-
-**OUTPUT RULES - ABSOLUTE:**
-- ALWAYS translate whatever text is provided, no matter how short or simple
-- NEVER refuse to translate
-- NEVER ask for context
-- NEVER provide explanations or comments
-- NEVER add characters not in the original (#, *, -, quotes, etc.)
-- DO NOT change singular to plural or vice versa
-- Output ONLY the translation, nothing else
-
-Examples:
-"Add content" → Inhoud toevoegen
-"Section" → Sectie
-"Sections" → Secties
-"Background Type" → Achtergrond Type
-"Highlight Section" → Sectie markeren`;
-    }
-
-    // Helper to apply external prompt and replace ${destinationLanguage} placeholders
-    applyCustomPrompt(basePrompt, userPrompt, destinationLanguage) {
-        if (!userPrompt || typeof userPrompt !== "string") return basePrompt;
-
-        const placeholderRegex = /\$\{\s*destinationLanguage\s*\}|\$destinationLanguage/gi;
-        const processedUserPrompt = userPrompt.replace(placeholderRegex, destinationLanguage);
-        const safeBasePrompt = basePrompt.replace(placeholderRegex, destinationLanguage);
-
-        return safeBasePrompt + "\n\n**Additional Instructions:**\n" + processedUserPrompt;
-    }
-
-    async translate(text, options = {}, attempt = 1) {
-    const {
-        glossary = {},
-        formal = false,
-        destinationLanguage = 'Dutch',
-        systemPrompt = null,
-        max_tokens = max_tokens,
-        temperature = 0.3
-    } = options;
-
-
-    // Build base prompt
-    const basePrompt = this.buildSystemPrompt(glossary, formal, destinationLanguage);
-
-    // Combine with external prompt
-    const finalSystemPrompt = this.applyCustomPrompt(basePrompt, systemPrompt, destinationLanguage);
-
-    // Include the text to translate inside the system prompt
-    const systemWithText = `
-${finalSystemPrompt}
-
-TRANSLATE THE FOLLOWING TEXT IMMEDIATELY:
-"""
-${text}
-"""
-Do NOT provide explanations, comments, or extra text. Output ONLY the literal translation.
-`;
-
-    if (toBoolean(DebugMode)) console.debug("=== Final system prompt sent to Claude ===\n", systemWithText);
-    //console.debug("text:",text)
-    const dataToSend = {
-        apiKey: this.apiKey,
-        apiVersion: this.apiVersion,
-        model: this.model,
-        systemPrompt: systemWithText,
-        text: text || " ", // <--- Required by your callClaude validation
-        max_tokens,
-        temperature
-    };
-
-    const result = await callClaude(dataToSend);
-       // console.debug("Claude response:", result)
-        if (!result.success) {
-            if (result.errorType === "rate_limit_error") {
-                console.debug("Rate limit hit:", result.error);
-                // e.g. show user a friendly message, trigger retry with backoff
-                 const delay = this.retryDelay * attempt;
-                console.debug(`API Overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
-                await this.sleep(delay);
-                return this.translate(text, options, attempt + 1);
-            } else if (result.errorType === "authentication_error") {
-                console.debug("Auth failed — check API key");
-            } else {
-                console.debug("Claude API error:", result.error);
-            }
-
-           if (result.errorType === "rate_limit_error") {
-             if (attempt >= this.maxRetries) {
-                console.debug(`Rate limit: max retries (${this.maxRetries}) reached. Giving up.`);
-                 throw new Error(`Rate limit exceeded after ${this.maxRetries} attempts: ${result.error}`);
-               return "Stop"
-           }
-
-    const delay = this.retryDelay * attempt;
-    console.debug(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
-    await this.sleep(delay);
-    return this.translate(text, options, attempt + 1);
-
-} else if (result.errorType === "overloaded_error") {
-    // Anthropic also returns this type when servers are busy
-    if (attempt >= this.maxRetries) {
-        console.warn(`API overloaded: max retries (${this.maxRetries}) reached. Giving up.`);
-        throw new Error(`API overloaded after ${this.maxRetries} attempts: ${result.error}`);
-    }
-
-    const delay = this.retryDelay * attempt;
-    console.debug(`API overloaded, retrying in ${delay}ms (attempt ${attempt}/${this.maxRetries})...`);
-    await this.sleep(delay);
-    return this.translate(text, options, attempt + 1);
-
-} else if (result.errorType === "authentication_error") {
-    // No point retrying auth errors
-    console.error("Auth failed — check API key");
-    throw new Error(`Authentication failed: ${result.error}`);
-
-} else {
-    // Non-retryable error
-    console.error("Claude API error:", result.error);
-    throw new Error(`Claude API error [${result.errorType}]: ${result.error}`);
 }
 
-            if (!result || result.error) {
-                return { success: false, error: result?.error || "Unknown error" };
-            }
-        }
-    // Clean any unwanted formatting Claude might add
-    let translation = result.translation;
-    if (translation) {
-        translation = translation
-            .replace(/^#{1,6}\s+/gm, '')
-            .replace(/^>\s*/gm, '')
-            .replace(/^(Translation|Output|Result):\s*/i, '')
-            .replace(/^["'](.+)["']$/s, '$1')
+/****************************************************
+ * PARSER
+ * Same multi-candidate strategy as Groq parser.
+ * Expects: {"results":[{"i":"rowId","tr":"translation"}]}
+ ****************************************************/
+function parseClaude(result) {
+    try {
+        let text = result.translation ?? '';
+        if (!text) return null;
+
+        console.debug('[Claude] Raw response:\n', text);
+
+        text = text
+            .replace(/<think>[\s\S]*?<\/think>/g, '')
+            .replace(/```json\s*/gi, '')
+            .replace(/```/g, '')
             .trim();
-    }
 
-    return {
-        success: true,
-        translation,
-        usage: result.usage
+        text = text.replace(/\}\}\]/g, '}]').replace(/\}\}\]\}/g, '}]}');
+
+        // Collect all top-level {...} candidates, largest first
+        const candidates = [];
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] !== '{') continue;
+            let depth = 0, end = -1;
+            for (let j = i; j < text.length; j++) {
+                if (text[j] === '{') depth++;
+                else if (text[j] === '}') depth--;
+                if (depth === 0) { end = j; break; }
+            }
+            if (end !== -1) { candidates.push(text.substring(i, end + 1)); i = end; }
+        }
+
+        if (!candidates.length) {
+            console.warn('[Claude] No JSON candidates in response:', text);
+            return null;
+        }
+
+        candidates.sort((a, b) => b.length - a.length);
+
+        for (const candidate of candidates) {
+            try {
+                const parsed = JSON.parse(candidate);
+                if (!Array.isArray(parsed.results) || !parsed.results.length) continue;
+
+                // Remap "t" → "tr" if model echoed the input key by mistake
+                for (const r of parsed.results) {
+                    if (!('tr' in r) && 't' in r) r.tr = r.t;
+                }
+
+                const badItem = parsed.results.find(r => !('i' in r) || !('tr' in r));
+                if (badItem) continue;
+
+                // Repetition loop detection
+                const hasLoop = parsed.results.some(r => {
+                    const tokens = String(r.tr ?? '').split(/[\s,]+/).filter(Boolean);
+                    if (tokens.length < 10) return false;
+                    let maxRun = 1, run = 1;
+                    for (let i = 1; i < tokens.length; i++) {
+                        run = tokens[i] === tokens[i - 1] ? run + 1 : 1;
+                        if (run > maxRun) maxRun = run;
+                    }
+                    return maxRun >= 8;
+                });
+
+                if (hasLoop) {
+                    console.warn('[Claude] Repetition loop detected — rejecting response');
+                    return null;
+                }
+
+                console.debug('[Claude] Parsed response:', parsed);
+                return parsed.results;
+
+            } catch { /* try next candidate */ }
+        }
+
+        console.warn('[Claude] No valid results in any candidate');
+        return null;
+
+    } catch (err) {
+        console.error('[Claude] Parse error:', err);
+        return null;
+    }
+}
+
+/****************************************************
+ * HELPERS
+ ****************************************************/
+function normalizeClaudeId(id) {
+    return String(id).replace(/\s/g, '');
+}
+
+function makeClaudeBubbleCache() {
+    const cache = new Map();
+    return rowId => {
+        if (!cache.has(rowId)) {
+            cache.set(rowId, document.querySelector('#editor-' + rowId + ' span.panel-header__bubble'));
+        }
+        return cache.get(rowId);
     };
 }
 
+function mergeClaudeGlossaries(enrichedItems) {
+    const seen = new Map();
+    for (const item of enrichedItems) {
+        if (!item.glossary) continue;
+        for (const line of String(item.glossary).split('\n')) {
+            const match = line.match(/(.+?)\s*->\s*(.+)/);
+            if (!match) continue;
+            const source = match[1].trim();
+            const target = match[2].trim();
+            if (source && target && !seen.has(source)) seen.set(source, target);
+        }
+    }
+    return Array.from(seen.entries()).map(([s, t]) => s + ' -> ' + t).join('\n');
 }
 
-// Line-by-line translation
-async function translateLineByLine(
+
+
+/****************************************************
+ * MAIN
+ ****************************************************/
+async function translatePageClaude(
     apiKey,
-    originals,
-    myglossary,
+    OpenAIPrompt,
+    claudeModel,
     destlang,
-    record,
-    rowId,
-    transtype,
-    plural_line,
-    locale,
+    preTranslationReplace,
+    postTranslationReplace,
+    formal,
     convertToLower,
-    current,
-    editor,
-    ClaudePrompt,
-    OpenAITone,
-    preverbs,
+    is_editor,
+    OpenAItemp,
     spellCheckIgnore,
-    convertToLower,
-    locale,
-    OpenAiTemp,
-    Model
+    OpenAITone,
+    openAiGloss,
+    claudeBatchSize = 10
 ) {
-    const results = [];
+    setPostTranslationReplace(postTranslationReplace, formal);
+    setPreTranslationReplace(preTranslationReplace);
 
-    const translator = new ClaudeTranslator(apiKey, {
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        maxRetries: 3,      // Retry up to 3 times on overload
-        retryDelay: 2000    // Start with 1 second, then 2s, then 3s
-    });
-    
-    // Convert glossary string to object
-    let Glossary = myglossary.replaceAll("->", ":");  
-    let glossary = JSON.parse(`{${Glossary}}`);
+    const getBubble      = makeClaudeBubbleCache();
+    const spellIgnoreStr = normalizeSpellCheckIgnore(spellCheckIgnore);
 
-    // Map destination language code to full name
-    let language;
-    switch (destlang) {
-        case 'nl': language = 'Dutch'; break;
-        case 'fr': language = 'French'; break;
-        case 'nl-be': language = 'Belgian Dutch'; break;
-        case 'de': language = 'German'; break;
-        case 'ru': language = 'Russian'; break;
-        case 'uk': language = 'Ukrainian'; break;
-        case 'ja': language = 'Japanese'; break;
-        case 'es-ES': language = 'Spanish'; break;
-        default: language = 'Dutch'; break;
+    const rows = document.querySelectorAll(
+        'tr.editor div.editor-panel__left div.panel-content'
+    );
+
+    const batchQueue     = [];
+    const immediateQueue = [];
+
+    /****************************************************
+     * STRIP PLURAL LABEL
+     ****************************************************/
+    function stripPluralLabel(text) {
+        const lines = (text || '').split('\n');
+        return lines.length > 1 ? lines.slice(1).join('\n').trim() : text.trim();
     }
 
-    let myFormal = (OpenAITone == "informal") ? false : true;
+    /****************************************************
+     * SCAN — classify every row  (identical to Groq)
+     ****************************************************/
+    for (const e of rows) {
+        const rowfound = e.closest('tr.editor')?.id;
+        if (!rowfound) continue;
 
-    // Ensure temperature is a valid number
-    const temp = typeof OpenAiTemp === 'number' ? OpenAiTemp : 0.0;
+        const match = rowfound.match(/^editor-(\d+)$/);
+        const rowId = match?.[1];
+        if (!rowId) continue;
 
-    for (let i = 0; i < originals.length; i++) {
-        const original = originals[i];
-        let originalText = typeof original === "string" ? original : original.text;
+        const original = e.querySelector('span.original-raw')?.innerText;
+        if (!original) continue;
 
-        // Preprocess original
-        let originalPreProcessed = await preProcessOriginal(originalText, preverbs, "OpenAI");
-        originalText = originalPreProcessed;
-        const start = Date.now();
-        let max_Tokens = estimateMaxTokens(originalPreProcessed);
-        let prompt_tokens = estimateMaxTokens(prompt);
-        max_Tokens = max_Tokens + prompt_tokens
-        //console.debug("original:",originalPreProcessed)
-        //console.debug("maxTokens:", max_Tokens)
-        //console.debug("original:",originalPreProcessed)
-        const result = await translator.translate(originalText, {
-            glossary: glossary,
-            formal: myFormal,
-            destinationLanguage: language,
-            systemPrompt: ClaudePrompt,   // Appends and replaces ${destinationLanguage}
-            max_tokens: max_Tokens,
-            temperature: temp,
-            model: Model
+        const plural1 = document.querySelector('#preview-' + rowId + ' .original li:nth-of-type(1)');
+        const plural2 = document.querySelector('#preview-' + rowId + ' .original li:nth-of-type(2)');
+
+        if (plural2) {
+            const form1 = stripPluralLabel(plural1?.innerText);
+            const form2 = stripPluralLabel(plural2?.innerText);
+            const rowLocale = checkLocale();
+            const tr1 = await findTransline(form1, rowLocale);
+            const tr2 = await findTransline(form2, rowLocale);
+
+            if (tr1 !== 'notFound' && tr2 !== 'notFound') {
+                immediateQueue.push({
+                    id: rowId, record: e, original,
+                    translation: tr1, render: false,
+                    pluralForms: [
+                        { original: form1, translation: tr1, line: 1 },
+                        { original: form2, translation: tr2, line: 2 }
+                    ]
+                });
+            } else {
+                batchQueue.push({
+                    id: rowId, type: 'plural', record: e,
+                    items: [
+                        { id: rowId, line: 1, original: form1 },
+                        { id: rowId, line: 2, original: form2 }
+                    ]
+                });
+            }
+            continue;
+        }
+
+        const [myType, myTranslated] = await determineType(rowId, e);
+
+        if (myType === 'name' || myType === 'URL') {
+            immediateQueue.push({ id: rowId, record: e, original, translation: original, render: true });
+            continue;
+        }
+
+        if (myType === 'pretranslated') {
+            immediateQueue.push({ id: rowId, record: e, original, translation: myTranslated, render: false });
+            continue;
+        }
+
+        batchQueue.push({
+            id: rowId, type: 'single', record: e,
+            items: [{ id: rowId, line: 1, original }]
         });
-        //console.debug("Claude translation result:", result); 
-        if (result.success) {
-            const duration = ((Date.now() - start) / 1000).toFixed(2);
-            if (toBoolean(DebugMode)) console.debug("Claude proxy response (raw):", result.translation," ",duration);
-         
+    }
 
-            let myTranslatedText = await postProcessTranslation(
-                original,
-                result.translation,
-                replaceVerb,
-                originalPreProcessed,
-                "Claud",
-                convertToLower,
-                spellCheckIgnore,
-                locale
-            );
+    /****************************************************
+     * LOCAL LABEL  (identical to Groq)
+     ****************************************************/
+    function addLocalLabel(rowId, expectedForms) {
+        const td = document.querySelector('#preview-' + rowId + ' td.translation');
+        if (!td) return;
 
-            await processTransl(
-                original,
-                myTranslatedText,
-                language,
-                record,
-                rowId,
-                transtype,
-                plural_line,
-                locale,
-                convertToLower,
-                current
-            );
-            results.push({
-                id: original.id,
-                original: originalText,
-                translation: result.translation,
-                success: true
-            });
-        } else {
-            const errMsg = result.error || "Unknown error";
-            //console.debug(`Translation error for ID ${original.id}: ${errMsg}`);
-            results.push({
-                id: original.id,
-                original: originalText,
-                error: errMsg,
-                success: false
-            });
+        function insertLabel() {
+            if (td.querySelector('.trans_local_div')) return;
+            const div = document.createElement('div');
+            div.setAttribute('class', 'trans_local_div');
+            div.setAttribute('id',    'trans_local_div');
+            div.appendChild(document.createTextNode(__('Local')));
+            const ul = td.querySelector('ul.ul-plural');
+            if (ul) ul.insertAdjacentElement('afterend', div);
+            else     td.appendChild(div);
         }
 
-        // Add delay between requests to avoid rate limiting (except last item)
-        if (i < originals.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // 500 msec delay
+        if (expectedForms && expectedForms > 1) {
+            const observer = new MutationObserver(() => {
+                const spans   = td.querySelectorAll('span.translation-text');
+                const allFilled = spans.length >= expectedForms &&
+                    [...spans].every(s => s.innerHTML.trim() !== '' && s.innerHTML.trim() !== 'empty');
+                if (allFilled) { observer.disconnect(); insertLabel(); }
+            });
+            observer.observe(td, { childList: true, subtree: true, characterData: true });
+            setTimeout(() => { observer.disconnect(); insertLabel(); }, 2000);
+        } else {
+            insertLabel();
         }
     }
 
-    return results;
+    /****************************************************
+     * IMMEDIATE — process local rows without Claude
+     ****************************************************/
+    for (const item of immediateQueue) {
+
+        // Pretranslated plural
+        if (item.pluralForms) {
+            for (let fi = 0; fi < item.pluralForms.length; fi++) {
+                const form = item.pluralForms[fi];
+                const preprocessed = await preProcessOriginal(form.original, replacePreVerb, 'claude');
+                const finalText = await postProcessTranslation(
+                    form.original, form.translation, replaceVerb,
+                    preprocessed, 'claude', convertToLower, spellIgnoreStr, locale
+                );
+                await processTransl(
+                    form.original, finalText, destlang, item.record,
+                    item.id, 'plural', String(form.line),
+                    locale, convertToLower, getBubble(item.id)
+                );
+                if (fi === item.pluralForms.length - 1) {
+                    addLocalLabel(item.id, item.pluralForms.length);
+                }
+            }
+            continue;
+        }
+
+        // Pretranslated single
+        if (!item.render) {
+            const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'claude');
+            const finalText = await postProcessTranslation(
+                item.original, item.translation, replaceVerb,
+                preprocessed, 'claude', convertToLower, spellIgnoreStr, locale
+            );
+            await processTransl(
+                item.original, finalText, destlang, item.record,
+                item.id, 'single', '', locale, convertToLower, getBubble(item.id)
+            );
+            addLocalLabel(item.id);
+            continue;
+        }
+
+        // name / URL
+        const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'claude');
+        const finalText = await postProcessTranslation(
+            item.original, item.translation, replaceVerb,
+            preprocessed, 'claude', convertToLower, spellIgnoreStr, locale
+        );
+        await processTransl(
+            item.original, finalText, destlang, item.record,
+            item.id, 'single', '', locale, convertToLower, getBubble(item.id)
+        );
+    }
+
+    /****************************************************
+     * BATCH — translate via Claude
+     ****************************************************/
+    const batchSize       = Number(claudeBatchSize) || 10;
+    const maxParseRetries = 2;
+    const resolvedLanguage = (typeof LOCALE_TO_LANGUAGE !== 'undefined' ? LOCALE_TO_LANGUAGE[destlang] : null) ?? destlang;
+
+    // Fill static placeholders once — language and tone never change between batches
+    const basePrompt = applyClaudePromptBase(OpenAIPrompt, resolvedLanguage, OpenAITone);
+
+    for (let i = 0; i < batchQueue.length; i += batchSize) {
+        const batch    = batchQueue.slice(i, i + batchSize);
+        const allItems = batch.flatMap(b => b.items);
+
+        // Preprocess first, then prune glossary against preprocessed text
+        const enrichedItems = await Promise.all(
+            allItems.map(async item => {
+                const preprocessed   = await preProcessOriginal(item.original, replacePreVerb, 'claude');
+                const prunedGlossary = await pruneGlossary(openAiGloss, preprocessed, null);
+                return {
+                    id: item.id, line: item.line,
+                    text: item.original, preprocessed,
+                    glossary: prunedGlossary || ''
+                };
+            })
+        );
+
+        const combinedGlossary = mergeClaudeGlossaries(enrichedItems);
+        console.debug('[Claude] combinedGlossary:', combinedGlossary);
+
+        const promptItems = enrichedItems.map(({ id, text }) => ({ i: id, t: text }));
+        const batchPrompt = applyClaudePromptBatch(
+            basePrompt,
+            JSON.stringify(promptItems),
+            combinedGlossary
+        );
+
+        let parsed = null;
+
+        // Correction-retry loop
+        let correctionPrompt = batchPrompt;
+        for (let attempt = 0; attempt <= maxParseRetries; attempt++) {
+
+            if (attempt > 0) {
+                showTranslationSpinner(__(
+                    'Model returned prose — correction attempt ' + attempt + '/' + maxParseRetries + '…'
+                ));
+                correctionPrompt = batchPrompt +
+                    '\n\nYour previous response used wrong output keys. ' +
+                    'Return ONLY a JSON object in this exact format: ' +
+                    '{"results":[{"i":"<echo input i unchanged>","tr":"<translation>"}]} ' +
+                    'The translation key MUST be "tr", NOT "t". ' +
+                    'No prose, no markdown, no headers, no notes. ' +
+                    'Tone: ' + OpenAITone + '. Target language: ' + resolvedLanguage + '.';
+                await new Promise(r => setTimeout(r, 1500));
+            }
+
+            console.debug('[Claude] batchPrompt:', correctionPrompt);
+            const response = await callClaudeWithRetry(
+                correctionPrompt, apiKey, claudeModel, OpenAItemp
+            );
+
+            if (!response.success) {
+                hideTranslationSpinner();
+                const progressbar = document.querySelector('.indeterminate-progress-bar');
+                if (progressbar) progressbar.style.display = 'none';
+                alert('Claude error:\n\n' + JSON.stringify(response.error, null, 2));
+                return 'STOPPED';
+            }
+
+            parsed = parseClaude(response);
+
+            if (parsed) {
+                hideTranslationSpinner();
+                break;
+            }
+
+            console.warn('[Claude] Attempt ' + (attempt + 1) + ' returned no valid JSON.\n' +
+                '--- RAW ---\n' + (response.translation ?? '') + '\n--- END ---');
+        }
+
+        if (!parsed) {
+            hideTranslationSpinner();
+            console.error('[Claude] All attempts failed for batch at index ' + i + '. Skipping.');
+            continue;
+        }
+
+        // Write results — match by id, use position for plurals
+        for (const group of batch) {
+            for (const item of group.items) {
+                const allForId  = parsed.filter(r => normalizeClaudeId(r.i ?? '') === normalizeClaudeId(item.id));
+                const lineIndex = Number(item.line ?? 1) - 1;
+                const res       = allForId[lineIndex] ?? allForId[0] ?? null;
+
+                if (!res) {
+                    console.warn('[Claude] No match for id=' + item.id + ' line=' + item.line +
+                        ' | returned: ' + parsed.map(r => r.i).join(', '));
+                }
+
+                const translation = res?.tr ?? 'No suggestions';
+                console.debug('WRITING ROW id=' + group.id + ' line=' + item.line + ' translation=' + translation);
+
+                const finalText = await postProcessTranslation(
+                    item.original, translation, replaceVerb,
+                    item.original, 'claude', convertToLower, spellIgnoreStr, locale
+                );
+
+                await processTransl(
+                    item.original, finalText, destlang,
+                    group.record, group.id, group.type,
+                    String(item.line), locale, convertToLower, getBubble(group.id)
+                );
+            }
+        }
+
+        // Inter-batch pause
+        const isLastBatch = i + batchSize >= batchQueue.length;
+        if (!isLastBatch) {
+            hideTranslationSpinner();
+            await new Promise(r => setTimeout(r, 3000));
+        }
+    }
+
+    hideTranslationSpinner();
+
+    const progressbar = document.querySelector('.indeterminate-progress-bar');
+    if (progressbar) progressbar.style.display = 'none';
+
+    return 'OK';
 }

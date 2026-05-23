@@ -1,4 +1,11 @@
-﻿/* checkmark span */
+﻿/*.translation-editor-topbar__buttons {
+    display: none !important;
+}
+.translation-editor-topbar__inner {
+        display: none !important;
+}*/
+
+/* checkmark span */
 /* Zorg dat checkmark positionering context heeft */
 /* Checkmark badge */
 .panel-header .checkmark {
