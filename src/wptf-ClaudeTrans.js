@@ -49,8 +49,6 @@ async function callClaude(data) {
  ****************************************************/
 async function callClaudeWithRetry(promptText, apiKey, model, temp, maxRetries = 3) {
     let attempt = 0;
-    console.debug("model", model);
-
     while (true) {
         const result = await callClaude({
             apiKey,
@@ -100,9 +98,6 @@ function parseClaude(result) {
     try {
         let text = result.translation ?? '';
         if (!text) return null;
-
-        console.debug('[Claude] Raw response:\n', text);
-
         text = text
             .replace(/<think>[\s\S]*?<\/think>/g, '')
             .replace(/```json\s*/gi, '')
@@ -229,6 +224,8 @@ async function translatePageClaude(
     openAiGloss,
     claudeBatchSize = 10
 ) {
+
+    console.debug('[Claude] translatePageClaude started, destlang:', destlang, 'rows:', document.querySelectorAll('tr.editor div.editor-panel__left div.panel-content').length);
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
 
@@ -498,7 +495,7 @@ async function translatePageClaude(
                 }
 
                 const translation = res?.tr ?? 'No suggestions';
-                console.debug('WRITING ROW id=' + group.id + ' line=' + item.line + ' translation=' + translation);
+                //console.debug('WRITING ROW id=' + group.id + ' line=' + item.line + ' translation=' + translation);
 
                 const finalText = await postProcessTranslation(
                     item.original, translation, replaceVerb,
