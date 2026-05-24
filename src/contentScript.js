@@ -3283,9 +3283,9 @@ function translateEntryClicked(event) {
         rowId = newrowId;
     }
     let editor = document.querySelector(`#editor-${rowId}`);
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI","apikeyOpenRouter", "apikeyMistral","apikeyClaude", "apikeygroq", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiSelect", "GeminiPrompt","groqSelect", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenRouterSelect","MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt", "LMStudioWait"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI","apikeyOpenRouter", "apikeyMistral","apikeyClaude", "apikeygroq", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiSelect", "GeminiPrompt","groqSelect", "LocalOllama", "OpenAIPrompt", "ClaudePrompt" ,"OpenAISelect", "OpenRouterSelect","MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss","ClaudSelect", "apikeyOllama", "LocalOllama", "ollamaModel","ollamaPrompt", "LMStudioWait"], function (data) {
         //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-       // console.debug("select:",data.MistralSelect)
+        //console.debug("select:",data.ClaudSelect)
         if (data.ForceFormal != true) {
             formal = checkFormal(false);
         }
@@ -3301,7 +3301,7 @@ function translateEntryClicked(event) {
         //console.debug("DeeplGlossary in translateEntry:",deeplGlossary)
        // console.debug("geminiSel:",data.GeminiSelect)
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude,data.apikeyNLP,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudModel,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait,data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq, data.groqSelect);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek,data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude,data.apikeyNLP,data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, OpenAITone, myOpenAiGloss,data.ClaudSelect,data.apikeyOllama, data.LocalOllama, data.ollamaModel,data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait,data.apikeyOpenRouter,data.OpenRouterSelect,data.apikeygroq, data.groqSelect);
         }
         else {
             messageBox("error", "You need to set the parameter for Destination language");

@@ -6438,6 +6438,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         //myGlossary = `{${myGlossary}}`;
                         // let Glossary = JSON.parse(`{${myGlossary}}`);
                         //console.debug("OpenAiGloss:",openAiGloss)
+                        console.debug("model:", ClaudModel)
                         const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp,ClaudModel);
                     
                        if (results.success) {
