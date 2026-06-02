@@ -96,13 +96,18 @@ const linkRegex = /(https?|ftp|file):\/\/[^\s]+/gi;
 const markupRegex = /<span[^>]*>|<a[^>]*>|&#[0-9]+;|&[a-zA-Z0-9]+;|&|<ul[^>]*>|<li[^>]*>/g;
 
 //const specialChar = new RegExp(/ # | #|\#|\t|\r\n|\r|\n|&#->/ig);
-const specialChar = /<[^>]+>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|\#|#/gi;
+//const specialChar = /<[^>]+>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|\#|#/gi;
+//const specialChar = /<[^>]*>|&#[0-9]+;|&[a-z]+;|[\r\n\t#]/gi;
+const specialChar = /<[^>]*>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|[#?]/g;
 const GoogleRegex = /%(\d{1,2})?\$?[sdl]/gi;
 
 
 async function preProcessOriginal(original, preverbs, translator) {
     var index = 0;
-
+    //console.log(original.split('').map(c => c.charCodeAt(0)));
+//const chars = original.split('').map((c, i) => ({ i, char: JSON.stringify(c), code: c.charCodeAt(0) })).slice(145, 175);
+//chars.forEach(c => console.log(c.i, c.char, c.code));    console.debug("original before preProcessOriginal:", original)
+    //console.debug("translator:", "'"+translator+"'")
     // We need to replace special chars before translating
     // We cannot use brackets {} because DeepL does not handle them properly
     // prereplverb contains the verbs to replace before translation
@@ -111,37 +116,34 @@ async function preProcessOriginal(original, preverbs, translator) {
 
     // We need to replace the preverbs before sending the text to the API, otherwise the API's will not translate the text because of the presence of the formal words
     for (let i = 0; i < preverbs.length; i++) {
-        if (!CheckUrl(original, preverbs[i][0])) {
-            // We need to remove the word provided
-            if (preverbs[i][0].startsWith("#remove")) {
-                original = removeWord(original, preverbs[i][1])
-                //console.debug("original after:",original)
-            }
-            //console.debug("preProcessOriginal before replacing preverbs:", original)
-            original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
+    if (!CheckUrl(original, preverbs[i][0])) {
+        const before = original;
+        if (preverbs[i][0].startsWith("#remove")) {
+            original = removeWord(original, preverbs[i][1]);
         }
+        original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
     }
+}
 
     if (translator != "lingvanex" && translator != "LMstudio" && translator != "NLPCLoud" && translator != "google" && translator != "Ollama") {
         const charmatches = original.matchAll(specialChar);
+      
         if (charmatches != null) {
             // we need to start with 1 otherwise translation API's alter the zero value
+            const placeholders = {};
             let index = 1;
-            for (const charmatch of charmatches) {
-                // Replace the found match with a DeepL-safe placeholder
-                original = original.replace(
-                    charmatch[0],
-                    `<x id="special_var${index}"/>`
-                );
-                index++;
-            }
+
+            original = original.replace(specialChar, (match) => {
+                const id = `special_var${index++}`;
+                placeholders[id] = match;
+                return `<x id="${id}"/>`;
+            });
+
         }
+
     }
 
-   
-    // 15-05-2021 PSS added check for translator
-
-    if (translator == "google") {
+    else if (translator == "google") {
       //  const matches = original.matchAll(placeHolderRegex);
        // if (matches != null) {
        //     index = 0;
@@ -183,6 +185,7 @@ async function preProcessOriginal(original, preverbs, translator) {
     }
     else if (translator == "deepl") {
 
+        console.debug("We have deepl")
         // Deepl does remove crlf so we need to replace them before sending them to the API
         //original = original.replaceAll('\r', "mylinefeed");
         original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
@@ -408,7 +411,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     var pos;
     var index = 0;
     var foundIgnore;
-    var formal = checkFormal(false);
+    let formal = checkFormal(false);
     const verbMap = Object.fromEntries(replaceVerb.map(v => [v[0], v[1]]));
     const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
     //console.debug("postprocessOriginal:", original) 
@@ -860,7 +863,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
 }
 
 function replace_special_var(original, translatedNewText) {
-    const specialChar = /<[^>]+>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|#/gi;
+    const specialChar = /<[^>]*>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|[#?]/g;
     const placeholderMap = {};
     let index = 1;
     for (const charmatch of original.matchAll(specialChar)) {
@@ -905,13 +908,13 @@ function replace_mVar(original, translatedNewText, specialChar) {
 
 
 function removeWord(sentence, searchWord) {
-    var formal = checkFormal(false);
+    let formal = checkFormal(false);
     var modifiedSentence = sentence;
 
     if (formal === false) {
         const escapedSearchWord = searchWord.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-        const regex = new RegExp(`(^|\\s)${escapedSearchWord},?\\s*`, 'gi');
-
+        //const regex = new RegExp(`(^|\\s)${escapedSearchWord},?\\s*`, 'gi');
+        const regex = new RegExp(`(^| )${escapedSearchWord},? *`, 'gi');
         modifiedSentence = sentence.replace(regex, (match, p1) => {
             return p1 === ' ' ? ' ' : '';
         });
@@ -1301,7 +1304,7 @@ async function pretranslate(original) {
 function checkFormalPage(dataFormal) {
     //console.debug('postrepl content:', dataFormal)
     //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-    var formal = checkFormal(false);
+    let formal = checkFormal(false);
     setPostTranslationReplace(dataFormal, formal);
     //console.debug("CheckFormal started")
     // 15-05-2021 PSS added fix for issue #73add
@@ -1939,8 +1942,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     }
     
       //  console.debug("we are checking")
-        //15-10- 2021 PSS enhencement for Deepl to go into formal issue #152
-        var formal = checkFormal(false);
+        
         setPostTranslationReplace(postTranslationReplace, formal);
         // console.debug('repl:',replaceVerb,formal)
         // 15-05-2021 PSS added fix for issue #73add
@@ -2908,7 +2910,7 @@ async function populateWithLocal(apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicr
     
     //destlang = "nl"
     parrotActive = 'true';
-    locale = checkLocale();
+    //locale = checkLocale();
     //console.debug("replaceVerbs:",postTranslationReplace)
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
@@ -5605,11 +5607,10 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             groqBatchSize)
     }
     else if (transsel == "Claude") {
-        console.debug("we translate with claude")
         let is_editor = false
         result = await translatePageClaude(
             apikeyClaude,
-            OpenAIPrompt,
+            ClaudePrompt,
             ClaudeModel,
             destlang,
             preTranslationReplace,
@@ -5881,7 +5882,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
                                     counter,
                                     editor,
                                     ClaudePrompt,
-                                    ClaudModel,
+                                    ClaudeModel,
                                     apikeyOllama,
                                     LocalOllama,
                                     ollamaModel,
@@ -6051,7 +6052,6 @@ function check_span_missing(row, plural_line) {
 
 async function checkEntry(rowId, postTranslationReplace, formal, convertToLower, spellCheckIgnore) {
     var translatedText;
-    var formal = checkFormal(false);
     var editor;
     var plural;
     var preview;
@@ -6149,7 +6149,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
     let myTextareaElem = ""
     locale = checkLocale();
     let myprompt = OpenAIPrompt
-    
+    //console.debug("entry:",formal)
     if (transsel == "LMStudio") {
         result = await checkModelAndContinue(ollamaModel);
         if (!result) {
@@ -6438,7 +6438,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         //myGlossary = `{${myGlossary}}`;
                         // let Glossary = JSON.parse(`{${myGlossary}}`);
                         //console.debug("OpenAiGloss:",openAiGloss)
-                        console.debug("model:", ClaudModel)
+                        //console.debug("model:", ClaudModel)
                         const results = await translateLineByLine(apikeyClaude, originals, openAiGloss,destlang, e, rowId, transtype, plural_line,locale, convertToLower, current, editor,ClaudePrompt, OpenAITone,replacePreVerb,spellCheckIgnore,  convertToLower, locale, OpenAItemp,ClaudModel);
                     
                        if (results.success) {
@@ -7613,7 +7613,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     var textareaElem2;
     var textareaElem3;
     var textareaElem4;
-    var formal = checkFormal(false);
+    let formal = checkFormal(false);
     const start = Date.now()
     var mytranslatedText;
 
@@ -8339,7 +8339,7 @@ async function onCopySuggestionClicked(target,rowId) {
         var translatedText = ""
         var textareaElem
         locale = checkLocale();
-        var formal = checkFormal(false);
+        let formal = checkFormal(false);
         var editor =""
        
         let convertToLower = data.convertToLower

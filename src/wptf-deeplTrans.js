@@ -10,6 +10,8 @@ async function translateText(
     deepLcurrent, DeepLWait = 0
 ) {
     destlang = destlang.toUpperCase();
+    //console.debug("formal:",formal)
+    //console.debug("Preprocessed original for DeepL:", originalPreProcessed);
     const formal_value = formal ? "prefer_more" : "prefer_less";
     const mycontext = formal
         ? "This text is a legal message"

@@ -1844,7 +1844,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
     var myGlotDictStat;
     var newurl;
     var old_status;
-    var formal = checkFormal(false);
+    let formal = checkFormal(false);
     var myglossary = ""
     //console.debug("Is formal:",formal)
     if (formal == true) {

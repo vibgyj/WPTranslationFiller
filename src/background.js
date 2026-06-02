@@ -1131,12 +1131,12 @@ else if (request.action == "Lingvanex") {
         if (request.action === "load_deepl_glossary") {
        // console.debug(request.isFree)
         //   console.debug(request.apiKey)
-        console.debug(request.glossaryData)
+        //console.debug(request.glossaryData)
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
         let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
         //console.debug("deeplServer in upload:",deeplServer)
         let url = `${deeplServer}`;
-        console.debug("Url:",url)
+        //console.debug("Url:",url)
         let response = fetch(url, {
             method: "POST",
             accept: "*/*",
@@ -1154,7 +1154,7 @@ else if (request.action == "Lingvanex") {
                 return response.json(); // DeepL API usually returns JSON
             })
             .then(data => {
-                console.log("Glossary uploaded successfully:", data);
+                console.debug("Glossary uploaded successfully:", data);
                 sendResponse({ success: true, glossaries: data });
 
             })

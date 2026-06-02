@@ -469,9 +469,13 @@ function working_findAllMissingWords(translationText, glossWords, locale = 'nl')
 async function remove_all_gloss(myleftPanel, preview, isPlural,rowId) {
    
     var spansArray
+    var spansSingular
+    //console.debug("myleftPanel in remove_all_gloss:", myleftPanel)
     if (typeof myleftPanel != 'undefined') {
         singlepresent = myleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
-        spansSingular = singlepresent.getElementsByClassName("glossary-word")
+        if (singlepresent != null) {
+            spansSingular = singlepresent.getElementsByClassName("glossary-word")
+        }
 
         if (isPlural) {
             pluralpresent = myleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
@@ -479,12 +483,16 @@ async function remove_all_gloss(myleftPanel, preview, isPlural,rowId) {
             spansArray = Array.from(spansPlural)
         }
         else {
-            spansArray = Array.from(spansSingular)
+            if (spansSingular != null) {
+                spansArray = Array.from(spansSingular)
+            }
         }
-
-        for (let i = 0; i < spansArray.length; i++) {
-            spansArray[i].classList.remove('highlight');
+        if (spansArray != null) {
+            for (let i = 0; i < spansArray.length; i++) {
+                spansArray[i].classList.remove('highlight');
+            }
         }
+    
 
     }
     else {

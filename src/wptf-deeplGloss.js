@@ -1,6 +1,6 @@
 function loadMyGlossary(apiKey, DeeplFree, gloss) {
-    //console.debug("we start loading", apiKey, DeeplFree, gloss)
-    console.debug("DeeplFree:",DeeplFree)
+     // console.debug("we start loading", apiKey, DeeplFree, gloss)
+    //console.debug("DeeplFree:",DeeplFree)
     chrome.runtime.sendMessage({
         action: "load_deepl_glossary",
         apiKey: apiKey,
@@ -8,7 +8,7 @@ function loadMyGlossary(apiKey, DeeplFree, gloss) {
         isFree: DeeplFree
     }, (response) => {
         //console.debug("Received response:", response); // Debugging step
-        console.debug("response:",response)
+        //console.debug("response:",response)
         if (response && response.success) {
             //console.debug("Glossary uploaded:", response.glossaries);
             let result = response.glossaries.glossary_id

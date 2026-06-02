@@ -49,6 +49,8 @@ async function callClaude(data) {
  ****************************************************/
 async function callClaudeWithRetry(promptText, apiKey, model, temp, maxRetries = 3) {
     let attempt = 0;
+    console.debug("model", model);
+
     while (true) {
         const result = await callClaude({
             apiKey,
@@ -98,6 +100,9 @@ function parseClaude(result) {
     try {
         let text = result.translation ?? '';
         if (!text) return null;
+
+        //console.debug('[Claude] Raw response:\n', text);
+
         text = text
             .replace(/<think>[\s\S]*?<\/think>/g, '')
             .replace(/```json\s*/gi, '')
@@ -222,10 +227,8 @@ async function translatePageClaude(
     spellCheckIgnore,
     OpenAITone,
     openAiGloss,
-    claudeBatchSize = 10
+    claudeBatchSize = 5
 ) {
-
-    console.debug('[Claude] translatePageClaude started, destlang:', destlang, 'rows:', document.querySelectorAll('tr.editor div.editor-panel__left div.panel-content').length);
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
 
@@ -254,7 +257,7 @@ async function translatePageClaude(
         const rowfound = e.closest('tr.editor')?.id;
         if (!rowfound) continue;
 
-        const match = rowfound.match(/^editor-(\d+)$/);
+        const match = rowfound.match(/^editor-(\d+(?:-\d+)?)$/);
         const rowId = match?.[1];
         if (!rowId) continue;
 
@@ -456,7 +459,7 @@ async function translatePageClaude(
             const response = await callClaudeWithRetry(
                 correctionPrompt, apiKey, claudeModel, OpenAItemp
             );
-
+            console.debug('[Claude] RAW response:', response.translation);
             if (!response.success) {
                 hideTranslationSpinner();
                 const progressbar = document.querySelector('.indeterminate-progress-bar');
@@ -522,6 +525,6 @@ async function translatePageClaude(
 
     const progressbar = document.querySelector('.indeterminate-progress-bar');
     if (progressbar) progressbar.style.display = 'none';
-
+    messageBox("info", __("Translation is ready"));
     return 'OK';
 }

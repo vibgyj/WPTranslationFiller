@@ -34,7 +34,7 @@ async function translateLineByLine(
 
     // Fill static placeholders once
     const basePrompt = applyClaudePromptBase(ClaudePrompt, resolvedLanguage, OpenAITone);
-
+    //console.debug('[Claude Single] Base prompt:', basePrompt)
     for (let i = 0; i < originals.length; i++) {
         const original    = originals[i];
         const originalText = typeof original === 'string' ? original : original.text;

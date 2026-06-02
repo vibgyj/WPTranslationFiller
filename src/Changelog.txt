@@ -62,3 +62,8 @@ Version 3.5.33 Removed the checkmark when using the save button on the translati
 Version 3.5.34 Separated the openAI review function
 Version 3.5.35 Fixed replacing words between brackets and curly brackets, there was a problem with the regex that was used to replace the words, now it uses a different regex that should work better
 Version 3.5.36 Fixed translateEntry for Claude 
+Version 3.5.37 reworked contentScript.js
+Version 3.5.37 Fixed a problem with upload the export file from the glossary
+Version 3.5.38 When entering the editor of a plural with pretranslated singular, the second line was not populated
+Version 3.5.39 the variable formal got the wrong value due to setting it with "var formal"
+Version 3.5.39 Fixed a problem with leaving newline out of the translation

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler Extended",
-  "version": "3.5.36",
+  "version": "3.5.38",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -37,7 +37,8 @@
         "en-gb.json"
       ],
       "matches": [
-        "https://translate.wordpress.org/*"
+	   "https://translate.wordpress.org/*",
+	   "http://localhost/*"
       ]
     }
   ],
@@ -82,7 +83,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://translate.wordpress.org/*"
+	    "https://translate.wordpress.org/*",
+		"http://localhost/*"
       ],
       "js": [
         "wptf-inject.js",

@@ -860,7 +860,7 @@ button.addEventListener("click", function () {
             ClaudSelect: Claudsel,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
-            transsel: transsel,
+            transsel: transsel.trim,
             OpenAISelect: OpenAIsel,
             groqSelect: groqsel,
             OpenRouterSelect: OpenRoutersel,
