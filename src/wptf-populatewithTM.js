@@ -396,7 +396,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                                     current.innerText = 'transFill'
                                     record = document.querySelector(`#editor-${rowId}`);
                                     let mytranslatedText = await  postProcessTranslation(original, textFound, replaceVerb, textFound, "populateWithTM", convertToLower, spellCheckIgnore, locale);
-                                   // console.debug("mytranslatedText:", mytranslatedText)
+                                    console.debug("mytranslatedText:", mytranslatedText)
                                     await processTransl(original, mytranslatedText, locale, record, rowId, transtype, plural_line, locale, false, current)
 
                                 }

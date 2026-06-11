@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler Extended",
-  "version": "3.5.38",
+  "version": "3.5.43",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -126,6 +126,7 @@
         "wptf_Fetch_themes.js",
         "wptf-translatePageGroq.js",
         "wptf-translatePageClaude.js",
+        "wptf-translatePageOpenRouter.js",
         "contentScript.js"
       ],
       "css": [

@@ -7,6 +7,7 @@
  * - Pretranslated singles + plurals handled locally (no Groq call)
  * - Local label added to pretranslated rows
  * - Adaptive inter-batch delay based on 429 pressure
+ * - Per-item glossary embedded in JSON payload (not a shared block)
  ****************************************************/
 
 function delay(ms) {
@@ -16,8 +17,19 @@ function delay(ms) {
 /****************************************************
  * TEMPLATE ENGINE
  * applyPromptBase  — fill static placeholders once before the loop
- * applyPromptBatch — fill dynamic placeholders per batch
+ * applyPromptBatch — fill dynamic placeholder per batch
  * applyPromptTemplate — fill all placeholders at once (legacy)
+ *
+ * NOTE: {{glossary}} is intentionally left empty in applyPromptBatch.
+ * Glossary terms are now embedded per-item as a "g" field in the
+ * JSON payload, so the model knows exactly which terms apply to
+ * which string. The {{glossary}} placeholder is kept in the
+ * signature for backwards compatibility with existing prompt
+ * templates, but callers should update their prompts to use:
+ *
+ *   "Each item may include a 'g' field with glossary terms in
+ *    'source -> target' format. Apply those terms when translating
+ *    that specific item only. Do not include 'g' in your output."
  ****************************************************/
 function applyPromptTemplate(prompt, vars) {
     return prompt
@@ -179,7 +191,7 @@ function parseGroq(result) {
         let text = result?.result?.choices?.[0]?.message?.content;
         if (!text) return null;
 
-        console.debug("GROQ RAW RESPONSE:\n", text);
+        //console.debug("GROQ RAW RESPONSE:\n", text);
 
         text = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
         text = text.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
@@ -208,24 +220,26 @@ function parseGroq(result) {
             return null;
         }
 
-        candidates.sort((a, b) => b.length - a.length);
+        // Two-pass evaluation last-to-first:
+        // Pass 1: prefer proper {results:[...]} objects over bare arrays
+        // Pass 2: accept bare arrays as fallback
+        candidates.reverse();
 
-        for (const candidate of candidates) {
+        function tryParseCandidate(candidate, requireResultsKey) {
             try {
                 const parsed = JSON.parse(candidate);
-
-                if (!Array.isArray(parsed.results) || parsed.results.length === 0) continue;
-
-                // If model used input key "t" instead of output key "tr", remap it
-                for (const r of parsed.results) {
-                    if (!("tr" in r) && "t" in r) r.tr = r.t;
+                if (requireResultsKey && !parsed.results) return null;
+                const normalised = Array.isArray(parsed) ? { results: parsed } : parsed;
+                if (!Array.isArray(normalised.results) || normalised.results.length === 0) return null;
+                const results = normalised.results;
+                for (const r of results) {
+                    if (!("i"  in r) && "id"          in r) r.i  = r.id;
+                    if (!("tr" in r) && "t"            in r) r.tr = r.t;
+                    if (!("tr" in r) && "translation"  in r) r.tr = r.translation;
                 }
-
-                const badItem = parsed.results.find(r => !("i" in r) || !("tr" in r));
-                if (badItem) continue;
-
-                // Repetition loop detection — reject if 8+ identical tokens in a row
-                const hasLoop = parsed.results.some(r => {
+                const badItem = results.find(r => !("i" in r) || !("tr" in r));
+                if (badItem) return null;
+                const hasLoop = results.some(r => {
                     const tokens = String(r.tr ?? "").split(/[\s,]+/).filter(Boolean);
                     if (tokens.length < 10) return false;
                     let maxRun = 1, run = 1;
@@ -235,19 +249,28 @@ function parseGroq(result) {
                     }
                     return maxRun >= 8;
                 });
-
                 if (hasLoop) {
                     console.warn("[Groq] Repetition loop detected — rejecting response");
                     return null;
                 }
+                return results;
+            } catch { return null; }
+        }
 
-                console.debug("PARSED GROQ RESPONSE:", parsed);
-                return parsed.results;
-
-            } catch {
-                // Invalid JSON — try next candidate
+        let results = null;
+        // Pass 1: proper {results:[...]} objects only
+        for (const candidate of candidates) {
+            results = tryParseCandidate(candidate, true);
+            if (results) break;
+        }
+        // Pass 2: accept bare arrays too
+        if (!results) {
+            for (const candidate of candidates) {
+                results = tryParseCandidate(candidate, false);
+                if (results) break;
             }
         }
+        if (results) return results;
 
         console.warn("[Groq] No valid results in any candidate");
         return null;
@@ -273,21 +296,6 @@ function makeBubbleCache() {
         }
         return cache.get(rowId);
     };
-}
-
-function mergeGlossaries(enrichedItems) {
-    const seen = new Map();
-    for (const item of enrichedItems) {
-        if (!item.glossary) continue;
-        for (const line of String(item.glossary).split("\n")) {
-            const match = line.match(/(.+?)\s*->\s*(.+)/);
-            if (!match) continue;
-            const source = match[1].trim();
-            const target = match[2].trim();
-            if (source && target && !seen.has(source)) seen.set(source, target);
-        }
-    }
-    return Array.from(seen.entries()).map(([s, t]) => s + " -> " + t).join("\n");
 }
 
 /****************************************************
@@ -524,7 +532,16 @@ async function translatePageGroq(
         const batch = batchQueue.slice(i, i + batchSize);
         const allItems = batch.flatMap(b => b.items);
 
-        // Preprocess and prune glossary in parallel for all items in the batch
+        /****************************************************
+         * PREPROCESS + GLOSSARY PRUNING (parallel per item)
+         *
+         * Each item gets its own pruned glossary. This is passed
+         * in TWO places:
+         *   1. {{glossary}} in the prompt — merged across all items,
+         *      visible in the ### Glossary section
+         *   2. "g" field per item in the JSON payload — so the model
+         *      knows exactly which terms apply to each specific string
+         ****************************************************/
         const enrichedItems = await Promise.all(
             allItems.map(async item => {
                 const [preprocessed, prunedGlossary] = await Promise.all([
@@ -539,16 +556,28 @@ async function translatePageGroq(
             })
         );
 
-        const combinedGlossary = mergeGlossaries(enrichedItems);
+        // Merge all per-item glossaries for the {{glossary}} prompt placeholder
+        const mergedGlossary = (() => {
+            const seen = new Map();
+            for (const item of enrichedItems) {
+                if (!item.glossary) continue;
+                for (const line of String(item.glossary).split(/,\s*|\n/)) {
+                    const m = line.match(/"(.+?)"\s*->\s*"(.+?)"/);
+                    if (m && !seen.has(m[1])) seen.set(m[1], m[2]);
+                }
+            }
+            return Array.from(seen.entries()).map(([s, t]) => `"${s}" -> "${t}"`).join("\n");
+        })();
 
-        // Send only id and text to the model — compact keys save ~40 tokens/batch
-        const promptItems = enrichedItems.map(({ id, text }) => ({ i: id, t: text }));
+        // Build payload with per-item "g" field for precision
+        const promptItems = enrichedItems.map(({ id, preprocessed, glossary }) => ({
+            i: id,
+            t: preprocessed || "",
+            ...(glossary ? { g: glossary } : {})
+        }));
 
-        const systemPrompt = applyPromptBatch(
-            basePrompt,
-            JSON.stringify(promptItems),
-            combinedGlossary
-        );
+        // Pass merged glossary into {{glossary}} AND per-item g field into payload
+        const systemPrompt = applyPromptBatch(basePrompt, JSON.stringify(promptItems), mergedGlossary);
 
         const messages = [{ role: "user", content: systemPrompt }];
         let parsed = null;
@@ -596,6 +625,7 @@ async function translatePageGroq(
                         "Return ONLY a JSON object in this exact format: " +
                         "{\"results\":[{\"i\":\"<echo input i unchanged>\",\"tr\":\"<translation>\"}]} " +
                         "The translation key MUST be 'tr', NOT 't'. " +
+                        "Do NOT include the 'g' field in your output — it is input-only. " +
                         "No prose, no markdown, no headers, no notes. " +
                         "Tone: " + OpenAITone + ". Target language: " + resolvedLanguage + "."
                 });
@@ -621,8 +651,23 @@ async function translatePageGroq(
                         " | returned: " + parsed.map(r => r.i).join(", "));
                 }
 
-                const translation = res?.tr ?? "No suggestions";
-                console.debug("WRITING ROW id=" + group.id + " line=" + item.line + " translation=" + translation);
+                let translation = res?.tr ?? "No suggestions";
+                //console.debug("WRITING ROW id=" + group.id + " line=" + item.line + " translation=" + translation);
+
+                // Post-process: enforce glossary in JS after model response
+                if (item.glossary) {
+                    for (const line of String(item.glossary).split(/,\s*|\n/)) {
+                        const m = line.match(/"(.+?)"\s*->\s*"(.+?)"/);
+                        if (!m) continue;
+                        const source = m[1];
+                        const target = m[2];
+                        if (source.toLowerCase() === target.toLowerCase()) continue;
+                        const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\$&");
+                        translation = translation.replace(
+                            new RegExp("\b" + escaped + "\b", "gi"), target
+                        );
+                    }
+                }
 
                 const finalText = await postProcessTranslation(
                     item.original, translation, replaceVerb,

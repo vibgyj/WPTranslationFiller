@@ -1,8 +1,9 @@
 
-async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, openAiGloss) {
+async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, openAiGloss, model, apikeyOpenRouter, translator,OpenRouterModel) {
     var countrows = 0;
     var progressbar;
-
+    //console.debug("data.OpenAISelect:", model);
+    //console.debug("Reviewing page with translator:", translator);
     // --- START progress bar setup ---
     const template = `
     <div class="indeterminate-progress-bar">
@@ -91,7 +92,7 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
                     original, destlang, e, apikeyOpenAI,
                     OpenAIPrompt, reviewPrompt, replacePreVerb,
                     row, transtype, "", false, locale,
-                    false, true, translatedText, preview, openAiGloss
+                    false, true, translatedText, preview, openAiGloss, model, apikeyOpenRouter, translator, OpenRouterModel
                 );
             }
         } else {
@@ -107,19 +108,19 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
                     original, destlang, e, apikeyOpenAI,
                     OpenAIPrompt, reviewPrompt, replacePreVerb,
                     row, "single", "", false, locale,
-                    false, true, translatedText, preview, openAiGloss
+                    false, true, translatedText, preview, openAiGloss, model, apikeyOpenRouter, translator, OpenRouterModel
                 );
             }
         }
     }
 
     // Process rows in batches of 20
-    const batchSize = 20;
+    const batchSize = 10;
     for (let i = 0; i < rowArray.length; i += batchSize) {
         const batch = rowArray.slice(i, i + batchSize);
         await Promise.all(batch.map(e => processRow(e)));
         // Small delay between batches to avoid rate limit errors
-        await delay(300);
+        await delay(1000);
     }
 
     // Done

@@ -1,81 +1,178 @@
 /****************************************************
- * CLAUDE BULK TRANSLATE PAGE
- * Modelled on translatePageGroq — same row scanning,
- * same immediate/batch split, same post-processing.
- * Only the API call and response parsing differ.
+ * OPENROUTER BULK TRANSLATE PAGE
+ * Exact mirror of translatePageClaude —
+ * same row scanning, same immediate/batch split,
+ * same correction-retry loop, same post-processing.
+ * Only the API call and payload building differ.
  ****************************************************/
 
 /****************************************************
- * TEMPLATE ENGINE  (shared with Groq convention)
+ * TEMPLATE ENGINE  (shared with Claude/Groq convention)
  ****************************************************/
-function applyClaudePromptBase(prompt, toLanguage, tone) {
-    // Support both {{toLanguage}} and ${destinationLanguage} placeholder styles
+function applyORPromptBase(prompt, toLanguage, tone) {
     return prompt
         .replace(/\{\{toLanguage\}\}/g,       toLanguage ?? "")
         .replace(/\$\{destinationLanguage\}/g, toLanguage ?? "")
         .replace(/\{\{tone\}\}/g,             tone ?? "");
 }
 
-function applyClaudePromptBatch(basePrompt, text, glossary) {
+function applyORPromptBatch(basePrompt, text, glossary) {
     return basePrompt
-        .replace(/\{\{text\}\}/g,     text    ?? "")
+        .replace(/\{\{text\}\}/g,     text     ?? "")
         .replace(/\{\{glossary\}\}/g, glossary ?? "");
 }
 
 /****************************************************
  * SPELLCHECK HELPER
- * spellCheckIgnore can arrive as a string, array, or
- * undefined — normalise to string for postProcess
  ****************************************************/
-function normalizeSpellCheckIgnore(val) {
+function normalizeORSpellCheckIgnore(val) {
     if (typeof val === 'string') return val;
     if (Array.isArray(val))      return val.join(',');
     return '';
 }
 
 /****************************************************
- * CLAUDE API CALL
+ * LOCALE → LANGUAGE NAME  (from getopenRouter)
  ****************************************************/
-async function callClaude(data) {
+function orResolveLanguage(destlang) {
+    const map = {
+        nl: 'Dutch', de: 'German', fr: 'French',
+        uk: 'Ukrainian', es: 'Spanish', id: 'Indonesian',
+        it: 'Italian', pt: 'Portuguese', ru: 'Russian',
+    };
+    return map[destlang] ?? destlang;
+}
+
+/****************************************************
+ * TONE RESOLVER  (mirrors getopenRouter exactly)
+ ****************************************************/
+function orResolveTone(OpenAITone, destlang) {
+    if (OpenAITone === 'formal') {
+        if (destlang === 'nl') return OpenAITone + " and use 'u' instead of 'je'";
+        if (destlang === 'de') return OpenAITone + " and use 'Sie' instead of 'du'";
+        if (destlang === 'fr') return OpenAITone + " use 'vous' instead of 'tu'";
+    }
+    return OpenAITone;
+}
+
+/****************************************************
+ * FALLBACK MAP  (verbatim from getopenRouter)
+ ****************************************************/
+var OR_BULK_FALLBACK_MAP = {
+    // OpenAI GPT models
+    "gpt-oss-20b":                              ["openai/gpt-5.4-nano", "openai/gpt-4o-mini"],
+    "gpt-5":                                    ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
+    "gpt-5-mini":                               ["openai/gpt-4o-mini", "google/gemini-flash-1.5"],
+    "gpt-5-nano":                               ["openai/gpt-4o-mini"],
+    "gpt-5.1":                                  ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
+    "gpt-5.1-mini":                             ["openai/gpt-4o-mini"],
+    "gpt-5.1-nano":                             ["openai/gpt-4o-mini"],
+    "gpt-5.4":                                  ["openai/gpt-4o"],
+    "gpt-5.3-chat-latest":                      ["openai/gpt-4o", "anthropic/claude-3-opus"],
+    // Google Gemini models
+    "google/gemini-2.5-flash-lite-preview-09-2025": ["google/gemini-2.5-flash", "openai/gpt-4o-mini"],
+    "google/gemini-2.5-flash":                  ["google/gemini-2.5-flash-lite-preview-09-2025", "openai/gpt-4o-mini"],
+    // Meta Llama models
+    "meta-llama/llama-3.3-70b-instruct":        ["google/gemini-2.5-flash-lite-preview-09-2025", "openai/gpt-4o-mini"],
+    // OpenAI via OpenRouter
+    "openai/gpt-4o-mini":                       ["google/gemini-2.5-flash-lite-preview-09-2025", "meta-llama/llama-3.3-70b-instruct"],
+    "openai/gpt-4o":                            ["openai/gpt-4o-mini", "google/gemini-2.5-flash"],
+};
+
+/****************************************************
+ * PAYLOAD BUILDER  (mirrors getopenRouter branching)
+ ****************************************************/
+function orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp) {
+    const mymodel  = model.toLowerCase();
+    const _maxTok  = typeof max_Tokens !== 'undefined' ? max_Tokens : 2048;
+    const _topP    = typeof Top_p      !== 'undefined' ? Number(Top_p) : 1;
+    const _topK    = typeof Top_k      !== 'undefined' ? Number(Top_k) : 0;
+
+    let dataNew = {};
+
+    if (["gpt-5", "gpt-5-mini", "gpt-5-nano"].includes(mymodel)) {
+        dataNew = {
+            model: mymodel, messages,
+            max_completion_tokens: _maxTok,
+            top_p: _topP, top_k: _topK,
+            frequency_penalty: 0, presence_penalty: 0,
+            reasoning_effort: 'minimal', verbosity: 'low',
+            apiKey: apikeyOpenRouter,
+            prompt_cache_key: 'WPTF translation', guardrails: false,
+        };
+    } else if (["gpt-5.1", "gpt-5.1-mini", "gpt-5.1-nano", "gpt-5.4"].includes(mymodel)) {
+        dataNew = {
+            model: mymodel, messages,
+            max_completion_tokens: _maxTok,
+            top_p: _topP,
+            frequency_penalty: 0, presence_penalty: 0,
+            reasoning_effort: 'none', verbosity: 'low',
+            apiKey: apikeyOpenRouter,
+            prompt_cache_key: 'WPTF translation', guardrails: false,
+        };
+    } else if (mymodel === "gpt-5.3-chat-latest") {
+        dataNew = {
+            model: mymodel, messages,
+            max_completion_tokens: _maxTok,
+            top_p: _topP,
+            frequency_penalty: 0, presence_penalty: 0,
+            reasoning_effort: 'medium', verbosity: 'low',
+            apiKey: apikeyOpenRouter,
+            prompt_cache_key: 'WPTF translation', guardrails: false,
+        };
+    } else {
+        dataNew = {
+            model: mymodel, messages,
+            n: 1, temperature: OpenAItemp,
+            frequency_penalty: 0, presence_penalty: 0,
+            top_p: _topP,
+            apiKey: apikeyOpenRouter,
+        };
+    }
+
+    const fallbacks = OR_BULK_FALLBACK_MAP[mymodel];
+    if (fallbacks) dataNew.models = [mymodel, ...fallbacks];
+
+    return dataNew;
+}
+
+/****************************************************
+ * OPENROUTER API CALL  (via chrome background)
+ ****************************************************/
+async function callOpenRouter(dataNew) {
     return new Promise(resolve => {
-        chrome.runtime.sendMessage({ action: "ClaudeAI", data }, response => {
-            resolve(response ?? { success: false, error: "No response from background script" });
-        });
+        chrome.runtime.sendMessage(
+            { action: "openRouter", data: { ...dataNew } },
+            response => resolve(response ?? { error: "No response from background script" })
+        );
     });
 }
 
 /****************************************************
- * CLAUDE CALL WITH RETRY + BACKOFF
+ * OPENROUTER CALL WITH RETRY + BACKOFF
+ * Mirrors callClaudeWithRetry — handles 429 / 500
  ****************************************************/
-async function callClaudeWithRetry(promptText, apiKey, model, temp, maxRetries = 3) {
+async function callORWithRetry(messages, apikeyOpenRouter, model, OpenAItemp, maxRetries = 3) {
     let attempt = 0;
-    //console.debug("model", model);
-    const NO_TEMPERATURE_MODELS = new Set([
-    'claude-opus-4-8',
-    'claude-opus-4-7',  // add others as needed
-]);
+
     while (true) {
-        const result = await callClaude({
-           apiKey,
-           apiVersion:   '2023-06-01',
-           model,
-           systemPrompt: promptText,
-           text:         '.',
-           max_tokens:   4096,
-          ...(!NO_TEMPERATURE_MODELS.has(model) && { temperature: parseFloat(temp) || 0.0 }),
-        });
+        const dataNew = orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp);
+        const result  = await callOpenRouter(dataNew);
 
-        if (result.success) return result;
+        // Success — no error field means the call worked
+        if (!result.error) return result;
 
-        const retryable = result.errorType === 'rate_limit_error'
-                       || result.errorType === 'overloaded_error';
+        // Extract status code from "Request failed (429): ..."
+        const match      = (result.error || '').match(/Request failed \((\d+)\)/);
+        const statusCode = match ? Number(match[1]) : 0;
+        const retryable  = statusCode === 429 || statusCode === 500;
 
         if (!retryable || attempt >= maxRetries) return result;
 
-        const waitMs = (attempt + 1) * 2000;
+        const waitMs  = (attempt + 1) * 2000;
         let remaining = Math.ceil(waitMs / 1000);
 
-        console.warn(`[Claude] ${result.errorType} — waiting ${remaining}s before attempt ${attempt + 2}/${maxRetries + 1}`);
+        console.warn(`[OR Bulk] ${statusCode} — waiting ${remaining}s before attempt ${attempt + 2}/${maxRetries + 1}`);
 
         function updateSpinner(sec) {
             hideTranslationSpinner();
@@ -96,15 +193,13 @@ async function callClaudeWithRetry(promptText, apiKey, model, temp, maxRetries =
 
 /****************************************************
  * PARSER
- * Same multi-candidate strategy as Groq parser.
+ * Same multi-candidate strategy as Claude/Groq.
  * Expects: {"results":[{"i":"rowId","tr":"translation"}]}
  ****************************************************/
-function parseClaude(result) {
+function parseOR(rawText) {
     try {
-        let text = result.translation ?? '';
+        let text = rawText ?? '';
         if (!text) return null;
-
-        //console.debug('[Claude] Raw response:\n', text);
 
         text = text
             .replace(/<think>[\s\S]*?<\/think>/g, '')
@@ -128,11 +223,28 @@ function parseClaude(result) {
         }
 
         if (!candidates.length) {
-            console.warn('[Claude] No JSON candidates in response:', text);
+            console.warn('[OR Bulk] No JSON candidates in response:', text);
             return null;
         }
 
         candidates.sort((a, b) => b.length - a.length);
+
+        // Also handle bare array response: [{"i":...,"t":...}, ...]
+        try {
+            const trimmed = text.trim();
+            if (trimmed.startsWith('[')) {
+                const arr = JSON.parse(trimmed);
+                if (Array.isArray(arr) && arr.length) {
+                    for (const r of arr) {
+                        if (!('tr' in r) && 't' in r) r.tr = r.t;
+                    }
+                    if (!arr.find(r => !('i' in r) || !('tr' in r))) {
+                        //console.debug('[OR Bulk] Accepted bare array response, remapped t→tr');
+                        return arr;
+                    }
+                }
+            }
+        } catch { /* not a bare array, continue to candidate scan */ }
 
         for (const candidate of candidates) {
             try {
@@ -160,33 +272,32 @@ function parseClaude(result) {
                 });
 
                 if (hasLoop) {
-                    console.warn('[Claude] Repetition loop detected — rejecting response');
+                    console.warn('[OR Bulk] Repetition loop detected — rejecting response');
                     return null;
                 }
 
-                //console.debug('[Claude] Parsed response:', parsed);
                 return parsed.results;
 
             } catch { /* try next candidate */ }
         }
 
-        console.warn('[Claude] No valid results in any candidate');
+        console.warn('[OR Bulk] No valid results in any candidate');
         return null;
 
     } catch (err) {
-        console.error('[Claude] Parse error:', err);
+        console.error('[OR Bulk] Parse error:', err);
         return null;
     }
 }
 
 /****************************************************
- * HELPERS
+ * HELPERS  (mirrors Claude helpers exactly)
  ****************************************************/
-function normalizeClaudeId(id) {
+function normalizeORId(id) {
     return String(id).replace(/\s/g, '');
 }
 
-function makeClaudeBubbleCache() {
+function makeORBubbleCache() {
     const cache = new Map();
     return rowId => {
         if (!cache.has(rowId)) {
@@ -196,37 +307,30 @@ function makeClaudeBubbleCache() {
     };
 }
 
-function mergeClaudeGlossaries(enrichedItems) {
-    //console.debug('[Claude] Merging glossaries from items:', enrichedItems)
-    for (const item of enrichedItems) {
-    //console.debug('[Claude] raw glossary item:', JSON.stringify(item.glossary));
-}
+function mergeORGlossaries(enrichedItems) {
     const seen = new Map();
     for (const item of enrichedItems) {
         if (!item.glossary) continue;
-        const lines = String(item.glossary).split('\n').flatMap(line => line.split(','));
-        for (const line of lines) {
-            const match = line.match(/"([^"]+)"\s*->\s*"([^"]+)"/);
+        for (const line of String(item.glossary).split('\n')) {
+            const match = line.match(/(.+?)\s*->\s*(.+)/);
             if (!match) continue;
-            //console.debug(`[Claude] raw match:`, JSON.stringify(match[1]), '->', JSON.stringify(match[2]));
-            if (!match) continue;
-            const source = match[1];
-            const target = match[2];
+            const source = match[1].trim();
+            const target = match[2].trim();
             if (source && target && !seen.has(source)) seen.set(source, target);
         }
     }
-    return Array.from(seen.entries()).map(([s, t]) => `"${s}" -> "${t}"`).join('\n');
+    return Array.from(seen.entries()).map(([s, t]) => s + ' -> ' + t).join('\n');
 }
 
-
-
 /****************************************************
- * MAIN
+ * MAIN ENTRY POINT
+ * Call exactly like translatePageClaude() /
+ * translatePageGroq() — just swap the function name.
  ****************************************************/
-async function translatePageClaude(
-    apiKey,
+async function translatePageOpenRouter(
+    apikeyOpenRouter,
     OpenAIPrompt,
-    claudeModel,
+    OpenRouterSelect,
     destlang,
     preTranslationReplace,
     postTranslationReplace,
@@ -237,13 +341,18 @@ async function translatePageClaude(
     spellCheckIgnore,
     OpenAITone,
     openAiGloss,
-    claudeBatchSize = 5
+    openRouterBatchSize = 10
 ) {
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
 
-    const getBubble      = makeClaudeBubbleCache();
-    const spellIgnoreStr = normalizeSpellCheckIgnore(spellCheckIgnore);
+    if (!OpenRouterSelect || OpenRouterSelect === 'undefined') {
+        messageBox("error", "You did not set the OpenRouter model!<br> Please check your options");
+        return 'NOK';
+    }
+
+    const getBubble      = makeORBubbleCache();
+    const spellIgnoreStr = normalizeORSpellCheckIgnore(spellCheckIgnore);
 
     const rows = document.querySelectorAll(
         'tr.editor div.editor-panel__left div.panel-content'
@@ -253,7 +362,7 @@ async function translatePageClaude(
     const immediateQueue = [];
 
     /****************************************************
-     * STRIP PLURAL LABEL
+     * STRIP PLURAL LABEL  (identical to Claude)
      ****************************************************/
     function stripPluralLabel(text) {
         const lines = (text || '').split('\n');
@@ -261,7 +370,7 @@ async function translatePageClaude(
     }
 
     /****************************************************
-     * SCAN — classify every row  (identical to Groq)
+     * SCAN — classify every row  (identical to Claude)
      ****************************************************/
     for (const e of rows) {
         const rowfound = e.closest('tr.editor')?.id;
@@ -278,11 +387,11 @@ async function translatePageClaude(
         const plural2 = document.querySelector('#preview-' + rowId + ' .original li:nth-of-type(2)');
 
         if (plural2) {
-            const form1 = stripPluralLabel(plural1?.innerText);
-            const form2 = stripPluralLabel(plural2?.innerText);
+            const form1     = stripPluralLabel(plural1?.innerText);
+            const form2     = stripPluralLabel(plural2?.innerText);
             const rowLocale = checkLocale();
-            const tr1 = await findTransline(form1, rowLocale);
-            const tr2 = await findTransline(form2, rowLocale);
+            const tr1       = await findTransline(form1, rowLocale);
+            const tr2       = await findTransline(form2, rowLocale);
 
             if (tr1 !== 'notFound' && tr2 !== 'notFound') {
                 immediateQueue.push({
@@ -324,7 +433,7 @@ async function translatePageClaude(
     }
 
     /****************************************************
-     * LOCAL LABEL  (identical to Groq)
+     * LOCAL LABEL  (identical to Claude)
      ****************************************************/
     function addLocalLabel(rowId, expectedForms) {
         const td = document.querySelector('#preview-' + rowId + ' td.translation');
@@ -343,7 +452,7 @@ async function translatePageClaude(
 
         if (expectedForms && expectedForms > 1) {
             const observer = new MutationObserver(() => {
-                const spans   = td.querySelectorAll('span.translation-text');
+                const spans     = td.querySelectorAll('span.translation-text');
                 const allFilled = spans.length >= expectedForms &&
                     [...spans].every(s => s.innerHTML.trim() !== '' && s.innerHTML.trim() !== 'empty');
                 if (allFilled) { observer.disconnect(); insertLabel(); }
@@ -356,18 +465,18 @@ async function translatePageClaude(
     }
 
     /****************************************************
-     * IMMEDIATE — process local rows without Claude
+     * IMMEDIATE — process local rows without API call
      ****************************************************/
     for (const item of immediateQueue) {
 
         // Pretranslated plural
         if (item.pluralForms) {
             for (let fi = 0; fi < item.pluralForms.length; fi++) {
-                const form = item.pluralForms[fi];
-                const preprocessed = await preProcessOriginal(form.original, replacePreVerb, 'claude');
-                const finalText = await postProcessTranslation(
+                const form         = item.pluralForms[fi];
+                const preprocessed = await preProcessOriginal(form.original, replacePreVerb, 'openRouter');
+                const finalText    = await postProcessTranslation(
                     form.original, form.translation, replaceVerb,
-                    preprocessed, 'claude', convertToLower, spellIgnoreStr, locale
+                    preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale
                 );
                 await processTransl(
                     form.original, finalText, destlang, item.record,
@@ -383,10 +492,10 @@ async function translatePageClaude(
 
         // Pretranslated single
         if (!item.render) {
-            const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'claude');
-            const finalText = await postProcessTranslation(
+            const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
+            const finalText    = await postProcessTranslation(
                 item.original, item.translation, replaceVerb,
-                preprocessed, 'claude', convertToLower, spellIgnoreStr, locale
+                preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale
             );
             await processTransl(
                 item.original, finalText, destlang, item.record,
@@ -397,10 +506,10 @@ async function translatePageClaude(
         }
 
         // name / URL
-        const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'claude');
-        const finalText = await postProcessTranslation(
+        const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
+        const finalText    = await postProcessTranslation(
             item.original, item.translation, replaceVerb,
-            preprocessed, 'claude', convertToLower, spellIgnoreStr, locale
+            preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale
         );
         await processTransl(
             item.original, finalText, destlang, item.record,
@@ -409,23 +518,24 @@ async function translatePageClaude(
     }
 
     /****************************************************
-     * BATCH — translate via Claude
+     * BATCH — translate via OpenRouter
      ****************************************************/
-    const batchSize       = Number(claudeBatchSize) || 10;
-    const maxParseRetries = 2;
-    const resolvedLanguage = (typeof LOCALE_TO_LANGUAGE !== 'undefined' ? LOCALE_TO_LANGUAGE[destlang] : null) ?? destlang;
+    const batchSize        = Number(openRouterBatchSize) || 10;
+    const maxParseRetries  = 2;
+    const resolvedLanguage = orResolveLanguage(destlang);
+    const resolvedTone     = orResolveTone(OpenAITone, destlang);
 
     // Fill static placeholders once — language and tone never change between batches
-    const basePrompt = applyClaudePromptBase(OpenAIPrompt, resolvedLanguage, OpenAITone);
+    const basePrompt = applyORPromptBase(OpenAIPrompt, resolvedLanguage, resolvedTone);
 
     for (let i = 0; i < batchQueue.length; i += batchSize) {
         const batch    = batchQueue.slice(i, i + batchSize);
         const allItems = batch.flatMap(b => b.items);
 
-        // Preprocess first, then prune glossary against preprocessed text
+        // Preprocess + prune glossary per item
         const enrichedItems = await Promise.all(
             allItems.map(async item => {
-                const preprocessed   = await preProcessOriginal(item.original, replacePreVerb, 'claude');
+                const preprocessed   = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
                 const prunedGlossary = await pruneGlossary(openAiGloss, preprocessed, null);
                 return {
                     id: item.id, line: item.line,
@@ -435,86 +545,95 @@ async function translatePageClaude(
             })
         );
 
-        const combinedGlossary = mergeClaudeGlossaries(enrichedItems);
-        //console.debug('[Claude] combinedGlossary:', combinedGlossary);
+        const combinedGlossary = mergeORGlossaries(enrichedItems);
+        //console.debug('[OR Bulk] combinedGlossary:', combinedGlossary);
 
         const promptItems = enrichedItems.map(({ id, text }) => ({ i: id, t: text }));
-        const batchPrompt = applyClaudePromptBatch(
+
+        const batchPrompt = applyORPromptBatch(
             basePrompt,
             JSON.stringify(promptItems),
             combinedGlossary
         );
 
+        const messages = [{ role: "user", content: batchPrompt }];
+
         let parsed = null;
 
-        // Correction-retry loop
-        let correctionPrompt = batchPrompt;
+        // Correction-retry loop — identical strategy to Claude
+        let correctionMessages = messages;
         for (let attempt = 0; attempt <= maxParseRetries; attempt++) {
 
             if (attempt > 0) {
                 showTranslationSpinner(__(
                     'Model returned prose — correction attempt ' + attempt + '/' + maxParseRetries + '…'
                 ));
-                correctionPrompt = batchPrompt +
+                const correctionContent = batchPrompt +
                     '\n\nYour previous response used wrong output keys. ' +
                     'Return ONLY a JSON object in this exact format: ' +
                     '{"results":[{"i":"<echo input i unchanged>","tr":"<translation>"}]} ' +
                     'The translation key MUST be "tr", NOT "t". ' +
                     'No prose, no markdown, no headers, no notes. ' +
                     'Tone: ' + OpenAITone + '. Target language: ' + resolvedLanguage + '.';
+                correctionMessages = [{ role: "user", content: correctionContent }];
                 await new Promise(r => setTimeout(r, 1500));
             }
 
-            //console.debug('[Claude] batchPrompt:', correctionPrompt);
-            const response = await callClaudeWithRetry(
-                correctionPrompt, apiKey, claudeModel, OpenAItemp
+            //console.debug('[OR Bulk] Sending prompt (attempt ' + (attempt + 1) + ')');
+            const result = await callORWithRetry(
+                correctionMessages, apikeyOpenRouter, OpenRouterSelect, OpenAItemp
             );
-            //console.debug('[Claude] RAW response:', response.translation);
-            if (!response.success) {
+
+            if (result.error) {
                 hideTranslationSpinner();
                 const progressbar = document.querySelector('.indeterminate-progress-bar');
                 if (progressbar) progressbar.style.display = 'none';
-                alert('Claude error:\n\n' + JSON.stringify(response.error, null, 2));
+
+                const match      = (result.error || '').match(/Request failed \((\d+)\)/);
+                const statusCode = match ? match[1] : 'unknown';
+                messageBox("warning", `OpenRouter error ${statusCode}:<br>${result.error}`);
                 return 'STOPPED';
             }
 
-            parsed = parseClaude(response);
-            //console.debug('[Claude] Parsed response:', parsed);
+            const rawText = result.result || "";
+            //console.debug('[OR Bulk] RAW response:', rawText);
+
+            parsed = parseOR(rawText);
+
             if (parsed) {
                 hideTranslationSpinner();
                 break;
             }
 
-            console.warn('[Claude] Attempt ' + (attempt + 1) + ' returned no valid JSON.\n' +
-                '--- RAW ---\n' + (response.translation ?? '') + '\n--- END ---');
+            console.warn('[OR Bulk] Attempt ' + (attempt + 1) + ' returned no valid JSON.\n' +
+                '--- RAW ---\n' + rawText + '\n--- END ---');
         }
 
         if (!parsed) {
             hideTranslationSpinner();
-            console.error('[Claude] All attempts failed for batch at index ' + i + '. Skipping.');
+            console.error('[OR Bulk] All attempts failed for batch at index ' + i + '. Skipping.');
             continue;
         }
 
         // Write results — match by id, use position for plurals
         for (const group of batch) {
             for (const item of group.items) {
-                const allForId  = parsed.filter(r => normalizeClaudeId(r.i ?? '') === normalizeClaudeId(item.id));
+                const allForId  = parsed.filter(r => normalizeORId(r.i ?? '') === normalizeORId(item.id));
                 const lineIndex = Number(item.line ?? 1) - 1;
                 const res       = allForId[lineIndex] ?? allForId[0] ?? null;
 
                 if (!res) {
-                    console.warn('[Claude] No match for id=' + item.id + ' line=' + item.line +
+                    console.warn('[OR Bulk] No match for id=' + item.id + ' line=' + item.line +
                         ' | returned: ' + parsed.map(r => r.i).join(', '));
                 }
 
                 const translation = res?.tr ?? 'No suggestions';
-                //console.debug('WRITING ROW id=' + group.id + ' line=' + item.line + ' translation=' + translation);
 
                 const finalText = await postProcessTranslation(
                     item.original, translation, replaceVerb,
-                    item.original, 'claude', convertToLower, spellIgnoreStr, locale
+                    item.original, 'openRouter', convertToLower, spellIgnoreStr, locale
                 );
-                //console.debug('FINAL TEXT for row ' + group.id + ' line ' + item.line + ':', finalText);
+
                 await processTransl(
                     item.original, finalText, destlang,
                     group.record, group.id, group.type,

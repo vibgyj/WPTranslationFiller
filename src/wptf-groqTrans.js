@@ -28,67 +28,6 @@ function normalizeGlossaryText(str) {
 /****************************************************
  * PRUNE GLOSSARY
  ****************************************************/
-function pruneGlossary(openAiGloss, originalPreProcessed, original) {
-
-    const isArrayFormat = Array.isArray(openAiGloss);
-    let entries = [];
-
-    if (isArrayFormat) {
-        entries = openAiGloss.map(([k, v]) => ({
-            source: String(k).toLowerCase(),
-            target: String(v)
-        }));
-    } else {
-        entries = (openAiGloss || "")
-            .split(/,\s*/)
-            .map(e => {
-                const parts = e.split(/->|=|:/);
-                return {
-                    source: (parts[0] || "").replace(/["']/g, "").trim().toLowerCase(),
-                    target: (parts[1] || "").replace(/["']/g, "").trim()
-                };
-            })
-            .filter(e => e.source && e.target);
-    }
-
-    const text = (originalPreProcessed || "").toLowerCase();
-    const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const matchesText = (key) => new RegExp(`\\b${escapeRegExp(key)}\\b`, 'i').test(text);
-
-    const result = [];
-    const matchedKeys = new Set();
-
-    for (const entry of entries) {
-        if (matchesText(entry.source)) {
-            result.push(entry);
-            matchedKeys.add(entry.source);
-        }
-    }
-
-    // Fallback DOM (optioneel)
-    if (original) {
-        const container =
-            original?.getElementsByClassName?.("source-string__singular")?.[0]
-            || new DOMParser().parseFromString(original || "", "text/html");
-
-        const nodes = container?.querySelectorAll?.(".glossary-word") || [];
-
-        nodes.forEach(node => {
-            const key = node.textContent.trim().toLowerCase();
-            const raw = node.getAttribute("data-translations");
-            if (!raw) return;
-            try {
-                const data = JSON.parse(raw.replace(/&quot;/g, '"'));
-                const translation = data?.[0]?.translation;
-                if (translation && !matchedKeys.has(key) && matchesText(key)) {
-                    result.push({ source: key, target: translation });
-                }
-            } catch (e) {}
-        });
-    }
-
-    return result.map(e => `"${e.source}" -> "${e.target}"`).join("\n");
-}
 
 /****************************************************
  * LOCALE → LANGUAGE NAME
@@ -140,21 +79,47 @@ async function getTransgroq(
 
     /****************************************************
      * PRUNED GLOSSARY
+     * Embedded as a "g" field directly in the JSON item,
+     * matching the batch approach. The {{glossary}}
+     * placeholder in the prompt is left empty — the model
+     * reads glossary terms from the per-item "g" field only.
+     * "g" is omitted entirely when there are no matches,
+     * keeping the payload compact.
      ****************************************************/
     const prunedGlossary = pruneGlossary(openAiGloss, originalPreProcessed, null) || "";
 
     /****************************************************
      * BUILD PROMPT
      * Uses compact format: i = rowId, t = text to translate
+     *                       g = glossary terms (omitted if empty)
      * Expected response:   i = rowId, tr = translation
+     *
+     * The pruned glossary is passed in TWO places:
+     *   1. {{glossary}} in the prompt — visible to the model
+     *      in the ### Glossary section as explicit term list
+     *   2. "g" field per item in the JSON payload — so the
+     *      model knows exactly which terms apply to this string
      ****************************************************/
-    const promptItems = JSON.stringify([{ i: rowId, t: originalPreProcessed }]);
+    const payloadItem = { i: rowId, t: originalPreProcessed };
+    if (prunedGlossary) payloadItem.g = prunedGlossary;
+
+    // Send a neutral dummy item alongside the real one.
+    // The model applies glossary terms more reliably when it sees
+    // multiple items — a single item gets treated as a standalone
+    // title/heading and triggers different (less compliant) behaviour.
+    const dummyItem = { i: "0", t: "OK" };
+    const promptItems = JSON.stringify([payloadItem, dummyItem]);
 
     const prompt = OpenAIPrompt
         .replace(/\{\{toLanguage\}\}/g, resolvedLanguage)
         .replace(/\{\{tone\}\}/g,       OpenAITone ?? "")
         .replace(/\{\{text\}\}/g,       promptItems)
-        .replace(/\{\{glossary\}\}/g,   prunedGlossary);
+        .replace(/\{\{glossary\}\}/g,   prunedGlossary); // glossary in prompt AND in g field
+
+    console.debug("[Groq single] rowId:", rowId);
+    console.debug("[Groq single] prunedGlossary:", prunedGlossary || "(empty)");
+    console.debug("[Groq single] promptItems:", promptItems);
+    console.debug("[Groq single] full prompt sent to model:\n", prompt);
 
     const data = {
         model: groqSelect,
@@ -187,6 +152,7 @@ async function getTransgroq(
      * input key by mistake) as the translation key.
      ****************************************************/
     let raw = result?.result?.choices?.[0]?.message?.content ?? "";
+    console.debug("[Groq single] raw model response:\n", raw);
 
     try {
         raw = raw
@@ -195,51 +161,70 @@ async function getTransgroq(
             .replace(/```/g, "")
             .trim();
 
-        // Robustly parse the response — the model sometimes:
-        // 1. Adds an extra closing brace e.g. ...value"}}]} instead of ...value"}]}
-        // 2. Double-escapes quotes in XML attributes e.g. <x id=\\"var\\"/>
-        // Strategy: try direct parse, then progressively fix known issues.
-        let json = null;
-        const candidates = [
-            raw,
-            raw.replace(/\}\}\]/g, "}]"),           // fix extra closing brace before ]
-            raw.replace(/\}\}\]\}/g, "}]}"),         // fix extra closing brace at end
-        ];
+        // Apply same structural fixes as batch parser before scanning
+        raw = raw.replace(/\}\}\]/g, "}]").replace(/\}\}\]\}/g, "}]}");
 
-        for (const candidate of candidates) {
-            try {
-                json = JSON.parse(candidate);
-                break;
-            } catch(e) {}
+        // Collect ALL top-level { } and [ ] blocks, then evaluate from last to first.
+        // Scanning last-to-first means the model's final self-corrected answer wins
+        // over any reasoning noise or early draft responses earlier in the output.
+        const candidates = [];
+        for (let i = 0; i < raw.length; i++) {
+            const ch = raw[i];
+            if (ch !== "{" && ch !== "[") continue;
+            const close = ch === "{" ? "}" : "]";
+            let depth = 0, end = -1;
+            for (let j = i; j < raw.length; j++) {
+                if (raw[j] === ch) depth++;
+                else if (raw[j] === close) depth--;
+                if (depth === 0) { end = j; break; }
+            }
+            if (end !== -1) {
+                candidates.push(raw.substring(i, end + 1));
+                i = end;
+            }
         }
 
-        // Last resort: scan all } positions from end to find valid JSON
-        if (!json) {
-            const start = raw.indexOf("{");
-            if (start !== -1) {
-                for (let end = raw.length - 1; end >= start; end--) {
-                    if (raw[end] !== "}") continue;
-                    try {
-                        json = JSON.parse(raw.substring(start, end + 1));
-                        break;
-                    } catch(e) {}
+        // Two-pass evaluation:
+        // Pass 1: prefer candidates that are proper {results:[...]} objects (last to first)
+        // Pass 2: fall back to bare arrays normalised to {results:[...]} (last to first)
+        // This ensures the model's final structured answer beats any intermediate
+        // bare arrays embedded in reasoning text earlier in the response.
+        candidates.reverse();
+
+        function tryCancel(candidate, requireResultsKey) {
+            try {
+                const parsed = JSON.parse(candidate);
+                if (requireResultsKey && !parsed.results) return null;
+                const normalised = Array.isArray(parsed) ? { results: parsed } : parsed;
+                if (!Array.isArray(normalised.results) || normalised.results.length === 0) return null;
+                for (const r of normalised.results) {
+                    if (!("i"  in r) && "id"         in r) r.i  = r.id;
+                    if (!("tr" in r) && "t"           in r) r.tr = r.t;
+                    if (!("tr" in r) && "translation" in r) r.tr = r.translation;
                 }
+                const badItem = normalised.results.find(r => !("i" in r) || !("tr" in r));
+                if (badItem) return null;
+                return normalised;
+            } catch(e) { return null; }
+        }
+
+        let json = null;
+        // Pass 1: proper {results:[...]} objects only
+        for (const candidate of candidates) {
+            json = tryCancel(candidate, true);
+            if (json) break;
+        }
+        // Pass 2: accept bare arrays too
+        if (!json) {
+            for (const candidate of candidates) {
+                json = tryCancel(candidate, false);
+                if (json) break;
             }
         }
 
         if (!json) {
-            console.error("[Groq] Parse failed after all fixes:", raw);
+            console.error("[Groq] Parse failed after all candidates:", raw);
             return "NOK";
-        }
-
-        if (!Array.isArray(json.results)) {
-            console.error("[Groq] No results array in response:", raw);
-            return "NOK";
-        }
-
-        // Remap "t" → "tr" if model used the input key by mistake
-        for (const r of json.results) {
-            if (!("tr" in r) && "t" in r) r.tr = r.t;
         }
 
         const item = json.results.find(r => String(r.i) === String(rowId));
@@ -247,6 +232,21 @@ async function getTransgroq(
         if (!item) {
             console.error("[Groq] No matching id:", rowId, json.results);
             return "NOK";
+        }
+
+        // Post-process: enforce glossary in JS after model response.
+        // The model sometimes ignores glossary terms — applying them here guarantees correctness.
+        if (prunedGlossary) {
+            for (const line of prunedGlossary.split(/,\s*|\n/)) {
+                const m = line.match(/"(.+?)"\s*->\s*"(.+?)"/);
+                if (!m) continue;
+                const source = m[1];
+                const target = m[2];
+                if (source.toLowerCase() === target.toLowerCase()) continue; // DO NOT TRANSLATE
+                const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                item.tr = item.tr.replace(new RegExp("\\b" + escaped + "\\b", "gi"), target);
+            }
+            console.debug("[Groq single] After glossary enforcement:", item.tr);
         }
 
         const finalText = await postProcessTranslation(

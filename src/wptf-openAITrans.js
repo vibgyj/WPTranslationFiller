@@ -30,10 +30,10 @@ async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPromp
 }
 
 // FIX: added openAiGloss parameter, removed double comma in reviewTransAI call
-async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss) {
+async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss, model, apikeyOpenRouter,translator,OpenRouterModel) {
     var originalPreProcessed = original;
     if (apikeyOpenAI != "") {
-        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss);
+        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss,model, apikeyOpenRouter,translator,OpenRouterModel);
     }
     else {
         errorstate = "No apikey provided!"
@@ -74,7 +74,7 @@ async function getTransAI(
   } else {
     myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
   }
-
+  //console.debug("Prompt after tone and language handling:", myprompt);
   // Compact glossary
   const filteredGloss = pruneGlossary(openAiGloss, originalPreProcessed, record);
   const compactGloss = filteredGloss.replace(/\n+/g, "|");
@@ -97,7 +97,7 @@ async function getTransAI(
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
   myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
-
+  //  console.debug("Prompt after all replacements:", myprompt)
   let maxTokens = estimateMaxTokens(originalPreProcessed);
   max_Tokens = maxTokens;
 
@@ -113,14 +113,13 @@ async function getTransAI(
   const mymodel = OpenAISelect.toLowerCase();
   if (show_debug) console.debug("Model selected:", mymodel);
   let dataNew = {};
-
+  //  console.debug("mymodel for translation:", mymodel);
   if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
     dataNew = {
       model: mymodel,
       messages,
       max_completion_tokens: max_Tokens,
       top_p: Number(Top_p),
-      top_k: Number(Top_k),
       frequency_penalty: 0,
       presence_penalty: 0,
       reasoning_effort: 'minimal',
@@ -179,52 +178,64 @@ async function getTransAI(
         (res) => resolve(res)
       );
     });
-
+    //  console.debug("Raw response from OpenAI proxy:", result.error)
     if (!result) {
       console.debug("OpenAI proxy returned undefined");
       return "NOK";
     }
 
     if (result.error) {
-      const duration = ((Date.now() - start) / 1000).toFixed(2);
-      if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] "OpenAI proxy error:" ${duration}s`, result.error);
-      const match = result.error.match(/Request failed \((\d+)\)/);
-      const statusCode = match ? match[1] : "unknown";
-      if (statusCode == '400') {
-        if (editor) messageBox("warning", `Request failed with status ${statusCode} <br>${result.error}`);
-        else return `Error 400`;
-      }
-      else if (statusCode == '401') {
-        if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!`);
-        else return `Error 401`;
-      }
-      else if (statusCode == '403') {
-        if (editor) messageBox("warning", `Request failed with status ${statusCode}. Country not supported!`);
-        else return `Request failed with status ${statusCode}. Country not supported!`;
-      }
-      if (statusCode == '404') {
-        if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!<br> ${result.error}`);
-        else return `Error 401`;
-      }
-      else if (statusCode == '429') {
-        if (editor) messageBox("warning", `Request failed with status ${statusCode}. Rate limit reached!`);
-        else return `Request failed with status ${statusCode}. Rate limit reached!`;
-      }
-      else if (statusCode == '500') {
-        if (editor) messageBox("warning", `Request failed with status ${statusCode}. Server issue!`);
-        else return `Request failed with status ${statusCode}. Server issue!`;
-      }
-      else {
-        return `Request failed with status ${statusCode}. Some undefined error happened!`;
-      }
+  const duration = ((Date.now() - start) / 1000).toFixed(2);
+  if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] OpenAI proxy error: ${duration}s`, result.error);
+
+  // Normalize: result.error can be a string or an object
+  const errorStr = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+
+  // Try to extract HTTP status code from "Request failed (400): ..." pattern
+  const match = errorStr.match(/Request failed \((\d+)\)/);
+  let statusCode = match ? match[1] : "unknown";
+
+  // Fallback: try to parse the embedded JSON for more detail
+  let errorMessage = errorStr;
+  try {
+    const jsonMatch = errorStr.match(/Request failed \(\d+\): (\{[\s\S]*\})/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[1]);
+      errorMessage = parsed?.error?.message ?? errorStr;
     }
+  } catch (_) {}
+       // console.debug("Extracted status code:", statusCode, "Error message:", errorMessage)
+  if (statusCode === '400') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}<br>${errorMessage}`);
+    return `Error 400`;
+  }
+  else if (statusCode === '401') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!`);
+    else return `Error 401`;
+  } else if (statusCode === '403') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Country not supported!`);
+    else return `Request failed with status ${statusCode}. Country not supported!`;
+  } else if (statusCode === '404') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!<br>${errorMessage}`);
+    else return `Error 404`;
+  } else if (statusCode === '429') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Rate limit reached!`);
+    else return `Request failed with status ${statusCode}. Rate limit reached!`;
+  } else if (statusCode === '500') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Server issue!`);
+    else return `Request failed with status ${statusCode}. Server issue!`;
+  } else {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}.<br>${errorMessage}`);
+    else return `Request failed with status ${statusCode}. ${errorMessage}`;
+  }
+}
 
     const duration = ((Date.now() - start) / 1000).toFixed(2);
     if (toBoolean(DebugMode)) console.debug("OpenAI proxy response (raw):", result.result, " ", duration);
 
     const data = result.result;
     let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
-
+    //console.debug("OpenAI proxy response (trimmed):", text)
     if (text === '""' || text === "") {
       text = "No suggestions";
     }
@@ -259,12 +270,12 @@ async function getTransAI(
 
 
 // FIX: added openAiGloss parameter, filters glossary and injects into review prompt
-async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss) {
+async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss,model,apikeyOpenRouter,translator, OpenRouterModel) {
     var current = "";
     var prevstate = "";
     var error;
     var data;
-
+    
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
     language = language.toUpperCase();
@@ -273,33 +284,85 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
     const filteredGloss = pruneGlossary(openAiGloss, original, record);
     const compactGloss = filteredGloss.replace(/\n+/g, "|");
 
-    var prompt = reviewPrompt.replace('placeholder_original', original);
-    prompt = prompt.replace('placeholder_translated', translatedText);
+    var prompt = reviewPrompt.replace('{{placeholder_original}}', original);
+    prompt = prompt.replace('{{placeholder_translated}}', translatedText);
     prompt = prompt.replace('{{OpenAiGloss}}', compactGloss);
-
-    var message = [{ 'role': 'user', 'content': prompt }];
-    let mymodel = "gpt-4.1-mini";
-    var data1 = {
-        messages: message,
-        model: mymodel,
-        max_tokens: 1000,
-        n: 1,
-        temperature: 0,
-        frequency_penalty: 0,
-        presence_penalty: 0,
-        top_p: 0,
-        stop: '|\n',
+    let maxTokens = estimateMaxTokens(originalPreProcessed);
+    max_Tokens = maxTokens;
+    var messages = [{ 'role': 'user', 'content': prompt }];
+    //let mymodel = "gpt-4.1-mini";
+    //console.debug("Model for review:", model);
+     if (translator == "openRouter") {
+        var myLink = "https://openrouter.ai/api/v1/chat/completions";
+         var myKey = apikeyOpenRouter
+         var mymodel = OpenRouterModel;
+    }
+    else {
+        var myLink = "https://api.openai.com/v1/chat/completions";
+        var myKey = apikeyOpenAI
+        var mymodel = model;
+    }
+    //console.debug("Review model:", mymodel, " Translator:", translator)
+    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
+    data1 = {
+      model: mymodel,
+      messages,
+      max_completion_tokens: max_Tokens,
+      top_p: Number(Top_p),
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      reasoning_effort: 'minimal',
+      verbosity: 'low',
+      prompt_cache_key: 'WPTF translation',
+    };
+  }
+  else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4" || mymodel === "gpt-5.5") {
+    data1 = {
+      model: mymodel,
+      messages,
+      max_completion_tokens: max_Tokens,
+      top_p: Number(Top_p),
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      reasoning_effort: 'none',
+      verbosity: 'low',
+      prompt_cache_key: 'WPTF translation',
+    };
+  }
+  else if (mymodel === "gpt-5.3-chat-latest") {
+    data1 = {
+      model: mymodel,
+      messages,
+      max_completion_tokens: max_Tokens,
+      top_p: Number(Top_p),
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      reasoning_effort: 'medium',
+      verbosity: 'low',
+      prompt_cache_key: 'WPTF translation',
+    };
+  }
+  else {
+    data1 = {
+      model: mymodel,
+      messages,
+      max_tokens: max_Tokens,
+      n: 1,
+      temperature: 0,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      top_p: Number(Top_p),
+      stop: '|\n',
+    }
     };
 
-    var link = "https://api.openai.com/v1/chat/completions";
-
     try {
-        const response = await fetch(link, {
+        const response = await fetch(myLink, {
             body: JSON.stringify(data1),
             method: "POST",
             headers: {
                 "content-type": "application/json",
-                Authorization: "Bearer " + apikeyOpenAI,
+                Authorization: "Bearer " + myKey,
             },
         });
 
@@ -325,7 +388,7 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
             let text = open_ai_response.message.content;
             //console.debug("Review text response:", text);
 
-            if (text.indexOf("Yes") !== -1) {
+            if (text !="" && text.indexOf("Yes") !== -1) {
                 // Remove existing checkmark if present then add fresh one
                 if (preview.innerHTML.startsWith('\u{2705}')) {
                     preview.innerHTML = preview.innerHTML.replace('\u{2705}', "");

@@ -427,12 +427,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     handleGroq();
     return true;
 }
-    else if (request.action === "openRouter") {
+    else if (request.action === "openRouter") { // OpenRouter translation
     (async () => {
         try {
             const start = Date.now();
 
-            const dataToSend = request.data;
+            const dataToSend = { ...request.data };  // ✅ clone zodat apiKey intact blijft voor volgende rijen
             const apiKey = dataToSend.apiKey;
 
             // remove sensitive field before sending
@@ -466,18 +466,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             // 🔥 extract ONLY what you actually need (major performance win)
             const result =
-                data?.choices?.[0]?.message?.content ??
-                "";
-            console.debug("result:", result) 
-            const duration = ((Date.now() - start) / 1000).toFixed(2);
+              data?.choices?.[0]?.message?.content ??
+              "";
+            const modelUsed = data?.model ?? "unknown";  // ✅ welk model daadwerkelijk gebruikt is
 
-            const DebugMode = true;
-            if (DebugMode) {
-                console.debug("openRouter response time:", duration + "s");
-            }
+            console.debug("result:", result)
+            console.debug("model used:", modelUsed)  // ✅ log het model
 
-            // 🔥 minimal IPC payload (avoids structured clone overhead)
-            sendResponse({ result });
+            sendResponse({ result, modelUsed });  // ✅ stuur het mee terug
+
 
         } catch (err) {
             sendResponse({ error: err.toString() });
@@ -486,10 +483,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     return true;
 }
-    
-
-      // Ollama translation
- else if (request.action === "ollama_translate") {
+    else if (request.action === "ollama_translate") {
+       // Ollama translation
     //-console.debug("Ollama translation request received:");
     
     (async () => {
@@ -788,7 +783,7 @@ else if (request.action === "LMStudio_translate") {
                 text, 
                 systemPrompt, 
                 max_tokens,
-                temperature = 0.3  // Default to 0.3 if not provided
+                temperature  // No default here — handled conditionally below
             } = request.data || {};
             
             if (!apiKey) {
@@ -799,6 +794,12 @@ else if (request.action === "LMStudio_translate") {
                 sendResponse({ success: false, error: "Required field missing (model/text/systemPrompt/max_tokens)" });
                 return;
             }
+
+            const NO_TEMPERATURE_MODELS = new Set([
+                'claude-opus-4-8',
+                'claude-opus-4-7',
+            ]);
+            const supportsTemperature = !NO_TEMPERATURE_MODELS.has(model);
             
             // Claude requires top-level `system`, messages only user content
             const bodyToSend = {
@@ -808,7 +809,7 @@ else if (request.action === "LMStudio_translate") {
                     { role: "user", content: text }
                 ],
                 max_tokens,
-                temperature  // Add temperature parameter
+                ...(supportsTemperature && { temperature: temperature ?? 0.3 }),
             };
             
             const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -823,74 +824,53 @@ else if (request.action === "LMStudio_translate") {
             });
             
             const respText = await resp.text().catch(() => '');
-            // debug raw response if you need
-            //console.debug("Claude raw response:", respText);
             
             if (!resp.ok) {
-    try {
-        // Parse the error JSON response
-        const json = JSON.parse(respText);
-        //console.debug("Claude error response JSON:", json);
+                try {
+                    const json = JSON.parse(respText);
 
-        // Handle structured Anthropic error format: { type, error: { type, message } }
-        let errorMessage;
-        if (json.error?.message) {
-            const errorType = json.error.type || "unknown_error";
-            errorMessage = `[${errorType}] ${json.error.message}`;
-        } else {
-            errorMessage = JSON.stringify(json);
-        }
+                    let errorMessage;
+                    if (json.error?.message) {
+                        const errorType = json.error.type || "unknown_error";
+                        errorMessage = `[${errorType}] ${json.error.message}`;
+                    } else {
+                        errorMessage = JSON.stringify(json);
+                    }
 
-        sendResponse({
-            success: false,
-            error: errorMessage,
-            errorType: json.error?.type || null,      // e.g. "rate_limit_error"
-            requestId: json.request_id || null,        // useful for debugging
-            status: resp.status
-        });
+                    sendResponse({
+                        success: false,
+                        error: errorMessage,
+                        errorType: json.error?.type || null,
+                        requestId: json.request_id || null,
+                        status: resp.status
+                    });
 
-    } catch {
-        // Fallback if response body isn't valid JSON
-        sendResponse({
-            success: false,
-            error: respText || `HTTP ${resp.status}`,
-            errorType: null,
-            requestId: null,
-            status: resp.status
-        });
-    }
-    return;
-}
+                } catch {
+                    sendResponse({
+                        success: false,
+                        error: respText || `HTTP ${resp.status}`,
+                        errorType: null,
+                        requestId: null,
+                        status: resp.status
+                    });
+                }
+                return;
+            }
             
-            // parse JSON
             let respData;
             try {
                 respData = JSON.parse(respText);
-                // 1️⃣ Normalize quotes: curly → straight
-           // translation = respText
-           //     .replace(/[“”„»«]/g, '"')  // double quotes
-            //    .replace(/[‘’‚‛]/g, "'");  // single quotes
-
-            // 2️⃣ Preserve literal backslashes before quotes
-            //    Replace any " that were output without backslash with \"
-            //    This keeps code/PO file examples intact
-            //    translation = translation.replace(/(?<!\\)"/g, '\\"');
-            //respText=translation
             } catch (e) {
                 sendResponse({ success: false, error: "Cannot parse JSON from Claude", raw: respText });
                 return;
             }
             
-            // extract content text (handles multiple content items if needed)
             if (!respData?.content || !Array.isArray(respData.content) || respData.content.length === 0) {
                 sendResponse({ success: false, error: "No content returned from Claude", raw: respData });
                 return;
             }
             
-            // join text blocks (usually one)
             const translation = respData.content.map(c => c?.text || "").filter(Boolean).join("\n");
-            
-            // optionally surface usage if available
             const usage = respData?.usage || null;
             
             sendResponse({ success: true, translation, usage });
@@ -898,8 +878,8 @@ else if (request.action === "LMStudio_translate") {
             sendResponse({ success: false, error: err?.message || String(err) });
         }
     })();
-    return true; // keep response channel open
-    }
+    return true;
+}
     else if (request.action === "google_translate") {
     
         (async () => {

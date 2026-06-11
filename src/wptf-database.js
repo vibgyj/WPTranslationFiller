@@ -1045,8 +1045,9 @@ function addEntry() {
 function saveNewRecord() {
     console.debug("Saving record...");
     let locale = document.getElementById("locale").value.trim();
-    const original = document.getElementById("original").value.trim();
-    const translation = document.getElementById("translation").value.trim();
+    // We should not remove the blanks before and after!
+    const original = document.getElementById("original").value;
+    const translation = document.getElementById("translation").value;
     myDelete = __("Delete")
     myRecordDeleted = __("Record deleted: ")
     myRecordSaved = __("Record saved successfully!")

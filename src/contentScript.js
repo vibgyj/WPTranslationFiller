@@ -1280,10 +1280,10 @@ function checkFormal(formal) {
 async function checkPageClicked(event) {
     if (event) event.preventDefault();
     let formal = checkFormal(false);
-    chrome.storage.local.get(["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "convertToLower", "showHistory", "showTransDiff", "openAiGloss"], async function (data) {
+    chrome.storage.local.get(["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "convertToLower", "showHistory", "showTransDiff", "openAiGloss", "OpenAISelect", "apikeyOpenRouter", "OpenRouterSelect"], async function (data) {
         try {
             await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, "", data.spellCheckIgnore, showHistory, data.apikeyOpenAI, data.OpenAIPrompt, data.reviewPrompt);
-            if (data.Auto_review_OpenAI == true) await reviewPage(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt, data.reviewPrompt, data.OpenAiGloss);
+            if (data.Auto_review_OpenAI == true) await reviewPage(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt, data.reviewPrompt, data.OpenAiGloss, data.OpenAISelect, data.apikeyOpenRouter,data.transsel,data.OpenRouterSelect);
             if (data.Auto_spellcheck   == true) await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
         } catch (error) { console.error("An error occurred:", error); }
     });

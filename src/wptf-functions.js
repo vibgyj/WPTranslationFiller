@@ -2699,139 +2699,103 @@ function showPlaceholderLog(position = "top-right") {
     document.addEventListener("mouseup", () => { isDragging = false; });
 }
 function pruneGlossary(openAiGloss, originalPreProcessed, original) {
-    console.debug("Pruning glossary with input:", openAiGloss);
-  const isArrayFormat = Array.isArray(openAiGloss);
-    console.debug("Pruning glossary with input format:", isArrayFormat ? "Array of pairs" : "String", openAiGloss);
-  // -----------------------------
-  // STEP 1: NORMALIZE INPUT
-  // -----------------------------
-  let entries = [];
+    const isArrayFormat = Array.isArray(openAiGloss);
 
-  if (isArrayFormat) {
-    entries = openAiGloss.map(([k, v]) => ({
-      source: String(k).toLowerCase(),
-      target: String(v)
-    }));
-  } else {
-    entries = (openAiGloss || "")
-      .split(/,\s*/)
-      .map(e => {
-        const parts = e.split(/->|=|:/);
-        return {
-          source: (parts[0] || "")
-            .replace(/["']/g, "")
-            .trim()
-            .toLowerCase(),
-          target: (parts[1] || "")
-            .replace(/["']/g, "")
-            .trim()
-        };
-      })
-      .filter(e => e.source && e.target);
-  }
+    // STEP 1: NORMALIZE INPUT
+    let entries = [];
 
-  //console.debug("NORMALIZED ENTRIES:", entries);
-
-  const text = (originalPreProcessed || "").toLowerCase();
-
-  const escapeRegExp = (str) =>
-    str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-  const matchesText = (key) => {
-    return new RegExp(`\\b${escapeRegExp(key)}\\b`, 'i').test(text);
-  };
-
-  // -----------------------------
-  // STEP 2: FIND MATCHES IN OPENAI
-  // -----------------------------
-  const result = [];
-  const matchedKeys = new Set();
-
-  for (const entry of entries) {
-    if (matchesText(entry.source)) {
-      result.push(entry);
-      matchedKeys.add(entry.source);
-      console.debug(`[OPENAI] ${entry.source} -> ${entry.target}`);
-    }
-  }
-
-  // -----------------------------
-  // STEP 3: ONLY IF NEEDED → DOM
-  // -----------------------------
-  let domMap = new Map();
-
-  if (original) {
-    const container =
-      original?.getElementsByClassName?.("source-string__singular")?.[0]
-      || new DOMParser().parseFromString(original || "", "text/html");
-
-    const nodes = container?.querySelectorAll?.(".glossary-word") || [];
-
-    nodes.forEach(node => {
-      const key = node.textContent.trim().toLowerCase();
-      const raw = node.getAttribute("data-translations");
-
-      if (!raw) return;
-
-      try {
-        const data = JSON.parse(raw.replace(/&quot;/g, '"'));
-        const translation = data?.[0]?.translation;
-
-        if (translation) {
-          domMap.set(key, translation);
-        }
-      } catch (e) {}
-    });
-  }
-
-  console.debug("DOM MAP:", domMap);
-
-  // -----------------------------
-  // STEP 4: ADD MISSING FROM DOM
-  // -----------------------------
-  for (const [key, value] of domMap.entries()) {
-
-    if (matchedKeys.has(key)) continue;
-
-    if (matchesText(key)) {
-      result.push({
-        source: key,
-        target: value
-      });
-      console.debug(`[DOM] ${key} -> ${value}`);
+    if (isArrayFormat) {
+        entries = openAiGloss.map(([k, v]) => ({
+            source: String(k).toLowerCase(),
+            rawSource: String(k),
+            target: String(v),
+            rawTarget: String(v)
+        }));
     } else {
-      console.debug(`[DOM SKIP - NOT IN TEXT] ${key}`);
+        const entryRegex = /"([^"]*?)"\s*->\s*"([^"]*?)"/g;
+        let match;
+        while ((match = entryRegex.exec(openAiGloss || "")) !== null) {
+            const rawSource = match[1];
+            const rawTarget = match[2];
+            entries.push({
+                source: rawSource.trim().toLowerCase(),
+                rawSource: rawSource,
+                target: rawTarget.trim(),
+                rawTarget: rawTarget
+            });
+        }
     }
-  }
 
-  // -----------------------------
-  // STEP 5: RETURN SAME FORMAT
-  // -----------------------------
-  if (isArrayFormat) {
-    const output = result.flatMap(e => {
-      if (!e.target.includes("/")) {
-        return [[e.source, e.target]];
-      }
+    // Sort longest phrases first so "block patterns" matches before "block"
+    entries.sort((a, b) => b.source.length - a.source.length);
 
-      return e.target.split("/")
-        .map(v => [e.source, v.trim()]);
-    });
+    const text = (originalPreProcessed || "").toLowerCase();
 
-    console.debug("FINAL ARRAY OUTPUT:", output);
-    return output;
-  }
+    const escapeRegExp = (str) =>
+        str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  const output = result
-    .flatMap(e => {
-      if (!e.target.includes("/")) {
-        return [`"${e.source}" -> "${e.target}"`];
-      }
+    const matchesText = (key) => {
+        if (key.includes(' ')) {
+            return text.toLowerCase().includes(key.toLowerCase());
+        }
+        return new RegExp(`\\b${escapeRegExp(key)}\\b`, 'i').test(text);
+    };
 
-      return e.target.split("/")
-        .map(v => `"${e.source}" -> "${v.trim()}"`);
-    })
-    .join(", ");
+    // STEP 2: FIND MATCHES
+    const result = [];
+    const matchedKeys = new Set();
 
-  console.debug("FINAL STRING OUTPUT:", output);
-  return output;
+    for (const entry of entries) {
+        if (matchesText(entry.source) && !matchedKeys.has(entry.source)) {
+            result.push(entry);
+            matchedKeys.add(entry.source);
+        }
+    }
+
+    // STEP 3: ONLY IF NEEDED → DOM
+    let domMap = new Map();
+
+    if (original) {
+        const container =
+            original?.getElementsByClassName?.("source-string__singular")?.[0]
+            || new DOMParser().parseFromString(original || "", "text/html");
+
+        const nodes = container?.querySelectorAll?.(".glossary-word") || [];
+
+        nodes.forEach(node => {
+            const key = node.textContent.trim().toLowerCase();
+            const raw = node.getAttribute("data-translations");
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw.replace(/&quot;/g, '"'));
+                const translation = data?.[0]?.translation;
+                if (translation) domMap.set(key, translation);
+            } catch (e) {}
+        });
+    }
+
+    // STEP 4: ADD MISSING FROM DOM
+    for (const [key, value] of domMap.entries()) {
+        if (matchedKeys.has(key)) continue;
+        if (matchesText(key)) {
+            result.push({ source: key, rawSource: key, target: value, rawTarget: value });
+        } else {
+            console.debug(`[DOM SKIP - NOT IN TEXT] ${key}`);
+        }
+    }
+
+    // STEP 5: RETURN SAME FORMAT
+    if (isArrayFormat) {
+        return result.flatMap(e => {
+            if (!e.rawTarget.includes("/")) return [[e.rawSource, e.rawTarget]];
+            return e.rawTarget.split("/").map(v => [e.rawSource, v.trim()]);
+        });
+    }
+
+    return result
+        .flatMap(e => {
+            if (!e.rawTarget.includes("/")) return [`"${e.rawSource}" -> "${e.rawTarget}"`];
+            return e.rawTarget.split("/").map(v => `"${e.rawSource}" -> "${v.trim()}"`);
+        })
+        .join(", ");
 }

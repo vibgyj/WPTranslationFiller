@@ -273,12 +273,12 @@ function displayRecords(records, myDelete, myRecordDeleted) {
         const row = document.createElement("tr");
 
         // Add the record data to the row
-        row.innerHTML = `
-            <td>${record.locale}</td>
-            <td>${record.original}</td>
-            <td>${record.translation}</td>
-            <td><button class="delete-btn">${deleteText}</button></td>
-        `;
+       row.innerHTML = `
+    <td>${record.locale}</td>
+    <td style="white-space: pre;">${highlightSpaces(record.original)}</td>
+    <td style="white-space: pre;">${highlightSpaces(record.translation)}</td>
+    <td><button class="delete-btn">${deleteText}</button></td>
+`;
 
         // Add event listener for the delete button
         const deleteButton = row.querySelector(".delete-btn");
@@ -509,7 +509,7 @@ function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, r
     }
 
     for (let row of rows) {
-        const localeCell = row.cells[0].textContent.trim();
+        const localeCell = row.cells[0].textContent;
         const originalCell = row.cells[1].textContent.trim();
 
         if (localeCell.toLowerCase() === locale.toLowerCase() &&
@@ -525,7 +525,7 @@ function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, r
             if (input) {
                 currentTranslation = input.value;
             } else {
-                currentTranslation = translationCell.textContent.trim();
+                currentTranslation = translationCell.textContent;
             }
 
             translationCell.innerHTML = `<input type="text" value="${currentTranslation}" id="editTranslation">`;
@@ -544,6 +544,10 @@ function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, r
     }
 }
 
+function highlightSpaces(value) {
+    return value.replace(/^(\s+)/, '<span style="background-color: #ddd;">$1</span>')
+                .replace(/(\s+)$/, '<span style="background-color: #ddd;">$1</span>');
+}
 
 function loadGlossaryFromDB(apiKey, DeeplFree,language) {
     // Ensure gloss is properly initialized as an array

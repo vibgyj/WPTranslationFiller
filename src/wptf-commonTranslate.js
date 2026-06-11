@@ -452,7 +452,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
             index++;
           }
         }
-        console.debug("we are in google post process after replacing", "'"+ translatedText + "'")
+        //console.debug("we are in google post process after replacing", "'"+ translatedText + "'")
         //translatedText =  restorePlaceholdersAfterTranslation(translatedText, original)
     }
     else if (translator == "lingvanex" || translator == "groq") {
@@ -772,7 +772,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         }
        
     }
-    
+    //console.debug("After replacement:", translatedText)
     // check if a sentence has ": " and check if next letter is uppercase
     // maybe more locales need to be added here, but for now only Dutch speaking locales have this grammar rule
     if (locale == "nl" || locale == "nl-be") {
@@ -850,8 +850,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //We need to check if the original sentence starts with uppercase and if so, we need to correct the translated sentence to start with uppercase as well, but only if the first word is not in the ignore list
     let originalUpperCase = isStartsWithUpperCase(original)
     //console.debug("originalUpperCase:", originalUpperCase)
+    //console.debug("before correct sentence:", translatedNewText)
     if (toBoolean(DebugMode)) console.debug("postProcessTranslation before correctSentence" ,translatedNewText);
     translatedNewText = correctSentence(translatedNewText, spellCheckIgnore, originalUpperCase);
+    //console.debug("before check hyphen:", translatedNewText)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
     translatedNewText = check_hyphen(translatedNewText, spellCheckIgnore);
     //console.debug("after check hyphen:", translatedNewText)
@@ -973,8 +975,16 @@ function correctSentence(translatedText, ignoreList, originalUpperCase) {
         });
 
         // --- 2b️⃣ Replace ignore words ---
+        // --- 2b️⃣ Replace ignore words ---
         if (ignoreRegex) {
-            temp = temp.replace(ignoreRegex, match => ignoreMap.get(match.toLowerCase()) || match);
+            temp = temp.replace(ignoreRegex, (match, ...args) => {
+            const offset = args[args.length - 2];
+            const str = args[args.length - 1];
+            const before = offset > 0 ? str[offset - 1] : ' ';
+            const after = str[offset + match.length] || ' ';
+            if (/[.\-_\/]/.test(before) || /[.\-_\/]/.test(after)) return match;
+            return ignoreMap.get(match.toLowerCase()) || match;
+            });
         }
 
         // --- 2c️⃣ Capitalize sentences safely ---
@@ -2370,7 +2380,7 @@ async function reviewTrans() {
     if (apikeyOpenAI != "") {
        if (translatedText != "") {
             //console.debug("openkey ", apikeyOpenAI)
-            result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview);
+            result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview, model, apikeyOpenRouter);
              console.debug("Result:", result)
         }
     }
@@ -4637,56 +4647,53 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                     }
                 }
             }
-            else if (transsel == "openRouter") {
-                let editor = false;
-                result = await openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
-                if (result == "Error 401") {
-                    messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+            //else if (transsel == "openRouter") {
+              //  let editor = false;
+              //  result = await openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+              //  if (result == "Error 401") {
+                 //   messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                     // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
-                }
-                else if (result == "Error 403") {
-                    messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+               // }
+               // else if (result == "Error 403") {
+                //    messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
                     //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                }
-                else {
+               // }
+               // else {
                     // console.debug("errorstate:",errorstate)
-                    if (errorstate != "OK") {
-                        messageBox("error", "There has been some uncatched error: " + errorstate);
+                  //  if (errorstate != "OK") {
+                     //   messageBox("error", "There has been some uncatched error: " + errorstate);
                         //alert("There has been some uncatched error: " + errorstate);
-                    }
-                }
-            }
+                    //}
+               // }
+            //}
             else if (transsel == "OpenAI") {
-                result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
-                //console.debug("result:",result)
-                if (result == "Error 401") {
-                    messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
-                    // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
-                    // break;
-                    stop = true;
-                    return "stop"
-                }
-                else if (result == "Error 403") {
-                    messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
-                    //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                }
-                else if (result == "Error 429") {
-                    //messageBox("error", "Error in translation received status 429 :" + errorstate);
-                    //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                    stop = true;
-                    return "stop"
-                }
-                else {
-                    if (errorstate != "OK") {
-                        stop = true;
-                        messageBox("error", "There has been some uncatched error: " + errorstate);
-                        return "stop"
-                        // break;
-                        //alert("There has been some uncatched error: " + errorstate);
-                    }
-
-                }
-            }
+    result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
+    
+    if (result == "Error 400") {
+        messageBox("error", __("Error in translation received status 400<br>Bad request - please check your API parameters (e.g. unsupported parameter for this model)."));
+        stop = true;
+        return "stop";
+    }
+    else if (result == "Error 401") {
+        messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+        stop = true;
+        return "stop";
+    }
+    else if (result == "Error 403") {
+        messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+    }
+    else if (result == "Error 429") {
+        stop = true;
+        return "stop";
+    }
+    else {
+        if (errorstate != "OK") {
+            stop = true;
+            messageBox("error", "There has been some uncatched error: " + errorstate);
+            return "stop";
+        }
+    }
+}
             else if (transsel == "groq") {
                 let editor = false;
                 result = await groqTranslate(original, destlang, record, apikeygroq, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, editor, openAiGloss);
@@ -4950,25 +4957,25 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                             }
                         }
         }
-        else if (transsel == "openRouter") {
-                        let editor = false; 
-                        result = await openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
-                        if (result == "Error 401") {
-                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+       // else if (transsel == "openRouter") {
+                  //      let editor = false; 
+                     //   result = await openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                      //  if (result == "Error 401") {
+                         //   messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                             // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
-                        }
-                        else if (result == "Error 403") {
-                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                       // }
+                       // else if (result == "Error 403") {
+                         //   messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
                             //alert("Error in translation received status 403 with readyState == 3 \r\nLanguage: " + language + " not supported!");
-                        }
-                        else {
+                      //  }
+                      //  else {
                             // console.debug("errorstate:",errorstate)
-                            if (errorstate != "OK") {
-                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                           // if (errorstate != "OK") {
+                             //   messageBox("error", "There has been some uncatched error: " + errorstate);
                                 //alert("There has been some uncatched error: " + errorstate);
-                            }
-                        }
-                    }
+                           // }
+                       // }
+                   // }
         else if (transsel == "OpenAI") {
             result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
 
@@ -5587,7 +5594,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             inprogressbar.style = ""
             progressbar.style.display = 'block';
     }
-    console.debug("transsel:", transsel)
+    //console.debug("transsel:", transsel)
     if (transsel == "groq") {
 
         result = await translatePageGroq(
@@ -5624,6 +5631,16 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyOpenAI,
             openAiGloss
         )
     
+    }
+    else if (transsel == "openRouter") {
+        //console.debug("we translate with openrouter")
+        let is_editor = false
+        result = await translatePageOpenRouter(
+            apikeyOpenRouter, OpenAIPrompt, OpenRouterSelect,
+            destlang, preTranslationReplace, postTranslationReplace,
+            formal, convertToLower, is_editor, OpenAItemp,
+            spellCheckIgnore, OpenAITone, openAiGloss
+         );
     }
     else {
        
@@ -7616,7 +7633,7 @@ async function processTransl (original, translatedText, language, record, rowId,
     let formal = checkFormal(false);
     const start = Date.now()
     var mytranslatedText;
-
+    //console.debug("formal:", formal)
     if (toBoolean(DebugMode)) {
         console.debug("processTransl translatedText:", translatedText)
         console.debug("processTransl ends with blank:",translatedText.endsWith(" "))

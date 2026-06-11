@@ -32,23 +32,6 @@ async function openRouterTranslate(original, destlang, record, apikeyOpenRouter,
     return result;
 }
 
-async function openRouterReview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor,translatedText,preview) {
-    // First we have to preprocess the original to remove unwanted chars
-    //var originalPreProcessed = preProcessOriginal(original, preverbs, "OpenAI");
-    var originalPreProcessed = original;
-    //errorstate = "NOK"
-    if (apikeyOpenAI != "") {
-        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview);
-    }
-    else {
-
-        errorstate = "No apikey provided!"
-    }
-        //console.debug("OpenAI errorstate:",errorstate,result)
-    return errorstate;
-}
-
-
 async function getopenRouter(
   original, language, record, apikeyOpenRouter, OpenAIPrompt,
   originalPreProcessed, rowId, transtype, plural_line, formal,
@@ -127,78 +110,101 @@ messages = [
  // reasoning={"effort": "minimal"}
     const mymodel = OpenRouterSelect.toLowerCase();
    if (show_debug) console.debug("Model selected:",mymodel);
-  let dataNew = {};
+    let dataNew = {};
     //mymodel= "openrouter/free"
-    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano" ) {
-        dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: Number(Top_p),
-            top_k: Number(Top_k),
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'minimal',
-            verbosity: 'low',
-            apiKey: apikeyOpenRouter,
-            prompt_cache_key: 'WPTF translation',
-        };
-    }
-    
-    else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano"  || mymodel === "gpt-5.4") { 
-         dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: Number(Top_p),
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'none',
-            verbosity: 'low',
-            apiKey: apikeyOpenRouter,
-            prompt_cache_key: 'WPTF translation',
-        };
-    }
-    else if (mymodel === "gpt-5.3-chat-latest" ) { 
-         dataNew = {
-            model: mymodel,
-            messages,
-            max_completion_tokens: max_Tokens,
-            top_p: Number(Top_p),
-            frequency_penalty: 0,
-            presence_penalty: 0,
-            reasoning_effort: 'medium',
-            verbosity: 'low',
-            apiKey:apikeyOpenRouter,
-            prompt_cache_key: 'WPTF translation'
-           
-        };
-  }
-  else {
-    dataNew = {
-      model: mymodel, 
-      messages,
-      
-      n: 1,
-      temperature: OpenAItemp,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      top_p: Number(Top_p),
-     apiKey:apikeyOpenRouter,
+   // Define fallbacks per primary model (or null for no fallback)
+    const fallbackMap = {
+  "gpt-oss-20b":         ["openai/gpt-5.4-nano", "openai/gpt-4o-mini"],
+  "gpt-5":               ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
+  "gpt-5-mini":          ["openai/gpt-4o-mini", "google/gemini-flash-1.5"],
+  "gpt-5-nano":          ["openai/gpt-4o-mini"],
+  "gpt-5.1":             ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
+  "gpt-5.1-mini":        ["openai/gpt-4o-mini"],
+  "gpt-5.1-nano":        ["openai/gpt-4o-mini"],
+  "gpt-5.4":             ["openai/gpt-4o"],
+  "gpt-5.3-chat-latest": ["openai/gpt-4o", "anthropic/claude-3-opus"],
+};
 
+if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
+    dataNew = {
+        model: mymodel,
+        messages,
+        max_completion_tokens: max_Tokens,
+        top_p: Number(Top_p),
+        top_k: Number(Top_k),
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        reasoning_effort: 'minimal',
+        verbosity: 'low',
+        apiKey: apikeyOpenRouter,
+        prompt_cache_key: 'WPTF translation',
+        guardrails: false,
     };
-  }
-  
+}
+else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4") {
+    dataNew = {
+        model: mymodel,
+        messages,
+        max_completion_tokens: max_Tokens,
+        top_p: Number(Top_p),
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        reasoning_effort: 'none',
+        verbosity: 'low',
+        apiKey: apikeyOpenRouter,
+        prompt_cache_key: 'WPTF translation',
+        guardrails: false,
+    };
+}
+else if (mymodel === "gpt-5.3-chat-latest") {
+    dataNew = {
+        model: mymodel,
+        messages,
+        max_completion_tokens: max_Tokens,
+        top_p: Number(Top_p),
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        reasoning_effort: 'medium',
+        verbosity: 'low',
+        apiKey: apikeyOpenRouter,
+        prompt_cache_key: 'WPTF translation',
+        guardrails: false,
+    };
+}
+else {
+    dataNew = {
+        model: mymodel,
+        messages,
+        n: 1,
+        temperature: OpenAItemp,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        top_p: Number(Top_p),
+        apiKey: apikeyOpenRouter,
+        //guardrails: false,
+    };
+}
+
+// Inject fallback models if defined for this model
+const fallbacks = fallbackMap[mymodel];
+if (fallbacks) {
+    dataNew.models = [mymodel, ...fallbacks];
+}
   
     try {
         const start = Date.now()
         //console.debug("We start call at :",start)
         const result = await new Promise((resolve) => {
             chrome.runtime.sendMessage(
-                { action: "openRouter", data: dataNew }, // send only the data
-                (res) => resolve(res)
+                { action: "openRouter", data: { ...dataNew } },  // ✅ clone meesturen
+
+              (res) => {
+                  console.debug("openRouter chrome message response:", res);
+                  //console.debug("openRouter model used:", res.modelUsed);
+                  resolve(res);
+              }
             );
-       });
+        });
        let duration = ((Date.now() - start) / 1000).toFixed(2);
        if (toBoolean(DebugMode)) console.debug("openRouter proxy response (raw):", result.result," ",duration);
        if (!result) {
