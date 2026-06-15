@@ -645,6 +645,46 @@ var bodyToSend = {
     return true; // keep response channel open
     }
 
+
+    else if (request.action === "koboldCpp") {
+    (async () => {
+        try {
+            const start = Date.now();
+            console.debug("We start translating with kobolCpp")
+            const dataToSend = request.data;
+            const baseUrl = dataToSend.baseUrl || "http://localhost:5001";
+            delete dataToSend.baseUrl;
+            //console.debug("KoboldCPP payload:", JSON.stringify(dataToSend));
+            const resp = await fetch(`${baseUrl}/v1/chat/completions`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            if (!resp.ok) {
+                const msg = await resp.text();
+                sendResponse({ error: `KoboldCPP request failed (${resp.status}): ${msg}` });
+                return;
+            }
+
+            const data = await resp.json();
+            console.debug("data:",data)
+            const result = data?.choices?.[0]?.message?.content ?? "";
+            console.debug("Result kobol:",result)
+            const duration = ((Date.now() - start) / 1000).toFixed(2);
+            console.debug("KoboldCPP response time:", duration + "s");
+
+            sendResponse({ result });
+
+        } catch (err) {
+            sendResponse({ error: err.toString() });
+        }
+    })();
+    return true;
+}
+
 else if (request.action === "LMStudio_translate") {
    // console.debug("LMStudio translation request received");
         setTimeout(async () => {

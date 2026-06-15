@@ -76,3 +76,4 @@ Version 3.5.43 Claude models added, and call to the API improved to handle the t
 Version 3.5.43 fixed a problem where postreplacement was replacing php for PHP after the filename
 Version 3.5.43 Fixed a problem within the DeepL glossary not showing spaces before and after the glossary word, this was caused by the regex that was used to replace the glossary words, now it uses a different regex that should work better
 Version 3.5.43 marked original glossary word if it has spaces before or after it
+Version 3.5.44 Added koboldcpp API
