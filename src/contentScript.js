@@ -378,7 +378,23 @@ script.src     = chrome.runtime.getURL('wptf-inject.js');
 
 var fileSelector = document.createElement("input");
 fileSelector.setAttribute("type", "file");
+// This function selects all checkboxes except those with the class "status-waiting" when the "select all" checkbox is checked. 
+const selectAll = document.querySelector('th.gp-column-checkbox input[type="checkbox"]');
 
+if (selectAll) {
+  selectAll.addEventListener('change', function () {
+    if (this.checked) {
+      setTimeout(() => {
+        document.querySelectorAll('tr[class*="status-"]').forEach(row => {
+          if (!row.classList.contains('status-waiting') && !row.classList.contains('status-fuzzy')) {
+            const cb = row.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = false;
+          }
+        });
+      }, 0);
+    }
+  });
+}
 // ─── Keyboard shortcuts ───────────────────────────────────────
 document.addEventListener("keydown", async function (event) {
 
@@ -1535,9 +1551,11 @@ function handleCopySuggestionClick(target) {
     const rowId = row?.id;
     if (!rowId) { console.warn('No row found for the clicked copy button.'); return true; }
     let formal = checkFormal(false);
+    //console.debug('Copy suggestion clicked for rowId:', rowId, 'formal:', formal);
     chrome.storage.local.get(["postTranslationReplace", "formal"], function (data) {
         // FIX: was `replaceVerb` (undefined) — unified to `replaceVerbs`
-        let replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, formal);
+        let replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, toBoolean(formal))
+        //console.debug('Post-translation replace settings:', replaceVerbs);
         onCopySuggestionClicked(target, rowId, replaceVerbs);
     });
     return true;
@@ -1878,7 +1896,7 @@ function LowerCaseClicked(event) {
     if (event != undefined) {
         chrome.storage.local.get(["spellCheckIgnore"], function (data) {
             let rowId   = event.target.id.split("-")[1];
-            let myrowId = event.target.id.split("-")[2];
+                let myrowId = event.target.id.split("-")[2];
             if (myrowId !== undefined && myrowId != "localcase") rowId = rowId.concat("-", myrowId);
             setLowerCase(rowId, data.spellCheckIgnore);
         });
@@ -2590,7 +2608,7 @@ async function savetranslateEntryClicked(event) {
     event.preventDefault(event);
     myrow = event.target.parentElement.parentElement;
     rowId = myrow.attributes.row.value;
-
+    //console.debug("savetranslateEntryClicked: clicked for rowId " + rowId);
     let h       = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
     var current = h.querySelector("span.panel-header__bubble");
 
@@ -2629,6 +2647,9 @@ async function savetranslateEntryClicked(event) {
             current.innerText = "current";
             glotpress_close.click();
             let prevrow = document.querySelector(`#preview-${rowId}.preview.status-waiting`);
+            prevrow.classList.replace('status-waiting', 'status-current');
+            //console.debug("prevrow for waiting:", prevrow);
+
             if (prevrow) prevrow.style.backgroundColor = "#b5e1b9";
         } else if (current.innerText == "fuzzy" || current.innerText == "changes requested") {
             let glotpress_open   = document.querySelector(`#preview-${rowId} td.actions .edit`);
@@ -2708,7 +2729,9 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
             toolTip    = buildTooltipFromGlossaryArray(missingTranslations);
             foundCount = spans.length - missingTranslations.length;
         } else {
+            //console.debug("No glossary words found in translation",translation)
             percent = 0; foundCount = 0;
+            toolTip   = buildTooltipFromGlossaryArray(missingTranslations); // ← add this
         }
     } else {
         percent    = 100;

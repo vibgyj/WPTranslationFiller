@@ -255,6 +255,7 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
     }
 
     // === First pass: Count matches ===
+    //console.debug("glosaawords:", glossWords)
     glossWords.forEach(entry => {
         const wordKey = JSON.stringify(entry.word);
         if (!entriesByKey[wordKey]) entriesByKey[wordKey] = [];
@@ -277,7 +278,7 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
                     ? (translation.match(new RegExp(`\\b${lowerVariant}\\b`, 'g')) || []).length
                     : 0;
             } else {
-                combinedMatches = translation.includes(lowerVariant) ? 1 : 0;
+                combinedMatches = new RegExp(`\\b${lowerVariant}\\b`, 'i').test(translation) ? 1 : 0;
             }
 
             let compoundMatches = 0;
@@ -321,7 +322,8 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
                     missingTranslations.push({
                         glossIndex: glossWords.indexOf(entry),
                         word: entry.word,
-                        missingCount
+                        missingCount,
+                        span: entry.span
                     });
                     return;
                 }
@@ -438,7 +440,8 @@ function working_findAllMissingWords(translationText, glossWords, locale = 'nl')
                     missingTranslations.push({
                         glossIndex: glossWords.indexOf(entry),
                         word: entry.word,
-                        missingCount
+                        missingCount,
+                        span: entry.span
                     });
                 });
             } else {
@@ -450,7 +453,8 @@ function working_findAllMissingWords(translationText, glossWords, locale = 'nl')
                         missingTranslations.push({
                             glossIndex: glossWords.indexOf(entry),
                             word: entry.word,
-                            missingCount
+                            missingCount,
+                            span: entry.span
                         });
                     }
                 });

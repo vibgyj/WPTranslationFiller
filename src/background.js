@@ -352,8 +352,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // keep sendResponse alive for async
     }
    else if (request.action === "groq") {
-    console.trace("GROQ ORIGIN TRACE");
-    console.log("GROQ ACTION PAYLOAD:", request);
+    //console.trace("GROQ ORIGIN TRACE");
+    //console.log("GROQ ACTION PAYLOAD:", request);
     const handleGroq = async () => {
         try {
             const dataToSend = { ...request.data };
@@ -385,7 +385,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 resetTokens:        resp.headers.get("x-ratelimit-reset-tokens")
             };
 
-            console.debug("rate-limit headers:", rateLimitHeaders);
+           // console.debug("rate-limit headers:", rateLimitHeaders);
 
             const contentType = resp.headers.get("content-type") || "";
 
@@ -662,9 +662,11 @@ var bodyToSend = {
                 },
                 body: JSON.stringify(dataToSend)
             });
-
+            //console.debug("KoboldCPP response status:", resp);
             if (!resp.ok) {
                 const msg = await resp.text();
+                //console.debug("KoboldCPP error response:", msg);
+                errorstate= 'NOK'
                 sendResponse({ error: `KoboldCPP request failed (${resp.status}): ${msg}` });
                 return;
             }
@@ -679,6 +681,7 @@ var bodyToSend = {
             sendResponse({ result });
 
         } catch (err) {
+            console.debug("KoboldCPP fetch error:", err);
             sendResponse({ error: err.toString() });
         }
     })();

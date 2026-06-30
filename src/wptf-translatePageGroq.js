@@ -87,8 +87,8 @@ async function callGroq(messages, apikey, model, temp) {
  ****************************************************/
 if (typeof GROQ_FALLBACK_CHAIN === "undefined") {
     var GROQ_FALLBACK_CHAIN = [
-        "llama-3.1-8b-instant",
         "meta-llama/llama-4-scout-17b-16e-instruct",
+        "llama-3.1-8b-instant",
         "moonshotai/kimi-k2-instruct",
         "llama-3.3-70b-versatile"
     ];
@@ -102,7 +102,7 @@ if (typeof GROQ_FALLBACK_CHAIN === "undefined") {
  *   2. "try again in Xs" in the error body
  *   3. Safe defaults: TPM→15s, RPM→62s
  ****************************************************/
-async function callGroqWithRetry(messages, apikey, model, temp, maxRetries = 4) {
+async function callGroqWithRetry(messages, apikey, model, temp, maxRetries = 5) {
     let attempt = 0;
     let activeModel = model;
     const fallbackSequence = [model, ...GROQ_FALLBACK_CHAIN.filter(m => m !== model)];

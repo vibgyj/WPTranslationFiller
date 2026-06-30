@@ -679,7 +679,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.substring(0, translatedText.length - 1)
         }
     }
-    
+    //console.debug("before tag check:", translatedText)
     // check if there is a blank after the tag 
     pos = translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -694,7 +694,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     if (pos != -1) {
         translatedText = translatedText.replace("> .", ">");
     }
-     if (locale == "nl" || locale == "nl-be") {
+    if (locale == "nl" || locale == "nl-be") {
          // reordering of the sentence
          if (toBoolean(Rearrange_Sentences)){
              translatedText = fixUILabelSmart(translatedText);
@@ -722,10 +722,13 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 if (!inUrl) {
                      // Escape regex special chars in search word
                     const safeWord = escapeRegex(searchWord);
-                    // Replace only when NOT inside square brackets
-                    const wordRegex = new RegExp(`(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}(?![^\\[]*\\]|[^{]*\\})`, 'g');
+                // Word boundaries toegevoegd zodat "u" niet binnen "uw" of "uit" matcht
+                const wordRegex = new RegExp(
+                 `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
+                    'gi'  // case-insensitive toegevoegd voor consistentie
+               );
                     translatedText = translatedText.replace(wordRegex, replacement);
-                   // translatedText = correctSentence(translatedText, spellCheckIgnore);
+                   //translatedText = correctSentence(translatedText, spellCheckIgnore);
                 }
 
             }
@@ -740,8 +743,11 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 if (!inUrl) {
                     // Escape regex special chars in search word
                     const safeWord = escapeRegex(searchWord);
-                    // Replace only when NOT inside square brackets
-                    const wordRegex = new RegExp(`(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}(?![^\\[]*\\]|[^{]*\\})`, 'g');
+                // Word boundaries toegevoegd zodat "u" niet binnen "uw" of "uit" matcht
+                const wordRegex = new RegExp(
+                 `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
+                    'gi'  // case-insensitive toegevoegd voor consistentie
+               );
                     translatedText = translatedText.replace(wordRegex, replacement);
                    // translatedText = correctSentence(translatedText, spellCheckIgnore);
                 }
@@ -755,22 +761,24 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
        
         // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-       //console.debug("checkurl before:",translatedText)
+        //console.debug("checkurl before:",translatedText)
         for (let i = 0; i < replaceVerb.length; i++) {
-            const searchWord = replaceVerb[i][0];
-            const replacement = replaceVerb[i][1];
-            // Skip if inside URL or button text in <button>
-            let inUrl = isInsideButtonOrUrl(translatedText, searchWord)
-    
-        if (!inUrl) {
-            const safeWord = escapeRegex(searchWord);
-            // Replace only when NOT inside square brackets
-            const wordRegex = new RegExp(`(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}(?![^\\[]*\\]|[^{]*\\})`, 'g');
-            translatedText = translatedText.replace(wordRegex, replacement);
-            //console.debug("replacing:", searchWord, "->", replacement);
+             const searchWord = replaceVerb[i][0];
+             const replacement = replaceVerb[i][1];
+
+            let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
+
+            if (!inUrl) {
+                const safeWord = escapeRegex(searchWord);
+                // Word boundaries toegevoegd zodat "u" niet binnen "uw" of "uit" matcht
+                const wordRegex = new RegExp(
+                 `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
+                    'gi'  // case-insensitive toegevoegd voor consistentie
+               );
+               translatedText = translatedText.replace(wordRegex, replacement);
+                //console.debug("replacing:", searchWord, "->", replacement);
             }
-        }
-       
+        } 
     }
     //console.debug("After replacement:", translatedText)
     // check if a sentence has ": " and check if next letter is uppercase
@@ -4515,11 +4523,14 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             }
             // ── NEW: KoboldCPP plural ────────────────────────────────────────
                     else if (transsel === "koboldCpp") {
-                let editor = true;
+                        let editor = false;
                         koboldUrl = "http://localhost:5001",
                         result = await KoboldAITranslate(original, destlang, record, koboldUrl, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
-                        if (errorstate != "OK") {
-                            messageBox("error", "KoboldCPP error: " + errorstate);
+                
+                if (errorstate != "OK") {
+                            messageBox("error", "KoboldCPP error: " + result);
+                            stop = true
+                            return "stop";
                         }
                     }
                     // ────────────────────────────────────────────────────────────────
@@ -8146,12 +8157,13 @@ async function saveToLocal() {
     return counter;
 }
 
-async function onCopySuggestionClicked(target,rowId) {
+async function onCopySuggestionClicked(target,rowId,replaceVerb) {
     chrome.storage.local.get(["postTranslationReplace", "convertToLower", "spellCheckIgnore", "ForceFormal"], async function (data) {
         var translatedText = ""
         var textareaElem
         locale = checkLocale();
         let formal = checkFormal(false);
+        //console.debug("onCopySuggestionClicked formal:", formal)
         var editor =""
        
         let convertToLower = data.convertToLower
@@ -8165,8 +8177,10 @@ async function onCopySuggestionClicked(target,rowId) {
         let original = editor.querySelector("span.original-raw").innerText;
         let text = editor.querySelector("textarea.foreign-text").value;
         setPostTranslationReplace(data.postTranslationReplace, formal)
+        //console.debug("onCopySuggestionClicked replaceVerb:", replaceVerb)
         if (formal) {
-            translatedText = await replaceVerbInTranslation(original, text, replaceVerb, debug = false, formal)
+            translatedText = await replaceVerbInTranslation(original, text, replaceVerb, debug = false, toBoolean(formal))
+            //console.debug("onCopySuggestionClicked formal translatedText:", translatedText)
         }
         else {
             translatedText = text

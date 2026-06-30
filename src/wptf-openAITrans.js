@@ -291,24 +291,28 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
     max_Tokens = maxTokens;
     var messages = [{ 'role': 'user', 'content': prompt }];
     //let mymodel = "gpt-4.1-mini";
-    //console.debug("Model for review:", model);
+    //console.debug("Model for review:", model,translator);
      if (translator == "openRouter") {
         var myLink = "https://openrouter.ai/api/v1/chat/completions";
          var myKey = apikeyOpenRouter
          var mymodel = OpenRouterModel;
-    }
-    else {
+     }
+     else if (translator == 'koboldCpp') {
+        // console.debug("Using koboldCpp for review")
+         var myLink = "http://localhost:5001/v1/chat/completions";
+         var mymodel = "koboldCpp";
+     }
+     else {
         var myLink = "https://api.openai.com/v1/chat/completions";
         var myKey = apikeyOpenAI
         var mymodel = model;
     }
-    //console.debug("Review model:", mymodel, " Translator:", translator)
+    console.debug("Review model:", mymodel, " Translator:", translator)
     if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
     data1 = {
       model: mymodel,
       messages,
       max_completion_tokens: max_Tokens,
-      top_p: Number(Top_p),
       frequency_penalty: 0,
       presence_penalty: 0,
       reasoning_effort: 'minimal',
@@ -342,21 +346,42 @@ async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPro
       prompt_cache_key: 'WPTF translation',
     };
   }
-  else {
-    data1 = {
-      model: mymodel,
-      messages,
-      max_tokens: max_Tokens,
-      n: 1,
-      temperature: 0,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      top_p: Number(Top_p),
-      stop: '|\n',
-    }
+    else {
+        if (mymodel === "koboldCpp") {
+             messages = [
+               { role: 'system', content: prompt },
+               { role: 'user', content: originalPreProcessed },
+               { role: 'assistant', content: "" }
+              ];
+            data1 = {
+                model: "koboldCpp",
+                messages,
+                max_tokens: max_Tokens,
+                temperature: 0,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+                repeat_penalty: 1.1,
+                top_k: Number(Top_k),
+                think: false,
+             }
+        }
+        else {
+            data1 = {
+                model: mymodel,
+                messages,
+                max_tokens: max_Tokens,
+                n: 1,
+                temperature: 0,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+                top_p: Number(Top_p),
+                stop: '|\n',
+            }
+        }
     };
 
     try {
+        //console.debug("myLink:",myLink)
         const response = await fetch(myLink, {
             body: JSON.stringify(data1),
             method: "POST",

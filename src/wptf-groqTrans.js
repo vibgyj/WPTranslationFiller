@@ -116,10 +116,10 @@ async function getTransgroq(
         .replace(/\{\{text\}\}/g,       promptItems)
         .replace(/\{\{glossary\}\}/g,   prunedGlossary); // glossary in prompt AND in g field
 
-    console.debug("[Groq single] rowId:", rowId);
-    console.debug("[Groq single] prunedGlossary:", prunedGlossary || "(empty)");
-    console.debug("[Groq single] promptItems:", promptItems);
-    console.debug("[Groq single] full prompt sent to model:\n", prompt);
+    //console.debug("[Groq single] rowId:", rowId);
+    //console.debug("[Groq single] prunedGlossary:", prunedGlossary || "(empty)");
+    //console.debug("[Groq single] promptItems:", promptItems);
+    //console.debug("[Groq single] full prompt sent to model:\n", prompt);
 
     const data = {
         model: groqSelect,
@@ -152,7 +152,7 @@ async function getTransgroq(
      * input key by mistake) as the translation key.
      ****************************************************/
     let raw = result?.result?.choices?.[0]?.message?.content ?? "";
-    console.debug("[Groq single] raw model response:\n", raw);
+    //console.debug("[Groq single] raw model response:\n", raw);
 
     try {
         raw = raw
@@ -246,7 +246,7 @@ async function getTransgroq(
                 const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
                 item.tr = item.tr.replace(new RegExp("\\b" + escaped + "\\b", "gi"), target);
             }
-            console.debug("[Groq single] After glossary enforcement:", item.tr);
+            //console.debug("[Groq single] After glossary enforcement:", item.tr);
         }
 
         const finalText = await postProcessTranslation(

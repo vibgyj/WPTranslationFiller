@@ -11,11 +11,9 @@ function delay(ms) {
 
 async function KoboldAITranslate(original, destlang, record, koboldUrl, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
     errorstate = "OK";
-
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "KoboldCPP");
 
-    var result = await getTransKobold(original, destlang, record, koboldUrl, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
-
+    var result = await getTransKobold(original, destlang, record, koboldUrl, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     return result;
 }
 
@@ -39,7 +37,7 @@ async function getTransKobold(
   var myTranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
   let prevstate = current ? current.innerText : "";
-
+  
   let destlang = language;
   language = language.toUpperCase();
 
@@ -82,7 +80,7 @@ async function getTransKobold(
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
   myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
-  console.debug("myprompt:",myprompt)
+  //console.debug("myprompt:",myprompt)
   let maxTokens = estimateMaxTokens(originalPreProcessed);
   max_Tokens = maxTokens;
 
@@ -102,7 +100,6 @@ async function getTransKobold(
     frequency_penalty: 0,
     presence_penalty: 0,
     repeat_penalty: 1.1,
-    top_p: Number(Top_p),
     top_k: Number(Top_k),
     think: false,
     baseUrl: koboldUrl || "http://localhost:5001",
@@ -149,7 +146,8 @@ async function getTransKobold(
         if (editor) messageBox("warning", `KoboldCPP server error (500)`);
         return `Request failed with status 500. Server issue!`;
       } else {
-        if (editor) messageBox("warning", `KoboldCPP request failed (${statusCode})<br>${errorMessage}`);
+          if (editor) messageBox("warning", `KoboldCPP request failed (${statusCode})<br>${errorMessage}`);
+          errorstate = "NOK";
         return `Request failed with status ${statusCode}. ${errorMessage}`;
       }
     }

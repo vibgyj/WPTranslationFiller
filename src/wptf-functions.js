@@ -115,7 +115,8 @@ function fixUILabelSmart(text) {
     };
 
     const infinitives = {
-        "Activeer": "activeren", 
+        "voeg toe": "toevoegen",
+        "Activeer": "activeren",
         "Kies": "kiezen", 
         "Schakel": "uitschakelen",
         "Zet": "aanzetten",
@@ -1037,32 +1038,44 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
                 console.debug(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formalWord}"`);
             }
 
-            let matchRegex = new RegExp(`\\b${escapeRegex(informal)}([.,!?:]?)(\\s|$)`, 'i');
-            if (matchRegex.test(dut)) {
-                dut = dut.replace(matchRegex, (match, punct, space, offset) => {
-                    if (debug) {
-                        console.debug("Matched informal:", match);
-                    }
+            // When a sentence contains MULTIPLE occurrences of the same informal word (e.g. a
+            // reflexive "je" in "Meld je aan" AND a possessive "je" in "met je Google account"),
+            // we prefer the LAST occurrence. Possessive "je"/"jouw" almost always sits directly
+            // before the noun it modifies, which tends to be the occurrence closest to the end
+            // of the clause — while reflexive/subject "je" tends to appear earlier, right after
+            // the verb. Any earlier, unmatched occurrence is left for Step 3's fallback logic.
+            const globalRegex = new RegExp(`\\b${escapeRegex(informal)}\\b([.,!?:]?)(\\s|$)`, 'gi');
+            const allMatches = [...dut.matchAll(globalRegex)];
 
-                    const marker = `${markerBase}${markerIndex}_0__`;
-                    const informalFound = match.match(new RegExp(`^${escapeRegex(informal)}`, 'i'))[0];
+            if (allMatches.length > 0) {
+                const match = allMatches[allMatches.length - 1]; // prefer last occurrence
+                const offset = match.index;
+                const matchText = match[0];
+                const punct = match[1] || '';
+                const space = match[2] || '';
 
-                    // Check sentence position (after .?! or opening bracket, or start of string)
-                    const precedingText = dut.slice(0, offset);
-                    const isCapitalized = isAtSentenceStart(precedingText) ||
-                        (informalFound[0] !== informalFound[0].toLowerCase() &&
-                         informalFound[0] === informalFound[0].toUpperCase());
+                if (debug) {
+                    console.debug("Matched informal:", matchText);
+                }
 
-                    // formalWord is already lowercase, capitalize only when needed
-                    const replacementFinal = isCapitalized
-                        ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
-                        : formalWord;
+                const marker = `${markerBase}${markerIndex}_0__`;
+                const informalFound = matchText.match(new RegExp(`^${escapeRegex(informal)}`, 'i'))[0];
 
-                    replacementsThisSentence.push({ marker, replacement: replacementFinal + (punct || '') });
-                    markerIndex++;
+                // Check sentence position (after .?! or opening bracket, or start of string)
+                const precedingText = dut.slice(0, offset);
+                const isCapitalized = isAtSentenceStart(precedingText) ||
+                    (informalFound[0] !== informalFound[0].toLowerCase() &&
+                     informalFound[0] === informalFound[0].toUpperCase());
 
-                    return marker + (space || '');
-                });
+                // formalWord is already lowercase, capitalize only when needed
+                const replacementFinal = isCapitalized
+                    ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
+                    : formalWord;
+
+                replacementsThisSentence.push({ marker, replacement: replacementFinal + punct });
+                markerIndex++;
+
+                dut = dut.slice(0, offset) + marker + space + dut.slice(offset + matchText.length);
             } else {
                 if (debug) {
                     console.debug(`No occurrence of "${informal}" found in Dutch sentence for "${word}"`);
@@ -1084,51 +1097,52 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         finalResult = finalResult.replace(marker, replacement);
     });
 
-    const engText = engSentences.join(" ");
-
     // === Step 3b: Extra pass ONLY when formal mode is active ===
     if (formal === true) {
-        // Only include entries whose English key actually appears in the English text.
-        // This prevents replacing Dutch words like "je" when there is no corresponding
-        // "your"/"you" in the English source (e.g. "How can we help you?" has "you" as
-        // object pronoun, not possessive — but "Hoe kunnen we je helpen?" should stay as-is
-        // because there is no "your" in the English text).
-        const filteredReplacements = validReplacements.filter(([en]) => {
-            if (typeof en !== 'string') return false;
-            return new RegExp(`\\b${escapeRegex(en)}\\b`, 'i').test(engText);
+        // By the time we reach this fallback pass, Step 1 has already correctly resolved any
+        // genuine possessive correlations (English "your" matched against the correct Dutch
+        // "je"/"jouw" occurrence using positional/last-occurrence matching). Anything still
+        // left over here is therefore almost always a reflexive, subject, or object use with
+        // no direct English counterpart (e.g. "Meld je aan" for "Sign in", or "je" in a title
+        // like "Hoe je ... gebruikt" where English drops the pronoun entirely).
+        // We default such leftovers to the "you" → "u" mapping when available, since "u" is
+        // grammatically safe in these contexts, rather than "your" → "uw" which only fits
+        // directly before a noun (already handled by Step 1).
+        const sortedPool = [...validReplacements].sort((a, b) => {
+            const aIsYou = /^you$/i.test(a[0]) ? 0 : 1;
+            const bIsYou = /^you$/i.test(b[0]) ? 0 : 1;
+            return aIsYou - bIsYou;
         });
 
-        if (filteredReplacements.length > 0) {
-            const leftoverInformals = filteredReplacements
-                .map(([, informal]) => escapeRegex(informal))
-                .join("|");
+        const leftoverInformals = sortedPool
+            .map(([, informal]) => escapeRegex(informal))
+            .join("|");
 
-            const leftoverRegex = new RegExp(
-                `\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`,
-                "gi"
-            );
+        const leftoverRegex = new RegExp(
+            `\\b(${leftoverInformals})\\b([.,!?:]?)(\\s|$)`,
+            "gi"
+        );
 
-            finalResult = finalResult.replace(
-                leftoverRegex,
-                (match, informal, punct, space, offset) => {
-                    const replacementPair = filteredReplacements.find(
-                        ([, inf]) => inf.toLowerCase() === informal.toLowerCase()
-                    );
-                    if (!replacementPair) return match;
+        finalResult = finalResult.replace(
+            leftoverRegex,
+            (match, informal, punct, space, offset) => {
+                const replacementPair = sortedPool.find(
+                    ([, inf]) => inf.toLowerCase() === informal.toLowerCase()
+                );
+                if (!replacementPair) return match;
 
-                    const formalWord = replacementPair[2]; // already lowercase from validReplacements
+                const formalWord = replacementPair[2]; // already lowercase from validReplacements
 
-                    const before = finalResult.slice(0, offset);
-                    const isSentenceStart = isAtSentenceStart(before);
+                const before = finalResult.slice(0, offset);
+                const isSentenceStart = isAtSentenceStart(before);
 
-                    const replacementFinal = isSentenceStart
-                        ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
-                        : formalWord;
+                const replacementFinal = isSentenceStart
+                    ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
+                    : formalWord;
 
-                    return replacementFinal + (punct || '') + (space || '');
-                }
-            );
-        }
+                return replacementFinal + (punct || '') + (space || '');
+            }
+        );
     }
 
     // === Step 4: Polite word insertion (HTML-safe) ===
@@ -2014,7 +2028,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
         //console.debug("ValidatePage nameDiff:", nameDiff+" "+rowId)
         // console.debug("ValidatePage showName:",showName)
         var result = validate(language, original, translation, locale, false, rowId, false, DefGlossary);
-        // console.debug("validate in validatepage line 853:",original,result)
+        //console.debug("validate in validatepage line 853:",original,result,result.toolTip)
         let record = e.previousSibling.previousSibling.previousSibling
         // this is the start of validation, so no prev_trans is present      
         prev_trans = translation
