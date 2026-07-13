@@ -434,39 +434,50 @@ function toUtf8(text) {
 }
 
 async function prepare_glossary(glossary, language) {
-    // this function builds the string to be sent to deepL
-    // glosObj is the string object to combine all necessary parts of the request
-    //console.debug("glossary,language:"glossary,language)
-    var glossObj = {};
-    glossObj["name"] = 'WPTF glossary';
-    glossObj["source_lang"] = "EN";
-    glossObj["target_lang"] = language.toUpperCase();
-    var gloss="";
-    var glossentry;
-    for (let i = 0, len = glossary.length; i < len; i++) {
-        if (i < len - 1) {
-            if (!glossary[i].endsWith(" ")) {
-                glossentry = toUtf8(glossary[i] + '\n')
-            }
-            else {
-                console.debug("glossary ends with blank:", glossary[i])
-                glossentry = glossary[i].trim() + '\n';
-                glossentry = toUtf8(glossentry)
-            }
+    //console.debug("CP1 input:", Array.isArray(glossary), glossary?.length,
+               //   JSON.stringify(glossary?.slice?.(0, 3)));
+
+    const seen = new Set();
+    const lines = [];
+
+    for (const raw of glossary) {
+        if (typeof raw !== 'string') continue;
+
+        const entry = raw.replace(/\r/g, '');
+        const commaPos = entry.indexOf(',');
+        if (commaPos === -1) {
+            console.debug("skipping entry without comma:", raw);
+            continue;
         }
-        else {
-            glossentry = glossary[i].trim() + '\n';
-            glossentry = toUtf8(glossentry)
+
+        const source = entry.slice(0, commaPos).trim();
+        const target = entry.slice(commaPos + 1).trim();
+
+        if (!source || !target) {
+            console.debug("skipping empty source/target:", raw);
+            continue;
         }
-        if (typeof glossentry != 'undefined') {
-            gloss+= glossentry;
+        if (seen.has(source)) {
+            console.debug("skipping duplicate source:", source);
+            continue;
         }
+        seen.add(source);
+        lines.push(`${source},${target}`);
     }
-    glossObj["entries"] = gloss;
-    glossObj["entries_format"] = 'csv';
-    // We are now complete, so return the object
-    let new_glossary = glossObj
-    return new_glossary
+
+    const glossObj = {
+        name: 'WPTF glossary',
+        dictionaries: [{
+            source_lang: 'en',
+            target_lang: language.split(/[-_]/)[0].toLowerCase(),
+            entries: lines.join('\n'),
+            entries_format: 'csv'
+        }]
+    };
+
+   // console.debug("CP2 output:", lines.length, "lines, first:",
+      //            JSON.stringify(lines.slice(0, 2)));
+    return glossObj;
 }
 
 function no_cors(deepl) {

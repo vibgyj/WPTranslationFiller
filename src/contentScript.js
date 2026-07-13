@@ -54,7 +54,8 @@ var DispClipboard;
 var DisableautoClose    = false;
 var DebugMode           = false;
 var Rearrange_Sentences = true;
-var PlaceholderLog      = [];
+var PlaceholderLog = [];
+var replaced_char = false
 
 chrome.storage.local.get(null, function (items) {
     const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
@@ -1683,8 +1684,19 @@ async function handleDetailsAction(rowId, event) {
             let myoriginal = myrec.getElementsByClassName("original")[0].textContent;
             let pretrans   = await findTransline(myoriginal, locale);
             if (pretrans != "notFound") {
-                mytextarea[0].innerHTML = pretrans;
-                mytextarea[0].innerText = pretrans;
+                let formal = checkFormal(false)
+                if (toBoolean(formal)) {
+                    chrome.storage.local.get(["postTranslationReplace", "formal"], async function (data) {
+                        let replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, toBoolean(formal))
+                        let mytranslatedText = await replaceVerbInTranslation(myoriginal, pretrans, replaceVerbs, debug = false, formal)
+                        mytextarea[0].innerHTML = mytranslatedText;
+                        mytextarea[0].innerText = mytranslatedText;
+                    });
+                }
+                else {
+                    mytextarea[0].innerHTML = pretrans;
+                    mytextarea[0].innerText = pretrans;
+                }
                 let header      = await document.querySelector(`#editor-${rowId} .panel-header`);
                 let localButton = await header.querySelector(`.translocal-entry-local-button`);
                 if (localButton) localButton.style.visibility = "visible";
@@ -1908,6 +1920,7 @@ function translateEntryClicked(event) {
     let rowId   = event.target.id.split("-")[1];
     let myrowId = event.target.id.split("-")[2];
     if (typeof myrowId != "undefined" && myrowId != "translation") rowId = rowId.concat("-", myrowId);
+    
     chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiSelect", "GeminiPrompt", "groqSelect", "LocalOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudSelect", "ollamaModel", "ollamaPrompt", "LMStudioWait"], function (data) {
         let formal = toBoolean(data.ForceFormal) === true ? true : checkFormal(false);
         let OpenAItemp    = parseFloat(data.OpenAItemp);

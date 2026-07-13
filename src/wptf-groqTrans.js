@@ -87,7 +87,8 @@ async function getTransgroq(
      * keeping the payload compact.
      ****************************************************/
     const prunedGlossary = pruneGlossary(openAiGloss, originalPreProcessed, null) || "";
-
+    //console.debug("openAiGloss:", openAiGloss || "(empty)");
+    //console.debug("[Groq single] prunedGlossary:", prunedGlossary || "(empty)");
     /****************************************************
      * BUILD PROMPT
      * Uses compact format: i = rowId, t = text to translate
@@ -115,18 +116,29 @@ async function getTransgroq(
         .replace(/\{\{tone\}\}/g,       OpenAITone ?? "")
         .replace(/\{\{text\}\}/g,       promptItems)
         .replace(/\{\{glossary\}\}/g,   prunedGlossary); // glossary in prompt AND in g field
-
+    //console.debug("prompt:\n", prompt);
     //console.debug("[Groq single] rowId:", rowId);
     //console.debug("[Groq single] prunedGlossary:", prunedGlossary || "(empty)");
     //console.debug("[Groq single] promptItems:", promptItems);
     //console.debug("[Groq single] full prompt sent to model:\n", prompt);
 
+   const REASONING_CONFIG = {
+    "qwen/qwen3.6-27b": { reasoning_effort: "none" },
+    "qwen/qwen3-32b": { reasoning_effort: "none" },
+    "openai/gpt-oss-20b": { reasoning_effort: "low", include_reasoning: false },
+    "openai/gpt-oss-120b": { reasoning_effort: "low", include_reasoning: false },
+    "deepseek-r1-distill-llama-70b": { reasoning_format: "hidden" },
+    "qwen-qwq-32b": { reasoning_format: "hidden" },
+    // llama, gemma, mixtral, etc. -> not reasoning models, no entry needed
+    };
+    //console.debug("[Groq single] model:", groqSelect, "config:", REASONING_CONFIG[groqSelect] || {});
     const data = {
-        model: groqSelect,
-        messages: [{ role: "user", content: prompt }],
-        temperature: OpenAItemp,
-        top_p: 1,
-        apiKey: apikeygroq
+      model: groqSelect,
+      messages: [{ role: "user", content: prompt }],
+      temperature: OpenAItemp,
+      top_p: Number(Top_p),
+      apiKey: apikeygroq,
+       ...(REASONING_CONFIG[groqSelect] || {}),
     };
 
     /****************************************************
@@ -141,7 +153,7 @@ async function getTransgroq(
         if (code == 429) {
             messageBox("error", "You have exceeded your rate limit!<br>");
         } else {
-            messageBox("error", "There has been some uncatched error<br>" + result?.error);
+            messageBox("error", "There has been some uncatched error<br>" + result.error.message);
         }
         return "NOK";
     }

@@ -156,6 +156,111 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
   //console.debug("we show it")
   showChangelog();    // Call your function
 });
+
+// ============================================================
+// GROQ DYNAMIC MODEL LIST
+// ============================================================
+
+// Models we never want in a chat-model dropdown (audio, safety/guard, tts, language-specialized, etc.)
+const GROQ_EXCLUDE_PATTERN = /whisper|tts|playai|orpheus|llama-guard|prompt-guard|allam|compound/i;
+
+// Fallback list used if the fetch fails (no key yet, offline, API error, etc.)
+const GROQ_FALLBACK_MODELS = [
+    "qwen/qwen3.6-27b",
+    "qwen/qwen3-32b",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-safeguard-20b",
+];
+
+// Preferred default when a stored model is no longer available.
+// Used instead of "just pick whatever sorts first" (which could land on
+// a language- or task-specialized model like allam-2-7b).
+const GROQ_PREFERRED_DEFAULT = "openai/gpt-oss-20b";
+
+async function fetchGroqModels(apiKey) {
+    const resp = await fetch("https://api.groq.com/openai/v1/models", {
+        headers: { "Authorization": "Bearer " + apiKey }
+    });
+    if (!resp.ok) {
+        throw new Error("HTTP " + resp.status);
+    }
+    const json = await resp.json();
+    return json.data
+        .map(m => m.id)
+        .filter(id => !GROQ_EXCLUDE_PATTERN.test(id))
+        .sort();
+}
+
+async function loadGroqModels(preselectValue) {
+    const statusEl = document.getElementById("groqModelStatus");
+    const selectEl = groqselectBox;
+    const apiKey = apikeygroqTextbox.value;
+
+    selectEl.innerHTML = "";
+    const loadingOpt = document.createElement("option");
+    loadingOpt.value = "";
+    loadingOpt.textContent = "Loading models...";
+    selectEl.appendChild(loadingOpt);
+    if (statusEl) statusEl.textContent = "";
+
+    let models;
+    let usedFallback = false;
+
+    try {
+        if (!apiKey || apiKey === "groq-api key->" || apiKey.trim() === "") {
+            throw new Error("No API key set");
+        }
+        models = await fetchGroqModels(apiKey);
+        if (!models.length) throw new Error("Empty model list");
+    } catch (err) {
+        console.warn("Could not fetch Groq models, using fallback list:", err.message);
+        models = GROQ_FALLBACK_MODELS;
+        usedFallback = true;
+    }
+
+    selectEl.innerHTML = "";
+    models.forEach(id => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = id;
+        selectEl.appendChild(opt);
+    });
+
+    if (preselectValue && models.includes(preselectValue)) {
+        selectEl.value = preselectValue;
+    } else if (preselectValue) {
+        // stored model no longer exists (deprecated) - fall back to a known-good
+        // default rather than whatever happens to sort first, and warn the user
+        const fallbackChoice = models.includes(GROQ_PREFERRED_DEFAULT)
+            ? GROQ_PREFERRED_DEFAULT
+            : models[0];
+        selectEl.value = fallbackChoice;
+        if (statusEl) {
+            statusEl.textContent = `Note: "${preselectValue}" is no longer available, switched to ${fallbackChoice}.`;
+            statusEl.style.color = "#ffffff";
+            statusEl.style.fontWeight = "bold";
+        }
+    } else {
+        // no stored model at all - prefer the known-good default over index 0
+        selectEl.value = models.includes(GROQ_PREFERRED_DEFAULT) ? GROQ_PREFERRED_DEFAULT : models[0];
+    }
+
+    if (usedFallback && statusEl && !statusEl.textContent) {
+        statusEl.textContent = "Enter a valid Groq API key and click Refresh to load the live model list.";
+        statusEl.style.color = "#ffffff";
+        statusEl.style.fontWeight = "normal";
+    } else if (!usedFallback && statusEl && !statusEl.textContent) {
+        statusEl.textContent = `${models.length} models loaded.`;
+        statusEl.style.color = "#ffffff";
+        statusEl.style.fontWeight = "normal";
+    }
+}
+
+document.getElementById("refreshGroqModels").addEventListener("click", function () {
+    loadGroqModels(groqselectBox.value || undefined);
+});
+
 chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "ClaudSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize"], function (data) {
     
     if (data.DeeplFree != null) {
@@ -322,15 +427,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         OpenAIselectBox.value = data.OpenAISelect;
     }
 
-    if (typeof data.groqSelect == 'undefined') {
-        groqselectBox.value = "llama-3.3-70b-versatile";
-    }
-    else if (data.groqSelect == "") {
-        groqselectBox.value = "llama-3.3-70b-versatile";
-    }
-    else {
-        groqselectBox.value = data.groqSelect;
-    }
+    // Populate the groq dropdown dynamically from the Groq API,
+    // preselecting the stored model if it still exists (see loadGroqModels()).
+    const storedGroqModel = (typeof data.groqSelect == 'undefined' || data.groqSelect == "")
+        ? undefined
+        : data.groqSelect;
+    loadGroqModels(storedGroqModel);
 
     if (typeof data.MistralSelect == 'undefined') {
        MistralselectBox.value = "mistral-small-latest";
@@ -662,11 +764,10 @@ button.addEventListener("click", function () {
         OpenAIsel = OpenAIselectBox.value;
     }
 
-    if (typeof groqselectBox.value == "undefined") {
-        groqsel = "llama-3.3-70b-versatile";
-    }
-    else if (groqselectBox.value == "") {
-        groqsel = "llama-3.3-70b-versatile";
+    // Groq model now comes from a dynamically populated dropdown (see loadGroqModels()).
+    // Fall back to a current, non-deprecated model id if nothing is selected.
+    if (typeof groqselectBox.value == "undefined" || groqselectBox.value == "") {
+        groqsel = "openai/gpt-oss-20b";
     }
     else {
         groqsel = groqselectBox.value;

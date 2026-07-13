@@ -52,9 +52,11 @@
         #deepseek_api_key {
             width: 400px;
         }
+
         #groq_api_key {
             width: 400px;
         }
+
         #Translateio_api_key {
             width: 400px;
         }
@@ -90,6 +92,7 @@
         #gemini_api_key {
             width: 400px;
         }
+
         #openRouter_api_key {
             width: 400px;
         }
@@ -129,6 +132,7 @@
         #bulkWait {
             width: 50px;
         }
+
         #BatchSize {
             width: 40px;
         }
@@ -193,16 +197,16 @@
             padding: 5px 0;
             background-color: #04AA6D;
         }
+
         #backupSettings {
-            
             justify-content: center;
             align-items: center;
             width: 200px;
             padding: 5px 0;
             background-color: lightblue;
         }
+
         #restoreSettings {
-            
             justify-content: center;
             align-items: center;
             width: 200px;
@@ -519,20 +523,18 @@
             <tr>
                 <td>
                     <label for="groqSelect">Select a model for groq:</label>
+                    <span class="tooltip" data-tooltip="This list is loaded live from the Groq API using your Groq API key above.&#10;
+                                             If no valid key is entered yet, a small fallback list is shown instead.&#10;
+                                             Click 'Refresh models' after entering or changing your API key.">?</span>
                 </td>
                 <td>
                     <div class="form-input">
                         <select title="Select a model for groq" name="groqSel" id="groqSelect">
-
-                            <option value="qwen/qwen3-32b">qwen/qwen3-32b</option>
-                            <option value="qwen/qwen3.6-27b">qwen/qwen3.6-27b</option>
-                            <option value="openai/gpt-oss-safeguard-20b">openai/gpt-oss-safeguard-20b</option>
-                            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
-                            <option value="llama3-70b-instruct">llama-3.3-70b-instruct</option>
-                            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
-                            <option value="meta-llama/Llama-4-Scout-17B-16E-Instruct">meta-llama/Llama-4-Scout-17B-16E-Instruct</option>
-
+                            <option value="">Loading models...</option>
                         </select>
+                        <button type="button" id="refreshGroqModels">Refresh models</button>
+                        <br />
+                        <span id="groqModelStatus" style="font-size:0.85em; color:#ffffff;"></span>
                     </div>
                 </td>
             </tr>

@@ -185,7 +185,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 try {
                     const json = JSON.parse(raw);
-                    // console.debug("✅ DeepL response:", json);
+                    //console.debug("✅ DeepL response:", json);
                     sendResponse(json);
                 } catch (err) {
                     console.error("❌ JSON parse error", err);
@@ -372,7 +372,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             );
 
-            console.debug("response status:", resp.status);
+          //  console.debug("response status:", resp.status);
 
             // Forward rate-limit headers so the content script can
             // use the exact reset times instead of guessing.
@@ -407,7 +407,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 ? await resp.json()
                 : await resp.text();
 
-            console.debug("data:", data);
+          //  console.debug("data:", data);
             sendResponse({
                 ok: true,
                 rateLimit: rateLimitHeaders,
@@ -437,7 +437,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             // remove sensitive field before sending
             delete dataToSend.apiKey;
-            console.debug("openRouter request payload:", dataToSend)
+          //  console.debug("openRouter request payload:", dataToSend)
             const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
@@ -470,8 +470,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               "";
             const modelUsed = data?.model ?? "unknown";  // ✅ welk model daadwerkelijk gebruikt is
 
-            console.debug("result:", result)
-            console.debug("model used:", modelUsed)  // ✅ log het model
+           // console.debug("result:", result)
+           // console.debug("model used:", modelUsed)  // ✅ log het model
 
             sendResponse({ result, modelUsed });  // ✅ stuur het mee terug
 
@@ -531,7 +531,7 @@ var bodyToSend = {
                 //options: {temperature: temperature, repeat_penalty: repeat_penalty, do_not_complete: 1,  }
                 try {
                     const result = await callLocalWithRetry(bodyToSend, 3, 10000); // 3 retries, 15s timeout
-                    console.debug("Local Ollama result:", result.translation);
+                  //  console.debug("Local Ollama result:", result.translation);
                     const translated = result.translation
                      const duration = ((Date.now() - start) / 1000).toFixed(2);
                            let show_debug = true
@@ -574,7 +574,7 @@ var bodyToSend = {
                 options: { temperature: temperature,repeat_penalty: repeat_penalty, do_not_complete: 1 ,top_p: myTop_p,  top_k: myTop_k}
             };
 
-            console.debug("Sending chat request to Ollama online:", bodyToSend);
+            //console.debug("Sending chat request to Ollama online:", bodyToSend);
 
             const resp = await fetch("https://ollama.com/api/chat", {
                 method: "POST",
@@ -606,9 +606,9 @@ var bodyToSend = {
                 }
             }
 
-            console.debug("HTTP status:", resp.status);
-            console.debug("Raw response text:", rawText);
-            console.debug("Parsed JSON:", data);
+          //  console.debug("HTTP status:", resp.status);
+          //  console.debug("Raw response text:", rawText);
+          //  console.debug("Parsed JSON:", data);
 
             // 🚨 HANDLE HTTP ERRORS FIRST
             if (!resp.ok) {
@@ -629,7 +629,7 @@ var bodyToSend = {
                 });
             }
 
-            console.debug("Processed translation:", data.message.content);
+          //  console.debug("Processed translation:", data.message.content);
 
             sendResponse({
                 success: true,
@@ -650,7 +650,7 @@ var bodyToSend = {
     (async () => {
         try {
             const start = Date.now();
-            console.debug("We start translating with kobolCpp")
+            //console.debug("We start translating with kobolCpp")
             const dataToSend = request.data;
             const baseUrl = dataToSend.baseUrl || "http://localhost:5001";
             delete dataToSend.baseUrl;
@@ -665,23 +665,24 @@ var bodyToSend = {
             //console.debug("KoboldCPP response status:", resp);
             if (!resp.ok) {
                 const msg = await resp.text();
-                //console.debug("KoboldCPP error response:", msg);
+              //  console.debug("KoboldCPP error response:", resp);
                 errorstate= 'NOK'
                 sendResponse({ error: `KoboldCPP request failed (${resp.status}): ${msg}` });
                 return;
             }
 
             const data = await resp.json();
-            console.debug("data:",data)
+           // console.debug("data:",data)
             const result = data?.choices?.[0]?.message?.content ?? "";
-            console.debug("Result kobol:",result)
+           // console.debug("Result kobol:",result)
             const duration = ((Date.now() - start) / 1000).toFixed(2);
-            console.debug("KoboldCPP response time:", duration + "s");
+           // console.debug("KoboldCPP response time:", duration + "s");
 
             sendResponse({ result });
 
         } catch (err) {
             console.debug("KoboldCPP fetch error:", err);
+            console.debug("KoboldCPP error stack:", err.stack);
             sendResponse({ error: err.toString() });
         }
     })();
@@ -728,9 +729,9 @@ else if (request.action === "LMStudio_translate") {
                     normalization: false,
                     stream: false,
                     top_p: Top_p,
-                   top_k: Top_k,
-                   repeat_penalty: 1.1,
-                   do_not_complete
+                    top_k: Top_k,
+                    repeat_penalty: 1.1,
+                    do_not_complete
                };
 
           //    const body = {
@@ -955,7 +956,7 @@ else if (request.action === "LMStudio_translate") {
                         body: JSON.stringify(body)
                     }
                 );
-                console.debug("Google Translate raw response status:", res); 
+               // console.debug("Google Translate raw response status:", res); 
                // console.debug("Google data:",await res.json())
                 let data;
                 try {
@@ -980,7 +981,7 @@ else if (request.action === "LMStudio_translate") {
                 }
 
                 const tr = data.data.translations[0];
-                console.debug("Google Translate processed translation:", tr.translatedText);
+               // console.debug("Google Translate processed translation:", tr.translatedText);
                 sendResponse({
                     ok: true,
                     result: {
@@ -1046,7 +1047,7 @@ else if (request.action == "Lingvanex") {
             });
 
             const respText = await resp.text().catch(() => "");
-            console.debug("Lingvanex raw response:", respText);
+            //console.debug("Lingvanex raw response:", respText);
 
             let respData;
             try {
@@ -1112,8 +1113,8 @@ else if (request.action == "Lingvanex") {
        
             (async () => {
                 try {
-                    console.debug("target:", trans_url)
-                     console.debug("source:", source_lang);
+                   // console.debug("target:", trans_url)
+                   //  console.debug("source:", source_lang);
                     const data = await doTranslate(
                         text || "Hello. How may I help you?",
                         source_lang || "en-us",
@@ -1151,53 +1152,81 @@ else if (request.action == "Lingvanex") {
             // keep the channel open
             return true;
     };
-        if (request.action === "load_deepl_glossary") {
-       // console.debug(request.isFree)
-        //   console.debug(request.apiKey)
-        //console.debug(request.glossaryData)
+    if (request.action === "load_deepl_glossary") {
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
-        //console.debug("deeplServer in upload:",deeplServer)
-        let url = `${deeplServer}`;
-        //console.debug("Url:",url)
-        let response = fetch(url, {
+
+        // Path B: v3 for BOTH account types — isFree only decides the domain
+        let apiHost = isFree ? "https://api-free.deepl.com" : "https://api.deepl.com";
+        let url = `${apiHost}/v3/glossaries`;
+       // console.debug("Url:", url);
+
+        // Normalize glossaryData: accept a JSON string or an object,
+        // and convert v2 shape (flat source_lang/target_lang/entries) to v3 shape
+        let glossObj = typeof request.glossaryData === "string"
+            ? JSON.parse(request.glossaryData)
+            : request.glossaryData;
+
+        if (!glossObj.dictionaries) {
+            // old v2 shape -> wrap into a v3 dictionary
+            glossObj = {
+                name: glossObj.name || 'WPTF glossary',
+                dictionaries: [{
+                    source_lang: (glossObj.source_lang || 'en').toLowerCase(),
+                    target_lang: (glossObj.target_lang || '').toLowerCase(),
+                    entries: glossObj.entries || '',
+                    entries_format: glossObj.entries_format || 'csv'
+                }]
+            };
+        }
+
+        let body = JSON.stringify(glossObj);
+       // console.debug("CP3 request body:", body.slice(0, 300));
+
+        fetch(url, {
             method: "POST",
-            accept: "*/*",
-            Encoding: "gzip, deflate, br",
-            body: request.glossaryData,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `DeepL-Auth-Key ${request.apiKey}`
-            }
+            },
+            body: body
         })
-            .then(response => {
+            .then(async response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    // DeepL puts the reason in the response body, even on errors
+                    let detail = '';
+                    try {
+                        const errBody = await response.json();
+                        detail = errBody.message || JSON.stringify(errBody);
+                    } catch {
+                        detail = await response.text().catch(() => '');
+                    }
+                    throw new Error(`HTTP ${response.status}: ${detail}`);
                 }
-                return response.json(); // DeepL API usually returns JSON
+                return response.json();
             })
             .then(data => {
-                console.debug("Glossary uploaded successfully:", data);
-                sendResponse({ success: true, glossaries: data });
-
+                const count = data.dictionaries?.[0]?.entry_count ?? 0;
+               // console.debug("CP4 glossary created:", data.glossary_id, "entries:", count);
+                sendResponse({ success: true, glossaries: data, glossary_id: data.glossary_id, entry_count: count });
             })
             .catch(error => {
                 console.error("Error uploading glossary:", error);
                 sendResponse({ success: false, error: error.message });
-            })
+            });
+
         return true; // Keeps sendResponse alive for async operations
     }
     else if (request.action === "fetch_deepl_glossaries") {
-    console.debug("we have a request to show the glossary:", request.isFree);
+   // console.debug("we have a request to show the glossary:", request.isFree);
 
     const isFree = request.isFree === true || request.isFree === "true";
     let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
 
 
-    console.debug("We fetch glossaries");
-    console.debug("isFree:", request.isFree);
-    console.debug("key:", request.apiKey);
-    console.debug("deeplServer:", deeplServer);
+  //  console.debug("We fetch glossaries");
+   // console.debug("isFree:", request.isFree);
+   // console.debug("key:", request.apiKey);
+  //  console.debug("deeplServer:", deeplServer);
 
     fetch(deeplServer, {
         method: "GET",
@@ -1207,7 +1236,7 @@ else if (request.action == "Lingvanex") {
         }
     })
         .then(async response => {
-            console.debug("raw response:", response);
+          //  console.debug("raw response:", response);
 
             const text = await response.text(); // READ BODY HERE
 
@@ -1247,10 +1276,10 @@ else if (request.action == "Lingvanex") {
 
     else if (request.action === "delete_deepl_glossary") {
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
-        console.debug("isFree:",isFree)
+      //  console.debug("isFree:",isFree)
         let deeplServer = isFree ? "https://api-free.deepl.com/v2/glossaries" : "https://api.deepl.com/v3/glossaries";
-        console.debug("We delete glossary with id:", request.glossary_id)
-       console.debug("deeplserver:",deeplServer)
+      //  console.debug("We delete glossary with id:", request.glossary_id)
+      // console.debug("deeplserver:",deeplServer)
         let url = `${deeplServer}/${request.glossary_id}`;
 
         fetch(url, {
@@ -1278,7 +1307,7 @@ else if (request.action == "Lingvanex") {
         return true; // Keeps sendResponse alive for async operations
     }
     else if (request.action === 'getGlossary') {
-        console.debug("We started getGlossary")
+      //  console.debug("We started getGlossary")
         // Get all glossary records
         const transaction = DeepLdb.transaction(['glossary'], 'readonly');
         const store = transaction.objectStore('glossary');
@@ -1336,9 +1365,9 @@ else if (request.action == "Lingvanex") {
             };
 
 
-            console.debug("Sending request body:", body);
-            console.debug("url:", url)
-            console.debug("key:",apiKey)
+          //  console.debug("Sending request body:", body);
+          //  console.debug("url:", url)
+          //  console.debug("key:",apiKey)
             const resp = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -1418,7 +1447,7 @@ const StorageWrapper = (() => {
         chrome.runtime.onInstalled.addListener((details) => {
             const currentVersion = chrome.runtime.getManifest().version;
             if (details.reason === "update" && details.previousVersion !== currentVersion) {
-                console.debug(`Extension updated from ${details.previousVersion} → ${currentVersion}`);
+               // console.debug(`Extension updated from ${details.previousVersion} → ${currentVersion}`);
                 backupStorage();
             }
         });
@@ -1440,7 +1469,7 @@ StorageWrapper.init();
 async function callLocalOllama(bodyToSend) {
     const LOCAL_CHAT_URL = "http://127.0.0.1:11434/api/chat";
     try {
-        console.debug("Sending chat request to local Ollama:", bodyToSend);
+      //  console.debug("Sending chat request to local Ollama:", bodyToSend);
         const resp = await fetch(LOCAL_CHAT_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

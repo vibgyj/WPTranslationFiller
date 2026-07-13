@@ -228,6 +228,7 @@ function fixUILabelSmart(text) {
     }
 
     const finalResult = sentences.map(s => s.content + s.punct + s.space).join("");
+
     if (toBoolean(DebugMode)) console.debug("fixUILabelSmart final result:", finalResult);
     return finalResult;
 }
@@ -354,7 +355,7 @@ async function checkModelAndContinue(modelName) {
 
         return true; // 🔹 resultaat teruggeven
     } catch (err) {
-        console.debug("Fout bij check:", err.message);
+       // console.debug("Fout bij check:", err.message);
          messageBox("error", __(`The model: "${modelName}" is not loaded.<br>Or server is not running<br>Please load the model first`));
        // alert("Er is een fout opgetreden bij het controleren van het model.");
         return false; // fout signaleren
@@ -765,7 +766,7 @@ function convertGlossaryToQuoted(glossaryText) {
 
 
 function moveDutchVerbToEndWithCase(translated, glossary) {
-    console.debug("glossary:", glossary);
+   // console.debug("glossary:", glossary);
     const words = translated.split(/\s+/).filter(Boolean);
     if (words.length < 2) return translated;
 
@@ -834,6 +835,38 @@ function estimateTokens(text) {
  * Returns true if `searchword` occurs inside any href/src/class attribute or any raw URL
  * inside the provided HTML/text `translated`.
  */
+
+function isProtected(translatedText, searchWord) {
+    if (!translatedText || !searchWord) return false;
+    const lowerWord = searchWord.toLowerCase();
+
+    const patterns = [
+        // URLs
+        /\b((https?|ftp|file):\/\/|(www|ftp)\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]/gi,
+        // <a ...> opening tags (link markup, incl. href)
+        /<a[^>]*>/gi,
+        // class attributes
+        /class="[^"]*"/gi,
+        // <span ...> opening tags
+        /<span[^>]*>/gi,
+        // <code> content
+        /<code[^>]*>[\s\S]*?<\/code>/gi
+    ];
+
+    for (const regex of patterns) {
+        const matches = translatedText.match(regex);
+        if (!matches) continue;
+        for (const m of matches) {
+            const lower = m.toLowerCase();
+            // normalize dashes/underscores for detection (from CheckUrl),
+            // so 'header' is also found inside class="header-menu"
+            if (lower.includes(lowerWord) || lower.replace(/[-_]/g, ' ').includes(lowerWord)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 function isInsideButtonOrUrl(translatedText, searchWord) {
     // Match <button> tags and URLs
@@ -998,97 +1031,117 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
         .map(([en, inf, form]) => [
             typeof en === 'string' ? en.trim() : en,
             typeof inf === 'string' ? inf.trim() : inf,
-            typeof form === 'string' ? form.trim().toLowerCase() : form  // normalized to lowercase
+            typeof form === 'string' ? form.trim().toLowerCase() : form
         ]);
 
     // Helper: determine if a position in text is at a sentence start
-    // Considers: start of string, after .?!, and after .?! followed by (
     const isAtSentenceStart = (text) => {
         return /^\s*$/.test(text) ||
                /[.?!]\s*$/.test(text) ||
                /[.?!]\s*\(\s*$/.test(text);
     };
 
-    // === Step 1: Pronoun replacement (per English match, preserves mapping) ===
-    for (let i = 0; i < dutchSentences.length; i++) {
-        const eng = engSentences[i] || "";
-        let dut = dutchSentences[i] || "";
+    // === Step 1: Global positional pronoun replacement ===
+    // We work across the FULL text rather than per sentence, because the comma-adjustment
+    // heuristic can misalign English/Dutch sentence pairs. By collecting all English pronoun
+    // entries and all Dutch informal occurrences globally in order, then matching them 1:1,
+    // we get correct positional mapping regardless of how sentences are aligned.
 
+    // 1a. Collect all English pronoun entries in order across all sentences
+    const globalEngPronouns = [];
+    for (let i = 0; i < engSentences.length; i++) {
+        const eng = engSentences[i] || "";
         const words = eng.trim().split(/\s+/);
         const firstWord = words[0] || "";
         const rest = words.slice(1).map(w => w.toLowerCase());
-        // Strip leading/trailing brackets and punctuation so "(You" matches "You"
         const normalizedEnglish = [firstWord, ...rest].map(w => w.replace(/^[()\[\]{}"']+|[()\[\]{}"']+$/g, ''));
 
         if (toBoolean(DebugMode)) {
             console.debug(`\n--- Sentence ${i + 1} ---`);
             console.debug("English words (normalized):", normalizedEnglish);
-            console.debug("Dutch before replacement:", dut);
+            console.debug("Dutch:", dutchSentences[i] || "");
         }
-
-        let replacementsThisSentence = [];
 
         normalizedEnglish.forEach((word) => {
             const matchEntry = validReplacements.find(([en]) => typeof en === 'string' && en === word);
             if (!matchEntry) return;
-
             const [, informal, formalWord] = matchEntry;
-
             if (toBoolean(DebugMode)) {
                 console.debug(`Match found for "${word}" → looking for Dutch informal "${informal}" → will replace with "${formalWord}"`);
             }
-
-            // When a sentence contains MULTIPLE occurrences of the same informal word (e.g. a
-            // reflexive "je" in "Meld je aan" AND a possessive "je" in "met je Google account"),
-            // we prefer the LAST occurrence. Possessive "je"/"jouw" almost always sits directly
-            // before the noun it modifies, which tends to be the occurrence closest to the end
-            // of the clause — while reflexive/subject "je" tends to appear earlier, right after
-            // the verb. Any earlier, unmatched occurrence is left for Step 3's fallback logic.
-            const globalRegex = new RegExp(`\\b${escapeRegex(informal)}\\b([.,!?:]?)(\\s|$)`, 'gi');
-            const allMatches = [...dut.matchAll(globalRegex)];
-
-            if (allMatches.length > 0) {
-                const match = allMatches[allMatches.length - 1]; // prefer last occurrence
-                const offset = match.index;
-                const matchText = match[0];
-                const punct = match[1] || '';
-                const space = match[2] || '';
-
-                if (debug) {
-                    console.debug("Matched informal:", matchText);
-                }
-
-                const marker = `${markerBase}${markerIndex}_0__`;
-                const informalFound = matchText.match(new RegExp(`^${escapeRegex(informal)}`, 'i'))[0];
-
-                // Check sentence position (after .?! or opening bracket, or start of string)
-                const precedingText = dut.slice(0, offset);
-                const isCapitalized = isAtSentenceStart(precedingText) ||
-                    (informalFound[0] !== informalFound[0].toLowerCase() &&
-                     informalFound[0] === informalFound[0].toUpperCase());
-
-                // formalWord is already lowercase, capitalize only when needed
-                const replacementFinal = isCapitalized
-                    ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
-                    : formalWord;
-
-                replacementsThisSentence.push({ marker, replacement: replacementFinal + punct });
-                markerIndex++;
-
-                dut = dut.slice(0, offset) + marker + space + dut.slice(offset + matchText.length);
-            } else {
-                if (debug) {
-                    console.debug(`No occurrence of "${informal}" found in Dutch sentence for "${word}"`);
-                }
-            }
+            globalEngPronouns.push({ informal, formalWord, engWord: word });
         });
+    }
 
-        if (toBoolean(DebugMode)) {
-            console.debug("Dutch after marker insertion:", dut);
+    // 1b. Join all Dutch sentences into one full string for global matching
+    let dutchFull = dutchSentences.join("");
+
+    // 1c. Find all Dutch informal occurrences across the full text, sorted by position
+    const uniqueInformals = [...new Set(globalEngPronouns.map(e => e.informal.toLowerCase()))];
+    const allDutchOccurrences = [];
+    for (const inf of uniqueInformals) {
+        const regex = new RegExp(`\\b${escapeRegex(inf)}\\b([.,!?:]?)(\\s|$)`, 'gi');
+        let m;
+        while ((m = regex.exec(dutchFull)) !== null) {
+            allDutchOccurrences.push({
+                informal: inf,
+                matchIndex: m.index,
+                matchText: m[0],
+                punct: m[1] || '',
+                space: m[2] || ''
+            });
         }
+    }
+    allDutchOccurrences.sort((a, b) => a.matchIndex - b.matchIndex);
 
-        markerReplacements.push(...replacementsThisSentence);
-        updatedSentences.push(dut);
+    // 1d. Group by informal, match English pronouns to Dutch occurrences positionally
+    const dutchByInformal = {};
+    for (const d of allDutchOccurrences) {
+        const key = d.informal.toLowerCase();
+        if (!dutchByInformal[key]) dutchByInformal[key] = [];
+        dutchByInformal[key].push(d);
+    }
+
+    const informalAssignCursor = {};
+    const replacementSchedule = [];
+    for (const ep of globalEngPronouns) {
+        const key = ep.informal.toLowerCase();
+        const available = dutchByInformal[key] || [];
+        const cursor = informalAssignCursor[key] || 0;
+        if (cursor < available.length) {
+            replacementSchedule.push({ occ: available[cursor], formalWord: ep.formalWord, engWord: ep.engWord });
+            informalAssignCursor[key] = cursor + 1;
+        } else {
+            if (debug) console.debug(`No Dutch occurrence left for English "${ep.engWord}" → "${ep.informal}"`);
+        }
+    }
+
+    // 1e. Apply scheduled replacements to dutchFull in reverse order (to preserve offsets)
+    replacementSchedule.sort((a, b) => b.occ.matchIndex - a.occ.matchIndex);
+    for (const { occ, formalWord } of replacementSchedule) {
+        const precedingText = dutchFull.slice(0, occ.matchIndex);
+        const informalFound = occ.matchText.match(new RegExp(`^${escapeRegex(occ.informal)}`, 'i'))[0];
+        const isCap = isAtSentenceStart(precedingText) ||
+            (informalFound[0] !== informalFound[0].toLowerCase() &&
+             informalFound[0] === informalFound[0].toUpperCase());
+        const replacementFinal = isCap
+            ? formalWord.charAt(0).toUpperCase() + formalWord.slice(1)
+            : formalWord;
+
+        const marker = `${markerBase}${markerIndex}_0__`;
+        markerReplacements.push({ marker, replacement: replacementFinal + occ.punct });
+        markerIndex++;
+
+        dutchFull = dutchFull.slice(0, occ.matchIndex) + marker + occ.space + dutchFull.slice(occ.matchIndex + occ.matchText.length);
+    }
+
+    // 1f. Re-split dutchFull back into sentences and push to updatedSentences
+    const resplit = [...dutchFull.matchAll(sentenceSplitRegex)].filter(m => m[1].trim() || m[2].trim());
+    const resplitSentences = resplit.map(m => m[1] + m[2]);
+    if (resplitSentences.length === dutchSentences.length) {
+        for (const s of resplitSentences) updatedSentences.push(s);
+    } else {
+        updatedSentences.push(dutchFull);
     }
 
     // === Step 2: Apply all marker replacements ===
@@ -1099,15 +1152,8 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
 
     // === Step 3b: Extra pass ONLY when formal mode is active ===
     if (formal === true) {
-        // By the time we reach this fallback pass, Step 1 has already correctly resolved any
-        // genuine possessive correlations (English "your" matched against the correct Dutch
-        // "je"/"jouw" occurrence using positional/last-occurrence matching). Anything still
-        // left over here is therefore almost always a reflexive, subject, or object use with
-        // no direct English counterpart (e.g. "Meld je aan" for "Sign in", or "je" in a title
-        // like "Hoe je ... gebruikt" where English drops the pronoun entirely).
-        // We default such leftovers to the "you" → "u" mapping when available, since "u" is
-        // grammatically safe in these contexts, rather than "your" → "uw" which only fits
-        // directly before a noun (already handled by Step 1).
+        // Anything still left over here is almost always reflexive, subject, or object use
+        // with no direct English counterpart. Default to "you" → "u" mapping.
         const sortedPool = [...validReplacements].sort((a, b) => {
             const aIsYou = /^you$/i.test(a[0]) ? 0 : 1;
             const bIsYou = /^you$/i.test(b[0]) ? 0 : 1;
@@ -1131,8 +1177,7 @@ function replaceVerbInTranslation(english, dutch, replaceVerbs, debug = true, fo
                 );
                 if (!replacementPair) return match;
 
-                const formalWord = replacementPair[2]; // already lowercase from validReplacements
-
+                const formalWord = replacementPair[2];
                 const before = finalResult.slice(0, offset);
                 const isSentenceStart = isAtSentenceStart(before);
 
@@ -1302,7 +1347,7 @@ function oldcountOccurrences(text, term) {
     const matches = text.match(pattern);
 
     // Debugging output
-    console.debug(`Searching for term: "${term}", found ${matches ? matches.length : 0} occurrences in text: "${text}"`);
+    // console.debug(`Searching for term: "${term}", found ${matches ? matches.length : 0} occurrences in text: "${text}"`);
 
     return (matches || []).length;
 }
@@ -1595,7 +1640,7 @@ function setmyCheckBox(event) {
      //if (event) {
      //   event.preventDefault();
     //   }
-    console.debug("setmyCheckBox called, event:", event);
+   // console.debug("setmyCheckBox called, event:", event);
     var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null;
     // if the translator is a PTE than we do not need to add the extra checkboxes
     if (!is_pte) {
@@ -2482,9 +2527,9 @@ function restoreCase(original, translated, locale, ignoreList = '', debug = fals
     return trimmed;
 }
 async function handlePlural1(row,translatedText) {
-    console.debug("We handle plural 1:", row, translatedText)
+  //  console.debug("We handle plural 1:", row, translatedText)
     previewElem = document.querySelector(`#preview-${row} .ul-plural li:nth-of-type(1) .translation-text`);
-    console.debug("in plural first line:", previewElem)
+  //  console.debug("in plural first line:", previewElem)
     previewElem.innerText = translatedText
 }
 
@@ -2536,7 +2581,7 @@ function logStringDiff(expected, actual) {
         }
     }
 
-    console.debug("Diff:", result.join(" "));
+    //console.debug("Diff:", result.join(" "));
 }
 
     function extractPlaceholders(text) {

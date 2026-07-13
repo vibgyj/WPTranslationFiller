@@ -1,7 +1,11 @@
 ﻿/****************************************************
  * GROQ BATCH TRANSLATE PAGE
  * - Parallel preprocessing + glossary pruning
- * - Header-aware rate limit backoff with model fallback chain
+ * - Per-model cooldown tracking: a 429 on one model no longer
+ *   blocks the others — we hop to a free model immediately
+ * - Sticky fallback: once a model works, later batches start there
+ * - Proactive pacing from x-ratelimit-remaining headers
+ * - Token-aware batch sizing (count + char budget)
  * - Conversation-based JSON correction retry
  * - Robust multi-candidate JSON parser
  * - Pretranslated singles + plurals handled locally (no Groq call)
@@ -55,16 +59,30 @@ function applyPromptBatch(basePrompt, text, glossary) {
  * GROQ CALL
  * Accepts a messages array so correction retries
  * can include conversation history.
+ *
+ * For reasoning models (Gemma reasoning variants, Qwen 3.x)
+ * we send reasoning_effort: "none" to disable thinking —
+ * otherwise they burn TPM budget on <think> tokens and slow
+ * everything down. IMPORTANT: Groq returns a 400 error if this
+ * parameter is sent to a model that doesn't support it, so it
+ * is only added when the model name matches the pattern below.
  ****************************************************/
+if (typeof GROQ_DISABLE_REASONING_PATTERN === "undefined") {
+    var GROQ_DISABLE_REASONING_PATTERN = /gemma|qwen/i;
+}
+
 async function callGroq(messages, apikey, model, temp) {
     const startTime = performance.now();
     const data = {
         model: String(model),
         messages,
         temperature: Number(temp ?? 0),
-        top_p: 1,
+        top_p: Number(Top_p),
         apiKey: apikey
     };
+    if (GROQ_DISABLE_REASONING_PATTERN.test(String(model))) {
+        data.reasoning_effort = "none";
+    }
     return new Promise(resolve => {
         chrome.runtime.sendMessage({ action: "groq", data }, res => {
             console.debug("GROQ RESPONSE TIME:", (performance.now() - startTime).toFixed(2), "ms");
@@ -74,7 +92,7 @@ async function callGroq(messages, apikey, model, temp) {
 }
 
 /****************************************************
- * GROQ MODEL FALLBACK CHAIN
+ * GROQ MODEL FALLBACK CHAIN + RATE-LIMIT STATE
  *
  * Free tier limits (Mar 2026):
  * llama-3.3-70b-versatile      30 RPM  1,000 RPD  12,000 TPM
@@ -83,7 +101,9 @@ async function callGroq(messages, apikey, model, temp) {
  * moonshotai/kimi-k2-instruct  60 RPM  1,000 RPD  10,000 TPM
  * qwen/qwen3-32b               60 RPM  1,000 RPD   6,000 TPM
  *
- * On each 429, advance one step through the chain.
+ * Groq rate limits are PER MODEL, so when one model hits 429 we
+ * record a cooldown timestamp for that model only and immediately
+ * try the next model in the chain instead of sleeping.
  ****************************************************/
 if (typeof GROQ_FALLBACK_CHAIN === "undefined") {
     var GROQ_FALLBACK_CHAIN = [
@@ -94,19 +114,42 @@ if (typeof GROQ_FALLBACK_CHAIN === "undefined") {
     ];
 }
 
+// model name -> epoch ms until which the model is rate-limited
+if (typeof GROQ_MODEL_COOLDOWNS === "undefined") {
+    var GROQ_MODEL_COOLDOWNS = {};
+}
+
+// Session-wide rate-limit tracker.
+// hits429      : total 429s seen (outer loop reads the delta per batch)
+// activeModel  : last model that answered successfully — later batches
+//                start here instead of re-hitting the limited default
+if (typeof GROQ_RATE_TRACKER === "undefined") {
+    var GROQ_RATE_TRACKER = { hits429: 0, activeModel: null };
+}
+
 /****************************************************
- * GROQ CALL WITH RETRY + HEADER-AWARE BACKOFF
+ * GROQ CALL WITH RETRY + PER-MODEL COOLDOWNS
  *
- * Wait time priority:
- *   1. x-ratelimit-reset headers from background script
- *   2. "try again in Xs" in the error body
- *   3. Safe defaults: TPM→15s, RPM→62s
+ * On 429:
+ *   1. Parse the wait time (headers > error body > safe default)
+ *   2. Record it as a cooldown for THAT model only
+ *   3. Immediately retry on the next model that is not cooling down
+ *   4. Only sleep when every model in the chain is cooling down —
+ *      and then only until the soonest one frees up
+ *
+ * On success:
+ *   - Remember the model (sticky) so the next batch starts there
+ *   - If the response headers show the quota is nearly exhausted,
+ *     proactively mark a cooldown so we rotate BEFORE the next 429
  ****************************************************/
-async function callGroqWithRetry(messages, apikey, model, temp, maxRetries = 5) {
-    let attempt = 0;
-    let activeModel = model;
-    const fallbackSequence = [model, ...GROQ_FALLBACK_CHAIN.filter(m => m !== model)];
-    let fallbackIndex = 0;
+async function callGroqWithRetry(messages, apikey, model, temp, maxRetries = 8) {
+
+    // Sticky model first (if any), then the requested model, then the chain
+    const fallbackSequence = [...new Set([
+        ...(GROQ_RATE_TRACKER.activeModel ? [GROQ_RATE_TRACKER.activeModel] : []),
+        model,
+        ...GROQ_FALLBACK_CHAIN
+    ])];
 
     function parseResetDuration(str) {
         if (!str) return null;
@@ -115,67 +158,133 @@ async function callGroqWithRetry(messages, apikey, model, temp, maxRetries = 5) 
         return ((parseFloat(m[1] || 0) * 60) + parseFloat(m[2])) * 1000;
     }
 
-    while (true) {
-        const response = await callGroq(messages, apikey, activeModel, temp);
-
-        if (response && !response.error) return response;
-
-        const status = response?.error?.status ?? response?.error?.statusCode;
-        const isTransient = status === 429 || status >= 500;
-
-        if (!isTransient || attempt >= maxRetries) return response;
-
-        const errMsg = String(response?.error?.message ?? "").toLowerCase();
-        const limitType = errMsg.includes("tokens") ? "TPM" : "RPM";
-
-        let waitMs = null;
-
-        const rl = response?.rateLimit;
-        if (rl) {
-            const headerReset = limitType === "TPM"
-                ? parseResetDuration(rl.resetTokens)
-                : parseResetDuration(rl.resetRequests);
-            if (headerReset !== null) waitMs = headerReset + 1000;
-        }
-
-        if (waitMs === null) {
-            const bodyMatch = errMsg.match(/(?:try again in|retry after)\s*([\d.]+)\s*s/);
-            if (bodyMatch) waitMs = (parseFloat(bodyMatch[1]) + 1) * 1000;
-        }
-
-        if (waitMs === null) {
-            waitMs = limitType === "TPM" ? 15000 : 62000;
-        }
-
-        fallbackIndex = Math.min(fallbackIndex + 1, fallbackSequence.length - 1);
-        activeModel = fallbackSequence[fallbackIndex];
-        if (activeModel !== model) {
-            console.warn("[Groq] Switching to fallback " + fallbackIndex +
-                "/" + (fallbackSequence.length - 1) + ": " + activeModel);
-        }
-
+    async function waitWithSpinner(waitMs, labelPrefix) {
         let remaining = Math.ceil(waitMs / 1000);
-        const fallbackNote = activeModel !== model ? " \u2192 " + activeModel : "";
-
-        console.warn("[Groq] 429 (" + limitType + ") — waiting " + remaining +
-            "s before attempt " + (attempt + 2) + "/" + (maxRetries + 1) +
-            " | model: " + activeModel);
-
-        function updateSpinner(sec) {
+        const update = sec => {
             hideTranslationSpinner();
-            showTranslationSpinner(__("Rate limited — retrying in " + sec + "s" + fallbackNote));
-        }
-
-        updateSpinner(remaining);
+            showTranslationSpinner(__(labelPrefix + " — retrying in " + sec + "s"));
+        };
+        update(remaining);
         const ticker = setInterval(() => {
             remaining--;
-            if (remaining > 0) updateSpinner(remaining);
+            if (remaining > 0) update(remaining);
         }, 1000);
-
         await delay(waitMs);
         clearInterval(ticker);
-        attempt++;
     }
+
+    function pickModel() {
+        const now = Date.now();
+        for (const m of fallbackSequence) {
+            if ((GROQ_MODEL_COOLDOWNS[m] ?? 0) <= now) {
+                return { model: m, waitMs: 0 };
+            }
+        }
+        // Every model is cooling down — find the one that frees up first
+        let soonestModel = fallbackSequence[0];
+        let soonestTime = Infinity;
+        for (const m of fallbackSequence) {
+            const t = GROQ_MODEL_COOLDOWNS[m] ?? 0;
+            if (t < soonestTime) { soonestTime = t; soonestModel = m; }
+        }
+        return { model: soonestModel, waitMs: Math.max(1000, soonestTime - now + 500) };
+    }
+
+    let lastResponse = null;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+
+        const pick = pickModel();
+        if (pick.waitMs > 0) {
+            console.warn("[Groq] All models cooling down — waiting " +
+                Math.ceil(pick.waitMs / 1000) + "s for " + pick.model);
+            await waitWithSpinner(pick.waitMs, "Rate limited");
+        }
+        const activeModel = pick.model;
+        if (activeModel !== model) {
+            console.debug("[Groq] Using fallback model: " + activeModel);
+        }
+
+        const response = await callGroq(messages, apikey, activeModel, temp);
+        lastResponse = response;
+
+        /* ---------- SUCCESS ---------- */
+        if (response && !response.error) {
+            GROQ_RATE_TRACKER.activeModel = activeModel;
+
+            // Proactive rotation: if the quota is nearly gone, mark a
+            // cooldown NOW so the next call starts on a fresh model
+            // instead of eating a 429 first.
+            // (Accepts either property name from the background script.)
+            const rl = response.rateLimit ?? response.rateLimitHeaders;
+            if (rl) {
+                const remReq = Number(rl.remainingRequests);
+                const remTok = Number(rl.remainingTokens);
+                if (Number.isFinite(remReq) && remReq <= 1) {
+                    const ms = parseResetDuration(rl.resetRequests) ?? 60000;
+                    GROQ_MODEL_COOLDOWNS[activeModel] = Date.now() + ms + 500;
+                    console.debug("[Groq] " + activeModel + " requests nearly exhausted — pre-rotating");
+                } else if (Number.isFinite(remTok) && remTok < 1500) {
+                    const ms = parseResetDuration(rl.resetTokens) ?? 15000;
+                    GROQ_MODEL_COOLDOWNS[activeModel] = Date.now() + ms + 500;
+                    console.debug("[Groq] " + activeModel + " tokens nearly exhausted — pre-rotating");
+                }
+            }
+            return response;
+        }
+
+        /* ---------- ERROR ---------- */
+        const status = response?.error?.status ?? response?.error?.statusCode;
+        const isTransient = status === 429 || status >= 500;
+        if (!isTransient || attempt >= maxRetries) return response;
+
+        if (status === 429) {
+            GROQ_RATE_TRACKER.hits429++;
+
+            const errMsg = String(response?.error?.message ?? "").toLowerCase();
+            const limitType = errMsg.includes("tokens") ? "TPM" : "RPM";
+
+            let waitMs = null;
+
+            const rl = response?.rateLimit ?? response?.rateLimitHeaders;
+            if (rl) {
+                const headerReset = limitType === "TPM"
+                    ? parseResetDuration(rl.resetTokens)
+                    : parseResetDuration(rl.resetRequests);
+                if (headerReset !== null) waitMs = headerReset + 1000;
+            }
+
+            if (waitMs === null) {
+                const bodyMatch = errMsg.match(/(?:try again in|retry after)\s*([\d.]+)\s*s/);
+                if (bodyMatch) waitMs = (parseFloat(bodyMatch[1]) + 1) * 1000;
+            }
+
+            if (waitMs === null) {
+                waitMs = limitType === "TPM" ? 15000 : 62000;
+            }
+
+            // Cool down THIS model only; the next loop iteration will
+            // pick a different model and retry almost immediately.
+            GROQ_MODEL_COOLDOWNS[activeModel] = Date.now() + waitMs;
+            if (GROQ_RATE_TRACKER.activeModel === activeModel) {
+                GROQ_RATE_TRACKER.activeModel = null;
+            }
+
+            console.warn("[Groq] 429 (" + limitType + ") on " + activeModel +
+                " — cooling down " + Math.ceil(waitMs / 1000) +
+                "s, switching model (attempt " + (attempt + 2) + "/" + (maxRetries + 1) + ")");
+
+            // Brief visible pause so the user sees the switch happen
+            hideTranslationSpinner();
+            showTranslationSpinner(__("Rate limited — switching model…"));
+            await delay(1500);
+        } else {
+            console.warn("[Groq] Server error " + status + " — retrying in 3s");
+            await waitWithSpinner(3000, "Server error");
+        }
+    }
+
+    return lastResponse ?? { error: { message: "Max retries exceeded", status: 429 } };
 }
 
 /****************************************************
@@ -325,10 +434,10 @@ async function translatePageGroq(
     const rows = document.querySelectorAll(
         "tr.editor div.editor-panel__left div.panel-content"
     );
-
+    console.debug("[Groq] Found " + rows.length + " rows to process")
     const batchQueue = [];
     const immediateQueue = [];
-
+    
     /****************************************************
      * SCAN — classify every row
      * Order matters:
@@ -346,13 +455,15 @@ async function translatePageGroq(
 
     for (const e of rows) {
         const rowfound = e.closest("tr.editor")?.id;
+        console.debug("[Groq] Scanning row element", e, "found row id=" + rowfound)
         if (!rowfound) continue;
 
-        const match = rowfound.match(/^editor-(\d+)$/);
+        const match = rowfound.match(/^editor-(\d+(?:-\d+)*)$/);
         const rowId = match?.[1];
         if (!rowId) continue;
 
         const original = e.querySelector("span.original-raw")?.innerText;
+        console.debug("[Groq] Scanning row id=" + rowId + " original=" + original)
         if (!original) continue;
 
         const plural1 = document.querySelector("#preview-" + rowId + " .original li:nth-of-type(1)");
@@ -506,6 +617,25 @@ async function translatePageGroq(
     const maxParseRetries = 2;
     let consecutiveRateLimits = 0;
 
+    // Sends the merged glossary via the {{glossary}} placeholder —
+    // required because the current prompt template relies on it.
+    // Note: the per-item "g" field carries the same terms, so both
+    // are sent; if you ever move the prompt fully to the "g" field,
+    // set this to false to save tokens per request.
+    const GROQ_USE_MERGED_GLOSSARY = true;
+
+    // Base pause between batches when NO rate limit was hit (plus
+    // 0–2s of random jitter). Raise this if you keep hitting TPM
+    // 429s: e.g. a ~3,000-token request on a 6,000 TPM model means
+    // at most 2 requests per minute → set this to ~25000–30000.
+    // After a 429 the delay escalates automatically (20s / 35s).
+    const INTER_BATCH_DELAY_MS = 8000;
+
+    // Rough payload budget per request, in characters (~1 token per
+    // 3.5 chars). Keeps a single batch of long strings from blowing
+    // through the TPM window of the smaller models in one shot.
+    const MAX_BATCH_CHARS = 3500;
+
     const LOCALE_TO_LANGUAGE = {
         af: "Afrikaans",   ar: "Arabic",      bg: "Bulgarian",
         bn: "Bengali",     cs: "Czech",        da: "Danish",
@@ -528,8 +658,39 @@ async function translatePageGroq(
     // Fill static placeholders once — language and tone never change between batches
     const basePrompt = applyPromptBase(OpenAIPrompt, resolvedLanguage, OpenAITone);
 
-    for (let i = 0; i < batchQueue.length; i += batchSize) {
-        const batch = batchQueue.slice(i, i + batchSize);
+    /****************************************************
+     * TOKEN-AWARE BATCH BUILDING
+     * A batch closes when it reaches groqBatchSize items OR
+     * MAX_BATCH_CHARS of source text — whichever comes first.
+     * A plural group is never split across batches.
+     ****************************************************/
+    const batches = [];
+    {
+        let current = [];
+        let currentChars = 0;
+        for (const group of batchQueue) {
+            const groupChars = group.items.reduce(
+                (n, it) => n + (it.original?.length ?? 0), 0
+            );
+            const wouldOverflow = current.length > 0 && (
+                current.flatMap(g => g.items).length >= batchSize ||
+                currentChars + groupChars > MAX_BATCH_CHARS
+            );
+            if (wouldOverflow) {
+                batches.push(current);
+                current = [];
+                currentChars = 0;
+            }
+            current.push(group);
+            currentChars += groupChars;
+        }
+        if (current.length) batches.push(current);
+    }
+    console.debug("[Groq] Built " + batches.length + " batches from " +
+        batchQueue.length + " groups");
+
+    for (let bi = 0; bi < batches.length; bi++) {
+        const batch = batches[bi];
         const allItems = batch.flatMap(b => b.items);
 
         /****************************************************
@@ -556,8 +717,19 @@ async function translatePageGroq(
             })
         );
 
-        // Merge all per-item glossaries for the {{glossary}} prompt placeholder
-        const mergedGlossary = (() => {
+        // Attach the pruned glossary back onto the batch items so the
+        // post-processing enforcement step can use it.
+        for (const group of batch) {
+            for (const item of group.items) {
+                const match = enrichedItems.find(en =>
+                    en.id === item.id && en.line === item.line);
+                if (match) item.glossary = match.glossary;
+            }
+        }
+
+        // Merge all per-item glossaries for the {{glossary}} prompt
+        // placeholder (only sent when GROQ_USE_MERGED_GLOSSARY is true)
+        const mergedGlossary = !GROQ_USE_MERGED_GLOSSARY ? "" : (() => {
             const seen = new Map();
             for (const item of enrichedItems) {
                 if (!item.glossary) continue;
@@ -576,11 +748,14 @@ async function translatePageGroq(
             ...(glossary ? { g: glossary } : {})
         }));
 
-        // Pass merged glossary into {{glossary}} AND per-item g field into payload
         const systemPrompt = applyPromptBatch(basePrompt, JSON.stringify(promptItems), mergedGlossary);
 
         const messages = [{ role: "user", content: systemPrompt }];
         let parsed = null;
+
+        // Snapshot 429 count so we can tell whether THIS batch was
+        // rate-limited anywhere inside callGroqWithRetry.
+        const hits429Before = GROQ_RATE_TRACKER.hits429;
 
         for (let attempt = 0; attempt <= maxParseRetries; attempt++) {
 
@@ -598,12 +773,6 @@ async function translatePageGroq(
                 if (progressbar) progressbar.style.display = "none";
                 alert("Groq error:\n\n" + JSON.stringify(response?.error, null, 2));
                 return "STOPPED";
-            }
-
-            if (response.ok) {
-                consecutiveRateLimits = 0;
-            } else if ((response?.error?.status ?? response?.error?.statusCode) === 429) {
-                consecutiveRateLimits++;
             }
 
             const rawContent = response?.result?.choices?.[0]?.message?.content ?? "";
@@ -633,9 +802,14 @@ async function translatePageGroq(
             }
         }
 
+        // Did this batch hit any 429s (inside the retry wrapper)?
+        const wasRateLimited = GROQ_RATE_TRACKER.hits429 > hits429Before;
+        consecutiveRateLimits = wasRateLimited ? consecutiveRateLimits + 1 : 0;
+
         if (!parsed) {
             hideTranslationSpinner();
-            console.error("[Groq] All attempts failed for batch at index " + i + ". Skipping.");
+            console.error("[Groq] All attempts failed for batch " + (bi + 1) +
+                "/" + batches.length + ". Skipping.");
             continue;
         }
 
@@ -662,9 +836,9 @@ async function translatePageGroq(
                         const source = m[1];
                         const target = m[2];
                         if (source.toLowerCase() === target.toLowerCase()) continue;
-                        const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\$&");
+                        const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
                         translation = translation.replace(
-                            new RegExp("\b" + escaped + "\b", "gi"), target
+                            new RegExp("\\b" + escaped + "\\b", "gi"), target
                         );
                     }
                 }
@@ -683,11 +857,11 @@ async function translatePageGroq(
         }
 
         // Adaptive inter-batch delay based on 429 pressure
-        const isLastBatch = i + batchSize >= batchQueue.length;
+        const isLastBatch = bi === batches.length - 1;
         if (!isLastBatch) {
             const interBatchDelay = consecutiveRateLimits >= 2 ? 35000
                 : consecutiveRateLimits === 1 ? 20000
-                : 5000 + Math.random() * 2000;
+                : INTER_BATCH_DELAY_MS + Math.random() * 2000;
             hideTranslationSpinner();
             await delay(interBatchDelay);
         }
@@ -698,6 +872,6 @@ async function translatePageGroq(
     // Hide the progress bar started by the calling code
     const progressbar = document.querySelector(".indeterminate-progress-bar");
     if (progressbar) progressbar.style.display = "none";
-
+    messageBox("info", __("Translation is ready"));
     return "OK";
 }

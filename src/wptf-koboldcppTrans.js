@@ -84,12 +84,11 @@ async function getTransKobold(
   let maxTokens = estimateMaxTokens(originalPreProcessed);
   max_Tokens = maxTokens;
 
-  messages = [
-    { role: 'system', content: myprompt },
-    { role: 'user', content: originalPreProcessed },
-    { role: 'assistant', content: "" }
-    ];
-
+  //messages = [
+  //  { role: 'system', content: myprompt },
+   // { role: 'user', content: originalPreProcessed }
+    // ];
+   messages = [{ role: "user", content: myprompt }]
 
   // KoboldCPP: simple OpenAI-compatible payload — no API key, no model variants
   const dataNew = {
