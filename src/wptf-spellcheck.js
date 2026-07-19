@@ -22,11 +22,24 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     var checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
     var tableRecords;
 
-    const template = `
-    <div class="indeterminate-progress-bar">
-        <div class="indeterminate-progress-bar__progress"></div>
-    </div>
-    `;
+    //const template = `
+    //<div class="indeterminate-progress-bar">
+    //    <div class="indeterminate-progress-bar__progress"></div>
+    //</div>
+    // `;,
+    progressbar = document.querySelector(".indeterminate-progress-bar");
+    inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
+    console.debug("progressbar:", progressbar)
+    if (progressbar == null) {
+        progressbar = createProgressBar();
+        myheader.after(progressbar);
+        progressbar.style.display = 'block';
+    }
+    else {
+       // we need to remove the style of inprogress to see the animation again
+       inprogressbar.style = ""
+       progressbar.style.display = 'block';
+     }
     var myheader = document.querySelector('header');
     checkButton.innerText = "Checking";
     // 30-10-2021 PSS fixed issue #155 let the button spin again when page is already translated

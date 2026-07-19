@@ -210,18 +210,14 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
     var prevstate
     var textFound
     var debug = false
-    const template = `
-    <div class="indeterminate-progress-bar">
-        <div class="indeterminate-progress-bar__progress"></div>
-    </div>
-    `;
+   
     progressbar = document.querySelector(".indeterminate-progress-bar");
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
     //console.debug("processTM")
     if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
-        // progressbar = document.querySelector(".indeterminate-progress-bar");
-        //progressbar.style.display = 'block;';
+         progressbar = createProgressBar();
+         myheader.after(progressbar);
+          progressbar.style.display = 'block';
     }
     else {
         // we need to remove the style of inprogress to see the animation again

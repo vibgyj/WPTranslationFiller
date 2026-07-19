@@ -57,6 +57,18 @@
         }
     });
 }
+
+function createProgressBar() {
+    const outer = document.createElement('div');
+    outer.className = 'indeterminate-progress-bar';
+
+    const progress = document.createElement('div');
+    progress.className = 'indeterminate-progress-bar__progress';
+    outer.appendChild(progress);
+
+    //console.debug("Created progress bar:", outer);
+    return outer;   // ← this line
+}
 function checkLocale() {
     // 30-11-2022 PSS If the stats button is used within a project then the locale is not determined properly #261
     const localeString = window.location.href;
@@ -1722,11 +1734,11 @@ async function validateOld(showDiff) {
     var textareaElem;
    // console.debug("we are checking for old strings");
    
-    const template = `
-    <div class="indeterminate-progress-bar">
-        <div class="indeterminate-progress-bar__progress"></div>
-    </div>
-    `;
+   // const template = `
+   // <div class="indeterminate-progress-bar">
+   //     <div class="indeterminate-progress-bar__progress"></div>
+  //  </div>
+   // `;
     var myheader = document.querySelector('header');
     // setPostTranslationReplace(postTranslationReplace, formal);
     records = await document.querySelectorAll("tr.preview")
@@ -1735,7 +1747,9 @@ async function validateOld(showDiff) {
     if ((records.length) > 1) {
         let progressbar = document.querySelector(".indeterminate-progress-bar");
         if (progressbar == null) {
-            myheader.insertAdjacentHTML('afterend', template);
+             progressbar = createProgressBar();
+             myheader.after(progressbar);
+             progressbar.style.display = 'block';
         }
         else {
             progressbar.style.display = 'block';
@@ -2243,7 +2257,10 @@ async function toastbox(type = "info", title = "", duration = 2000, message = ""
     toast.style.transform = "translateY(-10px)";
     toast.style.transition = "opacity 0.3s ease, transform 0.3s ease";
 
-    toast.innerHTML = `<strong>${title}</strong> ${message}`;
+    //toast.innerHTML = `<strong>${title}</strong> ${message}`;
+    const strong = document.createElement('strong');
+    strong.textContent = title;
+    toast.replaceChildren(strong, ` ${message}`);
     container.appendChild(toast);
 
     // Fade in
@@ -2274,17 +2291,24 @@ function close_toast() {
 
 
 async function messageBox(type, message) {
+    //console.debug("messageBox called:", type, message);
     currWindow = window.self;
-    let title = __("Message")
-    await cuteAlert({
-        type: type,
-        title: title,
-        message: message,
-        buttonText: "OK",
-        myWindow: currWindow,
-        closeStyle: "alert-close",
-    });
+    let title = __("Message");
+    try {
+        await cuteAlert({
+            type: type,
+            title: title,
+            message: message,
+            buttonText: "OK",
+            myWindow: currWindow,
+            closeStyle: "alert-close",
+        });
+        //console.debug("cuteAlert resolved normally");
+    } catch (err) {
+        console.error("cuteAlert FAILED:", err);
+    }
 }
+
 async function messageBox_reload(type, message) {
     currWindow = window.self;
     await cuteAlert({
@@ -2857,4 +2881,18 @@ function pruneGlossary(openAiGloss, originalPreProcessed, original) {
             return e.rawTarget.split("/").map(v => `"${e.rawSource}" -> "${v.trim()}"`);
         })
         .join(", ");
+}
+/**
+ * Safely set HTML content.
+ * Uses the native Sanitizer API (Firefox 148+, Chrome 146+).
+ * Falls back to innerHTML only on browsers without the API (Safari).
+ */
+function setSafeHTML(el, html) {
+    if ('setHTML' in el) {
+        // Empty config = allow all elements/attributes,
+        // strip only XSS vectors (scripts, event handlers, js: URLs)
+        el.setHTML(html, { sanitizer: new Sanitizer({}) });
+    } else {
+        el.innerHTML = html; // fallback for browsers without Sanitizer API
+    }
 }

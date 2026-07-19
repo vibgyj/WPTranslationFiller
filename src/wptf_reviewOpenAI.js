@@ -5,15 +5,16 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
     //console.debug("data.OpenAISelect:", model);
     //console.debug("Reviewing page with translator:", translator);
     // --- START progress bar setup ---
-    const template = `
-    <div class="indeterminate-progress-bar">
-    <div class="indeterminate-progress-bar__progress"></div>
-    </div>`;
+   // const template = `
+   // <div class="indeterminate-progress-bar">
+   // <div class="indeterminate-progress-bar__progress"></div>
+   // </div>`;
     const myheader = document.querySelector('header');
     progressbar = document.querySelector(".indeterminate-progress-bar");
-    if (!progressbar) {
-        myheader.insertAdjacentHTML('afterend', template);
-        progressbar = document.querySelector(".indeterminate-progress-bar");
+    if (progressbar == null) {
+       progressbar = createProgressBar();
+       myheader.after(progressbar);
+       progressbar.style.display = 'block';
     }
     if (progressbar) {
         progressbar.style.display = 'block';

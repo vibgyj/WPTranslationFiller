@@ -95,3 +95,7 @@ Version 3.5.52 Added top_k and top_p parameters to the groq API call, this way y
 Version 3.5.52 added replacing capitals after a semicolon when checking a page
 Version 3.5.53 Fixed again an issue with converting from default to formal, when a sentence had a comma inside it
 Version 3.5.54 Fixe a problem with translating text between <code> tags, it was translated, now it will not be translated
+Version 3.5.55 Fixed problems with checkpage, hanging and replaced words are not marked in the translation
+Version 3.5.56 Fixed another problem with showing the results in checkpage, the list was not build properly, and the count was wrong
+Version 3.5.57 Removed obsolete groq models
+Version 3.5.58 Improved groq model handling

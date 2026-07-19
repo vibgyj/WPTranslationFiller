@@ -351,6 +351,50 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // keep sendResponse alive for async
     }
+    else if (request.action === "groqModels") {
+    const handleGroqModels = async () => {
+        try {
+            const resp = await fetch(
+                "https://api.groq.com/openai/v1/models",
+                {
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + request.data.apiKey
+                    }
+                }
+            );
+
+            if (!resp.ok) {
+                const errorText = await resp.text();
+                console.debug("Groq models error response:", errorText);
+                sendResponse({
+                    ok: false,
+                    error: {
+                        status: resp.status,
+                        message: errorText
+                    }
+                });
+                return;
+            }
+
+            sendResponse({
+                ok: true,
+                result: await resp.json()
+            });
+
+        } catch (err) {
+            console.debug("Groq models fetch error:", err);
+            sendResponse({
+                ok: false,
+                error: {
+                    message: err.toString()
+                }
+            });
+        }
+    };
+    handleGroqModels();
+    return true;
+}
    else if (request.action === "groq") {
     //console.trace("GROQ ORIGIN TRACE");
     //console.log("GROQ ACTION PAYLOAD:", request);
@@ -372,7 +416,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             );
 
-          //  console.debug("response status:", resp.status);
+           //console.debug("response status:", resp);
 
             // Forward rate-limit headers so the content script can
             // use the exact reset times instead of guessing.

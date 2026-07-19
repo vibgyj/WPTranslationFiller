@@ -103,7 +103,7 @@ async function getTransgroq(
      ****************************************************/
     const payloadItem = { i: rowId, t: originalPreProcessed };
     if (prunedGlossary) payloadItem.g = prunedGlossary;
-
+    //console.debug("apiKey:", apikeygroq)
     // Send a neutral dummy item alongside the real one.
     // The model applies glossary terms more reliably when it sees
     // multiple items — a single item gets treated as a standalone

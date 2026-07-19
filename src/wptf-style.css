@@ -169,29 +169,27 @@ mymarker {
 
 
 .indeterminate-progress-bar__progress {
-    /* Color */
     background-color: #3b82f6;
-    /* Rounded border */
     border-radius: 9999px;
-    /* Absolute position */
     position: absolute;
-    bottom: 0;
     top: 0;
+    bottom: 0;
+    left: 0;
     width: 50%;
-    /* Move the bar infinitely */
-    animation: indeterminate 2s infinite;
-    animation-name: indeterminate-progress-bar;
+    animation: indeterminate-progress-bar 2s infinite linear;
+    will-change: transform;
 }
-
 
 @keyframes indeterminate-progress-bar {
     from {
-        left: -50%;
+        transform: translateX(-100%);
     }
-
+    /* one own-width left of the track */
     to {
-        left: 100%;
+        transform: translateX(200%);
     }
+    /* fully out the right side */
+
 }
 
 #DeepLmodalOverlay {

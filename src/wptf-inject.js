@@ -318,8 +318,11 @@ function saveTranslation(locale, original,deleteText,message) {
                 cursor.update(updatedRecord);
 
                 // Update the UI
-                const translationCell = document.getElementById("editTranslation").parentNode;
-                translationCell.innerHTML = newTranslation;
+              //  const translationCell = document.getElementById("editTranslation").parentNode;
+               // translationCell.innerHTML = newTranslation;
+               const translationCell = document.getElementById("editTranslation").parentNode;
+                setSafeHTML(translationCell, newTranslation);
+
 
                 // Restore the delete button
                 const saveCell = translationCell.nextElementSibling;
