@@ -51,9 +51,11 @@ async function callClaudeWithRetry(promptText, apiKey, model, temp, maxRetries =
     let attempt = 0;
     //console.debug("model", model);
     const NO_TEMPERATURE_MODELS = new Set([
-    'claude-opus-4-8',
-    'claude-opus-4-7',  // add others as needed
-]);
+        'claude-opus-4-8',
+        'claude-opus-4-7',
+        'claude-sonnet-5',
+        'claude-fable-5'
+            ]);
     while (true) {
         const result = await callClaude({
            apiKey,
@@ -237,7 +239,7 @@ async function translatePageClaude(
     spellCheckIgnore,
     OpenAITone,
     openAiGloss,
-    claudeBatchSize = 5
+    claudeBatchSize = 20
 ) {
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);

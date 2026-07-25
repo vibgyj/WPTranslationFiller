@@ -57,6 +57,10 @@
             width: 400px;
         }
 
+        #kimi_api_key {
+            width: 400px;
+        }
+
         #Translateio_api_key {
             width: 400px;
         }
@@ -353,6 +357,17 @@
 
             <tr>
                 <td>
+                    <label for="kimi_api_key">Kimi API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="kimi_api_key" type="text" value="kimi-api key->" placeholder="Kimi API key" />
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
                     <label for="nlpcloud_api_key">NLPCloud API Key</label>
                 </td>
                 <td>
@@ -489,17 +504,13 @@
                 <td>
                     <div class="form-input">
                         <select title="Select a model for Claude" name="ClaudSel" id="ClaudSelect">
-                            <option value="claude-haiku-4-5">claude-haiku-4-5</option>
-                            <option value="claude-2">claude-2</option>
-                            <option value="claude-instant-1">claude-instant-1</option>
-                            <option value="claude-opus-4-6">claude-opus-4-6</option>
+                            <option value="claude-fable-5">claude-fable-5</option>
                             <option value="claude-opus-4-8">claude-opus-4-8</option>
-                            <option value="claude-sonnet-3-5">claude-sonnet-3-5</option>
-                            <option value="claude-sonnet-4-5-20250929">claude-sonnet-4-5-20250929</option>
-                            <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+                            <option value="claude-opus-4-6">claude-opus-4-6</option>
+                            <option value="claude-sonnet-5">claude-sonnet-5</option>
                             <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
-                            <option value="openai/gpt-5.4-mini">openai/gpt-5.4-mini</option>
-                            <option value="openai/gpt-5.4-nano">openai/gpt-5.4-nano</option>
+                            <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+                            <option value="claude-haiku-4-5">claude-haiku-4-5</option>
                         </select>
                     </div>
                 </td>
@@ -538,6 +549,22 @@
                     </div>
                 </td>
             </tr>
+
+            <tr>
+                <td>
+                    <label for="Kimi">Select a model for Kimi:</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for Kimi" name="KimiSel" id="KimiSelect">
+                            <option value="kimi-k2.6">kimi-k2.6</option>
+                            <option value="kimi-k2.7-code-highspeed">kimi-k2.7-code-highspeed</option>
+                            <option value="kimi-k3">kimi-k3</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+
             <tr>
                 <td>
                     <label for="Mistral">Select a model for Mistral:</label>
@@ -549,7 +576,7 @@
                             <option value="magistral-small-2509">magistral-small-2509</option>
                             <option value="mistral-small-latest">mistral-small-latest</option>
                             <option value="mistral-large-2512">mistral-large-2512</option>
-                            <option value=" ministral-8b-2512"> ministral-8b-2512</option>
+                            <option value="ministral-8b-2512"> ministral-8b-2512</option>
                             <option value="ministral-14b-2512">ministral-14b-2512</option>
                         </select>
                     </div>
@@ -587,6 +614,7 @@
                             <option value="google/gemini-2.5-pro">google/gemini-2.5-pro:paid</option>
                             <option value="meta-llama/llama-3.1-8b-instruct:free">meta-llama/llama-3.1-8b-instruct:free</option>
                             <option value="meta-llama/llama-3.3-70b-instruct:free">meta-llama/llama-3.3-70b-instruct:free</option>
+                            <option value="moonshotai/kimi-k3">moonshotai/kimi-k3</option>
                             <option value="qwen/qwen3-next-80b-a3b-instruct:free">qwen/qwen3-next-80b-a3b-instruct:free</option>
                             <option value="qwen/qwen3.6-flash">qwen/qwen3.6-flash:paid</option>
                             <option value="qwen/qwen3.7-plus">qwen/qwen3.7-plus:paid</option>
@@ -678,6 +706,7 @@
                             <option value="gemini">Gemini</option>
                             <option value="google">Google</option>
                             <option value="groq">Groq</option>
+                            <option value="kimi">Kimi</option>
                             <option value="koboldCpp">koboldCpp</option>
                             <option value="LibreTrans">LibreTrans</option>
                             <option value="lingvanex">Lingvanex</option>

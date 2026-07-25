@@ -351,6 +351,108 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // keep sendResponse alive for async
     }
+    else if (request.action === "Kimi") {
+        (async () => {
+            try {
+                const dataToSend = { ...request.data };
+                const apiKey = dataToSend.apiKey;
+                delete dataToSend.apiKey;              // never send the key in the body
+
+                console.debug("Kimi request:", dataToSend);
+
+                const resp = await fetch("https://api.moonshot.ai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + apiKey
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                console.debug("moonshot:", resp.status, resp.statusText,
+                    "retry-after:", resp.headers.get("retry-after"));
+
+                if (!resp.ok) {
+                    const raw = await resp.text();
+                    let parsed = null;
+                    try { parsed = JSON.parse(raw); } catch { /* not JSON */ }
+
+                    const type = parsed?.error?.type ?? null;
+                    const detail = parsed?.error?.message ?? raw.slice(0, 500);
+
+                    let state, hint;
+                    switch (resp.status) {
+                        case 400:
+                            state = "bad_request";
+                            hint = "Moonshot rejected the request body: " + detail;
+                            break;
+                        case 401:
+                            state = "auth";
+                            hint = "API key rejected — check for stray whitespace when pasting.";
+                            break;
+                        case 404:
+                            state = "bad_model";
+                            hint = "Model '" + dataToSend.model + "' is not available on this account.";
+                            break;
+                        case 429:
+                            if (type === "exceeded_current_quota_error") {
+                                state = "no_credit";
+                                hint = "No balance on the Moonshot account. A minimum $1 top-up is "
+                                    + "required before any key works. Retrying will not help.";
+                            } else {
+                                state = "rate_limited";
+                                hint = "Rate limited or server busy — back off and retry.";
+                            }
+                            break;
+                        default:
+                            state = resp.status >= 500 ? "server_error" : "unknown";
+                            hint = "Upstream problem: " + detail;
+                    }
+
+                    console.warn("moonshot error:", { state, status: resp.status, type, detail });
+                    sendResponse({ error: hint, state, status: resp.status, type, detail });
+                    return;
+                }
+
+                const json = await resp.json();
+                const choice = json.choices?.[0];
+                const content = choice?.message?.content ?? "";
+                const reasoning = choice?.message?.reasoning_content ?? "";
+
+                console.debug("moonshot ok:", {
+                    finish: choice?.finish_reason,
+                    usage: json.usage,
+                    contentChars: content.length,
+                    reasoningChars: reasoning.length,
+                    preview: content.slice(0, 120)
+                });
+
+                // No usable content — surface WHY instead of returning an empty result
+                // that the caller would silently skip (=> translated=0 with no reason).
+                if (!content) {
+                    const why = choice?.finish_reason === "length"
+                        ? "hit max_tokens (" + dataToSend.max_tokens + ") before emitting content"
+                        + (reasoning.length ? " — all budget went to reasoning; thinking is still ON" : "")
+                        : "model returned empty content";
+                    console.warn("moonshot empty content:", why);
+                    sendResponse({ error: "Kimi returned no content — " + why, state: "empty_content", status: 200 });
+                    return;
+                }
+
+                if (choice?.finish_reason === "length") {
+                    console.warn("truncated: hit max_tokens =", dataToSend.max_tokens);
+                }
+
+                sendResponse({ result: json });
+
+            } catch (err) {
+                console.warn("moonshot fetch failed:", err.stack ?? err);
+                sendResponse({ error: err.message ?? String(err), state: "network" });
+            }
+        })();
+
+        return true; // keep sendResponse alive for async
+    }
     else if (request.action === "groqModels") {
     const handleGroqModels = async () => {
         try {
@@ -886,6 +988,8 @@ else if (request.action === "LMStudio_translate") {
             const NO_TEMPERATURE_MODELS = new Set([
                 'claude-opus-4-8',
                 'claude-opus-4-7',
+                'claude-sonnet-5',
+                'claude-fable-5'
             ]);
             const supportsTemperature = !NO_TEMPERATURE_MODELS.has(model);
             

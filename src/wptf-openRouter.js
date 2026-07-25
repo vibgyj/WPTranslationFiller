@@ -123,8 +123,11 @@ messages = [
   "gpt-5.1-nano":        ["openai/gpt-4o-mini"],
   "gpt-5.4":             ["openai/gpt-4o"],
   "gpt-5.3-chat-latest": ["openai/gpt-4o", "anthropic/claude-3-opus"],
-};
+    };
 
+    //let max_Tokens = await estimateMaxTokens(originalPreProcessed);
+    let prompt_tokens = await estimateMaxTokens(content);
+    max_Tokens = prompt_tokens
 if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
     dataNew = {
         model: mymodel,
@@ -141,7 +144,7 @@ if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano")
         guardrails: false,
     };
 }
-else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4") {
+else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4" || mymodel === 'moonshotai/kimi-k3') {
     dataNew = {
         model: mymodel,
         messages,

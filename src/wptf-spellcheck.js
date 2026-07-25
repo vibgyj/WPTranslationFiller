@@ -29,7 +29,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     // `;,
     progressbar = document.querySelector(".indeterminate-progress-bar");
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
-    console.debug("progressbar:", progressbar)
+    //console.debug("progressbar:", progressbar)
     if (progressbar == null) {
         progressbar = createProgressBar();
         myheader.after(progressbar);
@@ -136,7 +136,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
                                 // console.debug("line to check:",translatedText,previewNewText)
                                 if (translatedText != "") {
                                     let currec = document.querySelector(`#editor-${row} div.editor-panel__left div.panel-header`);
-                                    // console.debug("before LT:",translatedText)
+                                    //console.debug("before LT:",translatedText)
                                     spell_result = await spellcheck_entry(translatedText, found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, LtKey, LtUser, LtLang, LtFree, spellcheckIgnore)
                                 }
                             }
@@ -312,7 +312,8 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                         }   
                     }
                     // PSS result only needs to be processed if all verb in sentence have been found
-                   // console.debug("found verbs:", found_verbs)
+                    console.debug("found verbs:", found_verbs)
+                    //console.debug("newtext:", previewNewText)
                    // console.debug("ignore:", spellcheckIgnore)
                     entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, spellcheckIgnore)
                     if (typeof data.translations != 'undefined') {
@@ -434,7 +435,9 @@ async function process_result(found_verbs, replaced, countfound, e, newrowId, cu
         let preview = document.querySelector("#preview-" + newrowId + " td.translation");
          if (preview == null) {
             preview = document.querySelector("#preview-" + myrow + " td.translation");
-         }
+        }
+       // console.debug("preview:", preview.innerText)
+        translatedTexxt = preview.innerText;
         // PSS we need to remove the current span, as the mark function adds one again
         // PSS fix for issue #157
         let span = document.querySelector("#preview-" + newrowId + " td.translation span.translation-text");
@@ -448,8 +451,10 @@ async function process_result(found_verbs, replaced, countfound, e, newrowId, cu
         var myspan1 = document.createElement("span");
         myspan1.className = "translation-text";
         preview = document.querySelector("#preview-" + newrowId + " td.translation");
+        let new_row = newrowId
         if (preview == null) {
             preview = document.querySelector("#preview-" + myrow + " td.translation");
+            new_row = myrow;
         }
         // if there is no preview for the plural, we do not need to populate it
         //if (preview != null) {
@@ -458,13 +463,13 @@ async function process_result(found_verbs, replaced, countfound, e, newrowId, cu
 
             // PSS populate the preview before marking
            // preview.innerText = DOMPurify.sanitize(previewNewText);
-           // console.debug("OrgText:", orgText)
-          //  console.debug("preview:", preview)
-          //  console.debug("found_verbs:", found_verbs)
+            console.debug("OrgText:", orgText)
+            console.debug("preview:", preview)
+            console.debug("found_verbs:", found_verbs)
         
         if (typeof preview != "undefined") {
                // console.debug("spellcheck:",found_verbs)
-                markElements(preview, found_verbs, orgText, spellcheckIgnore,repl_verb);
+                markElements(preview, found_verbs, orgText, spellcheckIgnore,repl_verb,translatedText, new_row);
             }
         //}
 

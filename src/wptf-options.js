@@ -86,6 +86,7 @@ let apikeyTextbox = document.getElementById("google_api_key");
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
+let apikeykimiTextbox = document.getElementById("kimi_api_key");
 let apikeygroqTextbox = document.getElementById("groq_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let apikeyOpenRouterTextbox = document.getElementById("openRouter_api_key");
@@ -98,7 +99,8 @@ let apikeyOllamaTextbox = document.getElementById("Ollama_api_key");
 let apikeyLingvanexTextbox = document.getElementById("Lingvanex_api_key");
 let apikeyGeminiTextbox = document.getElementById("gemini_api_key");
 let transselectBox = document.getElementById("transselect");
-let OpenAIselectBox = document.getElementById("OpenAIselect"); 
+let KimiselectBox = document.getElementById("KimiSelect");
+let OpenAIselectBox = document.getElementById("OpenAIselect");
 let groqselectBox = document.getElementById("groqSelect");
 let OpenRouterselectBox = document.getElementById("OpenRouterSelect");
 let MistralselectBox = document.getElementById("MistralSelect");
@@ -261,7 +263,7 @@ document.getElementById("refreshGroqModels").addEventListener("click", function 
     loadGroqModels(groqselectBox.value || undefined);
 });
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "ClaudSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyKimi", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "ClaudSelect", "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize"], function (data) {
     
     if (data.DeeplFree != null) {
         if (data.DeeplFree == true) {
@@ -392,6 +394,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
     else {
         apikeygroqTextbox.value = data.apikeygroq;
     }
+    if (data.apikeyKimi == null && typeof data.apikeyKimi == "undefined") {
+        apikeykimiTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeykimiTextbox.value = data.apikeyKimi;
+    }
 
     if (data.apikeyOllama == null && typeof data.apikeyOllama == "undefined") {
         apikeyOllamaTextbox.value = "Enter key or leave empty";
@@ -417,6 +425,25 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpe
         OpenRouterselectBox.value = data.OpenRouterSelect;
     }
 
+    if (typeof data.KimiSelect == 'undefined') {
+        KimiselectBox.value = "kimi-k2.6";
+    }
+    else if (data.KimiSelect == "") {
+        KimiselectBox.value = "kimi-k2.6";
+    }
+    else {
+        KimiselectBox.value = data.KimiSelect;
+    }
+
+    if (typeof data.OpenAISelect == 'undefined') {
+        OpenAIselectBox.value = "gpt-3.5-turbo";
+    }
+    else if (data.OpenAISelect == "") {
+        OpenAIselectBox.value = "gpt-3.5-turbo";
+    }
+    else {
+        OpenAIselectBox.value = data.OpenAISelect;
+    }
     if (typeof data.OpenAISelect == 'undefined') {
         OpenAIselectBox.value = "gpt-3.5-turbo";
     }
@@ -712,11 +739,12 @@ button.addEventListener("click", function () {
    }
    
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
-    let apikeyOpenAI = apikeyOpenAITextbox.value;
     let apikeygroq = apikeygroqTextbox.value;
     let apikeyOpenRouter = apikeyOpenRouterTextbox.value;
     let apikeyMistral = apikeyMistralTextbox.value;
     let apikeyDeepSeek = apikeyDeepSeekTextbox.value;
+    let apikeyKimi = apikeykimiTextbox.value;
+    let apikeyOpenAI = apikeyOpenAITextbox.value;
     let apikeyTranslationio = apikeyTranslateioTextbox.value;
     let apikeyClaude = apikeyClaudeTextbox.value;
     let apikeyOllama = apikeyOllamaTextbox.value;
@@ -799,6 +827,13 @@ button.addEventListener("click", function () {
     }
     else {
         Geminisel = GeminiselectBox.value;
+    }
+
+    if (KimiSelect.value == "") {
+        Kimisel = "kimi-k2.6";
+    }
+    else {
+        Kimisel = KimiSelect.value;
     }
     
     let destlang = destLangTextbox.value;
@@ -945,6 +980,7 @@ button.addEventListener("click", function () {
             apikey: apikey,
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
+            apikeyKimi: apikeyKimi,
             apikeygroq: apikeygroq,
             apikeyOpenRouter: apikeyOpenRouter,
             apikeyMistral: apikeyMistral,
@@ -957,6 +993,7 @@ button.addEventListener("click", function () {
             apikeyLingvanex: apikeyLingvanex,
             apikeyGemini: apikeyGemini,
             GeminiSelect: Geminisel,
+            KimiSelect: Kimisel,
             MistralSelect: Mistralsel,
             ClaudSelect: Claudsel,
             DeeplFree: showDeepl,

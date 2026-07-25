@@ -1,0 +1,435 @@
+/**
+ * This file includes all functions for translating with the openAI API and uses a promise
+ * It depends on commonTranslate for additional translation functions
+ */
+// Call this at the start of your translation batch loop
+function startTranslationBatch() {
+  localStorage.setItem('openai_prompt_sent', 'false');
+}
+
+// Call this at the end of your translation batch loop or when needed
+function endTranslationBatch() {
+  localStorage.removeItem('openai_prompt_sent');
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function KimiTranslate(original, destlang, record, apikeyKimi, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, KimiSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
+    var timeout = 50;
+    errorstate = "OK";
+    
+    // Preprocess original
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "Kimi");
+    
+    // Await the translation call
+    var result = await getKimiTransAI(original, destlang, record, apikeyKimi, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, KimiSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    //console.debug("Kimi result:",result)
+    return result;
+}
+
+// FIX: added openAiGloss parameter, removed double comma in reviewTransAI call
+async function AIreview(original, destlang, record, apikeyKimi, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss, model, apikeyOpenRouter,translator,OpenRouterModel) {
+    var originalPreProcessed = original;
+    if (apikeyKimi != "") {
+        var result = await reviewTransAI(original, destlang, record, apikeyKimi, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss,model, apikeyOpenRouter,translator,OpenRouterModel);
+    }
+    else {
+        errorstate = "No apikey provided!"
+    }
+    return errorstate;
+}
+
+
+async function getKimiTransAI(
+  original, language, record, apikeyKimi, OpenAIPrompt,
+  originalPreProcessed, rowId, transtype, plural_line, formal,
+  locale, convertToLower, editor, counter, KimiSelect,
+  OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
+) {
+  var show_debug = false;
+  var myTtranslatedText = "";
+  let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+  let prevstate = current ? current.innerText : "";
+    
+  let destlang = language;
+  language = language.toUpperCase();
+  var messages;
+
+  let tempPrompt = OpenAIPrompt + '\n';
+  let myprompt = "";
+
+  // Handle tone and language in prompt
+  if (OpenAITone === 'formal') {
+    if (destlang === 'nl') {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
+    } else if (destlang === 'de') {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
+    } else if (destlang === 'fr') {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
+    } else {
+      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+    }
+  } else {
+    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+  }
+  //console.debug("Prompt after tone and language handling:", myprompt);
+  // Compact glossary
+  const filteredGloss = pruneGlossary(openAiGloss, originalPreProcessed, record);
+  const compactGloss = filteredGloss.replace(/\n+/g, "|");
+
+  // Replace glossary and language names
+  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss);
+
+  if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
+  else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
+  else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
+  else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian');
+  else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
+  else if (destlang === 'id') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Indonesian');
+  else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
+  else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
+  else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
+  else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+
+  if (!originalPreProcessed) {
+    originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
+  }
+  // Shared prompt expects a JSON array of items; send this single line as a batch of one
+  myprompt = myprompt.replaceAll("{{text}}", JSON.stringify([{ i: rowId, t: originalPreProcessed }]));
+  //  console.debug("Prompt after all replacements:", myprompt)
+  let maxTokens = estimateMaxTokens(originalPreProcessed);
+  max_Tokens = maxTokens +4000;
+  // Models that always reason (k3, k2.7-code) share one budget for reasoning+content.
+  {
+    const _m = (KimiSelect || '').toLowerCase();
+    if (_m === 'kimi-k3' || _m.startsWith('kimi-k2.7-code')) max_Tokens = Math.max(max_Tokens, 16000);
+  }
+
+  messages = [
+    { role: 'user', content: myprompt }
+  ];
+
+  if (KimiSelect === 'undefined' || !KimiSelect) {
+    messageBox("error", "You did not set the Kimi model!<br> Please check your options");
+    return "NOK";
+  }
+
+    //const mymodel = OpenAISelect.toLowerCase();
+    const mymodel = KimiSelect;
+
+    const dataNew = {
+        model: mymodel,
+        messages,
+        max_tokens: max_Tokens,
+        apiKey: apikeyKimi,
+    };
+
+    // Reasoning control — same rules as the bulk path (translatePageKimi):
+    //   kimi-k3          -> low reasoning_effort (k3 always reasons)
+    //   kimi-k2.6 / k2.5 -> thinking disabled (translation needs no reasoning)
+    // Never send both `thinking` and `reasoning_effort` — Moonshot returns 400.
+    // Reuse the shared helper if it's loaded; otherwise fall back to the inline rules.
+    if (typeof kimiReasoningParams === 'function') {
+        Object.assign(dataNew, kimiReasoningParams(mymodel));
+    } else {
+        const _m = (mymodel || '').toLowerCase();
+        if (_m === 'kimi-k3') dataNew.reasoning_effort = 'low';
+        else if (_m.startsWith('kimi-k2.6') || _m.startsWith('kimi-k2.5')) dataNew.thinking = { type: 'disabled' };
+    }
+
+    if (show_debug) console.debug("payload:", dataNew);
+
+    try {
+    const start = Date.now();
+    const result = await new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        { action: "Kimi", data: dataNew },
+        (res) => resolve(res)
+      );
+    });
+    //  console.debug("Raw response from Kimi proxy:", result.error)
+    if (!result) {
+      console.debug("Kimi proxy returned undefined");
+      return "NOK";
+    }
+
+    if (result.error) {
+  const duration = ((Date.now() - start) / 1000).toFixed(2);
+  if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] Kimi proxy error: ${duration}s`, result.error);
+
+  // Normalize: result.error can be a string or an object
+  const errorStr = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+
+  // Try to extract HTTP status code from "Request failed (400): ..." pattern
+  const match = errorStr.match(/Request failed \((\d+)\)/);
+  let statusCode = match ? match[1] : "unknown";
+
+  // Fallback: try to parse the embedded JSON for more detail
+  let errorMessage = errorStr;
+  try {
+    const jsonMatch = errorStr.match(/Request failed \(\d+\): (\{[\s\S]*\})/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[1]);
+      errorMessage = parsed?.error?.message ?? errorStr;
+    }
+  } catch (_) {}
+       // console.debug("Extracted status code:", statusCode, "Error message:", errorMessage)
+  if (statusCode === '400') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}<br>${errorMessage}`);
+    return `Error 400`;
+  }
+  else if (statusCode === '401') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!`);
+    else return `Error 401`;
+  } else if (statusCode === '403') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Country not supported!`);
+    else return `Request failed with status ${statusCode}. Country not supported!`;
+  } else if (statusCode === '404') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!<br>${errorMessage}`);
+    else return `Error 404`;
+  } else if (statusCode === '429') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Rate limit reached!`);
+    else return `Request failed with status ${statusCode}. Rate limit reached!`;
+  } else if (statusCode === '500') {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Server issue!`);
+    else return `Request failed with status ${statusCode}. Server issue!`;
+  } else {
+    if (editor) messageBox("warning", `Request failed with status ${statusCode}.<br>${errorMessage}`);
+    else return `Request failed with status ${statusCode}. ${errorMessage}`;
+  }
+}
+
+    const duration = ((Date.now() - start) / 1000).toFixed(2);
+    if (toBoolean(DebugMode)) console.debug("Kimi proxy response (raw):", result.result, " ", duration);
+
+    const data = result.result;
+    let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
+
+    // Shared prompt returns {"results":[{"i","tr"}]} — pull out the single translation
+    const parsed = parseKimi(text);
+    if (parsed && parsed.length) text = parsed[0].tr;
+
+    //console.debug("Kimi proxy response (trimmed):", text)
+    if (text === '""' || text === "" || text == null) {
+      text = "No suggestions";
+    }
+
+    const start1 = Date.now();
+    myTranslatedText = await postProcessTranslation(
+      original, text, replaceVerb, originalPreProcessed,
+      "Kimi", convertToLower, spellCheckIgnore, locale
+    );
+
+    const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] myTranslatedText postprocessed ${duration2}s`, myTranslatedText);
+
+    const start2 = Date.now();
+    await processTransl(
+      original, myTranslatedText, language, record, rowId,
+      transtype, plural_line, locale, convertToLower, current
+    );
+
+    const duration3 = ((Date.now() - start2) / 1000).toFixed(2);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
+    const durationSec = ((Date.now() - start) / 1000).toFixed(2);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
+
+    return "OK";
+
+  } catch (err) {
+    console.error("Fetch Kimi failed:", err);
+    return null;
+  }
+}
+
+
+// FIX: added openAiGloss parameter, filters glossary and injects into review prompt
+async function reviewTransAI(original, language, record, apikeyKimi, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss,model,apikeyOpenRouter,translator, OpenRouterModel) {
+    var current = "";
+    var prevstate = "";
+    var error;
+    var data;
+    
+    current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+    prevstate = current.innerText;
+    language = language.toUpperCase();
+
+    // Filter glossary for this specific original text and inject into prompt
+    const filteredGloss = pruneGlossary(openAiGloss, original, record);
+    const compactGloss = filteredGloss.replace(/\n+/g, "|");
+
+    var prompt = reviewPrompt.replace('{{placeholder_original}}', original);
+    prompt = prompt.replace('{{placeholder_translated}}', translatedText);
+    prompt = prompt.replace('{{OpenAiGloss}}', compactGloss);
+    let maxTokens = estimateMaxTokens(originalPreProcessed);
+    max_Tokens = maxTokens;
+    var messages = [{ 'role': 'user', 'content': prompt }];
+    //let mymodel = "gpt-4.1-mini";
+    //console.debug("Model for review:", model,translator);
+     if (translator == "openRouter") {
+        var myLink = "https://openrouter.ai/api/v1/chat/completions";
+         var myKey = apikeyOpenRouter
+         var mymodel = OpenRouterModel;
+     }
+     else if (translator == 'koboldCpp') {
+        // console.debug("Using koboldCpp for review")
+         var myLink = "http://localhost:5001/v1/chat/completions";
+         var mymodel = "koboldCpp";
+     }
+     else {
+        var myLink = "https://api.openai.com/v1/chat/completions";
+        var myKey = apikeyOpenAI
+        var mymodel = model;
+    }
+    console.debug("Review model:", mymodel, " Translator:", translator)
+    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
+    data1 = {
+      model: mymodel,
+      messages,
+      max_completion_tokens: max_Tokens,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      reasoning_effort: 'minimal',
+      verbosity: 'low',
+      prompt_cache_key: 'WPTF translation',
+    };
+  }
+  else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4" || mymodel === "gpt-5.5") {
+    data1 = {
+      model: mymodel,
+      messages,
+      max_completion_tokens: max_Tokens,
+      top_p: Number(Top_p),
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      reasoning_effort: 'none',
+      verbosity: 'low',
+      prompt_cache_key: 'WPTF translation',
+    };
+  }
+  else if (mymodel === "gpt-5.3-chat-latest") {
+    data1 = {
+      model: mymodel,
+      messages,
+      max_completion_tokens: max_Tokens,
+      top_p: Number(Top_p),
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      reasoning_effort: 'medium',
+      verbosity: 'low',
+      prompt_cache_key: 'WPTF translation',
+    };
+  }
+    else {
+        if (mymodel === "koboldCpp") {
+             messages = [
+               { role: 'system', content: prompt },
+               { role: 'user', content: originalPreProcessed },
+               { role: 'assistant', content: "" }
+              ];
+            data1 = {
+                model: "koboldCpp",
+                messages,
+                max_tokens: max_Tokens,
+                temperature: 0,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+                repeat_penalty: 1.1,
+                top_k: Number(Top_k),
+                think: false,
+             }
+        }
+        else {
+            data1 = {
+                model: mymodel,
+                messages,
+                max_tokens: max_Tokens,
+                n: 1,
+                temperature: 0,
+                frequency_penalty: 0,
+                presence_penalty: 0,
+                top_p: Number(Top_p),
+                stop: '|\n',
+            }
+        }
+    };
+
+    try {
+        //console.debug("myLink:",myLink)
+        const response = await fetch(myLink, {
+            body: JSON.stringify(data1),
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                Authorization: "Bearer " + myKey,
+            },
+        });
+
+        const isJson = response.headers.get('content-type')?.includes('application/json');
+        const data = isJson ? await response.json() : null;
+
+        if (!response.ok) {
+            errorstate = "NOK";
+            const statusCode = response.status;
+            if (statusCode == 400) { errorstate = "Error 400"; if (editor) messageBox("error", "Error 400:" + data?.error?.message); }
+            else if (statusCode == 401) { errorstate = "Error 401"; if (editor) messageBox("error", "Error 401 Authorization failed."); }
+            else if (statusCode == 404) { errorstate = "Error 404"; alert("Error 404 The requested resource could not be found."); }
+            else if (statusCode == 429) { errorstate = "Error 429"; if (editor) messageBox("error", "Model " + mymodel + " is overloaded."); }
+            else if (statusCode == 456) { errorstate = "Error 456"; }
+            else if (statusCode == 503) { errorstate = "Error 503"; messageBox("error", "The server cannot handle the request"); }
+            else { errorstate = "NOK"; if (editor) messageBox("error", "Uncaught error: " + statusCode); }
+            return errorstate;
+        }
+
+        errorstate = "OK";
+        const open_ai_response = data.choices[0];
+        if (typeof open_ai_response.message.content !== 'undefined') {
+            let text = open_ai_response.message.content;
+            //console.debug("Review text response:", text);
+
+            if (text !="" && text.indexOf("Yes") !== -1) {
+                // Remove existing checkmark if present then add fresh one
+                if (preview.innerHTML.startsWith('\u{2705}')) {
+                    preview.innerHTML = preview.innerHTML.replace('\u{2705}', "");
+                }
+                // Remove any previous reason element if the row was re-reviewed
+                const existingReason = preview.querySelector('.review-reason');
+                if (existingReason) existingReason.remove();
+
+                preview.innerHTML = '\u{2705}' + " " + preview.innerHTML;
+            } else {
+                // Extract reason after "No: "
+                const reasonMatch = text.match(/No[,:]?\s*(.*)/i);
+                const reason = reasonMatch && reasonMatch[1] ? reasonMatch[1].trim() : "No reason provided";
+
+                if (preview.innerHTML.startsWith('\u{26A0}')) {
+                    preview.innerHTML = preview.innerHTML.replace('\u{26A0}', "");
+                }
+                // Remove any previous reason element to avoid duplicates
+                const existingReason = preview.querySelector('.review-reason');
+                if (existingReason) existingReason.remove();
+
+                preview.innerHTML = '\u{26A0}' + " " + preview.innerHTML;
+
+                // Add reason below the translation text
+                const reasonElem = document.createElement('div');
+                reasonElem.className = 'review-reason';
+                reasonElem.style.cssText = 'font-size: 0.75em; color: #e53e3e; margin-top: 4px; font-style: italic;';
+                reasonElem.innerText = reason;
+                preview.appendChild(reasonElem);
+            }
+        } else {
+            console.debug("No text received!");
+            errorstate = "NOK";
+        }
+
+        return errorstate;
+
+    } catch (err) {
+        console.error("reviewTransAI fetch failed:", err);
+        errorstate = "NOK";
+        return errorstate;
+    }
+}

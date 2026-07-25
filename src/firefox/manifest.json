@@ -134,6 +134,7 @@
         "jsstore.worker.js",
         "wptf-commonTranslate.js",
         "wptf-ClaudeTrans.js",
+        "wptf-KimiTrans.js",
         "wptf-koboldcppTrans.js",
         "wptf-openAITrans.js",
         "wptf-openRouter.js",
@@ -150,6 +151,7 @@
         "wptf-testRunner.js",
         "wptf_Fetch_themes.js",
         "wptf-translatePageGroq.js",
+        "wptf-translatePageKimi.js",
         "wptf-translatePageClaude.js",
         "wptf-translatePageOpenRouter.js",
         "contentScript.js"

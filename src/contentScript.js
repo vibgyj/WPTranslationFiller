@@ -164,6 +164,7 @@ function setupTooltipHandler() {
         }
     });
 
+
     document.addEventListener('click', (event) => {
         const button = event.target.closest('button.panel-header-actions__next.with-tooltip');
         if (!button) return;
@@ -1270,8 +1271,8 @@ function impFileClicked(event) {
 
 function translatePageClicked(event) {
     if (event) event.preventDefault();
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP", "OpenAIPrompt", "ClaudePrompt", "ClaudSelect", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel", "ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect", "GeminiPrompt", "LMStudioWait", "groqBatchSize"], async function (data) {
-        if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined' || typeof data.apikeyOpenRouter != "undefined" && data.apikeyOpenRouter != "" && data.transsel == "openRouter") {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyKimi", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP", "OpenAIPrompt", "ClaudePrompt", "ClaudSelect", "KimiSelect","OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel", "ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect", "GeminiPrompt", "LMStudioWait", "groqBatchSize"], async function (data) {
+        if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined' || typeof data.apikeyOpenRouter != "undefined" && data.apikeyOpenRouter != "" && data.transsel == "openRouter" || typeof data.apikeyKimi != "undefined" && data.apikeyKimi != "" && data.transsel == "kimi") {
             if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                 if (data.transsel != "undefined") {
                     let formal       = toBoolean(data.ForceFormal) === true ? true : checkFormal(false);
@@ -1283,7 +1284,8 @@ function translatePageClicked(event) {
                         let result = await checkModelAndContinue(data.ollamaModel);
                         if (!result) return;
                     }
-                    translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.DeepLWait, data.OpenAiGloss, data.ClaudePrompt, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.groqBatchSize);
+                    //console.debug("KimiSelect:",data.KimiSelect)
+                    translatePage(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyKimi, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.DeepLWait, data.OpenAiGloss, data.ClaudePrompt, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.groqBatchSize,data.KimiSelect);
                 } else { messageBox("error", "You need to set the translator API"); }
             } else { messageBox("error", "You need to set the parameter for Destination language"); }
         } else { messageBox("error", "For " + data.transsel + " no apikey is set!"); }
@@ -1341,6 +1343,9 @@ async function loadGlossaries() {
         if (glossary1Valid) {
             ["glossary1", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map(l => "glossary1" + l)].forEach(key => loadSet(glossary1, data[key]));
             glossary1.sort((a, b) => b.key.length - a.key.length);
+        }
+        if (toBoolean(DebugMode)) {
+            console.debug("glossary loaded:", glossary.length, "entries; formal loaded:", glossary1.length, "entries");
         }
         return "success";
     } catch (error) {
@@ -1921,12 +1926,12 @@ function translateEntryClicked(event) {
     let myrowId = event.target.id.split("-")[2];
     if (typeof myrowId != "undefined" && myrowId != "translation") rowId = rowId.concat("-", myrowId);
     
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiSelect", "GeminiPrompt", "groqSelect", "LocalOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudSelect", "ollamaModel", "ollamaPrompt", "LMStudioWait"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyDeepSeek","apikeyKimi", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiSelect", "GeminiPrompt", "groqSelect", "KimiSelect","LocalOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudSelect", "ollamaModel", "ollamaPrompt", "LMStudioWait"], function (data) {
         let formal = toBoolean(data.ForceFormal) === true ? true : checkFormal(false);
         let OpenAItemp    = parseFloat(data.OpenAItemp);
         let deeplGlossary = localStorage.getItem('deeplGlossary');
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyNLP, data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.OpenAiGloss, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyKimi, data.apikeyNLP, data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.OpenAiGloss, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.KimiSelect);
         } else {
             messageBox("error", "You need to set the parameter for Destination language");
         }
