@@ -164,12 +164,11 @@ document.getElementById('show-changelog-link').addEventListener('click', functio
 // ============================================================
 
 // Models we never want in a chat-model dropdown (audio, safety/guard, tts, language-specialized, etc.)
-const GROQ_EXCLUDE_PATTERN = /whisper|tts|playai|orpheus|llama-guard|prompt-guard|allam|compound/i;
+const GROQ_EXCLUDE_PATTERN = /whisper|tts|playai|orpheus|guard|allam|compound/i;
 
 // Fallback list used if the fetch fails (no key yet, offline, API error, etc.)
 const GROQ_FALLBACK_MODELS = [
     "qwen/qwen3.6-27b",
-    "qwen/qwen3-32b",
     "openai/gpt-oss-20b",
     "openai/gpt-oss-120b",
     "openai/gpt-oss-safeguard-20b",
@@ -188,6 +187,7 @@ async function fetchGroqModels(apiKey) {
         throw new Error("HTTP " + resp.status);
     }
     const json = await resp.json();
+    console.debug("Fetched Groq models:", json.data.map(m => m.id));
     return json.data
         .map(m => m.id)
         .filter(id => !GROQ_EXCLUDE_PATTERN.test(id))

@@ -2508,18 +2508,20 @@ async function markElements(preview, replaceVerb, orgText, spellcheckIgnore, rep
             // (fixed: sentence rearrangements/case fixes are not in orgText,
             //  so checking only nwText skipped them)
             //if (translatedText != 'undefined') {
-            console.debug("checking markElements: from:", from, "to:", to, "translatedText:", translatedText, "nwText:", nwText)
-                if (translatedText.includes(to) || nwText.includes(from)) {
+            if (toBoolean(DebugMode)) {
+                console.debug("checking markElements: from:", from, "to:", to, "translatedText:", translatedText, "nwText:", nwText)
+            }
+            if (translatedText.includes(to) || nwText.includes(from)) {
                     // (fixed: removed the character-strip regex — it corrupted
                     //  sentences like '%s uit winkelwagen verwijderen' so they
                     //  could never be found by highlight)
-                    let high = to.trim();
+               let high = to.trim();
 
                     // do not push empty strings or single brackets!
-                    if (high !== '' && high !== '[' && high !== ']') {
-                        arr.push(high);
-                    }
-                }
+               if (high !== '' && high !== '[' && high !== ']') {
+                    arr.push(high);
+               }
+            }
             //}
         }
 
@@ -5348,7 +5350,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
             apikeyOpenRouter, OpenAIPrompt, OpenRouterSelect,
             destlang, preTranslationReplace, postTranslationReplace,
             formal, convertToLower, is_editor, OpenAItemp,
-            spellCheckIgnore, OpenAITone, openAiGloss
+            spellCheckIgnore, OpenAITone, openAiGloss,groqBatchSize
          );
     }
     else {

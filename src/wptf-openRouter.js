@@ -2,6 +2,78 @@
  * This file includes all functions for translating with the openRouter API and uses a promise
  * It depends on commonTranslate for additional translation functions
  */
+
+// ─── Token-budget config ─────────────────────────────────────────────
+// Hard output-token ceilings per model. These are PLACEHOLDERS — replace with
+// the real values from each model's OpenRouter page or the /api/v1/models endpoint.
+const MODEL_MAX_OUTPUT = {
+    "deepseek/deepseek-v4-pro": 8192,
+    "deepseek/deepseek-v4-flash": 8192,
+    "openai/gpt-5.5": 16384,
+    "openai/gpt-5.6-luna": 16384,
+    "openai/gpt-chat-latest": 16384,
+    "qwen/qwen3.6-flash": 8192,
+    "qwen/qwen3.7-plus": 8192,
+};
+const DEFAULT_MAX_OUTPUT = 4096; // conservative fallback for unlisted models
+
+// Token headroom to reserve for reasoning at each effort level. On OpenAI-style
+// APIs the output cap also counts reasoning tokens, so this is added on top.
+const REASONING_HEADROOM = { none: 0, minimal: 256, low: 1024, medium: 4096, high: 8192 };
+
+// ─── Per-model request tuning ────────────────────────────────────────
+// Declared at module scope so every function below can read them and they are
+// always initialized before use (avoids the temporal-dead-zone ReferenceError).
+// Keys must be the EXACT OpenRouter IDs you send (and that show up in your log).
+//
+// NOTE on reasoning:
+//   - OpenAI gpt-5.x understand effort tiers → use { effort: "minimal" }.
+//   - DeepSeek / Qwen treat effort as "reasoning ON", which is SLOWER. They had
+//     reasoning on by default, so we explicitly disable it: { enabled: false }.
+//   - If a model ever starts returning HTTP 400 on { enabled: false } it has
+//     MANDATORY reasoning — change that one entry to {} to omit the param instead.
+const modelConfig = {
+    // Non-OpenAI: reasoning off (was on by default; large latency win).
+    "deepseek/deepseek-v4-pro":   { reasoning: { enabled: false } },
+    "deepseek/deepseek-v4-flash": { reasoning: { enabled: false } },
+    "qwen/qwen3.6-flash":         { reasoning: { enabled: false } },
+    "qwen/qwen3.7-plus":          { reasoning: { enabled: false } },
+
+    // OpenAI: effort tiers work as intended.
+    "openai/gpt-5.5":             { reasoning: { effort: "minimal" }, verbosity: "low" },
+    "openai/gpt-5.6-luna":        { reasoning: { effort: "minimal" }, verbosity: "low" },
+    "openai/gpt-chat-latest":     {},   // non-reasoning: send nothing extra
+};
+
+// Fallback models per primary. Keys must be the EXACT prefixed OpenRouter IDs.
+const fallbackMap = {
+    "openai/gpt-5.5":    ["openai/gpt-chat-latest"],
+    "qwen/qwen3.7-plus": ["qwen/qwen3.6-flash"],
+};
+
+/**
+ * Compute a safe max output-token budget for a translation request.
+ *
+ * @param {number} promptTokens        Estimated input tokens.
+ * @param {string} model               Full prefixed id, e.g. "qwen/qwen3.7-plus".
+ * @param {object} [opts]
+ * @param {number} [opts.expansion=1.8] Output/input length ratio. Bump up if you
+ *                                      see truncation (German, Finnish, from CJK…).
+ * @param {number} [opts.floor=256]     Never cap below this.
+ * @param {string} [opts.effort="none"] Reasoning effort you're sending for this model.
+ * @returns {number} max output tokens to send.
+ */
+function computeMaxTokens(promptTokens, model, opts = {}) {
+    const { expansion = 1.8, floor = 256, effort = "none" } = opts;
+
+    const outputEstimate = Math.max(Math.ceil(promptTokens * expansion), floor);
+    const budget = outputEstimate + (REASONING_HEADROOM[effort] ?? 0);
+    const ceiling = MODEL_MAX_OUTPUT[model] ?? DEFAULT_MAX_OUTPUT;
+
+    return Math.min(budget, ceiling);
+}
+// ─────────────────────────────────────────────────────────────────────
+
 // Call this at the start of your translation batch loop
 function startTranslationBatch() {
   localStorage.setItem('openai_prompt_sent', 'false');
@@ -15,7 +87,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenCloudSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
+async function openRouterTranslate(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
     var timeout = 50;
     errorstate = "OK";
     //console.debug("Starting openRouterTranslate for rowId:", rowId, "original:", original)
@@ -23,11 +95,13 @@ async function openRouterTranslate(original, destlang, record, apikeyOpenRouter,
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
     
     // Wait the timeout delay if needed
-   // await delay(timeout);
-    
+    // await delay(timeout);
+    const start = performance.now();
     // Await the translation call
-    var result = await getopenRouter(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenCloudSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
-    
+    var result = await getopenRouter(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    //const duration = performance.now() - start;
+    const durationSeconds = (performance.now() - start) / 1000;
+    console.log(`model:` + OpenRouterSelect+ ` took ${durationSeconds.toFixed(3)}s`);
     // You can handle errorstate or result here if needed
     return result;
 }
@@ -105,94 +179,32 @@ messages = [
 
   if (OpenRouterSelect === 'undefined' || !OpenRouterSelect) {
     messageBox("error", "You did not set the OpenRouter model!<br> Please check your options");
-    return "NOK";
-  }
- // reasoning={"effort": "minimal"}
-    const mymodel = OpenRouterSelect.toLowerCase();
-   if (show_debug) console.debug("Model selected:",mymodel);
-    let dataNew = {};
-    //mymodel= "openrouter/free"
-   // Define fallbacks per primary model (or null for no fallback)
-    const fallbackMap = {
-  "gpt-oss-20b":         ["openai/gpt-5.4-nano", "openai/gpt-4o-mini"],
-  "gpt-5":               ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
-  "gpt-5-mini":          ["openai/gpt-4o-mini", "google/gemini-flash-1.5"],
-  "gpt-5-nano":          ["openai/gpt-4o-mini"],
-  "gpt-5.1":             ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
-  "gpt-5.1-mini":        ["openai/gpt-4o-mini"],
-  "gpt-5.1-nano":        ["openai/gpt-4o-mini"],
-  "gpt-5.4":             ["openai/gpt-4o"],
-  "gpt-5.3-chat-latest": ["openai/gpt-4o", "anthropic/claude-3-opus"],
-    };
+        return "NOK";
+    }
 
-    //let max_Tokens = await estimateMaxTokens(originalPreProcessed);
-    let prompt_tokens = await estimateMaxTokens(content);
-    max_Tokens = prompt_tokens
-if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
-    dataNew = {
+    const mymodel = OpenRouterSelect.toLowerCase();
+
+    if (toBoolean(DebugMode)) console.debug("Model selected:", mymodel);
+    const prompt_tokens = await estimateMaxTokens(content);
+    const effort = modelConfig[mymodel]?.reasoning?.effort ?? "none";
+    const max_Tokens = computeMaxTokens(prompt_tokens, mymodel, { effort });
+
+    const base = {
         model: mymodel,
         messages,
-        max_completion_tokens: max_Tokens,
+        max_tokens: max_Tokens,   // OpenRouter normalized field — applies across all providers
         top_p: Number(Top_p),
-        top_k: Number(Top_k),
-        frequency_penalty: 0,
-        presence_penalty: 0,
-        reasoning_effort: 'minimal',
-        verbosity: 'low',
-        apiKey: apikeyOpenRouter,
-        prompt_cache_key: 'WPTF translation',
-        guardrails: false,
-    };
-}
-else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4" || mymodel === 'moonshotai/kimi-k3') {
-    dataNew = {
-        model: mymodel,
-        messages,
-        max_completion_tokens: max_Tokens,
-        top_p: Number(Top_p),
-        frequency_penalty: 0,
-        presence_penalty: 0,
-        reasoning_effort: 'none',
-        verbosity: 'low',
-        apiKey: apikeyOpenRouter,
-        prompt_cache_key: 'WPTF translation',
-        guardrails: false,
-    };
-}
-else if (mymodel === "gpt-5.3-chat-latest") {
-    dataNew = {
-        model: mymodel,
-        messages,
-        max_completion_tokens: max_Tokens,
-        top_p: Number(Top_p),
-        frequency_penalty: 0,
-        presence_penalty: 0,
-        reasoning_effort: 'medium',
-        verbosity: 'low',
-        apiKey: apikeyOpenRouter,
-        prompt_cache_key: 'WPTF translation',
-        guardrails: false,
-    };
-}
-else {
-    dataNew = {
-        model: mymodel,
-        messages,
-        n: 1,
         temperature: OpenAItemp,
         frequency_penalty: 0,
         presence_penalty: 0,
-        top_p: Number(Top_p),
         apiKey: apikeyOpenRouter,
-        //guardrails: false,
+        prompt_cache_key: "WPTF translation",
     };
-}
 
-// Inject fallback models if defined for this model
-const fallbacks = fallbackMap[mymodel];
-if (fallbacks) {
-    dataNew.models = [mymodel, ...fallbacks];
-}
+    let dataNew = { ...base, ...(modelConfig[mymodel] ?? {}) };
+
+    const fallbacks = fallbackMap[mymodel];
+    if (fallbacks) dataNew.models = [mymodel, ...fallbacks];
   
     try {
         const start = Date.now()
@@ -345,22 +357,6 @@ if (fallbacks) {
         console.error("Fetch OpenAI failed:", err);
         return null;
     }
-
-    console.debug("result:")
-  //  if (!OpenAiResponse.ok) {
-      // error object from OpenAI might be in data.error.message
-   //   const errorMsg = data?.error?.message || `HTTP error ${response.status}`;
-  //    if (editor) messageBox("error", `OpenAI API Error: ${errorMsg}`);
-  //    if (show_debug) console.error("OpenAI API error:", errorMsg);
-  //    return "NOK";
-  //  }
-
-  
- // } catch (error) {
- //   if (editor) messageBox("error", "OpenAI API fetch error: " + error.message);
- //   if (show_debug) console.error("OpenAI fetch error:", error);
- //   return "NOK";
- // }
 }
 
 
@@ -387,14 +383,9 @@ async function reviewopenRouter(original, language, record, apikeyOpenAI, OpenAI
     current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     prevstate = current.innerText;
     language = language.toUpperCase();
-    // $openai_query.= 'For the english text  "'.$original_singular. '", is "'.$translation. '" a correct translation in '.$gp_locale -> english_name. '?';
     //console.debug("Review prompt:", reviewPrompt)
     var prompt = reviewPrompt.replace('placeholder_original', original)
     prompt = prompt.replace('placeholder_translated',translatedText)
-    //var prompt = 'I want you to act as a translation reviewer for the provided English text: "' + original + '", translated into Dutch text: "' + translatedText + '". Please check if all words are completely translated, review the interpunctuation to match the English text, and ensure that placeholders are accurately preserved. Please maintain HTML in their respective places. Please answer with "Yes" or "No".'
-    //  var prompt = 'I want you to act as translation improver. I do not want you to explain improvements. Give the answer in English. For the English text  "' + original + '", is "' + translatedText + '\" the correct translation in "Dutch"?';
-    // console.debug("prompt:", prompt)
-    //var prompt = encodeURIComponent(prompt);
     originalPreProcessed = "'" + originalPreProcessed + "'" + "|\n"
     var message = [{ 'role': 'user', 'content': prompt }];
     let mymodel = "gpt-3.5-turbo"
@@ -410,15 +401,6 @@ async function reviewopenRouter(original, language, record, apikeyOpenAI, OpenAI
         stop: '|\n',
     }
 
-  //  var mydata = {
-   //     "model": "text-davinci-003",
-   //     "prompt": "${prompt}",
-    //    "temperature": 0,
-    //    "max_tokens": 1000,
-   //     "top_p": 1,
-  //      "frequency_penalty": 0,
-  //      "presence_penalty": 0
-  //  }
     var newdata = {
         "model": "text-davinci-edit-001",
         "input": originalPreProcessed,

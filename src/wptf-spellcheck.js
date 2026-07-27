@@ -312,7 +312,7 @@ async function spellcheck_entry(translation, found_verbs, replaced, countfound, 
                         }   
                     }
                     // PSS result only needs to be processed if all verb in sentence have been found
-                    console.debug("found verbs:", found_verbs)
+                    //console.debug("found verbs:", found_verbs)
                     //console.debug("newtext:", previewNewText)
                    // console.debug("ignore:", spellcheckIgnore)
                     entry_res = await process_result(found_verbs, replaced, countfound, e, newrowId, currec, previewNewText, spellcheckIgnore)
@@ -456,6 +456,10 @@ async function process_result(found_verbs, replaced, countfound, e, newrowId, cu
             preview = document.querySelector("#preview-" + myrow + " td.translation");
             new_row = myrow;
         }
+        if (toBoolean(DebugMode)) {
+            console.debug("preview:", preview)
+            console.debug("row:", new_row)
+        }
         // if there is no preview for the plural, we do not need to populate it
         //if (preview != null) {
          //   preview.appendChild(myspan1);
@@ -463,9 +467,9 @@ async function process_result(found_verbs, replaced, countfound, e, newrowId, cu
 
             // PSS populate the preview before marking
            // preview.innerText = DOMPurify.sanitize(previewNewText);
-            console.debug("OrgText:", orgText)
-            console.debug("preview:", preview)
-            console.debug("found_verbs:", found_verbs)
+           // console.debug("OrgText:", orgText)
+            //console.debug("preview:", preview)
+           //  console.debug("found_verbs:", found_verbs)
         
         if (typeof preview != "undefined") {
                // console.debug("spellcheck:",found_verbs)

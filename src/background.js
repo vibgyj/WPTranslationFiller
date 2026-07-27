@@ -40,33 +40,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             (async () => {
                 try {
                     const { apiKey, text, sourceLang, targetLang, formal, locale, model, prompt, max_tokens, Top_p, Top_k } = request.data;
-                    //console.debug("model:", model)
-                    //console.debug("max:",max_tokens)
-                    let URL = `https://generativelanguage.googleapis.com/v1/models/` + model + `:generateContent?key=${apiKey}`
-                    const res = await fetch(URL,
 
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                            },
-                            body: JSON.stringify({
-                                contents: [
-                                    { role: "user", parts: [{ text: prompt }] }
-                                ],
-                                generationConfig: {
-                                    temperature: 0.0,
-                                    topP: Top_p,
-                                    topK: Top_k,
-                                    maxOutputTokens: max_tokens
-                                }
-                            }),
-                            // Firefox-specifieke optimalisaties:
-                            keepalive: true,       // Houd de verbinding open voor hergebruik
-                            priority: 'high'      // Experimentele optie voor hogere prioriteit (Firefox)
-                        }
-                    );
+                    // 3.x models use thinkingLevel (not thinkingBudget). Pro models don't
+                    // accept "minimal" (floor is "low"); Flash-tier models do accept "minimal".
+                    const isV3 = /^gemini-3\./.test(model) || model === "gemini-flash-latest";
+                    const isPro = /pro/.test(model);
+
+                    let URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+                    const generationConfig = { maxOutputTokens: max_tokens };
+                    if (isV3) {
+                        generationConfig.thinkingConfig = { thinkingLevel: isPro ? "low" : "minimal" };
+                    } else {
+                        generationConfig.temperature = 0.0;
+                        if (Top_p !== undefined) generationConfig.topP = Top_p;
+                        if (Top_k !== undefined) generationConfig.topK = Top_k;
+                    }
+
+                    const res = await fetch(URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                { role: "user", parts: [{ text: prompt }] }
+                            ],
+                            generationConfig
+                        }),
+                        keepalive: true,
+                        priority: 'high'
+                    });
 
                     let data;
                     try {
@@ -75,7 +79,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         throw new Error(`Failed to parse Gemini response (HTTP ${res.status})`);
                     }
 
-                    // HTTP-fouten expliciet afhandelen
                     if (!res.ok) {
                         let errorMessage = `Gemini request failed (HTTP ${res.status})`;
 
@@ -83,7 +86,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             errorMessage += `: ${data.error.message}`;
                         }
 
-                        // Extra details indien beschikbaar
                         if (data?.error?.details?.[0]?.fieldViolations?.length) {
                             const violations = data.error.details[0].fieldViolations
                                 .map(v => `${v.field}: ${v.description}`)
@@ -114,7 +116,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     });
                 }
             })();
-        },0)
+        }, 0);
 
     return true;
 }

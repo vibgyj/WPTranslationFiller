@@ -71,8 +71,9 @@ function kimiAlwaysThinks(model) {
 /** Clear the progress bar / spinner the caller put up. */
 function hideKimiProgress() {
   const progressbar = document.querySelector('.indeterminate-progress-bar');
-  if (progressbar) progressbar.style.display = 'none';
-  if (typeof hideTranslationSpinner === 'function') hideTranslationSpinner();
+    if (progressbar) progressbar.style.display = 'none';
+    if (typeof hideTranslationSpinner === 'function') hideTranslationSpinner();
+    messageBox("info", __("Translation is ready"));
 }
 
 /* ------------------------------------------------------------------ *

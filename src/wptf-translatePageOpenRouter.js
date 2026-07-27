@@ -4,6 +4,11 @@
  * same row scanning, same immediate/batch split,
  * same correction-retry loop, same post-processing.
  * Only the API call and payload building differ.
+ *
+ * DEPENDENCY: shares modelConfig, fallbackMap and
+ * computeMaxTokens with wptf-openRouter.js (single
+ * source of truth for reasoning/tuning per model).
+ * That file must load before any translation runs.
  ****************************************************/
 
 /****************************************************
@@ -56,81 +61,39 @@ function orResolveTone(OpenAITone, destlang) {
 }
 
 /****************************************************
- * FALLBACK MAP  (verbatim from getopenRouter)
+ * PAYLOAD BUILDER
+ * Uses the shared modelConfig / fallbackMap from
+ * wptf-openRouter.js so the bulk path and the
+ * single-entry path stay in sync automatically:
+ *   - DeepSeek / Qwen  → reasoning { enabled:false }
+ *   - OpenAI gpt-5.x   → reasoning { effort:"minimal" }
+ * maxTokens is computed per-batch and passed in, so the
+ * cap is sized for the full 10-item JSON response (not a
+ * single short string) — this prevents truncated JSON
+ * that would otherwise trip the correction-retry loop.
  ****************************************************/
-var OR_BULK_FALLBACK_MAP = {
-    // OpenAI GPT models
-    "gpt-oss-20b":                              ["openai/gpt-5.4-nano", "openai/gpt-4o-mini"],
-    "gpt-5":                                    ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
-    "gpt-5-mini":                               ["openai/gpt-4o-mini", "google/gemini-flash-1.5"],
-    "gpt-5-nano":                               ["openai/gpt-4o-mini"],
-    "gpt-5.1":                                  ["openai/gpt-4o", "anthropic/claude-3.5-sonnet"],
-    "gpt-5.1-mini":                             ["openai/gpt-4o-mini"],
-    "gpt-5.1-nano":                             ["openai/gpt-4o-mini"],
-    "gpt-5.4":                                  ["openai/gpt-4o"],
-    "gpt-5.3-chat-latest":                      ["openai/gpt-4o", "anthropic/claude-3-opus"],
-    // Google Gemini models
-    "google/gemini-2.5-flash-lite-preview-09-2025": ["google/gemini-2.5-flash", "openai/gpt-4o-mini"],
-    "google/gemini-2.5-flash":                  ["google/gemini-2.5-flash-lite-preview-09-2025", "openai/gpt-4o-mini"],
-    // Meta Llama models
-    "meta-llama/llama-3.3-70b-instruct":        ["google/gemini-2.5-flash-lite-preview-09-2025", "openai/gpt-4o-mini"],
-    // OpenAI via OpenRouter
-    "openai/gpt-4o-mini":                       ["google/gemini-2.5-flash-lite-preview-09-2025", "meta-llama/llama-3.3-70b-instruct"],
-    "openai/gpt-4o":                            ["openai/gpt-4o-mini", "google/gemini-2.5-flash"],
-};
+function orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp, maxTokens) {
+    const mymodel = model.toLowerCase();
+    const _topP   = typeof Top_p !== 'undefined' ? Number(Top_p) : 1;
 
-/****************************************************
- * PAYLOAD BUILDER  (mirrors getopenRouter branching)
- ****************************************************/
-function orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp) {
-    const mymodel  = model.toLowerCase();
-    const _maxTok  = typeof max_Tokens !== 'undefined' ? max_Tokens : 2048;
-    const _topP    = typeof Top_p      !== 'undefined' ? Number(Top_p) : 1;
-    const _topK    = typeof Top_k      !== 'undefined' ? Number(Top_k) : 0;
+    const base = {
+        model: mymodel,
+        messages,
+        max_tokens: maxTokens,          // normalized field — applies on all providers
+        top_p: _topP,
+        temperature: OpenAItemp,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        apiKey: apikeyOpenRouter,
+        prompt_cache_key: 'WPTF translation',
+    };
 
-    let dataNew = {};
+    // Per-model reasoning/verbosity from the shared table. Falls back to {} for
+    // any model not listed, which sends no reasoning param (model default).
+    const cfg = (typeof modelConfig !== 'undefined' && modelConfig[mymodel]) || {};
+    let dataNew = { ...base, ...cfg };
 
-    if (["gpt-5", "gpt-5-mini", "gpt-5-nano"].includes(mymodel)) {
-        dataNew = {
-            model: mymodel, messages,
-            max_completion_tokens: _maxTok,
-            top_p: _topP, top_k: _topK,
-            frequency_penalty: 0, presence_penalty: 0,
-            reasoning_effort: 'minimal', verbosity: 'low',
-            apiKey: apikeyOpenRouter,
-            prompt_cache_key: 'WPTF translation', guardrails: false,
-        };
-    } else if (["gpt-5.1", "gpt-5.1-mini", "gpt-5.1-nano", "gpt-5.4"].includes(mymodel)) {
-        dataNew = {
-            model: mymodel, messages,
-            max_completion_tokens: _maxTok,
-            top_p: _topP,
-            frequency_penalty: 0, presence_penalty: 0,
-            reasoning_effort: 'none', verbosity: 'low',
-            apiKey: apikeyOpenRouter,
-            prompt_cache_key: 'WPTF translation', guardrails: false,
-        };
-    } else if (mymodel === "gpt-5.3-chat-latest") {
-        dataNew = {
-            model: mymodel, messages,
-            max_completion_tokens: _maxTok,
-            top_p: _topP,
-            frequency_penalty: 0, presence_penalty: 0,
-            reasoning_effort: 'medium', verbosity: 'low',
-            apiKey: apikeyOpenRouter,
-            prompt_cache_key: 'WPTF translation', guardrails: false,
-        };
-    } else {
-        dataNew = {
-            model: mymodel, messages,
-            n: 1, temperature: OpenAItemp,
-            frequency_penalty: 0, presence_penalty: 0,
-            top_p: _topP,
-            apiKey: apikeyOpenRouter,
-        };
-    }
-
-    const fallbacks = OR_BULK_FALLBACK_MAP[mymodel];
+    const fallbacks = (typeof fallbackMap !== 'undefined' && fallbackMap[mymodel]) || null;
     if (fallbacks) dataNew.models = [mymodel, ...fallbacks];
 
     return dataNew;
@@ -152,11 +115,11 @@ async function callOpenRouter(dataNew) {
  * OPENROUTER CALL WITH RETRY + BACKOFF
  * Mirrors callClaudeWithRetry — handles 429 / 500
  ****************************************************/
-async function callORWithRetry(messages, apikeyOpenRouter, model, OpenAItemp, maxRetries = 3) {
+async function callORWithRetry(messages, apikeyOpenRouter, model, OpenAItemp, maxTokens, maxRetries = 3) {
     let attempt = 0;
 
     while (true) {
-        const dataNew = orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp);
+        const dataNew = orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp, maxTokens);
         const result  = await callOpenRouter(dataNew);
 
         // Success — no error field means the call worked
@@ -345,7 +308,7 @@ async function translatePageOpenRouter(
 ) {
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
-
+    //console.debug("Batch:",openRouterBatchSize)
     if (!OpenRouterSelect || OpenRouterSelect === 'undefined') {
         messageBox("error", "You did not set the OpenRouter model!<br> Please check your options");
         return 'NOK';
@@ -525,6 +488,11 @@ async function translatePageOpenRouter(
     const resolvedLanguage = orResolveLanguage(destlang);
     const resolvedTone     = orResolveTone(OpenAITone, destlang);
 
+    // Reasoning effort for the selected model (used to size the token cap).
+    const selectedModel  = OpenRouterSelect.toLowerCase();
+    const selectedEffort = (typeof modelConfig !== 'undefined'
+        && modelConfig[selectedModel]?.reasoning?.effort) || "none";
+
     // Fill static placeholders once — language and tone never change between batches
     const basePrompt = applyORPromptBase(OpenAIPrompt, resolvedLanguage, resolvedTone);
 
@@ -558,6 +526,12 @@ async function translatePageOpenRouter(
 
         const messages = [{ role: "user", content: batchPrompt }];
 
+        // Size the output cap for the FULL batch response (all items as JSON),
+        // not a single string. Computed from the actual batch prompt so bigger
+        // batches get more room and the JSON never truncates mid-array.
+        const promptTokens   = await estimateMaxTokens(batchPrompt);
+        const batchMaxTokens = computeMaxTokens(promptTokens, selectedModel, { effort: selectedEffort });
+
         let parsed = null;
 
         // Correction-retry loop — identical strategy to Claude
@@ -581,7 +555,7 @@ async function translatePageOpenRouter(
 
             //console.debug('[OR Bulk] Sending prompt (attempt ' + (attempt + 1) + ')');
             const result = await callORWithRetry(
-                correctionMessages, apikeyOpenRouter, OpenRouterSelect, OpenAItemp
+                correctionMessages, apikeyOpenRouter, OpenRouterSelect, OpenAItemp, batchMaxTokens
             );
 
             if (result.error) {
