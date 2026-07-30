@@ -1,8 +1,15 @@
 ﻿/****************************************************
  * GROQ BATCH TRANSLATE PAGE
- * Version: 2026-07-19.4
+ * Version: 2026-07-30.1
  *
  * Changelog:
+ * 2026-07-30.1  Added [[COMMENT]] prompt-comment stripping
+ *               (stripPromptComments helper + guard, [[COMMENT]]
+ *               marker only at line start) and per-item translation
+ *               context: the "context bubble" is read in the scan
+ *               phase, attached to single items, threaded through
+ *               enrichedItems, the batch payload ("c" field) and the
+ *               retry sweep. Matches the KoboldCPP batch conventions.
  * 2026-07-19.4  User-selected model always has first priority and
  *               returns automatically ("homing") when its cooldown
  *               expires; sticky model demoted to preferred fallback.
@@ -36,14 +43,32 @@
  * - Local label added to pretranslated rows
  * - Adaptive inter-batch delay based on 429 pressure
  * - Per-item glossary embedded in JSON payload (not a shared block)
+ * - [[COMMENT]] prompt-comment stripping
+ * - Per-item translation context ("c" field from the context bubble)
  ****************************************************/
 
 if (typeof GROQ_TRANSLATE_VERSION === "undefined") {
-    var GROQ_TRANSLATE_VERSION = "2026-07-19.4";
+    var GROQ_TRANSLATE_VERSION = "2026-07-30.1";
 }
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/****************************************************
+ * PROMPT COMMENTS
+ * Lines that START with [[COMMENT]] are notes for you (e.g. which
+ * model/API the prompt is for). They are stripped before the prompt
+ * is sent to the model, so they never influence the translation.
+ * The marker only counts at the start of a line, so [[COMMENT]]
+ * appearing mid-text is left untouched. Guarded so it can be shared
+ * with the KoboldCPP file without a double-definition conflict.
+ ****************************************************/
+if (typeof stripPromptComments === "undefined") {
+    function stripPromptComments(prompt) {
+        if (!prompt) return prompt;
+        return prompt.replace(/^[ \t]*\[\[COMMENT\]\].*(?:\r?\n|$)/gm, "");
+    }
 }
 
 /****************************************************
@@ -625,6 +650,11 @@ async function translatePageGroq(
         //console.debug("[Groq] Scanning row id=" + rowId + " original=" + original)
         if (!original) continue;
 
+        // Optional translation context from the "context bubble" field.
+        // Safe access: not every row has one. Only single (non-plural)
+        // UI strings carry meaningful context; plurals are skipped.
+        const mycontext = e.getElementsByClassName("context bubble")[0]?.innerText?.trim() || "";
+        console.debug("context:",mycontext)
         const plural1 = document.querySelector("#preview-" + rowId + " .original li:nth-of-type(1)");
         const plural2 = document.querySelector("#preview-" + rowId + " .original li:nth-of-type(2)");
 
@@ -670,7 +700,7 @@ async function translatePageGroq(
 
         batchQueue.push({
             id: rowId, type: "single", record: e,
-            items: [{ id: rowId, line: 1, original }]
+            items: [{ id: rowId, line: 1, original, context: mycontext }]
         });
     }
 
@@ -814,7 +844,9 @@ async function translatePageGroq(
     };
     const resolvedLanguage = LOCALE_TO_LANGUAGE[destlang] ?? destlang;
 
-    // Fill static placeholders once — language and tone never change between batches
+    // Strip [[COMMENT]] note lines, then fill static placeholders once
+    // — language and tone never change between batches.
+    OpenAIPrompt = stripPromptComments(OpenAIPrompt);
     const basePrompt = applyPromptBase(OpenAIPrompt, resolvedLanguage, OpenAITone);
 
     // Resolve the fallback chain against Groq's live model list so
@@ -872,7 +904,11 @@ async function translatePageGroq(
          *      visible in the ### Glossary section
          *   2. "g" field per item in the JSON payload — so the model
          *      knows exactly which terms apply to each specific string
+         *
+         * The per-item translation context ("c") is carried through
+         * from the scan phase alongside preprocessed + glossary.
          ****************************************************/
+        console.debug("glossary:",openAiGloss)
         const enrichedItems = await Promise.all(
             allItems.map(async item => {
                 const [preprocessed, prunedGlossary] = await Promise.all([
@@ -882,14 +918,16 @@ async function translatePageGroq(
                 return {
                     id: item.id, line: item.line,
                     text: item.original, preprocessed,
-                    glossary: prunedGlossary || ""
+                    glossary: prunedGlossary || "",
+                    context: item.context || ""
                 };
             })
         );
 
         // Attach the pruned glossary + preprocessed text back onto the
         // batch items so the post-processing enforcement step and the
-        // missed-item retry sweep can use them.
+        // missed-item retry sweep can use them. (context is already on
+        // the batch item from the scan phase.)
         for (const group of batch) {
             for (const item of group.items) {
                 const match = enrichedItems.find(en =>
@@ -915,15 +953,16 @@ async function translatePageGroq(
             return Array.from(seen.entries()).map(([s, t]) => `"${s}" -> "${t}"`).join("\n");
         })();
 
-        // Build payload with per-item "g" field for precision
-        const promptItems = enrichedItems.map(({ id, preprocessed, glossary }) => ({
+        // Build payload with per-item "g" glossary and optional "c" context.
+        const promptItems = enrichedItems.map(({ id, preprocessed, glossary, context }) => ({
             i: id,
             t: preprocessed || "",
-            ...(glossary ? { g: glossary } : {})
+            ...(glossary ? { g: glossary } : {}),
+            ...(context ? { c: context } : {})
         }));
 
         const systemPrompt = applyPromptBatch(basePrompt, JSON.stringify(promptItems), mergedGlossary);
-
+        console.debug("prompt:",systemPrompt)
         const messages = [{ role: "user", content: systemPrompt }];
         let parsed = null;
 
@@ -1038,6 +1077,7 @@ async function translatePageGroq(
      * Runs in small chunks (5 items) since tiny payloads are
      * far less likely to be dropped. Anything still missing
      * after this gets "No suggestions" so no row stays empty.
+     * Context ("c") is carried through so missed items keep it.
      ****************************************************/
     if (missedItems.length) {
         console.warn("[Groq] Retry sweep for " + missedItems.length + " untranslated item(s)");
@@ -1050,7 +1090,8 @@ async function translatePageGroq(
             const retryPayload = chunk.map(({ item }) => ({
                 i: item.id,
                 t: item.preprocessed || item.original || "",
-                ...(item.glossary ? { g: item.glossary } : {})
+                ...(item.glossary ? { g: item.glossary } : {}),
+                ...(item.context ? { c: item.context } : {})
             }));
             const retryPrompt = applyPromptBatch(
                 basePrompt, JSON.stringify(retryPayload), ""

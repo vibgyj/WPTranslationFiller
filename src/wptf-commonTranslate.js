@@ -419,7 +419,7 @@ function escapeRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // escapes all regex metacharacters
 }
 
-function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale, replLog) {
+function postProcessTranslation(original, translatedText, replaceVerb, originalPreProcessed, translator, convertToLower, spellCheckIgnore, locale, replLog, mycontext="") {
     if (!replLog) replLog = []
     var pos;
     var index = 0;
@@ -431,7 +431,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("postprocesstranslation:", translatedText)
     if (toBoolean(DebugMode)) {
         console.debug("postProc original: ", original);
-        console.debug("postProc translatedText :", translatedText);
+        console.debug("postProc translatedText :",translatedText);
        // console.debug("postProc replaceVerb :", replaceVerb);
         console.debug("postProc originalPreProcessed :", originalPreProcessed);
        // console.debug("postProc spellCheckIgnore :", spellCheckIgnore);
@@ -833,52 +833,54 @@ const ignoreWords = new Set(
     .map(w => w.trim().toLowerCase())
     .filter(w => w.length > 0)  // skip empty lines
 );
-      
+        
 for (let i = 0; i < replaceVerb.length; i++) {
       const searchWord = replaceVerb[i][0];
       const replacement = replaceVerb[i][1];
 
     //let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
       let inUrl = isProtected(translatedText, searchWord);
-      let inIgnore = ignoreWords.has(searchWord.toLowerCase());
+    let inIgnore = ignoreWords.has(searchWord.toLowerCase());
 
-      if (!inUrl && !inIgnore) {
-         const safeWord = escapeRegex(searchWord);
-          const wordRegex = new RegExp(
-           `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
-           'gi'
-          );
+    if ((mycontext || '').trim().toLowerCase() !== 'short day name') {
+        if (!inUrl && !inIgnore) {
+            const safeWord = escapeRegex(searchWord);
+            const wordRegex = new RegExp(
+                `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
+                'gi'
+            );
 
-          // Remember the text so we can detect if this entry changed anything
-          const beforeReplace = translatedText;
+            // Remember the text so we can detect if this entry changed anything
+            const beforeReplace = translatedText;
 
-          translatedText = translatedText.replace(wordRegex, (match, offset, fullString) => {
-               // Normalize replacement to lowercase-first, regardless of how it's stored in the list
-               const rep = typeof replacement === 'string' && replacement.length > 0
-               ? replacement.charAt(0).toLowerCase() + replacement.slice(1)
-                 : replacement;
+            translatedText = translatedText.replace(wordRegex, (match, offset, fullString) => {
+                // Normalize replacement to lowercase-first, regardless of how it's stored in the list
+                const rep = typeof replacement === 'string' && replacement.length > 0
+                    ? replacement.charAt(0).toLowerCase() + replacement.slice(1)
+                    : replacement;
 
-                 // Determine sentence position
-                 const before = fullString.slice(0, offset);
-                 const isSentenceStart =
+                // Determine sentence position
+                const before = fullString.slice(0, offset);
+                const isSentenceStart =
                     /^\s*$/.test(before) ||
-                     /[.?!]\s*$/.test(before) ||
-                     /[.?!]\s*\(\s*$/.test(before);
+                    /[.?!]\s*$/.test(before) ||
+                    /[.?!]\s*\(\s*$/.test(before);
 
-                 return isSentenceStart
+                return isSentenceStart
                     ? rep.charAt(0).toUpperCase() + rep.slice(1)
                     : rep;
-           });
+            });
 
-          // Register this replacement in the log (if a collector was passed in)
-          if (replLog && translatedText !== beforeReplace) {
-              replLog.push([searchWord, replacement]);
-          }
+            // Register this replacement in the log (if a collector was passed in)
+            if (replLog && translatedText !== beforeReplace) {
+                replLog.push([searchWord, replacement]);
+            }
+        }
       }
     }
         
-  }
-    
+    }
+   
   if (toBoolean(DebugMode)) console.debug("After replacement 830:", translatedText);
 
     //console.debug("After replacement:", translatedText)
@@ -972,12 +974,12 @@ for (let i = 0; i < replaceVerb.length; i++) {
     //console.debug("originalUpperCase:", originalUpperCase)
     //console.debug("before correct sentence:", translatedNewText)
     if (toBoolean(DebugMode)) console.debug("postProcessTranslation before correctSentence" ,translatedNewText);
-    translatedNewText = correctSentence(translatedNewText, spellCheckIgnore, originalUpperCase);
+    translatedNewText = correctSentence(translatedNewText, spellCheckIgnore, originalUpperCase,mycontext);
     //console.debug("before check hyphen:", translatedNewText)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
     translatedNewText = check_hyphen(translatedNewText, spellCheckIgnore);
     //console.debug("after check hyphen:", translatedNewText)
-    result = check_start_end(translatedNewText, translatedNewText, 0, "", original, "", 0);
+    result = check_start_end(translatedNewText, translatedNewText, 0, "", original, "", 0,mycontext);
     translatedNewText = result.translatedText;
     if (toBoolean(DebugMode)) console.debug("postProcessTranslation end:", translatedNewText);
     //console.debug("postProcessTranslation final:", translatedNewText);
@@ -1049,13 +1051,13 @@ function removeWord(sentence, searchWord) {
     return modifiedSentence;
 }
 // # We do not want to replace anything if it is a URL
-function correctSentence(translatedText, ignoreList, originalUpperCase) {
+function correctSentence(translatedText, ignoreList, originalUpperCase,mycontext) {
     if (!translatedText || typeof translatedText !== "string") return translatedText;
     if (isOnlyURL(translatedText)) return translatedText;
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
     translatedText = check_hyphen(translatedText, ignoreList);
                                 
-    
+    if (toBoolean(DebugMode)) {console.debug("correctSentence start:",translatedText) }
     // --- 1️⃣ Parse ignore list ---
     const ignoreArray = (ignoreList || "")
         .split(/\r?\n/)
@@ -1097,15 +1099,18 @@ function correctSentence(translatedText, ignoreList, originalUpperCase) {
             });
         }
 
+        //console.debug("mycontext:", mycontext)
         // --- 2c️⃣ Capitalize sentences safely ---
-        if (toBoolean(originalUpperCase)) {
-            temp = temp.replace(/(^|[.?!]\s+)([a-z])/g, (m, prefix, letter) => {
-                // Check vorige token: als het een HTML-tag is, skip capitalisatie
-                const prevToken = idx > 0 ? tokens[idx - 1] : "";
-                if (/^<[^>]*>$/.test(prevToken)) return m;
+        if ((mycontext || '').trim().toLowerCase() !== 'short day name') {
+            if (toBoolean(originalUpperCase)) {
+                temp = temp.replace(/(^|[.?!]\s+)([a-z])/g, (m, prefix, letter) => {
+                    // Check vorige token: als het een HTML-tag is, skip capitalisatie
+                    const prevToken = idx > 0 ? tokens[idx - 1] : "";
+                    if (/^<[^>]*>$/.test(prevToken)) return m;
 
-                return prefix + letter.toUpperCase();
-            });
+                    return prefix + letter.toUpperCase();
+                });
+            }
         }
 
         // --- 2d️⃣ Restore URLs ---
@@ -1117,7 +1122,9 @@ function correctSentence(translatedText, ignoreList, originalUpperCase) {
     });
 
     // --- 3️⃣ Rebuild text with HTML tags ---
-    return correctedTokens.join("");
+    const result = correctedTokens.join("");
+    if (toBoolean(DebugMode)) { console.debug("correctSentence result:", result) }
+    return result;
 }
 // Helper function to detect URLs
 function isOnlyURL(text) {
@@ -1873,7 +1880,7 @@ async function findDuplicates() {
         // ✅ Extract context from DOM
         let contextText = "";
         const myContext = e.getElementsByClassName("source-details__context")[0];
-        if (myContext != null && myContext != 'undefined') {
+        if ((myContext || '').trim().toLowerCase() !== 'short day name') {
             const realContext = myContext.getElementsByClassName("context bubble");
             if (realContext.length > 0) {
                 contextText = realContext[0].innerText.trim();
@@ -2739,7 +2746,7 @@ function replElements(
         repl_array
     };
 }
-function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow) {
+function check_start_end(translatedText, previewNewText, counter, repl_verb, original, replaced, myrow,mycontext ="") {
     repl_array = [];
     var mark;
     
@@ -2943,22 +2950,25 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
             }
         }
         // Make translation to start with same case (upper/lower) as the original.
-        if (isStartsWithUpperCase(original)) {
-            if (!isStartsWithUpperCase(translatedText)) {
-                translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
-                previewNewText = translatedText[0].toUpperCase() + translatedText.slice(1);
-                repl_verb += myrow + ": " + '->' + "set first char to uppercase" + "<br>"
-                countReplaced++;
-                replaced = true;
+        //console.debug("check_start_end:", mycontext)
+        if ((mycontext || '').trim().toLowerCase() !== 'short day name') {
+            if (isStartsWithUpperCase(original)) {
+                if (!isStartsWithUpperCase(translatedText)) {
+                    translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
+                    previewNewText = translatedText[0].toUpperCase() + translatedText.slice(1);
+                    repl_verb += myrow + ": " + '->' + "set first char to uppercase" + "<br>"
+                    countReplaced++;
+                    replaced = true;
+                }
             }
-        }
-        else {
-            if (isStartsWithUpperCase(translatedText)) {
-                translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
-                previewNewText = translatedText[0].toLowerCase() + translatedText.slice(1);
-                repl_verb += myrow + ": " + '->' + "set first char to lowercase" + "<br>"
-                countReplaced++;
-                replaced = true;
+            else {
+                if (isStartsWithUpperCase(translatedText)) {
+                    translatedText = translatedText[0].toLowerCase() + translatedText.slice(1);
+                    previewNewText = translatedText[0].toLowerCase() + translatedText.slice(1);
+                    repl_verb += myrow + ": " + '->' + "set first char to lowercase" + "<br>"
+                    countReplaced++;
+                    replaced = true;
+                }
             }
         }
     }
@@ -4533,13 +4543,13 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     if (pretrans == "notFound") {
         if (transsel == "translation_io") {
             is_entry = false
-            result = await translateWithGolinguist(plural, "nl-nl", record, rowId, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
+            result = await translateWithGolinguist(plural, "nl-nl", record, row, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
 
         }
         else if (transsel === "koboldCpp") {
              let koboldUrl = "http://localhost:5001"
              let is_editor = true;
-             result = await KoboldAITranslate(plural, destlang, record, koboldUrl, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+             result = await KoboldAITranslate(plural, destlang, record, koboldUrl, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, is_editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
              if (errorstate != "OK") {
                  messageBox("error", "KoboldCPP error: " + errorstate);
              }
@@ -4914,7 +4924,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         else if (transsel === "koboldCpp") {
              let koboldUrl = "http://localhost:5001"
              let editor = true;
-             result = await KoboldAITranslate(original, destlang, record, koboldUrl, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+             result = await KoboldAITranslate(original, destlang, record, koboldUrl, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
              if (errorstate != "OK") {
                  messageBox("error", "KoboldCPP error: " + errorstate);
              }
@@ -5343,6 +5353,12 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
         result = await translatePageKimi(destlang, apikeyKimi, OpenAIPrompt, formal, locale, convertToLower, editor, KimiSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss,preTranslationReplace,postTranslationReplace)
     
     }
+    else if (transsel == "koboldCpp") {
+        //console.debug("we translate with koboldCpp")
+        let is_editor = false
+        let koboldUrl = "http://localhost:5001" 
+        result = await translatePageKobold(koboldUrl,OpenAIPrompt,transsel,destlang,preTranslationReplace,postTranslationReplace,formal, convertToLower,OpenAItemp,spellCheckIgnore,OpenAITone, openAiGloss,5)
+    }
     else if (transsel == "openRouter") {
         //console.debug("we translate with openrouter")
         let is_editor = false
@@ -5432,7 +5448,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
             if (typeof preTranslationReplace != "undefined" && preTranslationReplace.length != 0) {
                 // PSS 21-07-2022 Currently when using formal, the translation is still default #225
                 setPostTranslationReplace(postTranslationReplace, formal);
-                console.debug("preTranslationReplace:", preTranslationReplace)
+                //console.debug("preTranslationReplace:", preTranslationReplace)
                 setPreTranslationReplace(preTranslationReplace);
                 
                 myrecCount = document.querySelectorAll("tr.editor")
@@ -5952,6 +5968,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             setPreTranslationReplace(preTranslationReplace);
             let e = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
             let original = e.querySelector("span.original-raw").innerText;
+            let mycontext = e.getElementsByClassName("context bubble")[0]?.innerText || "";
+            //console.debug("Context:",mycontext)
             let toTranslate = true;
             let element = e.querySelector(".source-details__comment");
             if (element != null) {
@@ -6046,7 +6064,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     }
                     else if (transsel == "groq") {
                         let editor = true;
-                        result = await groqTranslate(original, destlang, e, apikeygroq, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        result = await groqTranslate(original, destlang, e, apikeygroq, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, mycontext);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         } else if (result == "Error 403") {
@@ -6125,7 +6143,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     else if (transsel === "koboldCpp") {
                         let editor = true;
                         koboldUrl = "http://localhost:5001",
-                        result = await KoboldAITranslate(original, destlang, e, koboldUrl, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        result = await KoboldAITranslate(original, destlang, e, koboldUrl, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, mycontext);
                
                         if (errorstate != "OK") {
                             messageBox("error", "KoboldCPP error: " + errorstate);

@@ -38,7 +38,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
     //console.debug("Final prompt for LMStudio:", myprompt)
     let max_Tokens = estimateMaxTokens(originalPreProcessed);
     let prompt_tokens = estimateMaxTokens(myprompt);
-    max_Tokens = max_Tokens 
+    max_Tokens = max_Tokens + prompt_tokens; // Add some buffer for the model's response 
     const start = Date.now()
                     return new Promise((resolve, reject) => {
                         chrome.runtime.sendMessage({
@@ -60,7 +60,7 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
                             }
                         }, (response) => {
                             const duration = ((Date.now() - start) / 1000).toFixed(2);
-                             // console.debug("Time after fetch:", duration)
+                            console.debug("Time after fetch:", duration)
                             if (!response) {
                                 hideTranslationSpinner();
                                 if (typeof response != 'undefined') {

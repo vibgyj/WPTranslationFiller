@@ -1,19 +1,32 @@
 ﻿/**
- * This file includes all functions for translating with the KoboldCPP API and uses a promise
- * It depends on commonTranslate for additional translation functions
- * KoboldCPP exposes an OpenAI-compatible endpoint at http://localhost:5001/v1
- * No API key needed — runs locally.
+ * KoboldCPP single-line translation, rewritten to use the SAME batch
+ * JSON prompt/format as translatePageKobold, so you maintain ONE prompt.
+ *
+ * How it works:
+ *   - Builds a JSON array of items exactly like the batch path:
+ *       [{"i": rowId, "t": text, "g": prunedGlossary}, {dummy}]
+ *   - Sends it with the batch prompt (i/t/g -> results/i/tr).
+ *   - A neutral dummy item is added so the model stays in "batch mode",
+ *     where it follows the glossary more reliably than for a lone item
+ *     (behaviour you confirmed earlier with Groq).
+ *   - Parses the JSON response with parseKobold and pulls out the item
+ *     whose i matches rowId.
+ *
+ * Depends on (from koboldcpp-batch-translate.js):
+ *   parseKobold, enforceGlossaryKobold, normalizeIdKobold
+ * If the batch file is not loaded alongside this one, tell me and I'll
+ * inline those helpers here.
  */
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function KoboldAITranslate(original, destlang, record, koboldUrl, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
+async function KoboldAITranslate(original, destlang, record, koboldUrl, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, mycontext) {
     errorstate = "OK";
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "KoboldCPP");
 
-    var result = await getTransKobold(original, destlang, record, koboldUrl, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
+    var result = await getTransKobold(original, destlang, record, koboldUrl, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss, mycontext);
     return result;
 }
 
@@ -32,65 +45,74 @@ async function getTransKobold(
   original, language, record, koboldUrl, OpenAIPrompt,
   originalPreProcessed, rowId, transtype, plural_line, formal,
   locale, convertToLower, editor, counter, OpenAISelect,
-  OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
+  OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss, mycontext
 ) {
   var myTranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
   let prevstate = current ? current.innerText : "";
-  
+
   let destlang = language;
   language = language.toUpperCase();
 
-  let tempPrompt = OpenAIPrompt + '\n';
-  let myprompt = "";
-
-  // Handle tone and language in prompt
+  // ---- Tone handling (unchanged from your version) ----
+  let toneForPrompt = OpenAITone;
   if (OpenAITone === 'formal') {
-    if (destlang === 'nl') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
-    } else if (destlang === 'de') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
-    } else if (destlang === 'fr') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
-    } else {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
-    }
-  } else {
-    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+    if (destlang === 'nl')      toneForPrompt = OpenAITone + " and use 'u' instead of 'je'";
+    else if (destlang === 'de') toneForPrompt = OpenAITone + " and use 'Sie' instead of 'du'";
+    else if (destlang === 'fr') toneForPrompt = OpenAITone + " use 'vous' instead of 'tu'";
   }
 
-  // Compact glossary
-  const filteredGloss = pruneGlossary(openAiGloss, originalPreProcessed, record);
-  const compactGloss = filteredGloss.replace(/\n+/g, "|");
-
-  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss ?? "");
-
-  if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
-  else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
-  else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-  else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian');
-  else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
-  else if (destlang === 'id') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Indonesian');
-  else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
-  else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
-  else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-  else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+  // ---- Language resolution (unchanged) ----
+  const LANG_MAP = {
+    nl: 'Dutch', de: 'German', fr: 'French', uk: 'Ukrainian',
+    es: 'Spanish', id: 'Indonesian', it: 'Italian',
+    pt: 'Portuguese', ru: 'Russian'
+  };
+  const toLanguage = LANG_MAP[destlang] ?? destlang;
 
   if (!originalPreProcessed) {
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
-  myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
-  //console.debug("myprompt:",myprompt)
-  let maxTokens = estimateMaxTokens(originalPreProcessed);
-  max_Tokens = maxTokens;
 
-  //messages = [
-  //  { role: 'system', content: myprompt },
-   // { role: 'user', content: originalPreProcessed }
-    // ];
-   messages = [{ role: "user", content: myprompt }]
+  // ---- Per-item glossary (same pruning as before) ----
+  const filteredGloss = pruneGlossary(openAiGloss, originalPreProcessed, record);
+  const compactGloss  = (filteredGloss || "").replace(/\n+/g, "|");
 
-  // KoboldCPP: simple OpenAI-compatible payload — no API key, no model variants
+  // ---- Build the batch-style prompt with static placeholders ----
+  // Strip [[COMMENT]] note lines first (stripPromptComments comes from
+  // koboldcpp-batch-translate.js; both files are loaded together).
+  if (typeof stripPromptComments === "function") {
+    OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+  }
+  // Fill {{toLanguage}} / {{tone}} / {{OpenAiGloss}} the same way the
+  // batch path does. {{text}} is filled with the JSON items array.
+  let basePrompt = (OpenAIPrompt + '\n')
+    .replaceAll("{{toLanguage}}", toLanguage)
+    .replaceAll("{{tone}}", toneForPrompt)
+    .replaceAll("{{OpenAiGloss}}", compactGloss ?? "");
+
+  // ---- JSON items: the real line + a neutral dummy ----
+  // The dummy keeps the model in "batch mode" so it applies the
+  // glossary as mechanically as it does for multi-item batches.
+  const realItem = { i: String(rowId), t: originalPreProcessed };
+  if (compactGloss) realItem.g = compactGloss;
+  // Optional context (from the "context bubble" field). Only sent when
+  // present. It is a hint to disambiguate the translation — the prompt
+  // instructs the model to use it but never translate or echo it.
+  if (mycontext && String(mycontext).trim()) {
+    realItem.c = String(mycontext).trim();
+  }
+  const dummyItem = { i: "0", t: "OK" };
+  const itemsJson = JSON.stringify([realItem, dummyItem]);
+
+  let myprompt = basePrompt.replaceAll("{{text}}", itemsJson);
+
+  let maxTokens    = estimateMaxTokens(originalPreProcessed);
+  let prompt_tokens = estimateMaxTokens(myprompt);
+  max_Tokens = maxTokens + prompt_tokens + 100; // small margin for JSON overhead
+
+  messages = [{ role: "user", content: myprompt }];
+
   const dataNew = {
     model: "koboldcpp",
     messages,
@@ -100,7 +122,9 @@ async function getTransKobold(
     presence_penalty: 0,
     repeat_penalty: 1.1,
     top_k: Number(Top_k),
-    think: false,
+    chat_template_kwargs: {
+      enable_thinking: false
+    },
     baseUrl: koboldUrl || "http://localhost:5001",
   };
 
@@ -118,6 +142,7 @@ async function getTransKobold(
       return "NOK";
     }
 
+    // ---- Error handling (unchanged) ----
     if (result.error) {
       const duration = ((Date.now() - start) / 1000).toFixed(2);
       if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] KoboldCPP error: ${duration}s`, result.error);
@@ -145,17 +170,32 @@ async function getTransKobold(
         if (editor) messageBox("warning", `KoboldCPP server error (500)`);
         return `Request failed with status 500. Server issue!`;
       } else {
-          if (editor) messageBox("warning", `KoboldCPP request failed (${statusCode})<br>${errorMessage}`);
-          errorstate = "NOK";
+        if (editor) messageBox("warning", `KoboldCPP request failed (${statusCode})<br>${errorMessage}`);
+        errorstate = "NOK";
         return `Request failed with status ${statusCode}. ${errorMessage}`;
       }
     }
 
     const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug("KoboldCPP response:", result.result, duration + "s");
+    if (toBoolean(DebugMode)) console.debug("KoboldCPP raw response:", result.result, duration + "s");
 
-    const data = result.result;
-    let text = result.result;
+    // ---- Parse the JSON batch response and pull out our row ----
+    let text = "";
+    const parsed = parseKobold(result); // from koboldcpp-batch-translate.js
+    if (parsed) {
+      const match = parsed.find(r => normalizeIdKobold(r.i ?? "") === normalizeIdKobold(rowId));
+      if (match) {
+        text = enforceGlossaryKobold(match.tr, compactGloss);
+      } else {
+        console.warn("[Kobold] single-line: no JSON item matched rowId=" + rowId +
+          " | returned ids: " + parsed.map(r => r.i).join(", "));
+      }
+    } else {
+      console.warn("[Kobold] single-line: response was not valid JSON — falling back to raw text");
+      // Fallback: if the model ignored JSON and returned bare text,
+      // use it as-is so the user still gets something.
+      if (typeof result.result === "string") text = result.result.trim();
+    }
 
     if (text === '""' || text === "") {
       text = "No suggestions";
@@ -191,6 +231,9 @@ async function getTransKobold(
 }
 
 
+// reviewTransKobold left unchanged from your version — it uses a
+// separate review prompt, not the translation prompt, so it does not
+// need the batch/JSON treatment.
 async function reviewTransKobold(original, language, record, koboldUrl, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss, model) {
     var current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     var prevstate = current.innerText;
@@ -210,7 +253,6 @@ async function reviewTransKobold(original, language, record, koboldUrl, OpenAIPr
 
     const baseUrl = koboldUrl || "http://localhost:5001";
 
-    // KoboldCPP: direct fetch, no API key needed
     const data1 = {
       model: model || "koboldcpp",
       messages,
@@ -219,7 +261,7 @@ async function reviewTransKobold(original, language, record, koboldUrl, OpenAIPr
       frequency_penalty: 0,
       presence_penalty: 0,
       top_p: Number(Top_p),
-      think: false,           // ← disables thinking mode
+      chat_template_kwargs: { enable_thinking: false },
     };
 
     try {
@@ -245,7 +287,7 @@ async function reviewTransKobold(original, language, record, koboldUrl, OpenAIPr
         errorstate = "OK";
         const open_kobold_response = data.choices[0];
         if (typeof open_kobold_response.message.content !== 'undefined') {
-            let text = result.result;
+            let text = open_kobold_response.message.content;   // FIX: was result.result (undefined here)
 
             if (text != "" && text.indexOf("Yes") !== -1) {
                 if (preview.innerHTML.startsWith('\u{2705}')) {

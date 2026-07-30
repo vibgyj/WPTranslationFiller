@@ -73,7 +73,8 @@ async function getTransgroq(
     spellCheckIgnore,
     OpenAITone,
     is_editor,
-    openAiGloss
+    openAiGloss,
+    mycontext
 ) {
     const resolvedLanguage = LOCALE_TO_LANGUAGE[language] ?? language;
 
@@ -103,6 +104,10 @@ async function getTransgroq(
      ****************************************************/
     const payloadItem = { i: rowId, t: originalPreProcessed };
     if (prunedGlossary) payloadItem.g = prunedGlossary;
+    // Per-item context hint (c) — only added when the editor supplied one.
+    if (mycontext && String(mycontext).trim()) {
+        payloadItem.c = String(mycontext).trim();
+    }
     //console.debug("apiKey:", apikeygroq)
     // Send a neutral dummy item alongside the real one.
     // The model applies glossary terms more reliably when it sees
@@ -110,6 +115,13 @@ async function getTransgroq(
     // title/heading and triggers different (less compliant) behaviour.
     const dummyItem = { i: "0", t: "OK" };
     const promptItems = JSON.stringify([payloadItem, dummyItem]);
+
+    // Strip [[COMMENT]]-marked lines from the prompt template before filling
+    // placeholders, so editorial notes never reach the model. Helper lives in
+    // the KoboldCPP file; guard keeps this safe if it isn't loaded.
+    if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+    }
 
     const prompt = OpenAIPrompt
         .replace(/\{\{toLanguage\}\}/g, resolvedLanguage)
@@ -269,7 +281,9 @@ async function getTransgroq(
             "groq",
             convertToLower,
             spellCheckIgnore,
-            locale
+            locale,
+            [],
+            mycontext
         );
 
         await processTransl(
@@ -316,7 +330,8 @@ async function groqTranslate(
     spellCheckIgnore,
     OpenAITone,
     is_editor,
-    openAiGloss
+    openAiGloss,
+    mycontext
 ) {
     const originalPreProcessed = await preProcessOriginal(original, preverbs, "groq");
 
@@ -340,7 +355,8 @@ async function groqTranslate(
         spellCheckIgnore,
         OpenAITone,
         is_editor,
-        openAiGloss
+        openAiGloss,
+        mycontext
     );
 }
 

@@ -24,6 +24,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 // call je bestaande async functie
                 const found = await isLMStudioModelLoaded(model);
+                console.debug(`Model check for ${model}:`, found);
 
                 // stuur alleen boolean terug
                 sendResponse(found);
@@ -820,7 +821,7 @@ var bodyToSend = {
             }
 
             const data = await resp.json();
-           // console.debug("data:",data)
+            console.debug("data:",data)
             const result = data?.choices?.[0]?.message?.content ?? "";
            // console.debug("Result kobol:",result)
             const duration = ((Date.now() - start) / 1000).toFixed(2);
@@ -865,7 +866,8 @@ else if (request.action === "LMStudio_translate") {
                 // let mysystemPrompt = 'Translate the text exactly into Dutch. Do NOT change, move, or remove placeholders like <mytab1>, <mylinefeed2>, etc. Output ONLY the translated text, without explanations or notes.'
                 //let mysystemPrompt = systemPrompt
                 // console.debug("systemPrompt:", mysystemPrompt)
-               //  Bouw de body
+                //  Bouw de body
+               
                const body = {
                    messages: [
                        {
@@ -878,21 +880,16 @@ else if (request.action === "LMStudio_translate") {
                     stream: false,
                     top_p: Top_p,
                     top_k: Top_k,
-                    repeat_penalty: 1.1,
-                    do_not_complete
-               };
-
-          //    const body = {
-          //       prompt: systemPrompt,   // 👈 VERPLICHT
-          //     temperature: temperature ?? 0,
-           //    stream: false,
-           //     top_p: Top_p,
-            //   top_k: Top_k,
-            //   repeat_penalty
-           //   };
-
+                   repeat_penalty: 1.1,
+                   do_not_complete,
+                   chat_template_kwargs: {
+                    enable_thinking: false
+                    }
+                };
+                
+                    console.log("VERZONDEN BODY:", JSON.stringify(body, null, 2));
+                
               
-
                 if (max_tokens) body.max_tokens = max_tokens;
 
                 const options = {
@@ -912,12 +909,14 @@ else if (request.action === "LMStudio_translate") {
                         url,
                         options,
                         LMStudioWait, // timeout per retry in ms
-                        5      // max retries
+                        3      // max retries
                     );
 
                     // Lees de body precies één keer
                     const json = await res.json();
-                    //console.debug("LM Studio JSON response:", json);
+                   // if (toBoolean(DebugMode)) {
+                        console.log("RUWE LM Studio output:", JSON.stringify(json, null, 2));
+                   // }
 
                     // Check HTTP status
                     if (!res.ok) {
@@ -1704,18 +1703,16 @@ async function stopLocalModelSession(model) {
     }
 }
 
- async function isLMStudioModelLoaded(modelName) {
-  try {
-    const res = await fetch('http://127.0.0.1:1234/v1/models');
-    if (!res.ok) return false;
-
-    const json = await res.json();
-    if (!json.data || !Array.isArray(json.data)) return false;
-
-    return json.data.some(m => m.id === modelName);
-  } catch (e) {
-    return false;
-  }
+async function isLMStudioModelLoaded(modelName) {
+    try {
+        const res = await fetch('http://127.0.0.1:1234/v1/models');
+        if (!res.ok) return false;
+        const json = await res.json();
+        return json.data.some(m => m.id === modelName);
+    } catch (e) {
+        console.log('[check] fetch faalde:', e.name, e.message);
+        return false;
+    }
 }
 
 async function fetchWithTimeoutAndRetry(
