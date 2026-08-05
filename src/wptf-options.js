@@ -83,6 +83,8 @@ document.getElementById("exportverbs").addEventListener("click", export_verbs_cs
 let replaceVerb = [];
 
 let apikeyTextbox = document.getElementById("google_api_key");
+let apikeyCerebrasTextbox = document.getElementById("cerebras_api_key");
+console.debug("apikeyCerebrasTextbox:", apikeyCerebrasTextbox);
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
@@ -99,6 +101,7 @@ let apikeyOllamaTextbox = document.getElementById("Ollama_api_key");
 let apikeyLingvanexTextbox = document.getElementById("Lingvanex_api_key");
 let apikeyGeminiTextbox = document.getElementById("gemini_api_key");
 let transselectBox = document.getElementById("transselect");
+let cerebrasselectBox = document.getElementById("cerebrasSelect");
 let KimiselectBox = document.getElementById("KimiSelect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let groqselectBox = document.getElementById("groqSelect");
@@ -263,16 +266,115 @@ document.getElementById("refreshGroqModels").addEventListener("click", function 
     loadGroqModels(groqselectBox.value || undefined);
 });
 
-chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyKimi", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect","OpenRouterSelect", "ClaudSelect", "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize"], function (data) {
-    
-    if (data.DeeplFree != null) {
-        if (data.DeeplFree == true) {
-            apikeydeeplCheckbox.checked = true
-        }
-        else {
-            apikeydeeplCheckbox.checked = false
-        }
+// ============================================================
+// CEREBRAS DYNAMIC MODEL LIST
+// ============================================================
+
+// Cerebras' lijst is klein en bevat geen audio/tts/guard-modellen,
+// dus we hebben eigenlijk geen exclude-pattern nodig. Toch meegenomen
+// voor het geval ze later niet-chat modellen toevoegen.
+const CEREBRAS_EXCLUDE_PATTERN = /whisper|tts|guard|embed/i;
+
+// Fallback list used if the fetch fails (no key yet, offline, API error, etc.)
+// Gebaseerd op wat je account nu kan aanroepen.
+const CEREBRAS_FALLBACK_MODELS = [
+    "gemma-4-31b",
+    "gpt-oss-120b",
+    "zai-glm-4.7",
+];
+
+// Preferred default when a stored model is no longer available.
+const CEREBRAS_PREFERRED_DEFAULT = "gemma-4-31b";
+
+async function fetchCerebrasModels(apiKey) {
+    const resp = await fetch("https://api.cerebras.ai/v1/models", {
+        headers: { "Authorization": "Bearer " + apiKey }
+    });
+    if (!resp.ok) {
+        throw new Error("HTTP " + resp.status);
     }
+    const json = await resp.json();
+    console.debug("Fetched Cerebras models:", json.data.map(m => m.id));
+    return json.data
+        .map(m => m.id)
+        .filter(id => !CEREBRAS_EXCLUDE_PATTERN.test(id))
+        .sort();
+}
+
+async function loadCerebrasModels(preselectValue) {
+    const statusEl = document.getElementById("cerebrasModelStatus");
+    const selectEl = cerebrasselectBox;
+    const apiKey = apikeyCerebrasTextbox.value;
+
+    selectEl.innerHTML = "";
+    const loadingOpt = document.createElement("option");
+    loadingOpt.value = "";
+    loadingOpt.textContent = "Loading models...";
+    selectEl.appendChild(loadingOpt);
+    if (statusEl) statusEl.textContent = "";
+
+    let models;
+    let usedFallback = false;
+
+    try {
+        if (!apiKey || apiKey === "cerebras-api key->" || apiKey.trim() === "") {
+            throw new Error("No API key set");
+        }
+        models = await fetchCerebrasModels(apiKey);
+        if (!models.length) throw new Error("Empty model list");
+    } catch (err) {
+        console.warn("Could not fetch Cerebras models, using fallback list:", err.message);
+        models = CEREBRAS_FALLBACK_MODELS;
+        usedFallback = true;
+    }
+
+    selectEl.innerHTML = "";
+    models.forEach(id => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = id;
+        selectEl.appendChild(opt);
+    });
+
+    if (preselectValue && models.includes(preselectValue)) {
+        selectEl.value = preselectValue;
+    } else if (preselectValue) {
+        const fallbackChoice = models.includes(CEREBRAS_PREFERRED_DEFAULT)
+            ? CEREBRAS_PREFERRED_DEFAULT
+            : models[0];
+        selectEl.value = fallbackChoice;
+        if (statusEl) {
+            statusEl.textContent = `Note: "${preselectValue}" is no longer available, switched to ${fallbackChoice}.`;
+            statusEl.style.color = "#ffffff";
+            statusEl.style.fontWeight = "bold";
+        }
+    } else {
+        selectEl.value = models.includes(CEREBRAS_PREFERRED_DEFAULT) ? CEREBRAS_PREFERRED_DEFAULT : models[0];
+    }
+
+    if (usedFallback && statusEl && !statusEl.textContent) {
+        statusEl.textContent = "Enter a valid Cerebras API key and click Refresh to load the live model list.";
+        statusEl.style.color = "#ffffff";
+        statusEl.style.fontWeight = "normal";
+    } else if (!usedFallback && statusEl && !statusEl.textContent) {
+        statusEl.textContent = `${models.length} models loaded.`;
+        statusEl.style.color = "#ffffff";
+        statusEl.style.fontWeight = "normal";
+    }
+}
+
+document.getElementById("refreshCerebrasModels").addEventListener("click", function () {
+    loadCerebrasModels(cerebrasselectBox.value || undefined);
+});
+chrome.storage.local.get(["apikey", "apikeyCerebras","apikeyDeepl", "apikeyKimi", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "CerebrasSelect", "OpenAISelect","OpenRouterSelect", "ClaudSelect", "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize"], function (data) {
+    
+    if (data.DeeplFree == true) {
+            apikeydeeplCheckbox.checked = true
+    }
+    else {
+            apikeydeeplCheckbox.checked = false
+    }
+    
     if (typeof data.TMwait == "undefined") {
         TMwait = 500;
     }
@@ -367,10 +469,12 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyKimi", "apikeyMicrosof
     }
     else {
         OpenAIToneBox.value = data.OpenAITone;
-        OpenAITone = data.OpenAITone
-    }
+    OpenAITone = data.OpenAITone
+}
+    
     apikeydeeplCheckbox = data.DeeplFree;
     apikeyTextbox.value = data.apikey;
+    apikeyCerebrasTextbox.value= data.apikeyCerebras;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
@@ -408,6 +512,14 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyKimi", "apikeyMicrosof
         apikeyOllamaTextbox.value = data.apikeyOllama;
 
     }
+    if (data.apikeyCerebras == null && typeof data.apikeyCerebras == "undefined") {
+        console.debug("apikeyCerebras:",apikeyCerebrasTextbox)
+        apikeyCerebrasTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeyCerebrasTextbox.value = data.apikeyCerebras;
+    }
+
     if (data.transsel == "") {
         transselectBox.value = "google";
     }
@@ -444,15 +556,13 @@ chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyKimi", "apikeyMicrosof
     else {
         OpenAIselectBox.value = data.OpenAISelect;
     }
-    if (typeof data.OpenAISelect == 'undefined') {
-        OpenAIselectBox.value = "gpt-3.5-turbo";
-    }
-    else if (data.OpenAISelect == "") {
-        OpenAIselectBox.value = "gpt-3.5-turbo";
-    }
-    else {
-        OpenAIselectBox.value = data.OpenAISelect;
-    }
+    // Populate the Cerebras dropdown dynamically from the Cerebras API,
+    // preselecting the stored model if it still exists (see loadCerebrasModels()).
+    console.debug("cerebrasselect:", data.CerebrasSelect)
+    const storedCerebrasModel = (typeof data.CerebrasSelect == 'undefined' || data.CerebrasSelect == "")
+        ? undefined
+        : data.CerebrasSelect;
+    loadCerebrasModels(storedCerebrasModel);
 
     // Populate the groq dropdown dynamically from the Groq API,
     // preselecting the stored model if it still exists (see loadGroqModels()).
@@ -736,8 +846,8 @@ button.addEventListener("click", function () {
        showDeepl = true
     } else {
          showDeepl = "false";
-   }
-   
+    }
+    let apikeycerebras = apikeyCerebrasTextbox.value;
     let apikeyMicrosoft = apikeymicrosoftTextbox.value;
     let apikeygroq = apikeygroqTextbox.value;
     let apikeyOpenRouter = apikeyOpenRouterTextbox.value;
@@ -791,7 +901,16 @@ button.addEventListener("click", function () {
     else {
         OpenAIsel = OpenAIselectBox.value;
     }
-
+    if (typeof cerebrasselectBox.value == "undefined") {
+        cerebrassel = "gemma-4-31b";
+    }
+    else if (cerebrasselectBox.value == "") {
+        cerebrassel = "gemma-4-31b";
+    }
+    else {
+        cerebrassel = cerebrasselectBox.value;
+    }
+    console.debug("Cerebras selected model:", cerebrassel);
     // Groq model now comes from a dynamically populated dropdown (see loadGroqModels()).
     // Fall back to a current, non-deprecated model id if nothing is selected.
     if (typeof groqselectBox.value == "undefined" || groqselectBox.value == "") {
@@ -978,6 +1097,7 @@ button.addEventListener("click", function () {
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
         chrome.storage.local.set({
             apikey: apikey,
+            apikeyCerebras: apikeycerebras,
             apikeyDeepl: apikeyDeepl,
             apikeyOpenAI: apikeyOpenAI,
             apikeyKimi: apikeyKimi,
@@ -1000,6 +1120,7 @@ button.addEventListener("click", function () {
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,
             OpenAISelect: OpenAIsel,
+            CerebrasSelect: cerebrassel,
             groqSelect: groqsel,
             OpenRouterSelect: OpenRoutersel,
             ollamaModel: OllamaselectBox.value.trim(),

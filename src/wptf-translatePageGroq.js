@@ -56,22 +56,6 @@ function delay(ms) {
 }
 
 /****************************************************
- * PROMPT COMMENTS
- * Lines that START with [[COMMENT]] are notes for you (e.g. which
- * model/API the prompt is for). They are stripped before the prompt
- * is sent to the model, so they never influence the translation.
- * The marker only counts at the start of a line, so [[COMMENT]]
- * appearing mid-text is left untouched. Guarded so it can be shared
- * with the KoboldCPP file without a double-definition conflict.
- ****************************************************/
-if (typeof stripPromptComments === "undefined") {
-    function stripPromptComments(prompt) {
-        if (!prompt) return prompt;
-        return prompt.replace(/^[ \t]*\[\[COMMENT\]\].*(?:\r?\n|$)/gm, "");
-    }
-}
-
-/****************************************************
  * TEMPLATE ENGINE
  * applyPromptBase  — fill static placeholders once before the loop
  * applyPromptBatch — fill dynamic placeholder per batch
@@ -908,7 +892,7 @@ async function translatePageGroq(
          * The per-item translation context ("c") is carried through
          * from the scan phase alongside preprocessed + glossary.
          ****************************************************/
-        console.debug("glossary:",openAiGloss)
+        //console.debug("glossary:",openAiGloss)
         const enrichedItems = await Promise.all(
             allItems.map(async item => {
                 const [preprocessed, prunedGlossary] = await Promise.all([

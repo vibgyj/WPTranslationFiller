@@ -104,3 +104,6 @@ Version 3.5.60 Improved models from openRouter, Gemini, and translatePage for Ki
 Version 3.5.61 KoboldCPP did not populate plural lines due to a wrong var
 Version 3.5.61 Added context to KoboldCPP requests
 Version 3.5.61 Added new model for Ollama Kimi-k3:cloud
+Version 3.5.62 Improved month/day handling, now they are converted to lowercase only for locale nl and nl-be
+Version 3.5.63 Added Cerebras API for translation
+Version 3.5.64 FireFox throws a CORS error when usung Cerebras. So I added the URL into the manifest

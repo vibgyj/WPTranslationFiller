@@ -722,165 +722,170 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("Before replacement:", translatedText)
     if (toBoolean(DebugMode)) console.debug("before replacement 706:", translatedText);
     if (convertToLower == true) {
-    //console.debug("conversion lowercase is on:",translatedText)
-    translatedText = convert_lower(translatedText, spellCheckIgnore);
-    // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
+        //console.debug("conversion lowercase is on:",translatedText)
+        translatedText = convert_lower(translatedText, spellCheckIgnore);
+        // if the uppercase verbs are set to lower we need to reprocess the sentences otherwise you need to add uppercase variants as well!!
 
-    // Build the ignore lookup once, from the newline-separated spellCheckIgnore text
-    const ignoreWords = new Set(
-        (spellCheckIgnore || '')
-            .split(/\r?\n/)
-            .map(w => w.trim().toLowerCase())
-            .filter(w => w.length > 0)
-    );
+        // Build the ignore lookup once, from the newline-separated spellCheckIgnore text
+        const ignoreWords = new Set(
+            (spellCheckIgnore || '')
+                .split(/\r?\n/)
+                .map(w => w.trim().toLowerCase())
+                .filter(w => w.length > 0)
+        );
 
-    // Shared replace callback: same casing rules for both sub-paths
-    const makeReplacer = (replacement) => (match, offset, fullString) => {
-        // Determine sentence position
-        const before = fullString.slice(0, offset);
-        const isSentenceStart =
-            /^\s*$/.test(before) ||
-            /[.?!]\s*$/.test(before) ||
-            /[.?!]\s*\(\s*$/.test(before);
+        // Shared replace callback: same casing rules for both sub-paths
+        const makeReplacer = (replacement) => (match, offset, fullString) => {
+            // Determine sentence position
+            const before = fullString.slice(0, offset);
+            const isSentenceStart =
+                /^\s*$/.test(before) ||
+                /[.?!]\s*$/.test(before) ||
+                /[.?!]\s*\(\s*$/.test(before);
 
-        // At sentence start, a word that already begins with a capital
-        // is legitimately capitalized -> leave it untouched
-        const startsWithCapital =
-            match.charAt(0) !== match.charAt(0).toLowerCase();
-        if (isSentenceStart && startsWithCapital) {
-            return match;
+            // At sentence start, a word that already begins with a capital
+            // is legitimately capitalized -> leave it untouched
+            const startsWithCapital =
+                match.charAt(0) !== match.charAt(0).toLowerCase();
+            if (isSentenceStart && startsWithCapital) {
+                return match;
+            }
+
+            // Normalize replacement to lowercase-first, regardless of how it's stored in the list
+            const rep = typeof replacement === 'string' && replacement.length > 0
+                ? replacement.charAt(0).toLowerCase() + replacement.slice(1)
+                : replacement;
+
+            return isSentenceStart
+                ? rep.charAt(0).toUpperCase() + rep.slice(1)
+                : rep;
+        };
+
+        for (let i = 0; i < replaceVerb.length; i++) {
+            // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
+
+            if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
+                // PSS solution for issue #291
+                replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
+                const searchWord = replaceVerb[i][0];
+                const replacement = replaceVerb[i][1];
+
+                // Skip if inside URL or in the ignore list
+                //let inUrl = CheckUrl(translatedText, searchWord);
+                let inUrl = isProtected(translatedText, searchWord);
+                let inIgnore = ignoreWords.has(searchWord.toLowerCase());
+
+                if (!inUrl && !inIgnore) {
+                    const safeWord = escapeRegex(searchWord);
+                    // Word boundaries toegevoegd zodat "u" niet binnen "uw" of "uit" matcht
+                    const wordRegex = new RegExp(
+                        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
+                        'gi'  // case-insensitive toegevoegd voor consistentie
+                    );
+
+                    const beforeReplace = translatedText;
+                    translatedText = translatedText.replace(wordRegex, makeReplacer(replacement));
+
+                    if (replLog && translatedText !== beforeReplace) {
+                        replLog.push([searchWord, replacement]);
+                    }
+                }
+            }
+            else {
+                // PSS solution for issue #291
+                const searchWord = replaceVerb[i][0];
+                const replacement = replaceVerb[i][1];
+
+                // Skip if inside URL or in the ignore list
+                //let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
+                let inUrl = isProtected(translatedText, searchWord);
+                let inIgnore = ignoreWords.has(searchWord.toLowerCase());
+
+                if (!inUrl && !inIgnore) {
+                    const safeWord = escapeRegex(searchWord);
+                    const wordRegex = new RegExp(
+                        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
+                        'gi'
+                    );
+
+                    const beforeReplace = translatedText;
+                    translatedText = translatedText.replace(wordRegex, makeReplacer(replacement));
+
+                    if (replLog && translatedText !== beforeReplace) {
+                        replLog.push([searchWord, replacement]);
+                    }
+                    // translatedText = correctSentence(translatedText, spellCheckIgnore);
+                }
+            }
         }
+    }
+    else {
 
-        // Normalize replacement to lowercase-first, regardless of how it's stored in the list
-        const rep = typeof replacement === 'string' && replacement.length > 0
-            ? replacement.charAt(0).toLowerCase() + replacement.slice(1)
-            : replacement;
+        // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
 
-        return isSentenceStart
-            ? rep.charAt(0).toUpperCase() + rep.slice(1)
-            : rep;
-    };
+        // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
+        //console.debug("checkurl before:",translatedText)
 
-    for (let i = 0; i < replaceVerb.length; i++) {
-        // 30-12-2021 PSS need to improve this, because Deepl does not accept '#' so for now allow to replace it
+        // Build the ignore lookup once, from the newline-separated spellCheckIgnore text
+        const ignoreWords = new Set(
+            (spellCheckIgnore || '')
+                .split(/\r?\n/)             // handles both \n and \r\n line endings
+                .map(w => w.trim().toLowerCase())
+                .filter(w => w.length > 0)  // skip empty lines
+        );
+        if ((mycontext || '').trim().toLowerCase() !== 'short day name' && (mycontext || '').trim().toLowerCase() !== 'month name') {
 
-        if (replaceVerb[i][1] != '#' && replaceVerb[i][1] != '&') {
-            // PSS solution for issue #291
-            replaceVerb[i][0] = replaceVerb[i][0].replaceAll("&#44;", ",")
-            const searchWord = replaceVerb[i][0];
-            const replacement = replaceVerb[i][1];
+            for (let i = 0; i < replaceVerb.length; i++) {
+                const searchWord = replaceVerb[i][0];
+                const replacement = replaceVerb[i][1];
 
-            // Skip if inside URL or in the ignore list
-            //let inUrl = CheckUrl(translatedText, searchWord);
-            let inUrl = isProtected(translatedText, searchWord);
-            let inIgnore = ignoreWords.has(searchWord.toLowerCase());
+                //let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
+                let inUrl = isProtected(translatedText, searchWord);
+                let inIgnore = ignoreWords.has(searchWord.toLowerCase());
 
-            if (!inUrl && !inIgnore) {
-                const safeWord = escapeRegex(searchWord);
-                // Word boundaries toegevoegd zodat "u" niet binnen "uw" of "uit" matcht
-                const wordRegex = new RegExp(
-                    `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
-                    'gi'  // case-insensitive toegevoegd voor consistentie
-                );
+                if (!inUrl && !inIgnore) {
+                    const safeWord = escapeRegex(searchWord);
+                    const wordRegex = new RegExp(
+                        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
+                        'gi'
+                    );
 
-                const beforeReplace = translatedText;
-                translatedText = translatedText.replace(wordRegex, makeReplacer(replacement));
+                    // Remember the text so we can detect if this entry changed anything
+                    const beforeReplace = translatedText;
 
-                if (replLog && translatedText !== beforeReplace) {
-                    replLog.push([searchWord, replacement]);
+                    translatedText = translatedText.replace(wordRegex, (match, offset, fullString) => {
+                        // Normalize replacement to lowercase-first, regardless of how it's stored in the list
+                        const rep = typeof replacement === 'string' && replacement.length > 0
+                            ? replacement.charAt(0).toLowerCase() + replacement.slice(1)
+                            : replacement;
+
+                        // Determine sentence position
+                        const before = fullString.slice(0, offset);
+                        const isSentenceStart =
+                            /^\s*$/.test(before) ||
+                            /[.?!]\s*$/.test(before) ||
+                            /[.?!]\s*\(\s*$/.test(before);
+
+                        return isSentenceStart
+                            ? rep.charAt(0).toUpperCase() + rep.slice(1)
+                            : rep;
+                    });
+
+                    // Register this replacement in the log (if a collector was passed in)
+                    if (replLog && translatedText !== beforeReplace) {
+                        replLog.push([searchWord, replacement]);
+                    }
+
                 }
             }
         }
         else {
-            // PSS solution for issue #291
-            const searchWord = replaceVerb[i][0];
-            const replacement = replaceVerb[i][1];
-
-            // Skip if inside URL or in the ignore list
-            //let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
-            let inUrl = isProtected(translatedText, searchWord);
-            let inIgnore = ignoreWords.has(searchWord.toLowerCase());
-
-            if (!inUrl && !inIgnore) {
-                const safeWord = escapeRegex(searchWord);
-                const wordRegex = new RegExp(
-                    `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
-                    'gi'
-                );
-
-                const beforeReplace = translatedText;
-                translatedText = translatedText.replace(wordRegex, makeReplacer(replacement));
-
-                if (replLog && translatedText !== beforeReplace) {
-                    replLog.push([searchWord, replacement]);
-                }
-                // translatedText = correctSentence(translatedText, spellCheckIgnore);
+          //  console.debug("we have a context for:", translatedText, locale)
+            if (locale == 'nl' || locale == 'nl-be'){
+                translatedText = translatedText.toLowerCase()
             }
         }
     }
-}
-    else {
-  
-  // we need to check if the word from the sentence is present in the ignorelist with capital, and the word does not have a capital
-
-  // console.debug("ConvertoLower !=true we need to check the ignore list if the word is in the list")
-  //console.debug("checkurl before:",translatedText)
-
-// Build the ignore lookup once, from the newline-separated spellCheckIgnore text
-const ignoreWords = new Set(
-  (spellCheckIgnore || '')
-    .split(/\r?\n/)             // handles both \n and \r\n line endings
-    .map(w => w.trim().toLowerCase())
-    .filter(w => w.length > 0)  // skip empty lines
-);
-        
-for (let i = 0; i < replaceVerb.length; i++) {
-      const searchWord = replaceVerb[i][0];
-      const replacement = replaceVerb[i][1];
-
-    //let inUrl = isInsideButtonOrUrl(translatedText, searchWord);
-      let inUrl = isProtected(translatedText, searchWord);
-    let inIgnore = ignoreWords.has(searchWord.toLowerCase());
-
-    if ((mycontext || '').trim().toLowerCase() !== 'short day name') {
-        if (!inUrl && !inIgnore) {
-            const safeWord = escapeRegex(searchWord);
-            const wordRegex = new RegExp(
-                `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
-                'gi'
-            );
-
-            // Remember the text so we can detect if this entry changed anything
-            const beforeReplace = translatedText;
-
-            translatedText = translatedText.replace(wordRegex, (match, offset, fullString) => {
-                // Normalize replacement to lowercase-first, regardless of how it's stored in the list
-                const rep = typeof replacement === 'string' && replacement.length > 0
-                    ? replacement.charAt(0).toLowerCase() + replacement.slice(1)
-                    : replacement;
-
-                // Determine sentence position
-                const before = fullString.slice(0, offset);
-                const isSentenceStart =
-                    /^\s*$/.test(before) ||
-                    /[.?!]\s*$/.test(before) ||
-                    /[.?!]\s*\(\s*$/.test(before);
-
-                return isSentenceStart
-                    ? rep.charAt(0).toUpperCase() + rep.slice(1)
-                    : rep;
-            });
-
-            // Register this replacement in the log (if a collector was passed in)
-            if (replLog && translatedText !== beforeReplace) {
-                replLog.push([searchWord, replacement]);
-            }
-        }
-      }
-    }
-        
-    }
-   
   if (toBoolean(DebugMode)) console.debug("After replacement 830:", translatedText);
 
     //console.debug("After replacement:", translatedText)
@@ -1101,7 +1106,7 @@ function correctSentence(translatedText, ignoreList, originalUpperCase,mycontext
 
         //console.debug("mycontext:", mycontext)
         // --- 2c️⃣ Capitalize sentences safely ---
-        if ((mycontext || '').trim().toLowerCase() !== 'short day name') {
+        if ((mycontext || '').trim().toLowerCase() !== 'short day name' && (mycontext || '').trim().toLowerCase() !== 'month name') {
             if (toBoolean(originalUpperCase)) {
                 temp = temp.replace(/(^|[.?!]\s+)([a-z])/g, (m, prefix, letter) => {
                     // Check vorige token: als het een HTML-tag is, skip capitalisatie
@@ -1880,7 +1885,7 @@ async function findDuplicates() {
         // ✅ Extract context from DOM
         let contextText = "";
         const myContext = e.getElementsByClassName("source-details__context")[0];
-        if ((myContext || '').trim().toLowerCase() !== 'short day name') {
+        if ((mycontext || '').trim().toLowerCase() !== 'short day name' && (mycontext || '').trim().toLowerCase() !== 'month name') {
             const realContext = myContext.getElementsByClassName("context bubble");
             if (realContext.length > 0) {
                 contextText = realContext[0].innerText.trim();
@@ -2951,7 +2956,7 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
         }
         // Make translation to start with same case (upper/lower) as the original.
         //console.debug("check_start_end:", mycontext)
-        if ((mycontext || '').trim().toLowerCase() !== 'short day name') {
+        if ((mycontext || '').trim().toLowerCase() !== 'short day name' && (mycontext || '').trim().toLowerCase() !== 'month name') {
             if (isStartsWithUpperCase(original)) {
                 if (!isStartsWithUpperCase(translatedText)) {
                     translatedText = translatedText[0].toUpperCase() + translatedText.slice(1);
@@ -2970,6 +2975,9 @@ function check_start_end(translatedText, previewNewText, counter, repl_verb, ori
                     replaced = true;
                 }
             }
+        }
+        else {
+            console.debug("we have a context")
         }
     }
      if (translatedText.endsWith(" .")) {
@@ -4028,7 +4036,7 @@ async function determineType(row, record) {
 
 
 
-async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI,apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt, MistralSelect,LMStudioWait,apikeygroq,groqSelect) {
+async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, apikeyDeepSeek, apikeyMicrosoft, apikeyOpenAI,apikeyOpenRouter, apikeyMistral, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, OpenRouterSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, counter,is_entry,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt, MistralSelect,LMStudioWait,apikeygroq,groqSelect, mycontext) {
     
     const [type, myTranslated] = await determineType(row, record);
     var translatedText = ""
@@ -4233,6 +4241,23 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             //console.log('Handling a single type...');
             transtype = 'single'
             plural_line = 0
+            if (transsel == "cerebras") {
+                let editor = true;
+                
+                let URL = "https://api.cerebras.ai/v1/chat/completions";
+             //   console.debug("mycontext in cerebras:", mycontext)
+                result = await getTransOpenAI(original, destlang, record, apikeyCelebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL, mycontext);
+                if (result == "Error 401") {
+                    messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                } else if (result == "Error 403") {
+                    messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                } else {
+                    if (errorstate != "OK") {
+                        messageBox("error", "There has been some uncatched error: " + errorstate);
+                    }
+                        }
+                    }
+           
             if (transsel == "LibreTrans") {
                 is_editor = false
                 result = await transLibre(original, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
@@ -4300,7 +4325,7 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
             }
             else if (transsel == "deepl") {
                 // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false, DeepLWait);
+                result = await deepLTranslate(original, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false, DeepLWait, mycontext);
                 if (result == "Error 403") {
                     messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                     //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -4390,7 +4415,8 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 }
             }
             else if (transsel == "OpenAI") {
-               result = await AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
+                 result = await getTransOpenAI(original, destlang,record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,URL,mycontext);
+               //result = await getTransOpenAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
     
     if (result == "Error 400") {
         messageBox("error", __("Error in translation received status 400<br>Bad request - please check your API parameters (e.g. unsupported parameter for this model)."));
@@ -4452,9 +4478,9 @@ else if (transsel == "groq") {
              else if (transsel === "gemini") {
                         let is_editor = false
                         result = await translateWithGemini(original, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
-                         console.debug("result gemini:", result)
+                         // console.debug("result gemini:", result)
                 if (result == "NOK") {
-                    console.debug("Gemini translation error, possible wrong key") 
+                    // console.debug("Gemini translation error, possible wrong key") 
                       messageBox("error", "There has been some uncatched error, possibly wrong key ");
                       stop = true;
                       return "stop"
@@ -4546,6 +4572,21 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             result = await translateWithGolinguist(plural, "nl-nl", record, row, apikeyTranslatio, replacePreVerb, spellCheckIgnore, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
 
         }
+        else if (transsel == "cerebras") {
+            let editor = true;
+            let URL = "https://api.cerebras.ai/v1/chat/completions";
+          //  console.debug("mycontext in cerebras:", mycontext)
+            result = await getTransOpenAI(original, destlang, e, apikeyCelebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL, mycontext);
+            if (result == "Error 401") {
+                messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+            } else if (result == "Error 403") {
+                messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+            } else {
+                if (errorstate != "OK") {
+                    messageBox("error", "There has been some uncatched error: " + errorstate);
+                }
+            }
+        }
         else if (transsel === "koboldCpp") {
              let koboldUrl = "http://localhost:5001"
              let is_editor = true;
@@ -4601,7 +4642,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         }
         else if (transsel == "deepl") {
             // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-            result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false);
+            result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false, DeepLWait, mycontext);
             if (result == "Error 403") {
                 messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                 //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -4691,7 +4732,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                         }
         }
         else if (transsel == "OpenAI") {
-            result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, is_entry);
+           result = await getTransOpenAI(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,URL,mycontext);
 
             if (result == "Error 401") {
                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -4765,7 +4806,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
          else if (transsel === "gemini") {
                         let is_editor = false
                         result = await translateWithGemini(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
-                         console.debug("result gemini:", result)
+                         // console.debug("result gemini:", result)
                          if (result == "NOK") {
                             stop = true;
                             return "stop"
@@ -4915,10 +4956,10 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     //console.debug("pretrans:",pretrans)
     if (pretrans == "notFound") {
         if (transsel == "LibreTrans") {
-                        console.debug("we translate with libre")
+                        // console.debug("we translate with libre")
                         is_editor = false
                         result = await transLibre(plural, destlang, record, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
-                        console.debug("result:",result)
+                        // console.debug("result:",result)
                     
         }
         else if (transsel === "koboldCpp") {
@@ -4973,7 +5014,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         }
         else if (transsel == "deepl") {
             // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
-            result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false);
+            result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false,DeepLWait,mycontext);
             if (result == "Error 403") {
                 messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                 //alert("Error in translation received status 403, authorisation refused.\r\nPlease check your licence in the options!!!");
@@ -5080,9 +5121,9 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                                 //alert("There has been some uncatched error: " + errorstate);
                             }
                         }
-                    }
+        }
         else if (transsel == "OpenAI") {
-            result = await AITranslate(plural, destlang, record, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
+            result = await getTransOpenAI(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,URL,mycontext);
 
             if (result == "Error 401") {
                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -5139,7 +5180,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
          } 
          else if (transsel === "gemini") {
             let is_editor = true
-            console.debug("we translate with gemini plural")
+            // console.debug("we translate with gemini plural")
                  result = await translateWithGemini(plural, destlang, record, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower,  spellCheckIgnore, is_editor, apikeyGemini,GeminiModel,GeminiPrompt);
                  if (result == "NOK") {
                      stop = true;
@@ -5287,7 +5328,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudeModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait, apikeyOpenRouter,OpenRouterSelect,apikeygroq, groqSelect,groqBatchSize,KimiSelect) {
+async function translatePage(apikey, apikeyCerebras, apikeyDeepl, apikeyMicrosoft, apikeyKimi, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt,ClaudeModel,apikeyOllama,LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex,apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait, apikeyOpenRouter,OpenRouterSelect,apikeygroq, groqSelect,BatchSize,KimiSelect,CerebrasSelect) {
     var myheader = document.querySelector('header');
     //const template = `
     
@@ -5307,8 +5348,23 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
             // we need to remove the style of inprogress to see the animation again
             inprogressbar.style = ""
             progressbar.style.display = 'block';
+    }
+
+    //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
+    if (transsel == 'OpenAI') {
+        vartime = convertToNumber(openAIWait);
+    }
+    else if (transsel == 'Claude') {
+        vartime = convertToNumber(openAIWait);
+    }
+    else if (transsel == 'groq') {
+        vartime = convertToNumber(openAIWait);
+    }
+    else if (transsel == "LMStudio") {
+        vartime = convertToNumber(openAIWait);
         }
-    //console.debug("transsel:", transsel)
+
+    // console.debug("transsel:", transsel)
     if (transsel == "groq") {
 
         result = await translatePageGroq(
@@ -5325,7 +5381,27 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
             spellCheckIgnore,
             OpenAITone,
             openAiGloss,
-            groqBatchSize)
+            BatchSize)
+    }
+    else if (transsel == "cerebras") {
+        let URL = "https://api.cerebras.ai/v1/chat/completions";
+        const result = await translatePageOpenAI(
+            apikeyCerebras,            // API key (OpenAI key, or your Cerebras key)
+            OpenAIPrompt,            // shared prompt template ({{toLanguage}}, {{tone}}, {{glossary}}, {{text}})
+            transsel,               // transsel (as passed to translatePageGroq)
+            destlang,               // target language code, e.g. "nl"
+            preTranslationReplace,  // pre-translation replace rules
+            postTranslationReplace, // post-translation replace rules
+            formal,                 // formal flag
+            convertToLower,         // convertToLower flag
+            CerebrasSelect,           // selected model, e.g. "gpt-4" or "gpt-oss-120b"
+            OpenAItemp,             // temperature
+            spellCheckIgnore,       // spellCheckIgnore
+            OpenAITone,             // tone, e.g. "formal" / "strict"
+            openAiGloss,            // glossary source
+            URL,                    // Cerebras endpoint URL (ignored for OpenAI) ← NEW
+            BatchSize               // optional; defaults to 10 if omitted
+        );
     }
     else if (transsel == "Claude") {
         let is_editor = false
@@ -5357,7 +5433,28 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
         //console.debug("we translate with koboldCpp")
         let is_editor = false
         let koboldUrl = "http://localhost:5001" 
-        result = await translatePageKobold(koboldUrl,OpenAIPrompt,transsel,destlang,preTranslationReplace,postTranslationReplace,formal, convertToLower,OpenAItemp,spellCheckIgnore,OpenAITone, openAiGloss,5)
+        result = await translatePageKobold(koboldUrl, OpenAIPrompt, transsel, destlang, preTranslationReplace, postTranslationReplace, formal, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss, 5)
+    }
+    else if (transsel == "OpenAI") {
+     //   console.debug("we translate with openAI in batch")
+        let URL = "";
+        const result = await translatePageOpenAI(
+            apikeyOpenAI,            // API key (OpenAI key, or your Cerebras key)
+            OpenAIPrompt,            // shared prompt template ({{toLanguage}}, {{tone}}, {{glossary}}, {{text}})
+            transsel,               // transsel (as passed to translatePageGroq)
+            destlang,               // target language code, e.g. "nl"
+            preTranslationReplace,  // pre-translation replace rules
+            postTranslationReplace, // post-translation replace rules
+            formal,                 // formal flag
+            convertToLower,         // convertToLower flag
+            OpenAISelect,           // selected model, e.g. "gpt-4" or "gpt-oss-120b"
+            OpenAItemp,             // temperature
+            spellCheckIgnore,       // spellCheckIgnore
+            OpenAITone,             // tone, e.g. "formal" / "strict"
+            openAiGloss,            // glossary source
+            URL,                    // Cerebras endpoint URL (ignored for OpenAI) ← NEW
+            BatchSize               // optional; defaults to 10 if omitted
+        );
     }
     else if (transsel == "openRouter") {
         //console.debug("we translate with openrouter")
@@ -5366,7 +5463,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
             apikeyOpenRouter, OpenAIPrompt, OpenRouterSelect,
             destlang, preTranslationReplace, postTranslationReplace,
             formal, convertToLower, is_editor, OpenAItemp,
-            spellCheckIgnore, OpenAITone, openAiGloss,groqBatchSize
+            spellCheckIgnore, OpenAITone, openAiGloss,BatchSize
          );
     }
     else {
@@ -5389,20 +5486,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
         }
         
 
-        //24-07-2023 PSS corrected an error causing DeepL, Google, and Microsoft to translate very slow
-        if (transsel == 'OpenAI') {
-            vartime = convertToNumber(openAIWait);
-        }
-        else if (transsel == 'Claude') {
-            vartime = convertToNumber(openAIWait);
-        }
-        else if (transsel == 'groq') {
-            vartime = convertToNumber(openAIWait);
-        }
-        else if (transsel == "LMStudio") {
-            vartime = convertToNumber(openAIWait);
-        }
-
+      
         //console.debug("DeepL:",transsel,DeepLWait)
         else if (transsel == 'deepl') {
             // console.debug("we have deepl")
@@ -5618,6 +5702,7 @@ async function translatePage(apikey, apikeyDeepl, apikeyMicrosoft, apikeyKimi, a
                             console.debug(`No match found for record id: ${rowfound}`);
                             continue;  // Skip to next record
                         }
+                        let mycontext = record.getElementsByClassName("context bubble")[0]?.innerText || "";
 
                         counter++;
                         if (checkset.checked == true) {
@@ -5844,7 +5929,7 @@ async function checkEntry(rowId, postTranslationReplace, formal, convertToLower,
             let pluralText = textareaElem1.value;
             translatedText = postProcessTranslation(original, pluralText, replaceVerb, text, "checkEntry", convertToLower, spellCheckIgnore, locale);
             translatedText = replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
-            console.debug("translatedtext in checkentry:",translatedText)
+          //  console.debug("translatedtext in checkentry:",translatedText)
             textareaElem1.value = translatedText
         }
     }
@@ -5892,9 +5977,10 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 // 2. Added `koboldCpp` branch in the singular block (after "LMStudio")
 // 3. Added `koboldCpp` branch in the plural block (after "LMStudio")
 
-async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyKimi,apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss, ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeyOpenRouter, OpenRouterSelect, apikeygroq, groqSelect, KimiSelect, koboldUrl) {
+async function translateEntry(rowId, apikey, apikeyCerebras, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyKimi, apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss, ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeyOpenRouter, OpenRouterSelect, apikeygroq, groqSelect, KimiSelect, CerebrasSelect,koboldUrl) {
     var translateButton;
     var result;
+    var DeepLWait = 0;
     errorstate = "OK"
     let myTextareaElem = ""
     locale = checkLocale();
@@ -5986,6 +6072,21 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             if (toTranslate) {
                 let pretrans = await findTransline(original, destlang);
                 if (pretrans == "notFound") {
+                    if (transsel == "cerebras") {
+                        let editor = true;
+                        let URL = "https://api.cerebras.ai/v1/chat/completions";
+                        
+                        result = await getTransOpenAI(original, destlang, e, apikeyCerebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,transsel, URL,mycontext);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                        } else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                        } else {
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
                     if (transsel == "LibreTrans") {
                         is_editor = true
                         result = await transLibre(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
@@ -6006,7 +6107,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     }
                     else if (transsel == "deepl") {
                         is_entry = true
-                        deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry)
+                        deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, DeepLWait, mycontext)
                     }
                     else if (transsel == "microsoft") {
                         result = await microsoftTranslate(original, destlang, e, apikeyMicrosoft, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, spellCheckIgnore);
@@ -6051,7 +6152,8 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     }
                     else if (transsel == "OpenAI") {
                         let editor = true;
-                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        
+                        result = await getTransOpenAI(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL,mycontext);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         } else if (result == "Error 403") {
@@ -6185,7 +6287,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
             else {
                 let translatedText = original;
                 if (toBoolean(formal)) {
-                    console.debug("Formal is active")
+                 //   console.debug("Formal is active")
                     translatedText = await replaceVerbInTranslation(original, translatedText, replaceVerb, debug = false, formal)
                 }
                 myTextareaElem.innerText = translatedText;
@@ -6207,6 +6309,21 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                 let pretrans = await findTransline(original, destlang);
                 plural_line = "2";
                 if (pretrans == "notFound") {
+                    if (transsel == "cerebras") {
+                        let editor = true;
+                        let URL = "https://api.cerebras.ai/v1/chat/completions";
+                        // console.debug("mycontext in cerebras:", mycontext)
+                        result = await getTransOpenAI(original, destlang, e, apikeyCelebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL, mycontext);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                        } else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                        } else {
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
                     if (transsel == "LibreTrans") {
                         is_editor = true
                         result = await transLibre(original, destlang, e, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss)
@@ -6226,7 +6343,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                         }
                     }
                     else if (transsel == "deepl") {
-                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary);
+                        result = await deepLTranslate(original, destlang, e, apikeyDeepl, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false,DeepLWait,mycontext);
                         if (result == "Error 403") {
                             messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
                         } else if (result == 'Error 404') {
@@ -6307,7 +6424,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     }
                     else if (transsel == "OpenAI") {
                         let editor = true;
-                        result = await AITranslate(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, locale, convertToLower, DeeplFree, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        result = await getTransOpenAI(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL,mycontext);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         } else if (result == "Error 403") {
@@ -6320,7 +6437,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     }
                     else if (transsel == "groq") {
                         let editor = true;
-                        result = await groqTranslate(original, destlang, e, apikeygroq, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                        result = await groqTranslate(original, destlang, e, apikeygroq, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", groqSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,mycontext);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         } else if (result == "Error 403") {
@@ -6358,7 +6475,7 @@ async function translateEntry(rowId, apikey, apikeyDeepl, apikeyDeepSeek, apikey
                     else if (transsel === "koboldCpp") {
                         let editor = true;
                         koboldUrl = "http://localhost:5001",
-                        result = await KoboldAITranslate(original, destlang, e, koboldUrl, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
+                            result = await KoboldAITranslate(original, destlang, e, koboldUrl, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,mycontext);
                         if (errorstate != "OK") {
                             messageBox("error", "KoboldCPP error: " + errorstate);
                         }
@@ -7603,7 +7720,7 @@ function good_workingprocessPlaceholderSpaces(originalPreProcessed, translatedTe
         let transIndex = result.indexOf(placeholder);
         if (transIndex === -1) continue;
 
-        console.debug(`DEBUG Placeholder ${placeholder}: "${result}"`);
+      //  console.debug(`DEBUG Placeholder ${placeholder}: "${result}"`);
 
         // ---- Leading space ----
         const hasLeading = transIndex > 0 && result[transIndex - 1] === ' ';
@@ -7631,7 +7748,7 @@ function good_workingprocessPlaceholderSpaces(originalPreProcessed, translatedTe
         }
     }
 
-    console.debug("DEBUG processPlaceholderSpaces result:", result);
+    // console.debug("DEBUG processPlaceholderSpaces result:", result);
     return result;
 }
 // PSS 04-03-2021 Completely rewritten the processPlaceholderSpace function, because wrong replacements were made when removing blanks
@@ -7648,8 +7765,8 @@ function working_processPlaceholderSpaces(originalPreProcessed, translatedText) 
     while (counter < 20) {
         // PSS 03-03-2021 find if the placeholder is present and at which position
         found = originalPreProcessed.search("[" + counter + "]");
-        console.debug("OriginalPreprocessed:", originalPreProcessed)
-        console.debug("processPlaceholderSpaces original found start:", found, " ", "[" + counter + "]");
+      //  console.debug("OriginalPreprocessed:", originalPreProcessed)
+      //  console.debug("processPlaceholderSpaces original found start:", found, " ", "[" + counter + "]");
         if (found == -1) {
             break;
         }
@@ -7677,7 +7794,7 @@ function working_processPlaceholderSpaces(originalPreProcessed, translatedText) 
         counter = 0;
         while (counter < 20) {
             found = translatedText.search("[" + counter + "]");
-            console.debug("processPlaceholderSpaces found in translatedText start:", found, " ", "[" + counter + "]");
+            // console.debug("processPlaceholderSpaces found in translatedText start:", found, " ", "[" + counter + "]");
             if (found == -1) {
                 break;
             }
@@ -7719,9 +7836,9 @@ function working_processPlaceholderSpaces(originalPreProcessed, translatedText) 
                         if (!(transval.startsWith(" "))) {
                             // 24-03-2021 PSS found another problem when the placeholder is at the start of the line
                             found = translatedText.search("[" + counter + "]");
-                            console.debug('processPlaceholderSpaces found at :', found);
+                            // console.debug('processPlaceholderSpaces found at :', found);
                             if (found != 1) {
-                                console.debug("processPlaceholderSpaces in trans no blank before!!!");
+                                // console.debug("processPlaceholderSpaces in trans no blank before!!!");
                                 repl = transval.substr(0, 1) + " " + transval.substr(1,);
                                 translatedText = replaceAt(translatedText, transval, repl);
                             }
@@ -7790,7 +7907,7 @@ function working_processPlaceholderSpaces(originalPreProcessed, translatedText) 
         //console.debug("processPlaceholderBlank no placeholders found",translatedText);
         return translatedText;
     }
-    console.debug("processPlaceholderSpaces final result:", translatedText);
+    // console.debug("processPlaceholderSpaces final result:", translatedText);
     return translatedText;
 }
 

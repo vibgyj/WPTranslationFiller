@@ -73,6 +73,9 @@
             width: 400px;
         }
 
+        #cerebras_api_key {
+            width: 400px;
+        }
         #nlpcloud_api_key {
             width: 400px;
         }
@@ -326,6 +329,16 @@
         <table id="options">
             <tr>
                 <td>
+                    <label for="cerebras_api_key">Cerebras API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="cerebras_api_key" type="text" value="cerebras-api key->" placeholder="Cerebras API key" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="gemini_api_key">Gemini API Key</label>
                 </td>
                 <td>
@@ -499,6 +512,24 @@
             </tr>
             <tr>
                 <td>
+                    <label for="cerebrasSelect">Select a model for Cerebras:</label>
+                    <span class="tooltip" data-tooltip="This list is loaded live from the Cerebras API using your Cerebras API key above.&#10;
+                                 If no valid key is entered yet, a small fallback list is shown instead.&#10;
+                                 Click 'Refresh models' after entering or changing your API key.">?</span>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for Cerebras" name="cerebrasSel" id="cerebrasSelect">
+                            <option value="">Loading models...</option>
+                        </select>
+                        <button type="button" id="refreshCerebrasModels">Refresh models</button>
+                        <br />
+                        <span id="cerebrasModelStatus" style="font-size:0.85em; color:#ffffff;"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="ClaudSelect">Select a model for Claud:</label>
                 </td>
                 <td>
@@ -535,7 +566,7 @@
                             </select>
                         </div>
                     </div>
-                    </div>
+</div>
                 </td>
             </tr>
             <tr>
@@ -715,6 +746,7 @@
                 <td>
                     <div class="form-select">
                         <select title="Select a translator" name="transsel" id="transselect">
+                            <option value="cerebras">Cerebras</option>
                             <option value="deepl">Deepl</option>
                             <option value="deepseek">DeepSeek</option>
                             <option value="gemini">Gemini</option>

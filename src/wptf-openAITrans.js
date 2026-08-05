@@ -1,62 +1,33 @@
 ﻿/**
- * This file includes all functions for translating with the openAI API and uses a promise
- * It depends on commonTranslate for additional translation functions
+ * getTransOpenAI — OpenAI / Cerebras translation, Groq method.
+ *
+ * Groq-method pieces (unchanged from your working version):
+ *   1. prunedGlossary  — glossary pruned for THIS line.
+ *   2. content         — text sent as a structured JSON payload.
+ *   3. glossary per line — per-item `g` field, like Groq's [{ i, t, g }].
+ *
+ * This rebuild ONLY fixes ordering. The correct sequence is:
+ *   build dataNew  ->  strip OpenAI-only params  ->  apply Cerebras reasoning.
+ * Previously the param-strip and Cerebras block ran BEFORE dataNew existed
+ * (temporal dead zone), so the reasoning setting was lost / threw. The
+ * duplicated strip loop is also removed.
  */
-// Call this at the start of your translation batch loop
-function startTranslationBatch() {
-  localStorage.setItem('openai_prompt_sent', 'false');
-}
-
-// Call this at the end of your translation batch loop or when needed
-function endTranslationBatch() {
-  localStorage.removeItem('openai_prompt_sent');
-}
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function AITranslate(original, destlang, record, apikeyOpenAI, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
-    var timeout = 50;
-    errorstate = "OK";
-    
-    // Preprocess original
-    var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
-    
-    // Await the translation call
-    var result = await getTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
-    
-    return result;
-}
-
-// FIX: added openAiGloss parameter, removed double comma in reviewTransAI call
-async function AIreview(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss, model, apikeyOpenRouter,translator,OpenRouterModel) {
-    var originalPreProcessed = original;
-    if (apikeyOpenAI != "") {
-        var result = await reviewTransAI(original, destlang, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss,model, apikeyOpenRouter,translator,OpenRouterModel);
-    }
-    else {
-        errorstate = "No apikey provided!"
-    }
-    return errorstate;
-}
-
-
-async function getTransAI(
+async function getTransOpenAI(
   original, language, record, apikeyOpenAI, OpenAIPrompt,
-  originalPreProcessed, rowId, transtype, plural_line, formal,
+  preverbs, rowId, transtype, plural_line, formal,
   locale, convertToLower, editor, counter, OpenAISelect,
-  OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss
+    OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, translator, URL,mycontext
 ) {
   var show_debug = false;
+  var myURL = "";
   var myTtranslatedText = "";
   let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
   let prevstate = current ? current.innerText : "";
-    
   let destlang = language;
   language = language.toUpperCase();
   var messages;
-
+  var mymodel;
+  const originalPreProcessed = await preProcessOriginal(original, preverbs, "groq");
   let tempPrompt = OpenAIPrompt + '\n';
   let myprompt = "";
 
@@ -74,12 +45,13 @@ async function getTransAI(
   } else {
     myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
   }
-  //console.debug("Prompt after tone and language handling:", myprompt);
-  // Compact glossary
-  const filteredGloss = pruneGlossary(openAiGloss, originalPreProcessed, record);
-  const compactGloss = filteredGloss.replace(/\n+/g, "|");
 
-  // Replace glossary and language names
+  /****************************************************
+   * GLOSSARY — Groq method (per line)
+   ****************************************************/
+  const prunedGlossary = pruneGlossary(openAiGloss, originalPreProcessed, record) || "";
+  const compactGloss = prunedGlossary.replace(/\n+/g, "|");
+
   myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss);
 
   if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
@@ -93,11 +65,31 @@ async function getTransAI(
   else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
   else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
 
+
   if (!originalPreProcessed) {
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
   }
-  myprompt = myprompt.replaceAll("{{text}}", originalPreProcessed);
-  //  console.debug("Prompt after all replacements:", myprompt)
+
+  /****************************************************
+   * CONTENT — Groq method
+   ****************************************************/
+ 
+    // Context: strip any [[COMMENT]] marker, include only when non-empty.
+    const cleanContext = (typeof stripPromptComments === "function")
+        ? stripPromptComments(String(mycontext ?? "")).trim()
+        : String(mycontext ?? "").trim();
+
+    const promptItems = [{
+        i: rowId,
+        t: originalPreProcessed,
+        ...(cleanContext ? { c: cleanContext } : {}),
+    ...(prunedGlossary ? { g: compactGloss } : {})
+  }];
+  const contentPayload = JSON.stringify(promptItems);
+
+  myprompt = myprompt.replaceAll("{{text}}", contentPayload);
+  
+
   let maxTokens = estimateMaxTokens(originalPreProcessed);
   max_Tokens = maxTokens;
 
@@ -110,350 +102,151 @@ async function getTransAI(
     return "NOK";
   }
 
-  const mymodel = OpenAISelect.toLowerCase();
-  if (show_debug) console.debug("Model selected:", mymodel);
-  let dataNew = {};
-  //  console.debug("mymodel for translation:", mymodel);
-  if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
-    dataNew = {
-      model: mymodel,
-      messages,
-      max_completion_tokens: max_Tokens,
-      top_p: Number(Top_p),
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      reasoning_effort: 'minimal',
-      verbosity: 'low',
-      apiKey: apikeyOpenAI,
-      prompt_cache_key: 'WPTF translation',
-    };
-  }
-  else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4" || mymodel === "gpt-5.5") {
-    dataNew = {
-      model: mymodel,
-      messages,
-      max_completion_tokens: max_Tokens,
-      top_p: Number(Top_p),
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      reasoning_effort: 'none',
-      verbosity: 'low',
-      apiKey: apikeyOpenAI,
-      prompt_cache_key: 'WPTF translation',
-    };
-  }
-  else if (mymodel === "gpt-5.3-chat-latest") {
-    dataNew = {
-      model: mymodel,
-      messages,
-      max_completion_tokens: max_Tokens,
-      top_p: Number(Top_p),
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      reasoning_effort: 'medium',
-      verbosity: 'low',
-      apiKey: apikeyOpenAI,
-      prompt_cache_key: 'WPTF translation',
-    };
-  }
-  else {
-    dataNew = {
-      model: mymodel,
-      messages,
-      max_tokens: max_Tokens,
-      n: 1,
-      temperature: OpenAItemp,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      top_p: Number(Top_p),
-      apiKey: apikeyOpenAI,
-    };
-  }
+  mymodel = OpenAISelect.toLowerCase();
 
+  // Endpoint selection
+  if (translator == 'cerebras') {
+    myURL = URL;
+  } else {
+    myURL = 'https://api.openai.com/v1/chat/completions';
+  }
+   // console.debug("Cerebras key:",apikeyOpenAI)
+    const auth = { apiKey: apikeyOpenAI, URL: myURL };
+    let dataNew = buildRequestParams(mymodel, translator, messages, max_Tokens, auth, { OpenAItemp });
+
+ 
+
+   // console.debug("[Cerebras] mymodel:", JSON.stringify(mymodel),
+   //               "effort:", effort ?? "(none/gemma)",
+    //    "keys:", Object.keys(dataNew));
+  
+    //console.debug("Prompt after all replacements:", myprompt);
   try {
-    const start = Date.now();
-    const result = await new Promise((resolve) => {
-      chrome.runtime.sendMessage(
-        { action: "OpenAI", data: dataNew },
-        (res) => resolve(res)
-      );
-    });
-    //  console.debug("Raw response from OpenAI proxy:", result.error)
-    if (!result) {
-      console.debug("OpenAI proxy returned undefined");
+    // Only proceed for supported translators; action string matches the proxy
+    const supported = ['OpenAI', 'cerebras'];
+    if (!supported.includes(translator)) {
+      console.error("Unknown translator:", translator);
       return "NOK";
     }
 
-    if (result.error) {
-  const duration = ((Date.now() - start) / 1000).toFixed(2);
-  if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] OpenAI proxy error: ${duration}s`, result.error);
+    const start = Date.now();
 
-  // Normalize: result.error can be a string or an object
-  const errorStr = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        { action: translator, data: dataNew },
+        (res) => {
+          if (chrome.runtime.lastError) {
+            // Channel died: listener missing/threw, or closed before sendResponse
+            resolve({
+              error: {
+                status: 0,
+                message: chrome.runtime.lastError.message,
+                type: "channel_error"
+              }
+            });
+            return;
+          }
+          resolve(res);
+        }
+      );
+    });
 
-  // Try to extract HTTP status code from "Request failed (400): ..." pattern
-  const match = errorStr.match(/Request failed \((\d+)\)/);
-  let statusCode = match ? match[1] : "unknown";
-
-  // Fallback: try to parse the embedded JSON for more detail
-  let errorMessage = errorStr;
-  try {
-    const jsonMatch = errorStr.match(/Request failed \(\d+\): (\{[\s\S]*\})/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[1]);
-      errorMessage = parsed?.error?.message ?? errorStr;
+    // No envelope at all
+    if (!response) {
+      console.error(`${translator} proxy returned no response`);
+      return "NOK";
     }
-  } catch (_) {}
-       // console.debug("Extracted status code:", statusCode, "Error message:", errorMessage)
-  if (statusCode === '400') {
-    if (editor) messageBox("warning", `Request failed with status ${statusCode}<br>${errorMessage}`);
-    return `Error 400`;
-  }
-  else if (statusCode === '401') {
-    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!`);
-    else return `Error 401`;
-  } else if (statusCode === '403') {
-    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Country not supported!`);
-    else return `Request failed with status ${statusCode}. Country not supported!`;
-  } else if (statusCode === '404') {
-    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Please check your license!<br>${errorMessage}`);
-    else return `Error 404`;
-  } else if (statusCode === '429') {
-    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Rate limit reached!`);
-    else return `Request failed with status ${statusCode}. Rate limit reached!`;
-  } else if (statusCode === '500') {
-    if (editor) messageBox("warning", `Request failed with status ${statusCode}. Server issue!`);
-    else return `Request failed with status ${statusCode}. Server issue!`;
-  } else {
-    if (editor) messageBox("warning", `Request failed with status ${statusCode}.<br>${errorMessage}`);
-    else return `Request failed with status ${statusCode}. ${errorMessage}`;
-  }
-}
+
+    // ---- Error path ----
+    if (response.error) {
+      const duration = ((Date.now() - start) / 1000).toFixed(2);
+
+      // Normalize: error can be the new structured object OR the old string
+      let statusCode, errorMessage;
+      if (typeof response.error === 'object') {
+        statusCode = String(response.error.status ?? "unknown");
+        errorMessage = response.error.message ?? JSON.stringify(response.error);
+      } else {
+        const errorStr = String(response.error);
+        const match = errorStr.match(/Request failed \((\d+)\)/);
+        statusCode = match ? match[1] : "unknown";
+        errorMessage = errorStr;
+        const jsonMatch = errorStr.match(/Request failed \(\d+\): (\{[\s\S]*\})/);
+        if (jsonMatch) {
+          try { errorMessage = JSON.parse(jsonMatch[1])?.error?.message ?? errorStr; }
+          catch (_) { }
+        }
+      }
+
+      if (toBoolean(DebugMode)) {
+        console.debug(`[${new Date().toISOString()}] ${translator} proxy error (${duration}s): status=${statusCode}`, response.error);
+      }
+
+      // Every branch returns — no fall-through into the success parser
+      const messages = {
+        '400': `Request failed with status ${statusCode}<br>${errorMessage}`,
+        '401': `Request failed with status ${statusCode}. Please check your license!`,
+        '403': `Request failed with status ${statusCode}. Country not supported!`,
+        '404': `Request failed with status ${statusCode}. Please check your license!<br>${errorMessage}`,
+        '429': `Request failed with status ${statusCode}. Rate limit reached!`,
+        '500': `Request failed with status ${statusCode}. Server issue!`,
+      };
+      const msg = messages[statusCode] ?? `Request failed with status ${statusCode}.<br>${errorMessage}`;
+
+      if (editor) {
+        messageBox("warning", msg);
+      }
+      // Return a plain-text version regardless of editor mode
+      return `Error ${statusCode}`;
+    }
+
+    // ---- Success path ----
+    if (!response.result) {
+      console.error(`${translator} proxy returned no result:`, response);
+      return "NOK";
+    }
 
     const duration = ((Date.now() - start) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug("OpenAI proxy response (raw):", result.result, " ", duration);
+    if (toBoolean(DebugMode)) console.debug(`${translator} proxy response (raw):`, response.result, duration);
 
-    const data = result.result;
-    let text = data?.choices?.[0]?.message?.content?.trim() ?? "";
-    //console.debug("OpenAI proxy response (trimmed):", text)
-    if (text === '""' || text === "") {
-      text = "No suggestions";
+    const data = response.result;
+    let raw = data?.choices?.[0]?.message?.content?.trim() ?? "";
+    //console.debug("raw translation content:", raw);
+
+    // Groq method: the model replies with {"results":[{"i":"<rowId>","tr":"..."}]}.
+    // Pull out the translation for THIS row. Fall back to plain text if the
+    // model ignored the JSON format.
+    let text = "";
+    try {
+      const parsed = JSON.parse(raw);
+      const results = Array.isArray(parsed?.results) ? parsed.results
+                    : Array.isArray(parsed) ? parsed
+                    : [];
+      const match = results.find(r => String(r?.i) === String(rowId)) ?? results[0];
+      text = String(match?.tr ?? match?.t ?? "").trim();
+    } catch (_) {
+      text = raw;
     }
+    if (text === '""' || text === "") text = "No suggestions";
 
     const start1 = Date.now();
     myTranslatedText = await postProcessTranslation(
       original, text, replaceVerb, originalPreProcessed,
-      "OpenAI", convertToLower, spellCheckIgnore, locale
+      translator, convertToLower, spellCheckIgnore, locale
     );
-
-    const duration2 = ((Date.now() - start1) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] myTranslatedText postprocessed ${duration2}s`, myTranslatedText);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] postprocessed ${((Date.now() - start1) / 1000).toFixed(2)}s`, myTranslatedText);
 
     const start2 = Date.now();
     await processTransl(
-      original, myTranslatedText, language, record, rowId,
-      transtype, plural_line, locale, convertToLower, current
+      original, myTranslatedText, language, record, rowId, transtype, plural_line, locale, convertToLower, current
     );
-
-    const duration3 = ((Date.now() - start2) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] after processTransl ${duration3}s`);
-    const durationSec = ((Date.now() - start) / 1000).toFixed(2);
-    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] All processed in ${durationSec} sec`);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] after processTransl ${((Date.now() - start2) / 1000).toFixed(2)}s`);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] All processed in ${((Date.now() - start) / 1000).toFixed(2)} sec`);
 
     return "OK";
 
   } catch (err) {
-    console.error("Fetch OpenAI failed:", err);
+    console.error(`${translator} translation failed:`, err);
     return null;
   }
-}
-
-
-// FIX: added openAiGloss parameter, filters glossary and injects into review prompt
-async function reviewTransAI(original, language, record, apikeyOpenAI, OpenAIPrompt, reviewPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, editor, translatedText, preview, openAiGloss,model,apikeyOpenRouter,translator, OpenRouterModel) {
-    var current = "";
-    var prevstate = "";
-    var error;
-    var data;
-    
-    current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-    prevstate = current.innerText;
-    language = language.toUpperCase();
-
-    // Filter glossary for this specific original text and inject into prompt
-    const filteredGloss = pruneGlossary(openAiGloss, original, record);
-    const compactGloss = filteredGloss.replace(/\n+/g, "|");
-
-    var prompt = reviewPrompt.replace('{{placeholder_original}}', original);
-    prompt = prompt.replace('{{placeholder_translated}}', translatedText);
-    prompt = prompt.replace('{{OpenAiGloss}}', compactGloss);
-    let maxTokens = estimateMaxTokens(originalPreProcessed);
-    max_Tokens = maxTokens;
-    var messages = [{ 'role': 'user', 'content': prompt }];
-    //let mymodel = "gpt-4.1-mini";
-    //console.debug("Model for review:", model,translator);
-     if (translator == "openRouter") {
-        var myLink = "https://openrouter.ai/api/v1/chat/completions";
-         var myKey = apikeyOpenRouter
-         var mymodel = OpenRouterModel;
-     }
-     else if (translator == 'koboldCpp') {
-        // console.debug("Using koboldCpp for review")
-         var myLink = "http://localhost:5001/v1/chat/completions";
-         var mymodel = "koboldCpp";
-     }
-     else {
-        var myLink = "https://api.openai.com/v1/chat/completions";
-        var myKey = apikeyOpenAI
-        var mymodel = model;
-    }
-    console.debug("Review model:", mymodel, " Translator:", translator)
-    if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
-    data1 = {
-      model: mymodel,
-      messages,
-      max_completion_tokens: max_Tokens,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      reasoning_effort: 'minimal',
-      verbosity: 'low',
-      prompt_cache_key: 'WPTF translation',
-    };
-  }
-  else if (mymodel === "gpt-5.1" || mymodel === "gpt-5.1-mini" || mymodel === "gpt-5.1-nano" || mymodel === "gpt-5.4" || mymodel === "gpt-5.5") {
-    data1 = {
-      model: mymodel,
-      messages,
-      max_completion_tokens: max_Tokens,
-      top_p: Number(Top_p),
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      reasoning_effort: 'none',
-      verbosity: 'low',
-      prompt_cache_key: 'WPTF translation',
-    };
-  }
-  else if (mymodel === "gpt-5.3-chat-latest") {
-    data1 = {
-      model: mymodel,
-      messages,
-      max_completion_tokens: max_Tokens,
-      top_p: Number(Top_p),
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      reasoning_effort: 'medium',
-      verbosity: 'low',
-      prompt_cache_key: 'WPTF translation',
-    };
-  }
-    else {
-        if (mymodel === "koboldCpp") {
-             messages = [
-               { role: 'system', content: prompt },
-               { role: 'user', content: originalPreProcessed },
-               { role: 'assistant', content: "" }
-              ];
-            data1 = {
-                model: "koboldCpp",
-                messages,
-                max_tokens: max_Tokens,
-                temperature: 0,
-                frequency_penalty: 0,
-                presence_penalty: 0,
-                repeat_penalty: 1.1,
-                top_k: Number(Top_k),
-                think: false,
-             }
-        }
-        else {
-            data1 = {
-                model: mymodel,
-                messages,
-                max_tokens: max_Tokens,
-                n: 1,
-                temperature: 0,
-                frequency_penalty: 0,
-                presence_penalty: 0,
-                top_p: Number(Top_p),
-                stop: '|\n',
-            }
-        }
-    };
-
-    try {
-        //console.debug("myLink:",myLink)
-        const response = await fetch(myLink, {
-            body: JSON.stringify(data1),
-            method: "POST",
-            headers: {
-                "content-type": "application/json",
-                Authorization: "Bearer " + myKey,
-            },
-        });
-
-        const isJson = response.headers.get('content-type')?.includes('application/json');
-        const data = isJson ? await response.json() : null;
-
-        if (!response.ok) {
-            errorstate = "NOK";
-            const statusCode = response.status;
-            if (statusCode == 400) { errorstate = "Error 400"; if (editor) messageBox("error", "Error 400:" + data?.error?.message); }
-            else if (statusCode == 401) { errorstate = "Error 401"; if (editor) messageBox("error", "Error 401 Authorization failed."); }
-            else if (statusCode == 404) { errorstate = "Error 404"; alert("Error 404 The requested resource could not be found."); }
-            else if (statusCode == 429) { errorstate = "Error 429"; if (editor) messageBox("error", "Model " + mymodel + " is overloaded."); }
-            else if (statusCode == 456) { errorstate = "Error 456"; }
-            else if (statusCode == 503) { errorstate = "Error 503"; messageBox("error", "The server cannot handle the request"); }
-            else { errorstate = "NOK"; if (editor) messageBox("error", "Uncaught error: " + statusCode); }
-            return errorstate;
-        }
-
-        errorstate = "OK";
-        const open_ai_response = data.choices[0];
-        if (typeof open_ai_response.message.content !== 'undefined') {
-            let text = open_ai_response.message.content;
-            //console.debug("Review text response:", text);
-
-            if (text !="" && text.indexOf("Yes") !== -1) {
-                // Remove existing checkmark if present then add fresh one
-                if (preview.innerHTML.startsWith('\u{2705}')) {
-                    preview.innerHTML = preview.innerHTML.replace('\u{2705}', "");
-                }
-                // Remove any previous reason element if the row was re-reviewed
-                const existingReason = preview.querySelector('.review-reason');
-                if (existingReason) existingReason.remove();
-
-                preview.innerHTML = '\u{2705}' + " " + preview.innerHTML;
-            } else {
-                // Extract reason after "No: "
-                const reasonMatch = text.match(/No[,:]?\s*(.*)/i);
-                const reason = reasonMatch && reasonMatch[1] ? reasonMatch[1].trim() : "No reason provided";
-
-                if (preview.innerHTML.startsWith('\u{26A0}')) {
-                    preview.innerHTML = preview.innerHTML.replace('\u{26A0}', "");
-                }
-                // Remove any previous reason element to avoid duplicates
-                const existingReason = preview.querySelector('.review-reason');
-                if (existingReason) existingReason.remove();
-
-                preview.innerHTML = '\u{26A0}' + " " + preview.innerHTML;
-
-                // Add reason below the translation text
-                const reasonElem = document.createElement('div');
-                reasonElem.className = 'review-reason';
-                reasonElem.style.cssText = 'font-size: 0.75em; color: #e53e3e; margin-top: 4px; font-style: italic;';
-                reasonElem.innerText = reason;
-                preview.appendChild(reasonElem);
-            }
-        } else {
-            console.debug("No text received!");
-            errorstate = "NOK";
-        }
-
-        return errorstate;
-
-    } catch (err) {
-        console.error("reviewTransAI fetch failed:", err);
-        errorstate = "NOK";
-        return errorstate;
-    }
 }

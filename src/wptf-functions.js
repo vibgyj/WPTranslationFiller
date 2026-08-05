@@ -1,4 +1,115 @@
-﻿function adjustLayoutScreen() {
+﻿
+/****************************************************
+ * SHARED PARAM BUILDER  (used by getTransOpenAI AND translatePageOpenAI)
+ *
+ * Builds the request `data` object for one OpenAI / Cerebras API call.
+ * This is the ONLY place that knows about model-family params, so both
+ * the OpenAI and Cerebras 400-guards live here.
+ *
+ *   Step 1  build dataNew (GPT-5 family vs legacy chat params)
+ *   Step 2  strip OpenAI-only params for Cerebras
+ *   Step 3  apply Cerebras per-model reasoning control
+ *
+ * Cerebras reasoning notes:
+ *   gpt-oss-120b : only low|medium|high  ("none" => HTTP 400) -> low
+ *   zai-glm-4.7  : reasoning on by default, "none" disables   -> none
+ *   gemma-4-31b  : NOT a reasoning model — send no reasoning params
+ *
+ * Reads global Top_p for legacy models (typeof-guarded for safety).
+ ****************************************************/
+function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opts = {}) {
+    const { OpenAItemp = 0 } = opts;
+
+    // GPT-5 family (new param style). Value = reasoning_effort.
+    const GPT5_REASONING_EFFORT = {
+        "gpt-5": "low",          // "minimal" is not a valid value
+        "gpt-5-mini": "low",
+        "gpt-5-nano": "low",
+        "gpt-5.1": "none",
+        "gpt-5.1-mini": "none",
+        "gpt-5.1-nano": "none",
+        "gpt-5.4": "none",
+        "gpt-5.5": "none",
+        "gpt-5.3-chat-latest": "medium",
+    };
+
+    // ── Step 1: build dataNew ──
+    let dataNew;
+    if (mymodel in GPT5_REASONING_EFFORT) {
+        // GPT-5 reasoning family — NO top_p (that was the 400)
+        dataNew = {
+            model: mymodel,
+            messages,
+            max_completion_tokens: max_Tokens,
+            reasoning_effort: GPT5_REASONING_EFFORT[mymodel],
+            verbosity: 'low',
+            prompt_cache_key: 'WPTF translation',
+            ...auth,
+        };
+    } else {
+        // Legacy chat models — classic sampling params
+        dataNew = {
+            model: mymodel,
+            messages,
+            max_tokens: max_Tokens,
+            n: 1,
+            temperature: OpenAItemp,
+            top_p: (typeof Top_p !== "undefined") ? Number(Top_p) : 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            ...auth,
+        };
+    }
+
+    // ── Cerebras-only adjustments ──
+    if (translator === 'cerebras') {
+        // Step 2: strip OpenAI-only params Cerebras rejects
+        for (const key of ['verbosity', 'prompt_cache_key']) {
+            delete dataNew[key];
+        }
+
+        // Step 3: per-model reasoning control (the 400-guard)
+        const CEREBRAS_REASONING = {
+            "gpt-oss-120b": "low",
+            "zai-glm-4.7": "none",
+            // gemma-4-31b: intentionally absent — not a reasoning model
+        };
+        const effort = CEREBRAS_REASONING[mymodel];
+        if (effort) {
+            dataNew.reasoning_effort = effort;
+        } else {
+            delete dataNew.reasoning_effort;
+            delete dataNew.reasoning_format;
+        }
+
+        // Step 4: reasoning headroom — CoT shares the max_tokens pool,
+        // so a budget sized for output alone truncates the answer.
+        if (dataNew.reasoning_effort && dataNew.reasoning_effort !== 'none') {
+            dataNew.max_tokens = (dataNew.max_tokens ?? max_Tokens) + 1024;
+        }
+    }
+
+    return dataNew;
+}
+
+
+
+/****************************************************
+ * PROMPT COMMENTS
+ * Lines that START with [[COMMENT]] are notes for you (e.g. which
+ * model/API the prompt is for). They are stripped before the prompt
+ * is sent to the model, so they never influence the translation.
+ * The marker only counts at the start of a line, so [[COMMENT]]
+ * appearing mid-text is left untouched.
+ ****************************************************/
+if (typeof stripPromptComments === "undefined") {
+    function stripPromptComments(prompt) {
+        if (!prompt) return prompt;
+        return prompt.replace(/^[ \t]*\[\[COMMENT\]\].*(?:\r?\n|$)/gm, "");
+    }
+}
+
+function adjustLayoutScreen() {
     // Retrieve value from chrome local storage
     chrome.storage.local.get(['WPTFscreenWidth'], function (result) {
         // Access the stored value

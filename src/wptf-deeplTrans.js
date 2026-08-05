@@ -7,13 +7,13 @@ async function translateText(
     original, destlang, record, apikeyDeepl, originalPreProcessed, row,
     transtype, plural_line, formal, locale, convertToLower,
     DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,
-    deepLcurrent, DeepLWait = 0
+    deepLcurrent, DeepLWait = 0, mycontext = ""
 ) {
     destlang = destlang.toUpperCase();
     //console.debug("formal:",formal)
     //console.debug("Preprocessed original for DeepL:", originalPreProcessed);
     const formal_value = formal ? "prefer_more" : "prefer_less";
-    const mycontext = formal
+    console.debug("mycontext:", mycontext)
         ? "This text is a legal message"
         : "This text is a casual conversation with a friend.";
 
@@ -130,12 +130,15 @@ async function translateText(
 }
 
 
-async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, DeepLWait) {
+async function deepLTranslate(original, language, record, apikeyDeepl, preverbs, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry, DeepLWait, mycontext) {
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "deepl");
     if (toBoolean(DebugMode)) console.debug("DeepL Pre-processed Original:", originalPreProcessed)
     //console.debug("deeplGlossary:",deeplGlossary)
     language = language.toUpperCase();
-   
+    console.debug("mycontext:", mycontext)
+    if (mycontext == "") {
+        mycontext = 'This is an instruction'
+    }
     // PSS 09-07-2021 additional fix for issue #102 plural not updated
     var deepLcurrent = document.querySelector(`#editor-${row} span.panel-header__bubble`);
     prevstate = 'untranslated';
@@ -147,7 +150,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
     }
     try {
         //console.debug("before translateText:",DeeplFree)
-        await translateText(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,deepLcurrent,DeepLWait)
+        await translateText(original, language, record, apikeyDeepl, originalPreProcessed, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, is_entry,deepLcurrent,DeepLWait, mycontext)
     }
     catch (error) {
         // 08-09-2022 PSS improved response when no reaction comes from DeepL issue #243

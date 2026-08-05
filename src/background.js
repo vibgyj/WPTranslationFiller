@@ -14,7 +14,7 @@ function decodeBase64(encoded) {
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    //console.debug("Received message:", request);
+    console.debug("Received message:", request);
     if (request.action === "CheckModelLMs") {
 
        const model = request.model;
@@ -320,9 +320,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             try {
                 const dataToSend = { ...request.data }; // copy newData
                 const apiKey = dataToSend.apiKey;       // extract the key
-                delete dataToSend.apiKey;               // remove it from the body
-                //console.debug("model:", dataToSend.model) 
-                const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+                const myURL = dataToSend.URL
+                delete dataToSend.apiKey;               // remove it from the body.
+                delete dataToSend.URL;
+               // console.debug("URL:", myURL) 
+                const resp = await fetch(myURL, {
+               // const resp = await fetch("https://api.openai.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -330,11 +333,81 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     },
                     body: JSON.stringify(dataToSend)
                 });
-               // console.debug("response status:", resp) 
+                console.debug("response status:", resp)
                 if (!resp.ok) {
-                    // Return error message instead of raw response
-                    const msg = await resp.text();
-                    sendResponse({ error: `Request failed (${resp.status}): ${msg}` });
+                    const raw = await resp.text();
+
+                    // Try to parse OpenAI's structured error; fall back to raw text
+                    let parsed = null;
+                    try { parsed = JSON.parse(raw); } catch { /* not JSON */ }
+
+                    const apiError = parsed?.error;
+                    const errorInfo = {
+                        status: resp.status,
+                        message: apiError?.message || raw || resp.statusText,
+                        type: apiError?.type || null,
+                        param: apiError?.param || null,
+                        code: apiError?.code || null,
+                    };
+
+                    console.error("OpenAI request failed:", errorInfo);
+                    sendResponse({ error: errorInfo });
+                     return;
+                }
+                //console.debug("response status:", resp) 
+                let data;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    data = await resp.json();
+                } else {
+                    data = await resp.text();
+                }
+
+                sendResponse({ result: data });
+            } catch (err) {
+                sendResponse({ error: err.toString() });
+            }
+        })();
+
+        return true; // keep sendResponse alive for async
+    }
+
+    else if (request.action === "cerebras") {
+        (async () => {
+            try {
+                const dataToSend = { ...request.data }; // copy newData
+                const apiKey = dataToSend.apiKey;       // extract the key
+                const myURL = dataToSend.URL
+                delete dataToSend.apiKey;               // remove it from the body.
+                delete dataToSend.URL;
+                console.debug("DataToSend:", dataToSend)
+                const resp = await fetch(myURL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + apiKey
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+                console.debug("response status:", resp)
+                if (!resp.ok) {
+                    const raw = await resp.text();
+
+                    // Try to parse OpenAI's structured error; fall back to raw text
+                    let parsed = null;
+                    try { parsed = JSON.parse(raw); } catch { /* not JSON */ }
+
+                    const apiError = parsed?.error;
+                    const errorInfo = {
+                        status: resp.status,
+                        message: apiError?.message || raw || resp.statusText,
+                        type: apiError?.type || null,
+                        param: apiError?.param || null,
+                        code: apiError?.code || null,
+                    };
+
+                    console.error("Cerebras request failed:", errorInfo);
+                    sendResponse({ error: errorInfo });
                     return;
                 }
                 //console.debug("response status:", resp) 

@@ -47,21 +47,6 @@ if (typeof koboldDelay === "undefined") {
 }
 
 /****************************************************
- * PROMPT COMMENTS
- * Lines that START with [[COMMENT]] are notes for you (e.g. which
- * model/API the prompt is for). They are stripped before the prompt
- * is sent to the model, so they never influence the translation.
- * The marker only counts at the start of a line, so [[COMMENT]]
- * appearing mid-text is left untouched.
- ****************************************************/
-if (typeof stripPromptComments === "undefined") {
-    function stripPromptComments(prompt) {
-        if (!prompt) return prompt;
-        return prompt.replace(/^[ \t]*\[\[COMMENT\]\].*(?:\r?\n|$)/gm, "");
-    }
-}
-
-/****************************************************
  * TEMPLATE ENGINE (mirrors the Groq helpers)
  * applyPromptBaseKobold  — fill static placeholders once before the loop
  * applyPromptBatchKobold — fill dynamic placeholders per batch
