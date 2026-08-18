@@ -87,7 +87,13 @@
         #Claude_api_key {
             width: 400px;
         }
-
+        
+        #lara_accessKeyId {
+            width: 400px;
+        }
+        #lara_accessKeySecret {
+            width: 400px;
+        }
         #Lingvanex_api_key {
             width: 400px;
         }
@@ -329,6 +335,77 @@
         <table id="options">
             <tr>
                 <td>
+                    <label for="transselect">Select a translator:</label>
+                </td>
+                <td>
+                    <div class="form-select">
+                        <select title="Select a translator" name="transsel" id="transselect">
+                            <option value="alibaba">Alibaba</option>
+                            <option value="cerebras">Cerebras</option>
+                            <option value="deepl">Deepl</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="gemini">Gemini</option>
+                            <option value="google">Google</option>
+                            <option value="groq">Groq</option>
+                            <option value="kimi">Kimi</option>
+                            <option value="koboldCpp">koboldCpp</option>,
+                            <option value="LaraTrans">LaraTrans</option>,
+                            <option value="LibreTrans">LibreTrans</option>
+                            <option value="lingvanex">Lingvanex</option>
+                            <option value="NLPCloud">NLPCLoud</option>
+                            <option value="LMStudio">LMstudio</option>
+                            <option value="microsoft">Microsoft</option>
+                            <option value="Mistral">Mistral</option>
+                            <option value="OpenAI">OpenAI</option>
+                            <option value="openRouter">openRouter</option>
+                            <option value="translation_io">translationio</option>
+                            <option value="Claude">Claude</option>
+                            <option value="Ollama">Ollama</option>
+
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="destination_lang">Destination Language</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="destination_lang" type="text" value="nl" />
+                        <span class="tooltip" data-tooltip="Use the id from the list of languages provided by the API translator in lowercase">?</span>
+
+                        <select title="Select a language" name="langsel" id="langselect">
+                            <option value="bn">Bengali</option>
+                            <option value="ca">Catalan</option>
+                            <option value="cs">Czech</option>
+                            <option value="da">Danish</option>
+                            <option value="nl">Dutch</option>
+                            <option value="en">English</option>
+                            <option value="fi">Finnish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="hu">Hugarian</option>
+                            <option value="id">Indonesian</option>
+                            <option value="it">Italian</option>
+                            <option value="la">Latin</option>
+                            <option value="ja">Japanese</option>
+                            <option value="nb">Norwegian</option>
+                            <option value="pl">Polish</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ro">Romanian</option>
+                            <option value="ru">Russian</option>
+                            <option value="es">Spanish</option>
+                            <option value="sv">Swedish</option>
+                            <option value="ta">Tamil</option>
+                            <option value="tr">Turkish</option>
+                            <option value="uk">Ukraine</option>
+                            <option value="zh">Chinese</option>
+                        </select>
+                    </div>
+            </tr>
+            <tr>
+                <td>
                     <label for="cerebras_api_key">Cerebras API Key</label>
                 </td>
                 <td>
@@ -337,6 +414,27 @@
                     </div>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <label for="lara_accessKeyId">Lara Access Key ID</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="lara_accessKeyId" type="text" value="lara-access-key-id->" placeholder="Lara Access Key ID" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="lara_accessKeySecret">Lara Access Key Secret</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="lara_accessKeySecret" type="text" value="lara-access-key-secret->" placeholder="Lara Access Key Secret" />
+                    </div>
+                </td>
+            </tr>
+
             <tr>
                 <td>
                     <label for="gemini_api_key">Gemini API Key</label>
@@ -566,513 +664,473 @@
                             </select>
                         </div>
                     </div>
-</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="groqSelect">Select a model for groq:</label>
-                    <span class="tooltip" data-tooltip="This list is loaded live from the Groq API using your Groq API key above.&#10;
+    </div>
+    </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="groqSelect">Select a model for groq:</label>
+            <span class="tooltip" data-tooltip="This list is loaded live from the Groq API using your Groq API key above.&#10;
                                              If no valid key is entered yet, a small fallback list is shown instead.&#10;
                                              Click 'Refresh models' after entering or changing your API key.">?</span>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <select title="Select a model for groq" name="groqSel" id="groqSelect">
-                            <option value="">Loading models...</option>
-                        </select>
-                        <button type="button" id="refreshGroqModels">Refresh models</button>
-                        <br />
-                        <span id="groqModelStatus" style="font-size:0.85em; color:#ffffff;"></span>
-                    </div>
-                </td>
-            </tr>
+        </td>
+        <td>
+            <div class="form-input">
+                <select title="Select a model for groq" name="groqSel" id="groqSelect">
+                    <option value="">Loading models...</option>
+                </select>
+                <button type="button" id="refreshGroqModels">Refresh models</button>
+                <br />
+                <span id="groqModelStatus" style="font-size:0.85em; color:#ffffff;"></span>
+            </div>
+        </td>
+    </tr>
 
-            <tr>
-                <td>
-                    <label for="Kimi">Select a model for Kimi:</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <select title="Select a model for Kimi" name="KimiSel" id="KimiSelect">
-                            <option value="kimi-k2.6">kimi-k2.6</option>
-                            <option value="kimi-k2.7-code-highspeed">kimi-k2.7-code-highspeed</option>
-                            <option value="kimi-k3">kimi-k3</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
+    <tr>
+        <td>
+            <label for="Kimi">Select a model for Kimi:</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <select title="Select a model for Kimi" name="KimiSel" id="KimiSelect">
+                    <option value="kimi-k2.6">kimi-k2.6</option>
+                    <option value="kimi-k2.7-code-highspeed">kimi-k2.7-code-highspeed</option>
+                    <option value="kimi-k3">kimi-k3</option>
+                </select>
+            </div>
+        </td>
+    </tr>
 
-            <tr>
-                <td>
-                    <label for="Mistral">Select a model for Mistral:</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <select title="Select a model for Mistral" name="MistralSel" id="MistralSelect">
-                            <option value="mistral-small-2506">mistral-small-2506</option>
-                            <option value="magistral-small-2509">magistral-small-2509</option>
-                            <option value="mistral-small-latest">mistral-small-latest</option>
-                            <option value="mistral-large-2512">mistral-large-2512</option>
-                            <option value="ministral-8b-2512"> ministral-8b-2512</option>
-                            <option value="ministral-14b-2512">ministral-14b-2512</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
+    <tr>
+        <td>
+            <label for="Mistral">Select a model for Mistral:</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <select title="Select a model for Mistral" name="MistralSel" id="MistralSelect">
+                    <option value="mistral-small-2506">mistral-small-2506</option>
+                    <option value="magistral-small-2509">magistral-small-2509</option>
+                    <option value="mistral-small-latest">mistral-small-latest</option>
+                    <option value="mistral-large-2512">mistral-large-2512</option>
+                    <option value="ministral-8b-2512"> ministral-8b-2512</option>
+                    <option value="ministral-14b-2512">ministral-14b-2512</option>
+                </select>
+            </div>
+        </td>
+    </tr>
 
-            <tr>
-                <td>
-                    <label for="OpenRouterselect">Select a model for openRouter:</label>
-                    <span class="tooltip" data-tooltip="This line is for setting the parameters for openRouter&#10;
+    <tr>
+        <td>
+            <label for="OpenRouterselect">Select a model for openRouter:</label>
+            <span class="tooltip" data-tooltip="This line is for setting the parameters for openRouter&#10;
                                              Set the temp near zero for all of the models&#10;
                                              Set the Top_p value to 0.9&#10;
                                              Set the Top_k to 40&#10;
                                              Visit the models site for the exact values">?</span>
-                </td>
+        </td>
 
-                <td>
-                    <div class="form-input">
-                        <select title="Select a model for openRouter" name="OpenRoutersel" id="OpenRouterSelect">
-                            <!-- === Confirmed live (paid) === -->
-                            <option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro</option>
-                            <option value="deepseek/deepseek-v4-flash">deepseek/deepseek-v4-flash (cheap)</option>
-                            <option value="meta-llama/llama-3.3-70b-instruct">meta-llama/llama-3.3-70b-instruct</option>
-                            <option value="openai/gpt-chat-latest">openai/gpt-chat-latest</option>
-                            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
-                            <option value="openai/gpt-5.5">openai/gpt-5.5</option>
-                            <option value="openai/gpt-5.6-luna">openai/gpt-5.6-luna  (replaces gpt-5.4-nano)</option>
-                            <option value="qwen/qwen3.6-flash">qwen/qwen3.6-flash</option>
-                            <option value="qwen/qwen3.7-plus">qwen/qwen3.7-plus</option>
+        <td>
+            <div class="form-input">
+                <select title="Select a model for openRouter" name="OpenRoutersel" id="OpenRouterSelect">
+                    <!-- === Confirmed live (paid) === -->
+                    <option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro</option>
+                    <option value="deepseek/deepseek-v4-flash">deepseek/deepseek-v4-flash (cheap)</option>
+                    <option value="meta-llama/llama-3.3-70b-instruct">meta-llama/llama-3.3-70b-instruct</option>
+                    <option value="openai/gpt-chat-latest">openai/gpt-chat-latest</option>
+                    <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+                    <option value="openai/gpt-5.5">openai/gpt-5.5</option>
+                    <option value="openai/gpt-5.6-luna">openai/gpt-5.6-luna  (replaces gpt-5.4-nano)</option>
+                    <option value="qwen/qwen3.6-flash">qwen/qwen3.6-flash</option>
+                    <option value="qwen/qwen3.7-plus">qwen/qwen3.7-plus</option>
 
-                            <!-- === Updated to current generation === -->
-                            <option value="~openai/gpt-mini-latest">~openai/gpt-mini-latest  (replaces gpt-4o-mini)</option>
-                            <option value="google/gemini-3.1-flash-lite">google/gemini-3.1-flash-lite  (replaces gemini-2.5-flash-lite)</option>
-                            <option value="google/gemini-3.5-flash">google/gemini-3.5-flash  (replaces gemini-2.5-flash)</option>
-                            <option value="~google/gemini-pro-latest">~google/gemini-pro-latest  (replaces gemini-2.5-pro)</option>
-                            <option value="~google/gemini-flash-latest">~google/gemini-flash-latest</option>
-                            <option value="~moonshotai/kimi-latest">~moonshotai/kimi-latest  (replaces kimi-k3)</option>
-                            <option value="minimax/minimax-m3">minimax/minimax-m3  (replaces minimax-m2.5)</option>
-                            <option value="anthropic/claude-opus-4.8-fast">anthropic/claude-opus-4.8-fast  (replaces 4.7-fast)</option>
-                            <option value="~anthropic/claude-haiku-latest">~anthropic/claude-haiku-latest  (replaces claude-3-haiku)</option>
+                    <!-- === Updated to current generation === -->
+                    <option value="~openai/gpt-mini-latest">~openai/gpt-mini-latest  (replaces gpt-4o-mini)</option>
+                    <option value="google/gemini-3.1-flash-lite">google/gemini-3.1-flash-lite  (replaces gemini-2.5-flash-lite)</option>
+                    <option value="google/gemini-3.5-flash">google/gemini-3.5-flash  (replaces gemini-2.5-flash)</option>
+                    <option value="~google/gemini-pro-latest">~google/gemini-pro-latest  (replaces gemini-2.5-pro)</option>
+                    <option value="~google/gemini-flash-latest">~google/gemini-flash-latest</option>
+                    <option value="~moonshotai/kimi-latest">~moonshotai/kimi-latest  (replaces kimi-k3)</option>
+                    <option value="minimax/minimax-m3">minimax/minimax-m3  (replaces minimax-m2.5)</option>
+                    <option value="anthropic/claude-opus-4.8-fast">anthropic/claude-opus-4.8-fast  (replaces 4.7-fast)</option>
+                    <option value="~anthropic/claude-haiku-latest">~anthropic/claude-haiku-latest  (replaces claude-3-haiku)</option>
 
-                            <!-- === Free models (roster rotates — verify before relying) === -->
-                            <option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free">nvidia/nemotron-3-nano-omni:free</option>
-                            <option value="nvidia/nemotron-3-ultra-550b-a55b:free">nvidia/nemotron-3-ultra:free</option>
+                    <!-- === Free models (roster rotates — verify before relying) === -->
+                    <option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free">nvidia/nemotron-3-nano-omni:free</option>
+                    <option value="nvidia/nemotron-3-ultra-550b-a55b:free">nvidia/nemotron-3-ultra:free</option>
 
-                            <!-- === Routers === -->
-                            <option value="openrouter/free">openrouter/free (uses free models)</option>
-                            <option value="openrouter/auto">openrouter/auto (uses paid models)</option>
+                    <!-- === Routers === -->
+                    <option value="openrouter/free">openrouter/free (uses free models)</option>
+                    <option value="openrouter/auto">openrouter/auto (uses paid models)</option>
 
-                            <!-- === New high-quality picks (optional) === -->
-                            <option value="anthropic/claude-sonnet-5">anthropic/claude-sonnet-5</option>
-                            <option value="~anthropic/claude-sonnet-latest">~anthropic/claude-sonnet-latest</option>
-                            <option value="openai/gpt-5.6-terra">openai/gpt-5.6-terra</option>
-                            <option value="x-ai/grok-4.5">x-ai/grok-4.5</option>
-                            <option value="z-ai/glm-5.2">z-ai/glm-5.2</option>
-                            <option>
-                        </select>
+                    <!-- === New high-quality picks (optional) === -->
+                    <option value="anthropic/claude-sonnet-5">anthropic/claude-sonnet-5</option>
+                    <option value="~anthropic/claude-sonnet-latest">~anthropic/claude-sonnet-latest</option>
+                    <option value="openai/gpt-5.6-terra">openai/gpt-5.6-terra</option>
+                    <option value="x-ai/grok-4.5">x-ai/grok-4.5</option>
+                    <option value="z-ai/glm-5.2">z-ai/glm-5.2</option>
+                    <option>
+                </select>
 
-                    </div>
-                </td>
-            </tr>
+            </div>
+        </td>
+    </tr>
 
 
-            <tr>
-                <td>
-                    <label for="OpenAIselect">Select a model for openAI:</label>
-                    <span class="tooltip" data-tooltip="This line is for setting the parameters for AI&#10;
+    <tr>
+        <td>
+            <label for="OpenAIselect">Select a model for openAI:</label>
+            <span class="tooltip" data-tooltip="This line is for setting the parameters for AI&#10;
                                                         Set the temp near zero for all of the models&#10;
                                                         Set the Top_p value to 0.9&#10;
                                                         Set the Top_k to 40&#10;
                                                         Visit the models site for the exact values">?</span>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <select title="Select a model for opeAI" name="OpenAIsel" id="OpenAIselect">
-                            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-                            <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
-                            <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
-                            <option value="gpt-4">gpt-4</option>
-                            <option value="gpt-4.1">gpt-4.1</option>
-                            <option value="gpt-4.1-mini">gpt-4.1 mini</option>
-                            <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
-                            <option value="gpt-4-turbo">gpt-4-turbo</option>
-                            <option value="gpt-4o">gpt-4o</option>
-                            <option value="gpt-4o-mini">gpt-4o-mini</option>
-                            <option value="gpt-5">gpt-5</option>
-                            <option value="gpt-5-mini">gpt-5-mini</option>
-                            <option value="gpt-5-nano">gpt-5-nano</option>
-                            <option value="gpt-5.1">gpt-5.1</option>
-                            <option value="gpt-5.1-mini">gpt-5.1-mini</option>
-                            <option value="gpt-5.1-nano">gpt-5.1-nano</option>
-                            <option value="gpt-5.3-chat-latest">gpt-5.3-chat-latest</option>
-                            <option value="gpt-5.4">gpt-5.4</option>.
-                            <option value="gpt-5.5">gpt-5.5</option>
-                        </select>
-                        <label for="OpenAI_temp">temp:</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <select title="Select a model for opeAI" name="OpenAIsel" id="OpenAIselect">
+                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                    <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
+                    <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
+                    <option value="gpt-4">gpt-4</option>
+                    <option value="gpt-4.1">gpt-4.1</option>
+                    <option value="gpt-4.1-mini">gpt-4.1 mini</option>
+                    <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
+                    <option value="gpt-4-turbo">gpt-4-turbo</option>
+                    <option value="gpt-4o">gpt-4o</option>
+                    <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    <option value="gpt-5">gpt-5</option>
+                    <option value="gpt-5-mini">gpt-5-mini</option>
+                    <option value="gpt-5-nano">gpt-5-nano</option>
+                    <option value="gpt-5.1">gpt-5.1</option>
+                    <option value="gpt-5.1-mini">gpt-5.1-mini</option>
+                    <option value="gpt-5.1-nano">gpt-5.1-nano</option>
+                    <option value="gpt-5.3-chat-latest">gpt-5.3-chat-latest</option>
+                    <option value="gpt-5.4">gpt-5.4</option>.
+                    <option value="gpt-5.5">gpt-5.5</option>
+                </select>
+                <label for="OpenAI_temp">temp:</label>
 
-                        <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
-                        <label for="AI Top_p">Top_p:</label>
-                        <input type="number" min="0" max="1" step=".1" id="AI_Top_p" value="0.1" />
-                        <label for="AI Top_k">Top_k:</label>
-                        <input type="number" min="0" max="150" step="1" id="AI_Top_k" value="1" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="ToneSelect">Select a tone for AI:</label>
-                </td>
-                <td>
-                    <div>
-                        <select title="Select a tone for AI" name="ToneSel" id="ToneSelect">
-                            <option value="formal">Formal</option>
-                            <option value="informal">Informal</option>
-                            <option value="neutral">Neutral</option>
-                            <option value="official">Official</option>
-                            <option value="professional">Professional</option>
-                            <option value="polite">Polite</option>
-                            <option value="strict">Strict</option>
-                            <option value="technical">Technical</option>
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="transselect">Select a translator:</label>
-                </td>
-                <td>
-                    <div class="form-select">
-                        <select title="Select a translator" name="transsel" id="transselect">
-                            <option value="cerebras">Cerebras</option>
-                            <option value="deepl">Deepl</option>
-                            <option value="deepseek">DeepSeek</option>
-                            <option value="gemini">Gemini</option>
-                            <option value="google">Google</option>
-                            <option value="groq">Groq</option>
-                            <option value="kimi">Kimi</option>
-                            <option value="koboldCpp">koboldCpp</option>
-                            <option value="LibreTrans">LibreTrans</option>
-                            <option value="lingvanex">Lingvanex</option>
-                            <option value="NLPCloud">NLPCLoud</option>
-                            <option value="LMStudio">LMstudio</option>
-                            <option value="microsoft">Microsoft</option>
-                            <option value="Mistral">Mistral</option>
-                            <option value="OpenAI">OpenAI</option>
-                            <option value="openRouter">openRouter</option>
-                            <option value="translation_io">translationio</option>
-                            <option value="Claude">Claude</option>
-                            <option value="Ollama">Ollama</option>
-
-                        </select>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="destination_lang">Destination Language</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="destination_lang" type="text" value="nl" />
-                        <span class="tooltip" data-tooltip="Use the id from the list of languages provided by the API translator in lowercase">?</span>
-
-                        <select title="Select a language" name="langsel" id="langselect">
-                            <option value="bn">Bengali</option>
-                            <option value="ca">Catalan</option>
-                            <option value="cs">Czech</option>
-                            <option value="da">Danish</option>
-                            <option value="nl">Dutch</option>
-                            <option value="en">English</option>
-                            <option value="fi">Finnish</option>
-                            <option value="fr">French</option>
-                            <option value="de">German</option>
-                            <option value="hu">Hugarian</option>
-                            <option value="id">Indonesian</option>
-                            <option value="it">Italian</option>
-                            <option value="la">Latin</option>
-                            <option value="ja">Japanese</option>
-                            <option value="nb">Norwegian</option>
-                            <option value="pl">Polish</option>
-                            <option value="pt">Portuguese</option>
-                            <option value="ro">Romanian</option>
-                            <option value="ru">Russian</option>
-                            <option value="es">Spanish</option>
-                            <option value="sv">Swedish</option>
-                            <option value="ta">Tamil</option>
-                            <option value="tr">Turkish</option>
-                            <option value="uk">Ukraine</option>
-                            <option value="zh">Chinese</option>
-                        </select>
-                    </div>
+                <input type="number" min="0" max="2" step=".1" id="OpenAI_temp" value="0.5" />
+                <label for="AI Top_p">Top_p:</label>
+                <input type="number" min="0" max="1" step=".1" id="AI_Top_p" value="0.1" />
+                <label for="AI Top_k">Top_k:</label>
+                <input type="number" min="0" max="150" step="1" id="AI_Top_k" value="1" />
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="ToneSelect">Select a tone for AI:</label>
+        </td>
+        <td>
+            <div>
+                <select title="Select a tone for AI" name="ToneSel" id="ToneSelect">
+                    <option value="formal">Formal</option>
+                    <option value="informal">Informal</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="official">Official</option>
+                    <option value="professional">Professional</option>
+                    <option value="polite">Polite</option>
+                    <option value="strict">Strict</option>
+                    <option value="technical">Technical</option>
+                </select>
+            </div>
+        </td>
+    </tr>
 
 
-            </tr>
-            <tr>
-                <td>
-                    <label for="glossary_file">Glossary File default(csv)</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="glossary_file" type="file" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label>File uploaded at date</label>
-                </td>
-                <td colspan="1">
-                    <div>
-                        <span style="width:320px" id="glossary_file_uploaded"></span>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="glossary_file_second">Glossary File second (csv)</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="glossary_file_second" type="file" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label>File uploaded at date</label>
-                </td>
-                <td colspan="1">
-                    <div>
-                        <span style="width:320px" id="glossary_file_second_uploaded"></span>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="languagetool_key">Languagetool Key</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input style="width:320px" id="languagetool_key" type="text" value="-api key->" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="LangTool_Free">Languagetool Free</label>
-                </td>
-                <td>
-                    <label>
-                        <input type="checkbox" id="LangTool_Free">
-                        <span class="tooltip" data-tooltip="Set this for using languagetool free">?</span>
-                    </label>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="languagetool_user">Languagetool user</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input style="width:320px" id="languagetool_user" type="text" value="-user name->" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="languagetool_language">Languagetool language</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input style="width:120px" id="languagetool_language" type="text" value="-language-> nl-NL" placeholder="Enter language in format xx-XX" />
-                    </div>
-                </td>
-            </tr>
+    <tr>
+        <td>
+            <label for="glossary_file">Glossary File default(csv)</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input id="glossary_file" type="file" />
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label>File uploaded at date</label>
+        </td>
+        <td colspan="1">
+            <div>
+                <span style="width:320px" id="glossary_file_uploaded"></span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="glossary_file_second">Glossary File second (csv)</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input id="glossary_file_second" type="file" />
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label>File uploaded at date</label>
+        </td>
+        <td colspan="1">
+            <div>
+                <span style="width:320px" id="glossary_file_second_uploaded"></span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="languagetool_key">Languagetool Key</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input style="width:320px" id="languagetool_key" type="text" value="-api key->" />
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="LangTool_Free">Languagetool Free</label>
+        </td>
+        <td>
+            <label>
+                <input type="checkbox" id="LangTool_Free">
+                <span class="tooltip" data-tooltip="Set this for using languagetool free">?</span>
+            </label>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="languagetool_user">Languagetool user</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input style="width:320px" id="languagetool_user" type="text" value="-user name->" />
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="languagetool_language">Languagetool language</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input style="width:120px" id="languagetool_language" type="text" value="-language-> nl-NL" placeholder="Enter language in format xx-XX" />
+            </div>
+        </td>
+    </tr>
 
-            <tr>
-                <td>
-                    <label for="BatchSize">Batch Size</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="BatchSize" type="number" min="1" max="100" step="1" value="10" />
-                        <span class="tooltip" data-tooltip="Change this when you get to many rate errors<br>Batch is amount of lines to use">?</span>
-                        <label style="margin: 22px" for="BatchSize">Size of Batches</label>
-                    </div>
-                </td>
-            </tr>
+    <tr>
+        <td>
+            <label for="BatchSize">Batch Size</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input id="BatchSize" type="number" min="1" max="100" step="1" value="10" />
+                <span class="tooltip" data-tooltip="Change this when you get to many rate errors<br>Batch is amount of lines to use">?</span>
+                <label style="margin: 22px" for="BatchSize">Size of Batches</label>
+            </div>
+        </td>
+    </tr>
 
 
-            <tr>
-                <td>
-                    <label for="tmWait">TM waiting time</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="tmWait" type="text" value="500" />
-                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
-                        <label style="margin: 22px" for="OpenAIWait">OpenAI waiting time</label>
-                        <input id="OpenAIWait" type="text" value="10" />
-                        <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="bulkWait">Bulk and DeepL save waiting time</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="bulkWait" type="text" value="1000" />
-                        <span class="tooltip" data-tooltip="Change this when bulk save skips records">?</span>
-                        <label style="margin: 15px" for="DeepLWait">DeepL waiting time</label>
-                        <input id="DeepLWait" type="text" value="5" />
-                        <span class="tooltip" data-tooltip="Change this when DeepL skips records">?</span>
+    <tr>
+        <td>
+            <label for="tmWait">TM waiting time</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input id="tmWait" type="text" value="500" />
+                <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
+                <label style="margin: 22px" for="OpenAIWait">OpenAI waiting time</label>
+                <input id="OpenAIWait" type="text" value="10" />
+                <span class="tooltip" data-tooltip="Change this when you get to many no suggestions results">?</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="bulkWait">Bulk and DeepL save waiting time</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input id="bulkWait" type="text" value="1000" />
+                <span class="tooltip" data-tooltip="Change this when bulk save skips records">?</span>
+                <label style="margin: 15px" for="DeepLWait">DeepL waiting time</label>
+                <input id="DeepLWait" type="text" value="5" />
+                <span class="tooltip" data-tooltip="Change this when DeepL skips records">?</span>
 
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="TMtreshold">TM treshold</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="TMtreshold" type="number" min="80" max="100" value="90" />
-                        <span class="tooltip" data-tooltip="Change this if the results for TM are not OK">?</span>
-                        <label style="margin: 13px" for="LMstudio">LMstudio timout</label>
-                        <input style="margin: 10px; width: 45px" id="LMStudioTimeout" type="text" value="200000" />
-                        <span class="tooltip" data-tooltip="Change this when you get no results back">?</span>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="screenWidth">Screen witdth in %</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input type="range" id="screenWidth" value="90" min="0" max="100" />
-                        <span id="rangeValue">90</span>
-                        <span class="tooltip" data-tooltip="Change this value to alter the width of the table">?</span>
-                    </div>
-                </td>
-            </tr>
-        </table>
-        <div class="form-input">
-            <label for="text_openai_prompt">AI prompt</label>
-            <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated for OpenAi and Mistral">?</span>
-            <textarea id="text_openai_prompt"></textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_openai_review">AI review prompt</label>
-            <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
-            <textarea id="text_openai_review"></textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_claude_prompt">Claude prompt</label>
-            <span class="tooltip" data-tooltip="With the value of this field the prompt for Claude will be populated">?</span>
-            <textarea id="text_claude_prompt"></textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_ollama_prompt">Ollama/LMstudio prompt</label>
-            <span class="tooltip" data-tooltip="With the value of this field the prompt for Ollama will be populated">?</span>
-            <textarea id="text_ollama_prompt"></textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_gemini_prompt">Gemini prompt</label>
-            <span class="tooltip" data-tooltip="With the value of this field the prompt for Gemini will be populated">?</span>
-            <textarea id="text_gemini_prompt"></textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_pre_verbs">Pre Translation Replace</label>
-            <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
-            <textarea id="text_pre_verbs">Your,Je
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="TMtreshold">TM treshold</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input id="TMtreshold" type="number" min="80" max="100" value="90" />
+                <span class="tooltip" data-tooltip="Change this if the results for TM are not OK">?</span>
+                <label style="margin: 13px" for="LMstudio">LMstudio timout</label>
+                <input style="margin: 10px; width: 45px" id="LMStudioTimeout" type="text" value="200000" />
+                <span class="tooltip" data-tooltip="Change this when you get no results back">?</span>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="screenWidth">Screen witdth in %</label>
+        </td>
+        <td>
+            <div class="form-input">
+                <input type="range" id="screenWidth" value="90" min="0" max="100" />
+                <span id="rangeValue">90</span>
+                <span class="tooltip" data-tooltip="Change this value to alter the width of the table">?</span>
+            </div>
+        </td>
+    </tr>
+    </table>
+    <div class="form-input">
+        <label for="text_openai_prompt">AI prompt</label>
+        <span class="tooltip" data-tooltip="With the value of this field the prompt will be populated for OpenAi and Mistral">?</span>
+        <button type="button" class="load-prompt" data-prompt="openAI" title="Load openAI prompt">📂</button>
+        <button type="button" class="load-prompt" data-prompt="Cerebras" title="Load Cerebras prompt">📂</button>
+        <button type="button" class="load-prompt" data-prompt="Groq" title="Load Groq prompt">📂</button>
+        <button type="button" class="import-prompt" data-prompt="openAI" title="Import from file">📥</button>
+        <button type="button" class="backup-prompt" data-prompt="openAI" title="Backup to file openAI">💾</button>
+        <button type="button" class="backup-prompt" data-prompt="Cerebras" title="Backup to file Cerebras">💾</button>
+        <button type="button" class="backup-prompt" data-prompt="Groq" title="Backup to file Groq">💾</button>
+        <textarea id="text_openai_prompt"></textarea>
+    </div>
+    <div class="form-input">
+        <label for="text_openai_review">AI review prompt</label>
+        <span class="tooltip" data-tooltip="With the value of this field the review prompt will be populated">?</span>
+        <textarea id="text_openai_review"></textarea>
+    </div>
+    <div class="form-input">
+        <label for="text_claude_prompt">Claude prompt</label>
+        <span class="tooltip" data-tooltip="With the value of this field the prompt for Claude will be populated">?</span>
+        <button type="button" class="load-prompt" data-prompt="Claude" title="Load Claude prompt">📂</button>
+        <button type="button" class="import-prompt" data-prompt="Claude" title="Import from file Claude">📥</button>
+        <button type="button" class="backup-prompt" data-prompt="Claude" title="Backup to file Claude">💾</button>
+        <textarea id="text_claude_prompt"></textarea>
+    </div>
+    <div class="form-input">
+        <label for="text_ollama_prompt">Ollama/LMstudio prompt</label>
+        <span class="tooltip" data-tooltip="With the value of this field the prompt for Ollama will be populated">?</span>
+        <button type="button" class="load-prompt" data-prompt="Ollama" title="Load from file Ollama">📂</button>
+        <button type="button" class="load-prompt" data-prompt="LMStudio" title="Load from file LMStudio">📂</button>
+        <button type="button" class="backup-prompt" data-prompt="Ollama" title="Backup to file Ollama">💾</button>
+        <button type="button" class="backup-prompt" data-prompt="LMStudio" title="Backup to file LMStudio">💾</button>
+        <textarea id="text_ollama_prompt"></textarea>
+    </div>
+    <div class="form-input">
+        <label for="text_gemini_prompt">Gemini prompt</label>
+        <span class="tooltip" data-tooltip="With the value of this field the prompt for Gemini will be populated">?</span>
+        <button type="button" class="load-prompt" data-prompt="Gemini" title="Load from file Gemini">📂</button>
+        <button type="button" class="import-prompt" data-prompt="Gemini" title="Import from file Gemini">📥</button>
+        <button type="button" class="backup-prompt" data-prompt="Gemini" title="Backup to file Gemini">💾</button>
+        <textarea id="text_gemini_prompt"></textarea>
+    </div>
+    <div class="form-input">
+        <label for="text_pre_verbs">Pre Translation Replace</label>
+        <span class="tooltip" data-tooltip="With this table you can replace verbs before sending them to the translator API">?</span>
+        <textarea id="text_pre_verbs">Your,Je
 You,Je
             </textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_verbs">Post Translation Replace</label>
-            <span class="tooltip" data-tooltip="With this table you can replace verbs after sending them to the translator API">?</span>
-            <textarea id="text_verbs">wrong1,right1
+    </div>
+    <div class="form-input">
+        <label for="text_verbs">Post Translation Replace</label>
+        <span class="tooltip" data-tooltip="With this table you can replace verbs after sending them to the translator API">?</span>
+        <textarea id="text_verbs">wrong1,right1
             </textarea>
-        </div>
-        <div class="form-input">
-            <label for="text_ignore_verbs">Spellcheck ignore words</label>
-            <span class="tooltip" data-tooltip="With this table you can ignore verbs for spellchecking">?</span>
-            <textarea id="text_ignore_verbs">WooCommerce
+    </div>
+    <div class="form-input">
+        <label for="text_ignore_verbs">Spellcheck ignore words</label>
+        <span class="tooltip" data-tooltip="With this table you can ignore verbs for spellchecking">?</span>
+        <textarea id="text_ignore_verbs">WooCommerce
             </textarea>
-        </div>
-        <fieldset>
-            <label class="form-input">
-                <span for="export_verbs">Export post translation verbs </span>
-                <button type="button" id="exportverbs">Export verbs</button>
-            </label>
-        </fieldset>
-        <fieldset>
-            <label id="dvImportSegments" class="fileupload ">
-                <span>Upload post translation replace CSV File</span>
-                <input id="importPost" type="file" />
-            </label>
-        </fieldset>
-        <br />
-        <table style="width: 100%; table-layout: fixed;">
-            <tr>
-                <td style="width:500px">
-                    <label class="labeled-checkbox">
-                        <input type="checkbox" id="Auto-LT-spellcheck">
-                        <span>Auto spellcheck after pagecheck</span>
-                    </label>
-                </td>
-                <td style="padding-left: 5%;">
-                    <label class="labeled-checkbox">
-                        <input type="checkbox" id="no-period">
-                        <span>No period</span>
-                    </label>
-
-                </td>
-
-            </tr>
-        </table>
-        <table style="width: 100%; table-layout: fixed;">
-            <tr>
-                <td style="width:500px">
-                    <label class="labeled-checkbox">
-                        <input type="checkbox" id="Auto-review-OpenAI">
-                        <span>Auto review with OpenAi after pagecheck</span>
-                    </label>
-                </td>
-                <td style="padding-left: 5%;">
-                    <label class="labeled-checkbox">
-                        <input type="checkbox" id="debugmode">
-                        <span>Debug mode</span>
-                    </label>
-                </td>
-            </tr>
-        </table>
-        <table style="width: 100%; table-layout: fixed;">
-            <tr>
-                <td style="width:500px">
-                    <label class="labeled-checkbox">
-                        <input type="checkbox" id="comp-translations">
-                        <span>Compare translations</span>
-                    </label>
-                </td>
-                <td style="padding-left: 5%;">
-                    <label class="labeled-checkbox">
-                        <input type="checkbox" id="NoUI">
-                        <span>No UI translation</span>
-                    </label>
-                </td>
-            </tr>
-        </table>
-        <label class="labeled-checkbox">
-            <input type="checkbox" id="show-convertToLower">
-            <span>Convert words to lowercase except first word</span>
+    </div>
+    <fieldset>
+        <label class="form-input">
+            <span for="export_verbs">Export post translation verbs </span>
+            <button type="button" id="exportverbs">Export verbs</button>
         </label>
+    </fieldset>
+    <fieldset>
+        <label id="dvImportSegments" class="fileupload ">
+            <span>Upload post translation replace CSV File</span>
+            <input id="importPost" type="file" />
+        </label>
+    </fieldset>
+    <br />
+    <table style="width: 100%; table-layout: fixed;">
+        <tr>
+            <td style="width:500px">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="Auto-LT-spellcheck">
+                    <span>Auto spellcheck after pagecheck</span>
+                </label>
+            </td>
+            <td style="padding-left: 5%;">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="no-period">
+                    <span>No period</span>
+                </label>
+
+            </td>
+
+        </tr>
+    </table>
+    <table style="width: 100%; table-layout: fixed;">
+        <tr>
+            <td style="width:500px">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="Auto-review-OpenAI">
+                    <span>Auto review with OpenAi after pagecheck</span>
+                </label>
+            </td>
+            <td style="padding-left: 5%;">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="debugmode">
+                    <span>Debug mode</span>
+                </label>
+            </td>
+        </tr>
+    </table>
+    <table style="width: 100%; table-layout: fixed;">
+        <tr>
+            <td style="width:500px">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="comp-translations">
+                    <span>Compare translations</span>
+                </label>
+            </td>
+            <td style="padding-left: 5%;">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="NoUI">
+                    <span>No UI translation</span>
+                </label>
+            </td>
+        </tr>
+    </table>
+    <table style="width: 100%; table-layout: fixed;">
+        <tr>
+            <td style="width:420px">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="show-convertToLower">
+                    <span>Convert words to lowercase except first word</span>
+                </label>
+            </td>
+            <td style="padding-left: 15%;">
+                <label class="labeled-checkbox">
+                    <input type="checkbox" id="noChevrons">
+                    <span>Remove chevrons</span>
+                </label>
+            </td>
+        </tr>
+     </table>
         <label class="labeled-checkbox">
             <input type="checkbox" id="Force-formal">
             <span>Force to use formal tone</span>
@@ -1125,6 +1183,6 @@ You,Je
                 </td>
             </tr>
         </table>
-    </div>
+        </div>
 </body>
 </html>

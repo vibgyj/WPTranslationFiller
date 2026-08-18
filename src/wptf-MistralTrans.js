@@ -50,7 +50,10 @@ async function getMistralTrans(
   let destlang = language;
     language = language.toUpperCase();
     var messages;
-
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+    } 
   let tempPrompt = OpenAIPrompt + '\n'
     let myprompt = "";
 

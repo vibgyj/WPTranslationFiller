@@ -1,0 +1,13 @@
+t parses the HTML exactly like your runtime walker (text nodes, button values, data-tooltip attributes, with tooltip whitespace preserved), then filters to real UI copy. The filter is rule-based, not a hardcoded list, so it keeps working as you add fields: <option> text counts only inside the langselect and ToneSelect dropdowns, <input value> counts only for button-type inputs, and anything with no letters (emoji, ?, numbers) is dropped. In my test it reproduced your exact 140 keys and skipped all 53 noise strings.
+
+The four commands:
+
+candidates — lists the translatable strings and flags which are NEW vs your current en.json; add --show-skipped to audit what the filter dropped (worth a glance after adding fields, in case something real got filtered).
+
+build-en — regenerates en.json as an identity map from the HTML. This is your master key list.
+
+sync de es fr … (or --all) — aligns each locale to the HTML's key set: adds new keys with the English string as a placeholder, drops stale keys, reorders to match, and never overwrites existing translations. Add --check to detect drift without writing (exits 1 — good for a CI/pre-commit hook); add --blank if you'd rather spot untranslated entries by empty values than by value-equals-key.
+
+new pt — scaffolds a fresh locale with all 140 keys as English placeholders.
+
+Paths default to wptf-options.html and locales/options/; override with --html and --locales-dir. So your routine after adding options-page fields becomes: edit HTML → candidates to eyeball the new strings → build-en → sync --all → translate the new placeholders. That keeps all twelve locale files structurally identical to what your walker expects, with the fiddly tooltip whitespace handled for you.

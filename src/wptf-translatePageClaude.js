@@ -418,6 +418,10 @@ async function translatePageClaude(
     const resolvedLanguage = (typeof LOCALE_TO_LANGUAGE !== 'undefined' ? LOCALE_TO_LANGUAGE[destlang] : null) ?? destlang;
 
     // Fill static placeholders once — language and tone never change between batches
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+    }
     const basePrompt = applyClaudePromptBase(OpenAIPrompt, resolvedLanguage, OpenAITone);
 
     for (let i = 0; i < batchQueue.length; i += batchSize) {

@@ -1,4 +1,59 @@
-﻿
+﻿function isSingleWord(str) {
+  return str.trim().split(/\s+/).length === 1;
+}
+// This is to make sure for Dutch we don't capitalize months and days in the translation.
+const CALENDAR_TERMS = new Set([
+  'january','february','march','april','may','june','july',
+  'august','september','october','november','december',
+  'monday','tuesday','wednesday','thursday','friday','saturday','sunday',
+]);
+
+/**
+ * Lowercase a standalone month/day translation for Dutch.
+ * Assumes the caller has already scoped to nl / nl-be.
+ * Matches on the SOURCE word so only the 19 known terms are touched.
+ */
+function fixCalendarCase(source, translation) {
+  if (!CALENDAR_TERMS.has(source.trim().toLowerCase())) {
+    return translation; // not a calendar term — leave untouched
+  }
+  return translation.toLowerCase();
+}
+// Guillemets used as quotation marks in Russian/Ukrainian output.
+//   «  U+00AB  LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+//   »  U+00BB  RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+// Matched by CODE POINT, never by a pasted glyph, so encoding can't fool us.
+const OPEN_GUILLEMET  = /\u00AB ?/g; // « plus an optional following space
+const CLOSE_GUILLEMET = / ?\u00BB/g; // » plus an optional preceding space
+
+/**
+ * Remove guillemets from a translated string, keeping the wrapped text.
+ * No-op unless `active` is true, so it's safe to call unconditionally.
+ * @param {string}  text    translated string to clean
+ * @param {boolean} active  toggle; when false the input is returned unchanged
+ * @returns {string}
+ */
+// Placeholder forms: %s %d %1$s %2$d %f ... (tune the trailing set if needed)
+const PLACEHOLDER_RE = /%\d*\$?[a-zA-Z]/;
+
+function sourceHasQuotes(sourceText) {
+    if (typeof sourceText !== 'string') return false;
+    const straightPair = (sourceText.match(/"/g) || []).length >= 2;
+    const curlyPair = /\u201C/.test(sourceText) && /\u201D/.test(sourceText);
+    return straightPair || curlyPair;
+}
+
+function stripGuillemets(text, active, sourceText) {
+    if (!active || typeof text !== 'string') return text;
+    // Source already quoted -> leave everything (translator wants those quotes).
+    if (sourceHasQuotes(sourceText)) return text;
+    // Otherwise remove guillemets pair by pair, but KEEP any pair that wraps a
+    // placeholder -> the runtime value it stands for should stay quoted.
+    return text.replace(/\u00AB ?(.*?) ?\u00BB/g, (match, inner) =>
+        PLACEHOLDER_RE.test(inner) ? match : inner
+  );
+}
+
 /****************************************************
  * SHARED PARAM BUILDER  (used by getTransOpenAI AND translatePageOpenAI)
  *
@@ -511,8 +566,10 @@ async function initPublicVars() {
    DisableAutoClose = await result.DisableAutoClose
    result = await chrome.storage.local.get('strictValidate')
    strictValidation = result.strictValidate; // Assign the value to the global variable
-   result = await chrome.storage.local.get('DebugMode')
-   DebugMode = result.DebugMode; // Assign the value to the global variable
+    result = await chrome.storage.local.get('DebugMode')
+    DebugMode = result.DebugMode; // Assign the value to the global variable
+    result = await chrome.storage.local.get('noChevrons')
+    noChevrons = result.noChevrons; // Assign the value to the global variable
 
 }
 
@@ -1930,7 +1987,7 @@ async function validateOld(showDiff) {
             }
         };
 
-        const delayBetweenProcessing = 100; // Delay between processing each record in milliseconds
+        const delayBetweenProcessing = 200; // Delay between processing each record in milliseconds
 
         const processRecordsSequentially = async () => {
             try {

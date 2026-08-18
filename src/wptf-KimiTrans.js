@@ -54,9 +54,12 @@ async function getKimiTransAI(
   let prevstate = current ? current.innerText : "";
     
   let destlang = language;
-  language = language.toUpperCase();
-  var messages;
-
+    language = language.toUpperCase();
+    var messages;
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+    }
   let tempPrompt = OpenAIPrompt + '\n';
   let myprompt = "";
 
@@ -95,7 +98,8 @@ async function getKimiTransAI(
 
   if (!originalPreProcessed) {
     originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
-  }
+    }
+
   // Shared prompt expects a JSON array of items; send this single line as a batch of one
   myprompt = myprompt.replaceAll("{{text}}", JSON.stringify([{ i: rowId, t: originalPreProcessed }]));
   //  console.debug("Prompt after all replacements:", myprompt)

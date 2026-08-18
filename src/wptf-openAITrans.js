@@ -27,7 +27,12 @@ async function getTransOpenAI(
   language = language.toUpperCase();
   var messages;
   var mymodel;
-  const originalPreProcessed = await preProcessOriginal(original, preverbs, "groq");
+  const originalPreProcessed = await preProcessOriginal(original, preverbs, "alibaba");
+   // console.debug("Original preprocessed:", originalPreProcessed);
+  // Strip [[COMMENT]] lines, then fill static placeholders once.
+  if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+  }
   let tempPrompt = OpenAIPrompt + '\n';
   let myprompt = "";
 
@@ -73,7 +78,7 @@ async function getTransOpenAI(
   /****************************************************
    * CONTENT — Groq method
    ****************************************************/
- 
+    
     // Context: strip any [[COMMENT]] marker, include only when non-empty.
     const cleanContext = (typeof stripPromptComments === "function")
         ? stripPromptComments(String(mycontext ?? "")).trim()
@@ -88,7 +93,7 @@ async function getTransOpenAI(
   const contentPayload = JSON.stringify(promptItems);
 
   myprompt = myprompt.replaceAll("{{text}}", contentPayload);
-  
+  //console.debug("Prompt after all replacements:", myprompt);
 
   let maxTokens = estimateMaxTokens(originalPreProcessed);
   max_Tokens = maxTokens;
@@ -103,13 +108,19 @@ async function getTransOpenAI(
   }
 
   mymodel = OpenAISelect.toLowerCase();
-
+  
   // Endpoint selection
-  if (translator == 'cerebras') {
-    myURL = URL;
-  } else {
-    myURL = 'https://api.openai.com/v1/chat/completions';
-  }
+    if (translator == 'cerebras') {
+        myURL = URL;
+    }
+    else if (translator == 'alibaba') {
+        myURL = 'https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
+        mymodel = 'qwen-plus';
+      }
+    else if (translator == 'OpenAI') {
+        myURL = 'https://api.openai.com/v1/chat/completions';
+    }
+    
    // console.debug("Cerebras key:",apikeyOpenAI)
     const auth = { apiKey: apikeyOpenAI, URL: myURL };
     let dataNew = buildRequestParams(mymodel, translator, messages, max_Tokens, auth, { OpenAItemp });
@@ -123,7 +134,7 @@ async function getTransOpenAI(
     //console.debug("Prompt after all replacements:", myprompt);
   try {
     // Only proceed for supported translators; action string matches the proxy
-    const supported = ['OpenAI', 'cerebras'];
+    const supported = ['OpenAI', 'cerebras', 'alibaba'];
     if (!supported.includes(translator)) {
       console.error("Unknown translator:", translator);
       return "NOK";
@@ -148,9 +159,9 @@ async function getTransOpenAI(
           }
           resolve(res);
         }
-      );
+        );
     });
-
+    //  console.debug("foreground response:", response);
     // No envelope at all
     if (!response) {
       console.error(`${translator} proxy returned no response`);

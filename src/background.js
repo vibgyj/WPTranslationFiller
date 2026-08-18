@@ -119,6 +119,372 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             })();
         }, 0);
 
+        return true;
+    }
+    else if (request.action === "alibaba") {
+        (async () => {
+            const start = Date.now();
+            const dataToSend = request.data;
+            const apiKey = dataToSend.apiKey;
+            const baseUrl = dataToSend.baseUrl
+                || "https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
+            // Default to Singapore (intl) — the region you can actually register for + test on.
+           // const baseUrl = dataToSend.baseUrl
+            //    || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
+
+            delete dataToSend.apiKey;
+            delete dataToSend.baseUrl;
+
+            // Surface hangs instead of failing silently.
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 60000);
+
+            let resp;
+            try {
+               
+                resp = await fetch(`${baseUrl}/chat/completions`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + apiKey
+                    },
+                    body: JSON.stringify(dataToSend),
+                    signal: controller.signal
+                });
+            } catch (err) {
+                clearTimeout(timeout);
+                // No HTTP response at all. This is where a "no status" failure lands.
+                const reason = err.name === "AbortError"
+                    ? "request timed out (no response within 60s)"
+                    : `network/permission error: ${err.message}`;
+                console.error("alibaba fetch threw (no response):", err);
+                sendResponse({ error: `Alibaba request failed — ${reason}. Check host_permissions for ${baseUrl}` });
+                return;
+            }
+            clearTimeout(timeout);
+
+            // We got a response object — now the status is meaningful.
+            console.debug("alibaba status:", resp.status, "type:", resp.type, "ok:", resp.ok);
+
+            if (!resp.ok) {
+                let msg = "";
+                try { msg = await resp.text(); } catch (_) { msg = "(no body)"; }
+                const hint = resp.status === 0
+                    ? " (status 0 — response blocked before a real status; host_permissions issue)"
+                    : "";
+                sendResponse({ error: `Alibaba request failed (${resp.status})${hint}: ${msg}` });
+                return;
+            }
+
+            try {
+                const data = await resp.json();
+                console.debug("alibaba response:", data);
+
+                const duration = ((Date.now() - start) / 1000).toFixed(2);
+                console.debug("alibaba response time:", duration + "s");
+
+            // Geef de hele chat-completion terug — de foreground doet zelf de extractie,
+            // net als bij de andere providers.
+            sendResponse({ result: data });
+            } catch (err) {
+                console.error("alibaba: failed to parse body:", err);
+                sendResponse({ error: `Alibaba response parse error: ${err.message}` });
+            }
+        })();
+
+        return true;
+}
+    else if (request.action == "Lara") {
+        setTimeout(async () => {
+            (async () => {
+                try {
+                    const {
+                        accessKeyId,
+                        accessKeySecret,
+                        text,
+                        sourceLang,
+                        targetLang,
+                        instructions,
+                        glossaries,
+                        adaptTo,
+                        content_type,
+                        multiline,
+                        noTrace,
+                        style,
+                        reasoning
+                    } = request.data;
+
+                    if (!accessKeyId) {
+                        throw new Error("Lara Access Key ID is missing");
+                    }
+
+                    if (!accessKeySecret) {
+                        throw new Error("Lara Access Key Secret is missing");
+                    }
+
+                    if (text === undefined || text === null) {
+                        throw new Error("Lara text is missing");
+                    }
+
+                    if (!targetLang) {
+                        throw new Error("Lara target language is missing");
+                    }
+
+                    /*
+                     * ---------------------------------------------------------
+                     * Lara authentication
+                     * ---------------------------------------------------------
+                     */
+
+                    const authBody = {
+                        id: accessKeyId
+                    };
+
+                    const authBodyString = JSON.stringify(authBody);
+
+                    // Lara SDK:
+                    // SHA-256 -> first 16 bytes -> Base64
+                    const hashBuffer = await crypto.subtle.digest(
+                        "SHA-256",
+                        new TextEncoder().encode(authBodyString)
+                    );
+
+                    const first16 = hashBuffer.slice(0, 16);
+
+                    const contentMD5 = btoa(
+                        String.fromCharCode(
+                            ...new Uint8Array(first16)
+                        )
+                    );
+
+                    const authDate = new Date().toUTCString();
+
+                    const authChallenge =
+                        "POST\n" +
+                        "/v2/auth\n" +
+                        contentMD5 + "\n" +
+                        "application/json\n" +
+                        authDate;
+
+                    const hmacKey = await crypto.subtle.importKey(
+                        "raw",
+                        new TextEncoder().encode(accessKeySecret),
+                        {
+                            name: "HMAC",
+                            hash: "SHA-256"
+                        },
+                        false,
+                        ["sign"]
+                    );
+
+                    const signatureBuffer = await crypto.subtle.sign(
+                        "HMAC",
+                        hmacKey,
+                        new TextEncoder().encode(authChallenge)
+                    );
+
+                    const signature = btoa(
+                        String.fromCharCode(
+                            ...new Uint8Array(signatureBuffer)
+                        )
+                    );
+
+                    /*
+                     * ---------------------------------------------------------
+                     * Get Lara access token
+                     * ---------------------------------------------------------
+                     */
+
+                    const authResponse = await fetch(
+                        "https://api.laratranslate.com/v2/auth",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-Lara-Date": authDate,
+                                "Content-MD5": contentMD5,
+                                "Authorization": `Lara:${signature}`
+                            },
+                            body: authBodyString,
+                            keepalive: true,
+                            priority: "high"
+                        }
+                    );
+
+                    let authData;
+
+                    try {
+                        authData = await authResponse.json();
+                    } catch (parseErr) {
+                        throw new Error(
+                            `Failed to parse Lara authentication response (HTTP ${authResponse.status})`
+                        );
+                    }
+
+                    if (!authResponse.ok) {
+                        console.debug("Lara auth error response:", authData);
+                        let errorMessage =
+                            `Lara authentication failed (HTTP ${authResponse.status})`;
+
+                        if (authData?.message) {
+                            errorMessage += `: ${authData.message}`;
+                        }
+
+                        if (authData?.error?.message) {
+                            errorMessage += `: ${authData.error.message}`;
+                        }
+
+                        throw new Error(errorMessage);
+                    }
+
+                    const token = authData?.token;
+
+                    if (!token) {
+                        throw new Error(
+                            "Lara authentication returned no access token"
+                        );
+                    }
+
+                    /*
+                     * ---------------------------------------------------------
+                     * Translation request
+                     * ---------------------------------------------------------
+                     */
+
+                    const translationBody = {
+                        q: text,
+                        source: sourceLang || null,
+                        target: targetLang
+                    };
+
+                    if (instructions?.length) {
+                        translationBody.instructions = instructions;
+                    }
+
+                    if (glossaries?.length) {
+                        translationBody.glossaries = glossaries;
+                    }
+
+                    if (adaptTo?.length) {
+                        translationBody.adapt_to = adaptTo;
+                    }
+
+                    if (content_type) {
+                         translationBody.content_type = content_type;
+                    }
+
+                    if (multiline !== undefined) {
+                        translationBody.multiline = multiline;
+                    }
+
+                    if (noTrace !== undefined) {
+                        translationBody.no_trace = noTrace;
+                    }
+
+                    if (style) {
+                        translationBody.style = style;
+                    }
+
+                    if (reasoning !== undefined) {
+                        translationBody.reasoning = reasoning;
+                    }
+
+                    const translationResponse = await fetch(
+                        "https://api.laratranslate.com/v2/translate",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${token}`,
+                                "X-Lara-Date": new Date().toUTCString()
+                            },
+                            body: JSON.stringify(translationBody),
+                            keepalive: true,
+                            priority: "high"
+                        }
+                    );
+
+                    let translationData;
+
+                    try {
+                        translationData = await translationResponse.json();
+                    } catch (parseErr) {
+
+                        // Keep the raw response available for debugging.
+                        let rawText = "";
+
+                        try {
+                            rawText = await translationResponse.text();
+                        } catch (_) {
+                            // Ignore secondary parsing error.
+                        }
+
+                        throw new Error(
+                            `Failed to parse Lara translation response (HTTP ${translationResponse.status})` +
+                            (rawText ? `: ${rawText.substring(0, 500)}` : "")
+                        );
+                    }
+
+                    if (!translationResponse.ok) {
+                        let errorMessage =
+                            `Lara request failed (HTTP ${translationResponse.status})`;
+
+                        if (translationData?.message) {
+                            errorMessage += `: ${translationData.message}`;
+                        }
+
+                        if (translationData?.error?.message) {
+                            errorMessage += `: ${translationData.error.message}`;
+                        }
+
+                        throw new Error(errorMessage);
+                    }
+
+                    /*
+                     * Lara TextResult:
+                     *
+                     * {
+                     *     contentType,
+                     *     sourceLanguage,
+                     *     translation
+                     * }
+                     *
+                     * translation is either a string or an array,
+                     * depending on q.
+                     */
+
+                    const translation = translationData?.translation;
+
+                    if (
+                        translation === undefined ||
+                        translation === null
+                    ) {
+                        throw new Error(
+                            "Lara returned no translation content"
+                        );
+                    }
+                    console.debug("Lara translation result:", translation);
+                    sendResponse({
+                        success: true,
+                        translation: translation,
+                        sourceLanguage:
+                            translationData?.sourceLanguage || sourceLang,
+                        content_type:
+                            translationData?.content_type || content_type || "text"
+                    });
+
+                } catch (err) {
+
+                    console.error("Lara error:", err);
+
+                    sendResponse({
+                        success: false,
+                        error: err?.message || "Unknown Lara error"
+                    });
+                }
+            })();
+        }, 0);
+
     return true;
 }
     
@@ -188,7 +554,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 try {
                     const json = JSON.parse(raw);
-                    //console.debug("✅ DeepL response:", json);
+                    console.debug("✅ DeepL response:", json);
                     sendResponse(json);
                 } catch (err) {
                     console.error("❌ JSON parse error", err);
@@ -1171,18 +1537,21 @@ else if (request.action === "LMStudio_translate") {
                 if (sourceLang) body.source = sourceLang;
 
                 const res = await fetch(
-                    "https://translation.googleapis.com/language/translate/v2?key=" + apiKey,
+                  
+
+                   "https://translation.googleapis.com/language/translate/v2?key=" + apiKey,
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(body)
                     }
                 );
-               // console.debug("Google Translate raw response status:", res); 
+                console.debug("Google Translate raw response status:", res); 
                // console.debug("Google data:",await res.json())
-                let data;
+                let data ="";
                 try {
                     data = await res.json();
+                    console.debug("Google Translate processed response:", data);
                 } catch (parseErr) {
                     sendResponse({
                         ok: false,

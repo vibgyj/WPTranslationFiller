@@ -126,7 +126,7 @@ async function callGroq(messages, apikey, model, temp) {
                 resolve({ error: { status: 0, message: chrome.runtime.lastError.message } });
                 return;
             }
-            console.debug("GROQ RESPONSE TIME:", (performance.now() - startTime).toFixed(2), "ms");
+            //console.debug("GROQ RESPONSE TIME:", (performance.now() - startTime).toFixed(2), "ms");
             resolve(res);
         });
     });
@@ -592,7 +592,7 @@ async function translatePageGroq(
     openAiGloss,
     groqBatchSize = 10
 ) {
-    console.info("[Groq] translatePageGroq version " + GROQ_TRANSLATE_VERSION);
+   // console.info("[Groq] translatePageGroq version " + GROQ_TRANSLATE_VERSION);
 
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
@@ -638,7 +638,7 @@ async function translatePageGroq(
         // Safe access: not every row has one. Only single (non-plural)
         // UI strings carry meaningful context; plurals are skipped.
         const mycontext = e.getElementsByClassName("context bubble")[0]?.innerText?.trim() || "";
-        console.debug("context:",mycontext)
+        //console.debug("context:",mycontext)
         const plural1 = document.querySelector("#preview-" + rowId + " .original li:nth-of-type(1)");
         const plural2 = document.querySelector("#preview-" + rowId + " .original li:nth-of-type(2)");
 
@@ -946,7 +946,7 @@ async function translatePageGroq(
         }));
 
         const systemPrompt = applyPromptBatch(basePrompt, JSON.stringify(promptItems), mergedGlossary);
-        console.debug("prompt:",systemPrompt)
+        //console.debug("prompt:",systemPrompt)
         const messages = [{ role: "user", content: systemPrompt }];
         let parsed = null;
 

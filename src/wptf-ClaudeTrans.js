@@ -31,7 +31,10 @@ async function translateLineByLine(
     const resolvedLanguage = (typeof LOCALE_TO_LANGUAGE !== 'undefined' ? LOCALE_TO_LANGUAGE[destlang] : null) ?? destlang;
 
     const temp = parseFloat(OpenAiTemp) || 0.0;
-
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        ClaudePrompt = stripPromptComments(ClaudePrompt);
+    }
     // Fill static placeholders once
     const basePrompt = applyClaudePromptBase(ClaudePrompt, resolvedLanguage, OpenAITone);
     //console.debug('[Claude Single] Base prompt:', basePrompt)

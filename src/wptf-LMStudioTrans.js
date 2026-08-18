@@ -7,9 +7,13 @@ async function translateWithLMStudio(original, destlang, record, OpenAIPrompt, p
        openAiGloss,
        originalPreProcessed,
        record
-     );
+    );
     let convertedGlossary = convertGlossaryForOllamaMerged(filteredGloss)
-  
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        ollamaPrompt = stripPromptComments(ollamaPrompt);
+    }
+
     let myprompt = ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     
     myprompt = myprompt.replaceAll("{{tone}}", OpenAITone);

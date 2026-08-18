@@ -22,7 +22,7 @@ document.getElementsByTagName("head")[0].appendChild(link);
 document.addEventListener("DOMContentLoaded", async () => {
             chrome.storage.local.get(["noUI"], async function (data) {
     // let userLang = checkLocale() || 'en-gb';
-    console.debug("Checking if UI should be loaded, noUI value:", data.noUI);
+    //console.debug("Checking if UI should be loaded, noUI value:", data.noUI);
                 if (!toBoolean(data.noUI)) {
 
                     try {
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         const container = document.getElementById("container");
                         if (container) translateElement(container);
 
-                        console.log(`Loaded translations for locale: ${locale}`);
+                        // console.log(`Loaded translations for locale: ${locale}`);
                     } catch (err) {
                         console.error("Error loading translations:", err);
                     }
@@ -84,11 +84,12 @@ let replaceVerb = [];
 
 let apikeyTextbox = document.getElementById("google_api_key");
 let apikeyCerebrasTextbox = document.getElementById("cerebras_api_key");
-console.debug("apikeyCerebrasTextbox:", apikeyCerebrasTextbox);
 let apikeydeeplTextbox = document.getElementById("deepl_api_key");
 let apikeydeeplCheckbox = document.getElementById("DeeplFree");
 let apikeymicrosoftTextbox = document.getElementById("microsoft_api_key");
 let apikeykimiTextbox = document.getElementById("kimi_api_key");
+let apikeyLaraTextbox = document.getElementById("lara_accessKeyId");
+let LaraSecretTextbox = document.getElementById("lara_accessKeySecret");
 let apikeygroqTextbox = document.getElementById("groq_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let apikeyOpenRouterTextbox = document.getElementById("openRouter_api_key");
@@ -155,6 +156,7 @@ let showLocalOllama = document.getElementById("ollama-local");
 let showNoPeriodCheckbox = document.getElementById("no-period");
 let showdDebugModeCheckbox = document.getElementById("debugmode");
 let showdNoUICheckbox = document.getElementById("NoUI");
+let shownoChevronsCheckbox = document.getElementById("noChevrons");
 
 document.getElementById('show-changelog-link').addEventListener('click', function (e) {
     e.preventDefault(); // Prevent the default link behavior
@@ -190,7 +192,7 @@ async function fetchGroqModels(apiKey) {
         throw new Error("HTTP " + resp.status);
     }
     const json = await resp.json();
-    console.debug("Fetched Groq models:", json.data.map(m => m.id));
+   // console.debug("Fetched Groq models:", json.data.map(m => m.id));
     return json.data
         .map(m => m.id)
         .filter(id => !GROQ_EXCLUDE_PATTERN.test(id))
@@ -219,7 +221,7 @@ async function loadGroqModels(preselectValue) {
         models = await fetchGroqModels(apiKey);
         if (!models.length) throw new Error("Empty model list");
     } catch (err) {
-        console.warn("Could not fetch Groq models, using fallback list:", err.message);
+        // console.warn("Could not fetch Groq models, using fallback list:", err.message);
         models = GROQ_FALLBACK_MODELS;
         usedFallback = true;
     }
@@ -294,7 +296,7 @@ async function fetchCerebrasModels(apiKey) {
         throw new Error("HTTP " + resp.status);
     }
     const json = await resp.json();
-    console.debug("Fetched Cerebras models:", json.data.map(m => m.id));
+    // console.debug("Fetched Cerebras models:", json.data.map(m => m.id));
     return json.data
         .map(m => m.id)
         .filter(id => !CEREBRAS_EXCLUDE_PATTERN.test(id))
@@ -323,7 +325,7 @@ async function loadCerebrasModels(preselectValue) {
         models = await fetchCerebrasModels(apiKey);
         if (!models.length) throw new Error("Empty model list");
     } catch (err) {
-        console.warn("Could not fetch Cerebras models, using fallback list:", err.message);
+        // console.warn("Could not fetch Cerebras models, using fallback list:", err.message);
         models = CEREBRAS_FALLBACK_MODELS;
         usedFallback = true;
     }
@@ -366,7 +368,7 @@ async function loadCerebrasModels(preselectValue) {
 document.getElementById("refreshCerebrasModels").addEventListener("click", function () {
     loadCerebrasModels(cerebrasselectBox.value || undefined);
 });
-chrome.storage.local.get(["apikey", "apikeyCerebras","apikeyDeepl", "apikeyKimi", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "CerebrasSelect", "OpenAISelect","OpenRouterSelect", "ClaudSelect", "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyCerebras", "apikeyDeepl", "apikeyKimi", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "CerebrasSelect", "OpenAISelect", "OpenRouterSelect", "ClaudSelect", "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize", "apikeylara_accessKeyId","lara_accessKeySecret", "noChevrons"], function (data) {
     
     if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -469,12 +471,12 @@ chrome.storage.local.get(["apikey", "apikeyCerebras","apikeyDeepl", "apikeyKimi"
     }
     else {
         OpenAIToneBox.value = data.OpenAITone;
-    OpenAITone = data.OpenAITone
-}
-    
+        OpenAITone = data.OpenAITone
+     }
+ 
     apikeydeeplCheckbox = data.DeeplFree;
     apikeyTextbox.value = data.apikey;
-    apikeyCerebrasTextbox.value= data.apikeyCerebras;
+    apikeyCerebrasTextbox.value = data.apikeyCerebras;
     apikeydeeplTextbox.value = data.apikeyDeepl;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
@@ -498,6 +500,25 @@ chrome.storage.local.get(["apikey", "apikeyCerebras","apikeyDeepl", "apikeyKimi"
     else {
         apikeygroqTextbox.value = data.apikeygroq;
     }
+    if (data.apikeygroq == null && typeof data.apikeygroq == "undefined") {
+        apikeygroqTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeygroqTextbox.value = data.apikeygroq;
+    }
+    if (data.apikeylara_accessKeyId== null && typeof data.apikeylara_accessKeyId == "undefined") {
+        apikeyLaraTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeyLaraTextbox.value = data.apikeylara_accessKeyId;
+    }
+
+    if (data.lara_accessKeySecret == null && typeof data.lara_accessKeySecret == "undefined") {
+        LaraSecretTextbox.value = "Enter secret or leave empty";
+    }
+    else {
+        LaraSecretTextbox.value = data.lara_accessKeySecret;
+    }
     if (data.apikeyKimi == null && typeof data.apikeyKimi == "undefined") {
         apikeykimiTextbox.value = "Enter key or leave empty";
     }
@@ -513,7 +534,6 @@ chrome.storage.local.get(["apikey", "apikeyCerebras","apikeyDeepl", "apikeyKimi"
 
     }
     if (data.apikeyCerebras == null && typeof data.apikeyCerebras == "undefined") {
-        console.debug("apikeyCerebras:",apikeyCerebrasTextbox)
         apikeyCerebrasTextbox.value = "Enter key or leave empty";
     }
     else {
@@ -558,7 +578,7 @@ chrome.storage.local.get(["apikey", "apikeyCerebras","apikeyDeepl", "apikeyKimi"
     }
     // Populate the Cerebras dropdown dynamically from the Cerebras API,
     // preselecting the stored model if it still exists (see loadCerebrasModels()).
-    console.debug("cerebrasselect:", data.CerebrasSelect)
+    // console.debug("cerebrasselect:", data.CerebrasSelect)
     const storedCerebrasModel = (typeof data.CerebrasSelect == 'undefined' || data.CerebrasSelect == "")
         ? undefined
         : data.CerebrasSelect;
@@ -816,6 +836,18 @@ if ([...langselect.options].some(opt => opt.value === destLangTextbox.value)) {
     else {
         showdNoUICheckbox.checked = false;
     }
+    if (data.noChevrons != "null") {
+        if (data.noChevrons == true) {
+            shownoChevronsCheckbox.checked = true;
+        }
+        else {
+            shownoChevronsCheckbox.checked = false;
+        }
+    }
+    else {
+        shownoChevronsCheckbox.checked = false;
+    }
+    
     if (data.LocalOllama != "null" && typeof data.LocalOllama != "undefined") {
         if (data.LocalOllama == true) {
             showLocalOllama.checked = true;
@@ -910,7 +942,6 @@ button.addEventListener("click", function () {
     else {
         cerebrassel = cerebrasselectBox.value;
     }
-    console.debug("Cerebras selected model:", cerebrassel);
     // Groq model now comes from a dynamically populated dropdown (see loadGroqModels()).
     // Fall back to a current, non-deprecated model id if nothing is selected.
     if (typeof groqselectBox.value == "undefined" || groqselectBox.value == "") {
@@ -1093,12 +1124,22 @@ button.addEventListener("click", function () {
     else { 
         showNoUI = "false";
     }
-    
+    if (document.querySelector("#noChevrons:checked") !== null) {
+        let shownoChevrons_Set = document.querySelector("#noChevrons:checked");
+        shownoChevrons = shownoChevrons_Set.checked;
+    }
+    else {
+        shownoChevrons = false;
+    }
+
     if ((parseFloat(OpenAItempVal)) >= 0 && (parseFloat(OpenAItempVal)) <= 2) {
+        
         chrome.storage.local.set({
             apikey: apikey,
             apikeyCerebras: apikeycerebras,
             apikeyDeepl: apikeyDeepl,
+            apikeylara_accessKeyId: apikeyLaraTextbox.value,
+            lara_accessKeySecret: LaraSecretTextbox.value,
             apikeyOpenAI: apikeyOpenAI,
             apikeyKimi: apikeyKimi,
             apikeygroq: apikeygroq,
@@ -1163,6 +1204,7 @@ button.addEventListener("click", function () {
             AI_Top_k: AI_Top_k_Val,
             AI_Top_p: AI_Top_p_Val,
             DebugMode: showDebugMode,
+            noChevrons: shownoChevrons,
             noUI: showNoUI,
             groqBatchSize: groqBatchSizeBox.value
         });
@@ -1679,8 +1721,6 @@ const importInput = document.getElementById("importPost");
 
 importInput.addEventListener("change", function (event) {
 
-    console.debug("we are importing");
-
     if (importInput.files && importInput.files[0]) {
 
         let reader = new FileReader();
@@ -1913,3 +1953,147 @@ document.getElementById("restoreFile").addEventListener("change", function (even
     // Reset so same file can be re-selected if needed
     event.target.value = "";
 });
+// ── Load-prompt-from-file buttons ─────────────────────────────
+const api = globalThis.browser ?? globalThis.chrome;
+
+// prompts/<name>/<name>.txt  (name comes from the button's data-prompt)
+function promptURL(name) {
+    return api.runtime.getURL(`prompts/${name}/${name}.txt`);
+}
+
+async function loadPrompt(name) {
+    const res = await fetch(promptURL(name));
+    if (!res.ok) throw new Error(`Couldn't find prompts/${name}/${name}.txt`);
+    return res.text();
+}
+
+// the field this button feeds = the id in the preceding <label for="...">
+function targetFieldFor(btn) {
+    let el = btn.previousElementSibling;
+    while (el && el.tagName !== "LABEL") el = el.previousElementSibling;
+    const id = el?.getAttribute("for");
+    return id ? document.getElementById(id) : null;
+}
+
+function initPromptButtons() {
+    document.querySelectorAll("button.load-prompt").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const name = btn.dataset.prompt;
+            const field = targetFieldFor(btn);
+            if (!name || !field) {
+                console.warn("load-prompt: missing data-prompt or target field", btn);
+                return;
+            }
+
+            const text = await getBundledPrompt(name);
+            if (text == null) {
+                cuteAlert({
+                    type: "info",
+                    title: "No prompt available",
+                    message: `There's no bundled prompt for "${name}" yet.`,
+                    myWindow: window.self,
+                });
+                return;
+            }
+
+            cuteAlert({
+                type: "question",
+                title: "Load prompt",
+                message: `Load the "${name}" prompt from file?`,
+                confirmText: "Load",
+                cancelText: "Cancel",
+                myWindow: window.self,
+            }).then((e) => {
+                if (e !== "confirm") return;
+                field.value = text;   // already fetched — no second request
+            });
+        });
+  });
+}
+// ── Backup-prompt-to-file buttons ─────────────────────────────
+// reuses `api` and targetFieldFor() from the load code
+
+function dateStamp() {
+    return new Date().toISOString().slice(0, 10);   // 2026-08-05
+}
+
+// 2026-08-05_14-30-05
+function dateStamp() {
+    return new Date().toISOString().slice(0, 19).replace("T", "_").replace(/:/g, "-");
+}
+
+async function backupPrompt(name, text) {
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    try {
+        await api.downloads.download({
+            url,
+            filename: `prompts/${name}/${name}_${dateStamp()}.txt`,
+            saveAs: true,          // <- the only change; true = always prompt, false = always silent
+        });
+    } finally {
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+}
+
+function initBackupPromptButtons() {
+    document.querySelectorAll("button.backup-prompt").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const name = btn.dataset.prompt;
+            const field = targetFieldFor(btn);
+            if (!name || !field) return console.warn("backup-prompt: missing data/field", btn);
+
+            try {
+                await backupPrompt(name, field.value);
+            } catch (err) {
+                console.error(err);
+                cuteAlert({
+                    type: "error", title: "Backup failed",
+                    message: err.message, myWindow: window.self
+                });
+            }
+        });
+  });
+}
+
+// returns the prompt text, or null if the folder has no usable .txt
+async function getBundledPrompt(name) {
+    try {
+        const res = await fetch(promptURL(name));
+        if (!res.ok) return null;
+        const text = await res.text();
+        return text.trim().length ? text : null;   // missing OR empty → null
+    } catch {
+        return null;                               // FILE_NOT_FOUND rejects
+    }
+}
+// let the user pick a .txt, return its text (or null if cancelled)
+function pickPromptText() {
+    return new Promise((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".txt,text/plain";
+        input.addEventListener("change", async () => {
+            const file = input.files?.[0];
+            resolve(file ? await file.text() : null);
+        }, { once: true });
+        input.click();
+    });
+}
+function initImportPromptButtons() {
+    document.querySelectorAll("button.import-prompt").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const field = targetFieldFor(btn);
+            if (!field) return console.warn("import-prompt: no target field", btn);
+
+            const text = await pickPromptText();
+            if (text == null) return;          // user cancelled
+            field.value = text;
+        });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initImportPromptButtons);
+
+document.addEventListener("DOMContentLoaded", initBackupPromptButtons);
+document.addEventListener("DOMContentLoaded", initPromptButtons);

@@ -390,8 +390,12 @@ async function translatePageKimi(destlang, apikeyKimi, OpenAIPrompt, formal, loc
     return 'NOK';
   }
 
-  const language = (destlang || '').toUpperCase();
-  const batchSize = getKimiBatchSize();
+    const language = (destlang || '').toUpperCase();
+    const batchSize = getKimiBatchSize();
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+    }
 
   const shared = {
     model: KimiSelect,

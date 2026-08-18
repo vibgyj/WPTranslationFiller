@@ -493,6 +493,10 @@ async function translatePageOpenRouter(
     const selectedEffort = (typeof modelConfig !== 'undefined'
         && modelConfig[selectedModel]?.reasoning?.effort) || "none";
 
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+    }
     // Fill static placeholders once — language and tone never change between batches
     const basePrompt = applyORPromptBase(OpenAIPrompt, resolvedLanguage, resolvedTone);
 

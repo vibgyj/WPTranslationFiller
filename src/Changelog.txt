@@ -107,3 +107,16 @@ Version 3.5.61 Added new model for Ollama Kimi-k3:cloud
 Version 3.5.62 Improved month/day handling, now they are converted to lowercase only for locale nl and nl-be
 Version 3.5.63 Added Cerebras API for translation
 Version 3.5.64 FireFox throws a CORS error when usung Cerebras. So I added the URL into the manifest
+Version 3.5.65 Added buttons into the setup script to load and save the various prompts
+Version 3.5.66 modified the savebutton in options.js to always ask for the folder to save the prompts, this way it will always be saved in the correct folder
+Version 3.5.67 Modified Microsoft translation to handle glossary per line
+Version 3.5.68 Added Lara API for translation
+Version 3.5.68 Moved the API selector to the top of the options page
+Version 3.5.68 Moved the language selector to the top of the options page
+Version 3.5.68 Fixed a wrong call to populatewith local
+Version 3.5.68 Fixed adding special chars when translating for Russia and Ukraine, now it will not add special chars for these locales
+Version 3.5.69 Retranslated the options page
+Version 3.5.69 Added a function to remove chevrons for Russia an Ukraine, this way it will not add special chars for these locales
+Version 3.5.70 Added function for Dutch to check if it is a week name or day name, if so then it will be onverted to lowercase
+Version 3.5.71 Added Alibaba API for translation
+Version 3.5.71 When a fuzzy plural was present then the second line of the preview for the plural was not populated, now it will be populated with the fuzzy translation

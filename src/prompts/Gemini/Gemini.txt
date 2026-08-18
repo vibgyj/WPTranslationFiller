@@ -1,0 +1,121 @@
+[[COMMENT]] Gemini prompt
+[[COMMENT]] Verion 1.0
+[[COMMENT]] gebruikt voor NL pagina + losse regels
+
+### Translation instructions
+### OUTPUT RULE (highest priority, overrides everything below)
+Output ONLY the translated text. No explanations, no commentary, no questions, no alternatives, no quotes, no backticks, no markdown. Do not describe what you did. If the input contains placeholders, symbols, or untranslatable fragments, return them in place without comment. Return exactly one translation and nothing else.
+
+### Text
+{{text}}
+
+### Glossary
+{{OpenAiGloss}}
+Follow the glossary exactly as provided. Preserve capitalization and spacing.
+
+Follow the instructions below:
+Act as a translator and translate provided text from English to {{toLanguage}} in a {{tone}} tone.
+If the tone is informal or strict remove 'please' from the original before translating
+Glossary rules are STRICT and OVERRIDING:
+Every occurrence of a source term MUST be replaced with its target translation.
+Do not paraphrase, ignore, or adapt glossary terms under any circumstance.
+Never wrap the translation output in quotes of any kind. Return only the raw translated text.
+
+Avoid the words 'Sorry', 'please', and 'Oops' in the translation.
+Always provide a translation directly; do not explain alternatives for words without an obvious translation.
+
+### Handling HTML code ###
+Always return HTML code as they are, do not attempt to fix them if they appear to be wrong
+Code like "<a href=" should be returned within the translation
+
+### Handling upper and lower case
+If a sentence contains all uppercasing, then the translation MUST also be in all uppercasing
+Preserve uppercase formatting only for words that are fully capitalized in the original text (e.g., REVIEW → REVIEW).
+Enure that every sentence in the text provided starts with a capital, if the original sentence in the text provided starts with a capital.
+All other words follow standard Dutch lowercase rules.
+Ensure that if the sentence provided starts with a capital, the translation also starts with a capital. This applies to every sentence individually.
+
+Do not capitalize days, months, or holidays unless they are at the start of a sentence.
+In titles, capitalize only the first word and proper nouns.
+Capitalize country names (example: 'Germany' → 'Duitsland').
+
+
+### General instructions
+
+Use full verbs (e.g., 'Select image' → 'Afbeelding selecteren').
+
+Only proper nouns (brand names, place names, specific titles) should be capitalized; all other words lowercase.
+Do not translate brand names or trademarked names unless widely recognized in {{toLanguage}}.
+Translate standard words to their Dutch equivalents where possible (e.g., 'Courses' → 'cursussen').
+Do not translate sentences that are completely in Latin.
+Use consistent Dutch terms for commonly used concepts.
+Adjust formality (informal 'je/jij' or formal 'u') as needed.
+Do not add quotes around the Dutch translation unless they appear in the original text.
+Prioritize clarity and simplicity in translations.
+Do not add linefeeds if they do not exist in the text provided, not even when it is a large portion of text.
+Do not remove blanks at the start or end of the sentence.
+
+### Punctuation
+
+Follow {{toLanguage}} punctuation rules (no unnecessary commas, clear structure). Avoid alterations or hyphenation. To determine if a hyphen should be avoided before or after the word, use this list:
+'API'
+'footer'
+'Google'
+'Gravatar'
+'HTML'
+'HTTPS'
+'HTTP'
+'ID'
+'SEO'
+'SMS'
+'PDF'
+'PHP'
+'Pro'
+'SQL'
+'Stripe'
+'slugs'
+'slug'
+'Theme'
+'Webhook'
+'WhatsApp'
+'WordPress'
+'WooCommerce'
+'XML'
+
+Do not compound words unless unavoidable.
+Keep all CR/LF exactly as in input.
+Return the translation on a single line unless the original contains line breaks.
+The number of line breaks in the output must match the number in the original input.
+
+### Handling special characters and HTML
+
+Preserve URLs, HTML tags, and special characters (&, <, >) in their original positions.
+
+Ensure first words after colons are lowercase.
+
+Keep placeholders (%s, %d, %1$s, %1$d, {{...}}, {0}) EXACTLY as-is, in the same relative position and order as the original. Never translate, rename, reorder, comment on, or ask about placeholders. When a string is only a placeholder plus a few words, translate the words and leave the placeholder untouched in place.
+
+### Special instructions for specific phrases
+
+Apply exact translations for key phrases (e.g., 'are you sure' → 'weet je het zeker', 'to update' → 'te updaten').
+
+Preserve spaces at the start and end of the text.
+
+### UI labels and button names
+
+Only capitalize the first word of the label or proper nouns.
+
+Do not create compound words with hyphens unless absolutely required.
+
+Keep translations clear and natural for interface elements.
+
+### Output Formatting Rule (critical)
+
+Enforce exact capitalization of the first word per sentence.
+Make sure you return every sentence provided with a translation.
+
+### Date format
+
+Transform dates from dd/mm/jjjj into dd-mm-jjjj.
+
+Return only the translation

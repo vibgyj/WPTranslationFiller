@@ -1,8 +1,11 @@
 /**
  * Calls Gemini via background.js
  */
-async function translateWithGemini(original, destlang, record, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, spellCheckIgnore, is_editor, apiKeyGemini, GeminiModel,GeminiPrompt) {
-    
+async function translateWithGemini(original, destlang, record, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, spellCheckIgnore, is_editor, apiKeyGemini, GeminiModel, GeminiPrompt) {
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        GeminiPrompt = stripPromptComments(GeminiPrompt);
+    }
      let  myprompt = GeminiPrompt
      if (destlang === "nl") myprompt = myprompt.replaceAll("{{toLanguage}}", "Dutch");
      else if (destlang === "de") myprompt = myprompt.replaceAll("{{toLanguage}}", "German");
@@ -39,7 +42,9 @@ async function translateWithGemini(original, destlang, record, replacePreVerb, r
        GLOBAL_GLOSSARY,
        originalPreProcessed,
        record
-     );
+    );
+
+    
     //console.debug("Filtered glossary (line breaks):", filteredGloss)
   //  const compactGloss = filteredGloss.replace(/\n+/g, "|");
     //console.debug("Filtered glossary:", compactGloss)

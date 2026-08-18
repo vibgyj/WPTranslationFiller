@@ -48,7 +48,12 @@ const LOCALE_TO_LANGUAGE = {
     //console.debug("Filtered glossary:", compactGloss)
     let convertedGlossary = await convertGlossaryForOllamaMerged(compactGloss)
     //originalPreProcessed = await applyGlossaryMap(originalPreProcessed, convertedGlossary)
-  // Replace glossary and language names
+    // Replace glossary and language names
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        ollamaPrompt = stripPromptComments(ollamaPrompt);
+    }
+
     let myprompt = await ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     myprompt =  await myprompt.replaceAll("{{TEXT}}", originalPreProcessed);
     //myprompt = ollamaPrompt

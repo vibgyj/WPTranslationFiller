@@ -15,7 +15,10 @@ async function translateWithDeepSeek(original, language, record, apikeyDeepSeek,
     let destlang = language;
     language = language.toUpperCase();
     var messages;
-
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
+        OpenAIPrompt = stripPromptComments(OpenAIPrompt);
+    }
     let tempPrompt = OpenAIPrompt + '\n'
     let myprompt = "";
 
@@ -33,7 +36,7 @@ async function translateWithDeepSeek(original, language, record, apikeyDeepSeek,
     } else {
         myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
     }
-
+    
     // Replace glossary and language names
     myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss);
 
