@@ -17,7 +17,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
             font-size: 12pt;
         }
@@ -787,26 +787,32 @@
         </td>
         <td>
             <div class="form-input">
-                <select title="Select a model for opeAI" name="OpenAIsel" id="OpenAIselect">
-                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-                    <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
-                    <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
-                    <option value="gpt-4">gpt-4</option>
-                    <option value="gpt-4.1">gpt-4.1</option>
-                    <option value="gpt-4.1-mini">gpt-4.1 mini</option>
-                    <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
-                    <option value="gpt-4-turbo">gpt-4-turbo</option>
-                    <option value="gpt-4o">gpt-4o</option>
-                    <option value="gpt-4o-mini">gpt-4o-mini</option>
-                    <option value="gpt-5">gpt-5</option>
-                    <option value="gpt-5-mini">gpt-5-mini</option>
-                    <option value="gpt-5-nano">gpt-5-nano</option>
-                    <option value="gpt-5.1">gpt-5.1</option>
-                    <option value="gpt-5.1-mini">gpt-5.1-mini</option>
-                    <option value="gpt-5.1-nano">gpt-5.1-nano</option>
-                    <option value="gpt-5.3-chat-latest">gpt-5.3-chat-latest</option>
-                    <option value="gpt-5.4">gpt-5.4</option>.
-                    <option value="gpt-5.5">gpt-5.5</option>
+                <select title="Select a model" name="OpenAIsel" id="OpenAIselect">
+                    <optgroup label="OpenAI">
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
+                        <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
+                        <option value="gpt-4">gpt-4</option>
+                        <option value="gpt-4.1">gpt-4.1</option>
+                        <option value="gpt-4.1-mini">gpt-4.1 mini</option>
+                        <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
+                        <option value="gpt-4-turbo">gpt-4-turbo</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        <option value="gpt-5">gpt-5</option>
+                        <option value="gpt-5-mini">gpt-5-mini</option>
+                        <option value="gpt-5-nano">gpt-5-nano</option>
+                        <option value="gpt-5.1">gpt-5.1</option>
+                        <option value="gpt-5.1-mini">gpt-5.1-mini</option>
+                        <option value="gpt-5.1-nano">gpt-5.1-nano</option>
+                        <option value="gpt-5.3-chat-latest">gpt-5.3-chat-latest</option>
+                        <option value="gpt-5.4">gpt-5.4</option>
+                        <option value="gpt-5.5">gpt-5.5</option>
+                    </optgroup>
+                    <optgroup label="Alibaba (general)">
+                        <option value="qwen-plus">qwen-plus</option>
+                        <option value="qwen-flash">qwen-flash</option>
+                    </optgroup>
                 </select>
                 <label for="OpenAI_temp">temp:</label>
 
@@ -1067,7 +1073,7 @@ You,Je
     <br />
     <table style="width: 100%; table-layout: fixed;">
         <tr>
-            <td style="width:500px">
+            <td style="width:550px">
                 <label class="labeled-checkbox">
                     <input type="checkbox" id="Auto-LT-spellcheck">
                     <span>Auto spellcheck after pagecheck</span>
@@ -1085,7 +1091,7 @@ You,Je
     </table>
     <table style="width: 100%; table-layout: fixed;">
         <tr>
-            <td style="width:500px">
+            <td style="width:550px">
                 <label class="labeled-checkbox">
                     <input type="checkbox" id="Auto-review-OpenAI">
                     <span>Auto review with OpenAi after pagecheck</span>
@@ -1101,7 +1107,7 @@ You,Je
     </table>
     <table style="width: 100%; table-layout: fixed;">
         <tr>
-            <td style="width:500px">
+            <td style="width:550px">
                 <label class="labeled-checkbox">
                     <input type="checkbox" id="comp-translations">
                     <span>Compare translations</span>
@@ -1117,13 +1123,13 @@ You,Je
     </table>
     <table style="width: 100%; table-layout: fixed;">
         <tr>
-            <td style="width:420px">
+            <td style="width:550px">
                 <label class="labeled-checkbox">
                     <input type="checkbox" id="show-convertToLower">
                     <span>Convert words to lowercase except first word</span>
                 </label>
             </td>
-            <td style="padding-left: 15%;">
+            <td style="padding-left: 5%;">
                 <label class="labeled-checkbox">
                     <input type="checkbox" id="noChevrons">
                     <span>Remove chevrons</span>

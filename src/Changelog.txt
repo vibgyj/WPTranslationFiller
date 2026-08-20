@@ -120,3 +120,5 @@ Version 3.5.69 Added a function to remove chevrons for Russia an Ukraine, this w
 Version 3.5.70 Added function for Dutch to check if it is a week name or day name, if so then it will be onverted to lowercase
 Version 3.5.71 Added Alibaba API for translation
 Version 3.5.71 When a fuzzy plural was present then the second line of the preview for the plural was not populated, now it will be populated with the fuzzy translation
+Version 3.5.72 The backup of localStorage did not contain all keys, as there were some new keys added
+Version 3.5.72 With Cerebras activated a plural translation went wrong due to a wrong var name

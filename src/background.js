@@ -126,11 +126,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const start = Date.now();
             const dataToSend = request.data;
             const apiKey = dataToSend.apiKey;
-            const baseUrl = dataToSend.baseUrl
-                || "https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
-            // Default to Singapore (intl) — the region you can actually register for + test on.
            // const baseUrl = dataToSend.baseUrl
-            //    || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
+            //    || "https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1";
+            // Default to Singapore (intl) — the region you can actually register for + test on.
+           const baseUrl = dataToSend.baseUrl
+               || "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
 
             delete dataToSend.apiKey;
             delete dataToSend.baseUrl;
@@ -157,14 +157,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const reason = err.name === "AbortError"
                     ? "request timed out (no response within 60s)"
                     : `network/permission error: ${err.message}`;
-                console.error("alibaba fetch threw (no response):", err);
+                //console.error("alibaba fetch threw (no response):", err);
                 sendResponse({ error: `Alibaba request failed — ${reason}. Check host_permissions for ${baseUrl}` });
                 return;
             }
             clearTimeout(timeout);
 
             // We got a response object — now the status is meaningful.
-            console.debug("alibaba status:", resp.status, "type:", resp.type, "ok:", resp.ok);
+            //console.debug("alibaba status:", resp.status, "type:", resp.type, "ok:", resp.ok);
 
             if (!resp.ok) {
                 let msg = "";
@@ -178,7 +178,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             try {
                 const data = await resp.json();
-                console.debug("alibaba response:", data);
+                //console.debug("alibaba response:", data);
 
                 const duration = ((Date.now() - start) / 1000).toFixed(2);
                 console.debug("alibaba response time:", duration + "s");

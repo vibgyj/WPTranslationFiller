@@ -114,8 +114,9 @@ async function getTransOpenAI(
         myURL = URL;
     }
     else if (translator == 'alibaba') {
-        myURL = 'https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
-        mymodel = 'qwen-plus';
+        myURL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'
+       // myURL = 'https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
+        
       }
     else if (translator == 'OpenAI') {
         myURL = 'https://api.openai.com/v1/chat/completions';

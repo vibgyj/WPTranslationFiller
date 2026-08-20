@@ -1870,13 +1870,17 @@ const toBoolean = (value) => {
 document.getElementById("backupSettings").addEventListener("click", function () {
     chrome.storage.local.get(null, function (data) {
         const keysToBackup = [
-            "apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek",
-            "apikeyTranslateio", "apikeyClaude", "apikeyMistral", "apikeyOllama",
+            "apikey", "apikeyCerebras", "apikeyDeepl", "apikeyKimi", "apikeyMicrosoft",
+            "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude",
+            "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter",
             "apikeyLingvanex", "apikeyGemini", "apikeyNLP",
+            "apikeylara_accessKeyId", "lara_accessKeySecret",
             "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "ollamaPrompt", "reviewPrompt",
-            "OpenAISelect", "ClaudSelect", "GeminiSelect", "MistralSelect", "ollamaModel",
+            "CerebrasSelect", "OpenAISelect", "OpenRouterSelect", "ClaudSelect",
+            "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "ollamaModel",
             "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k",
             "OpenAIWait", "DeepLWait", "LMStudioWait", "TMwait", "bulkWait",
+            "groqBatchSize",
             "transsel", "destlang",
             "glossaryFile", "glossaryFileSecond",
             "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore",
@@ -1885,7 +1889,8 @@ document.getElementById("backupSettings").addEventListener("click", function () 
             "LtKey", "LtUser", "LtLang", "LtFree",
             "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary",
             "WPTFscreenWidth", "strictValidate", "autoCopyClip", "DisableAutoClose",
-            "LocalOllama", "noPeriod", "DebugMode", "noUI"
+            "LocalOllama", "noPeriod", "DebugMode", "noUI",
+            "DownloadPath", "noChevrons"
         ];
 
         const backup = {};

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WordPress Translation Filler Extended",
-  "version": "3.5.71",
+  "version": "3.5.72",
   "description": "Automatically populate translations by using a selectable API",
   "content_security_policy": {
     "extension_pages": "script-src 'self' ; object-src 'self'"
@@ -78,6 +78,7 @@
     "*://api.openai.com/*",
     "*://api.anthropic.com/*",
     "*://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/*",
+    "*://dashscope-intl.aliyuncs.com/*",
     "http://*/*",
     "https://*/*"
   ],

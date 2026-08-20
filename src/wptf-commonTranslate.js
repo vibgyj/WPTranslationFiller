@@ -6486,7 +6486,7 @@ async function translateEntry(rowId, apikey, apikeyCerebras, apikeyDeepl, apikey
                         let editor = true;
                         let URL = "https://api.cerebras.ai/v1/chat/completions";
                         // console.debug("mycontext in cerebras:", mycontext)
-                        result = await getTransOpenAI(original, destlang, e, apikeyCelebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL, mycontext);
+                        result = await getTransOpenAI(original, destlang, e, apikeyCerebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL, mycontext);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         } else if (result == "Error 403") {
