@@ -223,7 +223,7 @@ async function getTransOpenAI(
 
     const data = response.result;
     let raw = data?.choices?.[0]?.message?.content?.trim() ?? "";
-    //console.debug("raw translation content:", raw);
+    console.debug("raw translation content:", raw);
 
     // Groq method: the model replies with {"results":[{"i":"<rowId>","tr":"..."}]}.
     // Pull out the translation for THIS row. Fall back to plain text if the

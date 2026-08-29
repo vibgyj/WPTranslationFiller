@@ -122,3 +122,7 @@ Version 3.5.71 Added Alibaba API for translation
 Version 3.5.71 When a fuzzy plural was present then the second line of the preview for the plural was not populated, now it will be populated with the fuzzy translation
 Version 3.5.72 The backup of localStorage did not contain all keys, as there were some new keys added
 Version 3.5.72 With Cerebras activated a plural translation went wrong due to a wrong var name
+Version 3.5.73 Rearranged the key fields in the setup page alfabethically, this way it is easier to find the key you are looking for\
+Version 3.5.73 Retranslated the options page for Russian and Ukrainian
+Version 3.5.74 When in single translation a translation was copied from TM, then formal was not recognised, causing wrong marking of words
+Version 3.5.75 Added new function to check if there are missing glossary words in the page checked

@@ -644,6 +644,140 @@ mymarker {
         border-radius: 5px !important;
 }
 
+.wptfNavBarCont .check_translation-button {
+    font-size: 0.875em !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
+
+.wptfNavBarCont .check_translation-button.ready {
+      background: green;
+}
+
+.wptfNavBarCont .check_translation-button::before {
+      -webkit-font-smoothing: antialiased;
+      display: inline-block;
+      font: normal 20px/1 'dashicons';
+      vertical-align: middle;
+      width: 28px;
+}
+
+.wptfNavBarCont .check_translation-button:hover {
+      background: darkgray !important;
+}
+
+.wptfNavBarCont .check_translation-button.started {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: blink-background 1s ease-in-out infinite;
+}
+
+
+.wptfNavBarCont .check_translation-button.restarted {
+        content: "";
+        display: inline-block;
+        margin: auto;
+        border: 4px solid transparent;
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        background-color: blue;
+        animation: blink-background 1s ease-in-out infinite;
+}
+
+.wptfNavBarCont .check_translation-button.after_error {
+      animation: none;
+      background: red;
+}
+
+.wptfNavBarCont .check_translation-button.ready {
+        animation: none !important;
+        color: white !important;
+        padding: 5px 5px 5px 5px;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 2px solid !important;
+        border-color: grey !important;
+        border-radius: 5px !important;
+}
+
+
+.wptfNavBarCont .check_glossary-button {
+    font-size: 0.875em !important;
+    background: blue;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
+
+.wptfNavBarCont .check_glossary-button.ready {
+    background: green;
+}
+
+.wptfNavBarCont .check_glossary-button::before {
+    -webkit-font-smoothing: antialiased;
+    display: inline-block;
+    font: normal 20px/1 'dashicons';
+    vertical-align: middle;
+    width: 28px;
+}
+
+.wptfNavBarCont .check_glossary-button:hover {
+    background: darkgray !important;
+}
+
+.wptfNavBarCont .check_glossary-button.started {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: blink-background 1s ease-in-out infinite;
+}
+
+
+.wptfNavBarCont .check_glossary-button.restarted {
+    content: "";
+    display: inline-block;
+    margin: auto;
+    border: 4px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    background-color: blue;
+    animation: blink-background 1s ease-in-out infinite;
+}
+
+.wptfNavBarCont .check_glossary-button.after_error {
+    animation: none;
+    background: red;
+}
+
+.wptfNavBarCont .check_glossary-button.ready {
+    animation: none !important;
+    color: white !important;
+    padding: 5px 5px 5px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: 2px solid !important;
+    border-color: grey !important;
+    border-radius: 5px !important;
+}
+
+
 .wptfNavBarCont .tm-trans-button {
     font-size: 0.875em !important;
     background: blue;

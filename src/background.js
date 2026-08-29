@@ -2026,6 +2026,7 @@ const StorageWrapper = (() => {
 
     /** Normal remove wrapper */
     function remove(keys, callback) {
+        console.debug("Removing keys from local storage:", keys);
         chrome.storage.local.remove(keys, callback);
     }
 

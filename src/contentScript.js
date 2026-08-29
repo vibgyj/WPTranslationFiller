@@ -185,7 +185,7 @@ function setupTooltipHandler() {
         if (secondPrevTr) {
             let rowId = secondPrevTr.getAttribute("row");
             if (toBoolean(autoCopyClipBoard)) { copyToClipBoard(rowId); }
-        }
+           }
     });
 
     document.addEventListener("keydown", (event) => {
@@ -771,9 +771,10 @@ async function translatedButton() {
     let divProjects = document.querySelector("div.projects");
 
     const { container: transContainer,    btn: translateButton   } = makeNavButton({ className: "translation-filler-button",      label: __('Translate'),        tooltip: __("This function translates the table with translations from the API"),                                                 handler: translatePageClicked,    visible: false });
-    const { container: localtransContainer, btn: localtransButton } = makeNavButton({ className: "local-trans-button",             label: __("Local"),            tooltip: __("This function populates the table with translations from the local database"),                                        handler: localTransClicked,       visible: false });
-    const { container: TmContainer,        btn: tmtransButton     } = makeNavButton({ className: "tm-trans-button",                label: "TM",                   tooltip: __("This button starts fetching existing translations from translation memory"),                                           handler: tmTransClicked,          visible: false });
-    const { container: checkContainer,     btn: checkButton       } = makeNavButton({ className: "check_translation-button",       label: __("CheckPage"),        tooltip: __("This function checks the page for missing verbs and if set starts spellchecking"),                                   handler: checkPageClicked,        visible: false });
+    const { container: localtransContainer, btn: localtransButton } = makeNavButton({ className: "local-trans-button", label: __("Local"), tooltip: __("This function populates the table with translations from the local database"), handler: localTransClicked, visible: false });
+    const { container: TmContainer, btn: tmtransButton } = makeNavButton({ className: "tm-trans-button", label: "TM", tooltip: __("This button starts fetching existing translations from translation memory"), handler: tmTransClicked, visible: false });
+    const { container: checkGlossContainer, btn: checkGlossButton } = makeNavButton({ className: "check_glossary-button", label: __("CheckGlossary"), tooltip: __("This function checks the page for missing glossary translation"), handler: checkGlossClicked, visible: false });
+    const { container: checkContainer, btn: checkButton } = makeNavButton({ className: "check_translation-button", label: __("CheckPage"), tooltip: __("This function checks the page for missing verbs and if set starts spellchecking"), handler: checkPageClicked, visible: false });
     const { container: implocContainer,    btn: impLocButton      } = makeNavButton({ className: "impLoc-button",                  label: __("Imp localfile"),    tooltip: __("This button starts the import of a local po file containing translations into the current table"),                   handler: impFileClicked,          visible: false });
     const { container: implocDatabaseContainer, btn: impDatabaseButton } = makeNavButton({ className: "convLoc-button",           label: __("Conv po DB"),       tooltip: __("This button converts po and inserts to local database"),                                                              handler: impLocDataseClicked,     visible: false });
     const { container: checkAllContainer,  btn: checkAllButton    } = makeNavButton({ className: "selectAll-button",              label: __("Select all"),       tooltip: __("This button selects all records"),                                                                                    handler: setCheckBox,             visible: false });
@@ -842,7 +843,7 @@ async function translatedButton() {
 
     // Make all buttons visible
     requestAnimationFrame(() => {
-        [checkButton, impDatabaseButton, exportButton, translateButton, copyOrgButton,
+        [checkButton, checkGlossButton,impDatabaseButton, exportButton, translateButton, copyOrgButton,
          compairButton, fetchNewButton, fetchPTEButton, impLocButton, checkAllButton,
          exportPoButton, importButton, bulktolocalButton, tmtransButton, localtransButton
         ].forEach(b => b.style.visibility = 'visible');
@@ -871,6 +872,7 @@ async function translatedButton() {
         divNavBar.appendChild(bulktolocContainer);
         divNavBar.appendChild(implocContainer);
         divNavBar.appendChild(checkContainer);
+        divNavBar.appendChild(checkGlossContainer);
         divNavBar.appendChild(compairContainer);
         divNavBar.appendChild(TmContainer);
         divNavBar.appendChild(localtransContainer);
@@ -1297,6 +1299,11 @@ function checkFormal(formal) {
     return !window.location.href.includes("default");
 }
 
+async function checkGlossClicked(event) {
+    console.debug("checkGlossaryClicked called");
+    //DryRun = false;
+    glossaryQaSweep(DryRun = false);   
+    }
 async function checkPageClicked(event) {
     if (event) event.preventDefault();
     let formal = checkFormal(false);
@@ -1316,14 +1323,29 @@ function exportPoClicked(event)   { if (event) event.preventDefault(); chrome.st
 function getGlossaryData() {
     return new Promise((resolve, reject) => {
         const keys = [
-            "glossary",  ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map(l => "glossary"  + l),
+            "glossary", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map(l => "glossary" + l),
             "glossary1", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map(l => "glossary1" + l),
             "destlang"
         ];
+
         chrome.storage.local.get(keys, function (data) {
-            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
-            else resolve(data);
-        });
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
+            }
+
+            console.log(
+                "chrome.storage.local:",
+                Object.keys(data).length,
+                "van",
+                keys.length,
+                "gevraagde keys gevonden"
+            );
+
+            console.log("gevonden keys:", Object.keys(data));
+
+    resolve(data);
+});
     });
 }
 
@@ -1332,7 +1354,10 @@ async function loadGlossaries() {
         const data = await getGlossaryData();
         const glossaryValid  = typeof data.glossary  !== "undefined";
         const glossary1Valid = typeof data.glossary1 !== "undefined";
-        if (!glossaryValid && !glossary1Valid) return "unsuccessful";
+        if (!glossaryValid && !glossary1Valid) {
+            console.warn("No glossary data found in chrome.storage.local");
+            return "unsuccessful";
+        }
 
         glossary.length  = 0;
         glossary1.length = 0;
@@ -1660,7 +1685,7 @@ async function handleDetailsAction(rowId, event) {
     let locale    = checkLocale() || 'en';
     var is_pte    = document.querySelector("#bulk-actions-toolbar-top") !== null;
     var OpenAIres, result, lires = '0';
-
+    //console.debug("We hande details")
     // If rowId is still null, try waiting for the editor element
     if (rowId == null) {
         await waitForMyElement(`.editor`, 500, "resolveRowId").then((res) => {
@@ -1788,15 +1813,16 @@ async function handleDetailsAction(rowId, event) {
     await waitForMyElement(`#editor-${rowId}`, 200, "handleDetailsAction-validate").then((res) => {
         if (res == "Time-out reached") return;
         textareaElem = document.querySelector(`#editor-${rowId} textarea.foreign-text`);
-
+        //console.debug("glossary:",DefGlossary)
         if (detail_glossary && typeof textareaElem != "null") {
             chrome.storage.local.get(['destlang'], async function (data) {
-                let locale       = checkLocale();
+                let locale = checkLocale();
                 let originalText = myrec.querySelector("span.original-raw").innerText;
                 let translation  = textareaElem.textContent || "Empty";
                 let leftPanel    = await document.querySelector(`#editor-${rowId} .editor-panel__left`);
 
                 result = await validateEntry(locale, textareaElem, false, false, rowId, locale, "", false, DefGlossary);
+                //console.debug("Glossary validation result for rowId", rowId, ":", result);
                 mark_glossary(leftPanel, result.toolTip, textareaElem.textContent, rowId, false);
 
                 if (typeof result != 'undefined' && result.toolTip.length != 0) {
@@ -2035,6 +2061,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
                 }
             } else {
                 const myPreview = getPreview(rowId);
+                //console.debug("myPreview:", myPreview);
                 if (myPreview.classList.contains("untranslated")) {
                     myPreview.querySelector("th input").checked = true;
                 }

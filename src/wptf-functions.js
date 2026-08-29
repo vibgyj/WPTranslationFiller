@@ -555,7 +555,7 @@ async function initPublicVars() {
    result = await chrome.storage.local.get('noPeriod')
    no_period = result.noPeriod; // Assign the value to the global variable
    result = await chrome.storage.local.get('DefGlossary')
-   DefGlossary = result.DefGlossary; // Assign the value to the global variable
+   DefGlossary = result.DefGlossary; // Assign the value to the global variable will be 'true' or 'false' as string
    result = await chrome.storage.local.get('AI_Top_p');
    Top_p = result.AI_Top_p;
    result = await chrome.storage.local.get('AI_Top_k');
@@ -1955,7 +1955,8 @@ async function validateOld(showDiff) {
                 counter++;
                 current = document.querySelector("#editor-" + row + " div.editor-panel__left div.panel-header span.panel-header__bubble");
                 textareaElem = record.querySelector(".translation.foreign-text");
-                // console.debug("current:", current.innerText)
+                //console.debug("current:", current.innerText)
+                //console.debug("textareaElem:", textareaElem)
                 let showName = false;
                 //let showDiff = true;
                 if (textareaElem != null) {

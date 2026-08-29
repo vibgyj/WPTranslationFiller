@@ -416,25 +416,45 @@
             </tr>
             <tr>
                 <td>
-                    <label for="lara_accessKeyId">Lara Access Key ID</label>
+                    <label for="Claude_api_key">Claude API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="lara_accessKeyId" type="text" value="lara-access-key-id->" placeholder="Lara Access Key ID" />
+                        <input id="Claude_api_key" type="text" value="Claude api key->" />
                     </div>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <label for="lara_accessKeySecret">Lara Access Key Secret</label>
+                    <label for="deepl_api_key">DeepL API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="lara_accessKeySecret" type="text" value="lara-access-key-secret->" placeholder="Lara Access Key Secret" />
+                        <input id="deepl_api_key" type="text" value="DeepL-api key->" placeholder="DeepL API key" />
                     </div>
                 </td>
             </tr>
-
+            <tr>
+                <td>
+                    <label for="DeeplFree">License is for DeepL Free</label>
+                </td>
+                <td>
+                    <label>
+                        <input type="checkbox" id="DeeplFree">
+                        <span class="tooltip" data-tooltip="Select this if you are using a free license from Deepl">?</span>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="deepseek_api_key">DeepSeek API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="deepseek_api_key" type="text" value="DeepSeek-api key->" placeholder="DeepSeek API key" />
+                    </div>
+                </td>
+            </tr>
             <tr>
                 <td>
                     <label for="gemini_api_key">Gemini API Key</label>
@@ -476,14 +496,33 @@
                     </div>
                 </td>
             </tr>
-
             <tr>
                 <td>
-                    <label for="nlpcloud_api_key">NLPCloud API Key</label>
+                    <label for="lara_accessKeyId">Lara Access Key ID</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="nlpcloud_api_key" type="text" value="NLPCloud-api key->" placeholder="NLPCloud API key" />
+                        <input id="lara_accessKeyId" type="text" value="lara-access-key-id->" placeholder="Lara Access Key ID" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="lara_accessKeySecret">Lara Access Key Secret</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="lara_accessKeySecret" type="text" value="lara-access-key-secret->" placeholder="Lara Access Key Secret" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="Lingvanex_api_key">Lingvanex API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Lingvanex_api_key" type="text" value="Linvanex api key->" />
                     </div>
                 </td>
             </tr>
@@ -509,32 +548,31 @@
             </tr>
             <tr>
                 <td>
-                    <label for="deepl_api_key">DeepL API Key</label>
+                    <label for="nlpcloud_api_key">NLPCloud API Key</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="deepl_api_key" type="text" value="DeepL-api key->" placeholder="DeepL API key" />
+                        <input id="nlpcloud_api_key" type="text" value="NLPCloud-api key->" placeholder="NLPCloud API key" />
                     </div>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <label for="DeeplFree">License is for DeepL Free</label>
+                    <label for="Ollama_api_key">Ollama API Key</label>
                 </td>
                 <td>
-                    <label>
-                        <input type="checkbox" id="DeeplFree">
-                        <span class="tooltip" data-tooltip="Select this if you are using a free license from Deepl">?</span>
-                    </label>
+                    <div class="form-input">
+                        <input id="Ollama_api_key" type="text" value="Ollama api key->" />
+                    </div>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <label for="deepseek_api_key">DeepSeek API Key</label>
+                    <label for="Ollama_model">Ollama/LMstudio model</label>
                 </td>
                 <td>
                     <div class="form-input">
-                        <input id="deepseek_api_key" type="text" value="DeepSeek-api key->" placeholder="DeepSeek API key" />
+                        <input style="width:300px" id="Ollama_model" type="text" value="Ollama model->" />
                     </div>
                 </td>
             </tr>
@@ -568,46 +606,9 @@
                     </div>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <label for="Claude_api_key">Claude API Key</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="Claude_api_key" type="text" value="Claude api key->" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="Lingvanex_api_key">Lingvanex API Key</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="Lingvanex_api_key" type="text" value="Linvanex api key->" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="Ollama_api_key">Ollama API Key</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input id="Ollama_api_key" type="text" value="Ollama api key->" />
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="Ollama_model">Ollama/LMstudio model</label>
-                </td>
-                <td>
-                    <div class="form-input">
-                        <input style="width:300px" id="Ollama_model" type="text" value="Ollama model->" />
-                    </div>
-                </td>
-            </tr>
+
+
+
             <tr>
                 <td>
                     <label for="cerebrasSelect">Select a model for Cerebras:</label>
@@ -664,7 +665,7 @@
                             </select>
                         </div>
                     </div>
-    </div>
+</div>
     </td>
     </tr>
     <tr>
