@@ -27,6 +27,7 @@
 var glossary  = [];
 var glossary1 = [];
 var db;
+var dbGloss;
 var dbDeepL;
 var jsstoreCon;
 var myGlotDictStat;
@@ -58,10 +59,8 @@ var PlaceholderLog = [];
 var replaced_char = false
 var noChevrons = false
 
-chrome.storage.local.get(null, function (items) {
-    const keysToRemove = Object.keys(items).filter(key => key.startsWith("glossary1"));
-});
 
+removeLegacyGlossaryStorage()
 function savePage() {
     var currentUrl = window.location.href;
     chrome.storage.local.set({ lastPageVisited: currentUrl });
@@ -71,7 +70,73 @@ savePage();
 if (typeof addon_translations == 'undefined') {
     var addon_translations = {};
 }
+chrome.runtime.onMessage.addListener(
+    function (request, sender, sendResponse) {
+        console.log("content.js received:", request.action);
+        if (request.action === "importDefaultGlossaryToDB") {
 
+            importDefaultGlossaryRecords(
+                request.dbName,
+                request.records
+            )
+                .then(function (result) {
+
+                    console.log(
+                        "Default glossary import completed:",
+                        result
+                    );
+
+                    sendResponse({
+                        success: true,
+                        result: result
+                    });
+
+                })
+                .catch(function (error) {
+
+                    console.error(
+                        "Error importing default glossary:",
+                        error
+                    );
+
+                    sendResponse({
+                        success: false,
+                        error: error.message
+                    });
+                });
+
+            return true;
+        }
+    }
+);
+chrome.runtime.onMessage.addListener(
+    function (request, sender, sendResponse) {
+
+        if (request.action === "getWPGlossaryTest") {
+
+            testGlossaryRead()
+                .then(function (result) {
+                    sendResponse({
+                        success: true,
+                        records: result
+                    });
+                })
+                .catch(function (error) {
+                    console.error(
+                        "Error reading WPGlossary:",
+                        error
+                    );
+
+                    sendResponse({
+                        success: false,
+                        error: error.message
+                    });
+                });
+
+            return true;
+        }
+    }
+);
 async function loadTranslations(language) {
     try {
         const url = chrome.runtime.getURL(`locales/${language}.json`);
@@ -309,14 +374,27 @@ function sendMessageToInjectedScript(message) {
     window.postMessage(message, '*');
 }
 
+async function myOpenDB(db) { return await openDB(db); }
+async function myDeepLDB(dbDeepL) { return await openDeepLDatabase(dbDeepL); }
+
 // ─── IndexedDB / storage setup ───────────────────────────────
 if (!window.indexedDB) {
     messageBox("error", "Your browser doesn't support IndexedDB!<br> You cannot use local storage!");
 } else {
     jsstoreCon = new JsStore.Connection();
-    db = myOpenDB(db);
-}
 
+    db = myOpenDB(db);
+
+    myGlossDB("WPGlossary").then(function (result) {
+        dbGloss = result;
+        //console.log("Glossary DB:", dbGloss);
+       // testGlossaryRead();
+
+
+    }).catch(function (error) {
+        console.error("Error opening glossary database:", error);
+    });
+}
 if (typeof (Storage) !== "undefined") {
     interCept = localStorage.getItem("interXHR");
 } else {
@@ -1144,8 +1222,8 @@ function createElementWithId(type, id) {
     return element;
 }
 
-async function myOpenDB(db)     { return await openDB(db); }
-async function myDeepLDB(dbDeepL) { return await openDeepLDatabase(dbDeepL); }
+
+
 
 // ─── Bulk / save helpers ──────────────────────────────────────
 async function startBulkSave(event) {
@@ -1300,7 +1378,7 @@ function checkFormal(formal) {
 }
 
 async function checkGlossClicked(event) {
-    console.debug("checkGlossaryClicked called");
+    //console.debug("checkGlossaryClicked called");
     //DryRun = false;
     glossaryQaSweep(DryRun = false);   
     }
@@ -1350,6 +1428,174 @@ function getGlossaryData() {
 }
 
 async function loadGlossaries() {
+
+    try {
+
+        if (!dbGloss) {
+            console.warn("WPGlossary database is not available");
+            return "unsuccessful";
+        }
+
+        const locale = (checkLocale() || "en").toUpperCase();
+
+        const defaultRecords = await getGlossaryRecords(
+            dbGloss,
+            "default",
+            locale
+        );
+
+        const formalRecords = await getGlossaryRecords(
+            dbGloss,
+            "formal",
+            locale
+        );
+
+        /*
+         * Beide glossaries moeten gevuld zijn.
+         * Als één van beide leeg is, wordt de glossary
+         * niet als succesvol geladen beschouwd.
+         */
+        if (
+            defaultRecords.length === 0 ||
+            formalRecords.length === 0
+        ) {
+            console.warn(
+                "WPGlossary incomplete: default:",
+                defaultRecords.length,
+                "formal:",
+                formalRecords.length
+            );
+
+            return "unsuccessful";
+        }
+
+        /*
+         * Bestaande glossaries eerst leegmaken.
+         */
+        glossary.length = 0;
+        glossary1.length = 0;
+
+        /*
+         * Default glossary laden
+         */
+        defaultRecords.forEach(function (record) {
+
+            if (
+                !record ||
+                typeof record.original === "undefined" ||
+                typeof record.translation === "undefined"
+            ) {
+                return;
+            }
+
+            let value;
+
+            /*
+             * De database bewaart de translation als string,
+             * inclusief eventuele "/" tussen meerdere vertalingen.
+             *
+             * Pas hier zetten we deze om naar de array-structuur
+             * die de bestaande glossary-code gebruikt.
+             */
+            if (typeof record.translation === "string") {
+
+                value = record.translation
+                    .split("/")
+                    .map(function (item) {
+                        return item
+                            .replaceAll("&#39;", "'")
+                            .trim();
+                    });
+
+            } else {
+
+                value = record.translation;
+            }
+
+            glossary.push({
+                key: record.original,
+                value: value
+            });
+        });
+
+        /*
+         * Formal glossary laden
+         */
+        formalRecords.forEach(function (record) {
+
+            if (
+                !record ||
+                typeof record.original === "undefined" ||
+                typeof record.translation === "undefined"
+            ) {
+                return;
+            }
+
+            let value;
+
+            /*
+             * Ook hier blijft de "/" in de database intact.
+             * Alleen voor de bestaande glossary-code wordt
+             * de string hier omgezet naar een array.
+             */
+            if (typeof record.translation === "string") {
+
+                value = record.translation
+                    .split("/")
+                    .map(function (item) {
+                        return item
+                            .replaceAll("&#39;", "'")
+                            .trim();
+                    });
+
+            } else {
+
+                value = record.translation;
+            }
+
+            glossary1.push({
+                key: record.original,
+                value: value
+            });
+        });
+
+        /*
+         * Langste glossarywoorden eerst.
+         */
+        glossary.sort(function (a, b) {
+            return b.key.length - a.key.length;
+        });
+
+        glossary1.sort(function (a, b) {
+            return b.key.length - a.key.length;
+        });
+
+        if (toBoolean(DebugMode)) {
+
+            console.debug(
+                "WPGlossary loaded:",
+                glossary.length,
+                "entries; formal loaded:",
+                glossary1.length,
+                "entries"
+            );
+        }
+
+        return "success";
+
+    }
+    catch (error) {
+
+        console.error(
+            "Error loading WPGlossary:",
+            error
+        );
+
+        return "unsuccessful";
+    }
+}
+
+async function OldloadGlossaries() {
     try {
         const data = await getGlossaryData();
         const glossaryValid  = typeof data.glossary  !== "undefined";
@@ -2111,7 +2357,7 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
 // ─── validateEntry ────────────────────────────────────────────
 async function validateEntry(language, textareaElem, newurl, showHistory, rowId, locale, record, showDiff, DefGlossary) {
     var translation, result = [], original_preview, raw, originalText, preview_raw, hasGlossary, toolTip = "";
-
+    //console.debug("we are in validateEntry")
     if (typeof textareaElem === 'string') {
         translation = textareaElem;
     } else if (textareaElem !== null && typeof textareaElem === 'object' && !Array.isArray(textareaElem)) {
@@ -2730,10 +2976,22 @@ function countExactWordOccurrences(text, word) {
 }
 
 function createNewGlossArray(gloss) {
-    const sortedGlossArray = Object.values(gloss).map(entry => [entry.key, entry.value]).sort((a, b) => a[0].localeCompare(b[0]));
-    return new Map(sortedGlossArray);
-}
+    const map = new Map();
 
+    for (const entry of Object.values(gloss)) {
+        const key = String(entry.key).trim().toLowerCase();
+
+        const variants = (Array.isArray(entry.value) ? entry.value : [entry.value])
+            .flatMap(v => String(v).split('/'))
+            .map(s => s.trim().toLowerCase())
+            .filter(Boolean);
+
+        const existing = map.get(key) ?? [];
+        map.set(key, [...new Set([...existing, ...variants])]);
+    }
+
+    return new Map([...map.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+}
 // ─── validate ────────────────────────────────────────────────
 // NOTE: The large unreachable legacy block that used to live below the
 // early return has been removed entirely. The findAllMissingWords path
@@ -2742,10 +3000,13 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
     var wordCount = 0, foundCount = 0, percent = 0, toolTip = "", newText = "";
     var spansPlural, spansSingular, spans, spansArray, glossWords;
     var missingTranslations = [];
+   
 
     if (toBoolean(DefGlossary)) { myglossary = glossary; } else { myglossary = glossary1; }
+   // console.log('RAW gloss rows for search:',
+    //    JSON.stringify(Object.values(myglossary).filter(e => (e.key || '').toLowerCase() === 'search')));
     newGloss = createNewGlossArray(myglossary);
-
+    //console.debug("newGloss:",newGloss)
     let isURL = isOnlyURL(original);
     if (isURL) { return { wordCount: 0, foundCount: 0, percent: 100, toolTip: "", newText: "" }; }
 
@@ -2767,8 +3028,11 @@ function validate(language, original, translation, locale, showDiff, rowId, isPl
         return { wordCount: 0, foundCount: 0, percent: 100, toolTip: "", newText: "" };
     }
 
-    spansArray          = Array.from(spans);
-    glossWords          = createGlossArray(spansArray, newGloss);
+    spansArray = Array.from(spans);
+    //console.debug("spansArray:",spansSingular)
+    glossWords = createGlossArray(spansArray, newGloss);
+    //console.debug("glossWords:", glossWords)
+    //console.log(JSON.stringify(glossWords, null, 2));
     missingTranslations = findAllMissingWords(translation, glossWords, locale);
 
     if (missingTranslations.length != 0) {

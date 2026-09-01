@@ -126,3 +126,13 @@ Version 3.5.73 Rearranged the key fields in the setup page alfabethically, this 
 Version 3.5.73 Retranslated the options page for Russian and Ukrainian
 Version 3.5.74 When in single translation a translation was copied from TM, then formal was not recognised, causing wrong marking of words
 Version 3.5.75 Added new function to check if there are missing glossary words in the page checked
+Version 3.5.76 Moved storage of the glossary into indexedDB
+Version 3.5.78 Added code to remove old glossary and glossary1 contents from localStorage
+Version 3.5.77 Fixed a problem with marking glossary words which were OK such as 'Search'
+Version 3.5.77 Removed old glossary code
+Version 3.5.78 DeepL plurals was not working due to a missing var DeepLWait
+Version 3.5.78 When running local translation the plural lines were not populated, now it will populate the plural lines with the local translation
+Version 3.5.78 When performing checkGlossary words are missed out due to a combination of words
+Version 3.5.78 Added marking of missing glossary words in the checkGlossary function
+Version 3.5.79 Added waiting for progressbar to finish before starting with checkGlossary, this way it will not start before the progressbar is finished
+Version 3.5.80 Cerebras/openAI did not apply the glossary properly, now it will apply the glossary properly in page translation

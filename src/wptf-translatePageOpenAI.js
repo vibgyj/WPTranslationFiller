@@ -1,12 +1,22 @@
 /****************************************************
  * OPENAI / CEREBRAS BATCH TRANSLATE PAGE
- * Version: 2026-08-04.1
+ * Version: 2026-08-04.3
  *
  * Mirrors translatePageGroq() — same page walk, same immediate/local
  * queue, same plural handling, same token-aware batching, same
  * {"i","t","g","c"} -> {"results":[{"i","tr"}]} JSON contract, same
  * tolerant parser + retry sweep, and the same per-row write-back via
  * postProcessTranslation() + processTransl().
+ *
+ * CHANGE vs 2026-08-04.1:
+ *   - pruneGlossary output is normalized to the "src" -> "tgt", ...
+ *     STRING form before it is assigned to each item's glossary. When
+ *     openAiGloss is an ARRAY, pruneGlossary returns an array of
+ *     [src,tgt] pairs; that wrong shape made the per-item "g" field and
+ *     the merged {{glossary}} block unusable (String(array) never
+ *     matches the "..." -> "..." regex). Normalizing fixes both.
+ *   - A debug log prints the pruner output shape per item, INSIDE the
+ *     enrichment callback where `item` is in scope.
  *
  * DIFFERENCES vs Groq (deliberate):
  *   - No fallback chain / per-model cooldown / live-model list /
@@ -36,7 +46,7 @@
  ****************************************************/
 
 if (typeof OPENAI_TRANSLATE_VERSION === "undefined") {
-    var OPENAI_TRANSLATE_VERSION = "2026-08-04.1";
+    var OPENAI_TRANSLATE_VERSION = "2026-08-04.3";
 }
 
 // Session 429 counter — snapshot before/after each batch to detect
@@ -224,8 +234,8 @@ async function translatePageOpenAI(
                 batchQueue.push({
                     id: rowId, type: "plural", record: e,
                     items: [
-                        { id: rowId, line: 1, original: form1 },
-                        { id: rowId, line: 2, original: form2 }
+                        { id: rowId, line: 1, original: form1, record: e },
+                        { id: rowId, line: 2, original: form2, record: e }
                     ]
                 });
             }
@@ -246,7 +256,7 @@ async function translatePageOpenAI(
 
         batchQueue.push({
             id: rowId, type: "single", record: e,
-            items: [{ id: rowId, line: 1, original, context: mycontext }]
+            items: [{ id: rowId, line: 1, original, context: mycontext, record: e }]
         });
     }
 
@@ -414,17 +424,32 @@ async function translatePageOpenAI(
 
         /****************************************************
          * PREPROCESS + GLOSSARY PRUNING (parallel per item)
+         *
+         * pruneGlossary may return an ARRAY of [src,tgt] pairs when
+         * openAiGloss itself is an array. The per-item "g" field and the
+         * merged {{glossary}} block both expect the STRING form
+         * ("src" -> "tgt", ...), so we normalize here — inside this
+         * callback, where `item` and the pruner output are in scope.
          ****************************************************/
         const enrichedItems = await Promise.all(
             allItems.map(async item => {
-                const [preprocessed, prunedGlossary] = await Promise.all([
+                const [preprocessed, prunedRaw] = await Promise.all([
                     preProcessOriginal(item.original, replacePreVerb, PREPROCESS_MODE),
-                    pruneGlossary(openAiGloss, item.original, null)
+                    pruneGlossary(openAiGloss, item.original, item.record ?? null)
                 ]);
+
+                const glossary = Array.isArray(prunedRaw)
+                    ? prunedRaw.map(([s, t]) => `"${s}" -> "${t}"`).join(", ")
+                    : (prunedRaw || "");
+
+                console.debug("[" + translator + "] prune out:", item.id,
+                    Array.isArray(prunedRaw) ? "ARRAY" : typeof prunedRaw,
+                    "=>", JSON.stringify(glossary));
+
                 return {
                     id: item.id, line: item.line,
                     text: item.original, preprocessed,
-                    glossary: prunedGlossary || "",
+                    glossary,
                     context: item.context || ""
                 };
             })

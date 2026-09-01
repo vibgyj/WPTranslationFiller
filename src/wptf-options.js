@@ -1298,337 +1298,324 @@ button.addEventListener("click", function () {
     }
     });
 
-let file = document.getElementById("glossary_file");
-let glossary = [];
-let glossaryA = [];
-let glossaryB = [];
-let glossaryC = [];
-let glossaryD = [];
-let glossaryE = [];
-let glossaryF = [];
-let glossaryG = [];
-let glossaryH = [];
-let glossaryI = [];
-let glossaryJ = [];
-let glossaryK = [];
-let glossaryL = [];
-let glossaryM = [];
-let glossaryN = [];
-let glossaryO = [];
-let glossaryP = [];
-let glossaryQ = [];
-let glossaryR = [];
-let glossaryS = [];
-let glossaryT = [];
-let glossaryU = [];
-let glossaryV = [];
-let glossaryW = [];
-let glossaryX = [];
-let glossaryY = [];
-let glossaryZ = [];
 
-let second_file = document.getElementById("glossary_file_second");
-let glossary1 = [];
-let glossary1A = [];
-let glossary1B = [];
-let glossary1C = [];
-let glossary1D = [];
-let glossary1E = [];
-let glossary1F = [];
-let glossary1G = [];
-let glossary1H = [];
-let glossary1I = [];
-let glossary1J = [];
-let glossary1K = [];
-let glossary1L = [];
-let glossary1M = [];
-let glossary1N = [];
-let glossary1O = [];
-let glossary1P = [];
-let glossary1Q = [];
-let glossary1R = [];
-let glossary1S = [];
-let glossary1T = [];
-let glossary1U = [];
-let glossary1V = [];
-let glossary1W = [];
-let glossary1X = [];
-let glossary1Y = [];
-let glossary1Z = [];
+let file = document.getElementById("glossary_file");
 
 file.addEventListener("change", function () {
-    var entry = "";
-    var value = "";
-    var file = this.files[0];
 
-    if (this.files.length == 0) {
-        return
+    if (this.files.length === 0) {
+        return;
     }
-    //locale = "nl";
-    
-    var reader = new FileReader();
-    reader.onload = function () {
-        var lines = this.result.split("\n");
-        // don"t read first(header) and last(empty) lines
-        for (var line = 1; line < lines.length - 1; line++) {
-            entry = lines[line].split(",");
-            if (entry[1] && entry[1].length > 0) {
-                let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                const found = entry[1].indexOf("-/");
-                if (found == -1) {
-                    value = entry[1].split("/");
-                    for (let val in value) {
-                        if (value != "") {
-                            value[val] = value[val].replaceAll("\"", "").trim();
-                            value[val] = value[val].replaceAll("&#39;", "'").trim();
-                        }
-                    }
+    const urlParams = new URLSearchParams(window.location.search);
+    let locale = urlParams.get("lang") || "en";
+    locale = locale.toUpperCase()
+    const selectedFile = this.files[0];
+
+    const reader = new FileReader();
+
+    reader.onload = async function () {
+
+        try {
+
+            const text = this.result;
+
+            const lines = text
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n")
+                .split("\n");
+
+            const records = [];
+
+            // Eerste regel is de header:
+            // en,nl,pos,description
+
+            for (let i = 1; i < lines.length; i++) {
+
+                const line = lines[i].trim();
+
+                if (!line) {
+                    continue;
                 }
-                else {
-                    value = entry[1];
+
+                const entry = parseGlossaryCSVLine(line);
+
+                if (entry.length < 2) {
+                    continue;
                 }
-                for (let val in value) {
-                        if (value != "") {
-                            value[val] = value[val].replaceAll("\"", "").trim();
-                            value[val] = value[val].replaceAll("&#39;", "'").trim();
-                        }
-                    }
-                
-                startChar = key.substring(0, 1);
-                switch (startChar) {
-                    case "a":
-                        pushToGlossary(glossaryA, key, value);
-                        break;
-                    case "b":
-                        pushToGlossary(glossaryB, key, value);
-                        break;
-                    case "c":
-                        pushToGlossary(glossaryC, key, value);
-                        break;
-                    case "d":
-                        pushToGlossary(glossaryD, key, value);
-                        break;
-                    case "e":
-                        pushToGlossary(glossaryE, key, value);
-                        break;
-                    case "f":
-                        pushToGlossary(glossaryF, key, value);
-                        break;
-                    case "g":
-                        pushToGlossary(glossaryG, key, value);
-                        break;
-                    case "h":
-                        pushToGlossary(glossaryH, key, value);
-                        break;
-                    case "i":
-                        pushToGlossary(glossaryI, key, value);
-                        break;
-                    case "j":
-                        pushToGlossary(glossaryJ, key, value);
-                        break;
-                    case "k":
-                        pushToGlossary(glossaryK, key, value);
-                        break;
-                    case "l":
-                        pushToGlossary(glossaryL, key, value);
-                        break;
-                    case "m":
-                        pushToGlossary(glossaryM, key, value);
-                        break;
-                    case "n":
-                        pushToGlossary(glossaryN, key, value);
-                        break;
-                    case "o":
-                        pushToGlossary(glossaryO, key, value);
-                        break;
-                    case "p":
-                        pushToGlossary(glossaryP, key, value);
-                        break;
-                    case "q":
-                        pushToGlossary(glossaryQ, key, value);
-                        break;
-                    case "r":
-                        pushToGlossary(glossaryR, key, value);
-                        break;
-                    case "s":
-                        pushToGlossary(glossaryS, key, value);
-                        break;
-                    case "t":
-                        pushToGlossary(glossaryT, key, value);
-                        break;
-                    case "u":
-                        pushToGlossary(glossaryU, key, value);
-                        break;
-                    case "v":
-                        pushToGlossary(glossaryV, key, value);
-                        break;
-                    case "w":
-                        pushToGlossary(glossaryW, key, value);
-                        break;
-                    case "x":
-                        pushToGlossary(glossaryX, key, value);
-                        break;
-                    case "y":
-                        pushToGlossary(glossaryY, key, value);
-                        break;
-                    case "z":
-                        pushToGlossary(glossaryZ, key, value);
-                        break;
-                    default:
-                        pushToGlossary(glossary, key, value);
-                        break;
+
+                let original = entry[0]
+                    .replace(/^"|"$/g, "")
+                    .trim();
+
+                let translation = entry[1]
+                    .replace(/^"|"$/g, "")
+                    .trim();
+
+                if (!original || !translation) {
+                    continue;
                 }
+
+                translation = translation
+                    .replaceAll("&#39;", "'")
+                    .trim();
+
+                records.push({
+                    type: "default",
+                    locale: locale,
+                    original: original,
+                    translation: translation
+                });
             }
+
+      //      console.log(
+       //         "Default glossary parsed:",
+       //         records.length
+        //    );
+
+         //   console.log(
+         //       "First records:",
+         //       records.slice(0, 5)
+          //  );
+
+            try {
+
+                const response = await new Promise(function (resolve, reject) {
+
+                    chrome.runtime.sendMessage(
+                        {
+                            action: "importDefaultGlossary",
+                            dbName: "WPGlossary",
+                            records: records
+                        },
+                        function (response) {
+
+                            if (chrome.runtime.lastError) {
+                                reject(
+                                    new Error(
+                                        chrome.runtime.lastError.message
+                                    )
+                                );
+                                return;
+                            }
+
+                            resolve(response);
+                        }
+                    );
+                });
+
+              //  console.log(
+               //     "WPGlossary default import response:",
+               //     response
+               // );
+
+                if (response && response.success) {
+                    messageBox(
+                        "info",
+                       "Glossary import ready added: "+response.result.added
+                     );
+
+                } else {
+
+                    console.error(
+                        "WPGlossary default import failed:",
+                        response
+                    );
+                }
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error importing default glossary to WPGlossary:",
+                    error
+                );
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "Error reading default glossary:",
+                error
+            );
         }
     };
-    reader.readAsText(file);
-    let updatedfilename = document.getElementById("glossary_file");
-    const thisdate = new Date();
-    let myYear = thisdate.getFullYear();
-    let mymonth = thisdate.getMonth();
-    let myday = thisdate.getDate();
-    let thisDay = myday + "-" + (mymonth + 1) + "-" + myYear;
-    let myfiledate = "   " + thisDay;
-    updatedfilename.innerText = file.name + myfiledate;
-    messageBox("info", "Glossary import ready, make sure you save the options and restart the addon afterwards!")
+
+    reader.readAsText(selectedFile);
 });
+
+let second_file = document.getElementById("glossary_file_second");
 
 second_file.addEventListener("change", function () {
-    var entry = "";
-    var value = "";
-    var second_file = this.files[0];
 
-    if (this.files.length == 0) {
-        return
+    if (this.files.length === 0) {
+        return;
     }
-    //locale = "nl";
 
-    var reader = new FileReader();
-    reader.onload = function () {
-        var lines = this.result.split("\n");
-        // don"t read first(header) and last(empty) lines
-        for (var line = 1; line < lines.length - 1; line++) {
-            entry = lines[line].split(",");
-            if (entry[1] && entry[1].length > 0) {
-                let key = entry[0].replaceAll("\"", "").trim().toLowerCase();
-                const found = entry[1].indexOf("-/");
-                if (found == -1) {
-                    value = entry[1].split("/");
-                    for (let val in value) {
-                        if (value != "") {
-                            value[val] = value[val].replaceAll("\"", "").trim();
-                            value[val] = value[val].replaceAll("&#39;", "'").trim();
-                        }
-                    }
-                }
-                else {
-                    value = entry[1];
-                }
-                for (let val in value) {
-                    if (value != "") {
-                        value[val] = value[val].replaceAll("\"", "").trim();
-                        value[val] = value[val].replaceAll("&#39;", "'").trim();
-                    }
+    const selectedFile = this.files[0];
+
+    const reader = new FileReader();
+    const urlParams = new URLSearchParams(window.location.search);
+    let locale = urlParams.get("lang") || "en";
+    locale = locale.toUpperCase()
+    reader.onload = async function () {
+
+        try {
+
+            const text = this.result;
+
+            const lines = text
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n")
+                .split("\n");
+
+            const records = [];
+
+            // Eerste regel is de header:
+            // en,nl,pos,description
+
+            for (let i = 1; i < lines.length; i++) {
+
+                const line = lines[i].trim();
+
+                if (!line) {
+                    continue;
                 }
 
-                startChar = key.substring(0, 1);
-                switch (startChar) {
-                    case "a":
-                        pushToGlossary(glossary1A, key, value);
-                        break;
-                    case "b":
-                        pushToGlossary(glossary1B, key, value);
-                        break;
-                    case "c":
-                        pushToGlossary(glossary1C, key, value);
-                        break;
-                    case "d":
-                        pushToGlossary(glossary1D, key, value);
-                        break;
-                    case "e":
-                        pushToGlossary(glossary1E, key, value);
-                        break;
-                    case "f":
-                        pushToGlossary(glossary1F, key, value);
-                        break;
-                    case "g":
-                        pushToGlossary(glossary1G, key, value);
-                        break;
-                    case "h":
-                        pushToGlossary(glossary1H, key, value);
-                        break;
-                    case "i":
-                        pushToGlossary(glossary1I, key, value);
-                        break;
-                    case "j":
-                        pushToGlossary(glossary1J, key, value);
-                        break;
-                    case "k":
-                        pushToGlossary(glossary1K, key, value);
-                        break;
-                    case "l":
-                        pushToGlossary(glossary1L, key, value);
-                        break;
-                    case "m":
-                        pushToGlossary(glossary1M, key, value);
-                        break;
-                    case "n":
-                        pushToGlossary(glossary1N, key, value);
-                        break;
-                    case "o":
-                        pushToGlossary(glossary1O, key, value);
-                        break;
-                    case "p":
-                        pushToGlossary(glossary1P, key, value);
-                        break;
-                    case "q":
-                        pushToGlossary(glossary1Q, key, value);
-                        break;
-                    case "r":
-                        pushToGlossary(glossary1R, key, value);
-                        break;
-                    case "s":
-                        pushToGlossary(glossary1S, key, value);
-                        break;
-                    case "t":
-                        pushToGlossary(glossary1T, key, value);
-                        break;
-                    case "u":
-                        pushToGlossary(glossary1U, key, value);
-                        break;
-                    case "v":
-                        pushToGlossary(glossary1V, key, value);
-                        break;
-                    case "w":
-                        pushToGlossary(glossary1W, key, value);
-                        break;
-                    case "x":
-                        pushToGlossary(glossary1X, key, value);
-                        break;
-                    case "y":
-                        pushToGlossary(glossary1Y, key, value);
-                        break;
-                    case "z":
-                        pushToGlossary(glossary1Z, key, value);
-                        break;
-                    default:
-                        pushToGlossary(glossary1, key, value);
-                        break;
+                const entry = parseGlossaryCSVLine(line);
+
+                if (entry.length < 2) {
+                    continue;
                 }
+
+                let original = entry[0]
+                    .replace(/^"|"$/g, "")
+                    .trim();
+
+                let translation = entry[1]
+                    .replace(/^"|"$/g, "")
+                    .trim();
+
+                if (!original || !translation) {
+                    continue;
+                }
+
+                translation = translation
+                    .replaceAll("&#39;", "'")
+                    .trim();
+
+                records.push({
+                    type: "formal",
+                    locale: locale,
+                    original: original,
+                    translation: translation
+                });
             }
+
+          //  console.log(
+          //      "Formal glossary parsed:",
+           //     records.length
+          //  );
+
+           // console.log(
+           //     "First Formal records:",
+           //     records.slice(0, 5)
+           // );
+
+            try {
+
+                const response = await new Promise(function (resolve, reject) {
+
+                    chrome.runtime.sendMessage(
+                        {
+                            action: "importDefaultGlossary",
+                            dbName: "WPGlossary",
+                            records: records
+                        },
+                        function (response) {
+
+                            if (chrome.runtime.lastError) {
+                                reject(
+                                    new Error(
+                                        chrome.runtime.lastError.message
+                                    )
+                                );
+                                return;
+                            }
+
+                            resolve(response);
+                        }
+                    );
+                });
+
+                //console.log(
+                //    "WPGlossary Formal import response:",
+                //    response
+               // );
+
+                if (response && response.success) {
+                    
+                    messageBox(
+                        "info",
+                        "Number of Formal glossary records imported: " + `${response.result.added}`
+
+                     );
+                   
+                } else {
+
+                    console.error(
+                        "WPGlossary Formal import failed:",
+                        response
+                    );
+                }
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error importing Formal glossary to WPGlossary:",
+                    error
+                );
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "Error reading Formal glossary:",
+                error
+            );
         }
     };
-    reader.readAsText(second_file);
-    let updatedfilename = document.getElementById("glossary_file_second");
+
+    reader.readAsText(selectedFile);
+
+    let updatedfilename = document.getElementById(
+        "glossary_file_second"
+    );
+
     const thisdate = new Date();
+
     let myYear = thisdate.getFullYear();
     let mymonth = thisdate.getMonth();
     let myday = thisdate.getDate();
-    let thisDay = myday + "-" + (mymonth + 1) + "-" + myYear;
+
+    let thisDay =
+        myday +
+        "-" +
+        (mymonth + 1) +
+        "-" +
+        myYear;
+
     let myfiledate = "   " + thisDay;
-    updatedfilename.innerText = second_file.name + myfiledate;
-    messageBox("info", "Glossary import ready, make sure you save the options and restart the addon afterwards!")
+
+    updatedfilename.innerText =
+        selectedFile.name +
+        myfiledate;
+   
 });
+
+
 
 
 function sortTextarea(text) {
@@ -1639,20 +1626,6 @@ function sortTextarea(text) {
         sortedText = lines.join('\n');
     }
     return sortedText
-}
-function checkLocale() {
-    // function currently not used but maybe in future
-    //need to fetch the locale from the filename
-    return locale;
-}
-function pushToGlossary(glossary, key, value) {
-    for (var i in glossary) {
-        if (glossary[i].key == key) {
-            glossary[i].value = glossary[i].value.concat(value);
-            return;
-        }
-    }
-    glossary.push({ key: key, value: value });
 }
 
 function export_verbs_csv() {
@@ -2102,3 +2075,207 @@ document.addEventListener("DOMContentLoaded", initImportPromptButtons);
 
 document.addEventListener("DOMContentLoaded", initBackupPromptButtons);
 document.addEventListener("DOMContentLoaded", initPromptButtons);
+
+//chrome.runtime.sendMessage(
+//    {
+//        action: "getWPGlossaryTest"
+//    },
+//    function (response) {
+//        console.log("WPGlossary test response:", response);
+//    }
+//);
+
+async function importDefaultGlossaryToDB(records) {
+
+    return new Promise(function (resolve, reject) {
+
+        chrome.runtime.sendMessage(
+            {
+                action: "importDefaultGlossary",
+                dbName: "WPGlossary",
+                records: records
+            },
+            function (response) {
+
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                    return;
+                }
+
+                if (!response || !response.success) {
+                    reject(new Error(
+                        response && response.error
+                            ? response.error
+                            : "Unknown error importing default glossary"
+                    ));
+                    return;
+                }
+
+                resolve(response);
+            }
+        );
+    });
+}
+const testRecords = [
+    {
+        locale: "NL",
+        original: "appearance",
+        translation: "weergave"
+    }
+];
+
+
+async function importDefaultGlossaryViaBackground(records) {
+
+    return new Promise((resolve, reject) => {
+
+        chrome.runtime.sendMessage(
+            {
+                action: "importDefaultGlossary",
+                records: records
+            },
+            function (response) {
+
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                    return;
+                }
+
+                if (!response || !response.success) {
+                    reject(
+                        new Error(
+                            response && response.error
+                                ? response.error
+                                : "Unknown error importing default glossary"
+                        )
+                    );
+                    return;
+                }
+
+                resolve(response);
+            }
+        );
+    });
+}
+
+function parseGlossaryCSVLine(line) {
+
+    const result = [];
+    let value = "";
+    let insideQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+
+        const char = line[i];
+
+        if (char === '"') {
+
+            if (insideQuotes && line[i + 1] === '"') {
+
+                value += '"';
+                i++;
+
+            }
+            else {
+
+                insideQuotes = !insideQuotes;
+
+            }
+        }
+        else if (char === "," && !insideQuotes) {
+
+            result.push(value);
+            value = "";
+
+        }
+        else {
+
+            value += char;
+
+        }
+    }
+
+    result.push(value);
+
+    return result;
+}
+
+async function processDefaultGlossaryImport(file) {
+
+    try {
+
+        const text = await file.text();
+
+        const lines = text
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .split("\n");
+
+        const records = [];
+
+        // Regel 0 is de header:
+        // en,nl,pos,description
+        for (let i = 1; i < lines.length; i++) {
+
+            const line = lines[i].trim();
+
+            if (!line) {
+                continue;
+            }
+
+            const entry = parseGlossaryCSVLine(line);
+
+            if (entry.length < 3) {
+                continue;
+            }
+
+            const original = entry[0]
+                .replace(/^"|"$/g, "")
+                .trim();
+
+            const translation = entry[1]
+                .replace(/^"|"$/g, "")
+                .trim();
+
+            if (!original || !translation) {
+                continue;
+            }
+
+            records.push({
+                type: "default",
+                locale: "NL",
+                original: original,
+                translation: translation
+            });
+        }
+
+        console.log(
+            "Default glossary records parsed:",
+            records.length
+        );
+
+        if (records.length === 0) {
+            throw new Error("No glossary records found in CSV");
+        }
+
+        const result =
+            await importDefaultGlossaryViaBackground(records);
+
+        console.log(
+            "Default glossary import result:",
+            result
+        );
+
+        return result;
+
+    }
+    catch (error) {
+
+        console.error(
+            "Error processing default glossary:",
+            error
+        );
+
+        throw error;
+    }
+}

@@ -7,27 +7,33 @@ function createGlossArray(spanElements, newGloss) {
 
     for (const span of spanElements) {
         const originalWord = span.textContent.trim().toLowerCase();
-        
+
         // Look up the word in newGloss map
         const translations = newGloss.get(originalWord);
-        
-       // console.debug("createGlossArray lookup:", originalWord, translations);
-        
+
+        // --- PASTE 1: what the lookup returns ---
+        //console.log('INSIDE createGlossArray:', originalWord,
+          //  '| newGloss.get:', JSON.stringify(translations));
+
         // Skip if not in glossary or has no translations
         if (!translations || translations.length === 0) continue;
-        
+
         // Flatten all translation variants
         const allVariants = translations
             .flat()
             .map(t => t.trim().toLowerCase())
             .filter(Boolean);
 
+        // --- PASTE 2: what actually gets pushed ---
+        //console.log('INSIDE createGlossArray:', originalWord,
+        //    '| pushing:', JSON.stringify(allVariants));
+
         if (allVariants.length > 0) {
             glossArray.push({
                 word: allVariants,
                 originalWord: originalWord,
                 glossIndex: glossIndexCounter++,
-                span: span  // store reference to the actual span element
+                span: span
             });
         }
     }
@@ -229,18 +235,25 @@ function extractUrlLikeSegments(translation, tldPattern) {
 }
 
 
-function findAllMissingWords(translationText, glossWords, locale = 'nl') {
-    //console.debug("findAllMissingWords called with translationText:", translationText)
+function findAllMissingWords(translationText, glossWords, locale = 'nl', strictValidation = false) {
     const translation = translationText.toLowerCase();
     const wordsInTranslation = translation.split(/\W+/);
     const missingTranslations = [];
 
     const matchPool = {};
     const entriesByKey = {};
-    strictValidation = toBoolean(strictValidation)
+    strictValidation = toBoolean(strictValidation);
+
+    // Normalize a word array: split slash-joined variants, trim, lowercase, drop empties.
+    // Works whether the parser gave ["opgeslagen","bespaart"] or ["opgeslagen/bespaart"].
+    const normVariants = (wordArr) =>
+        (wordArr || [])
+            .flatMap(w => String(w).split('/'))
+            .map(s => s.trim().toLowerCase())
+            .filter(Boolean);
 
     const allGlossaryWords = new Set();
-    glossWords.forEach(entry => entry.word.forEach(w => allGlossaryWords.add(w.toLowerCase())));
+    glossWords.forEach(entry => normVariants(entry.word).forEach(w => allGlossaryWords.add(w)));
 
     function splitCompoundWord(word) {
         const matches = [];
@@ -255,7 +268,6 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
     }
 
     // === First pass: Count matches ===
-    //console.debug("glosaawords:", glossWords)
     glossWords.forEach(entry => {
         const wordKey = JSON.stringify(entry.word);
         if (!entriesByKey[wordKey]) entriesByKey[wordKey] = [];
@@ -264,8 +276,7 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
 
         let matchCount = 0;
 
-        for (const variant of entry.word) {
-            const lowerVariant = variant.toLowerCase();
+        for (const lowerVariant of normVariants(entry.word)) {
             const isShort = lowerVariant.length <= 2;
 
             const shortMatches = wordsInTranslation.filter(w => w === lowerVariant).length;
@@ -290,9 +301,8 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
             }
 
             matchCount += shortMatches + inflectedMatches + combinedMatches + compoundMatches;
-
         }
-        
+
         matchPool[wordKey] = matchCount;
     });
 
@@ -302,12 +312,11 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl') {
         const foundMatches = matchPool[wordKey] || 0;
         const expectedCount = entries.length;
         const missingCount = expectedCount - foundMatches;
-        //console.debug("wordKey:", wordKey, "found:", foundMatches, "expected:", expectedCount, "missing:", missingCount);
         if (missingCount <= 0) continue;
 
         entries.forEach(entry => {
             const lowerOriginal = entry.originalWord?.toLowerCase();
-            const lowerVariants = entry.word.map(w => w.toLowerCase());
+            const lowerVariants = normVariants(entry.word);
 
             // STEP 1 – if untranslated word is in a URL, skip completely
             if (lowerOriginal && translation.includes(lowerOriginal)) {
@@ -465,7 +474,17 @@ function working_findAllMissingWords(translationText, glossWords, locale = 'nl')
     if (missingTranslations.length > 0) {
         //console.debug("[DEBUG] Missing glossary entries:", missingTranslations);
     }
-
+    // --- TEMP DIAGNOSTIC ---
+    const t = translation.toLowerCase();
+    glossWords.forEach(e => {
+        const variants = (e.word || []).flatMap(w => String(w).split('/')).map(s => s.trim().toLowerCase()).filter(Boolean);
+        console.log('DIAG original:', e.originalWord, '| variants:', variants);
+        variants.forEach(v => console.log(
+            `   "${v}"  exact=${t.split(/\W+/).includes(v)}  boundary=${new RegExp(`\\b${v}\\b`).test(t)}  substring=${t.includes(v)}`
+        ));
+    });
+    console.log('DIAG translation:', JSON.stringify(t));
+// --- END ---
     return missingTranslations;
 }
 
@@ -670,6 +689,17 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
 
                     if (isPlural == false) {
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
+                        // --- TEMP DIAGNOSTIC ---
+                        const t = translation.toLowerCase();
+                        glossWords.forEach(e => {
+                            const variants = (e.word || []).flatMap(w => String(w).split('/')).map(s => s.trim().toLowerCase()).filter(Boolean);
+                            //console.log('DIAG original:', e.originalWord, '| variants:', variants);
+                            //variants.forEach(v => console.log(
+                           //     ` //  "${v}"  exact=${t.split(/\W+/).includes(v)}  boundary=${new RegExp(`\\b${v}\\b`).test(t)}  substring=${t.includes(v)}`
+                          //  ));
+                        });
+                      //  console.log('DIAG translation:', JSON.stringify(t));
+// --- END ---
                         if (missingTranslations.length > 0) {
                             document.addEventListener("mouseover", (event) => {
                                 const tooltip = document.querySelector(".ui-tooltip");

@@ -39,7 +39,7 @@ const LOCALES = {
   // Dutch — the calibrated default.
   nl: {
     message: 'Please translate the glossary term(s) as suggested:',
-    exactTerms: ['site', 'website', 'tab'],
+    exactTerms: ['site', 'website', 'tab', 'log', 'content'],
     singular: (w) => w.replace(/['\u2019]?s$/, ''),   // drop trailing "s" / "'s"
     // Dutch inflects by suffix (beschikbaar~beschikbare, deactiveer~deactivering):
     // the candidate must be almost fully a prefix of the token.
@@ -53,6 +53,35 @@ const LOCALES = {
 };
 
 async function glossaryQaSweep(options = {}) {
+  // Don't start while the page-open check is still running — the two overlap and
+  // cause save (403) errors. That check shows an indeterminate progress bar; wait
+  // for it to finish, and if it's still going after a timeout, warn and abort.
+  {
+    const barSelector = options.progressBarSelector || '.indeterminate-progress-bar';
+    const running = () => {
+      const bar = document.querySelector(barSelector);
+      return !!bar && getComputedStyle(bar).display !== 'none' && bar.getClientRects().length > 0;
+    };
+    const hasSpinner = typeof showTranslationSpinner === 'function'
+      && typeof hideTranslationSpinner === 'function';
+
+    if (running()) {
+      // Non-blocking status while we wait (no confirmation button).
+      if (hasSpinner) showTranslationSpinner(__('Waiting for the page check to finish…'));
+
+      const cleared = await waitFor(() => !running(), options.progressWait || 60000, 250);
+
+      if (hasSpinner) hideTranslationSpinner();
+
+      if (!cleared) {
+        const msg = 'The page check is still running — wait until it finishes, then run the glossary check again.';
+        if (typeof messageBox === 'function') messageBox('warning', msg);
+        else console.warn('[glossaryQA]', msg);
+        return [];
+      }
+    }
+  }
+
   // Detect the current locale from the page. checkLocale() is provided by the
   // addon; options.locale is only an override for console testing. The slug is
   // normalized (e.g. "nl_NL" -> "nl") to match a LOCALES key.
@@ -115,7 +144,10 @@ async function glossaryQaSweep(options = {}) {
     buttonTimeout: 4000,   // ms to keep re-asserting the reason until the button appears
     pollStep: 200,         // ms between re-assert/poll iterations
     dryRun: DryRun,        // driven by the top-level DryRun switch
-    actionDelay: 1000,     // ms to wait after acting so the AJAX can settle
+    logActions: false,     // log each row id as its change-request starts/clicks (debug the 403)
+    logHighlight: false,    // log what the highlighter sees each pass (noisy; debug only)
+    highlightStep: 250,    // ms between highlight re-applies (to survive the row re-render)
+    actionDelay: 2000,     // ms to wait after acting so the AJAX can settle
     ...options,
   };
 
@@ -186,6 +218,8 @@ async function glossaryQaSweep(options = {}) {
       // then tick it EXACTLY ONCE — the native click fires its own change, and
       // re-firing change would make GlotPress render the reason list again
       // (that was the doubled-checkbox bug). After that, just poll for the button.
+      if (cfg.logActions) console.log('[glossaryQA] START', row.id,
+        '|', missingInfo.map((m) => m.word).join(', '));
       activateMetaTab(editor, row, cfg);
       const checkbox = await waitForEl(
         () => editor.querySelector(cfg.glossaryCheckboxSelector),
@@ -214,8 +248,28 @@ async function glossaryQaSweep(options = {}) {
       );
 
       if (btn) {
-        btn.click();
+        // Highlight the offending word(s) in the PREVIEW original BEFORE clicking,
+        // so that if GlotPress's status handler throws (e.g. a 403), the mark is
+        // already applied. Re-applied a few times below to survive the re-render.
+        highlightMissing(row, missingInfo, cfg);
+
+        // Log the row and the button's nonce right before the POST fires, so a
+        // 403 in the console can be matched to this row (and its nonce compared).
+        if (cfg.logActions) console.log('[glossaryQA] CLICK', row.id,
+          '| nonce:', btn.getAttribute('data-nonce'));
+        try {
+          btn.click();
+        } catch (clickErr) {
+          if (cfg.logActions) console.warn('[glossaryQA] click threw', row.id, clickErr && clickErr.message);
+        }
         report[report.length - 1].status = 'changes-requested';
+
+        // GlotPress recolours/re-renders the row after the POST, which can strip
+        // an early highlight — re-apply a few times over ~1.5s to land after it.
+        for (let i = 0; i < 6; i++) {
+          await wait(cfg.highlightStep);
+          highlightMissing(row, missingInfo, cfg);
+        }
       } else {
         report[report.length - 1].status = 'changesrequested-not-shown';
         closeEditor(row, cfg);
@@ -225,9 +279,9 @@ async function glossaryQaSweep(options = {}) {
     } catch (err) {
       report[report.length - 1].status = 'action-error';
       report[report.length - 1].error = String(err && err.message || err);
+        }
     }
-  }
-
+   messageBox("info", __("Glossary Check is ready"));
   //console.table(report);
   const flagged = report.filter((r) => r.status !== 'ok').length;
   //console.log(`Scanned ${rows.length} rows, flagged ${flagged}.`);
@@ -464,6 +518,48 @@ function translatorName(editor, cfg) {
     return (link.textContent || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
   } catch (e) {
     return '';
+  }
+}
+
+// Add the 'highlight' class to the flagged glossary-word spans in the PREVIEW
+// row's original cell (td.original), so the word that caused the changes-requested
+// is visible at a glance in the list. Re-reads the live DOM at call time (the row
+// re-renders after the status change, so span references captured earlier are stale).
+function highlightMissing(row, missingInfo, cfg) {
+  try {
+    // On a status change GlotPress renames the original row by appending "-old"
+    // and inserts a fresh row. row.id then resolves to the stale, hidden "-old"
+    // node, so highlighting it shows nothing. Prefer the current row: strip any
+    // "-old", and pick the visible one.
+    const baseId = row.id.replace(/-old$/, '');
+    const candidates = [
+      document.getElementById(baseId),
+      ...document.querySelectorAll(`[id^="${baseId}"]`),
+      row,
+    ].filter(Boolean);
+    const live = candidates.find((el) => !/-old$/.test(el.id) && el.getClientRects().length > 0)
+      || candidates.find((el) => !/-old$/.test(el.id))
+      || row;
+
+    const scope = live.querySelector('.original .original-text')
+      || live.querySelector('.original-text')
+      || live.querySelector('td.original')
+      || live.querySelector('.original')
+      || live;
+    const wanted = new Set(missingInfo.map((m) => (m.word || '').toLowerCase().trim()));
+    const spans = scope ? [...scope.querySelectorAll(cfg.glossaryWordSelector)] : [];
+    if (cfg.logHighlight) {
+      console.log('[glossaryQA] highlight', row.id, '-> live', live.id,
+        '| wanted:', [...wanted],
+        '| spans:', spans.map((s) => (s.textContent || '').toLowerCase().trim()));
+    }
+    if (!spans.length || !wanted.size) return;
+    spans.forEach((span) => {
+      const t = (span.textContent || '').toLowerCase().trim();
+      if (wanted.has(t)) span.classList.add('highlight');
+    });
+  } catch (e) {
+    if (cfg.logHighlight) console.warn('[glossaryQA] highlight error', row.id, e && e.message);
   }
 }
 

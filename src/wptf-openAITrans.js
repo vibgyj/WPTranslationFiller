@@ -56,9 +56,9 @@ async function getTransOpenAI(
    ****************************************************/
   const prunedGlossary = pruneGlossary(openAiGloss, originalPreProcessed, record) || "";
   const compactGloss = prunedGlossary.replace(/\n+/g, "|");
-
+  //  console.debug("Pruned glossary for row", rowId, ":", compactGloss);
   myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss);
-
+  //  console.debug("Prompt after glossary replacement:", myprompt);
   if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
   else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
   else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
@@ -223,7 +223,7 @@ async function getTransOpenAI(
 
     const data = response.result;
     let raw = data?.choices?.[0]?.message?.content?.trim() ?? "";
-    console.debug("raw translation content:", raw);
+    //console.debug("raw translation content:", raw);
 
     // Groq method: the model replies with {"results":[{"i":"<rowId>","tr":"..."}]}.
     // Pull out the translation for THIS row. Fall back to plain text if the

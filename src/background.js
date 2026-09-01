@@ -14,7 +14,7 @@ function decodeBase64(encoded) {
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.debug("Received message:", request);
+    //console.debug("Received message:", request);
     if (request.action === "CheckModelLMs") {
 
        const model = request.model;
@@ -510,7 +510,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             "outline_detection",
             "context",
             "glossary_id",
-            "enable_beta_languages" 
+            "enable_beta_languages",
+            "model_type"
         ];
 
         const formData = new URLSearchParams();
@@ -1741,8 +1742,206 @@ else if (request.action == "Lingvanex") {
             })();
 
             // keep the channel open
-            return true;
+        return true;
     };
+    if (request.action === "getWPGlossaryTest") {
+
+        console.log("Received WPGlossary test request");
+
+        chrome.tabs.query(
+            {
+                url: [
+                    "https://translate.wordpress.org/*",
+                    "http://localhost/*"
+                ]
+            },
+            function (tabs) {
+
+                console.log("Matching WPTF tabs:", tabs);
+
+                if (tabs.length === 0) {
+                    sendResponse({
+                        success: false,
+                        error: "No WPTF tab found"
+                    });
+                    return;
+                }
+
+                const tab = tabs[0];
+
+               // console.log(
+                 //   "Sending WPGlossary request to tab:",
+                //    tab.id,
+                 //   tab.url
+               // );
+
+                chrome.tabs.sendMessage(
+                    tab.id,
+                    {
+                        action: "getWPGlossaryTest"
+                    },
+                    function (response) {
+
+                        if (chrome.runtime.lastError) {
+
+                            console.error(
+                                "Error sending WPGlossary request to content:",
+                                chrome.runtime.lastError.message
+                            );
+
+                            sendResponse({
+                                success: false,
+                                error: chrome.runtime.lastError.message
+                            });
+
+                            return;
+                        }
+
+                        console.log(
+                            "Response from contentScript:",
+                            response
+                        );
+
+                        sendResponse(response);
+                    }
+                );
+            }
+        );
+
+        return true;
+    }
+
+    if (request.action === "importDefaultGlossary") {
+
+       // console.log(
+       //     "Received default glossary import:",
+       //     request.records ? request.records.length : 0,
+        //    "records"
+       // );
+
+        const records = request.records;
+
+        if (!Array.isArray(records) || records.length === 0) {
+
+            sendResponse({
+                success: false,
+                error: "No glossary records received"
+            });
+
+            return true;
+        }
+
+        chrome.tabs.query(
+            {
+                url: [
+                    "https://translate.wordpress.org/*",
+                    "http://localhost/*"
+                ]
+            },
+            function (tabs) {
+
+                if (chrome.runtime.lastError) {
+
+                    sendResponse({
+                        success: false,
+                        error: chrome.runtime.lastError.message
+                    });
+
+                    return;
+                }
+
+              //  console.log(
+               //     "Matching WPTF tabs:",
+                //    tabs
+               // );
+
+                if (!tabs || tabs.length === 0) {
+
+                    sendResponse({
+                        success: false,
+                        error: "No WPTF tab found"
+                    });
+
+                    return;
+                }
+
+                const tab = tabs[0];
+
+            //    console.log(
+              //      "Sending default glossary to tab:",
+               //     tab.id,
+                //    tab.url
+              //  );
+
+                chrome.tabs.sendMessage(
+                    tab.id,
+                    {
+                        action: "importDefaultGlossaryToDB",
+                        dbName: request.dbName,
+                        records: records
+                    },
+                    function (response) {
+
+                        if (chrome.runtime.lastError) {
+
+                            console.error(
+                                "Error sending default glossary to content:",
+                                chrome.runtime.lastError.message
+                            );
+
+                            sendResponse({
+                                success: false,
+                                error: chrome.runtime.lastError.message
+                            });
+
+                            return;
+                        }
+
+                      //  console.log(
+                       //     "Response from contentScript:",
+                       //     response
+                       // );
+
+                        sendResponse(
+                            response || {
+                                success: false,
+                                error: "Content script returned no response"
+                            }
+                        );
+                    }
+                );
+            }
+        );
+
+    return true;
+}
+    if (request.action === "getWPGlossaryTest") {
+
+        getWPGlossaryTestRecords()
+            .then(function (records) {
+
+                console.log("Background WPGlossary records:", records);
+
+                sendResponse({
+                    success: true,
+                    records: records
+                });
+            })
+            .catch(function (error) {
+
+                console.error(
+                    "Error reading WPGlossary in background:",
+                    error
+                );
+
+                sendResponse({
+                    success: false,
+                    error: error.message
+                });
+            });
+
+    return true;
+}
     if (request.action === "load_deepl_glossary") {
         let isFree = request.isFree === true || request.isFree === "true"; // handle boolean or string
 
@@ -2356,4 +2555,41 @@ function splitSentencesWithSeparators(text) {
     }
 
     return parts;
+}
+async function getWPGlossaryTestRecords() {
+    return await new Promise((resolve, reject) => {
+
+        const request = indexedDB.open("WPGlossary", 1);
+
+        request.onerror = function (event) {
+            reject(event.target.error);
+        };
+
+        request.onsuccess = function (event) {
+            const db = event.target.result;
+
+            try {
+                const transaction = db.transaction("glossary", "readonly");
+                const store = transaction.objectStore("glossary");
+
+                const request = store.getAll();
+
+                request.onsuccess = function () {
+                    resolve(request.result);
+                };
+
+                request.onerror = function (event) {
+                    reject(event.target.error);
+                };
+
+                transaction.oncomplete = function () {
+                    db.close();
+                };
+
+            } catch (error) {
+                db.close();
+                reject(error);
+            }
+        };
+    });
 }

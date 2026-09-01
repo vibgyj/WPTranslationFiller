@@ -13,9 +13,9 @@ async function translateText(
     //console.debug("formal:",formal)
     //console.debug("Preprocessed original for DeepL:", originalPreProcessed);
     const formal_value = formal ? "prefer_more" : "prefer_less";
-    console.debug("mycontext:", mycontext)
-        ? "This text is a legal message"
-        : "This text is a casual conversation with a friend.";
+    //console.debug("mycontext:", mycontext)
+    //    ? "This text is a legal message"
+    //    : "This text is a casual conversation with a friend.";
 
     const myformat = destlang === "RO" ? "0" : "1";
      let isFree = DeeplFree === true || DeeplFree === "true"; // handle boolean or string
@@ -31,7 +31,8 @@ async function translateText(
         tag_handling: "xml",
         ignore_tags: "x",
         split_sentences: "nonewlines",
-        outline_detection: "0"
+        outline_detection: "0",
+        model_type: "quality_optimized"
     };
 
     if (mycontext) requestBody.context = [mycontext];
@@ -135,7 +136,7 @@ async function deepLTranslate(original, language, record, apikeyDeepl, preverbs,
     if (toBoolean(DebugMode)) console.debug("DeepL Pre-processed Original:", originalPreProcessed)
     //console.debug("deeplGlossary:",deeplGlossary)
     language = language.toUpperCase();
-    console.debug("mycontext:", mycontext)
+    //console.debug("mycontext:", mycontext)
     if (mycontext == "") {
         mycontext = 'This is an instruction'
     }

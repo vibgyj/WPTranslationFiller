@@ -1,4 +1,21 @@
-﻿function isSingleWord(str) {
+﻿async function removeLegacyGlossaryStorage() {
+    // Verwijdert alleen de oude glossary-DATA: glossary, glossary1,
+    // glossaryA..Z en glossary1A..Z.
+    // Laat bewust staan: DefGlossary, OpenAiGloss (instellingen) en
+    // glossaryFile / glossaryFileSecond (bestandsnamen, nog in gebruik).
+    const legacyPattern = /^glossary(1)?[A-Z]?$/;
+
+    const all = await chrome.storage.local.get(null);
+    const toRemove = Object.keys(all).filter(k => legacyPattern.test(k));
+
+    if (toRemove.length === 0) {
+        return;   // niets legacy aanwezig, storage ongemoeid laten
+    }
+
+    console.log("Legacy glossary-data verwijderd:", toRemove.length, toRemove);
+    await chrome.storage.local.remove(toRemove);
+}
+function isSingleWord(str) {
   return str.trim().split(/\s+/).length === 1;
 }
 // This is to make sure for Dutch we don't capitalize months and days in the translation.
@@ -2100,6 +2117,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
     }
     //console.debug("validatePage glossary:",myglossary)
     // html code for counter in checkbox
+
     const line_counter = `
     <div class="line-counter">
         <span class="text-line-counter"></span>

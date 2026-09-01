@@ -1,4 +1,286 @@
 res = initStoragePersistence();
+// Store the imported glossary in a separate DB
+
+async function importDefaultGlossaryRecords(dbName, records) {
+
+    if (!dbName) {
+        throw new Error("No glossary database name supplied");
+    }
+
+    if (!Array.isArray(records)) {
+        throw new Error("Glossary records must be an array");
+    }
+
+    return new Promise(function (resolve, reject) {
+
+        const request = indexedDB.open(dbName);
+
+        request.onerror = function (event) {
+            reject(event.target.error);
+        };
+
+        request.onsuccess = function (event) {
+
+            const db = event.target.result;
+
+            try {
+
+                const transaction = db.transaction(
+                    "glossary",
+                    "readwrite"
+                );
+
+                const store = transaction.objectStore("glossary");
+                const index = store.index("type_locale_original");
+
+                // Determine the scope of this import from the records themselves.
+                // Every record in one CSV import shares the same type + locale.
+                const scopeType = (records[0] && records[0].type) || "default";
+                const scopeLocale = (records[0] && records[0].locale) || "NL";
+
+                let added = 0;
+                let deleted = 0;
+                let skipped = 0;
+
+                // --- Step 1: delete only the rows for THIS type + locale ---
+                // The index key is [type, locale, original], so a bound range
+                // from [type, locale] to [type, locale, "\uffff"] covers every
+                // "original" within this type+locale and nothing else.
+                const range = IDBKeyRange.bound(
+                    [scopeType, scopeLocale],
+                    [scopeType, scopeLocale, "\uffff"]
+                );
+
+                const cursorRequest = index.openCursor(range);
+
+                cursorRequest.onsuccess = function (cursorEvent) {
+
+                    const cursor = cursorEvent.target.result;
+
+                    if (cursor) {
+                        cursor.delete();
+                        deleted++;
+                        cursor.continue();
+                        return;
+                    }
+
+                    // --- Step 2: cursor exhausted -> add the fresh rows ---
+                    records.forEach(function (record) {
+
+                        if (
+                            !record ||
+                            typeof record.original === "undefined" ||
+                            typeof record.translation === "undefined"
+                        ) {
+                            skipped++;
+                            return;
+                        }
+
+                        store.add({
+                            type: record.type || scopeType,
+                            locale: record.locale || scopeLocale,
+                            original: record.original,
+                            translation: record.translation
+                        });
+
+                        added++;
+                    });
+                };
+
+                cursorRequest.onerror = function () {
+                    // Let the transaction's onerror/onabort handle rejection.
+                    console.error(
+                        "Error clearing glossary rows:",
+                        cursorRequest.error
+                    );
+                };
+
+                transaction.oncomplete = function () {
+                    db.close();
+                    resolve({
+                        added: added,
+                        deleted: deleted,
+                        skipped: skipped
+                    });
+                };
+
+                transaction.onerror = function (event) {
+                    db.close();
+                    reject(event.target.error);
+                };
+
+                transaction.onabort = function (event) {
+                    db.close();
+                    reject(
+                        event.target.error ||
+                        new Error("Glossary transaction aborted")
+                    );
+                };
+
+            }
+            catch (error) {
+                db.close();
+                reject(error);
+            }
+        };
+    });
+}
+async function testGlossaryRead() {
+
+    try {
+
+        const records = await getGlossaryRecords(
+            dbGloss,
+            "default",
+            "NL"
+        );
+
+        console.log("Default glossary:", records);
+
+        const formalRecords = await getGlossaryRecords(
+            dbGloss,
+            "Formal",
+            "NL"
+        );
+
+        console.log("Formal glossary:", formalRecords);
+
+        return {
+            default: records,
+            formal: formalRecords
+        };
+
+    } catch (error) {
+
+        console.error("Fout bij lezen glossary:", error);
+        throw error;
+    }
+}
+async function getGlossaryRecords(dbGloss, type, locale) {
+    return await new Promise((resolve, reject) => {
+
+        const request = indexedDB.open(dbGloss, 1);
+
+        request.onerror = function (event) {
+            reject(event.target.error);
+        };
+
+        request.onsuccess = function (event) {
+            const db = event.target.result;
+
+            const transaction = db.transaction("glossary", "readonly");
+            const store = transaction.objectStore("glossary");
+            const index = store.index("type_locale_original");
+
+            const range = IDBKeyRange.bound(
+                [type, locale, ""],
+                [type, locale, "\uffff"]
+            );
+
+            const getRequest = index.getAll(range);
+
+            getRequest.onsuccess = function () {
+                resolve(getRequest.result);
+            };
+
+            getRequest.onerror = function (event) {
+                reject(event.target.error);
+            };
+
+            transaction.oncomplete = function () {
+                db.close();
+            };
+        };
+    });
+}
+
+async function addGlossaryRecord(dbGloss, type, locale, original, translation) {
+    return await new Promise((resolve, reject) => {
+
+        const request = indexedDB.open(dbGloss, 1);
+
+        request.onerror = function (event) {
+            reject(event.target.error);
+        };
+
+        request.onsuccess = function (event) {
+            const db = event.target.result;
+
+            const transaction = db.transaction("glossary", "readwrite");
+            const store = transaction.objectStore("glossary");
+
+            const record = {
+                type: type,
+                locale: locale,
+                original: original,
+                translation: translation
+            };
+
+            const addRequest = store.add(record);
+
+            addRequest.onsuccess = function (event) {
+                resolve(event.target.result);
+            };
+
+            addRequest.onerror = function (event) {
+                reject(event.target.error);
+            };
+
+            transaction.oncomplete = function () {
+                db.close();
+            };
+        };
+    });
+}
+async function testMyGlossDB() {
+    try {
+        const dbGloss = await myGlossDB("WPGlossary");
+
+        console.log("WPGlossary geopend:", dbGloss.name);
+        console.log("Versie:", dbGloss.version);
+        console.log(
+            "Object stores:",
+            Array.from(dbGloss.objectStoreNames)
+        );
+
+        dbGloss.close();
+
+    } catch (error) {
+        console.error("Fout bij openen WPGlossary:", error);
+    }
+}
+async function myGlossDB(dbGloss) {
+    return await new Promise((resolve, reject) => {
+
+        const request = indexedDB.open(dbGloss, 1);
+
+        request.onerror = function (event) {
+            reject(event.target.error);
+        };
+
+        request.onsuccess = function (event) {
+            request.result.close();
+            resolve(dbGloss);
+        };
+
+        request.onupgradeneeded = function (event) {
+            const db = event.target.result;
+
+            if (!db.objectStoreNames.contains("glossary")) {
+                const store = db.createObjectStore("glossary", {
+                    keyPath: "id",
+                    autoIncrement: true
+                });
+
+                store.createIndex(
+                    "type_locale_original",
+                    ["type", "locale", "original"],
+                    { unique: false }
+                );
+            }
+        };
+    });
+}
 
 async function openDB(db) {
    // console.debug("NewDB open started");

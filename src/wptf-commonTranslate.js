@@ -4164,7 +4164,8 @@ async function handleType(row, record, destlang, transsel, apikey, apikeyDeepl, 
                 // console.debug("current:",current)
                 //console.debug("myTranslated:",myTranslated)
                 //console.debug("handle_plural 4152:",openAiGloss)
-                mycontext=""
+                mycontext = ""
+
                 await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current, editor, ClaudePrompt, ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeygroq, groqSelect, apikeylaraAccessKeyId, laraAccessKeySecret, mycontext)
 
                 editorElem = editor.querySelector("textarea.foreign-text");
@@ -4571,7 +4572,6 @@ else if (transsel == "groq") {
             //break;
         case 'plural':
             //console.log('Handling a plural type...');
-            // preview = document.querySelector(`#preview-${row}`);
             spanmissing = preview.querySelector(" span.missing");
             if (spanmissing != null) {
                 spanmissing.remove();
@@ -4594,7 +4594,7 @@ else if (transsel == "groq") {
             //console.debug("pretrans 4351:",pretrans)
             //console.debug("plur:",plural)
             //console.debug("handle_plural 4432:",openAiGloss)
-            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current, editor, ClaudePrompt, ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait,apikeygroq,groqSelect,apikeylaraAccessKeyId, laraAccessKeySecret, mycontext)
+            await handle_plural(plural, destlang, record, apikey, apikeyDeepl, apikeyDeepSeek, apikeyOpenAI, apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss, transsel, deeplGlossary, current, editor, ClaudePrompt, ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait,apikeygroq,groqSelect,apikeylaraAccessKeyId, laraAccessKeySecret, mycontext,DeepLWait)
             editorElem = editor.querySelector("textarea.foreign-text");
 
             await validateEntry(destlang, editorElem, "", false, row, locale, record, false, DefGlossary);
@@ -4607,7 +4607,7 @@ else if (transsel == "groq") {
     // console.debug("DispClipBoard:",autoCopyClipBoard)
 } 
 
-async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI,apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect,OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeygroq,groqSelect,laraAccessKeyId,laraAccessKeySecret,mycontext) {
+async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apikeyDeepSeek, apikeyOpenAI,apikeyOpenRouter, apikeyClaude, apikeyTranslateio, apikeyNLP, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect,OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_Editor, openAiGloss, transsel, deeplGlossary, current,editor,ClaudePrompt,ClaudModel, apikeyOllama, LocalOllama, ollamaModel,ollamaPrompt,apikeyLingvanex, apikeyGemini,GeminiModel,GeminiPrompt,LMStudioWait,apikeygroq,groqSelect,laraAccessKeyId,laraAccessKeySecret,mycontext,DeepLWait) {
     let debug = false
     var myTranslatedText;
     if (debug == true) {
@@ -4732,6 +4732,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         }
         else if (transsel == "deepl") {
             // 22-05-2022 PSS fixed issue #211, the original var was used instead of plural
+            
             result = await deepLTranslate(plural, destlang, record, apikeyDeepl, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, spellCheckIgnore, deeplGlossary, false, DeepLWait, mycontext);
             if (result == "Error 403") {
                 messageBox("error", __("Error in translation received status 403, authorisation refused.<br>Please check your licence in the options!!!"));
@@ -4922,11 +4923,9 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
         // this should be set by processtransl
         
         myTranslatedText = pretrans
-        // console.debug("pretrans:",myTranslatedText)
+        // console.debug("pretrans plural:",myTranslatedText)
        // console.debug("row:",row)
         let rowId = row.split("-")[0];
-        //console.debug("rowId:", rowId)
-       // console.debug("pretranslated current:",current)
         if (current.innerText == "current") {
             //console.debug(" plural has current:",rowId)
             textareaElem1 = record.querySelector("textarea#translation_" + rowId + "_1");
@@ -4959,9 +4958,10 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             // Populate the second line in preview Plural
            // if (prevstate != "current") {
               //  console.debug("we are doing nothing with pretranslate")
-                let preview = document.querySelector("#preview-" + rowId + " td.translation");
-                if (preview != null) {
-                   // preview.innerText = myTranslatedText;
+            let preview = document.querySelector("#preview-" + rowId + " td.translation");
+            if (preview != null) {
+                preview.innerText = myTranslatedText;
+                    preview.innerHTML = myTranslatedText;
                    // preview.value = myTranslatedText;
                     var element1 = document.createElement("div");
                     element1.setAttribute("class", "trans_local_div");
@@ -4973,7 +4973,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
            // }
         }
         else {
-            //console.debug("It is not a current so we need to add it")
+         //   console.debug("It is not a current so we need to add it")
             // 30-10-2021 PSS added a fix for issue #154
             // console.debug("previewtext 4415:", myTranslatedText)
             ////console.debug("record:", record, rowId, row)
@@ -5011,7 +5011,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
 
             let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(1) .translation-text");
             if (previewElem != null) {
-                //previewElem.innerText =pretrans;
+                previewElem.innerText =pretrans;
                 previewElem.value = pretrans;
                 let myLi = document.querySelector("#preview-" + row + " .translation li:nth-of-type(1)");
                 element1 = document.createElement("div");
@@ -5376,9 +5376,10 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
 
             // Populate the second line in preview Plural
             //if (prevstate != "current") {
-                let preview = document.querySelector("#preview-" + rowId + " td.translation");
-                if (preview != null) {
-                    preview.innerText = translatedText;
+            let preview = document.querySelector("#preview-" + rowId + " td.translation");
+            if (preview != null) {
+                preview.innerText = translatedText;
+                   // preview.innerHTML = translatedText;
                     preview.value = translatedText;
                     let myLi = document.querySelector("#preview-" + row + " .translation li:nth-of-type(2)");
                     var element1 = document.createElement("div");
@@ -5394,7 +5395,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             // This is pretrans line to add
             //console.debug("translated plural row:",row,rowId)
             textareaElem1 = document.querySelector("textarea#translation_" + rowId + "_1");
-            //textareaElem1.innerText = translatedText;
+            textareaElem1.innerText = translatedText;
             textareaElem1.value = translatedText;
             // the code below is to populate the Russion and Ukrain plurals
             textareaElem2 = record.querySelector("textarea#translation_" + rowId + "_2");
@@ -5425,7 +5426,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             let previewElem = document.querySelector("#preview-" + row + " li:nth-of-type(2) .translation-text");
            // console.debug("previewElem 4207:",previewElem)
             if (previewElem != null) {
-               // previewElem.innerText = translatedText;
+                previewElem.innerText = translatedText;
                 previewElem.value = translatedText;
                 var element1 = document.createElement("div");
                 let myLi = document.querySelector("#preview-" + row + " .translation li:nth-of-type(2)");
@@ -7604,7 +7605,7 @@ async function processTransl (original, translatedText, language, record, rowId,
         }
         else {
            // console.debug("we have a problem possibly untranslated")
-           // console.debug("we have plural line:",plural_line)
+             //console.debug("we have plural line:",plural_line)
             //check_span_missing(rowId, plural_line);
             let newrow = myRowId.split("-")[1];
             if (typeof newrow == "undefined") {
@@ -7632,6 +7633,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                     //console.debug("previewElem:",previewElem)
                     if (previewElem != null) {
                        previewElem.innerText = mytranslatedText;
+                       //previewElem.innerHTML = mytranslatedText;
                        previewElem.value = mytranslatedText;
                     }
                     result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record, true, DefGlossary);
@@ -7647,7 +7649,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                 }
                 if (plural_line == 2) {
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_1");
-                    console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
+                    //console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
                     textareaElem2.innerText = mytranslatedText;
                     textareaElem2.value = mytranslatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
@@ -7661,6 +7663,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                     //console.debug("we are updating the second line in preview:")
                     if (previewElem != null) {
                         previewElem.innerText = mytranslatedText;
+                        //previewElem.innerText = mytranslatedText;
                         previewElem.value = mytranslatedText;
                     }
                     // the below code is for Russion plural handling
@@ -7718,6 +7721,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
                     //console.debug("previewElem 7043:",previewElem)
                     if (previewElem != null) {
+                        previewElem.innerText = mytranslatedText;
                         previewElem.innerText = mytranslatedText;
                         previewElem.value = mytranslatedText;
                     }
