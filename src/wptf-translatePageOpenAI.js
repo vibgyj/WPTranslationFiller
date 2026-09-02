@@ -442,9 +442,9 @@ async function translatePageOpenAI(
                     ? prunedRaw.map(([s, t]) => `"${s}" -> "${t}"`).join(", ")
                     : (prunedRaw || "");
 
-                console.debug("[" + translator + "] prune out:", item.id,
-                    Array.isArray(prunedRaw) ? "ARRAY" : typeof prunedRaw,
-                    "=>", JSON.stringify(glossary));
+               // console.debug("[" + translator + "] prune out:", item.id,
+                //    Array.isArray(prunedRaw) ? "ARRAY" : typeof prunedRaw,
+                //    "=>", JSON.stringify(glossary));
 
                 return {
                     id: item.id, line: item.line,

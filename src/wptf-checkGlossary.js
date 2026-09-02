@@ -74,7 +74,7 @@ async function glossaryQaSweep(options = {}) {
       if (hasSpinner) hideTranslationSpinner();
 
       if (!cleared) {
-        const msg = 'The page check is still running — wait until it finishes, then run the glossary check again.';
+        const msg = __('The page check is still running — wait until it finishes, then run the glossary check again.');
         if (typeof messageBox === 'function') messageBox('warning', msg);
         else console.warn('[glossaryQA]', msg);
         return [];
