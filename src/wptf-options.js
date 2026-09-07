@@ -1221,33 +1221,6 @@ button.addEventListener("click", function () {
             myfile = myfile + "   " + thisDay;
             chrome.storage.local.set({ glossaryFile: myfile });
 
-            chrome.storage.local.set({ glossary: glossary });
-            chrome.storage.local.set({ glossaryA: glossaryA });
-            chrome.storage.local.set({ glossaryB: glossaryB });
-            chrome.storage.local.set({ glossaryC: glossaryC });
-            chrome.storage.local.set({ glossaryD: glossaryD });
-            chrome.storage.local.set({ glossaryE: glossaryE });
-            chrome.storage.local.set({ glossaryF: glossaryF });
-            chrome.storage.local.set({ glossaryG: glossaryG });
-            chrome.storage.local.set({ glossaryH: glossaryH });
-            chrome.storage.local.set({ glossaryI: glossaryI });
-            chrome.storage.local.set({ glossaryJ: glossaryJ });
-            chrome.storage.local.set({ glossaryK: glossaryK });
-            chrome.storage.local.set({ glossaryL: glossaryL });
-            chrome.storage.local.set({ glossaryM: glossaryM });
-            chrome.storage.local.set({ glossaryN: glossaryN });
-            chrome.storage.local.set({ glossaryO: glossaryO });
-            chrome.storage.local.set({ glossaryP: glossaryP });
-            chrome.storage.local.set({ glossaryQ: glossaryQ });
-            chrome.storage.local.set({ glossaryR: glossaryR });
-            chrome.storage.local.set({ glossaryS: glossaryS });
-            chrome.storage.local.set({ glossaryT: glossaryT });
-            chrome.storage.local.set({ glossaryU: glossaryU });
-            chrome.storage.local.set({ glossaryV: glossaryV });
-            chrome.storage.local.set({ glossaryW: glossaryW });
-            chrome.storage.local.set({ glossaryX: glossaryX });
-            chrome.storage.local.set({ glossaryY: glossaryY });
-            chrome.storage.local.set({ glossaryZ: glossaryZ });
         }
 
         if (glossarySecondFile.value !== "") {
@@ -1261,33 +1234,7 @@ button.addEventListener("click", function () {
             mySecondfile = glossarySecondFile.value.replace("C:\\fakepath\\", "");
             mySecondfile = mySecondfile + "   " + thisDay;
             chrome.storage.local.set({ glossaryFileSecond: mySecondfile });
-            chrome.storage.local.set({ glossary1: glossary1 });
-            chrome.storage.local.set({ glossary1A: glossary1A });
-            chrome.storage.local.set({ glossary1B: glossary1B });
-            chrome.storage.local.set({ glossary1C: glossary1C });
-            chrome.storage.local.set({ glossary1D: glossary1D });
-            chrome.storage.local.set({ glossary1E: glossary1E });
-            chrome.storage.local.set({ glossary1F: glossary1F });
-            chrome.storage.local.set({ glossary1G: glossary1G });
-            chrome.storage.local.set({ glossary1H: glossary1H });
-            chrome.storage.local.set({ glossary1I: glossary1I });
-            chrome.storage.local.set({ glossary1J: glossary1J });
-            chrome.storage.local.set({ glossary1K: glossary1K });
-            chrome.storage.local.set({ glossary1L: glossary1L });
-            chrome.storage.local.set({ glossary1M: glossary1M });
-            chrome.storage.local.set({ glossary1N: glossary1N });
-            chrome.storage.local.set({ glossary1O: glossary1O });
-            chrome.storage.local.set({ glossary1P: glossary1P });
-            chrome.storage.local.set({ glossary1Q: glossary1Q });
-            chrome.storage.local.set({ glossary1R: glossary1R });
-            chrome.storage.local.set({ glossary1S: glossary1S });
-            chrome.storage.local.set({ glossary1T: glossary1T });
-            chrome.storage.local.set({ glossary1U: glossary1U });
-            chrome.storage.local.set({ glossary1V: glossary1V });
-            chrome.storage.local.set({ glossary1W: glossary1W });
-            chrome.storage.local.set({ glossary1X: glossary1X });
-            chrome.storage.local.set({ glossary1Y: glossary1Y });
-            chrome.storage.local.set({ glossary1Z: glossary1Z });
+            
         }
         
         messageBox("info", "Settings successfully saved.<br>Please make sure that you enter<br>values in Destination Language<br> and select a Glossary File<br>and enter values in <br>Post Translation Replace");
@@ -1415,7 +1362,7 @@ file.addEventListener("change", function () {
                      );
 
                 } else {
-
+                    window.alert("WPGlossary default import failed: " + response.error);
                     console.error(
                         "WPGlossary default import failed:",
                         response

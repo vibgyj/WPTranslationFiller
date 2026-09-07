@@ -712,8 +712,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     if (locale == "nl" || locale == "nl-be") {
          // reordering of the sentence
         if (toBoolean(Rearrange_Sentences)) {
-          const beforeRearrange = translatedText;
-          translatedText = fixUILabelSmart(translatedText);
+            const beforeRearrange = translatedText;
+            translatedText = fixUILabelSmart(translatedText, maxWords = 6);
           if (translatedText !== beforeRearrange) {
              replLog.push([beforeRearrange, translatedText]);
          }
@@ -4613,9 +4613,8 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
     if (debug == true) {
         console.debug("handle_plural plural_line: ", plural_line, plural)
         console.debug("handle_plural current:", current)
-        console.debug("we handle_plural ")
         console.debug("row at start handle_plural:", row)
-        console.debug("handle_plural:",openAiGloss)
+        //console.debug("handle_plural:",openAiGloss)
      }
     let pretrans = await findTransline(plural, destlang);
     //console.debug("pretrans:",pretrans)
@@ -4777,8 +4776,8 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
             }
         }
         else if (transsel == "deepseek") {
-            result = await translateWithDeepSeek(plural, destlang, record, apikeyDeepSeek, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
-
+            result = await translateWithDeepSeek(plural, destlang, record, apikeyDeepSeek, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
+            // console.debug("deepseek result:", result);
             if (result == "Error 401") {
                 messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                 // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -5183,10 +5182,9 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
                     // break;
                 }
             }
-        }
-        else if (transsel == "deepseek") {
-                result = await translateWithDeepSeek(plural, destlang, record, apikeyDeepSeek, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, DeeplFree, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
-
+         }
+         else if (transsel == "deepseek") {
+                result = await translateWithDeepSeek(plural, destlang, record, apikeyDeepSeek, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, false, openAiGloss);
                 if (result == "Error 401") {
                     messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                     // alert("Error in translation received status 401 \r\nThe request is not authorized because credentials are missing or invalid.");
@@ -6128,6 +6126,7 @@ async function translateEntry(rowId, apikey, apikeyCerebras, apikeyDeepl, apikey
             return
         }
     }
+   // console.debug("top_k:", Top_k)
     if (transsel == "LibreTrans") {
         const libreRunning = await isLibreTranslateRunning();
         if (libreRunning) {
@@ -7227,10 +7226,12 @@ async function saveLocal_2(bulk_timer = 0) {
             const t_dismiss1_end = perfNow();
             if (debugRow) console.debug(`Dismiss1 time: ${(t_dismiss1_end - t_dismiss1_start).toFixed(1)}ms`);
 
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+
             if (recordDismiss !== "Time-out reached" && typeof recordDismiss.click === "function") {
+                await sleep(500);          // give LT time to finish init before teardown
                 recordDismiss.click();
             }
-
             // Step 5: Try to detect an immediate second dismiss (existing record error)
             const t_dismiss2_start = perfNow();
             const recordError = await waitForSelector(`.gp-js-message-dismiss`, 500); // short attempt
@@ -7501,6 +7502,7 @@ async function processTransl (original, translatedText, language, record, rowId,
         console.debug("processTransl record:", record)
         console.debug("processTransl rowId:", myRowId)
         console.debug("processTransl transtype:", transtype)
+        console.debug("processTransl plural_line:", plural_line)
         if (transtype == 'single') {
             console.debug("processTransl a single line", transtype)
         }
@@ -7536,15 +7538,6 @@ async function processTransl (original, translatedText, language, record, rowId,
         if (inputElement) {
             inputElement.focus();    // Focus the input to show the cursor
         }
-        
-       // if (current.innerText != "waiting" && current.innerText != "fuzzy") {
-      //      preview = await record.previousElementSibling
-       // }
-       // else {
-       //     preview = await getPreview(rowId)
-            //preview = await document.querySelector("#preview-" + myRowId)
-       // }
-      
        
         preview = await getPreview(rowId)
         //console.debug("preview:", preview)
@@ -7588,7 +7581,7 @@ async function processTransl (original, translatedText, language, record, rowId,
         
         remove_all_gloss(leftPanel, preview, isPlural, rowId)
         mark_glossary(leftPanel, result.toolTip, mytranslatedText, rowId, false)
-        await mark_preview(preview, result.toolTip, mytranslatedText, rowId, false)
+        await mark_preview(preview, result.toolTip, mytranslatedText, rowId, false,0)
         
     }
     else {
@@ -7605,17 +7598,17 @@ async function processTransl (original, translatedText, language, record, rowId,
         }
         else {
            // console.debug("we have a problem possibly untranslated")
-             //console.debug("we have plural line:",plural_line)
+           // console.debug("we have plural line:",plural_line)
             //check_span_missing(rowId, plural_line);
             let newrow = myRowId.split("-")[1];
             if (typeof newrow == "undefined") {
-                if (transtype != "single") {
-                    previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
+                //if (transtype != "single") {
+                //    previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
                    // console.debug('not single:',rowId,plural_line)
-                    if (previewElem == null) {
-                        check_span_missing(myRowId, plural_line);
-                    }
-                }
+                 //   if (previewElem == null) {
+                  //      check_span_missing(myRowId, plural_line);
+                  //  }
+               // }
                 if (plural_line == 1) {
                    // console.debug("we update first line in plural:",translatedText)
                     //populate plural line if not already translated, so we can take original rowId
@@ -7630,26 +7623,47 @@ async function processTransl (original, translatedText, language, record, rowId,
                     // textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
                     // Select the first li
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
-                    //console.debug("previewElem:",previewElem)
+                    // console.debug("previewElem:",previewElem)
                     if (previewElem != null) {
                        previewElem.innerText = mytranslatedText;
                        //previewElem.innerHTML = mytranslatedText;
                        previewElem.value = mytranslatedText;
                     }
-                    result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record, true, DefGlossary);
+                   // result = await validateEntry(language, textareaElem1, "", "", myRowId, locale, record, true, DefGlossary);
                     if (textareaElem2 != null) {
-                        await mark_preview(preview, result.toolTip, textareaElem2.textContent, myRowId, false)
+                        console.debug("plural line 1 we are updating the editor:", textareaElem2, plural_line)
+                        await mark_preview(preview, result.toolTip, textareaElem2.textContent, myRowId, true, plural_line)
                     }
                     else if (textareaElem3 != null) {
-                        await mark_preview(preview, result.toolTip, textareaElem3.textContent, myRowId, false)
+                       await mark_preview(preview, result.toolTip, textareaElem3.textContent, myRowId, true, plural_line)
                     }
                     else if (textareaElem4 != null) {
-                        await mark_preview(preview, result.toolTip, textareaElem4.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem4.textContent, myRowId, true, plural_line)
                     }
                 }
                 if (plural_line == 2) {
+                    // Select the second li
+                    const root = document.querySelector("#preview-" + myRowId);
+                    //console.log("root:", root);
+                    //console.log("alle li's:", root && root.querySelectorAll("li").length);
+                    //console.log("alle .translation-text:", root && root.querySelectorAll(".translation-text").length);
+                    //console.log("root innerHTML:", root && root.innerHTML);
+                    // in de plural_line == 2 tak:
+                    const translationSpans = document.querySelectorAll(
+                        "#preview-" + myRowId + " td.translation .translation-text"
+                    );
+                    let previewElem2 = translationSpans[plural_line - 1] || null;   // plural_line 2 -> index 1 = Plural-span
+
+                    if (previewElem2 != null) {
+                        previewElem2.innerText = mytranslatedText;
+                        previewElem2.value = mytranslatedText;
+                    } else {
+                        console.debug("Geen Plural translation-text voor rowId", myRowId, "| spans:", translationSpans.length);
+                    }
+                    //console.debug("previewElem:",previewElem2)
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_1");
                     //console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
+                  //.debug("plural line 2 we are updating the editor:", textareaElem2, plural_line)
                     textareaElem2.innerText = mytranslatedText;
                     textareaElem2.value = mytranslatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
@@ -7680,17 +7694,20 @@ async function processTransl (original, translatedText, language, record, rowId,
                         textareaElem4.value = mytranslatedText;
                     }
                     result = await validateEntry(language, textareaElem2, "", "", myRowId, locale, record, true, DefGlossary);
+
+                  //  console.debug("result:", result.toolTip)
+
                     if (textareaElem2 != null) {
-                        await mark_preview(preview, result.toolTip, textareaElem2.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem2.textContent, myRowId, true, plural_line)
                     }
-                    else if (textareaElem3 != null) {
-                        await mark_preview(preview, result.toolTip, textareaElem3.textContent, myRowId, false)
+                    else if (textareaElem3 != null) {           
+                        await mark_preview(preview, result.toolTip, textareaElem3.textContent, myRowId, true, plural_line)
                     }
                     else if (textareaElem4 != null) {
-                        await mark_preview(preview, result.toolTip, textareaElem4.textContent, myRowId, false)
+                        await mark_preview(preview, result.toolTip, textareaElem4.textContent, myRowId, true, plural_line)
                     }
                 }
-               
+             
             }
             else {
                //console.debug("myRowId:",myRowId,record)

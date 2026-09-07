@@ -330,7 +330,7 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                     console.debug("mytranslatedText:", mytranslatedText)
                     await processTransl(original, mytranslatedText, locale, record, rowId, transtype, plural_line, locale, false, current)
                     result = await validateEntry(destlang, textareaElem, false, false, rowId, locale, record, false, DefGlossary);
-                    await mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false)
+                    await mark_preview(preview, result.toolTip, textareaElem.textContent, rowId, false, 0)
                     await mark_as_translated(rowId, current, translated, preview)
 
                 }

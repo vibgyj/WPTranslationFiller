@@ -1,4 +1,26 @@
-﻿async function removeLegacyGlossaryStorage() {
+﻿// strips quotes from the output if the source was not quoted. This is to avoid translators adding quotes unnecessarily.
+async function stripWrappingQuotes(output, source) {
+   // console.debug("stripWrappingQuotes called with output:", output, "source:", source);
+  const t = output.trim();
+  if (t.length < 2) return t;
+
+  const first = t[0], last = t[t.length - 1];
+  const isWrapped =
+    (first === '"' && last === '"') || (first === "'" && last === "'");
+  if (!isWrapped) return t;
+
+  // If the source is wrapped in the SAME quote char, the quotes are
+  // legitimate content — keep them.
+  const s = source.trim();
+  const sourceWrapped =
+    s.length >= 2 && s[0] === first && s[s.length - 1] === first;
+
+  if (sourceWrapped) return t;
+    //console.debug("Stripping wrapping quotes from output:", t.slice(1, -1));
+  return t.slice(1, -1);
+}
+
+async function removeLegacyGlossaryStorage() {
     // Verwijdert alleen de oude glossary-DATA: glossary, glossary1,
     // glossaryA..Z en glossary1A..Z.
     // Laat bewust staan: DefGlossary, OpenAiGloss (instellingen) en
@@ -297,7 +319,8 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 // --- Hoofdfunctie ---
-function fixUILabelSmart(text) {
+function fixUILabelSmart(text, maxWords = 6) {
+    //console.debug("fixUILabelSmart called with text:", text, "maxWords:", maxWords);
     if (!text || typeof text !== "string") return text;
 
     if (toBoolean(DebugMode)) console.debug("fixUILabelSmart start:", text);
@@ -312,16 +335,16 @@ function fixUILabelSmart(text) {
     const infinitives = {
         "voeg toe": "toevoegen",
         "Activeer": "activeren",
-        "Kies": "kiezen", 
+        "Kies": "kiezen",
         "Schakel": "uitschakelen",
         "Zet": "aanzetten",
         "Voer": "uitvoeren",
         "Voeg": "toevoegen",
-        "Volg": "volgen", 
+        "Volg": "volgen",
         "Maak": "maken",
         "Selecteer": "selecteren",
         "Bekijk": "bekijken",
-        "Verhoog": "verhogen", 
+        "Verhoog": "verhogen",
         "Verwijder": "verwijderen",
         "Wijzig": "wijzigen"
     };
@@ -339,6 +362,16 @@ function fixUILabelSmart(text) {
     if (sentences.length === 0) sentences = [{ content: text, punct: "", space: "" }];
 
     let first = sentences[0].content.trim();
+
+    // 🔹 Skip lange zinnen: bij een lang object komt de infinitief te ver
+    //    van het object te staan en leest het label onnatuurlijk.
+    const wordCount = first.split(/\s+/).filter(Boolean).length;
+    if (wordCount > maxWords) {
+        if (toBoolean(DebugMode))
+            console.debug("fixUILabelSmart skipped (too long):", wordCount, "words");
+        return text;
+    }
+
     const firstWordMatch = first.match(/^(\S+)/);
     if (!firstWordMatch) return text;
 
@@ -379,12 +412,12 @@ function fixUILabelSmart(text) {
     // -----------------------------
     // 1️⃣ Separable werkwoorden
     // -----------------------------
-      if (separableEntry) {
+    if (separableEntry) {
         for (const part of separableEntry[1]) {
             const regexPart = new RegExp(
-            `^\\s*${escapeRegex(firstWordRaw)}\\s+(.+?)\\s+${escapeRegex(part)}(?=\\s|$)`,
-           "i"
-        );
+                `^\\s*${escapeRegex(firstWordRaw)}\\s+(.+?)\\s+${escapeRegex(part)}(?=\\s|$)`,
+                "i"
+            );
             const matchPart = first.match(regexPart);
             if (matchPart) {
                 const middle = matchPart[1].trim();

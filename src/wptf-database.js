@@ -33,19 +33,22 @@ async function importDefaultGlossaryRecords(dbName, records) {
                 const store = transaction.objectStore("glossary");
                 const index = store.index("type_locale_original");
 
-                // Determine the scope of this import from the records themselves.
-                // Every record in one CSV import shares the same type + locale.
-                const scopeType = (records[0] && records[0].type) || "default";
-                const scopeLocale = (records[0] && records[0].locale) || "NL";
+                const scopeType =
+                    (records[0] && records[0].type) || "default";
+
+                const scopeLocale =
+                    (records[0] && records[0].locale) || "NL";
 
                 let added = 0;
                 let deleted = 0;
                 let skipped = 0;
 
-                // --- Step 1: delete only the rows for THIS type + locale ---
-                // The index key is [type, locale, original], so a bound range
-                // from [type, locale] to [type, locale, "\uffff"] covers every
-                // "original" within this type+locale and nothing else.
+                // ---------------------------------------------------------
+                // Step 1:
+                // Delete the existing WPGlossary rows for this
+                // type + locale.
+                // ---------------------------------------------------------
+
                 const range = IDBKeyRange.bound(
                     [scopeType, scopeLocale],
                     [scopeType, scopeLocale, "\uffff"]
@@ -58,13 +61,19 @@ async function importDefaultGlossaryRecords(dbName, records) {
                     const cursor = cursorEvent.target.result;
 
                     if (cursor) {
+
                         cursor.delete();
                         deleted++;
+
                         cursor.continue();
                         return;
                     }
 
-                    // --- Step 2: cursor exhausted -> add the fresh rows ---
+                    // -----------------------------------------------------
+                    // Step 2:
+                    // Add the fresh WPGlossary rows.
+                    // -----------------------------------------------------
+
                     records.forEach(function (record) {
 
                         if (
@@ -88,29 +97,72 @@ async function importDefaultGlossaryRecords(dbName, records) {
                 };
 
                 cursorRequest.onerror = function () {
-                    // Let the transaction's onerror/onabort handle rejection.
+
                     console.error(
                         "Error clearing glossary rows:",
                         cursorRequest.error
                     );
                 };
 
-                transaction.oncomplete = function () {
+                // ---------------------------------------------------------
+                // Step 3:
+                // WPGlossary transaction completed.
+                // ---------------------------------------------------------
+
+                transaction.oncomplete = async function () {
+
                     db.close();
-                    resolve({
-                        added: added,
-                        deleted: deleted,
-                        skipped: skipped
-                    });
+
+                    /*
+                     * Only the DEFAULT glossary is copied to DeeplGloss.
+                     *
+                     * Formal is deliberately NOT synchronized.
+                     */
+                    if (scopeType !== "default") {
+
+                        resolve({
+                            added: added,
+                            deleted: deleted,
+                            skipped: skipped,
+                            deeplAdded: 0,
+                            deeplUpdated: 0,
+                            deeplSkipped: 0
+                        });
+
+                        return;
+                    }
+
+                    try {
+
+                        const deeplResult =
+                            await syncGlossaryToDeeplGloss(records);
+
+                        resolve({
+                            added: added,
+                            deleted: deleted,
+                            skipped: skipped,
+                            deeplAdded: deeplResult.added,
+                            deeplUpdated: deeplResult.updated,
+                            deeplSkipped: deeplResult.skipped
+                        });
+
+                    }
+                    catch (error) {
+
+                        reject(error);
+                    }
                 };
 
                 transaction.onerror = function (event) {
+
                     db.close();
                     reject(event.target.error);
                 };
 
                 transaction.onabort = function (event) {
+
                     db.close();
+
                     reject(
                         event.target.error ||
                         new Error("Glossary transaction aborted")
@@ -119,10 +171,166 @@ async function importDefaultGlossaryRecords(dbName, records) {
 
             }
             catch (error) {
+
                 db.close();
                 reject(error);
             }
         };
+    });
+}
+
+async function syncGlossaryToDeeplGloss(records) {
+
+    if (!Array.isArray(records)) {
+        throw new Error("Glossary records must be an array");
+    }
+
+    const dbDeepL = await openDeepLDatabase();
+
+    return new Promise(function (resolve, reject) {
+
+        let transaction;
+
+        try {
+
+            transaction = dbDeepL.transaction(
+                "glossary",
+                "readwrite"
+            );
+
+            const store = transaction.objectStore("glossary");
+            const index = store.index("locale_original");
+
+            let added = 0;
+            let updated = 0;
+            let skipped = 0;
+
+            /*
+             * Process each imported Default glossary record.
+             *
+             * We search using the existing locale_original index.
+             */
+            function processRecord(position) {
+
+                if (position >= records.length) {
+                    return;
+                }
+
+                const record = records[position];
+
+                if (
+                    !record ||
+                    typeof record.original === "undefined" ||
+                    typeof record.translation === "undefined"
+                ) {
+
+                    skipped++;
+                    processRecord(position + 1);
+                    return;
+                }
+
+                const locale =
+                    String(record.locale || "en").toUpperCase();
+
+                const original =
+                    record.original;
+
+                const translation =
+                    record.translation;
+
+                const keyRange = IDBKeyRange.only([
+                    locale,
+                    original
+                ]);
+
+                const request = index.get(keyRange);
+
+                request.onsuccess = function (event) {
+
+                    const existingRecord = event.target.result;
+
+                    if (existingRecord) {
+
+                        /*
+                         * Existing record:
+                         * keep the existing id and overwrite only
+                         * the values supplied by the glossary.
+                         */
+                        existingRecord.locale = locale;
+                        existingRecord.original = original;
+                        existingRecord.translation = translation;
+
+                        store.put(existingRecord);
+
+                        updated++;
+
+                    }
+                    else {
+
+                        /*
+                         * New record.
+                         * No id is supplied, so the existing
+                         * auto-increment mechanism creates it.
+                         */
+                        store.add({
+                            locale: locale,
+                            original: original,
+                            translation: translation
+                        });
+
+                        added++;
+                    }
+
+                    processRecord(position + 1);
+                };
+
+                request.onerror = function () {
+
+                    reject(request.error);
+                };
+            }
+
+            processRecord(0);
+
+            transaction.oncomplete = function () {
+
+                dbDeepL.close();
+
+                resolve({
+                    added: added,
+                    updated: updated,
+                    skipped: skipped
+                });
+            };
+
+            transaction.onerror = function (event) {
+
+                dbDeepL.close();
+                reject(event.target.error);
+            };
+
+            transaction.onabort = function (event) {
+
+                dbDeepL.close();
+
+                reject(
+                    event.target.error ||
+                    new Error("DeeplGloss transaction aborted")
+                );
+            };
+
+        }
+        catch (error) {
+
+            try {
+                dbDeepL.close();
+            }
+            catch (e) {
+                // Ignore close errors
+            }
+
+            reject(error);
+        }
     });
 }
 async function testGlossaryRead() {

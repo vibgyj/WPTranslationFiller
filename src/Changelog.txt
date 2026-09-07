@@ -136,3 +136,11 @@ Version 3.5.78 When performing checkGlossary words are missed out due to a combi
 Version 3.5.78 Added marking of missing glossary words in the checkGlossary function
 Version 3.5.79 Added waiting for progressbar to finish before starting with checkGlossary, this way it will not start before the progressbar is finished
 Version 3.5.80 Cerebras/openAI did not apply the glossary properly, now it will apply the glossary properly in page translation
+Version 3.5.81 Glossary check dit not find combined words, now it will find combined words as well
+Version 3.5.81 Saving options did fail due to code left behind after converting the glossary into indexDB
+Version 3.5.82 Reformatting sentences limited to 6 words, otherwise the sentence is wrong
+Version 3.5.83 Fixed a problem with marking wrong glossary words within plurals, and with plural words
+Version 3.8.84 Added loading the glossary also into the DeepL glossary list
+Version 3.5.84 Modified the sequence of prompt selection in the options page.
+Version 3.5.84 improved bulksave behavior.
+Version 3.5.84 improved DeepSeek translation.

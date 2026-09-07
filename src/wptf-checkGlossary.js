@@ -74,7 +74,7 @@ async function glossaryQaSweep(options = {}) {
       if (hasSpinner) hideTranslationSpinner();
 
       if (!cleared) {
-        const msg = __('The page check is still running — wait until it finishes, then run the glossary check again.');
+        const msg = 'The page check is still running — wait until it finishes, then run the glossary check again.';
         if (typeof messageBox === 'function') messageBox('warning', msg);
         else console.warn('[glossaryQA]', msg);
         return [];
@@ -343,14 +343,29 @@ function unmetGlossary(glossaryWords, translationText, cfg) {
   for (const g of groups.values()) {
     if (g.candidates.length === 0) continue;   // no glossary target -> can't judge
 
-    // Greedily consume one distinct translation token per required occurrence.
+    // Split candidates into single-word (matched against individual tokens) and
+    // multi-word phrases like "geheime sleutel" (matched when ALL their words are
+    // present in the translation — a single token can never equal a phrase).
+    const singleCands = g.candidates.filter((c) => !/\s/.test(c));
+    const phraseCands = g.candidates.filter((c) => /\s/.test(c));
+
+    // A phrase candidate is satisfied if each of its words matches some token.
+    const phraseSatisfied = phraseCands.some((phrase) =>
+      phrase.split(/\s+/).filter(Boolean)
+        .every((wordCand) => tokens.some((tok) => tokenMatches(tok, [wordCand], g.word, cfg)))
+    );
+
+    // Greedily consume one distinct translation token per required occurrence
+    // (single-word candidates), or count the phrase as satisfying one occurrence.
     const used = new Array(tokens.length).fill(false);
     let found = 0;
     for (let need = 0; need < g.count; need++) {
-      const idx = tokens.findIndex((tok, i) => !used[i] && tokenMatches(tok, g.candidates, g.word, cfg));
-      if (idx === -1) break;
-      used[idx] = true;
-      found += 1;
+      const idx = singleCands.length
+        ? tokens.findIndex((tok, i) => !used[i] && tokenMatches(tok, singleCands, g.word, cfg))
+        : -1;
+      if (idx !== -1) { used[idx] = true; found += 1; continue; }
+      if (phraseSatisfied) { found += 1; continue; }  // phrase counts once per needed occurrence
+      break;
     }
 
     if (found < g.count) {

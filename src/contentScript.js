@@ -2458,70 +2458,7 @@ let currentTranslation = "";
 // findMissingTranslations and working2105findMissingWords are the
 // two live implementations. All previous iterations have been removed.
 
-function working2105findAllMissingWords(translation, expectedWords, locale = 'nl') {
-    const lowerTranslation = translation.toLowerCase();
-    const pluralize        = plural_rules[locale] || (() => []);
 
-    const groupedByWord = expectedWords.reduce((acc, entry) => {
-        const key = entry.word.join('|');
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(entry);
-        return acc;
-    }, {});
-
-    const missingGroups = [];
-
-    for (const key in groupedByWord) {
-        const group         = groupedByWord[key];
-        const wordVariants  = group[0].word;
-        const expectedCount = group.length;
-        const distinctWords = [...new Set(wordVariants.map(w => w.toLowerCase()))];
-        let actualCount     = 0;
-
-        if (distinctWords.length > 1) {
-            const concat1 = distinctWords.join('');
-            const concat2 = distinctWords.slice().reverse().join('');
-            if (lowerTranslation.includes(concat1) || lowerTranslation.includes(concat2)) actualCount = expectedCount;
-        }
-
-        if (actualCount === 0) {
-            for (const variant of wordVariants) {
-                const variantLower = variant.toLowerCase();
-                const regex        = new RegExp(`\\b${variantLower}\\b`, 'gi');
-                const matches      = lowerTranslation.match(regex);
-                if (matches) actualCount += matches.length;
-
-                if (actualCount < expectedCount && variantLower.length <= 2) {
-                    const fallbackMatches = lowerTranslation.match(new RegExp(variantLower, 'gi'));
-                    if (fallbackMatches) actualCount += fallbackMatches.length;
-                }
-
-                const plurals = pluralize(variantLower);
-                for (const plural of plurals) {
-                    const pluralMatches = lowerTranslation.match(new RegExp(`\\b${plural}\\b`, 'gi'));
-                    if (pluralMatches) actualCount += pluralMatches.length;
-                }
-
-                if (actualCount < expectedCount) {
-                    const wordsInTranslation = lowerTranslation.split(/\s+/);
-                    for (const word of wordsInTranslation) {
-                        if (word.includes(variantLower) && variantLower.length > 2 && !new RegExp(`\\b${variantLower}\\b`, 'i').test(word)) {
-                            actualCount += 1;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (actualCount < expectedCount) {
-            group.forEach(entry => missingGroups.push({ glossIndex: entry.glossIndex, word: entry.word, missingCount: 1 }));
-        }
-    }
-
-    missingGroups.sort((a, b) => a.glossIndex - b.glossIndex);
-    return missingGroups;
-}
 
 // findMissingTranslations – current live version
 function findMissingTranslations(translationText, glossWords, locale = 'nl') {

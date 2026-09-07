@@ -6,11 +6,12 @@
  */
 
 async function translateWithDeepSeek(original, language, record, apikeyDeepSeek, OpenAIPrompt, preverbs, rowId, transtype, plural_line, formal, locale, convertToLower, editor, counter, OpenAISelect, OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss) {
-    var show_debug = true
     let translatedText = "";
     let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
     let prevstate = current ? current.innerText : "";
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
+    // console.debug("plural_line:", plural_line);
+    //console.debug(`[${new Date().toISOString()}] Original pre-processed:`, originalPreProcessed);
     const maxTokens = estimateMaxTokens(originalPreProcessed);
     let destlang = language;
     language = language.toUpperCase();
@@ -36,9 +37,18 @@ async function translateWithDeepSeek(original, language, record, apikeyDeepSeek,
     } else {
         myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
     }
-    
+    let prunedGloss = '';
+
+    if (openAiGloss) {
+    // Prune against the RAW original text, not the preprocessed version —
+    // preProcessOriginal() can rewrite source words and then pruneGlossary
+    // matches nothing (same trap as the Lara/Cerebras paths).
+    prunedGloss = (await pruneGlossary(openAiGloss, original, null)) || '';
+    }
+    // console.debug("original:", original);
+    console.debug(`[${new Date().toISOString()}] Pruned glossary:`, prunedGloss);
     // Replace glossary and language names
-    myprompt = myprompt.replaceAll("{{OpenAiGloss}}", openAiGloss);
+    myprompt = myprompt.replaceAll("{{OpenAiGloss}}", prunedGloss);
 
     if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
     else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
@@ -49,7 +59,7 @@ async function translateWithDeepSeek(original, language, record, apikeyDeepSeek,
         originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
     }
     originalPreProcessed = `"${originalPreProcessed}"`;
-    //console.debug("originalPreProcessed:",originalPreProcessed)
+    
     messages = [
         { role: 'system', content: myprompt },
         { role: 'user', content: `translate this: ${originalPreProcessed}` }
@@ -69,12 +79,9 @@ async function translateWithDeepSeek(original, language, record, apikeyDeepSeek,
             model: mymodel,
             messages,
             max_completion_tokens: maxTokens,
-            top_p: 1,
-            frequency_penalty: 0,
-            presence_penalty: 0,
             reasoning_effort: 'minimal',
             verbosity: 'low'
-        };
+            };
     }
     else {
        dataNew = {
@@ -82,7 +89,7 @@ async function translateWithDeepSeek(original, language, record, apikeyDeepSeek,
        messages,
        max_tokens: maxTokens,
        temperature: OpenAItemp,
-       top_p: 0.5,
+       top_p: Number(Top_p),
        stream: false       // ensure non-streaming
 };
 
@@ -90,7 +97,7 @@ const link = "https://api.deepseek.com/v1/chat/completions";
 
 try {
     const start = Date.now();
-    if (show_debug) console.debug(`[${new Date().toISOString()}] Sending request to DeepSeek with model ${mymodel}`);
+    if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] Sending request to DeepSeek with model ${mymodel}`);
 
     const response = await fetch(link, {
         method: "POST",
@@ -109,7 +116,7 @@ try {
     if (!response.ok) {
         const errorMsg = data?.error?.message || `HTTP error ${response.status}`;
         if (editor) messageBox("error", `DeepSeek API Error: ${errorMsg}`);
-        if (show_debug) console.error("DeepSeek API error:", errorMsg);
+        if (toBoolean(DebugMode)) console.error("DeepSeek API error:", errorMsg);
         return "NOK";
     }
 
@@ -119,10 +126,13 @@ try {
         if (text === '""' || text === "") {
             text = original + " No translation received";
         }
-
+        if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] DeepSeek API response received:`, text);
+        
         const duration = ((Date.now() - start) / 1000).toFixed(2);
-        if (show_debug) console.debug(`[${new Date().toISOString()}] text received in ${duration}s`);
-
+        if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] text received in ${duration}s`);
+        // We need to give the original not preprocessed as preprocessed contains the quotes
+        text = await stripWrappingQuotes(text, original);
+        //console.debug("after stripping quotes:", text); 
         translatedText = await postProcessTranslation(
             original,
             text,
@@ -133,9 +143,8 @@ try {
             spellCheckIgnore,
             locale
         );
-
-        if (show_debug) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
-
+        if (toBoolean(DebugMode)) console.debug(`[${new Date().toISOString()}] text processed by postProcessTranslation`);
+        
         await processTransl(
             original,
             translatedText,
@@ -149,19 +158,19 @@ try {
             current
         );
 
-        if (show_debug) {
+        if (toBoolean(DebugMode)) {
             const durationSec = ((Date.now() - start) / 1000).toFixed(2);
             console.debug(`[${new Date().toISOString()}] All processed in ${durationSec}s`);
         }
 
         return "OK";
     } else {
-        if (show_debug) console.warn("DeepSeek API response missing expected content");
+        if (toBoolean(DebugMode)) console.warn("DeepSeek API response missing expected content");
         return "NOK";
     }
 } catch (error) {
     if (editor) messageBox("error", "DeepSeek API fetch error: " + error.message);
-    if (show_debug) console.error("DeepSeek fetch error:", error);
+    if (toBoolean(DebugMode)) console.error("DeepSeek fetch error:", error);
     return "NOK";
 }
 

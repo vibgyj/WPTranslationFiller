@@ -1883,7 +1883,7 @@ else if (request.action == "Lingvanex") {
                     function (response) {
 
                         if (chrome.runtime.lastError) {
-
+                            window.alert(`You do not have a working project tab, close this window and open a project tab first before setting paramters`);
                             console.error(
                                 "Error sending default glossary to content:",
                                 chrome.runtime.lastError.message

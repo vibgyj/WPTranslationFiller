@@ -5,37 +5,58 @@ function createGlossArray(spanElements, newGloss) {
     const glossArray = [];
     let glossIndexCounter = 0;
 
+    // Haal de vertaalvarianten uit de span's eigen data-translations attribuut.
+    // Dit is de locale-vertaling die al bij de span hoort, dus:
+    //  - werkt ongeacht of de brontekst enkelvoud of meervoud is
+    //    ("directories" hoeft niet naar "directory" gesingulariseerd te worden)
+    //  - is taal-onafhankelijk (geen aanname over de brontaal)
+    //  - splitst slash-varianten ("folder/directory" -> ["folder","directory"])
+    function variantsFromSpan(spanEl) {
+        const raw = spanEl && spanEl.dataset ? spanEl.dataset.translations : null;
+        if (!raw) return null;
+
+        let parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch (e) {
+            return null;
+        }
+        if (!Array.isArray(parsed)) return null;
+
+        const variants = parsed
+            .flatMap(t => String(t && t.translation ? t.translation : "").split('/'))
+            .map(s => s.replaceAll("&#39;", "'").trim().toLowerCase())
+            .filter(Boolean);
+
+        return variants.length ? [...new Set(variants)] : null;
+    }
+
     for (const span of spanElements) {
         const originalWord = span.textContent.trim().toLowerCase();
 
-        // Look up the word in newGloss map
-        const translations = newGloss.get(originalWord);
+        // Primair: varianten uit de span zelf.
+        let allVariants = variantsFromSpan(span);
 
-        // --- PASTE 1: what the lookup returns ---
-        //console.log('INSIDE createGlossArray:', originalWord,
-          //  '| newGloss.get:', JSON.stringify(translations));
-
-        // Skip if not in glossary or has no translations
-        if (!translations || translations.length === 0) continue;
-
-        // Flatten all translation variants
-        const allVariants = translations
-            .flat()
-            .map(t => t.trim().toLowerCase())
-            .filter(Boolean);
-
-        // --- PASTE 2: what actually gets pushed ---
-        //console.log('INSIDE createGlossArray:', originalWord,
-        //    '| pushing:', JSON.stringify(allVariants));
-
-        if (allVariants.length > 0) {
-            glossArray.push({
-                word: allVariants,
-                originalWord: originalWord,
-                glossIndex: glossIndexCounter++,
-                span: span
-            });
+        // Fallback: de oude lookup in newGloss, mocht een span geen bruikbare
+        // data-translations hebben.
+        if (!allVariants && newGloss) {
+            const translations = newGloss.get(originalWord);
+            if (translations && translations.length > 0) {
+                allVariants = translations
+                    .flat()
+                    .map(t => String(t).trim().toLowerCase())
+                    .filter(Boolean);
+            }
         }
+
+        if (!allVariants || allVariants.length === 0) continue;
+
+        glossArray.push({
+            word: allVariants,
+            originalWord: originalWord,
+            glossIndex: glossIndexCounter++,
+            span: span
+        });
     }
 
     return glossArray;
@@ -364,130 +385,6 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl', strictV
 
     return missingTranslations;
 }
-function working_findAllMissingWords(translationText, glossWords, locale = 'nl') {
-    
-    const translation = translationText.toLowerCase();
-    const wordsInTranslation = translation.split(/\W+/);
-
-    const matchPool = {}; // key: stringified word array, value: total matches
-    const entriesByKey = {}; // key: stringified word array, value: array of entries
-    const missingTranslations = [];
-
-    // Extended domain list including localized TLDs
-    const knownTLDs = [
-        'com', 'nl', 'be', 'de', 'fr', 'es', 'it', 'eu', 'uk', 'us',
-        'net', 'org', 'co', 'biz', 'info', 'io', 'gov', 'edu'
-    ];
-    const tldPattern = knownTLDs.join('|');
-
-    const urlLikeSegments = (translation.match(new RegExp(`\\b[\\w.-]+\\.(${tldPattern})(\\/\\S*)?\\b`, 'gi')) || []).map(s => s.toLowerCase());
-
-    function isWordInUrl(word,translation) {
-        return urlLikeSegments.some(segment => segment.includes(word));
-    }
-
-    // First pass: accumulate total matches per word group
-    glossWords.forEach((entry) => {
-        const wordKey = JSON.stringify(entry.word);
-
-        if (!entriesByKey[wordKey]) entriesByKey[wordKey] = [];
-        entriesByKey[wordKey].push(entry);
-
-        if (matchPool[wordKey] !== undefined) return; // already processed
-
-        let matchCount = 0;
-        for (const variant of entry.word) {
-            const lowerVariant = variant.toLowerCase();
-            const isShort = lowerVariant.length <= 2;
-
-            const specialCaseCartMatched = entry.originalWord === 'cart' && translation.includes('winkelwagen');
-
-            const lowerOriginal = entry.originalWord?.toLowerCase();
-            const originalAppearsUntranslated = lowerOriginal &&
-                translation.includes(lowerOriginal) &&
-                !entry.word.some(tw => tw.toLowerCase() === lowerOriginal) &&
-                !isWordInUrl(lowerOriginal); // ✅ exclude if it's part of a domain
-
-            const shortMatches = wordsInTranslation.filter(w => w === lowerVariant).length;
-
-            // ✅ Plural and adjective forms (locale-aware)
-            const inflectedForms = getInflectedFormsForLocale(locale, lowerVariant);
-            const inflectedMatches = wordsInTranslation.filter(w => inflectedForms.includes(w)).length;
-
-            const combinedMatches = (!originalAppearsUntranslated && !isShort)
-                ? (translation.match(new RegExp(`\\b\\w*${lowerVariant}\\w*\\b`, 'g')) || []).length
-                : 0;
-
-            const totalMatches = shortMatches + inflectedMatches + combinedMatches +
-                (specialCaseCartMatched ? 1 : 0);
-
-            matchCount += totalMatches;
-
-            // console.debug(`[DEBUG] Variant "${variant}": short=${shortMatches}, inflected=${inflectedMatches}, combined=${combinedMatches}, total=${totalMatches}`);
-        }
-
-        matchPool[wordKey] = matchCount;
-    });
-
-    // Second pass: check each group of same word entries
-    for (const wordKey in entriesByKey) {
-        const entries = entriesByKey[wordKey];
-        const expectedCount = entries.length;
-        const foundMatches = matchPool[wordKey] || 0;
-        const missingCount = expectedCount - foundMatches;
-
-        if (missingCount > 0) {
-            const originalWordFoundUntranslated = entries.some(entry => {
-                if (!entry.originalWord) return false;
-                const lowerOriginal = entry.originalWord.toLowerCase();
-                const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);
-                return translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal,translation);
-            });
-
-            if (!originalWordFoundUntranslated) {
-                entries.forEach((entry) => {
-                    missingTranslations.push({
-                        glossIndex: glossWords.indexOf(entry),
-                        word: entry.word,
-                        missingCount,
-                        span: entry.span
-                    });
-                });
-            } else {
-                entries.forEach((entry) => {
-                    const lowerOriginal = entry.originalWord?.toLowerCase();
-                    const originalIsTranslation = entry.word.some(tw => tw.toLowerCase() === lowerOriginal);
-
-                    if (lowerOriginal && translation.includes(lowerOriginal) && !originalIsTranslation && !isWordInUrl(lowerOriginal,translation)) {
-                        missingTranslations.push({
-                            glossIndex: glossWords.indexOf(entry),
-                            word: entry.word,
-                            missingCount,
-                            span: entry.span
-                        });
-                    }
-                });
-            }
-        }
-    }
-
-    if (missingTranslations.length > 0) {
-        //console.debug("[DEBUG] Missing glossary entries:", missingTranslations);
-    }
-    // --- TEMP DIAGNOSTIC ---
-    const t = translation.toLowerCase();
-    glossWords.forEach(e => {
-        const variants = (e.word || []).flatMap(w => String(w).split('/')).map(s => s.trim().toLowerCase()).filter(Boolean);
-        console.log('DIAG original:', e.originalWord, '| variants:', variants);
-        variants.forEach(v => console.log(
-            `   "${v}"  exact=${t.split(/\W+/).includes(v)}  boundary=${new RegExp(`\\b${v}\\b`).test(t)}  substring=${t.includes(v)}`
-        ));
-    });
-    console.log('DIAG translation:', JSON.stringify(t));
-// --- END ---
-    return missingTranslations;
-}
-
 
 async function remove_all_gloss(myleftPanel, preview, isPlural,rowId) {
    
@@ -632,7 +529,7 @@ async function mark_glossary(myleftPanel, toolTip, translation, rowId, isPlural)
 
 
 //# mark missing glossary words in original from preview 
-async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
+async function mark_preview(preview, toolTip, translation, rowId, isPlural,plural_line) {
     var glossWords
     var dutchText
     var spansArray = []
@@ -646,7 +543,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
         myglossary = glossary1;
     }
     newGloss = createNewGlossArray(myglossary);
-
+   // console.debug("plural_line:", plural_line) 
     if (!FoundURL) {
         if (translation != "") {
             markleftPanel = await document.querySelector(`#preview-${rowId} .original-text`)
@@ -661,8 +558,21 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                 singularText = markleftPanel.innerText;
 
                 if (isPlural == true) {
-                    pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__plural`);
-                    pluralText = pluralpresent.getElementsByClassName('original')[0]
+                    if (isPlural == true) {
+                        // meerdere bronvormen onder de preview; kies de vorm die bij deze plural_line hoort
+                        const originalTextNodes = document.querySelectorAll(`#preview-${rowId} .original-text`);
+                        //console.debug("original-text count:", originalTextNodes.length, "| plural_line:", plural_line);
+
+                        // plural_line is 1-based in je logging (1 = eerste vorm, 2 = tweede) -> index = plural_line - 1
+                        const idx = plural_line - 1;
+                        markleftPanel = originalTextNodes[idx] || originalTextNodes[0];
+                    } else {
+                      markleftPanel = await document.querySelector(`#preview-${rowId} .original-text`);
+                    }
+                    pluralpresent = markleftPanel
+                    //pluralpresent = markleftPanel.querySelector(`.editor-panel__left .source-string__singular`);
+                    // console.debug("mark_preview: pluralpresent:", pluralpresent)
+                    //pluralText = pluralpresent.getElementsByClassName('original')[0]
                     if (pluralpresent != null) {
                         spansPlural = pluralpresent.getElementsByClassName("glossary-word")
                     }
@@ -677,7 +587,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                 } else {
                     spans = spansSingular
                 }
-
+                //console.debug("spans:",spans)
                 if (spans.length > 0) {
                     spansArray = Array.from(spans)
                     for (spancnt = 1; spancnt < (spansArray.length); spancnt++) {
@@ -699,7 +609,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                           //  ));
                         });
                       //  console.log('DIAG translation:', JSON.stringify(t));
-// --- END ---
+                        // --- END ---
                         if (missingTranslations.length > 0) {
                             document.addEventListener("mouseover", (event) => {
                                 const tooltip = document.querySelector(".ui-tooltip");
@@ -735,10 +645,20 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural) {
                             }
                         }
                     } else {
+                      //  console.debug("we are in plural mode looking for missing words", glossWords)
+                        
+                       
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
+                       // console.debug("missingTranslations:", missingTranslations)
                         if (missingTranslations.length > 0) {
                             missingTranslations.forEach(({ word, glossIndex, span }) => {
+                            //    console.debug("missing word:", word, "glossIndex:", glossIndex, "span:", span);
                                 // plural highlighting placeholder
+                                missingTranslations.forEach(({ word, glossIndex, span }) => {
+                                    if (span) {
+                                        span.classList.add('highlight');
+                                }
+                            });
                             });
                         }
                     }
