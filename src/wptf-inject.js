@@ -266,35 +266,35 @@ function listAllRecords(locale,myDelete,myRecordDeleted) {
 
 function displayRecords(records, myDelete, myRecordDeleted) {
     const tableBody = document.getElementById("recordsTableBody");
-    tableBody.innerHTML = "";
-    let deleteText =myDelete; 
-    
+    tableBody.replaceChildren(); // clear safely
+
     records.forEach((record) => {
         const row = document.createElement("tr");
 
-        // Add the record data to the row
-       row.innerHTML = `
-    <td>${record.locale}</td>
-    <td style="white-space: pre;">${highlightSpaces(record.original)}</td>
-    <td style="white-space: pre;">${highlightSpaces(record.translation)}</td>
-    <td><button class="delete-btn">${deleteText}</button></td>
-`;
+        const tdLocale = document.createElement("td");
+        tdLocale.textContent = record.locale ?? "";
 
-        // Add event listener for the delete button
-        const deleteButton = row.querySelector(".delete-btn");
+        const tdOriginal = document.createElement("td");
+        tdOriginal.className = "gloss-cell";        // wrapping handled in CSS, not inline
+        tdOriginal.textContent = record.original ?? "";
 
-        // Explicitly pass locale and original values from record
+        const tdTranslation = document.createElement("td");
+        tdTranslation.className = "gloss-cell";
+        tdTranslation.textContent = record.translation ?? "";
+
+        const tdAction = document.createElement("td");
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-btn";
+        deleteButton.textContent = myDelete;
         deleteButton.addEventListener("click", function () {
-            // Log the values when button is clicked to verify correct values
-            //console.debug("Deleting record with locale:", record.locale, "and original:", record.original);
-            deleteRecord(record.locale, record.original, deleteText, myRecordDeleted); // Pass record values to deleteRecord
+            deleteRecord(record.locale, record.original, myDelete, myRecordDeleted);
         });
+        tdAction.appendChild(deleteButton);
 
-        // Append the row to the table body
+        row.append(tdLocale, tdOriginal, tdTranslation, tdAction);
         tableBody.appendChild(row);
     });
 }
-
 function saveTranslation(locale, original,deleteText,message) {
     const newTranslation = document.getElementById("editTranslation").value.trim();
 
@@ -588,3 +588,12 @@ function loadGlossaryFromDB(apiKey, DeeplFree,language) {
     });
 }
 
+function setSafeHTML(el, html) {
+    if ('setHTML' in el) {
+        // Empty config = allow all elements/attributes,
+        // strip only XSS vectors (scripts, event handlers, js: URLs)
+        el.setHTML(html, { sanitizer: new Sanitizer({}) });
+    } else {
+        el.innerHTML = html; // fallback for browsers without Sanitizer API
+    }
+}

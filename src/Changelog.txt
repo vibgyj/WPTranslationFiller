@@ -144,3 +144,6 @@ Version 3.8.84 Added loading the glossary also into the DeepL glossary list
 Version 3.5.84 Modified the sequence of prompt selection in the options page.
 Version 3.5.84 improved bulksave behavior.
 Version 3.5.84 improved DeepSeek translation.
+Version 3.5.85 Moved post and pre into vars with locale
+Version 3.5.86 Plural preview was not populated anymore
+Version 3.5.87 Fixed a warning for securety about deeplglossary.html in Firefox upload

@@ -58,7 +58,13 @@ var Rearrange_Sentences = true;
 var PlaceholderLog = [];
 var replaced_char = false
 var noChevrons = false
-
+var glob_row = 0;
+var convertToLow = true;
+var detailRow = 0;
+var errorstate = "OK";
+var locale = checkLocale();
+var showGlosLine;
+var parrotActive;
 
 removeLegacyGlossaryStorage()
 function savePage() {
@@ -109,34 +115,8 @@ chrome.runtime.onMessage.addListener(
         }
     }
 );
-chrome.runtime.onMessage.addListener(
-    function (request, sender, sendResponse) {
 
-        if (request.action === "getWPGlossaryTest") {
 
-            testGlossaryRead()
-                .then(function (result) {
-                    sendResponse({
-                        success: true,
-                        records: result
-                    });
-                })
-                .catch(function (error) {
-                    console.error(
-                        "Error reading WPGlossary:",
-                        error
-                    );
-
-                    sendResponse({
-                        success: false,
-                        error: error.message
-                    });
-                });
-
-            return true;
-        }
-    }
-);
 async function loadTranslations(language) {
     try {
         const url = chrome.runtime.getURL(`locales/${language}.json`);
@@ -254,6 +234,7 @@ function setupTooltipHandler() {
     });
 
     document.addEventListener("keydown", (event) => {
+        if (typeof event.key !== "string") return;   // autofill / synthetic keydown has no key
         if (event.key.toLowerCase() === "r" && event.ctrlKey && event.shiftKey) {
             if (event) event.preventDefault();
             const btn = document.createElement("button");
@@ -438,18 +419,10 @@ chrome.storage.local.get(["showTransDiff"], function (data) {
     }
 });
 
-var glob_row      = 0;
-var convertToLow  = true;
-var detailRow     = 0;
-var errorstate    = "OK";
-var locale        = checkLocale();
-var showGlosLine;
-
 gd_wait_table_alter();
 addCheckBox();
 exportGlossaryForOpenAi(locale);
 
-var parrotActive;
 const script   = document.createElement('script');
 script.src     = chrome.runtime.getURL('wptf-inject.js');
 (document.head || document.documentElement).prepend(script);
@@ -513,26 +486,6 @@ document.addEventListener("keydown", async function (event) {
         });
     }
 
-    if (event.altKey && event.shiftKey && (event.key === "+")) {
-        if (event) event.preventDefault();
-        chrome.storage.local.set({ convertToLower: true });
-        chrome.storage.local.get(["convertToLower"], function (data) {
-            if (data.convertToLower != "null") convertToLow = data.convertToLower;
-        });
-        UpperCaseButton.className = "UpperCase-button uppercase";
-        toastbox("info", "Switching conversion on", "1200", "Conversion");
-    }
-
-    if (event.altKey && event.shiftKey && (event.key === "-")) {
-        if (event) event.preventDefault();
-        chrome.storage.local.set({ convertToLower: false });
-        chrome.storage.local.get(["convertToLower"], function (data) {
-            if (data.convertToLower != "null") convertToLow = data.convertToLower;
-        });
-        UpperCaseButton.className = "UpperCase-button";
-        toastbox("info", "Switching conversion off", "1200", "Conversion");
-    }
-
     if (event.altKey && event.shiftKey && (event.key === "%")) {
         if (event) event.preventDefault();
         copyToClipBoard(detailRow);
@@ -582,7 +535,10 @@ document.addEventListener("keydown", async function (event) {
                 if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                     if (data.transsel != "undefined") {
                         convertToLow = data.convertToLower;
-                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, data.DeeplFree);
+                        const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                        const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                        const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
+                        result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, convertToLow, data.DeeplFree);
                     } else { messageBox("error", "You need to set the translator API"); }
                 } else { messageBox("error", "You need to set the parameter for Destination language"); }
             } else { messageBox("error", "For " + data.transsel + " no apikey is set!"); }
@@ -597,8 +553,11 @@ document.addEventListener("keydown", async function (event) {
                     if (data.transsel != "undefined") {
                         let formal   = checkFormal(false);
                         convertToLow = data.convertToLower;
-                        var TMwait   = (typeof data.TMwait == "undefined") ? 500 : data.TMwait;
-                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, data.DeeplFree, TMwait, data.spellCheckIgnore, TMtreshold, interCept);
+                        var TMwait = (typeof data.TMwait == "undefined") ? 500 : data.TMwait;
+                        const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                        const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                        const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
+                        result = populateWithTM(data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, convertToLow, data.DeeplFree, TMwait, data.spellCheckIgnore, TMtreshold, interCept);
                     } else { messageBox("error", "You need to set the translator API"); }
                 } else { messageBox("error", "You need to set the parameter for Destination language"); }
             } else { messageBox("error", "For " + data.transsel + " no apikey is set!"); }
@@ -708,7 +667,10 @@ document.addEventListener("keydown", async function (event) {
         }
         chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyMicrosoft", "apikeyClaude", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore"], function (data) {
             let formal = checkFormal(false);
-            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, spellCheckIgnore);
+            const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+            const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+            const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
+            translateEntry(rowId, data.apikey, data.apikeyDeepl, data.apikeyMicrosoft, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, data.convertToLower, data.DeeplFree, translationComplete, spellCheckIgnore);
         });
     }
 
@@ -1256,8 +1218,11 @@ function tmTransClicked(event) {
                 if (data.transsel != "undefined") {
                     let formal   = checkFormal(false);
                     convertToLow = data.convertToLower;
-                    var TMwait   = (typeof data.TMwait == "undefined") ? 500 : data.TMwait;
-                    result = populateWithTM(data.apikey, data.apikeyDeep, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, data.DeeplFree, TMwait, data.postTranslationReplace, data.preTranslationReplace, data.convertToLower, data.spellCheckIgnore, data.TMtreshold, interCept);
+                    var TMwait = (typeof data.TMwait == "undefined") ? 500 : data.TMwait;
+                    const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                    const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                    const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
+                    result = populateWithTM(data.apikey, data.apikeyDeep, data.apikeyMicrosoft, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, convertToLow, data.DeeplFree, TMwait, postTranslationReplace, preTranslationReplace, data.convertToLower, data.spellCheckIgnore, data.TMtreshold, interCept);
                 } else { messageBox("error", "You need to set the translator API"); }
             } else { messageBox("error", "You need to set the parameter for Destination language"); }
         } else { messageBox("error", "For " + data.transsel + " no apikey is set!"); }
@@ -1274,8 +1239,10 @@ function localTransClicked(event) {
                     convertToLow   = data.convertToLower;
                     let OpenAItemp = parseFloat(data.OpenAItemp);
                     //console.debug("keys:",data.apikeylara_accessKeyId,data.lara_accessKeySecret)
-
-                    result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, convertToLow, data.DeeplFree, data.apikeyOpenAI, data.OpenAIPrompt, data.OpenAISelect, data.OpenAITone, OpenAItemp, data.apikeyClaude, data.ClaudePrompt, data.OpenAiGloss, data.ClaudModel, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyNLP, data.apikeyOpenRouter, data.OpenRouterSelect,data.apikeygroq, data.grogSelect, data.apikeylara_accessKeyId, data.lara_accessKeySecret);
+                    const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                    const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                    const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
+                    result = populateWithLocal(data.apikey, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyMicrosoft, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, convertToLow, data.DeeplFree, data.apikeyOpenAI, data.OpenAIPrompt, data.OpenAISelect, data.OpenAITone, OpenAItemp, data.apikeyClaude, data.ClaudePrompt, data.OpenAiGloss, data.ClaudModel, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyNLP, data.apikeyOpenRouter, data.OpenRouterSelect,data.apikeygroq, data.grogSelect, data.apikeylara_accessKeyId, data.lara_accessKeySecret);
 
                 } else { messageBox("error", "You need to set the translator API"); }
             } else { messageBox("error", "You need to set the parameter for Destination language"); }
@@ -1365,8 +1332,10 @@ function translatePageClicked(event) {
                         let result = await checkModelAndContinue(data.ollamaModel);
                         if (!result) return;
                     }
-                    
-                    translatePage(data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyKimi, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.DeepLWait, data.OpenAiGloss, data.ClaudePrompt, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.groqBatchSize, data.KimiSelect, data.CerebrasSelect, data.apikeylara_accessKeyId,data.lara_accessKeySecret);
+                    const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                    const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                    const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
+                    translatePage(data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyKimi, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.DeepLWait, data.OpenAiGloss, data.ClaudePrompt, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.groqBatchSize, data.KimiSelect, data.CerebrasSelect, data.apikeylara_accessKeyId,data.lara_accessKeySecret);
                 } else { messageBox("error", "You need to set the translator API"); }
             } else { messageBox("error", "You need to set the parameter for Destination language"); }
        // } else { messageBox("error", "For " + data.transsel + " no apikey is set!"); }
@@ -1387,7 +1356,9 @@ async function checkPageClicked(event) {
     let formal = checkFormal(false);
     chrome.storage.local.get(["apikey", "apikeyOpenAI", "destlang", "transsel", "postTranslationReplace", "preTranslationReplace", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "spellCheckIgnore", "OpenAIPrompt", "reviewPrompt", "Auto_review_OpenAI", "convertToLower", "showHistory", "showTransDiff", "openAiGloss", "OpenAISelect", "apikeyOpenRouter", "OpenRouterSelect"], async function (data) {
         try {
-            await checkPage(data.postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, "", data.spellCheckIgnore, showHistory, data.apikeyOpenAI, data.OpenAIPrompt, data.reviewPrompt);
+            const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+            const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+            await checkPage(postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, "", data.spellCheckIgnore, showHistory, data.apikeyOpenAI, data.OpenAIPrompt, data.reviewPrompt);
             if (data.Auto_review_OpenAI == true) await reviewPage(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt, data.reviewPrompt, data.OpenAiGloss, data.OpenAISelect, data.apikeyOpenRouter,data.transsel,data.OpenRouterSelect);
             if (data.Auto_spellcheck   == true) await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
         } catch (error) { console.error("An error occurred:", error); }
@@ -1832,7 +1803,9 @@ function handleCopySuggestionClick(target) {
     //console.debug('Copy suggestion clicked for rowId:', rowId, 'formal:', formal);
     chrome.storage.local.get(["postTranslationReplace", "formal"], function (data) {
         // FIX: was `replaceVerb` (undefined) — unified to `replaceVerbs`
-        let replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, toBoolean(formal))
+        const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+        const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+        let replaceVerbs = setPostTranslationReplace(postTranslationReplace, toBoolean(formal))
         //console.debug('Post-translation replace settings:', replaceVerbs);
         onCopySuggestionClicked(target, rowId, replaceVerbs);
     });
@@ -1911,7 +1884,9 @@ async function processTMandAISuggestions(rowId) {
             if (my_original == null) return;
             const original = my_original.innerText;
             chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "formal"], function (data) {
-                setPostTranslationReplace(data.postTranslationReplace, data.formal);
+                const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                setPostTranslationReplace(postTranslationReplace, data.formal);
                 let locale       = checkLocale() || 'en';
                 let correctedText = postProcessTranslation(original, textFound, replaceVerb, "", "", data.convertToLower, data.spellCheckIgnore, locale);
                 liSuggestion.innerText     = correctedText;
@@ -1964,7 +1939,9 @@ async function handleDetailsAction(rowId, event) {
                 let formal = checkFormal(false)
                 if (toBoolean(formal)) {
                     chrome.storage.local.get(["postTranslationReplace", "formal"], async function (data) {
-                        let replaceVerbs = setPostTranslationReplace(data.postTranslationReplace, toBoolean(formal))
+                        const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                        const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                        let replaceVerbs = setPostTranslationReplace(postTranslationReplace, toBoolean(formal))
                         let mytranslatedText = await replaceVerbInTranslation(myoriginal, pretrans, replaceVerbs, debug = false, formal)
                         mytextarea[0].innerHTML = mytranslatedText;
                         mytextarea[0].innerText = mytranslatedText;
@@ -2177,7 +2154,9 @@ function checktranslateEntryClicked(event) {
     if (typeof myrowId != "undefined" && myrowId != "checktranslation") rowId = rowId.concat("-", myrowId);
     chrome.storage.local.get(["postTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal"], function (data) {
         let formal = toBoolean(data.ForceFormal) === true ? true : checkFormal(false);
-        checkEntry(rowId, data.postTranslationReplace, formal, data.convertToLower, data.spellCheckIgnore);
+        const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+        const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+        checkEntry(rowId, postTranslationReplace, formal, data.convertToLower, data.spellCheckIgnore);
     });
 }
 
@@ -2204,9 +2183,11 @@ function translateEntryClicked(event) {
         let OpenAItemp    = parseFloat(data.OpenAItemp);
         let deeplGlossary = localStorage.getItem('deeplGlossary');
         let koboldUrl = ""
-        
+        const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+        const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+        const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyKimi, data.apikeyNLP, data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, data.postTranslationReplace, data.preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.OpenAiGloss, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.KimiSelect, data.CerebrasSelect,koboldUrl,data.apikeylara_accessKeyId,data.lara_accessKeySecret);
+            translateEntry(rowId, data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyKimi, data.apikeyNLP, data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.OpenAiGloss, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.KimiSelect, data.CerebrasSelect,koboldUrl,data.apikeylara_accessKeyId,data.lara_accessKeySecret);
         } else {
             messageBox("error", "You need to set the parameter for Destination language");
         }
@@ -3506,10 +3487,16 @@ async function handleMutation(mutationsList) {
                 : percent >= 33 ? "orange"
                 : percent >= 10 ? "purple"
                 : percent >  0  ? "darkorange"
-                : "red";
-            priorityElem.innerHTML = percent > 0
-                ? `<span style="color:black">${percent}</span>`
-                : String(spansArray.length);
+                            : "red";
+            // code below replaces innerHTML with a span element to avoid HTML injection
+            if (percent > 0) {
+                const span = document.createElement('span');
+                span.style.color = 'black';
+                span.textContent = percent;        // numbers are fine; auto-converted
+                priorityElem.replaceChildren(span);
+            } else {
+               priorityElem.textContent = spansArray.length;
+            }
         }
 
         if (markerPresent[0]) markerPresent[0].remove();

@@ -17,9 +17,28 @@ async function stripWrappingQuotes(output, source) {
 
   if (sourceWrapped) return t;
     //console.debug("Stripping wrapping quotes from output:", t.slice(1, -1));
-  return t.slice(1, -1);
+    return t.slice(1, -1);
 }
-
+function buildWordRegex(searchWord) {
+    const safeWord = escapeRegex(searchWord);
+    // Dutch vormt samenstellingen ("site" -> "sitebezoekers"), dus woorden van
+    // 3+ tekens mogen als prefix van een samenstelling matchen (alleen leidende \b).
+    // Korte woorden zoals "u" houden beide boundaries zodat ze niet binnen
+    // "uw" of "uit" matchen.
+    const trailingBoundary = searchWord.length >= 3 ? '' : '\\b';
+    return new RegExp(
+        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}${trailingBoundary}(?![^\\[]*\\]|[^{]*\\})`,
+        'gi'
+    );
+}
+// Geeft de replace-tekst voor de gevraagde locale.
+// Werkt met zowel het oude platte-string formaat als het nieuwe object-per-locale.
+function getReplaceForLocale(stored, localeUpper) {
+    if (stored == null) return "";
+    if (typeof stored === "string") return stored;        // oud formaat: gold globaal
+    if (typeof stored === "object") return stored[localeUpper] || "";
+    return "";
+}
 async function removeLegacyGlossaryStorage() {
     // Verwijdert alleen de oude glossary-DATA: glossary, glossary1,
     // glossaryA..Z en glossary1A..Z.

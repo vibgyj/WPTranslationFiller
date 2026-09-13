@@ -554,56 +554,42 @@ function setSearchLocale(locale) {
 }
 
 async function openDeeplModal(DeepLdb) {
-    // we need to set the text of the button here, otherwise the translation is not found
-    let saveText = __("SaveRec")
-    var deleteText = __("Delete")
-    var deletedText = __("Deleted")
-    var message = __("Translation updated successfully!")
-    var title = __("Manage glossary")
-    var DeepLClose = __("Close")
-    var ImpCSV = __("Import CSV")
-    var ExpCSV = __("Export CSV")
-    var AddEntry = __("Add Entry")
-    var mySearch = __("Search")
-    var searchLoc = __("Enter Locale")
-    var searchOrig = __("Enter Original")
-    var locHead = __("Locale Header")
-    var origHead = __("Original Header")
-    var transHead = __("Translation Header")
-    var myDelete = __("Delete")
-    var myRecordDeleted = __("Record deleted: ")
-    var recordNotFound = __("Record not found: ")
-    var DownLoadPath = ""
+    let saveText = __("SaveRec");
+    var deleteText = __("Delete");
+    var deletedText = __("Deleted");
+    var message = __("Translation updated successfully!");
+    var title = __("Manage glossary");
+    var DeepLClose = __("Close");
+    var ImpCSV = __("Import CSV");
+    var ExpCSV = __("Export CSV");
+    var AddEntry = __("Add Entry");
+    var mySearch = __("Search");
+    var searchLoc = __("Enter Locale");
+    var searchOrig = __("Enter Original");
+    var locHead = __("Locale Header");
+    var origHead = __("Original Header");
+    var transHead = __("Translation Header");
+    var myDelete = __("Delete");
+    var myRecordDeleted = __("Record deleted: ");
+    var recordNotFound = __("Record not found: ");
 
-    await chrome.storage.local.get(["DownloadPath"], function (data) {
-       // console.debug("Download path:", data)
-        DownloadPath =  data.DownloadPath
-        if (DownloadPath == "" || DownloadPath == null) {
-            DownloadPath = "C:\\Temp\\"
-        }
-     // console.debug("pad:",DownloadPath)
-        const modalHTML = `
+    let store = await chrome.storage.local.get(["DownloadPath"]);
+    let DownloadPath = store.DownloadPath;
+    if (DownloadPath == "" || DownloadPath == null) {
+        DownloadPath = "C:\\Temp\\";
+    }
+
+    const modalHTML = `
 <div id="DeepLmodal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
   <div style="background:white; padding:20px; margin:auto; width:60%; position:relative; top:-20vh;">
-   
-
     <h2>${title}</h2>
-    <button onclick="closeModalClicked()">${DeepLClose}</button>
-    
-    <button 
-     data-delete="${myDelete}" 
-      data-deleted="${myRecordDeleted}" 
-      onclick="importDeepLCSV(this.dataset.delete, this.dataset.deleted)"
-    >
-      ${ImpCSV}
-    </button>
-    
-    <button onclick="exportDeepLCSV()">${ExpCSV}</button>
+    <button id="deeplCloseBtn">${DeepLClose}</button>
+    <button id="deeplImportBtn" data-delete="${myDelete}" data-deleted="${myRecordDeleted}">${ImpCSV}</button>
+    <button id="deeplExportBtn">${ExpCSV}</button>
     <button id="addEntryButton">${AddEntry}</button>
     <input type="text" id="searchLocale" placeholder="${searchLoc}">
     <input type="text" id="searchOriginal" placeholder="${searchOrig}">
-    
-    <button onclick="startSearch('${saveText}', '${deleteText}','${myRecordDeleted}', '${recordNotFound}', '${message}')">${mySearch}</button>
+    <button id="deeplSearchBtn">${mySearch}</button>
 
     <table border="1">
       <thead>
@@ -613,21 +599,28 @@ async function openDeeplModal(DeepLdb) {
     </table>
   </div>
 </div>
-
 `;
 
-        // Append modal to body
-        document.body.insertAdjacentHTML("beforeend", modalHTML);
-        document.getElementById("DeepLmodal").style.display = "block";
-        let locale = checkLocale() || 'en';
-        locale = locale.toUpperCase()
-        listAllRecords(locale, myDelete, myRecordDeleted);
-        document.getElementById("addEntryButton").addEventListener("click", addEntry);
-        // We need to set the locale to the working locale in the modal
-        setSearchLocale(locale)
-    })
-}
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+    document.getElementById("DeepLmodal").style.display = "block";
 
+    let locale = (checkLocale() || 'en').toUpperCase();
+    listAllRecords(locale, myDelete, myRecordDeleted);
+    setSearchLocale(locale);
+
+    // Wire every button here — no inline handlers anywhere in the markup
+    document.getElementById("deeplCloseBtn").addEventListener("click", closeModalClicked);
+    document.getElementById("deeplExportBtn").addEventListener("click", exportDeepLCSV);
+    document.getElementById("addEntryButton").addEventListener("click", addEntry);
+
+    document.getElementById("deeplImportBtn").addEventListener("click", function (e) {
+        importDeepLCSV(e.currentTarget.dataset.delete, e.currentTarget.dataset.deleted);
+    });
+
+    document.getElementById("deeplSearchBtn").addEventListener("click", function () {
+        startSearch(saveText, deleteText, myRecordDeleted, recordNotFound, message);
+    });
+}
 
 function createAndOpenModal() {
     //console.debug("locale:",locale)

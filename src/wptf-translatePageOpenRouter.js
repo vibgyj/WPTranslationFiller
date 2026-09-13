@@ -306,6 +306,9 @@ async function translatePageOpenRouter(
     openAiGloss,
     openRouterBatchSize = 10
 ) {
+    //console.debug("postTranslationReplace:", postTranslationReplace);
+    //console.debug("preTranslationReplace:", preTranslationReplace);
+    //console.debug("glossary:", openAiGloss);
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
     //console.debug("Batch:",openRouterBatchSize)
@@ -509,6 +512,7 @@ async function translatePageOpenRouter(
             allItems.map(async item => {
                 const preprocessed   = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
                 const prunedGlossary = await pruneGlossary(openAiGloss, preprocessed, null);
+                //console.debug("prunedGlossary for row " + item.id + " line " + item.line + ":", prunedGlossary); 
                 return {
                     id: item.id, line: item.line,
                     text: item.original, preprocessed,
@@ -521,7 +525,7 @@ async function translatePageOpenRouter(
         //console.debug('[OR Bulk] combinedGlossary:', combinedGlossary);
 
         const promptItems = enrichedItems.map(({ id, text }) => ({ i: id, t: text }));
-
+        
         const batchPrompt = applyORPromptBatch(
             basePrompt,
             JSON.stringify(promptItems),
@@ -611,11 +615,8 @@ async function translatePageOpenRouter(
                     item.original, translation, replaceVerb,
                     item.original, 'openRouter', convertToLower, spellIgnoreStr, locale
                 );
-
-                await processTransl(
-                    item.original, finalText, destlang,
-                    group.record, group.id, group.type,
-                    String(item.line), locale, convertToLower, getBubble(group.id)
+                // console.debug("plural_line:",String(item.line))
+                await processTransl(item.original, finalText, destlang,group.record, group.id, group.type,String(item.line), locale, convertToLower, getBubble(group.id)
                 );
             }
         }

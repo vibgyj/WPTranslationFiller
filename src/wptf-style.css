@@ -2358,3 +2358,27 @@ span.text-line-counter{
   /*  flex: 0 0 19rem !important; */
   /*  min-width: 1%; */
 /*}*/
+/* Beheer glossary table lives in #DeepLmodal; the <table> has no id/class */
+#DeepLmodal table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+/* Kill the inline white-space:pre so long entries wrap instead of
+   stretching the table past the modal */
+#recordsTableBody td,
+#DeepLmodal thead th {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+}
+
+    /* Keep the action column tight and the button on one line —
+   this pulls Verwijderen back next to the translation */
+    #recordsTableBody td:nth-child(4) {
+        width: 1%;
+        white-space: nowrap !important;
+        text-align: center;
+    }

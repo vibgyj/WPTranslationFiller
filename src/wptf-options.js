@@ -13,6 +13,7 @@ optionHeader.insertAdjacentHTML("afterbegin", template);
 var link = document.createElement("link");
 var parrotActive = 'false';
 var inter;
+var locale = 'en';
 link.type = "text/css";
 link.rel = "stylesheet";
 link.href = chrome.runtime.getURL("wptf-cute-alert.css");
@@ -27,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                     try {
                         const urlParams = new URLSearchParams(window.location.search);
-                        const locale = urlParams.get("lang") || "en";
+                        locale = urlParams.get("lang") || "en";
                         const response = await fetch(`locales/options/${locale}.json`);
                         const translations = await response.json();
 
@@ -638,8 +639,13 @@ if ([...langselect.options].some(opt => opt.value === destLangTextbox.value)) {
 }
     uploadedFile.innerText = `${data.glossaryFile}`;
     uploadedSecondFile.innerText = `${data.glossaryFileSecond}`;
-    verbsTextbox.value = data.postTranslationReplace;
-    preverbsTextbox.value = sortTextarea(data.preTranslationReplace);
+    // --- locale-bewust laden van pre/post replace ---
+    // De opgeslagen waarde is een object gekeyd op locale; haal de regels
+    // voor de huidige locale op. Oud plat-string formaat wordt door
+    // getReplaceForLocale gewoon teruggegeven (geldt dan globaal).
+    const loadLocale = (new URLSearchParams(window.location.search).get("lang") || "en").toUpperCase();
+    verbsTextbox.value    = getReplaceForLocale(data.postTranslationReplace, loadLocale);
+    preverbsTextbox.value = sortTextarea(getReplaceForLocale(data.preTranslationReplace, loadLocale));
 
     if (typeof data.OpenAIPrompt == 'undefined') {
         promptTextbox.value = 'Enter prompt'
@@ -1168,8 +1174,6 @@ button.addEventListener("click", function () {
             OpenAITone:OpenAITone,
             OpenAItemp: OpenAItempVal,
             destlang: destlang,
-            postTranslationReplace: postTranslation,
-            preTranslationReplace: preTranslation,
             OpenAIPrompt: promptText,
             ClaudePrompt: ClaudePrompt,
             ollamaPrompt: OllamaPromptTextbox.value,
@@ -1207,6 +1211,25 @@ button.addEventListener("click", function () {
             noChevrons: shownoChevrons,
             noUI: showNoUI,
             groqBatchSize: groqBatchSizeBox.value
+        });
+
+        // --- locale-bewuste opslag van pre/post replace ---
+        // De waarde wordt een object gekeyd op locale, zodat elke taal
+        // zijn eigen regels heeft. We lezen eerst de bestaande data zodat
+        // de andere locales bewaard blijven, en werken alleen de huidige bij.
+        const saveLocale = (new URLSearchParams(window.location.search).get("lang") || "en").toUpperCase();
+
+        chrome.storage.local.get(["postTranslationReplace", "preTranslationReplace"], function (stored) {
+            const postObj = toLocaleObject(stored.postTranslationReplace, saveLocale);
+            const preObj  = toLocaleObject(stored.preTranslationReplace,  saveLocale);
+
+            postObj[saveLocale] = postTranslation;
+            preObj[saveLocale]  = preTranslation;
+
+            chrome.storage.local.set({
+                postTranslationReplace: postObj,
+                preTranslationReplace: preObj,
+            });
         });
 
         if (glossaryFile.value !== "") {
@@ -1782,6 +1805,31 @@ const toBoolean = (value) => {
     if (typeof value === "number") return value === 1;
     return false;
 };
+
+// ============================================================
+// LOCALE-BEWUSTE PRE/POST REPLACE HELPERS
+// ============================================================
+// De pre/post replace-vakken worden per locale opgeslagen als een object
+// gekeyd op locale-code (hoofdletters), bv. { "NL-BE": "...", "DE": "..." }.
+// Deze twee helpers verzorgen het lezen en het migreren van het oude
+// platte-string formaat.
+
+function toLocaleObject(value, currentLocale) {
+    if (value == null) return {};
+    if (typeof value === "string") {
+        // oud plat formaat -> onder de huidige locale zetten
+        return value.trim() ? { [currentLocale]: value } : {};
+    }
+    if (typeof value === "object") return value;
+    return {};
+}
+
+function getReplaceForLocale(stored, localeUpper) {
+    if (stored == null) return "";
+    if (typeof stored === "string") return stored;        // oud plat formaat: gold globaal
+    if (typeof stored === "object") return stored[localeUpper] || "";
+    return "";
+}
 
     // ============================================================
 // BACKUP & RESTORE SETTINGS

@@ -778,12 +778,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 let inIgnore = ignoreWords.has(searchWord.toLowerCase());
 
                 if (!inUrl && !inIgnore) {
-                    const safeWord = escapeRegex(searchWord);
-                    // Word boundaries toegevoegd zodat "u" niet binnen "uw" of "uit" matcht
-                    const wordRegex = new RegExp(
-                        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
-                        'gi'  // case-insensitive toegevoegd voor consistentie
-                    );
+                    const wordRegex = buildWordRegex(searchWord);
 
                     const beforeReplace = translatedText;
                     translatedText = translatedText.replace(wordRegex, makeReplacer(replacement));
@@ -804,11 +799,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 let inIgnore = ignoreWords.has(searchWord.toLowerCase());
 
                 if (!inUrl && !inIgnore) {
-                    const safeWord = escapeRegex(searchWord);
-                    const wordRegex = new RegExp(
-                        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
-                        'gi'
-                    );
+                    const wordRegex = buildWordRegex(searchWord);
 
                     const beforeReplace = translatedText;
                     translatedText = translatedText.replace(wordRegex, makeReplacer(replacement));
@@ -846,11 +837,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 let inIgnore = ignoreWords.has(searchWord.toLowerCase());
 
                 if (!inUrl && !inIgnore) {
-                    const safeWord = escapeRegex(searchWord);
-                    const wordRegex = new RegExp(
-                        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}\\b(?![^\\[]*\\]|[^{]*\\})`,
-                        'gi'
-                    );
+                    const wordRegex = buildWordRegex(searchWord);
 
                     // Remember the text so we can detect if this entry changed anything
                     const beforeReplace = translatedText;
@@ -877,7 +864,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                     if (replLog && translatedText !== beforeReplace) {
                         replLog.push([searchWord, replacement]);
                     }
-
                 }
             }
         }
@@ -1746,7 +1732,9 @@ async function compairWithSuggestion(is_pte, convertToLower, spellCheckIgnore, l
         let singularLocal = await findTransline(singularOriginal, locale);
         if (singularLocal !== "notFound") {
             const formal = checkFormal(false);
-            setPostTranslationReplace(data.postTranslationReplace, formal);
+            const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+            const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+            setPostTranslationReplace(postTranslationReplace, formal);
             singularLocal = replaceVerbInTranslation(singularOriginal, singularLocal, replaceVerb, false, formal);
             singularLocal = await postProcessTranslation(
                 singularOriginal,
@@ -1768,7 +1756,9 @@ async function compairWithSuggestion(is_pte, convertToLower, spellCheckIgnore, l
             pluralLocal = await findTransline(pluralOriginal, locale);
             if (pluralLocal !== "notFound") {
                 const formal = checkFormal(false);
-                setPostTranslationReplace(data.postTranslationReplace, formal);
+                const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+                const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+                setPostTranslationReplace(postTranslationReplace, formal);
                 pluralLocal = replaceVerbInTranslation(pluralOriginal, pluralLocal, replaceVerb, false, formal);
                 pluralLocal = await postProcessTranslation(
                     pluralOriginal,
@@ -5588,6 +5578,7 @@ async function translatePage(apikey, apikeyCerebras, apikeyDeepl, apikeyMicrosof
     }
     else if (transsel == "openRouter") {
         //console.debug("we translate with openrouter")
+        //console.debug("page openrouter:",openAiGloss)
         let is_editor = false
         result = await translatePageOpenRouter(
             apikeyOpenRouter, OpenAIPrompt, OpenRouterSelect,
@@ -6600,6 +6591,7 @@ async function translateEntry(rowId, apikey, apikeyCerebras, apikeyDeepl, apikey
                     }
                     else if (transsel == "openRouter") {
                         let editor = true;
+                        
                         result = await openRouterTranslate(original, destlang, e, apikeyOpenRouter, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
@@ -7610,7 +7602,9 @@ async function processTransl (original, translatedText, language, record, rowId,
                   //  }
                // }
                 if (plural_line == 1) {
-                   // console.debug("we update first line in plural:",translatedText)
+                    // We need to make sure the spans are present in the preview, otherwise we will not be able to update the preview text
+                   await check_span_missing(myRowId, plural_line);
+                   //console.debug("we update first line in plural:",translatedText)
                     //populate plural line if not already translated, so we can take original rowId
                     textareaElem1 = document.querySelector("textarea#translation_" + myRowId + "_0");
                     textareaElem1.innerText = mytranslatedText;
@@ -7623,7 +7617,8 @@ async function processTransl (original, translatedText, language, record, rowId,
                     // textareaElem1.style.height = textareaElem1.scrollHeight + 'px';
                     // Select the first li
                     previewElem = document.querySelector("#preview-" + myRowId + " li:nth-of-type(1) .translation-text");
-                    // console.debug("previewElem:",previewElem)
+
+                    //console.debug("previewElem:",previewElem)
                     if (previewElem != null) {
                        previewElem.innerText = mytranslatedText;
                        //previewElem.innerHTML = mytranslatedText;
@@ -7644,19 +7639,17 @@ async function processTransl (original, translatedText, language, record, rowId,
                 if (plural_line == 2) {
                     // Select the second li
                     const root = document.querySelector("#preview-" + myRowId);
-                    //console.log("root:", root);
-                    //console.log("alle li's:", root && root.querySelectorAll("li").length);
-                    //console.log("alle .translation-text:", root && root.querySelectorAll(".translation-text").length);
-                    //console.log("root innerHTML:", root && root.innerHTML);
+                    
                     // in de plural_line == 2 tak:
                     const translationSpans = document.querySelectorAll(
                         "#preview-" + myRowId + " td.translation .translation-text"
                     );
-                    let previewElem2 = translationSpans[plural_line - 1] || null;   // plural_line 2 -> index 1 = Plural-span
+                    //console.debug("translationSpans:", translationSpans.length, translationSpans,plural_line)
+                    let previewElem2 = translationSpans[plural_line] || null;   // plural_line 2 -> index 1 = Plural-span, but if the label "locale" is present, then index 2 = Plural-span" 
 
                     if (previewElem2 != null) {
-                        previewElem2.innerText = mytranslatedText;
-                        previewElem2.value = mytranslatedText;
+                       previewElem2.innerText = mytranslatedText;
+                       previewElem2.value = mytranslatedText;
                     } else {
                         console.debug("Geen Plural translation-text voor rowId", myRowId, "| spans:", translationSpans.length);
                     }
@@ -8263,7 +8256,9 @@ async function onCopySuggestionClicked(target,rowId,replaceVerb) {
         editor = editor[0].querySelector(".panel-content")
         let original = editor.querySelector("span.original-raw").innerText;
         let text = editor.querySelector("textarea.foreign-text").value;
-        setPostTranslationReplace(data.postTranslationReplace, formal)
+        const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
+        const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+        setPostTranslationReplace(postTranslationReplace, formal)
         //console.debug("onCopySuggestionClicked replaceVerb:", replaceVerb)
         if (formal) {
             translatedText = await replaceVerbInTranslation(original, text, replaceVerb, debug = false, toBoolean(formal))
