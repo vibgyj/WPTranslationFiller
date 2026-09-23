@@ -287,31 +287,29 @@ async function reviewTransKobold(original, language, record, koboldUrl, OpenAIPr
         errorstate = "OK";
         const open_kobold_response = data.choices[0];
         if (typeof open_kobold_response.message.content !== 'undefined') {
-            let text = open_kobold_response.message.content;   // FIX: was result.result (undefined here)
+            let text = open_kobold_response.message.content;
+
+            // Bestaande status + reden opruimen (echte nodes, geen innerHTML)
+            preview.querySelector('.review-status')?.remove();
+            preview.querySelector('.review-reason')?.remove();
 
             if (text != "" && text.indexOf("Yes") !== -1) {
-                if (preview.innerHTML.startsWith('\u{2705}')) {
-                    preview.innerHTML = preview.innerHTML.replace('\u{2705}', "");
-                }
-                const existingReason = preview.querySelector('.review-reason');
-                if (existingReason) existingReason.remove();
-                preview.innerHTML = '\u{2705}' + " " + preview.innerHTML;
+                const status = document.createElement('span');
+                status.className = 'review-status';
+                status.textContent = '\u{2705} ';
+                preview.insertBefore(status, preview.firstChild);
             } else {
                 const reasonMatch = text.match(/No[,:]?\s*(.*)/i);
                 const reason = reasonMatch && reasonMatch[1] ? reasonMatch[1].trim() : "No reason provided";
 
-                if (preview.innerHTML.startsWith('\u{26A0}')) {
-                    preview.innerHTML = preview.innerHTML.replace('\u{26A0}', "");
-                }
-                const existingReason = preview.querySelector('.review-reason');
-                if (existingReason) existingReason.remove();
-
-                preview.innerHTML = '\u{26A0}' + " " + preview.innerHTML;
+                const status = document.createElement('span');
+                status.className = 'review-status';
+                status.textContent = '\u{26A0} ';
+                preview.insertBefore(status, preview.firstChild);
 
                 const reasonElem = document.createElement('div');
                 reasonElem.className = 'review-reason';
-                reasonElem.style.cssText = 'font-size: 0.75em; color: #e53e3e; margin-top: 4px; font-style: italic;';
-                reasonElem.innerText = reason;
+                reasonElem.innerText = reason;      // was al veilig
                 preview.appendChild(reasonElem);
             }
         } else {

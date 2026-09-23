@@ -263,15 +263,21 @@ async function reviewTransAI(original, language, record, apikeyKimi, OpenAIPromp
     // Filter glossary for this specific original text and inject into prompt
     const filteredGloss = pruneGlossary(openAiGloss, original, record);
     const compactGloss = filteredGloss.replace(/\n+/g, "|");
+    // Label 'Lokaal' verwijderen als losse regel (begin of eind van de tekst)
+    let cleaned = translatedText
+        .replace(/^\s*Lokaal\s*$/gim, "")   // hele regel die alleen 'Lokaal' is
+        .replace(/\n{2,}/g, "\n")            // dubbele lege regels opruimen
+        .trim();
 
     var prompt = reviewPrompt.replace('{{placeholder_original}}', original);
-    prompt = prompt.replace('{{placeholder_translated}}', translatedText);
+    prompt = prompt.replace('{{placeholder_translated}}', cleaned);
     prompt = prompt.replace('{{OpenAiGloss}}', compactGloss);
     let maxTokens = estimateMaxTokens(originalPreProcessed);
     max_Tokens = maxTokens;
     var messages = [{ 'role': 'user', 'content': prompt }];
     //let mymodel = "gpt-4.1-mini";
-    //console.debug("Model for review:", model,translator);
+    // console.debug("Model for review:", OpenRouterModel,translator,cleaned);
+     //console.debug("API:",translator)
      if (translator == "openRouter") {
         var myLink = "https://openrouter.ai/api/v1/chat/completions";
          var myKey = apikeyOpenRouter
@@ -287,7 +293,7 @@ async function reviewTransAI(original, language, record, apikeyKimi, OpenAIPromp
         var myKey = apikeyOpenAI
         var mymodel = model;
     }
-    console.debug("Review model:", mymodel, " Translator:", translator)
+    //console.debug("Review model:", mymodel, " Translator:", translator)
     if (mymodel === "gpt-5" || mymodel === "gpt-5-mini" || mymodel === "gpt-5-nano") {
     data1 = {
       model: mymodel,
@@ -395,34 +401,58 @@ async function reviewTransAI(original, language, record, apikeyKimi, OpenAIPromp
 
             if (text !="" && text.indexOf("Yes") !== -1) {
                 // Remove existing checkmark if present then add fresh one
-                if (preview.innerHTML.startsWith('\u{2705}')) {
-                    preview.innerHTML = preview.innerHTML.replace('\u{2705}', "");
+                if (preview.innerText.startsWith('\u{2705}')) {
+                    //preview.innerHTML = preview.innerHTML.replace('\u{2705}', "");
+                    preview.innerText = preview.innerHTML.replace('\u{2705}', "");
                 }
                 // Remove any previous reason element if the row was re-reviewed
                 const existingReason = preview.querySelector('.review-reason');
                 if (existingReason) existingReason.remove();
-
-                preview.innerHTML = '\u{2705}' + " " + preview.innerHTML;
+                //preview.innerHTML = '\u{2705}' + " " + preview.innerHTML;
+                preview.innerText = '\u{2705}' + " " + preview.innerText;
             } else {
                 // Extract reason after "No: "
-                const reasonMatch = text.match(/No[,:]?\s*(.*)/i);
+                // Reason: alles na "No:" tot aan de Correction-regel (of einde)
+                const reasonMatch = text.match(/No[,:]?\s*([\s\S]*?)(?:\n\s*Correction\s*:|$)/i);
                 const reason = reasonMatch && reasonMatch[1] ? reasonMatch[1].trim() : "No reason provided";
 
-                if (preview.innerHTML.startsWith('\u{26A0}')) {
-                    preview.innerHTML = preview.innerHTML.replace('\u{26A0}', "");
+                // Correction: de volledige verbeterde vertaling
+                const correctionMatch = text.match(/Correction\s*:\s*([\s\S]*)$/i);
+                const correction = correctionMatch && correctionMatch[1] ? correctionMatch[1].trim() : null;
+
+                if (preview.innerText.startsWith('\u{26A0}')) {
+                    preview.innerText = preview.innerText.replace('\u{26A0}', "");
                 }
-                // Remove any previous reason element to avoid duplicates
+                // Verwijder vorige elementen om dubbelingen te voorkomen
                 const existingReason = preview.querySelector('.review-reason');
                 if (existingReason) existingReason.remove();
+                const existingCorrection = preview.querySelector('.review-correction');
+                if (existingCorrection) existingCorrection.remove();
 
-                preview.innerHTML = '\u{26A0}' + " " + preview.innerHTML;
+                preview.innerText = '\u{26A0}' + " " + preview.innerText;
 
-                // Add reason below the translation text
+                // Reden onder de vertaling
                 const reasonElem = document.createElement('div');
                 reasonElem.className = 'review-reason';
                 reasonElem.style.cssText = 'font-size: 0.75em; color: #e53e3e; margin-top: 4px; font-style: italic;';
                 reasonElem.innerText = reason;
                 preview.appendChild(reasonElem);
+
+                // Voorgestelde correctie tonen (indien aanwezig)
+                if (correction) {
+                    let myEditor = document.querySelector(`#editor-${rowId}`);
+                    let myTranslatedText = myEditor.querySelector("div.textareas.active .foreign-text");
+
+                    if (myTranslatedText != 'undefined') {
+                        //console.debug("myEditor:", myTranslatedText.value)
+                        myTranslatedText.value = correction
+                    }
+                    const correctionElem = document.createElement('div');
+                    correctionElem.className = 'review-correction';
+                    correctionElem.style.cssText = 'font-size: 0.8em; color: #2f855a; margin-top: 4px;';
+                    correctionElem.innerText = correction;
+                    preview.appendChild(correctionElem);
+                }
             }
         } else {
             console.debug("No text received!");

@@ -404,8 +404,9 @@ function check() {
     var oldStr = a.value;
     var newStr = b.value;
     var changes = JsDiff[diffType](oldStr, newStr);
-    console.log(changes)
-    result.innerHTML = JsDiff.convertChangesToXML(changes);
+    console.debug(changes)
+    //result.innerHTML = JsDiff.convertChangesToXML(changes);
+    result.innerText = JsDiff.convertChangesToXML(changes);
 }
 
 if (b != null) {

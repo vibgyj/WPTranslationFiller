@@ -22,11 +22,6 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     var checkButton = document.querySelector(".wptfNavBarCont a.check_translation-button");
     var tableRecords;
 
-    //const template = `
-    //<div class="indeterminate-progress-bar">
-    //    <div class="indeterminate-progress-bar__progress"></div>
-    //</div>
-    // `;,
     progressbar = document.querySelector(".indeterminate-progress-bar");
     inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
     //console.debug("progressbar:", progressbar)
@@ -63,18 +58,7 @@ async function spellcheck_page(LtKey, LtUser, LtLang, LtFree, spellcheckIgnore) 
     //var tbodyRowCount = table.tBodies[0].rows.length;
     tableRecords = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content").length;
     progressbar = document.querySelector(".indeterminate-progress-bar");
-    inprogressbar = document.querySelector(".indeterminate-progress-bar__progress")
-    //console.debug("table records:",tableRecords)
-    if (progressbar == null) {
-        myheader.insertAdjacentHTML('beforebegin', template);
-        // progressbar = document.querySelector(".indeterminate-progress-bar");
-        progressbar.style.display = 'block;';
-    }
-    else {
-        // we need to remove the style of inprogress to see the animation again
-        inprogressbar.style=""
-        progressbar.style.display = 'block';
-    }
+   
     for (let e of document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content")) {
         countrows++;
         setTimeout(async function (timeout,countrows) {

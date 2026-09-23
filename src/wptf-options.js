@@ -3,13 +3,12 @@ var version = chrome.runtime.getManifest().version;
 var scriptElm = document.createElement("script");
 scriptElm.src = chrome.runtime.getURL("wptf-cute-alert.js");
 document.body.appendChild(scriptElm);
-const template = `
-    <h1>WP Translation Filler - Options v${version}
-    </h1>
-    `;
-// Show version in header of options screen
-optionHeader = document.getElementById('container')
-optionHeader.insertAdjacentHTML("afterbegin", template);
+const optionHeader = document.getElementById('container');
+
+const heading = document.createElement('h1');
+heading.textContent = `WP Translation Filler - Options v${version}`;
+
+optionHeader.insertBefore(heading, optionHeader.firstChild);  // = 'afterbegin'
 var link = document.createElement("link");
 var parrotActive = 'false';
 var inter;
@@ -1722,57 +1721,39 @@ function messageBox(type, message) {
 }
 
 async function showChangelog() {
-  //console.debug("We are showing it");
+    try {
+        const response = await fetch(chrome.runtime.getURL('/Changelog.txt'));
+        const text = await response.text();
 
-  try {
-    const response = await fetch(chrome.runtime.getURL('/Changelog.txt'));
-    const text = await response.text();
+        const changelogTab = window.open("", "_blank");
 
-    const changelogTab = window.open("", "_blank");
+        if (!changelogTab) {
+            throw new Error("Popup or tab blocked by browser settings.");
+        }
 
-    if (!changelogTab) {
-      throw new Error("Popup or tab blocked by browser settings.");
+        const doc = changelogTab.document;
+
+        // <head>: titel + stijl (geen HTML-string, textContent op een <style>-node)
+        doc.title = "Changelog";
+        const style = doc.createElement("style");
+        style.textContent = `
+      body { font-family: system-ui, sans-serif; font-size:16px; line-height:1.6; padding:2em; background-color:#f9f9f9; color:#333; }
+      pre  { white-space:pre-wrap; font-size:1em; font-family:monospace; background-color:#fff; padding:1em; border:1px solid #ccc; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow-x:auto; }
+    `;
+        doc.head.appendChild(style);
+
+        // <body>: kop + changelog-tekst via textContent
+        const h2 = doc.createElement("h2");
+        h2.textContent = "📄 Changelog";
+
+        const pre = doc.createElement("pre");
+        pre.textContent = text;   // ← geen .replace-escaping nodig; textContent doet <, > én & correct
+
+        doc.body.append(h2, pre);
+
+    } catch (error) {
+        console.error("Failed to load changelog:", error);
     }
-
-    changelogTab.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Changelog</title>
-        <style>
-          body {
-            font-family: system-ui, sans-serif;
-            font-size: 16px;
-            line-height: 1.6;
-            padding: 2em;
-            background-color: #f9f9f9;
-            color: #333;
-          }
-          pre {
-            white-space: pre-wrap;
-            font-size: 1.0em;
-            font-family: monospace;
-            background-color: #fff;
-            padding: 1em;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-x: auto;
-          }
-        </style>
-      </head>
-      <body>
-        <h2>📄 Changelog</h2>
-        <pre>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-      </body>
-      </html>
-    `);
-
-    changelogTab.document.close();
-
-  } catch (error) {
-    console.error("Failed to load changelog:", error);
-  }
 }
 
 input = document.getElementById("destination_lang");

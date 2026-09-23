@@ -9,6 +9,12 @@
  * computeMaxTokens with wptf-openRouter.js (single
  * source of truth for reasoning/tuning per model).
  * That file must load before any translation runs.
+ *
+ * GLOSSARY PARITY (2026): now matches the Groq batch-path —
+ *   - per-item "g" field embedded in the JSON payload so the
+ *     model knows exactly which terms apply to which string
+ *   - enforceORGlossary() forces "source -> target" terms onto
+ *     the model response afterwards (belt-and-suspenders)
  ****************************************************/
 
 /****************************************************
@@ -22,6 +28,7 @@ function applyORPromptBase(prompt, toLanguage, tone) {
 }
 
 function applyORPromptBatch(basePrompt, text, glossary) {
+    //console.debug("gloss:",glossary)
     return basePrompt
         .replace(/\{\{text\}\}/g,     text     ?? "")
         .replace(/\{\{glossary\}\}/g, glossary ?? "");
@@ -286,6 +293,32 @@ function mergeORGlossaries(enrichedItems) {
 }
 
 /****************************************************
+ * GLOSSARY ENFORCEMENT  (belt-and-suspenders)
+ * Mirrors Groq's enforceGlossary: after the model
+ * response, force every "source -> target" term onto the
+ * translation with a word-boundary, case-insensitive
+ * replace. Tolerant of both quoted ("s" -> "t") and
+ * unquoted (s -> t) glossary lines, and comma- or
+ * newline-separated entries.
+ ****************************************************/
+function enforceORGlossary(translation, glossaryStr) {
+    if (!glossaryStr) return translation;
+    for (const line of String(glossaryStr).split(/,\s*|\n/)) {
+        const match = line.match(/^\s*"?(.+?)"?\s*->\s*"?(.+?)"?\s*$/);
+        if (!match) continue;
+        const source = match[1].trim();
+        const target = match[2].trim();
+        if (!source || !target) continue;
+        if (source.toLowerCase() === target.toLowerCase()) continue;
+        const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        translation = translation.replace(
+            new RegExp('\\b' + escaped + '\\b', 'gi'), target
+        );
+    }
+    return translation;
+}
+
+/****************************************************
  * MAIN ENTRY POINT
  * Call exactly like translatePageClaude() /
  * translatePageGroq() — just swap the function name.
@@ -491,6 +524,14 @@ async function translatePageOpenRouter(
     const resolvedLanguage = orResolveLanguage(destlang);
     const resolvedTone     = orResolveTone(OpenAITone, destlang);
 
+    // Whether to ALSO send the merged glossary via the {{glossary}} placeholder.
+    // Off by default: every term is already carried per-item in the "g" field,
+    // scoped to the exact string it belongs to. The old merged block listed all
+    // terms globally with no line-scope, which invited the model to apply a term
+    // to rows it wasn't meant for — the main cause of the glossary errors.
+    // Flip to true only if you deliberately want the global block back.
+    const OR_USE_MERGED_GLOSSARY = false;
+
     // Reasoning effort for the selected model (used to size the token cap).
     const selectedModel  = OpenRouterSelect.toLowerCase();
     const selectedEffort = (typeof modelConfig !== 'undefined'
@@ -512,7 +553,7 @@ async function translatePageOpenRouter(
             allItems.map(async item => {
                 const preprocessed   = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
                 const prunedGlossary = await pruneGlossary(openAiGloss, preprocessed, null);
-                //console.debug("prunedGlossary for row " + item.id + " line " + item.line + ":", prunedGlossary); 
+                //console.debug("[OR Bulk] prunedGlossary row " + item.id + " line " + item.line + ":", prunedGlossary);
                 return {
                     id: item.id, line: item.line,
                     text: item.original, preprocessed,
@@ -521,11 +562,38 @@ async function translatePageOpenRouter(
             })
         );
 
-        const combinedGlossary = mergeORGlossaries(enrichedItems);
+        // Attach the pruned glossary + preprocessed text back onto the batch
+        // items so the post-processing enforcement step (enforceORGlossary)
+        // can use them in the write loop. Same approach as the Groq batch-path.
+        for (const group of batch) {
+            for (const item of group.items) {
+                const enMatch = enrichedItems.find(en =>
+                    en.id === item.id && en.line === item.line);
+                if (enMatch) {
+                    item.glossary     = enMatch.glossary;
+                    item.preprocessed = enMatch.preprocessed;
+                }
+            }
+        }
+
+        // Only build the merged global block when explicitly enabled. Off by
+        // default so the model relies solely on the per-item "g" fields.
+        const combinedGlossary = OR_USE_MERGED_GLOSSARY
+            ? mergeORGlossaries(enrichedItems)
+            : '';
         //console.debug('[OR Bulk] combinedGlossary:', combinedGlossary);
 
-        const promptItems = enrichedItems.map(({ id, text }) => ({ i: id, t: text }));
-        
+        // Per-item payload now carries a "g" field with that item's own
+        // glossary terms, so the model knows exactly which terms apply to
+        // which string. "t" uses the preprocessed text (what the glossary
+        // was pruned against) to stay consistent — mirror of Groq.
+        const promptItems = enrichedItems.map(({ id, preprocessed, text, glossary }) => ({
+            i: id,
+            t: preprocessed || text || '',
+            ...(glossary ? { g: glossary } : {})
+        }));
+        //console.debug('[OR Bulk] promptItems (met per-regel g-veld):', JSON.stringify(promptItems, null, 2));
+
         const batchPrompt = applyORPromptBatch(
             basePrompt,
             JSON.stringify(promptItems),
@@ -555,6 +623,7 @@ async function translatePageOpenRouter(
                     'Return ONLY a JSON object in this exact format: ' +
                     '{"results":[{"i":"<echo input i unchanged>","tr":"<translation>"}]} ' +
                     'The translation key MUST be "tr", NOT "t". ' +
+                    'Do NOT include the "g" field in your output — it is input-only. ' +
                     'No prose, no markdown, no headers, no notes. ' +
                     'Tone: ' + OpenAITone + '. Target language: ' + resolvedLanguage + '.';
                 correctionMessages = [{ role: "user", content: correctionContent }];
@@ -609,7 +678,11 @@ async function translatePageOpenRouter(
                         ' | returned: ' + parsed.map(r => r.i).join(', '));
                 }
 
-                const translation = res?.tr ?? 'No suggestions';
+                let translation = res?.tr ?? 'No suggestions';
+                // Belt-and-suspenders: force the glossary terms onto the
+                // translation, but only when there is a real result (never on
+                // the "No suggestions" placeholder).
+                if (res) translation = enforceORGlossary(translation, item.glossary);
 
                 const finalText = await postProcessTranslation(
                     item.original, translation, replaceVerb,

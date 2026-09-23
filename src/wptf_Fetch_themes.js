@@ -1,4 +1,4 @@
-﻿// contentscript.js
+﻿// wptf_Fetch_themes.js — fetches recent themes/plugins with new originals or warnings from translate.wordpress.org
 
 let PER_PAGE = 100;
 let currentPage = 1;
@@ -14,6 +14,13 @@ let MODE = 'originals';
 let USE_FAVORITES = false;
 let WP_USERNAME = '';
 let ONLY_ZERO_PERCENT = false;
+
+function mk(tag, props = {}, css = "") {
+    const el = document.createElement(tag);
+    Object.assign(el, props);
+    if (css) el.style.cssText = css;
+    return el;
+}
 
 function mycheckLocale() {
   const NON_LOCALE = ['dev', 'stable', 'readme', 'trunk', 'default', 'formal', 'projects', 'wp-plugins', 'wp-themes'];
@@ -100,30 +107,31 @@ async function loadRecentOriginals(page) {
 
   const modeLabel = MODE === 'warnings' ? '⚠️ Warnings' : '🆕 New originals';
 
-  container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong>${modeLabel} — ${MODE === 'originals' ? `last ${DAYS_AGO} days` : 'all'} (${LOCALE})</strong>
-      <div style="display:flex; gap:6px;">
-        <button id="btn-back" style="
-          background:#888; color:white; border:none;
-          padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
-        ">⬅ Back</button>
-        <button id="btn-quit" style="
-          background:#cc0000; color:white; border:none;
-          padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
-        ">✕ Quit</button>
-      </div>
-    </div>
-    <div style="color:#666; font-size:11px; margin-bottom:6px;">
-      📂 ${PROJECT_TYPE === 'themes' ? 'Themes' : 'Plugins'} — wp-${PROJECT_TYPE} — ${SLUG_TYPE}
-      ${USE_FAVORITES ? ` — ⭐ Favorites of ${WP_USERNAME}` : ''}
-      ${ONLY_ZERO_PERCENT ? ' — 0% only' : ''} — starting page ${START_PAGE}
-    </div>
-    <div id="progress" style="color:#888; font-size:12px; margin:4px 0;"></div>
-    <hr style="margin:8px 0;">
-    <div id="results"></div>
-    <div id="footer" style="margin-top:10px; text-align:center;"></div>
-  `;
+    const hdr = mk("div", {}, "display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;");
+    hdr.appendChild(mk("strong", {
+        textContent: `${modeLabel} — ${MODE === "originals" ? `last ${DAYS_AGO} days` : "all"} (${LOCALE})`
+    }));
+    const btnGroup = mk("div", {}, "display:flex; gap:6px;");
+    const backBtn = mk("button", { id: "btn-back", textContent: "⬅ Back" },
+        "background:#888; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;");
+    const quitBtn = mk("button", { id: "btn-quit", textContent: "✕ Quit" },
+        "background:#cc0000; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;");
+    btnGroup.append(backBtn, quitBtn);
+    hdr.appendChild(btnGroup);
+
+    // Subhead-regel (📂 ... starting page X)
+    let subheadText = `📂 ${PROJECT_TYPE === "themes" ? "Themes" : "Plugins"} — wp-${PROJECT_TYPE} — ${SLUG_TYPE}`;
+    if (USE_FAVORITES) subheadText += ` — ⭐ Favorites of ${WP_USERNAME}`;
+    if (ONLY_ZERO_PERCENT) subheadText += " — 0% only";
+    subheadText += ` — starting page ${START_PAGE}`;
+    const subhead = mk("div", { textContent: subheadText }, "color:#666; font-size:11px; margin-bottom:6px;");
+
+    const progressEl = mk("div", { id: "progress" }, "color:#888; font-size:12px; margin:4px 0;");
+    const hr = mk("hr", {}, "margin:8px 0;");
+    const resultsEl = mk("div", { id: "results" });
+    const footerEl = mk("div", { id: "footer" }, "margin-top:10px; text-align:center;");
+
+    container.replaceChildren(hdr, subhead, progressEl, hr, resultsEl, footerEl);
   document.body.appendChild(container);
 
   document.getElementById('btn-quit').addEventListener('click', () => {
@@ -143,261 +151,287 @@ async function loadRecentOriginals(page) {
   const results  = document.getElementById('results');
   const footer   = document.getElementById('footer');
 
-  try {
-    let projects   = [];
-    let totalPages = 1;
+    try {
+        let projects = [];
+        let totalPages = 1;
 
-    if (USE_FAVORITES && WP_USERNAME) {
-      // --- Favorites mode ---
-      progress.textContent = `🔄 Fetching favorites for ${WP_USERNAME}...`;
-      const slugs = await fetchFavoriteSlugs();
+        if (USE_FAVORITES && WP_USERNAME) {
+            // --- Favorites mode ---
+            progress.textContent = `🔄 Fetching favorites for ${WP_USERNAME}...`;
+            const slugs = await fetchFavoriteSlugs();
 
-      if (slugs.length === 0) {
-        progress.textContent = `✅ No favorite ${PROJECT_TYPE} found for ${WP_USERNAME} — make sure you are logged into wordpress.org.`;
-        return;
-      }
-
-      projects   = slugs.map(slug => ({ slug, name: slug }));
-      totalPages = 1;
-      console.log(`[WP Originals] Using ${projects.length} favorites as project list`);
-
-    } else if (ONLY_ZERO_PERCENT) {
-      // --- 0% mode: fetch directly from locale page sorted by percent-completed-asc ---
-      const localeUrl =
-        `https://translate.wordpress.org/locale/${LOCALE}/${SLUG_TYPE}/wp-${PROJECT_TYPE}/` +
-        `?s=&page=${page}&filter=percent-completed-asc`;
-
-      console.log(`[WP Originals] Fetching 0% projects from: ${localeUrl}`);
-      progress.textContent = `🔄 Fetching 0% ${PROJECT_TYPE} for ${LOCALE} — page ${page}...`;
-
-      const localeRes  = await fetch(localeUrl);
-      const localeHtml = await localeRes.text();
-
-      const localeParser = new DOMParser();
-      const localeDoc    = localeParser.parseFromString(localeHtml, 'text/html');
-
-      // Debug — log what we find
-      console.log('[0%] Total .project divs:', localeDoc.querySelectorAll('.project').length);
-      console.log('[0%] percent-0 divs:', localeDoc.querySelectorAll('.project[class*="percent-0"]').length);
-      console.log('[0%] First project classes:', localeDoc.querySelector('.project')?.className);
-      console.log('[0%] First project HTML:', localeDoc.querySelector('.project')?.outerHTML.slice(0, 300));
-
-      // Get total pages from pagination
-      const lastPageLink = localeDoc.querySelector('.paging a:last-of-type');
-      if (lastPageLink) {
-        const lastPageMatch = lastPageLink.href.match(/page=(\d+)/);
-        if (lastPageMatch) totalPages = parseInt(lastPageMatch[1]);
-      }
-
-      const allProjectDivs  = localeDoc.querySelectorAll('.project');
-      const zeroProjectDivs = localeDoc.querySelectorAll('.project[class*="percent-0"]');
-
-      console.log(`[WP Originals] Page ${page}: ${zeroProjectDivs.length} 0% projects out of ${allProjectDivs.length} total`);
-
-      zeroProjectDivs.forEach(div => {
-        const classes   = [...div.classList];
-        const slugClass = classes.find(c => c.startsWith(`project-wp-${PROJECT_TYPE}-`));
-        if (!slugClass) return;
-        const slug   = slugClass.replace(`project-wp-${PROJECT_TYPE}-`, '');
-        const nameEl = div.querySelector('.project-name h4 a');
-        const name   = nameEl ? nameEl.textContent.trim() : slug;
-        projects.push({ slug, name });
-      });
-
-      // If some projects on this page are NOT 0%, we've reached end of 0% section
-      if (zeroProjectDivs.length < allProjectDivs.length) {
-        console.log(`[WP Originals] Mixed page detected — stopping after this page`);
-        totalPages = page;
-      }
-
-      if (projects.length === 0) {
-        progress.textContent = `✅ No 0% ${PROJECT_TYPE} found on page ${page} — all done!`;
-        return;
-      }
-
-    } else {
-      // --- Normal browse=new fetch ---
-      const projectApiBase = PROJECT_TYPE === 'themes'
-        ? `https://api.wordpress.org/themes/info/1.2/?action=query_themes&request[browse]=new`
-        : `https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&request[browse]=new`;
-
-      const listUrl = `${projectApiBase}&request[per_page]=${PER_PAGE}&request[page]=${page}`;
-
-      console.log(`[WP Originals] Fetching project list: ${listUrl}`);
-      progress.textContent = `🔄 Fetching ${PROJECT_TYPE} list for page ${page}...`;
-
-      const listRes  = await fetch(listUrl);
-      const listData = await listRes.json();
-
-      projects   = listData.themes ?? listData.plugins ?? [];
-      totalPages = Math.ceil(listData.info.results / PER_PAGE);
-
-      console.log(`[WP Originals] Got ${projects.length} ${PROJECT_TYPE}, total pages: ${totalPages}`);
-
-      if (projects.length === 0) {
-        progress.textContent = '✅ No more projects to load.';
-        return;
-      }
-    }
-
-    progress.textContent = `🔄 Checking ${projects.length} ${USE_FAVORITES ? 'favorite ' : ''}${PROJECT_TYPE}...`;
-
-    let totalFound = 0;
-
-    for (let i = 0; i < projects.length; i++) {
-      if (stopRequested) {
-        progress.textContent = '🛑 Stopped.';
-        console.log('[WP Originals] Stop requested.');
-        break;
-      }
-
-      const slug        = projects[i].slug;
-      const name        = projects[i].name;
-      const projectPath = `wp-${PROJECT_TYPE}`;
-
-      const subPath = PROJECT_TYPE === 'plugins'
-        ? `stable/${LOCALE}/${SLUG_TYPE}`
-        : `${LOCALE}/${SLUG_TYPE}`;
-
-      progress.textContent = `${USE_FAVORITES ? '⭐ ' : ''}${page > 1 ? `Page ${page}/${totalPages} — ` : ''}checking ${i + 1}/${projects.length}: ${slug}`;
-
-      const url = MODE === 'warnings'
-        ? `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/${subPath}/` +
-          `?filters[status]=current` +
-          `&filters[warnings]=yes`
-        : `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/${subPath}/` +
-          `?filters[status]=untranslated` +
-          `&sort[by]=original_added` +
-          `&sort[how]=desc`;
-
-      console.log(`[${i + 1}/${projects.length}] Fetching: ${url}`);
-
-      try {
-        const gpRes = await fetch(url);
-        console.log(`[${slug}] HTTP status: ${gpRes.status}`);
-        if (!gpRes.ok) continue;
-
-        const gpData = await gpRes.json();
-
-        if (!Array.isArray(gpData) || gpData.length === 0) {
-          console.log(`[${slug}] No results`);
-          continue;
-        }
-
-        console.log(`[${slug}] Total: ${gpData.length}`);
-
-       // For 0% mode show all untranslated strings, ignore date filter
-        const relevant = MODE === 'warnings'
-          ? gpData.filter(o => o.warnings && Object.keys(o.warnings).length > 0)
-          : ONLY_ZERO_PERCENT
-            ? gpData  // all untranslated strings, no date filter
-            : gpData.filter(o => o.original_added && new Date(o.original_added) >= cutoff);
-
-        console.log(`[${slug}] After filter: ${relevant.length}`);
-        if (relevant.length === 0) continue;
-
-        totalFound += relevant.length;
-
-        // Skip percent fetch if already in 0% mode
-        let percentTranslated = ONLY_ZERO_PERCENT ? '0' : '?';
-        if (!ONLY_ZERO_PERCENT) {
-          try {
-            const tsUrl  = PROJECT_TYPE === 'plugins'
-              ? `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/stable`
-              : `https://translate.wordpress.org/api/projects/${projectPath}/${slug}`;
-            const tsRes  = await fetch(tsUrl);
-            const tsData = await tsRes.json();
-            const ts     = tsData.translation_sets?.find(t => t.locale === LOCALE && t.slug === SLUG_TYPE);
-            if (ts) percentTranslated = ts.percent_translated;
-          } catch (e) {
-            console.warn(`[${slug}] Could not fetch percent_translated:`, e);
-          }
-        }
-
-        const translateLink = `https://translate.wordpress.org/projects/${projectPath}/${slug}/${PROJECT_TYPE === 'plugins' ? `stable/${LOCALE}/${SLUG_TYPE}` : `${LOCALE}/${SLUG_TYPE}`}/`;
-
-        const block = document.createElement('div');
-        block.style.cssText = 'margin-bottom:14px; border-bottom:1px solid #eee; padding-bottom:10px;';
-        block.innerHTML = `
-          <strong>${MODE === 'warnings' ? '⚠️' : '📦'} ${name}</strong>
-          <span style="font-size:11px; color:#888; margin-left:6px;">${percentTranslated}% translated</span>
-          <a href="${translateLink}" target="_blank"
-             style="font-size:11px; margin-left:6px; color:#0073aa;">
-            → translate
-          </a><br>
-          <small>${relevant.length} ${MODE === 'warnings' ? 'warning(s)' : 'new untranslated original(s)'}</small>
-        `;
-
-        if (SHOW_RECORDS) {
-          relevant.forEach(o => {
-            const line = document.createElement('div');
-            line.style.cssText = 'margin:4px 0 2px 10px; color:#333; font-size:12px;';
-
-            if (MODE === 'warnings') {
-              const warningText = o.warnings
-                ? Object.entries(o.warnings).map(([key, val]) => {
-                    const detail = Array.isArray(val)
-                      ? val.map(v => typeof v === 'object' ? JSON.stringify(v) : v).join(', ')
-                      : typeof val === 'object'
-                        ? JSON.stringify(val)
-                        : val;
-                    return `${key}: ${detail}`;
-                  }).join(' | ')
-                : '—';
-              line.innerHTML = `
-                ⚠️ <span title="${o.singular}">${truncate(o.singular, 40)}</span>
-                <em style="color:#cc0000; font-size:11px;"> — ${warningText}</em>
-              `;
-            } else {
-              line.innerHTML = `
-                📅 <em>${o.original_added?.split(' ')[0]}</em> —
-                <span title="${o.singular}">${truncate(o.singular, 55)}</span>
-              `;
+            if (slugs.length === 0) {
+                progress.textContent = `✅ No favorite ${PROJECT_TYPE} found for ${WP_USERNAME} — make sure you are logged into wordpress.org.`;
+                return;
             }
 
-            block.appendChild(line);
-          });
+            projects = slugs.map(slug => ({ slug, name: slug }));
+            totalPages = 1;
+            console.log(`[WP Originals] Using ${projects.length} favorites as project list`);
+
+        } else if (ONLY_ZERO_PERCENT) {
+            // --- 0% mode: fetch directly from locale page sorted by percent-completed-asc ---
+            const localeUrl =
+                `https://translate.wordpress.org/locale/${LOCALE}/${SLUG_TYPE}/wp-${PROJECT_TYPE}/` +
+                `?s=&page=${page}&filter=percent-completed-asc`;
+
+            console.log(`[WP Originals] Fetching 0% projects from: ${localeUrl}`);
+            progress.textContent = `🔄 Fetching 0% ${PROJECT_TYPE} for ${LOCALE} — page ${page}...`;
+
+            const localeRes = await fetch(localeUrl);
+            const localeHtml = await localeRes.text();
+
+            const localeParser = new DOMParser();
+            const localeDoc = localeParser.parseFromString(localeHtml, 'text/html');
+
+            // Debug — log what we find
+            console.log('[0%] Total .project divs:', localeDoc.querySelectorAll('.project').length);
+            console.log('[0%] percent-0 divs:', localeDoc.querySelectorAll('.project[class*="percent-0"]').length);
+            console.log('[0%] First project classes:', localeDoc.querySelector('.project')?.className);
+            console.log('[0%] First project HTML:', localeDoc.querySelector('.project')?.outerHTML.slice(0, 300));
+
+            // Get total pages from pagination
+            const lastPageLink = localeDoc.querySelector('.paging a:last-of-type');
+            if (lastPageLink) {
+                const lastPageMatch = lastPageLink.href.match(/page=(\d+)/);
+                if (lastPageMatch) totalPages = parseInt(lastPageMatch[1]);
+            }
+
+            const allProjectDivs = localeDoc.querySelectorAll('.project');
+            const zeroProjectDivs = localeDoc.querySelectorAll('.project[class*="percent-0"]');
+
+            console.log(`[WP Originals] Page ${page}: ${zeroProjectDivs.length} 0% projects out of ${allProjectDivs.length} total`);
+
+            zeroProjectDivs.forEach(div => {
+                const classes = [...div.classList];
+                const slugClass = classes.find(c => c.startsWith(`project-wp-${PROJECT_TYPE}-`));
+                if (!slugClass) return;
+                const slug = slugClass.replace(`project-wp-${PROJECT_TYPE}-`, '');
+                const nameEl = div.querySelector('.project-name h4 a');
+                const name = nameEl ? nameEl.textContent.trim() : slug;
+                projects.push({ slug, name });
+            });
+
+            // If some projects on this page are NOT 0%, we've reached end of 0% section
+            if (zeroProjectDivs.length < allProjectDivs.length) {
+                console.log(`[WP Originals] Mixed page detected — stopping after this page`);
+                totalPages = page;
+            }
+
+            if (projects.length === 0) {
+                progress.textContent = `✅ No 0% ${PROJECT_TYPE} found on page ${page} — all done!`;
+                return;
+            }
+
+        } else {
+            // --- Normal browse=new fetch ---
+            const projectApiBase = PROJECT_TYPE === 'themes'
+                ? `https://api.wordpress.org/themes/info/1.2/?action=query_themes&request[browse]=new`
+                : `https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&request[browse]=new`;
+
+            const listUrl = `${projectApiBase}&request[per_page]=${PER_PAGE}&request[page]=${page}`;
+
+            console.log(`[WP Originals] Fetching project list: ${listUrl}`);
+            progress.textContent = `🔄 Fetching ${PROJECT_TYPE} list for page ${page}...`;
+
+            const listRes = await fetch(listUrl);
+            const listData = await listRes.json();
+
+            projects = listData.themes ?? listData.plugins ?? [];
+            totalPages = Math.ceil(listData.info.results / PER_PAGE);
+
+            console.log(`[WP Originals] Got ${projects.length} ${PROJECT_TYPE}, total pages: ${totalPages}`);
+
+            if (projects.length === 0) {
+                progress.textContent = '✅ No more projects to load.';
+                return;
+            }
         }
 
-        results.appendChild(block);
+        progress.textContent = `🔄 Checking ${projects.length} ${USE_FAVORITES ? 'favorite ' : ''}${PROJECT_TYPE}...`;
 
-      } catch (e) {
-        console.error(`[${slug}] Error:`, e);
-      }
-    }
+        let totalFound = 0;
 
-    if (!stopRequested) {
-      const foundMsg = totalFound > 0
-        ? `${totalFound} ${MODE === 'warnings' ? 'warning(s)' : 'new original(s)'} found.`
-        : USE_FAVORITES
-          ? `No new records found in favorites of ${WP_USERNAME}.`
-          : `No new records found on this page.`;
+        for (let i = 0; i < projects.length; i++) {
+            if (stopRequested) {
+                progress.textContent = '🛑 Stopped.';
+                console.log('[WP Originals] Stop requested.');
+                break;
+            }
 
-      progress.textContent = `✅ ${USE_FAVORITES ? 'Favorites check' : `Page ${page}`} done — ${foundMsg}`;
-      console.log(`[WP Originals] Done. Total found: ${totalFound}`);
+            const slug = projects[i].slug;
+            const name = projects[i].name;
+            const projectPath = `wp-${PROJECT_TYPE}`;
 
-      if (!USE_FAVORITES && page < totalPages) {
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = `Next → (page ${page + 1} of ${totalPages})`;
-        nextBtn.style.cssText = `
+            const subPath = PROJECT_TYPE === 'plugins'
+                ? `stable/${LOCALE}/${SLUG_TYPE}`
+                : `${LOCALE}/${SLUG_TYPE}`;
+
+            progress.textContent = `${USE_FAVORITES ? '⭐ ' : ''}${page > 1 ? `Page ${page}/${totalPages} — ` : ''}checking ${i + 1}/${projects.length}: ${slug}`;
+
+            const url = MODE === 'warnings'
+                ? `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/${subPath}/` +
+                `?filters[status]=current` +
+                `&filters[warnings]=yes`
+                : `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/${subPath}/` +
+                `?filters[status]=untranslated` +
+                `&sort[by]=original_added` +
+                `&sort[how]=desc`;
+
+            console.log(`[${i + 1}/${projects.length}] Fetching: ${url}`);
+
+            try {
+                const gpRes = await fetch(url);
+                console.log(`[${slug}] HTTP status: ${gpRes.status}`);
+                if (!gpRes.ok) continue;
+
+                const gpData = await gpRes.json();
+
+                if (!Array.isArray(gpData) || gpData.length === 0) {
+                    console.log(`[${slug}] No results`);
+                    continue;
+                }
+
+                console.log(`[${slug}] Total: ${gpData.length}`);
+
+                // For 0% mode show all untranslated strings, ignore date filter
+                const relevant = MODE === 'warnings'
+                    ? gpData.filter(o => o.warnings && Object.keys(o.warnings).length > 0)
+                    : ONLY_ZERO_PERCENT
+                        ? gpData  // all untranslated strings, no date filter
+                        : gpData.filter(o => o.original_added && new Date(o.original_added) >= cutoff);
+
+                console.log(`[${slug}] After filter: ${relevant.length}`);
+                if (relevant.length === 0) continue;
+
+                totalFound += relevant.length;
+
+                // Skip percent fetch if already in 0% mode
+                let percentTranslated = ONLY_ZERO_PERCENT ? '0' : '?';
+                if (!ONLY_ZERO_PERCENT) {
+                    try {
+                        const tsUrl = PROJECT_TYPE === 'plugins'
+                            ? `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/stable`
+                            : `https://translate.wordpress.org/api/projects/${projectPath}/${slug}`;
+                        const tsRes = await fetch(tsUrl);
+                        const tsData = await tsRes.json();
+                        const ts = tsData.translation_sets?.find(t => t.locale === LOCALE && t.slug === SLUG_TYPE);
+                        if (ts) percentTranslated = ts.percent_translated;
+                    } catch (e) {
+                        console.warn(`[${slug}] Could not fetch percent_translated:`, e);
+                    }
+                }
+
+                const translateLink = `https://translate.wordpress.org/projects/${projectPath}/${slug}/${PROJECT_TYPE === 'plugins' ? `stable/${LOCALE}/${SLUG_TYPE}` : `${LOCALE}/${SLUG_TYPE}`}/`;
+
+                // project-blok
+                const block = document.createElement('div');
+                block.style.cssText = 'margin-bottom:14px; border-bottom:1px solid #eee; padding-bottom:10px;';
+
+                const titleStrong = document.createElement('strong');
+                titleStrong.textContent = `${MODE === 'warnings' ? '⚠️' : '📦'} ${name}`;
+
+                const pct = document.createElement('span');
+                pct.style.cssText = 'font-size:11px; color:#888; margin-left:6px;';
+                pct.textContent = `${percentTranslated}% translated`;
+
+                const link = document.createElement('a');
+                link.href = translateLink;                 // zelf samengestelde https-URL → veilig
+                link.target = '_blank';
+                link.style.cssText = 'font-size:11px; margin-left:6px; color:#0073aa;';
+                link.textContent = '→ translate';
+
+                const count = document.createElement('small');
+                count.textContent = `${relevant.length} ${MODE === 'warnings' ? 'warning(s)' : 'new untranslated original(s)'}`;
+
+                block.append(titleStrong, ' ', pct, ' ', link, document.createElement('br'), count);
+
+                if (SHOW_RECORDS) {
+                    relevant.forEach(o => {
+                        const line = document.createElement('div');
+                        line.style.cssText = 'margin:4px 0 2px 10px; color:#333; font-size:12px;';
+
+                        if (MODE === 'warnings') {
+                            const warningText = o.warnings
+                                ? Object.entries(o.warnings).map(([key, val]) => {
+                                    const detail = Array.isArray(val)
+                                        ? val.map(v => typeof v === 'object' ? JSON.stringify(v) : v).join(', ')
+                                        : typeof val === 'object' ? JSON.stringify(val) : val;
+                                    return `${key}: ${detail}`;
+                                }).join(' | ')
+                                : '—';
+
+                            const singular = document.createElement('span');
+                            singular.title = o.singular ?? '';
+                            singular.textContent = truncate(o.singular, 40);
+
+                            const em = document.createElement('em');
+                            em.style.cssText = 'color:#cc0000; font-size:11px;';
+                            em.textContent = ` — ${warningText}`;
+
+                            line.append('⚠️ ', singular, em);
+                        } else {
+                            const em = document.createElement('em');
+                            em.textContent = o.original_added?.split(' ')[0] ?? '';
+
+                            const singular = document.createElement('span');
+                            singular.title = o.singular ?? '';
+                            singular.textContent = truncate(o.singular, 55);
+
+                            line.append('📅 ', em, ' — ', singular);
+                        }
+
+                        block.appendChild(line);
+                    });
+                }
+
+                results.appendChild(block);
+
+            } catch (e) {
+                console.error(`[${slug}] Error:`, e);
+            }
+        }
+
+        if (!stopRequested) {
+            const foundMsg = totalFound > 0
+                ? `${totalFound} ${MODE === 'warnings' ? 'warning(s)' : 'new original(s)'} found.`
+                : USE_FAVORITES
+                    ? `No new records found in favorites of ${WP_USERNAME}.`
+                    : `No new records found on this page.`;
+
+            progress.textContent = `✅ ${USE_FAVORITES ? 'Favorites check' : `Page ${page}`} done — ${foundMsg}`;
+            console.log(`[WP Originals] Done. Total found: ${totalFound}`);
+
+            if (!USE_FAVORITES && page < totalPages) {
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = `Next → (page ${page + 1} of ${totalPages})`;
+                nextBtn.style.cssText = `
           background: #0073aa; color: white; border: none;
           padding: 6px 14px; border-radius: 4px;
           cursor: pointer; font-size: 13px; margin-top: 6px;
         `;
-        nextBtn.addEventListener('click', () => {
-          currentPage++;
-          loadRecentOriginals(currentPage);
-        });
-        footer.appendChild(nextBtn);
-      } else if (!USE_FAVORITES) {
-        footer.innerHTML = '<em style="color:#888;">No more pages.</em>';
-      }
-    }
+                nextBtn.addEventListener('click', () => {
+                    currentPage++;
+                    loadRecentOriginals(currentPage);
+                });
+                footer.appendChild(nextBtn);
+            } else if (!USE_FAVORITES) {
+                const noMore = document.createElement('em');
+                noMore.style.cssText = 'color:#888;';
+                noMore.textContent = 'No more pages.';
+                footer.appendChild(noMore);
+            
+            }
+        }
 
-  } catch (err) {
-    console.error('[WP Originals] Fatal error:', err);
-    results.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-  }
+    } catch (err) {
+        console.error('[WP Originals] Fatal error:', err);
+        results.replaceChildren();
+        const p = document.createElement('p');
+        p.style.cssText = 'color:red;';
+        p.textContent = `Error: ${err.message}`;
+        results.appendChild(p);
+    }
 }
 
 function showSettings() {
@@ -413,102 +447,99 @@ function showSettings() {
     font-family: sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
     border-radius: 6px;
   `;
-  container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <strong>WP Originals Finder</strong>
-      <button id="btn-quit" style="
-        background:#cc0000; color:white; border:none;
-        padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
-      ">✕ Quit</button>
-    </div>
+    const mkRadioLabel = (name, value, checked, text) => {
+        const label = mk("label", {}, "cursor:pointer;");
+        const radio = mk("input", { type: "radio", name, value, checked });
+        label.append(radio, " " + text);
+        return label;
+    };
 
-    <label style="display:block; margin-bottom:6px;"><strong>Mode:</strong></label>
-    <div style="display:flex; gap:10px; margin-bottom:12px;">
-      <label style="cursor:pointer;">
-        <input type="radio" name="mode" value="originals" ${MODE === 'originals' ? 'checked' : ''}> New originals
-      </label>
-      <label style="cursor:pointer;">
-        <input type="radio" name="mode" value="warnings" ${MODE === 'warnings' ? 'checked' : ''}> Warnings
-      </label>
-    </div>
+    const hdr = mk("div", {}, "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;");
+    hdr.append(mk("strong", { textContent: "WP Originals Finder" }));
+    const quitBtn = mk("button", { id: "btn-quit", textContent: "✕ Quit" },
+        "background:#cc0000; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;");
+    hdr.append(quitBtn);
 
-    <label style="display:block; margin-bottom:6px;"><strong>Project type:</strong></label>
-    <div style="display:flex; gap:10px; margin-bottom:12px;">
-      <label style="cursor:pointer;">
-        <input type="radio" name="project_type" value="themes" ${PROJECT_TYPE === 'themes' ? 'checked' : ''}> Themes
-      </label>
-      <label style="cursor:pointer;">
-        <input type="radio" name="project_type" value="plugins" ${PROJECT_TYPE === 'plugins' ? 'checked' : ''}> Plugins
-      </label>
-    </div>
+    const modeLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    modeLbl.appendChild(mk("strong", { textContent: "Mode:" }));
+    const modeRow = mk("div", {}, "display:flex; gap:10px; margin-bottom:12px;");
+    modeRow.append(
+        mkRadioLabel("mode", "originals", MODE === "originals", "New originals"),
+        mkRadioLabel("mode", "warnings", MODE === "warnings", "Warnings")
+    );
 
-    <label style="display:block; margin-bottom:8px; cursor:pointer;">
-      <input type="checkbox" id="input-favorites" ${USE_FAVORITES ? 'checked' : ''}>
-      <strong>⭐ Search favorites only</strong>
-    </label>
-    <div id="favorites-section" style="display:${USE_FAVORITES ? 'block' : 'none'}; margin-bottom:12px;">
-      <label style="display:block; margin-bottom:6px;"><strong>WordPress.org username:</strong></label>
-      <input id="input-username" type="text" value="${WP_USERNAME}" placeholder="e.g. WordPress login" style="
-        width: 100%; box-sizing:border-box; padding:5px 8px;
-        border:1px solid #ccc; border-radius:4px;
-      "/>
-      <small style="color:#888; display:block; margin-top:4px;">
-        ⚠️ You must be logged into wordpress.org in this browser.
-      </small>
-    </div>
+    const ptLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    ptLbl.appendChild(mk("strong", { textContent: "Project type:" }));
+    const ptRow = mk("div", {}, "display:flex; gap:10px; margin-bottom:12px;");
+    ptRow.append(
+        mkRadioLabel("project_type", "themes", PROJECT_TYPE === "themes", "Themes"),
+        mkRadioLabel("project_type", "plugins", PROJECT_TYPE === "plugins", "Plugins")
+    );
 
-    <label style="display:block; margin-bottom:6px;"><strong>Variant:</strong></label>
-    <div style="display:flex; gap:10px; margin-bottom:12px;">
-      <label style="cursor:pointer;">
-        <input type="radio" name="slug_type" value="default" ${SLUG_TYPE === 'default' ? 'checked' : ''}> Default
-      </label>
-      <label style="cursor:pointer;">
-        <input type="radio" name="slug_type" value="formal" ${SLUG_TYPE === 'formal' ? 'checked' : ''}> Formal
-      </label>
-    </div>
+    const favLbl = mk("label", {}, "display:block; margin-bottom:8px; cursor:pointer;");
+    favLbl.append(mk("input", { type: "checkbox", id: "input-favorites", checked: USE_FAVORITES }), " ");
+    favLbl.appendChild(mk("strong", { textContent: "⭐ Search favorites only" }));
 
-    <label style="display:block; margin-bottom:6px;"><strong>Locale:</strong></label>
-    <input id="input-locale" type="text" value="${LOCALE}" style="
-      width: 100%; box-sizing:border-box; padding:5px 8px;
-      border:1px solid #ccc; border-radius:4px; margin-bottom:12px;
-    "/>
+    const favSection = mk("div", { id: "favorites-section" },
+        `display:${USE_FAVORITES ? "block" : "none"}; margin-bottom:12px;`);
+    const favUserLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    favUserLbl.appendChild(mk("strong", { textContent: "WordPress.org username:" }));
+    const favInput = mk("input", { type: "text", id: "input-username", value: WP_USERNAME, placeholder: "e.g. WordPress login" },
+        "width:100%; box-sizing:border-box; padding:5px 8px; border:1px solid #ccc; border-radius:4px;");
+    const favSmall = mk("small", { textContent: "⚠️ You must be logged into wordpress.org in this browser." },
+        "color:#888; display:block; margin-top:4px;");
+    favSection.append(favUserLbl, favInput, favSmall);
 
-    <div id="days-section" style="display:${MODE === 'originals' ? 'block' : 'none'};">
-      <label style="display:block; margin-bottom:6px;"><strong>Days to look back:</strong></label>
-      <input id="input-days" type="number" value="${DAYS_AGO}" min="1" max="365" style="
-        width: 100%; box-sizing:border-box; padding:5px 8px;
-        border:1px solid #ccc; border-radius:4px; margin-bottom:12px;
-      "/>
-    </div>
+    const varLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    varLbl.appendChild(mk("strong", { textContent: "Variant:" }));
+    const varRow = mk("div", {}, "display:flex; gap:10px; margin-bottom:12px;");
+    varRow.append(
+        mkRadioLabel("slug_type", "default", SLUG_TYPE === "default", "Default"),
+        mkRadioLabel("slug_type", "formal", SLUG_TYPE === "formal", "Formal")
+    );
 
-    <label style="display:block; margin-bottom:6px;"><strong>Lines per page:</strong></label>
-    <input id="input-lines" type="number" value="${PER_PAGE}" min="1" max="500" style="
-      width: 100%; box-sizing:border-box; padding:5px 8px;
-      border:1px solid #ccc; border-radius:4px; margin-bottom:12px;
-    "/>
+    const locLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    locLbl.appendChild(mk("strong", { textContent: "Locale:" }));
+    const locInput = mk("input", { type: "text", id: "input-locale", value: LOCALE },
+        "width:100%; box-sizing:border-box; padding:5px 8px; border:1px solid #ccc; border-radius:4px; margin-bottom:12px;");
 
-    <label style="display:block; margin-bottom:6px;"><strong>Start at page:</strong></label>
-    <input id="input-start-page" type="number" value="${START_PAGE}" min="1" max="9999" style="
-      width: 100%; box-sizing:border-box; padding:5px 8px;
-      border:1px solid #ccc; border-radius:4px; margin-bottom:12px;
-    "/>
+    const daysSection = mk("div", { id: "days-section" }, `display:${MODE === "originals" ? "block" : "none"};`);
+    const daysLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    daysLbl.appendChild(mk("strong", { textContent: "Days to look back:" }));
+    const daysInput = mk("input", { type: "number", id: "input-days", value: DAYS_AGO, min: "1", max: "365" },
+        "width:100%; box-sizing:border-box; padding:5px 8px; border:1px solid #ccc; border-radius:4px; margin-bottom:12px;");
+    daysSection.append(daysLbl, daysInput);
 
-    <label style="display:block; margin-bottom:8px; cursor:pointer;">
-      <input type="checkbox" id="input-show-records" ${SHOW_RECORDS ? 'checked' : ''}>
-      Show individual records found
-    </label>
+    const linesLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    linesLbl.appendChild(mk("strong", { textContent: "Lines per page:" }));
+    const linesInput = mk("input", { type: "number", id: "input-lines", value: PER_PAGE, min: "1", max: "500" },
+        "width:100%; box-sizing:border-box; padding:5px 8px; border:1px solid #ccc; border-radius:4px; margin-bottom:12px;");
 
-    <label style="display:block; margin-bottom:16px; cursor:pointer;">
-      <input type="checkbox" id="input-only-zero" ${ONLY_ZERO_PERCENT ? 'checked' : ''}>
-      Only show 0% translated projects
-    </label>
+    const startLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    startLbl.appendChild(mk("strong", { textContent: "Start at page:" }));
+    const startInput = mk("input", { type: "number", id: "input-start-page", value: START_PAGE, min: "1", max: "9999" },
+        "width:100%; box-sizing:border-box; padding:5px 8px; border:1px solid #ccc; border-radius:4px; margin-bottom:12px;");
 
-    <button id="btn-start" style="
-      width:100%; background:#0073aa; color:white; border:none;
-      padding:8px 0; border-radius:4px; cursor:pointer;
-      font-size:14px; font-weight:bold;
-    ">▶ Start</button>
-  `;
+    const showLbl = mk("label", {}, "display:block; margin-bottom:8px; cursor:pointer;");
+    showLbl.append(
+        mk("input", { type: "checkbox", id: "input-show-records", checked: SHOW_RECORDS }),
+        " Show individual records found"
+    );
+
+    const zeroLbl = mk("label", {}, "display:block; margin-bottom:16px; cursor:pointer;");
+    zeroLbl.append(
+        mk("input", { type: "checkbox", id: "input-only-zero", checked: ONLY_ZERO_PERCENT }),
+        " Only show 0% translated projects"
+    );
+
+    const startBtn = mk("button", { id: "btn-start", textContent: "▶ Start" },
+        "width:100%; background:#0073aa; color:white; border:none; padding:8px 0; border-radius:4px; cursor:pointer; font-size:14px; font-weight:bold;");
+
+    container.replaceChildren(
+        hdr, modeLbl, modeRow, ptLbl, ptRow, favLbl, favSection,
+        varLbl, varRow, locLbl, locInput, daysSection,
+        linesLbl, linesInput, startLbl, startInput, showLbl, zeroLbl, startBtn
+    );
   document.body.appendChild(container);
 
   container.querySelectorAll('input[name="mode"]').forEach(radio => {
@@ -588,26 +619,39 @@ async function loadEditorProjects() {
     border-radius: 6px;
   `;
 
-  container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong>🛡️ My editor projects (${LOCALE})</strong>
-      <button id="btn-quit" style="
-        background:#cc0000; color:white; border:none;
-        padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
-      ">✕ Quit</button>
-    </div>
-    <p style="color:#555; margin:10px 0 14px;">Select which project type to scan:</p>
-    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:6px;">
-      <button id="btn-themes" style="
-        background:#0073aa; color:white; border:none;
-        padding:8px 20px; border-radius:4px; cursor:pointer; font-size:13px;
-      ">🎨 Themes</button>
-      <button id="btn-plugins" style="
-        background:#0073aa; color:white; border:none;
-        padding:8px 20px; border-radius:4px; cursor:pointer; font-size:13px;
-      ">🔌 Plugins</button>
-    </div>
-  `;
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;';
+
+    const title = document.createElement('strong');
+    title.textContent = `🛡️ My editor projects (${LOCALE})`;
+
+    const quitBtn = document.createElement('button');
+    quitBtn.id = 'btn-quit';
+    quitBtn.style.cssText = 'background:#cc0000; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;';
+    quitBtn.textContent = '✕ Quit';
+
+    header.append(title, quitBtn);
+
+    const intro = document.createElement('p');
+    intro.style.cssText = 'color:#555; margin:10px 0 14px;';
+    intro.textContent = 'Select which project type to scan:';
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex; gap:10px; justify-content:center; margin-bottom:6px;';
+
+    const themesBtn = document.createElement('button');
+    themesBtn.id = 'btn-themes';
+    themesBtn.style.cssText = 'background:#0073aa; color:white; border:none; padding:8px 20px; border-radius:4px; cursor:pointer; font-size:13px;';
+    themesBtn.textContent = '🎨 Themes';
+
+    const pluginsBtn = document.createElement('button');
+    pluginsBtn.id = 'btn-plugins';
+    pluginsBtn.style.cssText = 'background:#0073aa; color:white; border:none; padding:8px 20px; border-radius:4px; cursor:pointer; font-size:13px;';
+    pluginsBtn.textContent = '🔌 Plugins';
+
+    btnRow.append(themesBtn, pluginsBtn);
+
+    container.replaceChildren(header, intro, btnRow);
   document.body.appendChild(container);
 
   document.getElementById('btn-quit').addEventListener('click', () => {
@@ -640,36 +684,28 @@ function showEditorSettings() {
     border-radius: 6px;
   `;
 
-  container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <strong>🛡️ My editor projects — Settings</strong>
-      <button id="btn-quit" style="
-        background:#cc0000; color:white; border:none;
-        padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
-      ">✕ Quit</button>
-    </div>
+    const hdr = mk("div", {}, "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;");
+    hdr.appendChild(mk("strong", { textContent: "🛡️ My editor projects — Settings" }));
+    const quitBtn = mk("button", { id: "btn-quit", textContent: "✕ Quit" },
+        "background:#cc0000; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;");
+    hdr.appendChild(quitBtn);
 
-    <label style="display:block; margin-bottom:6px;"><strong>Locale:</strong></label>
-    <input id="input-locale" type="text" value="${LOCALE || 'nl'}" style="
-      width: 100%; box-sizing:border-box; padding:5px 8px;
-      border:1px solid #ccc; border-radius:4px; margin-bottom:12px;
-    "/>
+    const locLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    locLbl.appendChild(mk("strong", { textContent: "Locale:" }));
+    const locInput = mk("input", { type: "text", id: "input-locale", value: LOCALE || "nl" },
+        "width:100%; box-sizing:border-box; padding:5px 8px; border:1px solid #ccc; border-radius:4px; margin-bottom:12px;");
 
-    <label style="display:block; margin-bottom:6px;"><strong>WordPress.org username:</strong></label>
-    <input id="input-username" type="text" value="${WP_USERNAME || ''}" placeholder="e.g. your WordPress login" style="
-      width: 100%; box-sizing:border-box; padding:5px 8px;
-      border:1px solid #ccc; border-radius:4px; margin-bottom:6px;
-    "/>
-    <small style="color:#888; display:block; margin-bottom:16px;">
-      ⚠️ You must be logged into wordpress.org in this browser.
-    </small>
+    const userLbl = mk("label", {}, "display:block; margin-bottom:6px;");
+    userLbl.appendChild(mk("strong", { textContent: "WordPress.org username:" }));
+    const userInput = mk("input", { type: "text", id: "input-username", value: WP_USERNAME || "", placeholder: "e.g. your WordPress login" },
+        "width:100%; box-sizing:border-box; padding:5px 8px; border:1px solid #ccc; border-radius:4px; margin-bottom:6px;");
+    const userSmall = mk("small", { textContent: "⚠️ You must be logged into wordpress.org in this browser." },
+        "color:#888; display:block; margin-bottom:16px;");
 
-    <button id="btn-start" style="
-      width:100%; background:#0073aa; color:white; border:none;
-      padding:8px 0; border-radius:4px; cursor:pointer;
-      font-size:14px; font-weight:bold;
-    ">▶ Start</button>
-  `;
+    const startBtn = mk("button", { id: "btn-start", textContent: "▶ Start" },
+        "width:100%; background:#0073aa; color:white; border:none; padding:8px 0; border-radius:4px; cursor:pointer; font-size:14px; font-weight:bold;");
+
+    container.replaceChildren(hdr, locLbl, locInput, userLbl, userInput, userSmall, startBtn);
   document.body.appendChild(container);
 
   document.getElementById('btn-quit').addEventListener('click', () => {
@@ -698,26 +734,25 @@ async function runEditorScan(projectType, container) {
 
   console.log(`[WP Editor Projects] Scanning ${projectType} — locale: ${LOCALE}`);
 
-  container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong>🛡️ My editor projects — ${projectType === 'themes' ? '🎨 Themes' : '🔌 Plugins'} (${LOCALE})</strong>
-      <div style="display:flex; gap:6px;">
-        <button id="btn-back" style="
-          background:#888; color:white; border:none;
-          padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
-        ">⬅ Back</button>
-        <button id="btn-quit" style="
-          background:#cc0000; color:white; border:none;
-          padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;
-        ">✕ Quit</button>
-      </div>
-    </div>
-    <div id="progress"  style="color:#888; font-size:12px; margin:4px 0;"></div>
-    <div id="progress2" style="color:#aaa; font-size:11px; margin:2px 0;"></div>
-    <hr style="margin:8px 0;">
-    <div id="results"></div>
-    <div id="footer" style="margin-top:10px; text-align:center;"></div>
-  `;
+    const hdr = mk("div", {}, "display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;");
+    hdr.appendChild(mk("strong", {
+        textContent: `🛡️ My editor projects — ${projectType === "themes" ? "🎨 Themes" : "🔌 Plugins"} (${LOCALE})`
+    }));
+    const btnGroup = mk("div", {}, "display:flex; gap:6px;");
+    const backBtn = mk("button", { id: "btn-back", textContent: "⬅ Back" },
+        "background:#888; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;");
+    const quitBtn = mk("button", { id: "btn-quit", textContent: "✕ Quit" },
+        "background:#cc0000; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;");
+    btnGroup.append(backBtn, quitBtn);
+    hdr.appendChild(btnGroup);
+
+    const progressEl = mk("div", { id: "progress" }, "color:#888; font-size:12px; margin:4px 0;");
+    const progress2El = mk("div", { id: "progress2" }, "color:#aaa; font-size:11px; margin:2px 0;");
+    const hr = mk("hr", {}, "margin:8px 0;");
+    const resultsEl = mk("div", { id: "results" });
+    const footerEl = mk("div", { id: "footer" }, "margin-top:10px; text-align:center;");
+
+    container.replaceChildren(hdr, progressEl, progress2El, hr, resultsEl, footerEl);
 
   document.getElementById('btn-quit').addEventListener('click', () => {
     stopRequested = true;
@@ -880,18 +915,23 @@ async function runEditorScan(projectType, container) {
         if (!isEditor) return;
 
         // ✅ Found one — append immediately so the user sees results live
-        editorCount++;
-        foundProjects.push({ name, url: translateLink });
-        const block = document.createElement('div');
-        block.style.cssText = 'margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px;';
-        block.innerHTML = `
-          <strong>🛡️ ${name}</strong>
-          <a href="${translateLink}" target="_blank"
-             style="font-size:11px; margin-left:6px; color:#0073aa;">
-            → translate
-          </a>
-        `;
-        results.appendChild(block);
+          editorCount++;
+          foundProjects.push({ name, url: translateLink });
+
+          const block = document.createElement('div');
+          block.style.cssText = 'margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px;';
+
+          const titleStrong = document.createElement('strong');
+          titleStrong.textContent = `🛡️ ${name}`;                 // externe projectnaam → veilig
+
+          const link = document.createElement('a');
+          link.href = translateLink;                                // zelf samengestelde locale-URL
+          link.target = '_blank';
+          link.style.cssText = 'font-size:11px; margin-left:6px; color:#0073aa;';
+          link.textContent = '→ translate';
+
+          block.append(titleStrong, ' ', link);
+          results.appendChild(block);
 
       } catch (e) {
         console.error(`[${slug}] Project page check error:`, e);
@@ -911,9 +951,10 @@ async function runEditorScan(projectType, container) {
       console.log(`[WP Editor Projects] Finished. Editor for ${editorCount} project(s).`);
 
       if (editorCount === 0) {
-        footer.innerHTML = `<em style="color:#888;">
-          Make sure you are logged into wordpress.org and your username is set correctly.
-        </em>`;
+          const noEditorMsg = document.createElement('em');
+          noEditorMsg.style.cssText = 'color:#888;';
+          noEditorMsg.textContent = 'Make sure you are logged into wordpress.org and your username is set correctly.';
+          footer.appendChild(noEditorMsg);
       } else {
         // Export button
         const exportBtn = document.createElement('button');
@@ -948,7 +989,11 @@ async function runEditorScan(projectType, container) {
 
   } catch (err) {
     console.error('[WP Editor Projects] Fatal error:', err);
-    results.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+      results.replaceChildren();
+      const p = document.createElement('p');
+      p.style.cssText = 'color:red;';
+      p.textContent = `Error: ${err.message}`;
+      results.appendChild(p);
   }
 }
 

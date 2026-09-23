@@ -2,7 +2,7 @@
 async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, openAiGloss, model, apikeyOpenRouter, translator,OpenRouterModel) {
     var countrows = 0;
     var progressbar;
-    //console.debug("data.OpenAISelect:", model);
+    console.debug("data.OpenAISelect:", model);
     //console.debug("Reviewing page with translator:", translator);
     // --- START progress bar setup ---
    // const template = `
@@ -42,7 +42,7 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
     // Helper to process a single row, extracted so it can be called in parallel
     async function processRow(e) {
         let original = e.querySelector("span.original-raw").innerText;
-
+        //console.debug("original:",original)
         // Parse row ID (same logic as checkPage)
         let rowfound = e.parentElement.parentElement.parentElement.parentElement.id;
         let row = rowfound.split("-")[1];
@@ -84,10 +84,11 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
         let transtype = pluralpresent ? "plural" : "single";
 
         if (transtype === "single") {
-            let textareaElem = e.querySelector("textarea.foreign-text");
-            let translatedText = textareaElem ? textareaElem.innerHTML : "";
+            
+            let textareaElem = document.querySelector(`#preview-${row} .translation.foreign-text`)
+            let translatedText = textareaElem ? textareaElem.innerText : "";
             let preview = document.querySelector("#preview-" + row + " td.translation");
-
+            
             if (translatedText !== "" && translatedText !== "No suggestions") {
                 let result = await AIreview(
                     original, destlang, e, apikeyOpenAI,
@@ -95,6 +96,7 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
                     row, transtype, "", false, locale,
                     false, true, translatedText, preview, openAiGloss, model, apikeyOpenRouter, translator, OpenRouterModel
                 );
+                //console.debug("result:",result)
             }
         } else {
             // Plural — review first line only

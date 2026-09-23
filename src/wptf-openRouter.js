@@ -460,20 +460,28 @@ async function reviewopenRouter(original, language, record, apikeyOpenAI, OpenAI
                 open_ai_response = data.choices[0];
                 if (typeof open_ai_response.message.content != 'undefined') {
                     let text = open_ai_response.message.content;
-                    //console.debug("text:", text,original,translatedText);
-                    if (text.indexOf("Yes") != -1) {
-                        // We need to remove the existing checkmark if present
-                        if (preview.innerHTML.startsWith('\u{2705}')){
-                            preview.innerHTML = preview.innerHTML.replace('\u{2705}',"")
-                        }
-                        preview.innerHTML = '\u{2705}' + " " + preview.innerHTML
-                        
-                    }
-                    else {
-                        if (preview.innerHTML.startsWith('\u{26A0}}')) {
-                            preview.innerHTML = preview.innerHTML.replace('\u{26A0}', "")
-                        }
-                        preview.innerHTML = '\u{26A0}' + " "+ preview.innerHTML
+                    // Bestaande status + reden opruimen (echte nodes, geen innerHTML)
+                    preview.querySelector('.review-status')?.remove();
+                    preview.querySelector('.review-reason')?.remove();
+
+                    if (text != "" && text.indexOf("Yes") !== -1) {
+                        const status = document.createElement('span');
+                        status.className = 'review-status';
+                        status.textContent = '\u{2705} ';
+                        preview.insertBefore(status, preview.firstChild);
+                    } else {
+                        const reasonMatch = text.match(/No[,:]?\s*(.*)/i);
+                        const reason = reasonMatch && reasonMatch[1] ? reasonMatch[1].trim() : "No reason provided";
+
+                        const status = document.createElement('span');
+                        status.className = 'review-status';
+                        status.textContent = '\u{26A0} ';
+                        preview.insertBefore(status, preview.firstChild);
+
+                        const reasonElem = document.createElement('div');
+                        reasonElem.className = 'review-reason';
+                        reasonElem.innerText = reason;      // was al veilig
+                        preview.appendChild(reasonElem);
                     }
                     return Promise.resolve(errorstate)
                 }

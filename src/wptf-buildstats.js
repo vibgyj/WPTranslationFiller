@@ -84,51 +84,83 @@ async function showTypesel(locale) {
         return;
     }
 
-    // Modal HTML including "Only PTE" checkbox
-    body.insertAdjacentHTML(
-        'afterend',
-        `<div id="myModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <p>
-                    Select your stats type<br>
-                    For some stats it takes a while — use "X" to stop.
-                </p>
-                <select id="stattypes">
-                    <option value="1">Themes default</option>
-                    <option value="2">Plugins default</option>
-                    <option value="3">Themes formal</option>
-                    <option value="4">Plugins formal</option>
-                    <option value="5">Themes default 100%</option>
-                    <option value="6">Plugins default 100%</option>
-                    <option value="7">Themes formal 100%</option>
-                    <option value="8">Plugins formal 100%</option>
-                    <option value="9">Meta default</option>
-                    <option value="10">Meta formal</option>
-                </select>
-                <br><br>
+    // Verwijder een eventueel achtergebleven modal, zodat er nooit twee #myModal bestaan
+    const oldModal = document.getElementById("myModal");
+    if (oldModal) oldModal.remove();
 
-                <!-- ✅ Only PTE checkbox -->
-                <label style="user-select:none;">
-                    <input type="checkbox" id="onlyPTE" /> Only PTE
-                </label>
+    const modal = document.createElement("div");
+    modal.id = "myModal";
+    modal.className = "modal";
 
-                <br><br>
-                <button id="mySelButton">Select stat and click me to start</button>
-            </div>
-        </div>`
+    const content = document.createElement("div");
+    content.className = "modal-content";
+
+    const closeSpan = document.createElement("span");
+    closeSpan.className = "close";
+    closeSpan.textContent = "\u00D7";   // &times;
+
+    const p = document.createElement("p");
+    p.append(
+        "Select your stats type",
+        document.createElement("br"),
+        'For some stats it takes a while — use "X" to stop.'
     );
 
-    let modal = document.getElementById("myModal");
+    const select = document.createElement("select");
+    select.id = "stattypes";
+    const options = [
+        ["1", "Themes default"],
+        ["2", "Plugins default"],
+        ["3", "Themes formal"],
+        ["4", "Plugins formal"],
+        ["5", "Themes default 100%"],
+        ["6", "Plugins default 100%"],
+        ["7", "Themes formal 100%"],
+        ["8", "Plugins formal 100%"],
+        ["9", "Meta default"],
+        ["10", "Meta formal"],
+    ];
+    options.forEach(([value, label]) => {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = label;
+        select.appendChild(opt);
+    });
+
+    const label = document.createElement("label");
+    label.style.userSelect = "none";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = "onlyPTE";
+    label.append(checkbox, " Only PTE");
+
+    const selButton = document.createElement("button");
+    selButton.id = "mySelButton";
+    selButton.textContent = "Select stat and click me to start";
+
+    // Samenvoegen: p, select, br, br, label, br, br, button
+    content.append(
+        closeSpan,
+        p,
+        select,
+        document.createElement("br"),
+        document.createElement("br"),
+        label,
+        document.createElement("br"),
+        document.createElement("br"),
+        selButton
+    );
+    modal.appendChild(content);
+
+    document.body.after(modal);
     modal.style.display = "block";
 
-    document.getElementById("mySelButton").addEventListener("click", mySelection);
+    selButton.addEventListener("click", mySelection);
 
-    // Close modal logic
-    let span = document.getElementsByClassName("close")[0];
-    span.onclick = function () {
+    closeSpan.addEventListener("click", () => {
         modal.style.display = "none";
-    };
+    });
+
 
     window.onclick = function (event) {
         if (event.target == modal) {
@@ -313,33 +345,74 @@ async function createStatsTable(selVal, query, myType, locale,onlyPTE) {
         document.addEventListener("mouseup", () => { isDragging = false; });
     }
 
-    // ----- Insert HTML including Close button -----
-    statsContainer.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <h2 style="margin:0; cursor:default;">Project Stats</h2>
-            <button id="closeStats" style="padding:2px 6px; font-size:14px; cursor:pointer;">Close ✖</button>
-        </div>
-        <p id="progress">Processing 0 of ${allProjects.length} projects...</p>
-        <table id="statsTable" border="1" cellspacing="0" cellpadding="4" style="width:100%;">
-            <thead>
-                <tr>
-                    <th>Project Name</th>
-                    <th>Link</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody id="statsBody"></tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="2"><strong>Grand Total</strong></td>
-                    <td id="grandTotal">0</td>
-                </tr>
-            </tfoot>
-        </table>
-    `;
+    // ----- Build stats UI as nodes (no innerHTML) -----
+    statsContainer.replaceChildren();
 
-    // ----- Close button handler -----
-    const closeBtn = document.getElementById("closeStats");
+    // Header met titel + close-knop
+    const header = document.createElement("div");
+    header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;";
+
+    const h2 = document.createElement("h2");
+    h2.style.cssText = "margin:0; cursor:default;";
+    h2.textContent = "Project Stats";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "closeStats";
+    closeBtn.style.cssText = "padding:2px 6px; font-size:14px; cursor:pointer;";
+    closeBtn.textContent = "Close ✖";
+
+    header.append(h2, closeBtn);
+
+    // Progress-regel
+    const progress = document.createElement("p");
+    progress.id = "progress";
+    progress.textContent = `Processing 0 of ${allProjects.length} projects...`;
+
+    // Tabel
+    const table = document.createElement("table");
+    table.id = "statsTable";
+    table.border = "1";
+    table.cellSpacing = "0";
+    table.cellPadding = "4";
+    table.style.cssText = "width:100%;";
+
+    // thead
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    ["Project Name", "Link", "Total"].forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+
+    // tbody (leeg, id behouden)
+    const tbody = document.createElement("tbody");
+    tbody.id = "statsBody";
+
+    // tfoot met Grand Total
+    const tfoot = document.createElement("tfoot");
+    const footRow = document.createElement("tr");
+
+    const tdLabel = document.createElement("td");
+    tdLabel.colSpan = 2;
+    const strong = document.createElement("strong");
+    strong.textContent = "Grand Total";
+    tdLabel.appendChild(strong);
+
+    const tdTotal = document.createElement("td");
+    tdTotal.id = "grandTotal";
+    tdTotal.textContent = "0";
+
+    footRow.append(tdLabel, tdTotal);
+    tfoot.appendChild(footRow);
+
+    table.append(thead, tbody, tfoot);
+
+    // Alles samenvoegen
+    statsContainer.append(header, progress, table);
+
+    // ----- Close button handler — direct op de node, geen getElementById nodig -----
     closeBtn.addEventListener("click", () => statsContainer.remove());
 
     // ----- Process projects -----
@@ -433,11 +506,21 @@ async function process_projects(myProjects, currusername, container, onlyPTE) {
                         grandTotal += val;
 
                         const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${projectname}</td>
-                            <td><a href="${fetch_project}" target="_blank">${fetch_project}</a></td>
-                            <td>${val}</td>
-                        `;
+
+                        const tdName = document.createElement("td");
+                        tdName.textContent = projectname;
+
+                        const tdLink = document.createElement("td");
+                        const link = document.createElement("a");
+                        link.href = fetch_project;          // zelf-samengestelde URL → via property
+                        link.target = "_blank";
+                        link.textContent = fetch_project;
+                        tdLink.appendChild(link);
+
+                        const tdVal = document.createElement("td");
+                        tdVal.textContent = val;
+
+                        row.append(tdName, tdLink, tdVal);
                         statsBody.appendChild(row);
                         grandTotalElem.innerText = grandTotal;
                     }

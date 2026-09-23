@@ -1,4 +1,16 @@
 ﻿// strips quotes from the output if the source was not quoted. This is to avoid translators adding quotes unnecessarily.
+// helper functie zodat innerHTML niet wordt gebruikt en de quotes behouden blijven
+function setPriorityValue(cell, value) {
+    if (!cell) return;
+    let span = cell.querySelector(".priority-value");
+    if (!span) {
+        span = document.createElement("span");
+        span.className = "priority-value";
+        span.style.color = "white";          // wit, zoals de oude <span style="color:white">
+        cell.insertBefore(span, cell.firstChild);
+    }
+    span.textContent = value;
+}
 async function stripWrappingQuotes(output, source) {
    // console.debug("stripWrappingQuotes called with output:", output, "source:", source);
   const t = output.trim();
@@ -1058,13 +1070,19 @@ function showTranslationSpinner(text = "Translating…") {
 
     const spinner = document.createElement("div");
     spinner.id = "wpft-translation-spinner";
-    spinner.innerHTML = `
-        <div class="wpft-spinner-box">
-            <div class="wpft-spinner"></div>
-            <div class="wpft-spinner-text">${text}</div>
-        </div>
-    `;
 
+    const box = document.createElement("div");
+    box.className = "wpft-spinner-box";
+
+    const spin = document.createElement("div");
+    spin.className = "wpft-spinner";
+
+    const textDiv = document.createElement("div");
+    textDiv.className = "wpft-spinner-text";
+    textDiv.textContent = text;              // ${text} → veilig via textContent
+
+    box.append(spin, textDiv);
+    spinner.appendChild(box);
     document.body.appendChild(spinner);
 }
 
@@ -1849,15 +1867,17 @@ function setcheckBox() {
 
         document.querySelectorAll("tr.preview").forEach((preview, i) => {
             rowchecked = preview.querySelector('td.myCheckBox');
-            rowChecked = rowchecked.querySelector("input") 
-            if (rowChecked.checked != null) {
-                if (!rowChecked.checked) {
-                    if (preview.classList.contains("untranslated")) {
-                        rowChecked.checked = true;
+            if (rowchecked != null) {
+                rowChecked = rowchecked.querySelector("input")
+                if (rowChecked.checked != null) {
+                    if (!rowChecked.checked) {
+                        if (preview.classList.contains("untranslated")) {
+                            rowChecked.checked = true;
+                        }
                     }
-                }
-                else {
-                    rowChecked.checked = false;
+                    else {
+                        rowChecked.checked = false;
+                    }
                 }
             }
         });
@@ -2170,11 +2190,11 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
     //console.debug("validatePage glossary:",myglossary)
     // html code for counter in checkbox
 
-    const line_counter = `
-    <div class="line-counter">
-        <span class="text-line-counter"></span>
-    </div>
-    `;
+//    const line_counter = `
+//    <div class="line-counter">
+//        <span class="text-line-counter"></span>
+//    </div>
+//    `;
 
     // 12-06-2021 PSS added project to url so the proper project is used for finding old translations
     let f = document.getElementsByClassName("breadcrumb");
@@ -2248,35 +2268,54 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
             glossary_word = old_status.getElementsByClassName("glossary-word")
         }
         if (checkbox[0] != null) {
-            
-            my_line_counter = checkbox[0].querySelector("div.line-counter")
-            // mark lines with glossary word into checkbox
+
+            my_line_counter = checkbox[0].querySelector("div.line-counter");
+
             if (glossary_word.length != 0) {
-                checkbox[0].style.background = "LightSteelBlue"
-                checkbox[0].title = "Has glossary word"
-            }
-            // add counter to checkbox, but do not add it twice      
-            if (my_line_counter == null) {
-                checkbox[0].insertAdjacentHTML('afterbegin', line_counter);
-                let this_line_counter = checkbox[0].querySelector("span.text-line-counter")
-                this_line_counter.innerText = rowcount
+                checkbox[0].style.background = "LightSteelBlue";
+                checkbox[0].title = "Has glossary word";
             }
 
+            if (my_line_counter == null) {
+                // Build <div class="line-counter"><span class="text-line-counter">rowcount</span></div>
+                const counterDiv = document.createElement("div");
+                counterDiv.className = "line-counter";
+
+                const counterSpan = document.createElement("span");
+                counterSpan.className = "text-line-counter";
+                counterSpan.innerText = rowcount;          // dynamic value, set safely
+
+                counterDiv.appendChild(counterSpan);
+                checkbox[0].insertBefore(counterDiv, checkbox[0].firstChild);  // = 'afterbegin'
+            }
         }
         else {
             // if not a PTE it must be put in a different checkbox
-            //console.debug("we are not a PTE")
             if (old_status != null) {
-                let mycheckbox = old_status.getElementsByClassName("myCheckBox")
-                mycheckbox[0].insertAdjacentHTML('afterbegin', line_counter);
-                let this_line_counter = mycheckbox[0].querySelector("span.text-line-counter")
-                this_line_counter.innerText = rowcount
-                if (glossary_word.length != 0) {
-                    mycheckbox[0].style.background = "LightSteelBlue"
-                    mycheckbox[0].title = "Has glossary word"
+                let mycheckbox = old_status.getElementsByClassName("myCheckBox");
+
+                if (mycheckbox[0]) {
+                    // zelfde dubbel-invoeg-guard als de PTE-tak
+                    let my_line_counter = mycheckbox[0].querySelector("div.line-counter");
+
+                    if (my_line_counter == null) {
+                        const counterDiv = document.createElement("div");
+                        counterDiv.className = "line-counter";
+
+                        const counterSpan = document.createElement("span");
+                        counterSpan.className = "text-line-counter";
+                        counterSpan.innerText = rowcount;
+
+                        counterDiv.appendChild(counterSpan);
+                        mycheckbox[0].insertBefore(counterDiv, mycheckbox[0].firstChild);
+                    }
+
+                    if (glossary_word.length != 0) {
+                        mycheckbox[0].style.background = "LightSteelBlue";
+                        mycheckbox[0].title = "Has glossary word";
+                    }
                 }
             }
-            
         }
         let element = e.querySelector(".source-details__comment");
         let toTranslate = false;
@@ -2918,30 +2957,15 @@ function showPlaceholderLog(position = "top-right") {
     if (existing) existing.remove();
 
     const positionStyles = {
-        "top-left":     "top: 20px; left: 20px;",
-        "top-right":    "top: 20px; right: 20px;",
-        "bottom-left":  "bottom: 20px; left: 20px;",
+        "top-left": "top: 20px; left: 20px;",
+        "top-right": "top: 20px; right: 20px;",
+        "bottom-left": "bottom: 20px; left: 20px;",
         "bottom-right": "bottom: 20px; right: 20px;",
     };
 
     const posStyle = positionStyles[position] || positionStyles["top-right"];
 
-    // Build the log rows as HTML
-    const rows = PlaceholderLog.map(entry => {
-        const color =
-            entry.type === "ok"    ? "#2e7d32" :
-            entry.type === "error" ? "#c62828" : "#555";
-        return `<div style="
-            padding: 4px 6px;
-            font-family: monospace;
-            font-size: 13px;
-            color: ${color};
-            border-bottom: 1px solid #eee;
-            white-space: pre;
-        ">${entry.text}</div>`;
-    }).join("");
-
-    // Create a div instead of an iframe
+    // Create the panel
     const panel = document.createElement("div");
     panel.id = "placeholder-log-panel";
     panel.style.cssText = `
@@ -2959,46 +2983,47 @@ function showPlaceholderLog(position = "top-right") {
         font-family: sans-serif;
     `;
 
-    panel.innerHTML = `
-        <div id="placeholder-log-header" style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: #1565c0;
-            color: #fff;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: move;
-            user-select: none;
-            border-radius: 3px 3px 0 0;
-            flex-shrink: 0;
-        ">
-            📋 Placeholder Check Results
-            <button style="
-                background: transparent;
-                border: 1px solid #fff;
-                color: #fff;
-                cursor: pointer;
-                padding: 2px 8px;
-                border-radius: 3px;
-                font-size: 13px;
-            ">✕ Close</button>
-        </div>
-        <div style="
-            overflow-y: auto;
-            flex: 1;
-            padding: 4px 0;
-        ">${rows || '<div style="padding:10px;color:#888;">No entries logged.</div>'}</div>
-    `;
+    // --- Header (built as nodes, no innerHTML) ---
+    const header = document.createElement("div");
+    header.id = "placeholder-log-header";
+    header.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#1565c0; color:#fff; font-size:14px; font-weight:bold; cursor:move; user-select:none; border-radius:3px 3px 0 0; flex-shrink:0;";
+    header.appendChild(document.createTextNode("📋 Placeholder Check Results"));
 
+    const closeBtn = document.createElement("button");
+    closeBtn.style.cssText = "background:transparent; border:1px solid #fff; color:#fff; cursor:pointer; padding:2px 8px; border-radius:3px; font-size:13px;";
+    closeBtn.textContent = "✕ Close";
+    header.appendChild(closeBtn);
+
+    // --- Body container ---
+    const body = document.createElement("div");
+    body.style.cssText = "overflow-y:auto; flex:1; padding:4px 0;";
+
+    // --- Rows (per entry a node, text via textContent) ---
+    if (PlaceholderLog.length > 0) {
+        PlaceholderLog.forEach(entry => {
+            const color =
+                entry.type === "ok" ? "#2e7d32" :
+                    entry.type === "error" ? "#c62828" : "#555";
+
+            const rowDiv = document.createElement("div");
+            rowDiv.style.cssText = `padding:4px 6px; font-family:monospace; font-size:13px; color:${color}; border-bottom:1px solid #eee; white-space:pre;`;
+            rowDiv.textContent = entry.text;
+            body.appendChild(rowDiv);
+        });
+    } else {
+        const empty = document.createElement("div");
+        empty.style.cssText = "padding:10px; color:#888;";
+        empty.textContent = "No entries logged.";
+        body.appendChild(empty);
+    }
+
+    panel.append(header, body);
     document.body.appendChild(panel);
 
-    // Close button
-    panel.querySelector("button").addEventListener("click", () => panel.remove());
+    // Close button — use the node directly, no querySelector needed
+    closeBtn.addEventListener("click", () => panel.remove());
 
-    // Drag support
-    const header = panel.querySelector("#placeholder-log-header");
+    // Drag support — header is already a variable
     let isDragging = false, startX, startY, origLeft, origTop;
 
     header.addEventListener("mousedown", (e) => {
@@ -3007,15 +3032,15 @@ function showPlaceholderLog(position = "top-right") {
         startY = e.clientY;
         const rect = panel.getBoundingClientRect();
         origLeft = rect.left;
-        origTop  = rect.top;
-        panel.style.right  = "auto";
+        origTop = rect.top;
+        panel.style.right = "auto";
         panel.style.bottom = "auto";
     });
 
     document.addEventListener("mousemove", (e) => {
         if (!isDragging) return;
         panel.style.left = (origLeft + e.clientX - startX) + "px";
-        panel.style.top  = (origTop  + e.clientY - startY) + "px";
+        panel.style.top = (origTop + e.clientY - startY) + "px";
     });
 
     document.addEventListener("mouseup", () => { isDragging = false; });
@@ -3121,17 +3146,28 @@ function pruneGlossary(openAiGloss, originalPreProcessed, original) {
         })
         .join(", ");
 }
-/**
- * Safely set HTML content.
- * Uses the native Sanitizer API (Firefox 148+, Chrome 146+).
- * Falls back to innerHTML only on browsers without the API (Safari).
- */
-function setSafeHTML(el, html) {
-    if ('setHTML' in el) {
-        // Empty config = allow all elements/attributes,
-        // strip only XSS vectors (scripts, event handlers, js: URLs)
-        el.setHTML(html, { sanitizer: new Sanitizer({}) });
-    } else {
-        el.innerHTML = html; // fallback for browsers without Sanitizer API
-    }
+function decodeEntities(str) {
+    if (typeof str !== "string" || str.indexOf("&") === -1) return str;
+    const named = {
+        "&nbsp;": "\u00A0",
+        "&amp;": "&",
+        "&lt;": "<",
+        "&gt;": ">",
+        "&quot;": '"',
+        "&#39;": "'",
+        "&apos;": "'",
+        "&eacute;": "é",
+        "&egrave;": "è",
+        "&euml;": "ë",
+        "&iuml;": "ï",
+        "&ouml;": "ö",
+        "&uuml;": "ü",
+        "&hellip;": "\u2026"
+    };
+    return str
+        // named entities
+        .replace(/&[a-z]+;/gi, m => named[m] ?? m)
+        // numerieke entities: &#123; en &#x1F;
+        .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
+        .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)));
 }

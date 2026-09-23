@@ -564,15 +564,15 @@ document.addEventListener("keydown", async function (event) {
         });
     }
 
-    if (event.altKey && event.shiftKey && (event.key === "F6")) {
-        if (event) event.preventDefault();
-        var rule = { "id": 1, "priority": 1, "action": { "type": "allow" }, "condition": { "regexFilter": "-get-tm-suggestions", "resourceTypes": ["xmlhttprequest"] } };
-        resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
-    }
+  //  if (event.altKey && event.shiftKey && (event.key === "F6")) {
+   //     if (event) event.preventDefault();
+   //     var rule = { "id": 1, "priority": 1, "action": { "type": "allow" }, "condition": { "regexFilter": "-get-tm-suggestions", "resourceTypes": ["xmlhttprequest"] } };
+   //     resblock = chrome.declarativeNetRequest.updateEnabledRulesets({ addRules: [rule] });
+   // }
 
-    if (event.altKey && event.shiftKey && (event.key === "F7")) {
-        res = chrome.declarativeNetRequest.updateEnabledRuleset({ addRules: [{ "id": 1, "priority": 1, "action": { "type": "block" }, "condition": { "regexFilter": "-get-tm-suggestions", "resourceTypes": ["xmlhttprequest"] } }], removeRuleIds: [1] });
-    }
+   // if (event.altKey && event.shiftKey && (event.key === "F7")) {
+   //     res = chrome.declarativeNetRequest.updateEnabledRuleset({ addRules: [{ "id": 1, "priority": 1, "action": { "type": "block" }, "condition": { "regexFilter": "-get-tm-suggestions", "resourceTypes": ["xmlhttprequest"] } }], removeRuleIds: [1] });
+  //  }
 
     if (event.altKey && event.shiftKey && (event.key === "F8")) {
         if (event) event.preventDefault();
@@ -1358,6 +1358,7 @@ async function checkPageClicked(event) {
         try {
             const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
             const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
+            //console.debug("reviewpar:",data.Auto_review_OpenAI)
             await checkPage(postTranslationReplace, formal, data.destlang, data.apikeyOpenAI, "", data.spellCheckIgnore, showHistory, data.apikeyOpenAI, data.OpenAIPrompt, data.reviewPrompt);
             if (data.Auto_review_OpenAI == true) await reviewPage(data.apikeyOpenAI, data.destlang, data.OpenAIPrompt, data.reviewPrompt, data.OpenAiGloss, data.OpenAISelect, data.apikeyOpenRouter,data.transsel,data.OpenRouterSelect);
             if (data.Auto_spellcheck   == true) await startSpellCheck(data.LtKey, data.LtUser, data.LtLang, data.LtFree, data.spellCheckIgnore);
@@ -1943,12 +1944,16 @@ async function handleDetailsAction(rowId, event) {
                         const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
                         let replaceVerbs = setPostTranslationReplace(postTranslationReplace, toBoolean(formal))
                         let mytranslatedText = await replaceVerbInTranslation(myoriginal, pretrans, replaceVerbs, debug = false, formal)
-                        mytextarea[0].innerHTML = mytranslatedText;
+                        //mytextarea[0].innerHTML = mytranslatedText;
+                        mytextarea[0].value = mytranslatedText;
+                        mytextarea[0].TextContent = mytranslatedText;
                         mytextarea[0].innerText = mytranslatedText;
                     });
                 }
                 else {
-                    mytextarea[0].innerHTML = pretrans;
+                   // mytextarea[0].innerHTML = pretrans;
+                    mytextarea[0].TextContent = pretrans;
+                    mytextarea[0].value = pretrans;
                     mytextarea[0].innerText = pretrans;
                 }
                 let header      = await document.querySelector(`#editor-${rowId} .panel-header`);
@@ -2012,7 +2017,8 @@ async function handleDetailsAction(rowId, event) {
                 let pluralPretrans     = await findTransline(pluralOriginalText, locale);
                 if (pluralPretrans != "notFound") {
                     pluralTextarea.value    = pluralPretrans;
-                    pluralTextarea.innerHTML = pluralPretrans;
+                    //pluralTextarea.innerHTML = pluralPretrans;
+                    pluralTextarea.TextContent = pluralPretrans;
                     let header      = document.querySelector(`#editor-${rowId} .panel-header`);
                     let localButton = header?.querySelector(`.translocal-entry-local-button`);
                     if (localButton) localButton.style.visibility = "visible";
@@ -2058,7 +2064,9 @@ async function handleDetailsAction(rowId, event) {
                         markdiv.appendChild(markspan1);
                         markdiv.appendChild(markspan2);
                         editorElem.appendChild(markdiv);
-                        markspan1.innerHTML = "<br>--" + __("Missing glossary verbs are marked") + "--";
+                        //markspan1.innerHTML = "<br>--" + __("Missing glossary verbs are marked") + "--";
+                        markspan1.appendChild(document.createElement("br"));
+                        markspan1.appendChild(document.createTextNode("--" + __("Missing glossary verbs are marked") + "--"));
                     }
                 }
 
@@ -2220,7 +2228,12 @@ function applyPercentStyle(panelTransMenu, priorityElem, percent, missingVerbsBu
 
     if (priorityElem) {
         if (entry.label !== null) {
-            priorityElem.innerHTML = `<span style="color:black">${entry.label}</span>`;
+            const labelSpan = document.createElement("span");
+            labelSpan.style.color = "white";
+            labelSpan.textContent = entry.label;
+            priorityElem.replaceChildren(labelSpan);
+
+            //priorityElem.innerHTML = `<span style="color:black">${entry.label}</span>`;
         }
         // caller is responsible for setting raw count text when percent === 0
     }
@@ -2260,7 +2273,9 @@ async function updateStyle(textareaElem, result, newurl, showHistory, showName, 
             markdiv.appendChild(markimage);
             let markspan = document.createElement("span"); markspan.setAttribute("class", "mark-tooltiptext");
             markdiv.appendChild(markspan);
-            markspan.innerHTML = result.newText;
+            //markspan.innerHTML = result.newText;
+            markspan.TextContent = result.newText;
+            markspan.value = result.newText;
         }
     }
 
@@ -2427,11 +2442,11 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^=!:${}()|[\]\/\\]/g, '\\$&');
 }
 
-function decodeHtmlEntities(str) {
-    const txt = document.createElement("textarea");
-    txt.innerHTML = str;
-    return txt.value;
-}
+//function decodeHtmlEntities(str) {
+//    const txt = document.createElement("textarea");
+//    txt.innerHTML = str;
+//    return txt.value;
+//}
 
 let isProcessing       = false;
 let currentTranslation = "";
@@ -2544,8 +2559,12 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
             const priorityElem = checkElem;
 
             if (result.percent == 100) {
-                checkElem.innerHTML = "100";
+                //console.debug("checkElem:", checkElem);
+                setPriorityValue(checkElem, "100");
+                //checkElem.innerHTML = "100";
+                
                 checkElem.style.backgroundColor = "green";
+                checkElem.style.Color = "white";
                 separator1 = document.createElement("div"); separator1.setAttribute("class", "checkElem_save"); checkElem.appendChild(separator1);
                 res = addCheckButton(rowId, checkElem, "updateElementStyle-100");
                 if (res?.SavelocalButton) { SavelocalButton = res.SavelocalButton; SavelocalButton.innerText = button_name; }
@@ -2556,7 +2575,10 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 if (markdiv) markdiv.remove();
 
             } else if (result.percent > 0) {
-                checkElem.innerHTML = `<span style="color:black">${result.percent}</span>`;
+                const percentSpan = document.createElement("span");
+                percentSpan.style.color = "black";
+                percentSpan.textContent = result.percent;
+                checkElem.replaceChildren(percentSpan);
                 separator1 = document.createElement("div"); separator1.setAttribute("class", "checkElem_save"); checkElem.appendChild(separator1);
                 res = addCheckButton(rowId, checkElem, "updateElementStyle-partial");
                 if (res?.SavelocalButton) { SavelocalButton = res.SavelocalButton; SavelocalButton.innerText = button_name; }
@@ -2578,7 +2600,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
                 // percent == 0
                 newtitle = checkElem.title;
                 if ((result.wordCount - result.foundCount) == 0) {
-                    checkElem.innerText = "0";
+                    setPriorityValue(checkElem, "0");
+                    //checkElem.innerText = "0";
                     checkElem.style.backgroundColor = "green";
                     separator1 = document.createElement("div"); separator1.setAttribute("class", "checkElem_save"); checkElem.appendChild(separator1);
                     res = addCheckButton(rowId, checkElem, "updateElementStyle-0-eq");
@@ -2625,7 +2648,8 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
     } else {
         // showName == true
         if (current != "untranslated") {
-            checkElem.innerHTML = "100";
+            //checkElem.innerHTML = "100";
+            setPriorityValue(checkElem, "100");
             separator1 = document.createElement("div"); separator1.setAttribute("class", "checkElem_save"); checkElem.appendChild(separator1);
             res = addCheckButton(rowId, checkElem, "updateElementStyle-name");
             if (res?.SavelocalButton) { SavelocalButton = res.SavelocalButton; SavelocalButton.innerText = "Curr"; }
@@ -3403,11 +3427,11 @@ function start_editor_mutation_server2(pluralTextarea, action, leftPanel) {
 
 function findByKey(map, searchKey) { return map.get(searchKey) || null; }
 
-function decodeHTML(html) {
-    const textArea   = document.createElement('textarea');
-    textArea.innerHTML = html;
-    return textArea.value;
-}
+//function decodeHTML(html) {
+ //   const textArea   = document.createElement('textarea');
+ //   textArea.innerHTML = html;
+ //   return textArea.value;
+//}
 
 // ─── handleMutation ──────────────────────────────────────────
 async function handleMutation(mutationsList) {
@@ -3491,7 +3515,7 @@ async function handleMutation(mutationsList) {
             // code below replaces innerHTML with a span element to avoid HTML injection
             if (percent > 0) {
                 const span = document.createElement('span');
-                span.style.color = 'black';
+                span.style.color = 'white';
                 span.textContent = percent;        // numbers are fine; auto-converted
                 priorityElem.replaceChildren(span);
             } else {
@@ -3509,9 +3533,12 @@ async function handleMutation(mutationsList) {
         if (missingVerbsButton) { missingVerbsButton.style.visibility = "hidden"; missingVerbsButton.title = ""; }
         applyPercentStyle(panelTransMenu, null, 100, missingVerbsButton);
         if (priorityElem) {
-            priorityElem.style.backgroundColor = "green";
-            priorityElem.innerHTML = '<span style="color:black">100</span>';
-        }
+    priorityElem.style.backgroundColor = "green";
+    const span = document.createElement("span");
+    span.style.color = "white";
+    span.textContent = "100";
+    priorityElem.replaceChildren(span);
+}
     }
 
     const inputElement = document.getElementById(`translation_${row}_0`);
@@ -3591,8 +3618,8 @@ function MutationsPlural(mutationsList) {
                     : percent >= 10 ? "purple"
                     : percent >  0  ? "darkorange"
                     : "red";
-                priorityElem.innerHTML = percent > 0
-                    ? `<span style="color:black">${percent}</span>`
+                priorityElem.value = percent > 0
+                    ? `<span style="color:white">${percent}</span>`
                     : String(spansArray.length);
             }
             if (markerPresent[0]) markerPresent[0].remove();
@@ -3603,7 +3630,13 @@ function MutationsPlural(mutationsList) {
             if (markerPresent[0]) markerPresent[0].remove();
             if (missingVerbsButton[0]) { missingVerbsButton[0].style.visibility = "hidden"; missingVerbsButton[0].title = ""; }
             applyPercentStyle(panelTransMenu[0], null, 100, null);
-            if (priorityElem) { priorityElem.style.backgroundColor = "green"; priorityElem.innerHTML = '<span style="color:black">100</span>'; }
+            if (priorityElem) {
+                priorityElem.style.backgroundColor = "green";
+                const span = document.createElement("span");
+                span.style.color = "white";
+                span.textContent = "100";
+                priorityElem.replaceChildren(span);
+            }
             // Only remove glossary markers on the plural source string element, not the whole leftPanel
             const pluralSourceElem = leftPanel.querySelector(`.source-string__plural`);
             if (pluralSourceElem) await remove_all_gloss(pluralSourceElem, "", false, rowId);

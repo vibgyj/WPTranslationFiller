@@ -147,3 +147,8 @@ Version 3.5.84 improved DeepSeek translation.
 Version 3.5.85 Moved post and pre into vars with locale
 Version 3.5.86 Plural preview was not populated anymore
 Version 3.5.87 Fixed a warning for securety about deeplglossary.html in Firefox upload
+Version 3.5.88 Fixed review of translations, it was no longer working as intended
+Version 3.5.89 Fixed security warnings for Firefox when uploading new version
+Version 3.5.90 Fixed security warnings for Firefox when uploading new version
+Version 3.5.91 Fixed security warnings for Firefox when uploading new version
+Version 3.5.92 Untranslated plurals gave an error, as the selecion of the preview was wrong

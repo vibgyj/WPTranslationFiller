@@ -292,7 +292,8 @@ async function processTM(myrecCount, destlang, TMwait, postTranslationReplace, p
                     let translatedText = original;
                     textareaElem = editor.querySelector("textarea.foreign-text");
                     textareaElem.innerText = translatedText;
-                    textareaElem.innerHTML = translatedText;
+                    //textareaElem.innerHTML = translatedText;
+                    textareaElem.TextContent = translatedText
                     textareaElem.value = translatedText;
                     let previewName = preview.querySelector("td.translation");
                     if (previewName != null) {

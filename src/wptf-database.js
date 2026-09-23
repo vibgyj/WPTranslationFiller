@@ -579,30 +579,77 @@ async function openDeeplModal(DeepLdb) {
         DownloadPath = "C:\\Temp\\";
     }
 
-    const modalHTML = `
-<div id="DeepLmodal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
-  <div style="background:white; padding:20px; margin:auto; width:60%; position:relative; top:-20vh;">
-    <h2>${title}</h2>
-    <button id="deeplCloseBtn">${DeepLClose}</button>
-    <button id="deeplImportBtn" data-delete="${myDelete}" data-deleted="${myRecordDeleted}">${ImpCSV}</button>
-    <button id="deeplExportBtn">${ExpCSV}</button>
-    <button id="addEntryButton">${AddEntry}</button>
-    <input type="text" id="searchLocale" placeholder="${searchLoc}">
-    <input type="text" id="searchOriginal" placeholder="${searchOrig}">
-    <button id="deeplSearchBtn">${mySearch}</button>
+    // Overlay + panel
+    const overlay = document.createElement("div");
+    overlay.id = "DeepLmodal";
+    overlay.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;";
 
-    <table border="1">
-      <thead>
-        <tr><th>${locHead}</th><th>${origHead}</th><th>${transHead}</th></tr>
-      </thead>
-      <tbody id="recordsTableBody"></tbody>
-    </table>
-  </div>
-</div>
-`;
+    const panel = document.createElement("div");
+    panel.style.cssText = "background:white; padding:20px; margin:auto; width:60%; position:relative; top:-20vh;";
 
-    document.body.insertAdjacentHTML("beforeend", modalHTML);
-    document.getElementById("DeepLmodal").style.display = "block";
+    // Titel
+    const h2 = document.createElement("h2");
+    h2.textContent = decodeEntities(title);
+
+    // Knoppen
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "deeplCloseBtn";
+    closeBtn.textContent = decodeEntities(DeepLClose);
+
+    const importBtn = document.createElement("button");
+    importBtn.id = "deeplImportBtn";
+    importBtn.dataset.delete = myDelete;          // data-delete, veilig via dataset
+    importBtn.dataset.deleted = myRecordDeleted;  // data-deleted
+    importBtn.textContent = decodeEntities(ImpCSV);
+
+    const exportBtn = document.createElement("button");
+    exportBtn.id = "deeplExportBtn";
+    exportBtn.textContent = decodeEntities(ExpCSV);
+
+    const addBtn = document.createElement("button");
+    addBtn.id = "addEntryButton";
+    addBtn.textContent = decodeEntities(AddEntry);
+
+    // Zoekvelden
+    const searchLocaleInput = document.createElement("input");
+    searchLocaleInput.type = "text";
+    searchLocaleInput.id = "searchLocale";
+    searchLocaleInput.placeholder = decodeEntities(searchLoc);
+
+    const searchOriginalInput = document.createElement("input");
+    searchOriginalInput.type = "text";
+    searchOriginalInput.id = "searchOriginal";
+    searchOriginalInput.placeholder = decodeEntities(searchOrig);
+
+    const searchBtn = document.createElement("button");
+    searchBtn.id = "deeplSearchBtn";
+    searchBtn.textContent = mySearch;
+
+    // Tabel
+    const table = document.createElement("table");
+    table.border = "1";
+
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    [locHead, origHead, transHead].forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = decodeEntities(h);
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+
+    const tbody = document.createElement("tbody");
+    tbody.id = "recordsTableBody";
+
+    table.append(thead, tbody);
+
+    // Alles samenvoegen
+    panel.append(h2, closeBtn, importBtn, exportBtn, addBtn,
+        searchLocaleInput, searchOriginalInput, searchBtn, table);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    overlay.style.display = "block";
 
     let locale = (checkLocale() || 'en').toUpperCase();
     listAllRecords(locale, myDelete, myRecordDeleted);
@@ -858,8 +905,9 @@ async function getTM(myLi, row, record, destlang, original, replaceVerb, transty
          }
          else {
             // if it is as single with local then we need also update the preview
-             preview.innerText = translatedText;
-             preview.innerHTML = translatedText
+            preview.innerText = translatedText;
+            preview.TextContent = translatedText;
+             //preview.innerHTML = translatedText
              preview.value = translatedText;
              current.innerText = "transFill";
              current.value = "transFill";

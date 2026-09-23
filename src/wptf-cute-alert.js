@@ -1,5 +1,12 @@
 // Alert box design by Igor Ferrão de Souza: https://www.linkedin.com/in/igor-ferr%C3%A3o-de-souza-4122407b/
-
+// Helper: tekst met <br>-behoud als nodes (geen HTML-parsing)
+function appendWithBreaks(el, str) {
+    const doc = el.ownerDocument;
+    String(str ?? '').split(/<br\s*\/?>/i).forEach((part, i) => {
+        if (i > 0) el.appendChild(doc.createElement('br'));
+        el.appendChild(doc.createTextNode(part));
+    });
+}
 const cuteAlert = ({
     type,
     title,
@@ -45,19 +52,8 @@ const cuteAlert = ({
             src = src.substring(0, src.lastIndexOf('/'));
         }
 
-        let btnTemplate = `
-	
-    <button class="alert-button ${type}-bg ${type}-btn">${buttonText}</button>
-    `;
-
-        if (type === 'question') {
-            btnTemplate = `
-      <div class="question-buttons">
-        <button class="confirm-button ${type}-bg ${type}-btn">${confirmText}</button>
-        <button class="cancel-button error-bg error-btn">${cancelText}</button>
-      </div>
-      `;
-        }
+      
+      
 
         if (vibrate.length > 0) {
             navigator.vibrate(vibrate);
@@ -92,46 +88,73 @@ const cuteAlert = ({
             
         }
 
-        const template = `
-    <div class="alert-wrapper">
-      <div class="alert-frame">
-        ${img !== '' ? '<div class="alert-header ' + type + '-bg">' : '<div>'}
-          <span class="alert-close ${closeStyle === 'circle'
-                ? 'alert-close-circle'
-                : 'alert-close-default'
-            }">X</span>
-          ${img !== '' ? '<img class="alert-img" src="' + src + img + '/' + type + '.svg' + '" />' : ''}
-        </div>
-        <div class="alert-body">
-          <span class="alert-title">${title}</span>
-          <span class="alert-message">${message}</span>
-          ${btnTemplate}
-        </div>
-      </div>
-    </div>
-    `;
+      
+        // Wrapper + frame
+        const alertWrapper = myWindow.document.createElement('div');
+        alertWrapper.className = 'alert-wrapper';
 
-        body.insertAdjacentHTML('afterend', template);
+        const alertFrame = myWindow.document.createElement('div');
+        alertFrame.className = 'alert-frame';
 
-        const alertWrapper = myWindow.document.querySelector('.alert-wrapper');
-        const alertFrame = myWindow.document.querySelector('.alert-frame');
-        const alertClose = myWindow.document.querySelector('.alert-close');
+        // Header
+        const alertHeader = myWindow.document.createElement('div');
+        if (img !== '') alertHeader.className = 'alert-header ' + type + '-bg';
 
+        const alertClose = myWindow.document.createElement('span');
+        alertClose.className = 'alert-close ' + (closeStyle === 'circle' ? 'alert-close-circle' : 'alert-close-default');
+        alertClose.textContent = 'X';
+        alertHeader.appendChild(alertClose);
+
+        if (img !== '') {
+            const image = myWindow.document.createElement('img');
+            image.className = 'alert-img';
+            image.src = src + img + '/' + type + '.svg';
+            alertHeader.appendChild(image);
+        }
+
+        // Body
+        const alertBody = myWindow.document.createElement('div');
+        alertBody.className = 'alert-body';
+
+        const titleSpan = myWindow.document.createElement('span');
+        titleSpan.className = 'alert-title';
+        appendWithBreaks(titleSpan, title);
+
+        const messageSpan = myWindow.document.createElement('span');
+        messageSpan.className = 'alert-message';
+        appendWithBreaks(messageSpan, message);
+
+        alertBody.append(titleSpan, messageSpan);
+
+        // Knoppen als nodes
         if (type === 'question') {
-            const confirmButton = myWindow.document.querySelector('.confirm-button');
-            const cancelButton = myWindow.document.querySelector('.cancel-button');
+            const btnWrap = myWindow.document.createElement('div');
+            btnWrap.className = 'question-buttons';
+
+            const confirmButton = myWindow.document.createElement('button');
+            confirmButton.className = 'confirm-button ' + type + '-bg ' + type + '-btn';
+            confirmButton.textContent = confirmText;
+
+            const cancelButton = myWindow.document.createElement('button');
+            cancelButton.className = 'cancel-button error-bg error-btn';
+            cancelButton.textContent = cancelText;
+
+            btnWrap.append(confirmButton, cancelButton);
+            alertBody.appendChild(btnWrap);
 
             confirmButton.addEventListener('click', () => {
                 alertWrapper.remove();
                 resolve('confirm');
             });
-
             cancelButton.addEventListener('click', () => {
                 alertWrapper.remove();
                 resolve('cancel');
             });
         } else {
-            const alertButton = myWindow.document.querySelector('.alert-button');
+            const alertButton = myWindow.document.createElement('button');
+            alertButton.className = 'alert-button ' + type + '-bg ' + type + '-btn';
+            alertButton.textContent = buttonText;
+            alertBody.appendChild(alertButton);
 
             alertButton.addEventListener('click', () => {
                 alertWrapper.remove();
@@ -139,10 +162,18 @@ const cuteAlert = ({
             });
         }
 
+        // Samenvoegen + invoegen (= insertAdjacentHTML('afterend', ...))
+        alertFrame.append(alertHeader, alertBody);
+        alertWrapper.appendChild(alertFrame);
+        body.after(alertWrapper);
+
+        // Close-knop
         alertClose.addEventListener('click', () => {
             alertWrapper.remove();
             resolve('close');
         });
+        
+       
 
         /*     alertWrapper.addEventListener('click', () => {
               alertWrapper.remove();
@@ -199,38 +230,81 @@ const cuteToast = ({ type, message, timer = 2000, vibrate = [], playSound = "/er
         }
 
         const toastId = id();
-        const templateContent = `
-    <div class="toast-content ${type}-bg" id="${toastId}-toast-content">
-      <div>
-        <div class="toast-frame">
-          <div class="toast-body">
-            ${img !== '' ? '<img class="toast-body-img" src="' + src + img + '/' + type + '.svg' + '" />' : ''}  
-            <div class="toast-body-content">
-              <span class="toast-title">${title}</span>
-              <span class="toast-message">${message}</span>
-            </div>
-            <div class="toast-close" id="${toastId}-toast-close">X</div>
-          </div>
-        </div>
-        ${img !== '' ? '<div class="toast-timer ' + type + '-timer"  style="animation: timer' + timer + 'ms linear;>' : ''}
-      </div>
-    </div>
-    `;
+
+        // Bouw de toast-content als nodes
+        const toastContentEl = myWindow && myWindow.document
+            ? myWindow.document.createElement('div')
+            : document.createElement('div');
+        const doc = toastContentEl.ownerDocument;
+
+        toastContentEl.className = 'toast-content ' + type + '-bg';
+        toastContentEl.id = `${toastId}-toast-content`;
+
+        const outer = doc.createElement('div');
+
+        const frame = doc.createElement('div');
+        frame.className = 'toast-frame';
+
+        const bodyDiv = doc.createElement('div');
+        bodyDiv.className = 'toast-body';
+
+        if (img !== '') {
+            const bodyImg = doc.createElement('img');
+            bodyImg.className = 'toast-body-img';
+            bodyImg.src = src + img + '/' + type + '.svg';
+            bodyDiv.appendChild(bodyImg);
+        }
+
+        const bodyContent = doc.createElement('div');
+        bodyContent.className = 'toast-body-content';
+
+        const titleSpan = doc.createElement('span');
+        titleSpan.className = 'toast-title';
+        appendWithBreaks(titleSpan, title);      // dezelfde helper als bij het hoofd-alert
+
+        const messageSpan = doc.createElement('span');
+        messageSpan.className = 'toast-message';
+        appendWithBreaks(messageSpan, message);
+
+        bodyContent.append(titleSpan, messageSpan);
+
+        const closeDiv = doc.createElement('div');
+        closeDiv.className = 'toast-close';
+        closeDiv.id = `${toastId}-toast-close`;
+        closeDiv.textContent = 'X';
+
+        bodyDiv.append(bodyContent, closeDiv);
+        frame.appendChild(bodyDiv);
+        outer.appendChild(frame);
+
+        // Timer-balk (alleen als er een img is) — nu mét correcte style en gesloten div
+        if (img !== '') {
+            const timerDiv = doc.createElement('div');
+            timerDiv.className = 'toast-timer ' + type + '-timer';
+            timerDiv.style.animation = `timer ${timer}ms linear`;
+            outer.appendChild(timerDiv);
+        }
+
+        toastContentEl.appendChild(outer);
+
+        // Invoegen: vóór de bestaande eerste toast, of in de container
+        let toasts;
         if (typeof myWindow == 'undefined') {
             toasts = document.querySelectorAll('.toast-content');
-        }
-        else {
-             toasts = myWindow.querySelectorAll('.toast-content');
+        } else {
+            toasts = myWindow.querySelectorAll('.toast-content');
         }
 
         if (toasts.length) {
-            toasts[0].insertAdjacentHTML('beforebegin', DOMPurify.sanitize(templateContent));
+            toasts[0].before(toastContentEl);        // = insertAdjacentHTML('beforebegin', ...)
         } else {
-            templateContainer.innerHTML = DOMPurify.sanitize(templateContent);
+            templateContainer.replaceChildren(toastContentEl);   // = innerHTML = ...
         }
+
+        // toastContent-referentie ophalen (id ongewijzigd, dus dit blijft werken)
         if (typeof myWindow == 'undefined') {
             toastContent = document.getElementById(`${toastId}-toast-content`);
-       }
+        }
        else {
             toastContent = myWindow.getElementsByClassName("toast-content info-bg")[0];
        }
@@ -264,3 +338,11 @@ const cuteToast = ({ type, message, timer = 2000, vibrate = [], playSound = "/er
 const id = () => {
     return '_' + Math.random().toString(36).substr(2, 9);
 };
+// helper: zet een melding met <br> om naar tekstnodes + <br>-elementen (geen HTML-parsing)
+function appendMessageWithBreaks(container, text) {
+    const parts = String(text ?? '').split(/<br\s*\/?>/i);
+    parts.forEach((part, i) => {
+        if (i > 0) container.appendChild(document.createElement('br'));
+        container.appendChild(document.createTextNode(part));
+    });
+}

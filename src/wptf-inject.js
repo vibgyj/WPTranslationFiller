@@ -320,13 +320,20 @@ function saveTranslation(locale, original,deleteText,message) {
                 // Update the UI
               //  const translationCell = document.getElementById("editTranslation").parentNode;
                // translationCell.innerHTML = newTranslation;
-               const translationCell = document.getElementById("editTranslation").parentNode;
-                setSafeHTML(translationCell, newTranslation);
+                const translationCell = document.getElementById("editTranslation").parentNode;
+                translationCell.textContent = newTranslation;
 
 
                 // Restore the delete button
                 const saveCell = translationCell.nextElementSibling;
-                saveCell.innerHTML = `<button class="delete-btn" onclick="deleteRecord('${locale}', '${original}', '${deleteText}')">${deleteText})</button>`;
+                saveCell.replaceChildren();
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "delete-btn";
+                deleteBtn.textContent = deleteText;   // stray ")" is weg
+                deleteBtn.addEventListener("click", () => deleteRecord(locale, original, deleteText));
+
+                saveCell.appendChild(deleteBtn);
                 alert(message);
             }
         };
@@ -364,8 +371,8 @@ function deleteRecord(locale, original,myDelete,myRecordDeleted) {
     });
 }
 function closeModalClicked() {
-    document.getElementById("DeepLmodal").style.display = "none";
-   // console.debug("we closed the modal")
+    const modal = document.getElementById("DeepLmodal");
+    if (modal) modal.remove();
 }
 function startSearch(knopText, deleteText, myRecordDeleted, recordNotFound, message) {
     const locale = document.getElementById("searchLocale").value.trim();
@@ -524,19 +531,35 @@ function searchRecord(locale, original, saveText, deleteText, myRecordDeleted, r
             const translationCell = row.cells[2];
             let currentTranslation = '';
 
-            const input = translationCell.querySelector('input');
+            let input = translationCell.querySelector('input');
             if (input) {
                 currentTranslation = input.value;
             } else {
                 currentTranslation = translationCell.textContent;
             }
 
-            translationCell.innerHTML = `<input type="text" value="${currentTranslation}" id="editTranslation">`;
+            translationCell.replaceChildren(); // leegmaken
 
+            input = document.createElement("input");
+            input.type = "text";
+            input.id = "editTranslation";
+            input.value = currentTranslation;   // value via property → veilig, ook met quotes in de tekst
+
+            translationCell.appendChild(input);
             const saveCell = row.cells[3];
-            saveCell.innerHTML = `<button onclick="saveTranslation('${locale}', '${original}', '${deleteText}','${message}')">${saveText}</button>
-                                  <button onclick="deleteRecord('${locale}', '${original}', '${deleteText}', '${myRecordDeleted}')">${deleteText}</button>`;
+            saveCell.replaceChildren(); // leegmaken
 
+            const saveBtn = document.createElement("button");
+            saveBtn.textContent = saveText;
+            saveBtn.addEventListener("click", () => saveTranslation(locale, original, deleteText, message));
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = deleteText;
+            deleteBtn.addEventListener("click", () => deleteRecord(locale, original, deleteText, myRecordDeleted));
+
+            saveCell.append(saveBtn, deleteBtn);
+           // saveCell.value = `<button onclick="saveTranslation('${locale}', '${original}', '${deleteText}','${message}')">${saveText}</button>
+           //                       <button onclick="deleteRecord('${locale}', '${original}', '${deleteText}', '${myRecordDeleted}')">${deleteText}</button>`;
             found = true;
             break;
         }
@@ -588,12 +611,12 @@ function loadGlossaryFromDB(apiKey, DeeplFree,language) {
     });
 }
 
-function setSafeHTML(el, html) {
-    if ('setHTML' in el) {
+//function setSafeHTML(el, html) {
+ //   if ('setHTML' in el) {
         // Empty config = allow all elements/attributes,
         // strip only XSS vectors (scripts, event handlers, js: URLs)
-        el.setHTML(html, { sanitizer: new Sanitizer({}) });
-    } else {
-        el.innerHTML = html; // fallback for browsers without Sanitizer API
-    }
-}
+  //      el.setHTML(html, { sanitizer: new Sanitizer({}) });
+  //  } else {
+  //      el.innerHTML = html; // fallback for browsers without Sanitizer API
+  //  }
+//}
