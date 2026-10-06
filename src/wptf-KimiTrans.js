@@ -273,7 +273,7 @@ async function reviewTransAI(original, language, record, apikeyKimi, OpenAIPromp
     prompt = prompt.replace('{{placeholder_translated}}', cleaned);
     prompt = prompt.replace('{{OpenAiGloss}}', compactGloss);
     let maxTokens = estimateMaxTokens(originalPreProcessed);
-    max_Tokens = maxTokens;
+    max_Tokens = maxTokens +1000;
     var messages = [{ 'role': 'user', 'content': prompt }];
     //let mymodel = "gpt-4.1-mini";
     // console.debug("Model for review:", OpenRouterModel,translator,cleaned);
@@ -379,7 +379,7 @@ async function reviewTransAI(original, language, record, apikeyKimi, OpenAIPromp
 
         const isJson = response.headers.get('content-type')?.includes('application/json');
         const data = isJson ? await response.json() : null;
-
+        //console.debug("Review response data:", data);
         if (!response.ok) {
             errorstate = "NOK";
             const statusCode = response.status;
@@ -395,11 +395,11 @@ async function reviewTransAI(original, language, record, apikeyKimi, OpenAIPromp
 
         errorstate = "OK";
         const open_ai_response = data.choices[0];
-        if (typeof open_ai_response.message.content !== 'undefined') {
+        if (typeof open_ai_response.message.content !== 'undefined' && open_ai_response.message.content !== null) {
             let text = open_ai_response.message.content;
             //console.debug("Review text response:", text);
-
-            if (text !="" && text.indexOf("Yes") !== -1) {
+            //console.debug("message:", open_ai_response.message)
+            if ( text !="" && text.indexOf("Yes") !== -1) {
                 // Remove existing checkmark if present then add fresh one
                 if (preview.innerText.startsWith('\u{2705}')) {
                     //preview.innerHTML = preview.innerHTML.replace('\u{2705}', "");

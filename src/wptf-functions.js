@@ -145,32 +145,63 @@ function stripGuillemets(text, active, sourceText) {
 function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opts = {}) {
     const { OpenAItemp = 0 } = opts;
 
-    // GPT-5 family (new param style). Value = reasoning_effort.
+    // OpenAI direct — GPT-5 family (new param style). Value = reasoning_effort.
     const GPT5_REASONING_EFFORT = {
-        "gpt-5": "low",          // "minimal" is not a valid value
-        "gpt-5-mini": "low",
-        "gpt-5-nano": "low",
-        "gpt-5.1": "none",
-        "gpt-5.1-mini": "none",
-        "gpt-5.1-nano": "none",
         "gpt-5.4": "none",
         "gpt-5.5": "none",
-        "gpt-5.3-chat-latest": "medium",
+        "gpt-5.6": "none",       // alias → Sol
+        "gpt-5.6-luna": "none",
+        "gpt-5.6-sol": "none",
+        "gpt-5.6-terra": "none",
     };
 
-    // ── Step 1: build dataNew ──
+    // OpenRouter reasoning models. Value = reasoning.effort.
+    // ~…-latest aliases are intentionally absent: their target can change.
+    const OPENROUTER_REASONING = {
+        "openai/gpt-5.5": "none",
+        "openai/gpt-5.6-luna": "none",
+        "openai/gpt-5.6-terra": "none",
+        "openai/gpt-oss-120b": "low",
+        "anthropic/claude-sonnet-5.5": "low",
+        "anthropic/claude-opus-5.5": "low",
+    };
+
+    // ── OpenRouter: reasoning models get their own body ──
+    if (translator === 'openrouter') {
+        const effort = OPENROUTER_REASONING[mymodel];
+        if (effort) {
+            // No temperature/top_p: reasoning models reject or ignore them
+            const dataNew = {
+                model: mymodel,
+                messages,
+                max_tokens: max_Tokens,
+                reasoning: { effort, exclude: true }, // keep reasoning text out of the reply
+                ...auth,
+            };
+            // Reasoning shares the token budget, so add headroom
+            if (effort !== 'none') dataNew.max_tokens += 1024;
+            return dataNew;
+        }
+        // Any other OpenRouter model → legacy params below
+    }
+
+    // ── OpenAI direct / Cerebras / other OpenRouter models ──
+    const isNewStyle =
+        mymodel in GPT5_REASONING_EFFORT ||
+        (translator === 'openai' && /^(gpt-5|gpt-6|o\d)/.test(mymodel));
+
     let dataNew;
-    if (mymodel in GPT5_REASONING_EFFORT) {
-        // GPT-5 reasoning family — NO top_p (that was the 400)
+    if (isNewStyle) {
         dataNew = {
             model: mymodel,
             messages,
             max_completion_tokens: max_Tokens,
-            reasoning_effort: GPT5_REASONING_EFFORT[mymodel],
             verbosity: 'low',
             prompt_cache_key: 'WPTF translation',
             ...auth,
         };
+        const effort = GPT5_REASONING_EFFORT[mymodel];
+        if (effort) dataNew.reasoning_effort = effort; // unknown model → API default
     } else {
         // Legacy chat models — classic sampling params
         dataNew = {
@@ -186,18 +217,14 @@ function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opt
         };
     }
 
-    // ── Cerebras-only adjustments ──
+    // ── Cerebras-only adjustments ── (unchanged)
     if (translator === 'cerebras') {
-        // Step 2: strip OpenAI-only params Cerebras rejects
         for (const key of ['verbosity', 'prompt_cache_key']) {
             delete dataNew[key];
         }
-
-        // Step 3: per-model reasoning control (the 400-guard)
         const CEREBRAS_REASONING = {
             "gpt-oss-120b": "low",
             "zai-glm-4.7": "none",
-            // gemma-4-31b: intentionally absent — not a reasoning model
         };
         const effort = CEREBRAS_REASONING[mymodel];
         if (effort) {
@@ -206,9 +233,6 @@ function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opt
             delete dataNew.reasoning_effort;
             delete dataNew.reasoning_format;
         }
-
-        // Step 4: reasoning headroom — CoT shares the max_tokens pool,
-        // so a budget sized for output alone truncates the answer.
         if (dataNew.reasoning_effort && dataNew.reasoning_effort !== 'none') {
             dataNew.max_tokens = (dataNew.max_tokens ?? max_Tokens) + 1024;
         }
@@ -351,144 +375,79 @@ function escapeRegex(str) {
 }
 // --- Hoofdfunctie ---
 function fixUILabelSmart(text, maxWords = 6) {
-    //console.debug("fixUILabelSmart called with text:", text, "maxWords:", maxWords);
     if (!text || typeof text !== "string") return text;
+    const debug = toBoolean(DebugMode);
+    if (debug) console.debug("fixUILabelSmart start:", text, "maxWords:", maxWords);
 
-    if (toBoolean(DebugMode)) console.debug("fixUILabelSmart start:", text);
-
-    const separableParts = {
-        "Schakel": ["uit", "in"],
-        "Zet": ["aan"],
-        "Voer": ["uit"],
-        "Voeg": ["toe"]
+    // Scheidbare werkwoorden: infinitief = partikel + basis (in + schakelen)
+    const separableVerbs = {
+        schakel: { base: "schakelen", parts: ["in", "uit"] },
+        zet: { base: "zetten", parts: ["aan", "uit"] },
+        voer: { base: "voeren", parts: ["uit", "in"] },
+        voeg: { base: "voegen", parts: ["toe"] }
     };
 
     const infinitives = {
-        "voeg toe": "toevoegen",
-        "Activeer": "activeren",
-        "Kies": "kiezen",
-        "Schakel": "uitschakelen",
-        "Zet": "aanzetten",
-        "Voer": "uitvoeren",
-        "Voeg": "toevoegen",
-        "Volg": "volgen",
-        "Maak": "maken",
-        "Selecteer": "selecteren",
-        "Bekijk": "bekijken",
-        "Verhoog": "verhogen",
-        "Verwijder": "verwijderen",
-        "Wijzig": "wijzigen"
+        activeer: "activeren", kies: "kiezen", volg: "volgen", maak: "maken",
+        selecteer: "selecteren", bekijk: "bekijken", verhoog: "verhogen",
+        verwijder: "verwijderen", wijzig: "wijzigen", ondersteun: "ondersteunen"
     };
 
-    const capitalizeFirstLetter = (str) =>
-        str.charAt(0).toUpperCase() + str.slice(1);
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const clean = w => (w || "").toLowerCase().replace(/[^\p{L}]/gu, "");
 
-    // --- Split zinnen ---
-    const sentenceRegex = /([^.!?]+)([.!?]+)?(\s*)/g;
-    let match;
-    let sentences = [];
-    while ((match = sentenceRegex.exec(text)) !== null) {
-        sentences.push({ content: match[1], punct: match[2] || "", space: match[3] || "" });
+    // --- Zinnen splitsen ---
+    const sentences = [];
+    const re = /([^.!?]+)([.!?]+)?(\s*)/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+        sentences.push({ content: m[1], punct: m[2] || "", space: m[3] || "" });
     }
-    if (sentences.length === 0) sentences = [{ content: text, punct: "", space: "" }];
+    if (!sentences.length) return text;
 
-    let first = sentences[0].content.trim();
-
-    // 🔹 Skip lange zinnen: bij een lang object komt de infinitief te ver
-    //    van het object te staan en leest het label onnatuurlijk.
-    const wordCount = first.split(/\s+/).filter(Boolean).length;
-    if (wordCount > maxWords) {
-        if (toBoolean(DebugMode))
-            console.debug("fixUILabelSmart skipped (too long):", wordCount, "words");
+    const words = sentences[0].content.trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return text;
+    if (words.length > maxWords) {
+        if (debug) console.debug("fixUILabelSmart skipped (too long):", words.length, "words");
         return text;
     }
 
-    const firstWordMatch = first.match(/^(\S+)/);
-    if (!firstWordMatch) return text;
+    const verb = clean(words[0]);
+    const rest = words.slice(1);
+    let result;
 
-    const firstWordRaw = firstWordMatch[1];
-    const firstWord = firstWordRaw.replace(/[^\p{L}]/gu, "");
+    const sep = separableVerbs[verb];
+    if (sep) {
+        // Voorkeur: partikel aan het eind van de zin, anders het eerste voorkomen
+        const last = rest.length - 1;
+        const idx = sep.parts.includes(clean(rest[last]))
+            ? last
+            : rest.findIndex(w => sep.parts.includes(clean(w)));
+        if (idx === -1) return text;
 
-    const infinitiveEntry = Object.entries(infinitives).find(([verb]) => verb.toLowerCase() === firstWord.toLowerCase());
-    if (!infinitiveEntry) return text;
-    let infinitive = infinitiveEntry[1];
-
-    const separableEntry = Object.entries(separableParts).find(([verb]) => verb.toLowerCase() === firstWord.toLowerCase());
-
-    let finalFirst = first;
-
-    // ========================================
-    // 🔹 FIX: "Selecteer [object] als|wanneer|om …"
-    // ========================================
-    if (firstWord.toLowerCase() === "selecteer") {
-        const specialMatch = first.match(/^Selecteer\s+(.+?)\s+(als|wanneer|om)\b(.*)$/i);
-        if (specialMatch) {
-            const object = specialMatch[1].trim();
-            const voegwoord = specialMatch[2];
-            const rest = specialMatch[3];
-
-            // Zet infinitief direct achter object
-            finalFirst = `${object} ${infinitive} ${voegwoord}${rest}`;
-            finalFirst = finalFirst.replace(/\s+/g, " ").trim();
-            finalFirst = capitalizeFirstLetter(finalFirst);
-
-            sentences[0].content = finalFirst;
-
-            const finalResult = sentences.map(s => s.content + s.punct + s.space).join("");
-            if (toBoolean(DebugMode)) console.debug("fixUILabelSmart final result:", finalResult);
-            return finalResult;
-        }
-    }
-
-    // -----------------------------
-    // 1️⃣ Separable werkwoorden
-    // -----------------------------
-    if (separableEntry) {
-        for (const part of separableEntry[1]) {
-            const regexPart = new RegExp(
-                `^\\s*${escapeRegex(firstWordRaw)}\\s+(.+?)\\s+${escapeRegex(part)}(?=\\s|$)`,
-                "i"
-            );
-            const matchPart = first.match(regexPart);
-            if (matchPart) {
-                const middle = matchPart[1].trim();
-                let rest = first.replace(regexPart, "").trim();
-
-                if (firstWordRaw.toLowerCase() === "schakel") {
-                    if (part.toLowerCase() === "in") infinitive = "inschakelen";
-                    if (part.toLowerCase() === "uit") infinitive = "uitschakelen";
-                }
-
-                finalFirst = middle + " " + infinitive + (rest ? " " + rest : "");
-                finalFirst = finalFirst.replace(/\s+/g, " ").trim();
-                finalFirst = capitalizeFirstLetter(finalFirst);
-                sentences[0].content = finalFirst;
-                break;
-            }
-        }
+        const part = clean(rest[idx]);
+        result = [...rest.slice(0, idx), part + sep.base, ...rest.slice(idx + 1)].join(" ");
+    } else if (infinitives[verb]) {
+        const inf = infinitives[verb];
+        const remainder = rest.join(" ");
+        // "Selecteer [object] als|wanneer|om …" → infinitief direct achter het object
+        const special = verb === "selecteer" && remainder.match(/^(.+?)\s+(als|wanneer|om)\b(.*)$/i);
+        result = special
+            ? `${special[1]} ${inf} ${special[2]}${special[3]}`
+            : `${remainder} ${inf}`;
     } else {
-        // -----------------------------
-        // 2️⃣ Normaal werkwoord
-        // -----------------------------
-        let remainder = first.replace(new RegExp("^\\s*" + firstWordRaw + "\\s*", "i"), "");
-        finalFirst = remainder.trim() + " " + infinitive;
-        finalFirst = finalFirst.replace(/\s+/g, " ").trim();
-        finalFirst = capitalizeFirstLetter(finalFirst);
-        sentences[0].content = finalFirst;
+        return text;
     }
 
-    // -----------------------------
-    // 3️⃣ Overige zinnen capitalizen
-    // -----------------------------
+    sentences[0].content = cap(result.replace(/\s+/g, " ").trim());
+
+    // Overige zinnen capitalizen (content begint nooit met whitespace)
     for (let i = 1; i < sentences.length; i++) {
-        const leading = sentences[i].space || "";
-        const contentTrim = sentences[i].content.trim();
-        sentences[i].content = leading + capitalizeFirstLetter(contentTrim);
+        sentences[i].content = cap(sentences[i].content);
     }
 
     const finalResult = sentences.map(s => s.content + s.punct + s.space).join("");
-
-    if (toBoolean(DebugMode)) console.debug("fixUILabelSmart final result:", finalResult);
+    if (debug) console.debug("fixUILabelSmart final result:", finalResult);
     return finalResult;
 }
 function capitalizeFirstLetter(str) {

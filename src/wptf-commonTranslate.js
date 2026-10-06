@@ -107,288 +107,156 @@ const specialChar = /<[^>]*>|&#[0-9]+;|&[a-z]+;|\r\n|\r|\n|\t|#|[\u2018\u2019\u2
 const GoogleRegex = /%(\d{1,2})?\$?[sdl]/gi;
 
 
-async function preProcessOriginal(original, preverbs, translator) {
-    var index = 0;
-    
-    // We need to replace the preverbs before sending the text to the API, otherwise the API's will not translate the text because of the presence of the formal words
-    for (let i = 0; i < preverbs.length; i++) {
-        // Same mechanism as links: swallow whole <code>...</code> blocks
-        
-        const codematches = original.match(codeRegex);
-        const codeStore = [];   // keep originals for restore
+// Stores used to restore the originals after translation.
+// placeholderMap and spaceMap are assumed to be declared elsewhere in your file, as before.
+let codeStore = [];      // codevar1 -> codeStore[0], codevar2 -> codeStore[1], ...
+let linkStore = [];      // linkvar1 / XXX1 / {linkvar1} -> linkStore[0], ...
+let specialCharMap = {}; // "special_var1" -> original character(s), "YYY1" -> ...
 
-        if (codematches != null) {
-           let index = 1;
-          for (const match of codematches) {
-             codeStore.push(match);
-             original = original.replace(match, `codevar${index}`);
-             index++;
-       }
-    }
+// Placeholder regex shared by lingvanex, groq, Ollama and LMstudio
+const INLINE_PLACEHOLDER_REGEX = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
 
-
-    let inUrl = isProtected(original, preverbs[i][0]);
-    if (!inUrl) {
-    //if (!CheckUrl(original, preverbs[i][0])) {
-        const before = original;
-        if (preverbs[i][0].startsWith("#remove")) {
-            original = removeWord(original, preverbs[i][1]);
-        }
-        original = original.replaceAll(preverbs[i][0], preverbs[i][1]);
-    }
+// Replaces every match in one pass, so each match is replaced exactly where it was found.
+// makeToken(n) builds the token for the n-th match (n starts at 0).
+// store(token, match, n) is optional and lets you keep the original for restoring later.
+function replaceWithTokens(text, regex, makeToken, store) {
+    const re = regex.global ? regex : new RegExp(regex.source, regex.flags + "g");
+    let n = 0;
+    return text.replace(re, (match) => {
+        const token = makeToken(n);
+        if (store) store(token, match, n);
+        n++;
+        return token;
+    });
 }
-//console.debug("translator:",translator)
-    if (translator != "lingvanex" && translator != "LMstudio" && translator != "NLPCLoud" && translator != "google" && translator != "Ollama") {
-        const charmatches = original.matchAll(specialChar);
-      
-        if (charmatches != null) {
-            // we need to start with 1 otherwise translation API's alter the zero value
-            const placeholders = {};
-            let index = 1;
 
-            original = original.replace(specialChar, (match) => {
-                const id = `special_var${index++}`;
-                placeholders[id] = match;
-                return `<x id="${id}"/>`;
-            });
-            
-        }
-        //console.debug("original after replacing placeholders for other translators:", original)
-    }
+async function preProcessOriginal(original, preverbs, translator) {
+   // console.debug("translator:", translator);
 
-    else if (translator == "google") {
-      //  const matches = original.matchAll(placeHolderRegex);
-       // if (matches != null) {
-       //     index = 0;
-          //  for (const match of matches) {
-           //     original = original.replace(match, `[${index}]`);
+    // 1. Protect <code>...</code> blocks once, before the preverbs are applied
+    codeStore = [];
+    original = replaceWithTokens(original, codeRegex, (n) => `codevar${n + 1}`,
+        (token, match) => codeStore.push(match));
 
-              //  index++;
-           // }
-        // }
-      let index = 0;
-         preprocessed = original.replace(placeHolderRegex, () => `[${index++}]`);
-         original = preprocessed;
-      //  console.debug("original after replacing placeholders for google:", original)
-       //original = replacePlaceholdersBeforeTranslation(original);
-    }
-    else if (translator == "NLPCLoud") {
-            const charmatches = original.matchAll(specialChar);
-        if (charmatches != null) {
-            // we need to start with 1 otherwise translation API's alter the zero value
-            let index = 1;
-            for (const charmatch of charmatches) {
-                // Replace the found match with a DeepL-safe placeholder
-                original = original.replace(
-                    charmatch[0],
-                    `YYY${index}`
-                );
-                index++;
+    // 2. Apply the preverbs, otherwise the APIs will not translate the text
+    //    because of the presence of the formal words
+    for (let i = 0; i < preverbs.length; i++) {
+        const [search, replacement] = preverbs[i];
+        if (!isProtected(original, search)) {
+            if (search.startsWith("#remove")) {
+                original = removeWord(original, replacement);
             }
-        }
-        const linkmatches = original.match(linkRegex);
-
-        if (linkmatches != null) {
-          let index = 1;
-           for (const match of linkmatches) {
-               original = original.replace(match, `XXX${index}`);
-              index++;
-            }
-       }
-    }
-    else if (translator == "deepl") {
-
-       // console.debug("We have deepl")
-        // Deepl does remove crlf so we need to replace them before sending them to the API
-        //original = original.replaceAll('\r', "mylinefeed");
-        original = original.replace(/(.!?\r\n|\n|\r)/gm, "<x>mylinefeed</x>");
-        // Deepl does remove tabs so we need to replace them before sending them to the API
-        //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
-        original = original.replaceAll(/(\t)/gm, "<x>mytb</x>");
-        // original = original.replace(/(.!?\r\n|\n|\r)/gm, " [xxx] ");
-        // The above replacements are put into the specialchar regex for all api's
-        // 1) Define your regex for all the placeholders you care about:
-        // Match placeholders (like %1$s, &#123;, %placeholder%, etc.)
-        //const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-
-        // Store placeholder mappings for post-replacement
-
-        index = 0;
-        placeholderMap = {};
-        // Replace each match with a unique token and store original
-        const matches = [...original.matchAll(placeHolderRegex)];
-        for (const match of matches) {
-            const token = `<x id="var${index}"/>`;
-            original = original.replace(match[0], token);
-            placeholderMap[token] = match[0]; // keep mapping to restore later
-
-            index++;
-        }
-
-        // We need to remove markup that contains & and ; otherwise translation will fail
-        let markupmatches = original.match(markupRegex)
-        if (markupmatches != null) {
-            index = 1;
-            for (const markupmatch of markupmatches) {
-                //console.debug("before:",markupmatch)
-                original = original.replace(markupmatch, `{mymark_var${index}}`);
-                index++;
-            }
-        }
-        //console.debug("original after replacing placeholders for deepl:", original)
-
-    }
-    else if (translator == "microsoft") {
-        // const matches = original.matchAll(placeHolderRegex);
-        index = 0;
-        if (index == 0) {
-            //  console.debug("preProcessOriginal no placeholders found index === 0 ");
+            original = original.replaceAll(search, replacement);
         }
     }
-    else if (translator == "lingvanex") {
-        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-        index = 0;
-        placeholderMap = {};
-        // Replace each match with a unique token and store original
-        const matches = [...original.matchAll(placeholderRegex)];
-        for (const match of matches) {
-            const token = `var_${index}`;
-            original = original.replace(match[0], token);
-            placeholderMap[token] = match[0]; // keep mapping to restore later
-            index++;
-        }
 
+    // 3. openRouter: protect links before the special characters are replaced
+    if (translator === "openRouter") {
+        linkStore = [];
+        original = replaceWithTokens(original, linkRegex, (n) => `linkvar${n + 1}`,
+            (token, match) => linkStore.push(match));
     }
-    else if (translator == "groq") {
-       
-        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-        index = 0;
-        placeholderMap = {};
-        // Replace each match with a unique token and store original
-        const matches = [...original.matchAll(placeholderRegex)];
-        for (const match of matches) {
-            const token = `var_${index}`;
-            original = original.replace(match[0], token);
-            placeholderMap[token] = match[0]; // keep mapping to restore later
-            index++;
-        }
 
+    // 4. Shared step: special characters for every translator NOT in this list
+    const noSpecialChar = ["lingvanex", "LMstudio", "NLPCLoud", "google", "Ollama"];
+    if (!noSpecialChar.includes(translator)) {
+        // Start with 1, otherwise translation APIs alter the zero value
+        specialCharMap = {};
+        original = replaceWithTokens(original, specialChar, (n) => `<x id="special_var${n + 1}"/>`,
+            (token, match, n) => { specialCharMap[`special_var${n + 1}`] = match; });
     }
-    else if (translator == "Ollama") {
 
-        const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-        index = 0;
-        placeholderMap = {};
-        // Replace each match with a unique token and store original
-        const matches = [...original.matchAll(placeholderRegex)];
-        for (const match of matches) {
-            const token = `<x id="var${index}"/>`;
-            original = original.replace(match[0], token);
-            placeholderMap[token] = match[0]; // keep mapping to restore later
-            index++;
+    // 5. Translator-specific step: exactly one case runs
+    switch (translator) {
+        case "openRouter":
+            // Links already protected in step 3
+            break;
+
+        case "google":
+            original = replaceWithTokens(original, placeHolderRegex, (n) => `[${n}]`);
+            break;
+
+        case "NLPCLoud":
+            // Start with 1, otherwise translation APIs alter the zero value
+            specialCharMap = {};
+            original = replaceWithTokens(original, specialChar, (n) => `YYY${n + 1}`,
+                (token, match) => { specialCharMap[token] = match; });
+
+            linkStore = [];
+            original = replaceWithTokens(original, linkRegex, (n) => `XXX${n + 1}`,
+                (token, match) => linkStore.push(match));
+            break;
+
+        case "deepl":
+            // DeepL removes line feeds and tabs, so protect them
+            original = original.replace(/\r\n|\n|\r/g, "<x>mylinefeed</x>");
+            original = original.replaceAll("\t", "<x>mytb</x>");
+
+            placeholderMap = {};
+            original = replaceWithTokens(original, placeHolderRegex, (n) => `<x id="var${n}"/>`,
+                (token, match) => { placeholderMap[token] = match; });
+
+            // Markup containing & and ; makes the translation fail
+            original = replaceWithTokens(original, markupRegex, (n) => `{mymark_var${n + 1}}`);
+            break;
+
+        case "microsoft":
+            // No preprocessing needed
+            break;
+
+        case "lingvanex":
+        case "groq":
+            placeholderMap = {};
+            original = replaceWithTokens(original, INLINE_PLACEHOLDER_REGEX, (n) => `var_${n}`,
+                (token, match) => { placeholderMap[token] = match; });
+            break;
+
+        case "Ollama":
+            placeholderMap = {};
+            original = replaceWithTokens(original, INLINE_PLACEHOLDER_REGEX, (n) => `<x id="var${n}"/>`,
+                (token, match) => { placeholderMap[token] = match; });
+
+            linkStore = [];
+            original = replaceWithTokens(original, linkRegex, (n) => `linkvar${n + 1}`,
+                (token, match) => linkStore.push(match));
+
+            // Markup containing & and ; makes the translation fail
+            original = replaceWithTokens(original, markupRegex, (n) => `{mymark_var${n + 1}}`);
+            break;
+
+        case "LMstudio": {
+            // Markup containing & and ; makes the translation fail
+            original = replaceWithTokens(original, markupRegex, (n) => `{myymark_var${n + 1}}`);
+
+            linkStore = [];
+            original = replaceWithTokens(original, linkRegex, (n) => `{linkvar${n + 1}}`,
+                (token, match) => linkStore.push(match));
+
+            placeholderMap = {};
+            original = replaceWithTokens(original, INLINE_PLACEHOLDER_REGEX, (n) => `[[mVar_${n + 1}]]`,
+                (token, match) => { placeholderMap[token] = match; });
+
+            // LMstudio removes line feeds and tabs, so protect them
+            original = original.replace(/\r\n|\n|\r|\t/g,
+                (match) => (match === "\t" ? "mytab" : "<code>placeholder1</code>"));
+
+            const result = replaceMultiSpaces(original);
+            original = result.original; // now contains the [[Space_X]] placeholders
+            spaceMap = result.spaceMap;
+            break;
         }
 
-        const linkmatches = original.match(linkRegex);
+        case "OpenAI":
+            original = replaceWithTokens(original, placeHolderRegex, (n) => `{var ${n + 1}}`);
+            original = original.replaceAll(".{", ". {");
+            break;
 
-        if (linkmatches != null) {
-          let index = 1;
-           for (const match of linkmatches) {
-               original = original.replace(match, `linkvar${index}`);
-              index++;
-            }
-       }
-        
-        // We need to remove markup that contains & and ; otherwise translation will fail
-        let markupmatches = original.match(markupRegex)
-        if (markupmatches != null) {
-            index = 1;
-            for (const markupmatch of markupmatches) {
-                //console.debug("before:",markupmatch)
-                original = original.replace(markupmatch, `{mymark_var${index}}`);
-                index++;
-            }
-        }
-
-
+        default:
+            console.warn(`preProcessOriginal: unknown translator "${translator}"`);
     }
-    else if (translator == "LMstudio") {
-       
-        //console.debug("original:",original)
-        
-         // We need to remove markup that contains & and ; otherwise translation will fail
-        let markupmatches = original.match(markupRegex)
-        if (markupmatches != null) {
-            index = 1;
-            for (const markupmatch of markupmatches) {
-                //console.debug("before:",markupmatch)
-                original = original.replace(markupmatch, `{myymark_var${index}}`);
-                index++;
-            }
-        }
 
-
-        const linkmatches = original.match(linkRegex);
-
-       if (linkmatches != null) {
-          let index = 1;
-           for (const match of linkmatches) {
-               original = original.replace(match, `{linkvar${index}}`);
-              index++;
-            }
-       }
-         // original = original.replace(/(.!?\r\n|\n|\r)/gm, "<code>mylinefeed</code>");
-        // LMstudiol does remove tabs so we need to replace them before sending them to the API
-         const placeholderRegex = /%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi;
-
-        // Store placeholder mappings for post-replacement
-
-        index = 1;
-        placeholderMap = {};
-        // Replace each match with a unique token and store original
-        const matches = [...original.matchAll(placeholderRegex)];
-        for (const match of matches) {
-        const token = `[[mVar_${index}]]`;
-        original = original.replace(match[0], token);
-        placeholderMap[token] = match[0]; // keep mapping to restore later
-
-         index++;
-        }
-        //console.debug("after replacing placeholders for LMstudio:", original)
-        //let regex = (/&(nbsp|amp|quot|lt|gt);/g);
-        index = 1   ;
-        original = original.replace(/(\r\n|\n|\r|\t)/g, match => {
-           if (match === '\t') return `mytab`;
-             return `<code>placeholder${index}</code>`;
-        });
-
-
-        const result = replaceMultiSpaces(original);
-        original = result.original; // original bevat nu de tekst met [[Space_X]] placeholders
-        spaceMap = result.spaceMap;
-
-        //console.debug("preProcessOrigineel LMstudio:", original) 
-
-    }
-    else if (translator == "OpenAI") {
-        const matches = original.matchAll(placeHolderRegex);
-       // console.debug("matches:",matches.length)
-        if (matches !== null) {
-            let index = 1;
-            for (const match of matches) {
-                const regex = new RegExp(match, "gi"); // Create a global and case-insensitive regex
-                original = original.replace(regex, `{var ${index}}`);
-                original = original.replace('.{', '. {');
-                index++;
-            }
-        }
-       
-    }
-    
-    //console.debug("preProcessOriginal result:", original)
-   
     return original;
 }
-
 function startsWithCapital(word) {
     return /[A-Z]/.test(word.charAt(0))
 }
@@ -924,10 +792,10 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     
     // We need to put back the links present within the original
     const linkmatches = original.match(linkRegex);
-    //console.debug("linkmatches2:", linkmatches)
+    
     if (linkmatches != null) {
-        translatedText = translatedText.replace(/\{linkvar(\d+)\}/g, (_, n) => {
-            return linkmatches[parseInt(n) - 1] || _;
+        translatedText = translatedText.replace(/\{?linkvar(\d+)\}?/gi, (token, n) => {
+            return linkmatches[parseInt(n, 10) - 1] ?? token;
         });
     }
     if (toBoolean(DebugMode)) console.debug("postProcessTranslation before check_start_end", translatedText);
@@ -2099,6 +1967,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
             var translatedText = "";
             const records = document.querySelectorAll("tr.editor div.editor-panel__left div.panel-content");
             const tableRecords = records.length;
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
             for (const record of records) {
 
@@ -2154,9 +2023,6 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             let preview = document.querySelector("#preview-" + row + " td.translation.foreign-text");
                             //console.debug("single preview:", preview)
                             let myPreview = getPreview(row)
-
-
-
                             textareaElem = record.querySelector("textarea.foreign-text");
                             //console.debug("textareaELem:", textareaElem)
                             translatedText = textareaElem.innerText;
@@ -2465,6 +2331,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
              // console.debug("PlaceholderLog:", PlaceholderLog)
               showPlaceholderLog()
             }
+            //await sleep(20000); // wait 10000ms before the next record
         }
         else {
             messageBox("error", __("Your postreplace verbs are not populated add at least on line!"));
@@ -2476,15 +2343,15 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
     
 }
 
-async function reviewTrans() {
-    if (apikeyOpenAI != "") {
-       if (translatedText != "") {
+//async function reviewTrans() {
+ //   if (apikeyOpenAI != "") {
+  //     if (translatedText != "") {
             //console.debug("openkey ", apikeyOpenAI)
-            result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview, model, apikeyOpenRouter);
+      //      result = await AIreview(original, destlang, e, apikeyOpenAI, OpenAIPrompt, replacePreVerb, row, transtype, plural_line, false, locale, false, true, translatedText, preview, model, apikeyOpenRouter);
             // console.debug("Result:", result)
-        }
-    }
-}
+      //  }
+   // }
+//}
 
 
 async function markElements(preview, replaceVerb, orgText, spellcheckIgnore, repl_array, translatedText,new_row) {

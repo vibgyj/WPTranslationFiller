@@ -81,31 +81,49 @@ function orResolveTone(OpenAITone, destlang) {
  ****************************************************/
 function orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp, maxTokens) {
     const mymodel = model.toLowerCase();
-    const _topP   = typeof Top_p !== 'undefined' ? Number(Top_p) : 1;
+    const _topP = typeof Top_p !== 'undefined' ? Number(Top_p) : 1;
 
-    const base = {
+    // Per-model reasoning/verbosity from the shared table ({} if not listed)
+    const cfg = (typeof modelConfig !== 'undefined' && modelConfig[mymodel]) || {};
+    const isReasoning = !!cfg.reasoning;
+
+    const dataNew = {
         model: mymodel,
         messages,
         max_tokens: maxTokens,          // normalized field — applies on all providers
-        top_p: _topP,
-        temperature: OpenAItemp,
-        frequency_penalty: 0,
-        presence_penalty: 0,
         apiKey: apikeyOpenRouter,
+        provider: {
+            "sort": "throughput",
+            "allow_fallbacks": true
+        },
         prompt_cache_key: 'WPTF translation',
     };
 
-    // Per-model reasoning/verbosity from the shared table. Falls back to {} for
-    // any model not listed, which sends no reasoning param (model default).
-    const cfg = (typeof modelConfig !== 'undefined' && modelConfig[mymodel]) || {};
-    let dataNew = { ...base, ...cfg };
+    // Classic sampling params only for non-reasoning models
+    if (!isReasoning) {
+        Object.assign(dataNew, {
+            top_p: _topP,
+            temperature: OpenAItemp,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        });
+    }
+
+    Object.assign(dataNew, cfg);
+
+    if (isReasoning) {
+        // Keep reasoning text out of the reply, so only the translation comes back
+        dataNew.reasoning = { exclude: true, ...cfg.reasoning };
+        // Reasoning shares the max_tokens pool — add headroom
+        const effort = dataNew.reasoning.effort;
+        if (effort && effort !== 'none') dataNew.max_tokens = maxTokens + 1024;
+    }
 
     const fallbacks = (typeof fallbackMap !== 'undefined' && fallbackMap[mymodel]) || null;
     if (fallbacks) dataNew.models = [mymodel, ...fallbacks];
 
     return dataNew;
 }
-
 /****************************************************
  * OPENROUTER API CALL  (via chrome background)
  ****************************************************/
@@ -379,9 +397,12 @@ async function translatePageOpenRouter(
         const rowId = match?.[1];
         if (!rowId) continue;
 
-        const original = e.querySelector('span.original-raw')?.innerText;
+        var original = e.querySelector('span.original-raw')?.innerText;
         if (!original) continue;
+        const translator = "openRouter"
+        let myoriginal = await preProcessOriginal(original, replacePreVerb, translator);
 
+        // console.debug("[OR Bulk] row " + rowId + " original:", myoriginal);
         const plural1 = document.querySelector('#preview-' + rowId + ' .original li:nth-of-type(1)');
         const plural2 = document.querySelector('#preview-' + rowId + ' .original li:nth-of-type(2)');
 
@@ -472,7 +493,7 @@ async function translatePageOpenRouter(
         if (item.pluralForms) {
             for (let fi = 0; fi < item.pluralForms.length; fi++) {
                 const form         = item.pluralForms[fi];
-                const preprocessed = await preProcessOriginal(form.original, replacePreVerb, 'openRouter');
+                //const preprocessed = await preProcessOriginal(form.original, replacePreVerb, 'openRouter');
                 const finalText    = await postProcessTranslation(
                     form.original, form.translation, replaceVerb,
                     preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale
@@ -491,7 +512,7 @@ async function translatePageOpenRouter(
 
         // Pretranslated single
         if (!item.render) {
-            const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
+            //const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
             const finalText    = await postProcessTranslation(
                 item.original, item.translation, replaceVerb,
                 preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale

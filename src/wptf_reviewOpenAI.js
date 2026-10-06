@@ -63,10 +63,12 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
         // Check comments for translate flag
         let toTranslate = true;
         let precomment = e.querySelector(".source-details__comment p");
+        //console.debug("precomment:", precomment);
         if (precomment !== null) {
             let comment = precomment.innerText.replace(/(\r\n|\n|\r)/gm, "");
             toTranslate = checkComments(comment.trim());
         }
+        //console.debug("toTranslate:", toTranslate);
         if (!toTranslate) return;
 
         // Only review rows that have a translation status
@@ -90,6 +92,7 @@ async function reviewPage(apikeyOpenAI, destlang, OpenAIPrompt, reviewPrompt, op
             let preview = document.querySelector("#preview-" + row + " td.translation");
             
             if (translatedText !== "" && translatedText !== "No suggestions") {
+                //console.debug("translatedText:", translatedText)
                 let result = await AIreview(
                     original, destlang, e, apikeyOpenAI,
                     OpenAIPrompt, reviewPrompt, replacePreVerb,

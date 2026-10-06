@@ -152,3 +152,5 @@ Version 3.5.89 Fixed security warnings for Firefox when uploading new version
 Version 3.5.90 Fixed security warnings for Firefox when uploading new version
 Version 3.5.91 Fixed security warnings for Firefox when uploading new version
 Version 3.5.92 Untranslated plurals gave an error, as the selecion of the preview was wrong
+Version 3.5.93 Added new models for openRouter and openAI, and removed old models
+Version 3.5.93 Fixed replacing words in a link

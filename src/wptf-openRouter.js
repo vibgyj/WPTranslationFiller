@@ -92,7 +92,7 @@ async function openRouterTranslate(original, destlang, record, apikeyOpenRouter,
     errorstate = "OK";
     //console.debug("Starting openRouterTranslate for rowId:", rowId, "original:", original)
     // Preprocess original
-    var originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
+    var originalPreProcessed = await preProcessOriginal(original, preverbs, "openRouter");
     
     // Wait the timeout delay if needed
     // await delay(timeout);

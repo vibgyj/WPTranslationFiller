@@ -684,6 +684,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
    else if (request.action === "OpenAI") {
         (async () => {
+            console.debug("OpenAI request received:", request.data)
             try {
                 const dataToSend = { ...request.data }; // copy newData
                 const apiKey = dataToSend.apiKey;       // extract the key
@@ -703,7 +704,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 console.debug("response status:", resp)
                 if (!resp.ok) {
                     const raw = await resp.text();
-
+                    console.debug("raw error response:", raw)
                     // Try to parse OpenAI's structured error; fall back to raw text
                     let parsed = null;
                     try { parsed = JSON.parse(raw); } catch { /* not JSON */ }

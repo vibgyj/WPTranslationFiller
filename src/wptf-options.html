@@ -707,27 +707,35 @@
                 <td>
                     <div class="form-input">
                         <select title="Select a model for openRouter" name="OpenRoutersel" id="OpenRouterSelect">
-                            <!-- === Confirmed live (paid) === -->
-                            <option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro</option>
+                            <!-- === Recommended for translation === -->
                             <option value="deepseek/deepseek-v4-flash">deepseek/deepseek-v4-flash (cheap)</option>
-                            <option value="meta-llama/llama-3.3-70b-instruct">meta-llama/llama-3.3-70b-instruct</option>
-                            <option value="openai/gpt-chat-latest">openai/gpt-chat-latest</option>
-                            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
-                            <option value="openai/gpt-5.5">openai/gpt-5.5</option>
-                            <option value="openai/gpt-5.6-luna">openai/gpt-5.6-luna  (replaces gpt-5.4-nano)</option>
+                            <option value="openai/gpt-5.6-luna">openai/gpt-5.6-luna (cheap, fast)</option>
+                            <option value="openai/gpt-5.6-terra">openai/gpt-5.6-terra (balanced)</option>
+                            <option value="google/gemini-3.1-flash-lite">google/gemini-3.1-flash-lite</option>
+                            <option value="google/gemini-3.5-flash">google/gemini-3.5-flash</option>
                             <option value="qwen/qwen3.6-flash">qwen/qwen3.6-flash</option>
-                            <option value="qwen/qwen3.7-plus">qwen/qwen3.7-plus</option>
 
-                            <!-- === Updated to current generation === -->
-                            <option value="~openai/gpt-mini-latest">~openai/gpt-mini-latest  (replaces gpt-4o-mini)</option>
-                            <option value="google/gemini-3.1-flash-lite">google/gemini-3.1-flash-lite  (replaces gemini-2.5-flash-lite)</option>
-                            <option value="google/gemini-3.5-flash">google/gemini-3.5-flash  (replaces gemini-2.5-flash)</option>
-                            <option value="~google/gemini-pro-latest">~google/gemini-pro-latest  (replaces gemini-2.5-pro)</option>
+                            <!-- === Paid models === -->
+                            <option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro</option>
+                            <option value="openai/gpt-5.5">openai/gpt-5.5</option>
+                            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+                            <option value="openai/gpt-chat-latest">openai/gpt-chat-latest</option>
+                            <option value="qwen/qwen3.7-plus">qwen/qwen3.7-plus</option>
+                            <option value="minimax/minimax-m3">minimax/minimax-m3</option>
+                            <option value="x-ai/grok-4.5">x-ai/grok-4.5</option>
+                            <option value="z-ai/glm-5.2">z-ai/glm-5.2</option>
+
+                            <!-- === Anthropic === -->
+                            <option value="~anthropic/claude-haiku-latest">~anthropic/claude-haiku-latest</option>
+                            <option value="anthropic/claude-sonnet-5.5">anthropic/claude-sonnet-5.5</option>
+                            <option value="anthropic/claude-opus-5.5">anthropic/claude-opus-5.5 (high quality)</option>
+
+                            <!-- === Auto-updating aliases (always newest) === -->
+                            <option value="~openai/gpt-mini-latest">~openai/gpt-mini-latest</option>
                             <option value="~google/gemini-flash-latest">~google/gemini-flash-latest</option>
-                            <option value="~moonshotai/kimi-latest">~moonshotai/kimi-latest  (replaces kimi-k3)</option>
-                            <option value="minimax/minimax-m3">minimax/minimax-m3  (replaces minimax-m2.5)</option>
-                            <option value="anthropic/claude-opus-4.8-fast">anthropic/claude-opus-4.8-fast  (replaces 4.7-fast)</option>
-                            <option value="~anthropic/claude-haiku-latest">~anthropic/claude-haiku-latest  (replaces claude-3-haiku)</option>
+                            <option value="~google/gemini-pro-latest">~google/gemini-pro-latest</option>
+                            <option value="~anthropic/claude-sonnet-latest">~anthropic/claude-sonnet-latest</option>
+                            <option value="~moonshotai/kimi-latest">~moonshotai/kimi-latest</option>
 
                             <!-- === Free models (roster rotates — verify before relying) === -->
                             <option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free">nvidia/nemotron-3-nano-omni:free</option>
@@ -736,14 +744,6 @@
                             <!-- === Routers === -->
                             <option value="openrouter/free">openrouter/free (uses free models)</option>
                             <option value="openrouter/auto">openrouter/auto (uses paid models)</option>
-
-                            <!-- === New high-quality picks (optional) === -->
-                            <option value="anthropic/claude-sonnet-5">anthropic/claude-sonnet-5</option>
-                            <option value="~anthropic/claude-sonnet-latest">~anthropic/claude-sonnet-latest</option>
-                            <option value="openai/gpt-5.6-terra">openai/gpt-5.6-terra</option>
-                            <option value="x-ai/grok-4.5">x-ai/grok-4.5</option>
-                            <option value="z-ai/glm-5.2">z-ai/glm-5.2</option>
-                            <option>
                         </select>
 
                     </div>
@@ -783,25 +783,20 @@
                     <div class="form-input">
                         <select title="Select a model" name="OpenAIsel" id="OpenAIselect">
                             <optgroup label="OpenAI">
-                                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                                 <option value="gpt-3.5-turbo-16k">gpt-3.5-turbo-16k</option>
-                                <option value="gpt-3.5-turbo-1106">gpt-3.5-turbo-1106</option>
-                                <option value="gpt-4">gpt-4</option>
                                 <option value="gpt-4.1">gpt-4.1</option>
                                 <option value="gpt-4.1-mini">gpt-4.1 mini</option>
-                                <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
-                                <option value="gpt-4-turbo">gpt-4-turbo</option>
                                 <option value="gpt-4o">gpt-4o</option>
                                 <option value="gpt-4o-mini">gpt-4o-mini</option>
                                 <option value="gpt-5">gpt-5</option>
                                 <option value="gpt-5-mini">gpt-5-mini</option>
                                 <option value="gpt-5-nano">gpt-5-nano</option>
-                                <option value="gpt-5.1">gpt-5.1</option>
                                 <option value="gpt-5.1-mini">gpt-5.1-mini</option>
-                                <option value="gpt-5.1-nano">gpt-5.1-nano</option>
-                                <option value="gpt-5.3-chat-latest">gpt-5.3-chat-latest</option>
                                 <option value="gpt-5.4">gpt-5.4</option>
                                 <option value="gpt-5.5">gpt-5.5</option>
+                                <option value="gpt-5.6-luna">gpt-5.6-luna</option>
+                                <option value="gpt-5.6-sol">gpt-5.6-sol</option>
+                                <option value="gpt-5.6-terra">gpt-5.6-terra</option>
                             </optgroup>
                             <optgroup label="Alibaba (general)">
                                 <option value="qwen-plus">qwen-plus</option>

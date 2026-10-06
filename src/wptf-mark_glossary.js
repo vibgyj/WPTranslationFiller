@@ -61,43 +61,6 @@ function createGlossArray(spanElements, newGloss) {
 
     return glossArray;
 }
-function oldcreateGlossArray(spanElements) {
-    const glossArray = [];
-    let glossIndexCounter = 0;
-
-    for (const span of spanElements) {
-        const dataTranslations = span.getAttribute('data-translations');
-        if (!dataTranslations) continue;
-
-        try {
-            const parsedEntries = JSON.parse(dataTranslations);
-            const allVariants = [];
-
-            for (const entry of parsedEntries) {
-                if (entry.translation) {
-                    const unescaped = entry.translation.replace(/\\\//g, '/');
-                    const splitVariants = unescaped
-                        .split('/')
-                        .map(t => t.trim().toLowerCase())
-                        .filter(Boolean);
-                    allVariants.push(...splitVariants);
-                }
-            }
-
-            if (allVariants.length > 0) {
-                glossArray.push({
-                    word: allVariants,
-                    originalWord: span.textContent.trim().toLowerCase(),  // <-- store original English word here
-                    glossIndex: glossIndexCounter++
-                });
-            }
-        } catch (e) {
-            console.warn('Invalid JSON in data-translations:', dataTranslations, e);
-        }
-    }
-
-    return glossArray;
-}
 
 function getPluralFormsForLocale(locale, word) {
     const pluralForms = new Set();
@@ -171,57 +134,99 @@ function matchesWithLocalePrefix(locale, variant, translationWord) {
 }
 
 
-function getInflectedFormsForLocale(locale, word) {
-    const forms = new Set();
+// Bepaalt de werkwoordstam van een -en / -ing / -ingen woord.
+// open:   stam vóór een klinker-uitgang  (bestell-en, bewar-en, ondersteun-en)
+// closed: stam vóór een medeklinker-uitgang of zonder uitgang (bestel-t, bewaar-t, ondersteun-t)
+function getDutchVerbStems(word) {
+    const m = word.match(/^(.{3,}?)(ingen|ing|en)$/);
+    if (!m) return null;
+    const open = m[1];
+    let closed;
+    if (/([bcdfgklmnprst])\1$/.test(open)) {
+        closed = [open.slice(0, -1)];                 // bestell -> bestel
+    } else {
+        closed = [open];
+        const v = open.match(/^(.*[^aeiou])([aeou])([^aeiouy])$/);
+        if (v) closed.push(v[1] + v[2] + v[2] + v[3]); // bewar -> bewaar
+    }
+    return { open, closed };
+}
+// Herkent "voegt ... toe" en "toe te voegen" voor glossary-woord "toevoegen"
+function countDutchSeparable(tokens, word) {
+    const particles = ['toe', 'uit', 'aan', 'in', 'op', 'af'];
+    const particle = particles.find(p => word.startsWith(p));
+    if (!particle) return 0;
 
-    if (locale === 'nl' || locale === 'nl-be') {
-        // Noun pluralizations
-        const commonSuffixes = ['en', 's', 'eren'];
-        for (const suffix of commonSuffixes) {
-            forms.add(word + suffix);
-        }
+    const base = word.slice(particle.length);          // "voegen"
+    if (!/en$/.test(base) || /ing(en)?$/.test(base)) return 0;
+    const s = getDutchVerbStems(base);                 // open: "voeg"
+    if (!s) return 0;
 
-        if (word.endsWith('en')) {
-            const stem = word.slice(0, -2);
-            forms.add(stem + 'ing');
-            forms.add(stem + 'ingen');
-        }
-
-        if (word.endsWith('ing')) {
-            forms.add(word + 'en');
-            forms.add(word.slice(0, -3) + 'ingen');
-        }
-
-        // Adjective inflections (e.g., beschikbaar → beschikbare)
-        if (word.endsWith('baar')) {
-            forms.add(word + 'e'); // beschikbaar → beschikbare
-            const root = word.slice(0, -3); // remove 'aar'
-            forms.add(root + 'are');        // beschikbaar → beschikbare
-        }
-        if (word.endsWith("uut")) {
-            const root = word.slice(0, -3); // remove 'uut'
-            forms.add(root + 'uten'); 
-           // console.debug("in second:",forms)
-        }
+    const finite = new Set([s.open + 'en']);
+    for (const c of s.closed) {
+        for (const e of ['', 't', 'de', 'te', 'den', 'ten']) finite.add(c + e);
     }
 
-    if (locale === 'de') {
-        const germanSuffixes = ['e', 'en', 'n', 'er', 's'];
-        for (const suffix of germanSuffixes) {
-            forms.add(word + suffix);
+    let count = 0;
+    tokens.forEach((t, i) => {
+        if (!finite.has(t)) return;
+        for (let j = Math.max(0, i - 2); j <= Math.min(tokens.length - 1, i + 12); j++) {
+            if (j !== i && tokens[j] === particle) { count++; return; }
         }
-    }
-
-    if (locale === 'ru') {
-        const russianSuffixes = ['ы', 'и', 'а', 'я'];
-        for (const suffix of russianSuffixes) {
-            forms.add(word + suffix);
-        }
-    }
-
-    return Array.from(forms);
+    });
+    return count;
 }
 
+function getInflectedFormsForLocale(locale, word) {
+    const forms = new Set();
+    const lang = String(locale || '').toLowerCase().split(/[-_]/)[0]; // nl_NL, nl-be, NL → nl
+
+    if (lang === 'nl') {
+        // Meervouden van zelfstandige naamwoorden
+        for (const suffix of ['en', 's', 'eren']) {
+            forms.add(word + suffix);
+        }
+
+        // Werkwoord <-> -ing-naamwoord, beide richtingen:
+        // ondersteuning / ondersteunen -> ondersteunt, ondersteunde, ondersteund, ...
+        const stems = getDutchVerbStems(word);
+        if (stems) {
+            for (const end of ['en', 'end', 'ende', 'ing', 'ingen']) {
+                forms.add(stems.open + end);
+            }
+            for (const c of stems.closed) {
+                for (const end of ['', 't', 'd', 'de', 'te', 'den', 'ten']) {
+                    forms.add(c + end);
+                }
+                forms.add('ge' + c + 'd');
+                forms.add('ge' + c + 't');
+            }
+        }
+
+        // Bijvoeglijke naamwoorden: beschikbaar -> beschikbare
+        if (word.endsWith('baar')) {
+            forms.add(word.slice(0, -3) + 'are');
+        }
+        if (word.endsWith('uut')) {
+            forms.add(word.slice(0, -3) + 'uten');
+        }
+    }
+
+    if (lang === 'de') {
+        for (const suffix of ['e', 'en', 'n', 'er', 's']) {
+            forms.add(word + suffix);
+        }
+    }
+
+    if (lang === 'ru') {
+        for (const suffix of ['ы', 'и', 'а', 'я']) {
+            forms.add(word + suffix);
+        }
+    }
+
+    forms.delete(word); // basisvorm wordt al door shortMatches geteld
+    return Array.from(forms);
+}
 function matchesWithLocaleVerbSystem(locale, base, word) {
     if (locale === 'nl' || locale === 'nl-be') {
         const prefixes = ['ge', 'her', 'ver', 'be', 'ont'];
@@ -321,10 +326,18 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl', strictV
                 }
             }
 
-            matchCount += shortMatches + inflectedMatches + combinedMatches + compoundMatches;
+            const separableMatches = countDutchSeparable(wordsInTranslation, lowerVariant);
+
+            matchCount += shortMatches + inflectedMatches + combinedMatches + compoundMatches + separableMatches;
         }
 
         matchPool[wordKey] = matchCount;
+     //   console.debug('glossary check', {
+        //    locale, wordKey, matchCount, expected: entriesByKey[wordKey].length,
+         //   forms: normVariants(entry.word).map(v => getInflectedFormsForLocale(locale, v))
+        //});
+      //  console.debug('[WPTF] source:', getInflectedFormsForLocale.toString());
+       // console.debug('[WPTF] stems:', typeof getDutchVerbStems === 'function' ? getDutchVerbStems('ondersteuning') : 'getDutchVerbStems bestaat niet');
     });
 
     // === Second pass: Detect missing ===
