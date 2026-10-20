@@ -15,6 +15,10 @@ let USE_FAVORITES = false;
 let WP_USERNAME = '';
 let ONLY_ZERO_PERCENT = false;
 
+// Results carried over to the next page when "Next →" is clicked
+let carriedResults = null;   // DocumentFragment with the result blocks of earlier pages
+let carriedTotal = 0;      // records found on earlier pages
+
 function mk(tag, props = {}, css = "") {
     const el = document.createElement(tag);
     Object.assign(el, props);
@@ -23,80 +27,80 @@ function mk(tag, props = {}, css = "") {
 }
 
 function mycheckLocale() {
-  const NON_LOCALE = ['dev', 'stable', 'readme', 'trunk', 'default', 'formal', 'projects', 'wp-plugins', 'wp-themes'];
-  const parts = window.location.pathname.split('/').filter(Boolean);
-  for (const part of parts) {
-    if (NON_LOCALE.includes(part)) continue;
-    if (/^[a-z]{2,3}(?:-[a-z]{2,4})?$/i.test(part)) {
-      return part;
+    const NON_LOCALE = ['dev', 'stable', 'readme', 'trunk', 'default', 'formal', 'projects', 'wp-plugins', 'wp-themes'];
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    for (const part of parts) {
+        if (NON_LOCALE.includes(part)) continue;
+        if (/^[a-z]{2,3}(?:-[a-z]{2,4})?$/i.test(part)) {
+            return part;
+        }
     }
-  }
-  return null;
+    return null;
 }
 
 async function fetchFavoriteSlugs() {
-  const profileUrl = `https://profiles.wordpress.org/${WP_USERNAME}/`;
-  console.log(`[WP Originals] Fetching favorites from: ${profileUrl}`);
+    const profileUrl = `https://profiles.wordpress.org/${WP_USERNAME}/`;
+    console.log(`[WP Originals] Fetching favorites from: ${profileUrl}`);
 
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage(
-      { action: 'fetchFavorites', url: profileUrl },
-      (response) => {
-        if (!response?.success) {
-          console.error('[WP Originals] Background fetch failed:', response?.error);
-          resolve([]);
-          return;
-        }
+    return new Promise((resolve) => {
+        chrome.runtime.sendMessage(
+            { action: 'fetchFavorites', url: profileUrl },
+            (response) => {
+                if (!response?.success) {
+                    console.error('[WP Originals] Background fetch failed:', response?.error);
+                    resolve([]);
+                    return;
+                }
 
-        const favParser  = new DOMParser();
-        const favDoc     = favParser.parseFromString(response.html, 'text/html');
-        const favSection = favDoc.querySelector('#content-favorites');
+                const favParser = new DOMParser();
+                const favDoc = favParser.parseFromString(response.html, 'text/html');
+                const favSection = favDoc.querySelector('#content-favorites');
 
-        if (!favSection) {
-          console.warn('[WP Originals] No favorites section found — are you logged into wordpress.org?');
-          resolve([]);
-          return;
-        }
+                if (!favSection) {
+                    console.warn('[WP Originals] No favorites section found — are you logged into wordpress.org?');
+                    resolve([]);
+                    return;
+                }
 
-        const slugs = [];
-        const links = favSection.querySelectorAll('a[href]');
+                const slugs = [];
+                const links = favSection.querySelectorAll('a[href]');
 
-        links.forEach(link => {
-          const href        = link.getAttribute('href');
-          const pluginMatch = href.match(/\/plugins\/([^/]+)\//);
-          const themeMatch  = href.match(/\/themes\/([^/]+)\//);
-          const match       = PROJECT_TYPE === 'plugins' ? pluginMatch : themeMatch;
-          if (match && match[1] && !slugs.includes(match[1])) {
-            slugs.push(match[1]);
-          }
-        });
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    const pluginMatch = href.match(/\/plugins\/([^/]+)\//);
+                    const themeMatch = href.match(/\/themes\/([^/]+)\//);
+                    const match = PROJECT_TYPE === 'plugins' ? pluginMatch : themeMatch;
+                    if (match && match[1] && !slugs.includes(match[1])) {
+                        slugs.push(match[1]);
+                    }
+                });
 
-        console.log(`[WP Originals] Found ${slugs.length} favorite ${PROJECT_TYPE}:`, slugs);
-        resolve(slugs);
-      }
-    );
-  });
+                console.log(`[WP Originals] Found ${slugs.length} favorite ${PROJECT_TYPE}:`, slugs);
+                resolve(slugs);
+            }
+        );
+    });
 }
 
 async function loadRecentOriginals(page) {
 
-  if (!settingsDone) {
-    showSettings();
-    return;
-  }
+    if (!settingsDone) {
+        showSettings();
+        return;
+    }
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - DAYS_AGO);
-  stopRequested = false;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - DAYS_AGO);
+    stopRequested = false;
 
-  console.log(`[WP Originals] Starting page ${page}, mode: ${MODE}, cutoff: ${cutoff.toDateString()}`);
+    console.log(`[WP Originals] Starting page ${page}, mode: ${MODE}, cutoff: ${cutoff.toDateString()}`);
 
-  const existing = document.getElementById('wp-originals-overlay');
-  if (existing) existing.remove();
+    const existing = document.getElementById('wp-originals-overlay');
+    if (existing) existing.remove();
 
-  const container = document.createElement('div');
-  container.id = 'wp-originals-overlay';
-  container.style.cssText = `
+    const container = document.createElement('div');
+    container.id = 'wp-originals-overlay';
+    container.style.cssText = `
     position: fixed; top: 10px; right: 10px;
     width: 420px; max-height: 85vh; overflow-y: auto;
     background: white; border: 1px solid #ccc;
@@ -105,7 +109,9 @@ async function loadRecentOriginals(page) {
     border-radius: 6px;
   `;
 
-  const modeLabel = MODE === 'warnings' ? '⚠️ Warnings' : '🆕 New originals';
+    const modeLabel = MODE === 'warnings' ? '⚠️ Warnings'
+        : MODE === 'changesrequested' ? '📝 Changes requested'
+            : '🆕 New originals';
 
     const hdr = mk("div", {}, "display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;");
     hdr.appendChild(mk("strong", {
@@ -131,25 +137,41 @@ async function loadRecentOriginals(page) {
     const resultsEl = mk("div", { id: "results" });
     const footerEl = mk("div", { id: "footer" }, "margin-top:10px; text-align:center;");
 
+    // Keep the results of earlier pages and mark where this page starts
+    const hasCarried = !!(carriedResults && carriedResults.childNodes.length);
+    if (hasCarried) {
+        resultsEl.appendChild(carriedResults);
+        // Changes requested are sorted oldest-first across pages, so no page separator there
+        if (MODE !== 'changesrequested') {
+            resultsEl.appendChild(mk("div", { textContent: `— Page ${page} —` },
+                "color:#888; font-size:11px; text-align:center; margin:6px 0 10px;"));
+        }
+    }
+    carriedResults = null;
+
     container.replaceChildren(hdr, subhead, progressEl, hr, resultsEl, footerEl);
-  document.body.appendChild(container);
+    document.body.appendChild(container);
 
-  document.getElementById('btn-quit').addEventListener('click', () => {
-    console.log('[WP Originals] Quit clicked.');
-    stopRequested = true;
-    container.remove();
-  });
+    document.getElementById('btn-quit').addEventListener('click', () => {
+        console.log('[WP Originals] Quit clicked.');
+        stopRequested = true;
+        carriedResults = null;
+        carriedTotal = 0;
+        container.remove();
+    });
 
-  document.getElementById('btn-back').addEventListener('click', () => {
-    console.log('[WP Originals] Back clicked.');
-    stopRequested = true;
-    settingsDone = false;
-    loadRecentOriginals(START_PAGE);
-  });
+    document.getElementById('btn-back').addEventListener('click', () => {
+        console.log('[WP Originals] Back clicked.');
+        stopRequested = true;
+        carriedResults = null;
+        carriedTotal = 0;
+        settingsDone = false;
+        loadRecentOriginals(START_PAGE);
+    });
 
-  const progress = document.getElementById('progress');
-  const results  = document.getElementById('results');
-  const footer   = document.getElementById('footer');
+    const progress = document.getElementById('progress');
+    const results = document.getElementById('results');
+    const footer = document.getElementById('footer');
 
     try {
         let projects = [];
@@ -268,6 +290,20 @@ async function loadRecentOriginals(page) {
                 : `${LOCALE}/${SLUG_TYPE}`;
 
             progress.textContent = `${USE_FAVORITES ? '⭐ ' : ''}${page > 1 ? `Page ${page}/${totalPages} — ` : ''}checking ${i + 1}/${projects.length}: ${slug}`;
+
+            // --- Changes requested mode: own fetch + render, then next project ---
+            if (MODE === 'changesrequested') {
+                try {
+                    const cr = await fetchChangesRequestedForProject(PROJECT_TYPE, slug, LOCALE, SLUG_TYPE);
+                    if (cr.count > 0) {
+                        totalFound += cr.count;
+                        insertByOldest(results, renderChangesRequestedBlock(name, cr));
+                    }
+                } catch (e) {
+                    console.error(`[${slug}] Error:`, e);
+                }
+                continue;
+            }
 
             const url = MODE === 'warnings'
                 ? `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/${subPath}/` +
@@ -394,13 +430,16 @@ async function loadRecentOriginals(page) {
 
         if (!stopRequested) {
             const foundMsg = totalFound > 0
-                ? `${totalFound} ${MODE === 'warnings' ? 'warning(s)' : 'new original(s)'} found.`
+                ? `${totalFound} ${MODE === 'warnings' ? 'warning(s)' : MODE === 'changesrequested' ? 'changes requested' : 'new original(s)'} found.`
                 : USE_FAVORITES
                     ? `No new records found in favorites of ${WP_USERNAME}.`
                     : `No new records found on this page.`;
 
-            progress.textContent = `✅ ${USE_FAVORITES ? 'Favorites check' : `Page ${page}`} done — ${foundMsg}`;
-            console.log(`[WP Originals] Done. Total found: ${totalFound}`);
+            const runningTotal = carriedTotal + totalFound;
+            const totalMsg = hasCarried ? ` (${runningTotal} in total so far)` : '';
+
+            progress.textContent = `✅ ${USE_FAVORITES ? 'Favorites check' : `Page ${page}`} done — ${foundMsg}${totalMsg}`;
+            console.log(`[WP Originals] Done. Total found: ${totalFound}, running total: ${runningTotal}`);
 
             if (!USE_FAVORITES && page < totalPages) {
                 const nextBtn = document.createElement('button');
@@ -411,6 +450,10 @@ async function loadRecentOriginals(page) {
           cursor: pointer; font-size: 13px; margin-top: 6px;
         `;
                 nextBtn.addEventListener('click', () => {
+                    // Take the result blocks along to the next page
+                    carriedResults = document.createDocumentFragment();
+                    carriedResults.append(...results.childNodes);
+                    carriedTotal = runningTotal;
                     currentPage++;
                     loadRecentOriginals(currentPage);
                 });
@@ -420,13 +463,14 @@ async function loadRecentOriginals(page) {
                 noMore.style.cssText = 'color:#888;';
                 noMore.textContent = 'No more pages.';
                 footer.appendChild(noMore);
-            
+
             }
         }
 
     } catch (err) {
         console.error('[WP Originals] Fatal error:', err);
-        results.replaceChildren();
+        // Keep results of earlier pages; only clear when this is the first page
+        if (!hasCarried) results.replaceChildren();
         const p = document.createElement('p');
         p.style.cssText = 'color:red;';
         p.textContent = `Error: ${err.message}`;
@@ -435,12 +479,12 @@ async function loadRecentOriginals(page) {
 }
 
 function showSettings() {
-  const existing = document.getElementById('wp-originals-overlay');
-  if (existing) existing.remove();
+    const existing = document.getElementById('wp-originals-overlay');
+    if (existing) existing.remove();
 
-  const container = document.createElement('div');
-  container.id = 'wp-originals-overlay';
-  container.style.cssText = `
+    const container = document.createElement('div');
+    container.id = 'wp-originals-overlay';
+    container.style.cssText = `
     position: fixed; top: 10px; right: 10px;
     width: 420px; background: white; border: 1px solid #ccc;
     padding: 14px; z-index: 99999; font-size: 13px;
@@ -465,7 +509,8 @@ function showSettings() {
     const modeRow = mk("div", {}, "display:flex; gap:10px; margin-bottom:12px;");
     modeRow.append(
         mkRadioLabel("mode", "originals", MODE === "originals", "New originals"),
-        mkRadioLabel("mode", "warnings", MODE === "warnings", "Warnings")
+        mkRadioLabel("mode", "warnings", MODE === "warnings", "Warnings"),
+        mkRadioLabel("mode", "changesrequested", MODE === "changesrequested", "Changes requested")
     );
 
     const ptLbl = mk("label", {}, "display:block; margin-bottom:6px;");
@@ -540,77 +585,272 @@ function showSettings() {
         varLbl, varRow, locLbl, locInput, daysSection,
         linesLbl, linesInput, startLbl, startInput, showLbl, zeroLbl, startBtn
     );
-  document.body.appendChild(container);
+    document.body.appendChild(container);
 
-  container.querySelectorAll('input[name="mode"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      document.getElementById('days-section').style.display =
-        radio.value === 'originals' ? 'block' : 'none';
+    container.querySelectorAll('input[name="mode"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.getElementById('days-section').style.display =
+                radio.value === 'originals' ? 'block' : 'none';
+        });
     });
-  });
 
-  document.getElementById('input-favorites').addEventListener('change', (e) => {
-    document.getElementById('favorites-section').style.display =
-      e.target.checked ? 'block' : 'none';
-  });
+    document.getElementById('input-favorites').addEventListener('change', (e) => {
+        document.getElementById('favorites-section').style.display =
+            e.target.checked ? 'block' : 'none';
+    });
 
-  document.getElementById('btn-quit').addEventListener('click', () => {
-    container.remove();
-  });
+    document.getElementById('btn-quit').addEventListener('click', () => {
+        container.remove();
+    });
 
-  document.getElementById('btn-start').addEventListener('click', () => {
-    MODE              = document.querySelector('input[name="mode"]:checked').value;
-    DAYS_AGO          = parseInt(document.getElementById('input-days')?.value, 10) || 7;
-    PER_PAGE          = parseInt(document.getElementById('input-lines').value, 10) || 100;
-    START_PAGE        = parseInt(document.getElementById('input-start-page').value, 10) || 1;
-    LOCALE            = document.getElementById('input-locale').value.trim() || 'en-gb';
-    PROJECT_TYPE      = document.querySelector('input[name="project_type"]:checked').value;
-    SLUG_TYPE         = document.querySelector('input[name="slug_type"]:checked').value;
-    SHOW_RECORDS      = document.getElementById('input-show-records').checked;
-    ONLY_ZERO_PERCENT = document.getElementById('input-only-zero').checked;
-    USE_FAVORITES     = document.getElementById('input-favorites').checked;
-    WP_USERNAME       = document.getElementById('input-username')?.value.trim() || '';
-    currentPage       = START_PAGE;
-    settingsDone      = true;
+    document.getElementById('btn-start').addEventListener('click', () => {
+        MODE = document.querySelector('input[name="mode"]:checked').value;
+        DAYS_AGO = parseInt(document.getElementById('input-days')?.value, 10) || 7;
+        PER_PAGE = parseInt(document.getElementById('input-lines').value, 10) || 100;
+        START_PAGE = parseInt(document.getElementById('input-start-page').value, 10) || 1;
+        LOCALE = document.getElementById('input-locale').value.trim() || 'en-gb';
+        PROJECT_TYPE = document.querySelector('input[name="project_type"]:checked').value;
+        SLUG_TYPE = document.querySelector('input[name="slug_type"]:checked').value;
+        SHOW_RECORDS = document.getElementById('input-show-records').checked;
+        ONLY_ZERO_PERCENT = document.getElementById('input-only-zero').checked;
+        USE_FAVORITES = document.getElementById('input-favorites').checked;
+        WP_USERNAME = document.getElementById('input-username')?.value.trim() || '';
+        currentPage = START_PAGE;
+        settingsDone = true;
+        carriedResults = null;
+        carriedTotal = 0;
 
-    console.log(`[WP Originals] Settings — mode: ${MODE}, type: ${PROJECT_TYPE}, locale: ${LOCALE}, variant: ${SLUG_TYPE}, days: ${DAYS_AGO}, perPage: ${PER_PAGE}, startPage: ${START_PAGE}, favorites: ${USE_FAVORITES}, user: ${WP_USERNAME}, showRecords: ${SHOW_RECORDS}, onlyZero: ${ONLY_ZERO_PERCENT}`);
+        console.log(`[WP Originals] Settings — mode: ${MODE}, type: ${PROJECT_TYPE}, locale: ${LOCALE}, variant: ${SLUG_TYPE}, days: ${DAYS_AGO}, perPage: ${PER_PAGE}, startPage: ${START_PAGE}, favorites: ${USE_FAVORITES}, user: ${WP_USERNAME}, showRecords: ${SHOW_RECORDS}, onlyZero: ${ONLY_ZERO_PERCENT}`);
 
-    loadRecentOriginals(currentPage);
-  });
+        loadRecentOriginals(currentPage);
+    });
 }
 
 function truncate(str, max) {
-  if (!str) return '—';
-  return str.length > max ? str.slice(0, max) + '…' : str;
+    if (!str) return '—';
+    return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+// ---------------------------------------------------------------------------
+// Changes requested mode
+// ---------------------------------------------------------------------------
+
+// GlotPress dates are GMT "YYYY-MM-DD HH:MM:SS"
+function parseGpDate(text) {
+    if (!text) return null;
+    const d = new Date(text.replace(' ', 'T') + 'Z');
+    return isNaN(d) ? null : d;
+}
+
+function formatCrDate(d) {
+    return d ? d.toLocaleString('nl-NL', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+}
+
+// All translations of one (sub)project that currently have status "changesrequested".
+// The API returns one page at a time, so walk the pages until nothing new comes back.
+async function fetchChangesRequested(projectPath, slug, subPath, maxPages = 50) {
+    const base =
+        `https://translate.wordpress.org/api/projects/${projectPath}/${slug}/${subPath}/` +
+        `?filters[status]=changesrequested` +
+        `&sort[by]=translation_date_modified` +
+        `&sort[how]=asc`;   // oldest first
+
+    const entries = [];
+    const seen = new Set();
+
+    for (let p = 1; p <= maxPages; p++) {
+        if (stopRequested) break;
+
+        const url = p === 1 ? base : `${base}&page=${p}`;
+        console.log(`[${slug}] Fetching: ${url}`);
+
+        const res = await fetch(url, { credentials: 'include' });
+        console.log(`[${slug}] HTTP status: ${res.status}`);
+        if (!res.ok) break;
+
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) break;
+
+        let added = 0;
+        data.forEach(o => {
+            if (o.translation_status && o.translation_status !== 'changesrequested') return;
+            const key = o.id ?? `${o.original_id}|${o.date_modified}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            entries.push(o);
+            added++;
+        });
+
+        // Server returned a page we already had: stop
+        if (added === 0) break;
+    }
+
+    // Oldest / newest = status change (date_modified), fallback: date added
+    let newestDate = null;
+    let oldestDate = null;
+    entries.forEach(o => {
+        const d = parseGpDate(o.date_modified || o.translation_added || o.date_added);
+        if (d && (!newestDate || d > newestDate)) newestDate = d;
+        if (d && (!oldestDate || d < oldestDate)) oldestDate = d;
+    });
+
+    return { count: entries.length, newestDate, oldestDate, entries };
+}
+
+// Plugins: check stable (plugin strings) and readme (directory page). Themes: no sub-projects.
+async function fetchChangesRequestedForProject(projectType, slug, locale, set = 'default',
+    pluginSubProjects = ['stable', 'readme']) {
+    const projectPath = `wp-${projectType}`;
+    const apiBase = `https://translate.wordpress.org/api/projects/${projectPath}/${slug}`;
+
+    const parts = [];
+    let count = 0;
+    let newestDate = null;
+    let oldestDate = null;
+
+    // Step 1 — which sub-projects exist? (avoids 404s on plugins without a readme project)
+    let subProjects = [''];
+    if (projectType === 'plugins') {
+        const res = await fetch(`${apiBase}/`, { credentials: 'include' });
+        if (!res.ok) {
+            console.log(`[${slug}] Project not found on translate.wordpress.org (${res.status})`);
+            return { count, newestDate, oldestDate, parts };
+        }
+        const data = await res.json();
+        const existing = (data.sub_projects || []).map(p => p.slug);
+        subProjects = pluginSubProjects.filter(s => existing.includes(s));
+        console.log(`[${slug}] Sub-projects: ${existing.join(', ') || 'none'} → checking: ${subProjects.join(', ') || 'none'}`);
+    }
+
+    for (const sub of subProjects) {
+        if (stopRequested) break;
+
+        const subPath = sub ? `${sub}/${locale}/${set}` : `${locale}/${set}`;
+
+        // Step 2 — read changesrequested_count from the translation set (one call, no paging)
+        const infoRes = await fetch(sub ? `${apiBase}/${sub}/` : `${apiBase}/`, { credentials: 'include' });
+        if (!infoRes.ok) {
+            console.log(`[${slug}${sub ? '/' + sub : ''}] Project info ${infoRes.status}`);
+            continue;
+        }
+        const info = await infoRes.json();
+        const tSet = (info.translation_sets || []).find(t => t.locale === locale && t.slug === set);
+        if (!tSet) {
+            console.log(`[${slug}${sub ? '/' + sub : ''}] No translation set ${locale}/${set}`);
+            continue;
+        }
+        const setCount = tSet.changesrequested_count;
+        if (setCount !== undefined && Number(setCount) === 0) {
+            console.log(`[${slug}${sub ? '/' + sub : ''}] Changes requested: 0`);
+            continue;
+        }
+
+        // Step 3 — only now fetch the strings themselves (for the date and the records)
+        const cr = await fetchChangesRequested(projectPath, slug, subPath);
+        console.log(`[${slug}${sub ? '/' + sub : ''}] Changes requested: ${cr.count}`);
+        if (cr.count === 0) continue;
+
+        count += cr.count;
+        if (cr.newestDate && (!newestDate || cr.newestDate > newestDate)) newestDate = cr.newestDate;
+        if (cr.oldestDate && (!oldestDate || cr.oldestDate < oldestDate)) oldestDate = cr.oldestDate;
+
+        parts.push({
+            label: sub || 'theme',
+            count: cr.count,
+            newestDate: cr.newestDate,
+            oldestDate: cr.oldestDate,
+            entries: cr.entries,
+            link: `https://translate.wordpress.org/projects/${projectPath}/${slug}/${subPath}/?filters%5Bstatus%5D=changesrequested`
+        });
+    }
+
+    parts.sort((a, b) => (a.oldestDate?.getTime() ?? Infinity) - (b.oldestDate?.getTime() ?? Infinity));
+    return { count, newestDate, oldestDate, parts };
+}
+
+// Insert a project block so the list stays sorted: oldest changes requested first
+function insertByOldest(results, block) {
+    const key = Number(block.dataset.oldest) || Infinity;
+    const next = [...results.children].find(el =>
+        el.dataset && el.dataset.oldest !== undefined && (Number(el.dataset.oldest) || Infinity) > key);
+    results.insertBefore(block, next || null);
+}
+
+// Project block: name once, total + newest date, then one link per sub-project
+function renderChangesRequestedBlock(name, cr) {
+    const block = document.createElement('div');
+    block.style.cssText = 'margin-bottom:14px; border-bottom:1px solid #eee; padding-bottom:10px;';
+    block.dataset.oldest = cr.oldestDate ? cr.oldestDate.getTime() : '';   // sort key
+
+    const titleStrong = document.createElement('strong');
+    titleStrong.textContent = `📝 ${name}`;
+
+    const count = document.createElement('small');
+    count.textContent = `${cr.count} changes requested — oldest: ${formatCrDate(cr.oldestDate)}, newest: ${formatCrDate(cr.newestDate)}`;
+
+    block.append(titleStrong, document.createElement('br'), count);
+
+    cr.parts.forEach(part => {
+        const row = document.createElement('div');
+        row.style.cssText = 'margin:4px 0 2px 10px; font-size:12px;';
+
+        const link = document.createElement('a');
+        link.href = part.link;                       // zelf samengestelde https-URL → veilig
+        link.target = '_blank';
+        link.style.cssText = 'color:#0073aa;';
+        link.textContent = `→ ${part.label}`;
+
+        row.append(link, ` (${part.count}, oldest: ${formatCrDate(part.oldestDate)})`);
+        block.appendChild(row);
+
+        if (SHOW_RECORDS) {
+            part.entries.forEach(o => {
+                const line = document.createElement('div');
+                line.style.cssText = 'margin:2px 0 2px 22px; color:#333; font-size:12px;';
+
+                const em = document.createElement('em');
+                em.textContent = (o.date_modified || o.translation_added || '').split(' ')[0];
+
+                const singular = document.createElement('span');
+                singular.title = o.singular ?? '';
+                singular.textContent = truncate(o.singular, 50);
+
+                line.append('📅 ', em, ' — ', singular);
+                block.appendChild(line);
+            });
+        }
+    });
+
+    return block;
 }
 
 // Single entry point
 //loadRecentOriginals(currentPage);
-    // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // loadEditorProjects — show projects where the current user is Translation Editor
 // Concurrency constants (tune here if translate.wordpress.org throttles you):
-const EDITOR_LIST_CONCURRENCY    = 5;   // parallel fetches for project list pages
+const EDITOR_LIST_CONCURRENCY = 5;   // parallel fetches for project list pages
 const EDITOR_CONTRIB_CONCURRENCY = 3;   // parallel fetches for contributors pages
 // ---------------------------------------------------------------------------
 
 async function loadEditorProjects() {
 
-  stopRequested = false;
+    stopRequested = false;
 
-  // This function only needs LOCALE and WP_USERNAME — use its own settings screen
-  if (!LOCALE || !WP_USERNAME) {
-    showEditorSettings();
-    return;
-  }
+    // This function only needs LOCALE and WP_USERNAME — use its own settings screen
+    if (!LOCALE || !WP_USERNAME) {
+        showEditorSettings();
+        return;
+    }
 
-  console.log(`[WP Editor Projects] Starting — locale: ${LOCALE}, user: ${WP_USERNAME}`);
+    console.log(`[WP Editor Projects] Starting — locale: ${LOCALE}, user: ${WP_USERNAME}`);
 
-  const existing = document.getElementById('wp-originals-overlay');
-  if (existing) existing.remove();
+    const existing = document.getElementById('wp-originals-overlay');
+    if (existing) existing.remove();
 
-  const container = document.createElement('div');
-  container.id = 'wp-originals-overlay';
-  container.style.cssText = `
+    const container = document.createElement('div');
+    container.id = 'wp-originals-overlay';
+    container.style.cssText = `
     position: fixed; top: 10px; right: 10px;
     width: 420px; max-height: 85vh; overflow-y: auto;
     background: white; border: 1px solid #ccc;
@@ -652,18 +892,18 @@ async function loadEditorProjects() {
     btnRow.append(themesBtn, pluginsBtn);
 
     container.replaceChildren(header, intro, btnRow);
-  document.body.appendChild(container);
+    document.body.appendChild(container);
 
-  document.getElementById('btn-quit').addEventListener('click', () => {
-    stopRequested = true;
-    container.remove();
-  });
-  document.getElementById('btn-themes').addEventListener('click', () => {
-    runEditorScan('themes', container);
-  });
-  document.getElementById('btn-plugins').addEventListener('click', () => {
-    runEditorScan('plugins', container);
-  });
+    document.getElementById('btn-quit').addEventListener('click', () => {
+        stopRequested = true;
+        container.remove();
+    });
+    document.getElementById('btn-themes').addEventListener('click', () => {
+        runEditorScan('themes', container);
+    });
+    document.getElementById('btn-plugins').addEventListener('click', () => {
+        runEditorScan('plugins', container);
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -671,12 +911,12 @@ async function loadEditorProjects() {
 // ---------------------------------------------------------------------------
 
 function showEditorSettings() {
-  const existing = document.getElementById('wp-originals-overlay');
-  if (existing) existing.remove();
+    const existing = document.getElementById('wp-originals-overlay');
+    if (existing) existing.remove();
 
-  const container = document.createElement('div');
-  container.id = 'wp-originals-overlay';
-  container.style.cssText = `
+    const container = document.createElement('div');
+    container.id = 'wp-originals-overlay';
+    container.style.cssText = `
     position: fixed; top: 10px; right: 10px;
     width: 420px; background: white; border: 1px solid #ccc;
     padding: 14px; z-index: 99999; font-size: 13px;
@@ -706,33 +946,33 @@ function showEditorSettings() {
         "width:100%; background:#0073aa; color:white; border:none; padding:8px 0; border-radius:4px; cursor:pointer; font-size:14px; font-weight:bold;");
 
     container.replaceChildren(hdr, locLbl, locInput, userLbl, userInput, userSmall, startBtn);
-  document.body.appendChild(container);
+    document.body.appendChild(container);
 
-  document.getElementById('btn-quit').addEventListener('click', () => {
-    container.remove();
-  });
+    document.getElementById('btn-quit').addEventListener('click', () => {
+        container.remove();
+    });
 
-  document.getElementById('btn-start').addEventListener('click', () => {
-    LOCALE      = document.getElementById('input-locale').value.trim() || 'nl';
-    WP_USERNAME = document.getElementById('input-username').value.trim();
+    document.getElementById('btn-start').addEventListener('click', () => {
+        LOCALE = document.getElementById('input-locale').value.trim() || 'nl';
+        WP_USERNAME = document.getElementById('input-username').value.trim();
 
-    if (!WP_USERNAME) {
-      document.getElementById('input-username').style.borderColor = 'red';
-      return;
-    }
+        if (!WP_USERNAME) {
+            document.getElementById('input-username').style.borderColor = 'red';
+            return;
+        }
 
-    console.log(`[WP Editor Projects] Settings — locale: ${LOCALE}, user: ${WP_USERNAME}`);
-    loadEditorProjects();
-  });
+        console.log(`[WP Editor Projects] Settings — locale: ${LOCALE}, user: ${WP_USERNAME}`);
+        loadEditorProjects();
+    });
 }
 
 // ---------------------------------------------------------------------------
 
 async function runEditorScan(projectType, container) {
 
-  stopRequested = false;
+    stopRequested = false;
 
-  console.log(`[WP Editor Projects] Scanning ${projectType} — locale: ${LOCALE}`);
+    console.log(`[WP Editor Projects] Scanning ${projectType} — locale: ${LOCALE}`);
 
     const hdr = mk("div", {}, "display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;");
     hdr.appendChild(mk("strong", {
@@ -754,247 +994,247 @@ async function runEditorScan(projectType, container) {
 
     container.replaceChildren(hdr, progressEl, progress2El, hr, resultsEl, footerEl);
 
-  document.getElementById('btn-quit').addEventListener('click', () => {
-    stopRequested = true;
-    container.remove();
-  });
-  document.getElementById('btn-back').addEventListener('click', () => {
-    stopRequested = true;
-    loadEditorProjects();
-  });
-
-  const progress  = document.getElementById('progress');
-  const progress2 = document.getElementById('progress2');
-  const results   = document.getElementById('results');
-  const footer    = document.getElementById('footer');
-
-  try {
-
-    // -----------------------------------------------------------------------
-    // PHASE 1 — Collect all project slugs/names from the locale list pages.
-    //           Fetch page 1 first to learn totalPages, then batch the rest
-    //           EDITOR_LIST_CONCURRENCY pages at a time.
-    // -----------------------------------------------------------------------
-
-    const baseUrl = `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/`;
-
-    progress.textContent  = `🔄 Phase 1/2 — Fetching ${projectType} list, page 1…`;
-    progress2.textContent = '';
-
-    // Parse one list-page HTML → [{ slug, name }, …] and whether a next page exists
-    const parseListPage = (html) => {
-      const doc      = new DOMParser().parseFromString(html, 'text/html');
-      const projects = [];
-      doc.querySelectorAll('.project').forEach(div => {
-        const classes   = [...div.classList];
-        const slugClass = classes.find(c => c.startsWith(`project-wp-${projectType}-`));
-        if (!slugClass) return;
-        const slug   = slugClass.replace(`project-wp-${projectType}-`, '');
-        const nameEl = div.querySelector('.project-name h4 a');
-        const name   = nameEl ? nameEl.textContent.trim() : slug;
-        projects.push({ slug, name });
-      });
-      // Stop when there is no "next" arrow link in the pagination
-      const hasNextPage = !!doc.querySelector('.paging a.next');
-      return { projects, hasNextPage };
-    };
-
-    // Pagination only has prev/next arrows so we don't know the total upfront.
-    // Strategy: fetch pages in batches of EDITOR_LIST_CONCURRENCY at a time.
-    // If any page in the batch has no "next" link, that was the last page — stop.
-    let allProjects  = [];
-    let batchStart   = 1;
-    let reachedEnd   = false;
-
-    while (!stopRequested && !reachedEnd) {
-      const batchPages = Array.from({ length: EDITOR_LIST_CONCURRENCY }, (_, i) => batchStart + i);
-
-      progress.textContent  = `🔄 Phase 1/2 — Fetching ${projectType} list: pages ${batchStart}–${batchStart + EDITOR_LIST_CONCURRENCY - 1}…`;
-      progress2.textContent = `${allProjects.length} projects collected so far`;
-
-      // Fetch all pages in this batch in parallel
-      const batchResults = await Promise.all(batchPages.map(async (pageNum) => {
-        try {
-          const res  = await fetch(`${baseUrl}?page=${pageNum}`);
-          const html = await res.text();
-          return { pageNum, ...parseListPage(html) };
-        } catch (e) {
-          console.warn(`[WP Editor Projects] List page ${pageNum} error:`, e);
-          return { pageNum, projects: [], hasNextPage: false };
-        }
-      }));
-
-      // Add results in page order, stop at the first page with no next link
-      for (const result of batchResults) {
-        allProjects.push(...result.projects);
-        if (!result.hasNextPage) {
-          console.log(`[WP Editor Projects] Last page: ${result.pageNum} — done collecting.`);
-          reachedEnd = true;
-          break;
-        }
-      }
-
-      progress2.textContent = `${allProjects.length} projects collected so far`;
-      batchStart += EDITOR_LIST_CONCURRENCY;
-    }
-
-    console.log(`[WP Editor Projects] Finished collecting — ${allProjects.length} projects total`);
-
-    if (stopRequested) {
-      progress.textContent  = '🛑 Stopped.';
-      progress2.textContent = '';
-      return;
-    }
-
-    console.log(`[WP Editor Projects] Total projects to check: ${allProjects.length}`);
-
-    if (allProjects.length === 0) {
-      progress.textContent  = `✅ No ${projectType} found for locale ${LOCALE}.`;
-      progress2.textContent = '';
-      return;
-    }
-
-    // -----------------------------------------------------------------------
-    // PHASE 2 — Fetch the locale+project page for each project and check for
-    //           the user in .locale-project-contributors-editors.
-    //           Matches are appended to the popup live as they are found.
-    // -----------------------------------------------------------------------
-
-    progress.textContent  = `🔍 Phase 2/2 — Checking ${allProjects.length} project pages…`;
-    progress2.textContent = `0 / ${allProjects.length} checked — 0 editor projects found`;
-
-    let checked      = 0;
-    let editorCount  = 0;
-    const foundProjects = []; // collect for export
-
-    // Retry up to 3 times on network failure
-    const fetchWithRetry = async (url, retries = 3) => {
-      for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-          const r = await fetch(url);
-          return r;
-        } catch (e) {
-          if (attempt === retries) throw e;
-          await new Promise(res => setTimeout(res, attempt * 1000));
-        }
-      }
-    };
-
-    await runWithConcurrency(allProjects, EDITOR_CONTRIB_CONCURRENCY, async ({ slug, name }) => {
-      if (stopRequested) return;
-
-      // The locale+project page is where PTE info lives per locale
-      const localeUrl = projectType === 'plugins'
-        ? `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/${slug}/stable/`
-        : `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/${slug}/`;
-
-      const translateLink = localeUrl;
-
-      try {
-        const res = await fetchWithRetry(localeUrl);
-        if (!res.ok) {
-          console.warn(`[${slug}] Locale project page returned ${res.status}`);
-          return;
-        }
-
-        const html        = await res.text();
-        const doc         = new DOMParser().parseFromString(html, 'text/html');
-
-        // PTE info is in .locale-project-contributors-group.locale-project-contributors-editors
-        const editorGroup = doc.querySelector(
-          '.locale-project-contributors-group.locale-project-contributors-editors'
-        );
-
-        if (!editorGroup) return;
-
-        const isEditor = [...editorGroup.querySelectorAll('a')].some(a =>
-          (a.getAttribute('href') || '').toLowerCase()
-            .includes(`/profiles.wordpress.org/${WP_USERNAME.toLowerCase()}/`)
-        );
-
-        if (!isEditor) return;
-
-        // ✅ Found one — append immediately so the user sees results live
-          editorCount++;
-          foundProjects.push({ name, url: translateLink });
-
-          const block = document.createElement('div');
-          block.style.cssText = 'margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px;';
-
-          const titleStrong = document.createElement('strong');
-          titleStrong.textContent = `🛡️ ${name}`;                 // externe projectnaam → veilig
-
-          const link = document.createElement('a');
-          link.href = translateLink;                                // zelf samengestelde locale-URL
-          link.target = '_blank';
-          link.style.cssText = 'font-size:11px; margin-left:6px; color:#0073aa;';
-          link.textContent = '→ translate';
-
-          block.append(titleStrong, ' ', link);
-          results.appendChild(block);
-
-      } catch (e) {
-        console.error(`[${slug}] Project page check error:`, e);
-      } finally {
-        checked++;
-        progress2.textContent =
-          `${checked} / ${allProjects.length} checked — ${editorCount} editor project(s) found`;
-      }
+    document.getElementById('btn-quit').addEventListener('click', () => {
+        stopRequested = true;
+        container.remove();
+    });
+    document.getElementById('btn-back').addEventListener('click', () => {
+        stopRequested = true;
+        loadEditorProjects();
     });
 
-    if (!stopRequested) {
-      progress.textContent  = editorCount > 0
-        ? `✅ Done — you are Translation Editor for ${editorCount} ${projectType}.`
-        : `✅ Done — no ${projectType} found where you are Translation Editor.`;
-      progress2.textContent = `${allProjects.length} projects checked.`;
+    const progress = document.getElementById('progress');
+    const progress2 = document.getElementById('progress2');
+    const results = document.getElementById('results');
+    const footer = document.getElementById('footer');
 
-      console.log(`[WP Editor Projects] Finished. Editor for ${editorCount} project(s).`);
+    try {
 
-      if (editorCount === 0) {
-          const noEditorMsg = document.createElement('em');
-          noEditorMsg.style.cssText = 'color:#888;';
-          noEditorMsg.textContent = 'Make sure you are logged into wordpress.org and your username is set correctly.';
-          footer.appendChild(noEditorMsg);
-      } else {
-        // Export button
-        const exportBtn = document.createElement('button');
-        exportBtn.textContent = '⬇️ Export list as CSV';
-        exportBtn.style.cssText = `
+        // -----------------------------------------------------------------------
+        // PHASE 1 — Collect all project slugs/names from the locale list pages.
+        //           Fetch page 1 first to learn totalPages, then batch the rest
+        //           EDITOR_LIST_CONCURRENCY pages at a time.
+        // -----------------------------------------------------------------------
+
+        const baseUrl = `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/`;
+
+        progress.textContent = `🔄 Phase 1/2 — Fetching ${projectType} list, page 1…`;
+        progress2.textContent = '';
+
+        // Parse one list-page HTML → [{ slug, name }, …] and whether a next page exists
+        const parseListPage = (html) => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const projects = [];
+            doc.querySelectorAll('.project').forEach(div => {
+                const classes = [...div.classList];
+                const slugClass = classes.find(c => c.startsWith(`project-wp-${projectType}-`));
+                if (!slugClass) return;
+                const slug = slugClass.replace(`project-wp-${projectType}-`, '');
+                const nameEl = div.querySelector('.project-name h4 a');
+                const name = nameEl ? nameEl.textContent.trim() : slug;
+                projects.push({ slug, name });
+            });
+            // Stop when there is no "next" arrow link in the pagination
+            const hasNextPage = !!doc.querySelector('.paging a.next');
+            return { projects, hasNextPage };
+        };
+
+        // Pagination only has prev/next arrows so we don't know the total upfront.
+        // Strategy: fetch pages in batches of EDITOR_LIST_CONCURRENCY at a time.
+        // If any page in the batch has no "next" link, that was the last page — stop.
+        let allProjects = [];
+        let batchStart = 1;
+        let reachedEnd = false;
+
+        while (!stopRequested && !reachedEnd) {
+            const batchPages = Array.from({ length: EDITOR_LIST_CONCURRENCY }, (_, i) => batchStart + i);
+
+            progress.textContent = `🔄 Phase 1/2 — Fetching ${projectType} list: pages ${batchStart}–${batchStart + EDITOR_LIST_CONCURRENCY - 1}…`;
+            progress2.textContent = `${allProjects.length} projects collected so far`;
+
+            // Fetch all pages in this batch in parallel
+            const batchResults = await Promise.all(batchPages.map(async (pageNum) => {
+                try {
+                    const res = await fetch(`${baseUrl}?page=${pageNum}`);
+                    const html = await res.text();
+                    return { pageNum, ...parseListPage(html) };
+                } catch (e) {
+                    console.warn(`[WP Editor Projects] List page ${pageNum} error:`, e);
+                    return { pageNum, projects: [], hasNextPage: false };
+                }
+            }));
+
+            // Add results in page order, stop at the first page with no next link
+            for (const result of batchResults) {
+                allProjects.push(...result.projects);
+                if (!result.hasNextPage) {
+                    console.log(`[WP Editor Projects] Last page: ${result.pageNum} — done collecting.`);
+                    reachedEnd = true;
+                    break;
+                }
+            }
+
+            progress2.textContent = `${allProjects.length} projects collected so far`;
+            batchStart += EDITOR_LIST_CONCURRENCY;
+        }
+
+        console.log(`[WP Editor Projects] Finished collecting — ${allProjects.length} projects total`);
+
+        if (stopRequested) {
+            progress.textContent = '🛑 Stopped.';
+            progress2.textContent = '';
+            return;
+        }
+
+        console.log(`[WP Editor Projects] Total projects to check: ${allProjects.length}`);
+
+        if (allProjects.length === 0) {
+            progress.textContent = `✅ No ${projectType} found for locale ${LOCALE}.`;
+            progress2.textContent = '';
+            return;
+        }
+
+        // -----------------------------------------------------------------------
+        // PHASE 2 — Fetch the locale+project page for each project and check for
+        //           the user in .locale-project-contributors-editors.
+        //           Matches are appended to the popup live as they are found.
+        // -----------------------------------------------------------------------
+
+        progress.textContent = `🔍 Phase 2/2 — Checking ${allProjects.length} project pages…`;
+        progress2.textContent = `0 / ${allProjects.length} checked — 0 editor projects found`;
+
+        let checked = 0;
+        let editorCount = 0;
+        const foundProjects = []; // collect for export
+
+        // Retry up to 3 times on network failure
+        const fetchWithRetry = async (url, retries = 3) => {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    const r = await fetch(url);
+                    return r;
+                } catch (e) {
+                    if (attempt === retries) throw e;
+                    await new Promise(res => setTimeout(res, attempt * 1000));
+                }
+            }
+        };
+
+        await runWithConcurrency(allProjects, EDITOR_CONTRIB_CONCURRENCY, async ({ slug, name }) => {
+            if (stopRequested) return;
+
+            // The locale+project page is where PTE info lives per locale
+            const localeUrl = projectType === 'plugins'
+                ? `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/${slug}/stable/`
+                : `https://translate.wordpress.org/locale/${LOCALE}/default/wp-${projectType}/${slug}/`;
+
+            const translateLink = localeUrl;
+
+            try {
+                const res = await fetchWithRetry(localeUrl);
+                if (!res.ok) {
+                    console.warn(`[${slug}] Locale project page returned ${res.status}`);
+                    return;
+                }
+
+                const html = await res.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                // PTE info is in .locale-project-contributors-group.locale-project-contributors-editors
+                const editorGroup = doc.querySelector(
+                    '.locale-project-contributors-group.locale-project-contributors-editors'
+                );
+
+                if (!editorGroup) return;
+
+                const isEditor = [...editorGroup.querySelectorAll('a')].some(a =>
+                    (a.getAttribute('href') || '').toLowerCase()
+                        .includes(`/profiles.wordpress.org/${WP_USERNAME.toLowerCase()}/`)
+                );
+
+                if (!isEditor) return;
+
+                // ✅ Found one — append immediately so the user sees results live
+                editorCount++;
+                foundProjects.push({ name, url: translateLink });
+
+                const block = document.createElement('div');
+                block.style.cssText = 'margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:10px;';
+
+                const titleStrong = document.createElement('strong');
+                titleStrong.textContent = `🛡️ ${name}`;                 // externe projectnaam → veilig
+
+                const link = document.createElement('a');
+                link.href = translateLink;                                // zelf samengestelde locale-URL
+                link.target = '_blank';
+                link.style.cssText = 'font-size:11px; margin-left:6px; color:#0073aa;';
+                link.textContent = '→ translate';
+
+                block.append(titleStrong, ' ', link);
+                results.appendChild(block);
+
+            } catch (e) {
+                console.error(`[${slug}] Project page check error:`, e);
+            } finally {
+                checked++;
+                progress2.textContent =
+                    `${checked} / ${allProjects.length} checked — ${editorCount} editor project(s) found`;
+            }
+        });
+
+        if (!stopRequested) {
+            progress.textContent = editorCount > 0
+                ? `✅ Done — you are Translation Editor for ${editorCount} ${projectType}.`
+                : `✅ Done — no ${projectType} found where you are Translation Editor.`;
+            progress2.textContent = `${allProjects.length} projects checked.`;
+
+            console.log(`[WP Editor Projects] Finished. Editor for ${editorCount} project(s).`);
+
+            if (editorCount === 0) {
+                const noEditorMsg = document.createElement('em');
+                noEditorMsg.style.cssText = 'color:#888;';
+                noEditorMsg.textContent = 'Make sure you are logged into wordpress.org and your username is set correctly.';
+                footer.appendChild(noEditorMsg);
+            } else {
+                // Export button
+                const exportBtn = document.createElement('button');
+                exportBtn.textContent = '⬇️ Export list as CSV';
+                exportBtn.style.cssText = `
           background:#0073aa; color:white; border:none;
           padding:6px 14px; border-radius:4px;
           cursor:pointer; font-size:13px; margin-top:6px;
         `;
-        exportBtn.addEventListener('click', () => {
-          const rows = ['Name,URL'];
-          foundProjects.forEach(p => {
-            // Quote name in case it contains commas
-            rows.push(`"${p.name.replace(/"/g, '""')}","${p.url}"`);
-          });
-          const csv  = rows.join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const a    = document.createElement('a');
-          a.href     = URL.createObjectURL(blob);
-          a.download = `editor-projects-${LOCALE}-${projectType}.csv`;
-          a.click();
-          URL.revokeObjectURL(a.href);
-        });
-        footer.appendChild(exportBtn);
-      }
+                exportBtn.addEventListener('click', () => {
+                    const rows = ['Name,URL'];
+                    foundProjects.forEach(p => {
+                        // Quote name in case it contains commas
+                        rows.push(`"${p.name.replace(/"/g, '""')}","${p.url}"`);
+                    });
+                    const csv = rows.join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `editor-projects-${LOCALE}-${projectType}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                });
+                footer.appendChild(exportBtn);
+            }
 
-    } else {
-      progress.textContent  = '🛑 Stopped.';
-      progress2.textContent =
-        `${checked} / ${allProjects.length} checked — ${editorCount} editor project(s) found so far.`;
+        } else {
+            progress.textContent = '🛑 Stopped.';
+            progress2.textContent =
+                `${checked} / ${allProjects.length} checked — ${editorCount} editor project(s) found so far.`;
+        }
+
+    } catch (err) {
+        console.error('[WP Editor Projects] Fatal error:', err);
+        results.replaceChildren();
+        const p = document.createElement('p');
+        p.style.cssText = 'color:red;';
+        p.textContent = `Error: ${err.message}`;
+        results.appendChild(p);
     }
-
-  } catch (err) {
-    console.error('[WP Editor Projects] Fatal error:', err);
-      results.replaceChildren();
-      const p = document.createElement('p');
-      p.style.cssText = 'color:red;';
-      p.textContent = `Error: ${err.message}`;
-      results.appendChild(p);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1003,12 +1243,12 @@ async function runEditorScan(projectType, container) {
 // promises in-flight at the same time.  Order of completion is not guaranteed.
 // ---------------------------------------------------------------------------
 async function runWithConcurrency(items, limit, asyncFn) {
-  const queue   = [...items];
-  const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
-    while (queue.length > 0) {
-      const item = queue.shift();
-      await asyncFn(item);
-    }
-  });
-  await Promise.all(workers);
+    const queue = [...items];
+    const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
+        while (queue.length > 0) {
+            const item = queue.shift();
+            await asyncFn(item);
+        }
+    });
+    await Promise.all(workers);
 }

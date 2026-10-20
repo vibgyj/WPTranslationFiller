@@ -93,7 +93,7 @@ async function openRouterTranslate(original, destlang, record, apikeyOpenRouter,
     //console.debug("Starting openRouterTranslate for rowId:", rowId, "original:", original)
     // Preprocess original
     var originalPreProcessed = await preProcessOriginal(original, preverbs, "openRouter");
-    
+   // console.debug("Preprocessed original:", originalPreProcessed)
     // Wait the timeout delay if needed
     // await delay(timeout);
     const start = performance.now();
@@ -101,7 +101,7 @@ async function openRouterTranslate(original, destlang, record, apikeyOpenRouter,
     var result = await getopenRouter(original, destlang, record, apikeyOpenRouter, OpenAIPrompt, originalPreProcessed, rowId, transtype, plural_line, formal, locale, convertToLower, is_editor, counter, OpenRouterSelect, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss);
     //const duration = performance.now() - start;
     const durationSeconds = (performance.now() - start) / 1000;
-    console.log(`model:` + OpenRouterSelect+ ` took ${durationSeconds.toFixed(3)}s`);
+    console.debug(`model:` + OpenRouterSelect+ ` took ${durationSeconds.toFixed(3)}s`);
     // You can handle errorstate or result here if needed
     return result;
 }
@@ -219,7 +219,7 @@ messages = [
                 { action: "openRouter", data: { ...dataNew } },  // ✅ clone meesturen
 
               (res) => {
-                  console.debug("openRouter chrome message response:", res);
+                  //console.debug("openRouter chrome message response:", res);
                   //console.debug("openRouter model used:", res.modelUsed);
                   resolve(res);
               }

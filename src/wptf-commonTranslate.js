@@ -89,7 +89,8 @@ function setPostTranslationReplace(postTranslationReplace, formal) {
                        //new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%| # /gi);
 // const placeHolderRegex = new RegExp(/%(\d{1,2})?\$?[sdl]{1}|&#\d{1,4};|&#x\d{1,4};|&\w{2,6};|%\w*%/gi);
 const placeHolderRegex = /%(\d+\$?)?[a-z]|&#\d{1,4};|&#x[\da-fA-F]{1,4};|&\w{2,6};|%\w+%/gi;
-const linkRegex = /((https?|ftp|file):\/\/[^\s]+|\bwww\.[^\s]+)/gi;
+// 07-10 const linkRegex = /((https?|ftp|file):\/\/[^\s]+|\bwww\.[^\s]+)/gi;
+const linkRegex = /\b(?:(?:https?|ftp|file):\/\/|www\.)[^\s"'<>]+[^\s"'<>.,;:!?)\]]/gi;
 const codeRegex = /<code[^>]*>[\s\S]*?<\/code>/gi;
 // the below regex did not work for links
 //const linkRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]<a[^>]*>|<span[^>]*>)/ig;
@@ -131,7 +132,7 @@ function replaceWithTokens(text, regex, makeToken, store) {
 }
 
 async function preProcessOriginal(original, preverbs, translator) {
-   // console.debug("translator:", translator);
+    //console.debug("translator:", translator);
 
     // 1. Protect <code>...</code> blocks once, before the preverbs are applied
     codeStore = [];
@@ -155,10 +156,11 @@ async function preProcessOriginal(original, preverbs, translator) {
         linkStore = [];
         original = replaceWithTokens(original, linkRegex, (n) => `linkvar${n + 1}`,
             (token, match) => linkStore.push(match));
+            //console.debug("preProcessOriginal openRouter after link protection:", original)
     }
 
     // 4. Shared step: special characters for every translator NOT in this list
-    const noSpecialChar = ["lingvanex", "LMstudio", "NLPCLoud", "google", "Ollama"];
+    const noSpecialChar = ["lingvanex", "LMstudio", "NLPCLoud", "google", "Ollama", "openRouter"];
     if (!noSpecialChar.includes(translator)) {
         // Start with 1, otherwise translation APIs alter the zero value
         specialCharMap = {};
@@ -254,7 +256,7 @@ async function preProcessOriginal(original, preverbs, translator) {
         default:
             console.warn(`preProcessOriginal: unknown translator "${translator}"`);
     }
-
+    //console.debug("reProcessOriginal after processing:", original)
     return original;
 }
 function startsWithCapital(word) {

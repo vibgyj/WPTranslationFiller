@@ -757,7 +757,7 @@ let fetchNewlink = document.createElement("li");
 var c            = document.createElement('a');
 c.href           = "#";
 c.id             = "fetchNewlink";
-c.appendChild(document.createTextNode("Fetch New"));
+c.appendChild(document.createTextNode("Fetch New/Changes requested"));
 fetchNewlink.className = 'menu-item wptf_fetchnew_menu';
 
 let fetchPTElink = document.createElement("li");
@@ -767,12 +767,20 @@ d.id             = "fetchPTElink";
 d.appendChild(document.createTextNode("Fetch PTE"));
 fetchPTElink.className = 'menu-item wptf_fetchpte_menu';
 
+//let fetchDiscussionLink = document.createElement("li");
+//var e = document.createElement('a');
+//e.href = "#";
+//e.id = "fetchDiscussionLink";
+//e.appendChild(document.createTextNode("Fetch Discussion"));
+//fetchDiscussionLink.className = 'menu-item wptf_fetchdiscussion_menu';
+
 var divMenu = document.querySelector("#menu-headline-nav");
 if (divMenu != null) {
     optionlink.appendChild(a);   divMenu.appendChild(optionlink);
     databaselink.appendChild(b); divMenu.appendChild(databaselink);
     fetchNewlink.appendChild(c); divMenu.appendChild(fetchNewlink);
     fetchPTElink.appendChild(d); divMenu.appendChild(fetchPTElink);
+   // fetchDiscussionLink.appendChild(e); divMenu.appendChild(fetchDiscussionLink);
 }
 
 function openOptionsPage() {
@@ -785,6 +793,7 @@ document.addEventListener('click', function (event) {
     else if (event.target.id == 'openOptionsLink')  { if (event) event.preventDefault(); openOptionsPage(); }
     else if (event.target.id == 'fetchNewlink')     { if (event) event.preventDefault(); fetchNewClicked(); }
     else if (event.target.id == 'fetchPTElink')     { if (event) event.preventDefault(); fetchPTEClicked(); }
+    else if (event.target.id == 'fetchDiscussionLink') { if (event) event.preventDefault(); fetchDiscussionClicked(); }
 });
 
 // ─── translatedButton (nav bar construction) ─────────────────
@@ -1207,6 +1216,7 @@ async function savetolocalClicked(event)     { if (event) event.preventDefault()
 async function setCheckBox(event)            { if (event) { await setcheckBox(event); event.preventDefault(); } }
 async function compairClicked()              { var is_pte = document.querySelector("#bulk-actions-toolbar-top") !== null; chrome.storage.local.get(["convertToLower", "spellCheckIgnore", "formal", "destlang"], function (data) { compairWithSuggestion(is_pte, data.convertToLower, data.spellCheckIgnore, data.destlang); }); }
 async function fetchPTEClicked(event)        { if (event) event.preventDefault(); await loadEditorProjects(currentPage); }
+async function fetchDiscussionClicked(event) { if (event) event.preventDefault(); await wptfShowDiscussionsOverview(startPage = 1, locale = "", set = "default", filter = "") }
 async function fetchNewClicked(event)        { if (event) event.preventDefault(); await loadRecentOriginals(currentPage); }
 async function copyOrgClicked(event)         { if (event) event.preventDefault(); await copyOrgRecords(); }
 

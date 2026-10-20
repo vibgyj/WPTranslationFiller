@@ -3,15 +3,20 @@
  * -----------------------------------------------------------------------------
  * Walks the visible translations table. For every row whose ORIGINAL contains
  * one or more glossary words, it checks whether each glossary word is translated
- * as the glossary suggests. If any isn't, it opens the editor via the "Details"
- * link, ticks the glossary reason, writes a note naming the offending term(s),
- * and clicks "Request changes" (changes-requested state, not a hard reject).
+ * as the glossary suggests. Glossary words WITHOUT a translation in the glossary
+ * are ignored (not checked, not counted, not highlighted).
+ *
+ * When something is missing, a modal asks what to do with the flagged rows:
+ *   - "Create" : open the editor, tick the glossary reason, write a note naming
+ *                the offending term(s) and click "Request changes".
+ *   - "Reject" : open the editor and hard-reject the row, WITHOUT a glossary reason.
+ *   - closing the modal without a choice aborts the sweep.
  *
  * Run it from the browser console on a GlotPress translation-set page (filter to
  * waiting first: add ?filters[status]=waiting).
  *
- * SAFETY: flip the DryRun switch below. true = report only, changes nothing.
- * false = actually tick / fill / request changes.
+ * SAFETY: flip the DryRun switch below. true = report only, changes nothing
+ * (no modal is shown). false = ask via the modal, then act.
  *
  *   DryRun = true;  glossaryQaSweep();                  // report only (whole page)
  *   DryRun = false; glossaryQaSweep();                  // act on flagged rows
@@ -110,21 +115,21 @@ async function glossaryQaSweep(options = {}) {
         },
 
         // --- selectors ---------------------------------------------------------
-        glossaryWordSelector: '.glossary-word',          // words marked in the original
-        translationTextSelector: '.translation-text',       // current translation in the preview row
+        glossaryWordSelector: '.glossary-word',                                   // words marked in the original
+        translationTextSelector: '.translation-text',                             // current translation in the preview row
         glossaryCheckboxSelector: 'input[name="feedback_reason"][value="glossary"]', // reject-reason checkbox
-        standardTextSelector: 'textarea[name="feedback_comment"]',               // reject feedback note
-        translatorSelector: 'a[href*="profiles.wordpress.org"]',               // link showing who translated
-        rejectSelector: 'button.reject',                                   // hard-reject button
-        changesRequestedSelector: 'button.changesrequested',                         // appears once a reason is checked
-        editSelector: 'a.action.edit',                                   // GlotPress "Details" link that opens the editor
-        metaTabSelector: 'li.tab-meta',                                     // the Meta tab holding the feedback form
-        activeTabClass: 'current',                                         // class marking the active tab
+        standardTextSelector: 'textarea[name="feedback_comment"]',                // reject feedback note
+        translatorSelector: 'a[href*="profiles.wordpress.org"]',                  // link showing who translated
+        rejectSelector: 'button.reject',                                          // hard-reject button
+        changesRequestedSelector: 'button.changesrequested',                      // appears once a reason is checked
+        editSelector: 'a.action.edit',                                            // GlotPress "Details" link that opens the editor
+        metaTabSelector: 'li.tab-meta',                                           // the Meta tab holding the feedback form
+        activeTabClass: 'current',                                                // class marking the active tab
         // -----------------------------------------------------------------------
 
         action: 'changesrequested', // 'changesrequested' (check reason + Request changes)
-        // or 'reject' (hard reject)
-        matchMode: 'prefix',   // 'includes' = substring only; 'prefix' = also allow inflectionMatch
+        // or 'reject' (hard reject) — set by the modal below
+        matchMode: 'prefix',        // 'includes' = substring only; 'prefix' = also allow inflectionMatch
 
         // --- from the locale profile (see LOCALES above) -----------------------
         exactTerms: profile.exactTerms,
@@ -146,11 +151,42 @@ async function glossaryQaSweep(options = {}) {
         pollStep: 200,         // ms between re-assert/poll iterations
         dryRun: DryRun,        // driven by the top-level DryRun switch
         logActions: false,     // log each row id as its change-request starts/clicks (debug the 403)
-        logHighlight: false,    // log what the highlighter sees each pass (noisy; debug only)
+        logHighlight: false,   // log what the highlighter sees each pass (noisy; debug only)
         highlightStep: 250,    // ms between highlight re-applies (to survive the row re-render)
         actionDelay: 2000,     // ms to wait after acting so the AJAX can settle
         ...options,
     };
+
+    // Ask what to do with flagged rows (not needed for a dry run).
+    //   "Create" -> changes requested with glossary reason and note (original behaviour)
+    //   "Reject" -> hard reject, without glossary reason
+    //   anything else (modal closed) -> abort, change nothing
+    if (!cfg.dryRun) {
+        const choice = await cuteAlert({
+            type: "question",
+            title: __("Create changes requested"),
+            message: __("Do you want to request changes, or reject the translations?"),
+            confirmText: "Create",
+            cancelText: "Reject",
+            myWindow: currWindow
+        });
+
+        // Log the raw answer, so the button values of cuteAlert are visible in the console.
+        console.log('[glossaryQA] modal choice:', choice);
+
+        // cuteAlert versions differ in what they resolve with, so accept the common forms.
+        const isConfirm = choice === 'confirm' || choice === 'create' || choice === true;
+        const isCancel = choice === 'cancel' || choice === 'reject' || choice === false;
+
+        if (isConfirm) {
+            cfg.action = 'changesrequested';
+        } else if (isCancel) {
+            cfg.action = 'reject';
+        } else {
+            messageBox("info", __("Glossary check aborted"));
+            return [];
+        }
+    }
 
     // Merge the stored brand/ignore list from settings with anything configured above.
     cfg.ignorePhrases = [...(cfg.ignorePhrases || []), ...await loadIgnoreList()];
@@ -164,7 +200,19 @@ async function glossaryQaSweep(options = {}) {
     const report = [];
 
     for (const row of rows) {                                    // (1) walk the table
+
         if (cfg.onlyRow && !(row.id || '').includes(cfg.onlyRow)) continue;
+        let toTranslate = true;
+
+        let comment = document.querySelector("#editor-" + row.id + " .source-details__comment p");
+        if (comment != null) {
+            comment = comment.innerText;
+            toTranslate = checkComments(comment.trim());
+        }
+
+        if (toTranslate == false) {
+            continue;
+        }
 
         const original = row.querySelector('td.original');
         let glossaryWords = original
@@ -174,6 +222,9 @@ async function glossaryQaSweep(options = {}) {
         // Drop glossary words that fall inside a protected phrase (brand names etc.),
         // e.g. "Search" inside "Google Search Console" — those must not be translated.
         glossaryWords = dropProtected(glossaryWords, original, cfg);
+
+        // Glossary words without a translation are not checked and not counted.
+        glossaryWords = glossaryWords.filter((w) => expectedFor(w).length > 0);
 
         if (glossaryWords.length === 0) continue;                  // (3) no glossary word to check -> skip
 
@@ -207,14 +258,21 @@ async function glossaryQaSweep(options = {}) {
             }
 
             if (cfg.action === 'reject') {
-                // Hard reject: just needs the button (also under the Meta tab).
+                // Hard reject without a glossary reason: just the Reject button
+                // (also under the Meta tab).
                 activateMetaTab(editor, row, cfg);
                 const rej = await waitForEl(
                     () => visibleEl(editor.querySelector(cfg.rejectSelector)),
                     cfg.buttonTimeout
                 );
-                if (rej) { rej.click(); report[report.length - 1].status = 'rejected'; }
-                else { report[report.length - 1].status = 'reject-button-missing'; closeEditor(row, cfg); }
+                if (rej) {
+                    highlightMissing(row, missingInfo, cfg);
+                    rej.click();
+                    report[report.length - 1].status = 'rejected';
+                } else {
+                    report[report.length - 1].status = 'reject-button-missing';
+                    closeEditor(row, cfg);
+                }
                 await wait(cfg.actionDelay);
                 continue;
             }
@@ -289,7 +347,7 @@ async function glossaryQaSweep(options = {}) {
     }
     messageBox("info", __("Glossary Check is ready"));
     //console.table(report);
-    const flagged = report.filter((r) => r.status !== 'ok').length;
+    //const flagged = report.filter((r) => r.status !== 'ok').length;
     //console.log(`Scanned ${rows.length} rows, flagged ${flagged}.`);
     return report;
 }
@@ -304,14 +362,19 @@ function readTranslation(row, cfg) {
     return text.trim();
 }
 
+// Returns the glossary translations of a glossary-word span. Empty, unparseable
+// or placeholder ("-", "?") translations count as "no translation" -> [].
 function expectedFor(wordSpan) {
+    let list;
     try {
-        return JSON.parse(wordSpan.dataset.translations || '[]')
-            .map((e) => (e.translation || '').trim())
-            .filter(Boolean);
+        list = JSON.parse(wordSpan.dataset.translations || '[]');
     } catch (e) {
-        return ['<unparseable data-translations>'];
+        return [];                       // unparseable -> treat as "no translation"
     }
+    if (!Array.isArray(list)) return [];
+    return list
+        .map((e) => String((e && e.translation) || '').trim())
+        .filter((t) => t && !/^[-–—_?.\s]+$/.test(t));   // ignore placeholders like "-" or "?"
 }
 
 // Returns a list of glossary terms that aren't translated enough times.
@@ -332,12 +395,14 @@ function unmetGlossary(glossaryWords, translationText, cfg) {
     for (const w of glossaryWords) {
         const key = normalize(w.textContent);
         if (!key) continue;
+        const expected = expectedFor(w);
+        if (expected.length === 0) continue;     // no translation -> don't count this span
         if (!groups.has(key)) {
             groups.set(key, { word: w.textContent.trim(), count: 0, expectedRaw: [], candidates: [] });
         }
         const g = groups.get(key);
         g.count += 1;
-        for (const raw of expectedFor(w)) {
+        for (const raw of expected) {
             if (!g.expectedRaw.includes(raw)) g.expectedRaw.push(raw);
             for (const cand of raw.split(/[\/,;|]+/).map(normalize).filter(Boolean)) {
                 if (!g.candidates.includes(cand)) g.candidates.push(cand);
@@ -543,9 +608,10 @@ function translatorName(editor, cfg) {
 }
 
 // Add the 'highlight' class to the flagged glossary-word spans in the PREVIEW
-// row's original cell (td.original), so the word that caused the changes-requested
-// is visible at a glance in the list. Re-reads the live DOM at call time (the row
-// re-renders after the status change, so span references captured earlier are stale).
+// row's original cell (td.original), so the word that caused the action is
+// visible at a glance in the list. Only spans WITH a glossary translation are
+// marked. Re-reads the live DOM at call time (the row re-renders after the
+// status change, so span references captured earlier are stale).
 function highlightMissing(row, missingInfo, cfg) {
     try {
         // On a status change GlotPress renames the original row by appending "-old"
@@ -577,7 +643,7 @@ function highlightMissing(row, missingInfo, cfg) {
         if (!spans.length || !wanted.size) return;
         spans.forEach((span) => {
             const t = (span.textContent || '').toLowerCase().trim();
-            if (wanted.has(t)) span.classList.add('highlight');
+            if (wanted.has(t) && expectedFor(span).length > 0) span.classList.add('highlight');
         });
     } catch (e) {
         if (cfg.logHighlight) console.warn('[glossaryQA] highlight error', row.id, e && e.message);

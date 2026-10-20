@@ -262,6 +262,10 @@ function extractUrlLikeSegments(translation, tldPattern) {
 
 
 function findAllMissingWords(translationText, glossWords, locale = 'nl', strictValidation = false) {
+    if (translationText == null || translationText === undefined) {
+        console.debug("findAllMissingWords: translationText is null or undefined");
+        return [];
+    }
     const translation = translationText.toLowerCase();
     const wordsInTranslation = translation.split(/\W+/);
     const missingTranslations = [];
@@ -276,8 +280,20 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl', strictV
         (wordArr || [])
             .flatMap(w => String(w).split('/'))
             .map(s => s.trim().toLowerCase())
-            .filter(Boolean);
+            .filter(s => s && !/^[-–—_?.\s]+$/.test(s));   // leeg of placeholder -> weg
+    // Speciale regex-tekens escapen, zodat "c++" of "e-mail (adres)" geen fout geeft
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+    // DEBUG — hier, NA normVariants
+   // glossWords
+    //    .filter(e => String(e.originalWord || '').toLowerCase().includes('please'))
+    //    .forEach(e => console.log('[DEBUG please]', {
+     //       word: e.word,
+      //      typeofWord: typeof e.word,
+      //      isArray: Array.isArray(e.word),
+      //      originalWord: e.originalWord,
+      //      variants: normVariants(e.word),
+      //  }));
     const allGlossaryWords = new Set();
     glossWords.forEach(entry => normVariants(entry.word).forEach(w => allGlossaryWords.add(w)));
 
@@ -295,6 +311,8 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl', strictV
 
     // === First pass: Count matches ===
     glossWords.forEach(entry => {
+        // NIEUW: glossary-woord zonder vertaling -> niet controleren, niet meetellen
+        if (normVariants(entry.word).length === 0) return;
         const wordKey = JSON.stringify(entry.word);
         if (!entriesByKey[wordKey]) entriesByKey[wordKey] = [];
         entriesByKey[wordKey].push(entry);
@@ -312,10 +330,10 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl', strictV
             let combinedMatches = 0;
             if (strictValidation) {
                 combinedMatches = (!isShort)
-                    ? (translation.match(new RegExp(`\\b${lowerVariant}\\b`, 'g')) || []).length
+                    ? (translation.match(new RegExp(`\\b${esc(lowerVariant)}\\b`, 'g')) || []).length
                     : 0;
             } else {
-                combinedMatches = new RegExp(`\\b${lowerVariant}\\b`, 'i').test(translation) ? 1 : 0;
+                combinedMatches = new RegExp(`\\b${esc(lowerVariant)}\\b`, 'i').test(translation) ? 1 : 0;
             }
 
             let compoundMatches = 0;
@@ -375,7 +393,7 @@ function findAllMissingWords(translationText, glossWords, locale = 'nl', strictV
             // STEP 3 – check for translated variants
             const anyVariantInText = lowerVariants.some(variant => {
                 if (strictValidation) {
-                    return new RegExp(`\\b${variant}\\b`, 'i').test(translation);
+                    return new RegExp(`\\b${esc(variant)}\\b`, 'i').test(translation);
                 } else {
                     return translation.includes(variant);
                 }
@@ -556,6 +574,17 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural,plura
         myglossary = glossary1;
     }
     newGloss = createNewGlossArray(myglossary);
+    // We do not want to mark glossary words in a plugin or theme name
+    let toTranslate = true;
+    
+    let comment = document.querySelector("#editor-" + rowId + " .source-details__comment p");
+    if (comment != null) {
+        comment = comment.innerText;
+        toTranslate = checkComments(comment.trim());
+    }
+    if (toTranslate == false) {
+        return
+    }
    // console.debug("plural_line:", plural_line) 
     if (!FoundURL) {
         if (translation != "") {
@@ -611,6 +640,7 @@ async function mark_preview(preview, toolTip, translation, rowId, isPlural,plura
                     dutchText = translation
 
                     if (isPlural == false) {
+
                         missingTranslations = await findAllMissingWords(dutchText, glossWords, locale)
                         // --- TEMP DIAGNOSTIC ---
                         const t = translation.toLowerCase();

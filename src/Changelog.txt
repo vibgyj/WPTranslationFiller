@@ -154,3 +154,7 @@ Version 3.5.91 Fixed security warnings for Firefox when uploading new version
 Version 3.5.92 Untranslated plurals gave an error, as the selecion of the preview was wrong
 Version 3.5.93 Added new models for openRouter and openAI, and removed old models
 Version 3.5.93 Fixed replacing words in a link
+Version 3.5.94 Added Hungarian translation
+Version 3.5.95 Added function to check for changes requested
+Version 3.5.95 Fixed marking words in the preview when it is the project name, now it will not mark the project name as a glossary word
+Version 3.5.95 Added option to only delete records within checkglossary

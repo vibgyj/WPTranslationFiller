@@ -515,7 +515,7 @@ async function translatePageOpenRouter(
             //const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
             const finalText    = await postProcessTranslation(
                 item.original, item.translation, replaceVerb,
-                preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale
+               // preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale
             );
             await processTransl(
                 item.original, finalText, destlang, item.record,

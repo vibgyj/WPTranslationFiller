@@ -1060,7 +1060,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               "";
             const modelUsed = data?.model ?? "unknown";  // ✅ welk model daadwerkelijk gebruikt is
 
-           // console.debug("result:", result)
+           console.debug("result:", result)
            // console.debug("model used:", modelUsed)  // ✅ log het model
 
             sendResponse({ result, modelUsed });  // ✅ stuur het mee terug
@@ -1873,7 +1873,7 @@ else if (request.action == "Lingvanex") {
                //     tab.id,
                 //    tab.url
               //  );
-
+                console.debug("Target tab:", tab && tab.id, tab && tab.url);
                 chrome.tabs.sendMessage(
                     tab.id,
                     {
@@ -1882,26 +1882,18 @@ else if (request.action == "Lingvanex") {
                         records: records
                     },
                     function (response) {
-
                         if (chrome.runtime.lastError) {
-                            window.alert(`You do not have a working project tab, close this window and open a project tab first before setting paramters`);
                             console.error(
                                 "Error sending default glossary to content:",
                                 chrome.runtime.lastError.message
                             );
-
                             sendResponse({
                                 success: false,
+                                noProjectTab: true,
                                 error: chrome.runtime.lastError.message
                             });
-
                             return;
                         }
-
-                      //  console.log(
-                       //     "Response from contentScript:",
-                       //     response
-                       // );
 
                         sendResponse(
                             response || {
