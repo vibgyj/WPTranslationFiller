@@ -158,3 +158,6 @@ Version 3.5.94 Added Hungarian translation
 Version 3.5.95 Added function to check for changes requested
 Version 3.5.95 Fixed marking words in the preview when it is the project name, now it will not mark the project name as a glossary word
 Version 3.5.95 Added option to only delete records within checkglossary
+Version 3.5.96 Improved placing of the Site title
+Version 3.5.96 Translation with groq did not replace var_0 back
+Version 3.5.97 Added Belgium as a locale for Dutch into option selector, this way it will use the correct spelling and grammar for Belgium

@@ -593,7 +593,7 @@ async function translatePageGroq(
     groqBatchSize = 10
 ) {
    // console.info("[Groq] translatePageGroq version " + GROQ_TRANSLATE_VERSION);
-
+    
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
 
@@ -868,8 +868,6 @@ async function translatePageGroq(
         }
         if (current.length) batches.push(current);
     }
-    //console.debug("[Groq] Built " + batches.length + " batches from " +
-     //   batchQueue.length + " groups");
 
     // Items the model omitted from its response — retried in a
     // final sweep instead of immediately writing "No suggestions".
@@ -1030,12 +1028,11 @@ async function translatePageGroq(
                 }
 
                 let translation = enforceGlossary(res.tr, item.glossary);
-                //console.debug("translatedText:",translation)
+                
                 const finalText = await postProcessTranslation(
                     item.original, translation, replaceVerb,
                     item.original, "groq", convertToLower, spellCheckIgnore, locale
                 );
-                //console.debug("finalText:", finalText)
 
                 await processTransl(
                     item.original, finalText, destlang,

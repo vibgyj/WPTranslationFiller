@@ -207,10 +207,14 @@ async function preProcessOriginal(original, preverbs, translator) {
             break;
 
         case "lingvanex":
+            break;
         case "groq":
             placeholderMap = {};
-            original = replaceWithTokens(original, INLINE_PLACEHOLDER_REGEX, (n) => `var_${n}`,
+            original = replaceWithTokens(original, INLINE_PLACEHOLDER_REGEX, (n) => `<x id="var${n}"/>`,
                 (token, match) => { placeholderMap[token] = match; });
+         //   placeholderMap = {};
+         //   original = replaceWithTokens(original, INLINE_PLACEHOLDER_REGEX, (n) => `var_${n}`,
+           //     (token, match) => { placeholderMap[token] = match; });
             break;
 
         case "Ollama":
@@ -346,6 +350,15 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         for (const [token, originalValue] of Object.entries(placeholderMap)) {
             const regex = new RegExp(escapeRegExp(token), "g"); // globale match
             translatedText = translatedText.replace(regex, originalValue);
+
+        }
+        const matches = original.matchAll(placeHolderRegex);
+        if (matches != null) {
+            let index = 0;
+            for (const match of matches) {
+                translatedText = translatedText.replaceAll(`<x id="var${index}"/>`, match[0]);  // <-- match[0] ipv match
+                index++;
+            }
         }
     }
     else if (translator == "Ollama") {
@@ -495,6 +508,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
        
       
     }
+    
     else if (translator == "NLPCLoud") {
        
        let charmatches = original.matchAll(specialChar);
@@ -521,13 +535,6 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     }
     else if (translator == "OpenAI") {
         
-       // const matches = original.matchAll(placeHolderRegex);
-       // index = 1;
-        //console.debug("translated in OpenAI:",translatedText)
-        //for (const match of matches) {
-        //  translatedText = translatedText.replace(`{var ${index}}`, match);
-        //   index++;
-        // }
         // 06-07-2023 PSS fix for issue #301 translation by OpenAI of text within the link
 
         if (translatedText.endsWith(".") == true) {

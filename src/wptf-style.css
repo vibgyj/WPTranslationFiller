@@ -131,17 +131,7 @@ mymarker {
 /*.gp-content {
     max-width:1300px !important;
 } */
-/* If Wordpress team decides to change the title position, this can be removed*/
-@media screen and (min-width: 1200 AND (max-width:1500)) {
-    .site-title {
-        margin-left: 0px !important;
-    }
-}
-@media screen and (min-width: 1500 AND (max-width:2000)) {
-    .site-title {
-        margin-left: -60px !important;
-    }
-}
+
 .status-nosuggestions {
     background-color: #F9F7E5;
 }
@@ -1633,10 +1623,6 @@ table.translations td.priority {
 } */
 
 
-.site-header .site-branding {
-    max-width: 1400px !important;
-}
-
 /* tr.editor { */
  /*  scroll-margin-top: 90px !important; */
 /* } */
@@ -2319,10 +2305,11 @@ span.text-line-counter{
 }
 
 /*/After Glotpress has improved remove this header change*/
-.site-header {
-    padding-top:32px !important;
+.site-header .site-branding {
+    max-width: 1600px !important;
+    padding-top: 32px !important;
 }
-     
+
 /*After Glotpress has improved remove this header change 
 .wp-block-group.global-header {
     position: relative !important;

@@ -32,7 +32,6 @@
   "Select a tone for AI:": "Selecteer een toon voor AI:",
   "Select a translator:": "Selecteer een vertaler:",
   "Destination Language": "Doeltaal",
-  "Use the id from the list of languages provided by the API translator in lowercase": "Gebruik de id uit de lijst van talen van de API-vertaler in kleine letters",
   "Glossary File default(csv)": "Woordenlijstbestand standaard (csv)",
   "File uploaded at date": "Bestand geüpload op datum",
   "Glossary File second (csv)": "Tweede woordenlijstbestand (csv)",
@@ -103,11 +102,13 @@
   "translation_io": "translation_io",
   "Claude": "Claude",
   "Ollama": "Ollama",
+  "Use the id from the list of languages provided by the API translator in lowercase": "Gebruik de id uit de lijst met talen van de API-vertaler, in kleine letters",
   "Bengali": "Bengaals",
   "Catalan": "Catalaans",
   "Czech": "Tsjechisch",
   "Danish": "Deens",
   "Dutch": "Nederlands",
+  "Belgium": "Nederlands (België)",
   "English": "Engels",
   "Finnish": "Fins",
   "French": "Frans",
@@ -127,5 +128,6 @@
   "Tamil": "Tamil",
   "Turkish": "Turks",
   "Ukraine": "Oekraïens",
+  "Chinese": "Chinees",
   "Chinese": "Chinees"
 }
