@@ -320,20 +320,44 @@ function mergeORGlossaries(enrichedItems) {
  * newline-separated entries.
  ****************************************************/
 function enforceORGlossary(translation, glossaryStr) {
-    if (!glossaryStr) return translation;
-    for (const line of String(glossaryStr).split(/,\s*|\n/)) {
-        const match = line.match(/^\s*"?(.+?)"?\s*->\s*"?(.+?)"?\s*$/);
-        if (!match) continue;
-        const source = match[1].trim();
-        const target = match[2].trim();
+    if (!translation || !glossaryStr) return translation;
+
+    // Splits op newlines, of op komma's buiten aanhalingstekens
+    const lines = String(glossaryStr).split(/\n|,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+
+    const map = new Map(); // lowercase match -> vervanging
+    const targets = [];
+    for (const line of lines) {
+        const m = line.match(/^\s*"?(.+?)"?\s*->\s*"?(.+?)"?\s*$/);
+        if (!m) continue;
+        const source = m[1].trim();
+        const target = m[2].trim();
         if (!source || !target) continue;
-        if (source.toLowerCase() === target.toLowerCase()) continue;
-        const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        translation = translation.replace(
-            new RegExp('\\b' + escaped + '\\b', 'gi'), target
-        );
+        const key = source.toLowerCase();
+        if (!map.has(key)) map.set(key, target);   // ook identieke paren: die beschermen de term
+        targets.push(target);
     }
-    return translation;
+    // Doeltermen die al in de vertaling staan, blijven ongemoeid
+    for (const t of targets) {
+        const key = t.toLowerCase();
+        if (!map.has(key)) map.set(key, t);
+    }
+    if (!map.size) return translation;
+
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const alternation = [...map.keys()]
+        .sort((a, b) => b.length - a.length)          // langste eerst
+        .map(esc)
+        .join('|');
+
+    // Woordgrens die letters (incl. accenten), cijfers, _ en - als deel van het woord ziet
+    const re = new RegExp(
+        `(?<![\\p{L}\\p{N}_-])(?:${alternation})(?![\\p{L}\\p{N}_-])`,
+        'giu'
+    );
+
+    // Eén pass: ingevoegde tekst wordt nooit opnieuw vervangen
+    return translation.replace(re, m => map.get(m.toLowerCase()) ?? m);
 }
 
 /****************************************************
@@ -493,7 +517,7 @@ async function translatePageOpenRouter(
         if (item.pluralForms) {
             for (let fi = 0; fi < item.pluralForms.length; fi++) {
                 const form         = item.pluralForms[fi];
-                //const preprocessed = await preProcessOriginal(form.original, replacePreVerb, 'openRouter');
+                const preprocessed = await preProcessOriginal(item.original, replacePreVerb, 'openRouter');
                 const finalText    = await postProcessTranslation(
                     form.original, form.translation, replaceVerb,
                     preprocessed, 'openRouter', convertToLower, spellIgnoreStr, locale
@@ -709,7 +733,7 @@ async function translatePageOpenRouter(
                     item.original, translation, replaceVerb,
                     item.original, 'openRouter', convertToLower, spellIgnoreStr, locale
                 );
-                // console.debug("plural_line:",String(item.line))
+                 //console.debug("plural_line:",String(item.line))
                 await processTransl(item.original, finalText, destlang,group.record, group.id, group.type,String(item.line), locale, convertToLower, getBubble(group.id)
                 );
             }

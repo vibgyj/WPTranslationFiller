@@ -16,7 +16,7 @@ async function getTransOpenAI(
   original, language, record, apikeyOpenAI, OpenAIPrompt,
   preverbs, rowId, transtype, plural_line, formal,
   locale, convertToLower, editor, counter, OpenAISelect,
-    OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, translator, URL,mycontext
+    OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, translator, URL, mycontext, apikeyMeta, MetaSelect
 ) {
   var show_debug = false;
   var myURL = "";
@@ -27,8 +27,24 @@ async function getTransOpenAI(
   language = language.toUpperCase();
   var messages;
   var mymodel;
-  const originalPreProcessed = await preProcessOriginal(original, preverbs, "alibaba");
-   // console.debug("Original preprocessed:", originalPreProcessed);
+  var originalPreProcessed = "";
+  var auth = ""
+    if (translator == 'meta') {
+        originalPreProcessed = await preProcessOriginal(original, preverbs, "meta");
+    }
+    else if (translator == 'alibaba') {
+        originalPreProcessed = await preProcessOriginal(original, preverbs, "alibaba");
+    }
+    else if (translator == 'cerebras') {
+        originalPreProcessed = await preProcessOriginal(original, preverbs, "cerebras");
+    }
+    else if (translator == 'OpenAI') {
+        originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
+    }
+    else {
+        originalPreProcessed= original
+    }
+   //console.debug("Original preprocessed:", originalPreProcessed);
   // Strip [[COMMENT]] lines, then fill static placeholders once.
   if (typeof stripPromptComments === "function") {
         OpenAIPrompt = stripPromptComments(OpenAIPrompt);
@@ -106,36 +122,38 @@ async function getTransOpenAI(
     messageBox("error", "You did not set the OpenAI model!<br> Please check your options");
     return "NOK";
   }
-
+   
   mymodel = OpenAISelect.toLowerCase();
   
   // Endpoint selection
     if (translator == 'cerebras') {
         myURL = URL;
+        auth = { apiKey: apikeyCerebras, URL: myURL };
+    }
+    else if (translator == 'meta') {
+        mymodel = MetaSelect.toLowerCase();
+        myURL = URL;
+        auth = { apiKey: apikeyMeta, URL: myURL };
     }
     else if (translator == 'alibaba') {
         myURL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'
-       // myURL = 'https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
+        // myURL = 'https://ws-jfu0174yr92bwsnt.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
+        auth = { apiKey: apikeyOpenAI, URL: myURL };
         
       }
     else if (translator == 'OpenAI') {
         myURL = 'https://api.openai.com/v1/chat/completions';
+        auth = { apiKey: apikeyOpenAI, URL: myURL };
     }
     
-   // console.debug("Cerebras key:",apikeyOpenAI)
-    const auth = { apiKey: apikeyOpenAI, URL: myURL };
+    // console.debug("Cerebras key:",apikeyOpenAI)
+    
+    //console.debug("translator:",translator,auth)
     let dataNew = buildRequestParams(mymodel, translator, messages, max_Tokens, auth, { OpenAItemp });
 
- 
-
-   // console.debug("[Cerebras] mymodel:", JSON.stringify(mymodel),
-   //               "effort:", effort ?? "(none/gemma)",
-    //    "keys:", Object.keys(dataNew));
-  
-    //console.debug("Prompt after all replacements:", myprompt);
   try {
     // Only proceed for supported translators; action string matches the proxy
-    const supported = ['OpenAI', 'cerebras', 'alibaba'];
+    const supported = ['OpenAI', 'cerebras', 'alibaba','meta'];
     if (!supported.includes(translator)) {
       console.error("Unknown translator:", translator);
       return "NOK";

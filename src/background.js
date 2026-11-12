@@ -739,6 +739,63 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         return true; // keep sendResponse alive for async
     }
+    else if (request.action === "meta") {
+        (async () => {
+            console.debug("Meta request received:", request.data)
+            try {
+                const dataToSend = { ...request.data }; // copy newData
+                const apiKey = dataToSend.apiKey;       // extract the key
+                const myURL = dataToSend.URL
+                delete dataToSend.apiKey;               // remove it from the body.
+                delete dataToSend.URL;
+                // console.debug("URL:", myURL) 
+                const resp = await fetch(myURL, {
+                    
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + apiKey
+                    },
+                    body: JSON.stringify(dataToSend)
+                });
+                console.debug("response status:", resp)
+                if (!resp.ok) {
+                    const raw = await resp.text();
+                    console.debug("raw error response:", raw)
+                    // Try to parse Meta's structured error; fall back to raw text
+                    let parsed = null;
+                    try { parsed = JSON.parse(raw); } catch { /* not JSON */ }
+
+                    const apiError = parsed?.error;
+                    const errorInfo = {
+                        status: resp.status,
+                        message: apiError?.message || raw || resp.statusText,
+                        type: apiError?.type || null,
+                        param: apiError?.param || null,
+                        code: apiError?.code || null,
+                    };
+
+                    console.error("Meta request failed:", errorInfo);
+                    sendResponse({ error: errorInfo });
+                    return;
+                }
+                //console.debug("response status:", resp) 
+                let data;
+                const contentType = resp.headers.get("content-type") || "";
+                if (contentType.includes("application/json")) {
+                    data = await resp.json();
+                } else {
+                    data = await resp.text();
+                }
+                console.debug("Meta response data:", data)
+                sendResponse({ result: data });
+            } catch (err) {
+                sendResponse({ error: err.toString() });
+            }
+        })();
+
+        return true; // keep sendResponse alive for async
+    }
 
     else if (request.action === "cerebras") {
         (async () => {
@@ -1060,7 +1117,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               "";
             const modelUsed = data?.model ?? "unknown";  // ✅ welk model daadwerkelijk gebruikt is
 
-           console.debug("result:", result)
+           // console.debug("result:", result)
            // console.debug("model used:", modelUsed)  // ✅ log het model
 
             sendResponse({ result, modelUsed });  // ✅ stuur het mee terug

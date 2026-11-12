@@ -161,3 +161,8 @@ Version 3.5.95 Added option to only delete records within checkglossary
 Version 3.5.96 Improved placing of the Site title
 Version 3.5.96 Translation with groq did not replace var_0 back
 Version 3.5.97 Added Belgium as a locale for Dutch into option selector, this way it will use the correct spelling and grammar for Belgium
+Version 3.5.98 Plural 2 was not populated when translating fuzzy
+Version 3.5.98 openRouter page translation did not apply the glossary properly, now it will apply the glossary properly in page translation
+Version 3.5.98 Wrong savebutton text when preview is changes requested
+Version 3.5.98 Fixed a problem with the glossary, when a glossary word was part of another word, it was not marked as a glossary word, now it will mark the glossary word even if it is part of another word
+Version 3.5.99 Meta API added for translation

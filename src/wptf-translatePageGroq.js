@@ -549,16 +549,37 @@ function normalizeId(id) {
 // string after the model response (belt and suspenders).
 function enforceGlossary(translation, glossaryStr) {
     if (!glossaryStr) return translation;
-    for (const line of String(glossaryStr).split(/,\s*|\n/)) {
-        const m = line.match(/"(.+?)"\s*->\s*"(.+?)"/);
-        if (!m) continue;
-        const source = m[1];
-        const target = m[2];
-        if (source.toLowerCase() === target.toLowerCase()) continue;
-        const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        translation = translation.replace(
-            new RegExp("\\b" + escaped + "\\b", "gi"), target
-        );
+
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Woordgrens die ook met accenten werkt
+    const wordRe = (term, flags) =>
+        new RegExp("(?<![\\p{L}\\p{N}_])" + esc(term) + "(?![\\p{L}\\p{N}_])", flags + "u");
+
+    // Ondersteunt "bron" -> "doel" én regels als: bron,doel
+    const entries = [];
+    const str = String(glossaryStr);
+    const arrow = [...str.matchAll(/"(.+?)"\s*->\s*"(.+?)"/g)];
+    if (arrow.length) {
+        for (const m of arrow) entries.push([m[1], m[2]]);
+    } else {
+        for (const line of str.split("\n")) {
+            const i = line.indexOf(",");
+            if (i > 0) entries.push([line.slice(0, i).trim(), line.slice(i + 1).trim()]);
+        }
+    }
+
+    for (const [source, targetStr] of entries) {
+        // Alternatieven gescheiden door "/"
+        const targets = targetStr.split("/").map(t => t.trim()).filter(Boolean);
+        if (!targets.length) continue;
+
+        // Bronterm is zelf een toegestane vertaling: niets vervangen
+        if (targets.some(t => t.toLowerCase() === source.toLowerCase())) continue;
+
+        // Vertaling bevat al een toegestane term: niets vervangen
+        if (targets.some(t => wordRe(t, "i").test(translation))) continue;
+
+        translation = translation.replace(wordRe(source, "gi"), targets[0]);
     }
     return translation;
 }

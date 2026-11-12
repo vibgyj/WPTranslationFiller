@@ -33,13 +33,22 @@ async function stripWrappingQuotes(output, source) {
 }
 function buildWordRegex(searchWord) {
     const safeWord = escapeRegex(searchWord);
+
+    // \b alleen gebruiken als de term aan die kant met een woordteken begint/eindigt.
+    // Anders matcht een term als "[ya16]" nooit (geen woordgrens tussen spatie en "[").
+    const startsWithWordChar = /^\w/.test(searchWord);
+    const endsWithWordChar   = /\w$/.test(searchWord);
+
+    const leadingBoundary = startsWithWordChar ? '\\b' : '';
+
     // Dutch vormt samenstellingen ("site" -> "sitebezoekers"), dus woorden van
     // 3+ tekens mogen als prefix van een samenstelling matchen (alleen leidende \b).
     // Korte woorden zoals "u" houden beide boundaries zodat ze niet binnen
     // "uw" of "uit" matchen.
-    const trailingBoundary = searchWord.length >= 3 ? '' : '\\b';
+    const trailingBoundary = (endsWithWordChar && searchWord.length < 3) ? '\\b' : '';
+
     return new RegExp(
-        `\\b(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}${trailingBoundary}(?![^\\[]*\\]|[^{]*\\})`,
+        `${leadingBoundary}(?<!\\[[^\\]]*|\\{[^}]*)${safeWord}${trailingBoundary}(?![^\\[]*\\]|[^{]*\\})`,
         'gi'
     );
 }
@@ -142,21 +151,21 @@ function stripGuillemets(text, active, sourceText) {
  *
  * Reads global Top_p for legacy models (typeof-guarded for safety).
  ****************************************************/
+
 function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opts = {}) {
     const { OpenAItemp = 0 } = opts;
 
-    // OpenAI direct — GPT-5 family (new param style). Value = reasoning_effort.
+    // OpenAI direct — GPT-5 family
     const GPT5_REASONING_EFFORT = {
         "gpt-5.4": "none",
         "gpt-5.5": "none",
-        "gpt-5.6": "none",       // alias → Sol
+        "gpt-5.6": "none",
         "gpt-5.6-luna": "none",
         "gpt-5.6-sol": "none",
         "gpt-5.6-terra": "none",
     };
 
-    // OpenRouter reasoning models. Value = reasoning.effort.
-    // ~…-latest aliases are intentionally absent: their target can change.
+    // OpenRouter reasoning models
     const OPENROUTER_REASONING = {
         "openai/gpt-5.5": "none",
         "openai/gpt-5.6-luna": "none",
@@ -166,23 +175,32 @@ function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opt
         "anthropic/claude-opus-5.5": "low",
     };
 
+    
+    // ── Meta Muse Ember ──
+    if (translator === 'meta') {
+        return {
+            model: mymodel,
+            messages,
+            max_tokens: max_Tokens + 1024,
+            reasoning_effort: 'low',
+            ...auth,
+        };
+    }
+
     // ── OpenRouter: reasoning models get their own body ──
     if (translator === 'openrouter') {
         const effort = OPENROUTER_REASONING[mymodel];
         if (effort) {
-            // No temperature/top_p: reasoning models reject or ignore them
             const dataNew = {
                 model: mymodel,
                 messages,
                 max_tokens: max_Tokens,
-                reasoning: { effort, exclude: true }, // keep reasoning text out of the reply
+                reasoning: { effort, exclude: true },
                 ...auth,
             };
-            // Reasoning shares the token budget, so add headroom
             if (effort !== 'none') dataNew.max_tokens += 1024;
             return dataNew;
         }
-        // Any other OpenRouter model → legacy params below
     }
 
     // ── OpenAI direct / Cerebras / other OpenRouter models ──
@@ -201,9 +219,8 @@ function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opt
             ...auth,
         };
         const effort = GPT5_REASONING_EFFORT[mymodel];
-        if (effort) dataNew.reasoning_effort = effort; // unknown model → API default
+        if (effort) dataNew.reasoning_effort = effort;
     } else {
-        // Legacy chat models — classic sampling params
         dataNew = {
             model: mymodel,
             messages,
@@ -217,7 +234,7 @@ function buildRequestParams(mymodel, translator, messages, max_Tokens, auth, opt
         };
     }
 
-    // ── Cerebras-only adjustments ── (unchanged)
+    // ── Cerebras-only adjustments ──
     if (translator === 'cerebras') {
         for (const key of ['verbosity', 'prompt_cache_key']) {
             delete dataNew[key];
@@ -879,15 +896,30 @@ function convertArrowGlossaryToArray(glossaryString) {
 
 
 
- function applyOpenAiGlossary(text, Gloss) {
-    //console.debug("Applying glossary:", Gloss); 
+function applyOpenAiGlossary(text, Gloss) {
+    console.debug("Applying glossary:", text);
     if (!text || !Gloss) return text;
+
+    // Zet HTML-entiteiten (zoals &#235;) om naar gewone tekens (ë)
+    const decoder = document.createElement("textarea");
+    const decodeEntities = (s) => {
+        decoder.innerHTML = s;
+        return decoder.value;
+    };
+
     let result = text;
+
     const applyPair = ([source, target]) => {
         if (!source || !target) return;
+        source = decodeEntities(String(source));
+        target = decodeEntities(String(target));
         if (source.toLowerCase() === target.toLowerCase()) return; // skip if same
 
-        const regex = new RegExp(`\\b${escapeRegExp(source)}\\b`, "gi");
+        // Woordgrenzen die ook werken met ë, é, ï enz.
+        const regex = new RegExp(
+            `(?<![\\p{L}\\p{N}_])${escapeRegExp(source)}(?![\\p{L}\\p{N}_])`,
+            "giu"
+        );
         result = result.replace(regex, (match) => {
             // alleen vervangen als match niet gelijk is aan target
             if (match.toLowerCase() === target.toLowerCase()) return match;
@@ -905,6 +937,8 @@ function convertArrowGlossaryToArray(glossaryString) {
             applyPair([source, target]);
         }
     }
+
+    console.debug("result:", result);
     return result;
 }
 
@@ -2324,7 +2358,7 @@ async function validatePage(language, showHistory, locale, showDiff, DefGlossary
         //console.debug("ValidatePage nameDiff:", nameDiff+" "+rowId)
         // console.debug("ValidatePage showName:",showName)
         var result = validate(language, original, translation, locale, false, rowId, false, DefGlossary);
-        //console.debug("validate in validatepage line 853:",original,result,result.toolTip)
+        //console.debug("validate in validatepage line 2353:",original,result,result.toolTip)
         let record = e.previousSibling.previousSibling.previousSibling
         // this is the start of validation, so no prev_trans is present      
         prev_trans = translation

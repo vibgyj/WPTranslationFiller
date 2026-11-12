@@ -68,6 +68,7 @@ if (typeof OPENAI_RATE_TRACKER === "undefined") {
  * ("OpenAI" or "cerebras"). Same transport as the single-line fn.
  ****************************************************/
 async function callOpenAI(messages, auth, mymodel, temp, translator, maxTokens) {
+    //console.debug("[" + translator + "] callOpenAI: model=" + mymodel + ", temp=" + temp);
     const dataNew = buildRequestParams(mymodel, translator, messages, maxTokens, auth, { OpenAItemp: temp });
     const startTime = performance.now();
     return new Promise(resolve => {
@@ -93,7 +94,6 @@ async function callOpenAI(messages, auth, mymodel, temp, translator, maxTokens) 
  ****************************************************/
 async function callOpenAIWithRetry(messages, auth, mymodel, temp, translator, maxTokens, maxRetries = 5) {
     let lastResponse = null;
-
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const response = await callOpenAI(messages, auth, mymodel, temp, translator, maxTokens);
         lastResponse = response;
@@ -150,32 +150,69 @@ async function translatePageOpenAI(
     OpenAITone,
     openAiGloss,
     URL,
-    openaiBatchSize = 10
+    openaiBatchSize = 10,
+    apikeyMeta,
+    MetaSelect
 ) {
-    console.info("[" + translator + "] translatePageOpenAI version " + OPENAI_TRANSLATE_VERSION);
-
+    //console.info("[" + translator + "] translatePageOpenAI version " + OPENAI_TRANSLATE_VERSION);
+    var mymodel = "";
+    var auth = ""
+    var PREPROCESS_MODE =""
     // Only OpenAI / Cerebras are handled by this transport
-    const supported = ['OpenAI', 'cerebras'];
+    const supported = ['OpenAI', 'cerebras', 'meta'];
     if (!supported.includes(translator)) {
         console.error("Unknown translator:", translator);
         messageBox("error", "Unknown translator: " + translator);
         return "NOK";
     }
+    if (translator == 'OpenAI') {
+        mymodel = String(OpenAISelect || "").toLowerCase();
 
-    const mymodel = String(OpenAISelect || "").toLowerCase();
-    if (!mymodel || mymodel === 'undefined') {
-        messageBox("error", "You did not set the model!<br> Please check your options");
-        return "NOK";
+        if (!mymodel || mymodel === 'undefined') {
+            messageBox("error", "You did not set the model for openAI!<br> Please check your options");
+            return "NOK";
+        }
+    }
+    else if (translator == 'meta') {
+        // console.debug("model for meta:", MetaSelect); 
+        mymodel = String(MetaSelect || "").toLowerCase();
+        // Endpoint + auth (Meta uses the passed-in URL, OpenAI is fixed)
+        myURL = (translator === 'meta') ? URL : 'https://api.openai.com/v1/chat/completions';
+        if (!mymodel || mymodel === 'undefined') {
+            messageBox("error", "You did not set the model for Meta!<br> Please check your options");
+            return "NOK";
+        }
+    }
+    else if (translator == 'cerebras') {
+        mymodel = String(cerebrasSelect || "").toLowerCase();
+        // Endpoint + auth (Cerebras uses the passed-in URL, OpenAI is fixed)
+        myURL = (translator === 'cerebras') ? URL : 'https://api.openai.com/v1/chat/completions';
+        if (!mymodel || mymodel === 'undefined') {
+            messageBox("error", "You did not set the model!<br> Please check your options");
+            return "NOK";
+        }
     }
 
-    // Endpoint + auth (Cerebras uses the passed-in URL, OpenAI is fixed)
-    const myURL = (translator === 'cerebras') ? URL : 'https://api.openai.com/v1/chat/completions';
-    const auth = { apiKey: apikeyOpenAI, URL: myURL };
-
+    //console.debug("[" + translator + "] model:", mymodel, "URL:", myURL)
+    if (translator == 'OpenAI') {
+        auth = { apiKey: apikeyOpenAI, URL: 'https://api.openai.com/v1/chat/completions' };
+    }
+    else if (translator == 'meta') {
+        auth = { apiKey: apikeyMeta, URL: myURL };
+    }
+    else {
+        auth = { apiKey: apikeyOpenAI, URL: myURL };
+    }
+    // console.debug("[" + translator + "] auth:", auth)
     // Preprocessing mode tag — kept as "groq" to match the proven
     // single-line getTransOpenAI behaviour (preProcessOriginal branches
     // on this; "groq" is what the single-line path uses).
-    const PREPROCESS_MODE = "groq";
+    if (translator != 'meta') {
+        PREPROCESS_MODE = "groq";
+    }
+    else {
+        PREPROCESS_MODE = "meta";
+    }
 
     setPostTranslationReplace(postTranslationReplace, formal);
     setPreTranslationReplace(preTranslationReplace);
@@ -505,7 +542,7 @@ async function translatePageOpenAI(
                     "Model returned prose — correction attempt " + attempt + "/" + maxParseRetries + "…"
                 ));
             }
-
+            
             const response = await callOpenAIWithRetry(
                 messages, auth, mymodel, OpenAItemp, translator, maxTokens
             );
@@ -574,12 +611,13 @@ async function translatePageOpenAI(
                     continue;
                 }
 
-                let translation = enforceGlossary(res.tr, item.glossary);
+                //let translation = enforceGlossary(res.tr, item.glossary);
+                translation = res.tr
                 const finalText = await postProcessTranslation(
                     item.original, translation, replaceVerb,
                     item.original, translator, convertToLower, spellCheckIgnore, locale
                 );
-
+                
                 await processTransl(
                     item.original, finalText, destlang,
                     group.record, group.id, group.type,

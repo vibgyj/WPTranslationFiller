@@ -61,6 +61,10 @@
             width: 400px;
         }
 
+        #Meta_api_key {
+            width: 400px;
+        }
+
         #Translateio_api_key {
             width: 400px;
         }
@@ -353,6 +357,7 @@
                             <option value="LaraTrans">LaraTrans</option>,
                             <option value="LibreTrans">LibreTrans</option>
                             <option value="lingvanex">Lingvanex</option>
+                            <option value="meta">Meta</option>
                             <option value="NLPCloud">NLPCLoud</option>
                             <option value="LMStudio">LMstudio</option>
                             <option value="microsoft">Microsoft</option>
@@ -528,6 +533,16 @@
             </tr>
             <tr>
                 <td>
+                    <label for="Meta_api_key">Meta API Key</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <input id="Meta_api_key" type="text" value="Meta api key->" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="microsoft_api_key">Microsoft API Key</label>
                 </td>
                 <td>
@@ -687,6 +702,19 @@
             </tr>
             <tr>
                 <td>
+                    <label for="Meta">Select a model for Meta:</label>
+                </td>
+                <td>
+                    <div class="form-input">
+                        <select title="Select a model for Meta" name="MetaSel" id="MetaSelect">
+                            <option value="muse-ember-1.0">muse-ember-1.0"</option>
+                            
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <label for="Ollama_model">Ollama/LMstudio model</label>
                 </td>
                 <td>
@@ -718,6 +746,7 @@
 
                             <!-- === Paid models === -->
                             <option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro</option>
+                            <option value="meta/muse-ember">meta/muse-ember</option>
                             <option value="openai/gpt-5.5">openai/gpt-5.5</option>
                             <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
                             <option value="openai/gpt-chat-latest">openai/gpt-chat-latest</option>

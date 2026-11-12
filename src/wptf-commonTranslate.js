@@ -201,6 +201,9 @@ async function preProcessOriginal(original, preverbs, translator) {
             // Markup containing & and ; makes the translation fail
             original = replaceWithTokens(original, markupRegex, (n) => `{mymark_var${n + 1}}`);
             break;
+        case "meta":
+            // No preprocessing needed
+            break;
 
         case "microsoft":
             // No preprocessing needed
@@ -344,7 +347,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         //console.debug("we are in google post process after replacing", "'"+ translatedText + "'")
         //translatedText =  restorePlaceholdersAfterTranslation(translatedText, original)
     }
-    else if (translator == "lingvanex" || translator == "groq") {
+    else if (translator == "lingvanex" || translator == "groq" || translator == 'meta') {
         // We need to put back the %s etc
         // Vervang elk token terug door zijn originele waarde
         for (const [token, originalValue] of Object.entries(placeholderMap)) {
@@ -540,6 +543,14 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
         if (translatedText.endsWith(".") == true) {
             if (original.endsWith(".") != true) {
                 translatedText = translatedText.substring(0, translatedText.length - 1)
+            }
+        }
+        const matches = original.matchAll(placeHolderRegex);
+        if (matches != null) {
+            let index = 0;
+            for (const match of matches) {
+                translatedText = translatedText.replaceAll(`<x id="var${index}"/>`, match[0]);  // <-- match[0] ipv match
+                index++;
             }
         }
         // OpenAI adds sometimes a "'" due to the placeholder at te beginning of the line like '<x>1</x>'
@@ -5334,7 +5345,7 @@ async function handle_plural(plural, destlang, record, apikey, apikeyDeepl,apike
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-async function translatePage(apikey, apikeyCerebras, apikeyDeepl, apikeyMicrosoft, apikeyKimi, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt, ClaudeModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeyOpenRouter, OpenRouterSelect, apikeygroq, groqSelect, BatchSize, KimiSelect, CerebrasSelect, laraAccessKeyId, laraAccessKeySecret) {
+async function translatePage(apikey, apikeyCerebras, apikeyDeepl, apikeyMicrosoft, apikeyKimi, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyDeepSeek, apikeyTranslateio, apikeyNLP, OpenAIPrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, openAIWait, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, DeepLWait, openAiGloss, ClaudePrompt, ClaudeModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeyOpenRouter, OpenRouterSelect, apikeygroq, groqSelect, BatchSize, KimiSelect, CerebrasSelect, laraAccessKeyId, laraAccessKeySecret,apikeyMeta,MetaSelect) {
     var myheader = document.querySelector('header');
     
     //const template = `
@@ -5444,9 +5455,8 @@ async function translatePage(apikey, apikeyCerebras, apikeyDeepl, apikeyMicrosof
         let koboldUrl = "http://localhost:5001" 
         result = await translatePageKobold(koboldUrl, OpenAIPrompt, transsel, destlang, preTranslationReplace, postTranslationReplace, formal, convertToLower, OpenAItemp, spellCheckIgnore, OpenAITone, openAiGloss, 5)
     }
-
     else if (transsel == "OpenAI") {
-     //   console.debug("we translate with openAI in batch")
+        //   console.debug("we translate with openAI in batch")
         let URL = "";
         const result = await translatePageOpenAI(
             apikeyOpenAI,            // API key (OpenAI key, or your Cerebras key)
@@ -5463,7 +5473,33 @@ async function translatePage(apikey, apikeyCerebras, apikeyDeepl, apikeyMicrosof
             OpenAITone,             // tone, e.g. "formal" / "strict"
             openAiGloss,            // glossary source
             URL,                    // Cerebras endpoint URL (ignored for OpenAI) ← NEW
-            BatchSize               // optional; defaults to 10 if omitted
+            BatchSize,             // optional; defaults to 10 if omitted
+            apikeyMeta,
+            MetaSelect
+        );
+    }
+
+    else if (transsel == "meta") {
+     //   console.debug("we translate with openAI in batch")
+        let URL = "https://api.meta.ai/v1/chat/completions";
+        const result = await translatePageOpenAI(
+            apikeyOpenAI,            // API key (OpenAI key, or your Cerebras key, or Meta key)
+            OpenAIPrompt,            // shared prompt template ({{toLanguage}}, {{tone}}, {{glossary}}, {{text}})
+            transsel,               // transsel (as passed to translatePageGroq)
+            destlang,               // target language code, e.g. "nl"
+            preTranslationReplace,  // pre-translation replace rules
+            postTranslationReplace, // post-translation replace rules
+            formal,                 // formal flag
+            convertToLower,         // convertToLower flag
+            OpenAISelect,           // selected model, e.g. "gpt-4" or "gpt-oss-120b"
+            OpenAItemp,             // temperature
+            spellCheckIgnore,       // spellCheckIgnore
+            OpenAITone,             // tone, e.g. "formal" / "strict"
+            openAiGloss,            // glossary source
+            URL,                    // Cerebras endpoint URL (ignored for OpenAI) ← NEW
+            BatchSize,               // optional; defaults to 10 if omitted
+            apikeyMeta,
+            MetaSelect
         );
     }
     else if (transsel == "openRouter") {
@@ -5806,45 +5842,46 @@ async function translatePage(apikey, apikeyCerebras, apikeyDeepl, apikeyMicrosof
 
 
 function check_span_missing(row, plural_line) {
-    // console.debug("check_span_missing plural_line:",plural_line)
+    //console.debug("check_span_missing plural_line:",row,plural_line)
     let preview = document.querySelector("#preview-" + row + " td.translation");
     let spanmissing = preview.querySelector(" span.missing");
     //console.debug("check_span_missing:",spanmissing)
     if (spanmissing != null) {
-        //if (plural_line == "1") {
-        // only remove when it is present and first plural line
-        spanmissing.remove();
-        // }
-
-        var ul = document.createElement("ul");
-        ul.classList.add('ul-plural');
-        preview.appendChild(ul);
-        //console.debug("ul found:",ul)
-        //ul.className = "ul-plural"
-        var li1 = document.createElement("li");
-        li1.style.cssText = "text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;";
-        ul.appendChild(li1);
-        var small = document.createElement("small");
-        //  li1.appendChild(small);
-        small.appendChild(document.createTextNode("Singular:"));
-        var br = document.createElement("br");
-        li1.appendChild(br);
-        var myspan1 = document.createElement("span");
-        myspan1.className = "translation-text";
-        li1.appendChild(myspan1);
-        myspan1.appendChild(document.createTextNode("empty"));
-        // Also create the second li
-        var li2 = document.createElement("li");
-        ul.appendChild(li2);
-        // var small = document.createElement("small");
-        // li2.appendChild(small);
-        //small.appendChild(document.createTextNode("Plural:"));
-        //  var br = document.createElement("br");
-        //  li2.appendChild(br);
-        var myspan2 = document.createElement("span");
-        myspan2.className = "translation-text";
-        li2.appendChild(myspan2);
-        myspan2.appendChild(document.createTextNode("empty"));
+        if (plural_line == "2") {
+            // only remove when it is present and first plural line
+            spanmissing.remove();
+        }
+        if (plural_line != "2") {
+            var ul = document.createElement("ul");
+            ul.classList.add('ul-plural');
+            preview.appendChild(ul);
+             //console.debug("ul found:",ul)
+             //ul.className = "ul-plural"
+            var li1 = document.createElement("li");
+            li1.style.cssText = "text-align: -webkit-match-parent; padding-bottom: .2em; border-bottom: 1px dotted #72777c;";
+            ul.appendChild(li1);
+            var small = document.createElement("small");
+            //  li1.appendChild(small);
+            small.appendChild(document.createTextNode("Singular:"));
+            var br = document.createElement("br");
+            li1.appendChild(br);
+            var myspan1 = document.createElement("span");
+            myspan1.className = "translation-text";
+            li1.appendChild(myspan1);
+            myspan1.appendChild(document.createTextNode("empty"));
+            // Also create the second li
+           var li2 = document.createElement("li");
+           ul.appendChild(li2);
+           // var small = document.createElement("small");
+           // li2.appendChild(small);
+           //small.appendChild(document.createTextNode("Plural:"));
+           //  var br = document.createElement("br");
+           //  li2.appendChild(br);
+           var myspan2 = document.createElement("span");
+           myspan2.className = "translation-text";
+           li2.appendChild(myspan2);
+           myspan2.appendChild(document.createTextNode("empty"));
+    }
     }
     else  {
     previewElem = document.querySelector("#preview-" + row + " .translation.foreign-text li:nth-of-type(1)");
@@ -5994,7 +6031,7 @@ async function setLowerCase(rowId, spellCheckIgnore) {
 // 2. Added `koboldCpp` branch in the singular block (after "LMStudio")
 // 3. Added `koboldCpp` branch in the plural block (after "LMStudio")
 
-async function translateEntry(rowId, apikey, apikeyCerebras, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyKimi, apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss, ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeyOpenRouter, OpenRouterSelect, apikeygroq, groqSelect, KimiSelect, CerebrasSelect, koboldUrl,apikeylara_accessKeyId,lara_accessKeySecret) {
+async function translateEntry(rowId, apikey, apikeyCerebras, apikeyDeepl, apikeyDeepSeek, apikeyTranslatio, apikeyMicrosoft, apikeyOpenAI, apikeyMistral, apikeyClaude, apikeyKimi, apikeyNLP, OpenAIPrompt, ClaudePrompt, transsel, destlang, postTranslationReplace, preTranslationReplace, formal, convertToLower, DeeplFree, OpenAISelect, MistralSelect, OpenAItemp, spellCheckIgnore, deeplGlossary, OpenAITone, openAiGloss, ClaudModel, apikeyOllama, LocalOllama, ollamaModel, ollamaPrompt, apikeyLingvanex, apikeyGemini, GeminiModel, GeminiPrompt, LMStudioWait, apikeyOpenRouter, OpenRouterSelect, apikeygroq, groqSelect, KimiSelect, CerebrasSelect, koboldUrl,apikeylara_accessKeyId,lara_accessKeySecret,apikeyMeta, MetaSelect) {
     var translateButton;
     var result;
     var DeepLWait = 0;
@@ -6088,14 +6125,28 @@ async function translateEntry(rowId, apikey, apikeyCerebras, apikeyDeepl, apikey
                 myTextareaElem.style.height = "auto"
             });
             if (toTranslate) {
-                let pretrans = await findTransline(original, destlang);
+                let pretrans = await findTransline(original, destlang)
                 if (pretrans == "notFound") {
-                     
+                    if (transsel == "meta") {
+                        let editor = true;
+                        let URL = "https://api.meta.ai/v1/chat/completions";
+
+                        result = await getTransOpenAI(original, destlang, e, apikeyCerebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss, transsel, URL, mycontext,apikeyMeta,MetaSelect);
+                        if (result == "Error 401") {
+                            messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
+                        } else if (result == "Error 403") {
+                            messageBox("error", "Error in translation received status 403 with readyState == 3<br>Language: " + destlang + " not supported!");
+                        } else {
+                            if (errorstate != "OK") {
+                                messageBox("error", "There has been some uncatched error: " + errorstate);
+                            }
+                        }
+                    }
                     if (transsel == "cerebras") {
                         let editor = true;
                         let URL = "https://api.cerebras.ai/v1/chat/completions";
                         
-                        result = await getTransOpenAI(original, destlang, e, apikeyCerebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,transsel, URL,mycontext);
+                        result = await getTransOpenAI(original, destlang, e, apikeyCerebras, OpenAIPrompt, replacePreVerb, rowId, transtype, plural_line, formal, locale, convertToLower, editor, "1", CerebrasSelect, OpenAItemp, spellCheckIgnore, OpenAITone, "editor", openAiGloss,transsel, URL,mycontext, apikeyMeta,MetaSelect);
                         if (result == "Error 401") {
                             messageBox("error", __("Error in translation received status 401<br>The request is not authorized because credentials are missing or invalid."));
                         } else if (result == "Error 403") {
@@ -7530,12 +7581,14 @@ async function processTransl (original, translatedText, language, record, rowId,
                 }
                 if (plural_line == 2) {
                     // Select the second li
+                    await check_span_missing(myRowId, plural_line);
                     const root = document.querySelector("#preview-" + myRowId);
                     
                     // in de plural_line == 2 tak:
                     const translationSpans = document.querySelectorAll(
                         "#preview-" + myRowId + " td.translation .translation-text"
                     );
+                    //console.debug("preview:",translationSpans)
                     //console.debug("translationSpans:", translationSpans.length, translationSpans,plural_line)
                     let previewElem2 = translationSpans[plural_line] || null;   // plural_line 2 -> index 1 = Plural-span, but if the label "locale" is present, then index 2 = Plural-span" 
                     if (previewElem2 == null) {
@@ -7551,7 +7604,7 @@ async function processTransl (original, translatedText, language, record, rowId,
                     //console.debug("previewElem:",previewElem2)
                     textareaElem2 = document.querySelector("textarea#translation_" + myRowId + "_1");
                     //console.debug("We have plural_line 2 we are updating the editor:",textareaElem2)
-                  //.debug("plural line 2 we are updating the editor:", textareaElem2, plural_line)
+                  //console.debug("plural line 2 we are updating the editor:", textareaElem2, plural_line)
                     textareaElem2.innerText = mytranslatedText;
                     textareaElem2.value = mytranslatedText;
                     //PSS 25-03-2021 Fixed problem with description box issue #13
@@ -7633,7 +7686,8 @@ async function processTransl (original, translatedText, language, record, rowId,
                 }
                 else {
                     //populate plural line if  already translated
-                    //console.debug("it is plural!!",plural_row)
+                    //console.debug("it is plural!!",plural_line)
+                    await check_span_missing(rowId, plural_line);
                     let f = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-content`);
                     textareaElem1 = f.querySelector("textarea#translation_" + plural_row + "_1");
                     //console.debug("plural _1",textareaElem1)

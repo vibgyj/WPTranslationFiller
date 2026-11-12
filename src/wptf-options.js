@@ -93,6 +93,7 @@ let LaraSecretTextbox = document.getElementById("lara_accessKeySecret");
 let apikeygroqTextbox = document.getElementById("groq_api_key");
 let apikeyOpenAITextbox = document.getElementById("OpenAI_api_key");
 let apikeyOpenRouterTextbox = document.getElementById("openRouter_api_key");
+let apikeyMetaTextbox = document.getElementById("Meta_api_key");
 let apikeyMistralTextbox = document.getElementById("Mistral_api_key");
 let apikeyNLPTextbox = document.getElementById("nlpcloud_api_key");
 let apikeyDeepSeekTextbox = document.getElementById("deepseek_api_key");
@@ -104,6 +105,7 @@ let apikeyGeminiTextbox = document.getElementById("gemini_api_key");
 let transselectBox = document.getElementById("transselect");
 let cerebrasselectBox = document.getElementById("cerebrasSelect");
 let KimiselectBox = document.getElementById("KimiSelect");
+let MetaselectBox = document.getElementById("MetaSelect");
 let OpenAIselectBox = document.getElementById("OpenAIselect");
 let groqselectBox = document.getElementById("groqSelect");
 let OpenRouterselectBox = document.getElementById("OpenRouterSelect");
@@ -368,7 +370,7 @@ async function loadCerebrasModels(preselectValue) {
 document.getElementById("refreshCerebrasModels").addEventListener("click", function () {
     loadCerebrasModels(cerebrasselectBox.value || undefined);
 });
-chrome.storage.local.get(["apikey", "apikeyCerebras", "apikeyDeepl", "apikeyKimi", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "CerebrasSelect", "OpenAISelect", "OpenRouterSelect", "ClaudSelect", "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize", "apikeylara_accessKeyId","lara_accessKeySecret", "noChevrons"], function (data) {
+chrome.storage.local.get(["apikey", "apikeyCerebras", "apikeyDeepl", "apikeyKimi", "apikeyMicrosoft", "apikeyOpenAI", "apikeyDeepSeek", "apikeyTranslateio", "apikeyClaude", "apikeyMeta", "apikeygroq", "apikeyMistral", "apikeyOllama", "apikeyOpenRouter", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "GeminiPrompt", "OpenAIPrompt", "ClaudePrompt", "CerebrasSelect", "MetaSelect","OpenAISelect", "OpenRouterSelect", "ClaudSelect", "KimiSelect", "GeminiSelect", "groqSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "AI_Top_p", "AI_Top_k", "OpenAIWait", "DeepLWait", "LMStudioWait", "reviewPrompt", "transsel", "destlang", "glossaryFile", "glossaryFileSecond", "postTranslationReplace", "preTranslationReplace", "spellCheckIgnore", "showHistory", "showTransDiff", "glotDictGlos", "convertToLower", "DeeplFree", "TMwait", "bulkWait", "interXHR", "LtKey", "LtUser", "LtLang", "LtFree", "Auto_spellcheck", "Auto_review_OpenAI", "ForceFormal", "DefGlossary", "WPTFscreenWidth", "strictValidate", "autoCopyClip", "TMtreshold", "DownloadPath", "DisableAutoClose", "LocalOllama", "ollamaModel", "ollamaPrompt", "noPeriod", "DebugMode", "noUI", "groqBatchSize", "apikeylara_accessKeyId","lara_accessKeySecret", "noChevrons"], function (data) {
     
     if (data.DeeplFree == true) {
             apikeydeeplCheckbox.checked = true
@@ -478,6 +480,7 @@ chrome.storage.local.get(["apikey", "apikeyCerebras", "apikeyDeepl", "apikeyKimi
     apikeyTextbox.value = data.apikey;
     apikeyCerebrasTextbox.value = data.apikeyCerebras;
     apikeydeeplTextbox.value = data.apikeyDeepl;
+    //apikeyMetaTextbox.value = data.apikeyMeta;
     apikeymicrosoftTextbox.value = data.apikeyMicrosoft;
     apikeyOpenAITextbox.value = data.apikeyOpenAI;
     apikeygroqTextbox.value = data.apikeygroq;
@@ -526,6 +529,13 @@ chrome.storage.local.get(["apikey", "apikeyCerebras", "apikeyDeepl", "apikeyKimi
         apikeykimiTextbox.value = data.apikeyKimi;
     }
 
+    if (data.apikeyMeta == null && typeof data.apikeyMeta == "undefined") {
+        apikeyMetaTextbox.value = "Enter key or leave empty";
+    }
+    else {
+        apikeyMetaTextbox.value = data.apikeyMeta;
+    }
+   
     if (data.apikeyOllama == null && typeof data.apikeyOllama == "undefined") {
         apikeyOllamaTextbox.value = "Enter key or leave empty";
     }
@@ -618,6 +628,13 @@ chrome.storage.local.get(["apikey", "apikeyCerebras", "apikeyDeepl", "apikeyKimi
     }
     else {
         ClaudselectBox.value = data.ClaudSelect;
+    }
+
+    if (data.MetaSelect == "") {
+        MetaselectBox.value = "meta/muse-ember";
+    }
+    else {
+        MetaselectBox.value = data.MetaSelect;
     }
 
     if (typeof data.ollamaModel == 'undefined') {
@@ -1143,6 +1160,7 @@ button.addEventListener("click", function () {
             apikey: apikey,
             apikeyCerebras: apikeycerebras,
             apikeyDeepl: apikeyDeepl,
+            apikeyMeta: apikeyMetaTextbox.value,
             apikeylara_accessKeyId: apikeyLaraTextbox.value,
             lara_accessKeySecret: LaraSecretTextbox.value,
             apikeyOpenAI: apikeyOpenAI,
@@ -1162,6 +1180,7 @@ button.addEventListener("click", function () {
             KimiSelect: Kimisel,
             MistralSelect: Mistralsel,
             ClaudSelect: Claudsel,
+            MetaSelect: MetaselectBox.value,
             DeeplFree: showDeepl,
            // DownloadPath: DownloadTextbox.value,
             transsel: transsel,

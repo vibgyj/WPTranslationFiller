@@ -1329,7 +1329,7 @@ function impFileClicked(event) {
 
 function translatePageClicked(event) {
     if (event) event.preventDefault();
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyCerebras", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyKimi", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP", "OpenAIPrompt", "ClaudePrompt", "CerebrasSelect", "ClaudSelect", "KimiSelect", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel", "ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect", "GeminiPrompt", "LMStudioWait", "groqBatchSize", "apikeylara_accessKeyId","lara_accessKeySecret"], async function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyCerebras", "apikeyDeepSeek", "apikeyMicrosoft", "apikeyKimi", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyTranslateio", "apikeyLingvanex", "apikeyNLP", "OpenAIPrompt", "ClaudePrompt", "CerebrasSelect", "ClaudSelect", "KimiSelect", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAItemp", "OpenAIWait", "DeepLWait", "OpenAITone", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudModel", "apikeyOllama", "LocalOllama", "ollamaModel", "ollamaPrompt", "apikeyGemini", "GeminiSelect", "groqSelect", "GeminiPrompt", "LMStudioWait", "groqBatchSize", "apikeylara_accessKeyId","lara_accessKeySecret","apikeyMeta", "MetaSelect"], async function (data) {
        // if (typeof data.apikey != "undefined" && data.apikey != "" && data.transsel == "google" ||typeof data.laraAccessKeyId != "undefined" && data.laraAccessKeyId != "" && data.transsel == "LaraTrans" || typeof data.apikeyClaude != 'undefined' && data.apikeyClaude != "" || typeof data.apikeyDeepl != "undefined" && data.apikeyDeepl != "" && data.transsel == "deepl" || typeof data.apikeyMicrosoft != "undefined" && data.apikeyMicrosoft != "" && data.transsel == "microsoft" || typeof data.apikeyOpenAI != "undefined" && data.apikeyOpenAI != "" && data.transsel == "OpenAI" && data.OpenAISelect != 'undefined' || typeof data.apikeyDeepSeek != "undefined" && data.apikeyDeepSeek != "" && data.transsel == "deepseek" && data.OpenAISelect != 'undefined' || typeof data.apikeyTranslateio != "undefined" && data.apikeyTranslateio != "" && data.transsel == "translation_io" && data.OpenAISelect != 'undefined' || typeof data.apikeyOpenRouter != "undefined" && data.apikeyOpenRouter != "" && data.transsel == "openRouter" || typeof data.apikeyKimi != "undefined" && data.apikeyKimi != "" && data.transsel == "kimi") {
             if (data.destlang != "undefined" && data.destlang != null && data.destlang != "") {
                 if (data.transsel != "undefined") {
@@ -1345,7 +1345,7 @@ function translatePageClicked(event) {
                     const currentLocale = checkLocale().toUpperCase();   // of de locale-var die hier al bestaat
                     const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
                     const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
-                    translatePage(data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyKimi, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.DeepLWait, data.OpenAiGloss, data.ClaudePrompt, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.groqBatchSize, data.KimiSelect, data.CerebrasSelect, data.apikeylara_accessKeyId,data.lara_accessKeySecret);
+                    translatePage(data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyMicrosoft, data.apikeyKimi, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyNLP, data.OpenAIPrompt, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, openAIWait, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.DeepLWait, data.OpenAiGloss, data.ClaudePrompt, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.groqBatchSize, data.KimiSelect, data.CerebrasSelect, data.apikeylara_accessKeyId,data.lara_accessKeySecretw, data.apikeyMeta, data.MetaSelect);
                 } else { messageBox("error", "You need to set the translator API"); }
             } else { messageBox("error", "You need to set the parameter for Destination language"); }
        // } else { messageBox("error", "For " + data.transsel + " no apikey is set!"); }
@@ -2196,7 +2196,7 @@ function translateEntryClicked(event) {
     let myrowId = event.target.id.split("-")[2];
     if (typeof myrowId != "undefined" && myrowId != "translation") rowId = rowId.concat("-", myrowId);
     
-    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyCerebras", "apikeyDeepSeek", "apikeyKimi", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "CerebrasSelect", "GeminiSelect", "GeminiPrompt", "groqSelect", "KimiSelect", "LocalOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudSelect", "ollamaModel", "ollamaPrompt", "LMStudioWait", "apikeylara_accessKeyId","lara_accessKeySecret"], function (data) {
+    chrome.storage.local.get(["apikey", "apikeyDeepl", "apikeyCerebras", "apikeyDeepSeek", "apikeyMeta", "apikeyKimi", "apikeyTranslateio", "apikeyMicrosoft", "apikeyOpenAI", "apikeyOpenRouter", "apikeyMistral", "apikeyClaude", "apikeygroq", "apikeyOllama", "apikeyLingvanex", "apikeyGemini", "apikeyNLP", "CerebrasSelect", "MetaSelect", "GeminiSelect", "GeminiPrompt", "groqSelect", "KimiSelect", "LocalOllama", "OpenAIPrompt", "ClaudePrompt", "OpenAISelect", "OpenRouterSelect", "MistralSelect", "OpenAITone", "OpenAItemp", "transsel", "destlang", "postTranslationReplace", "preTranslationReplace", "convertToLower", "DeeplFree", "spellCheckIgnore", "ForceFormal", "OpenAiGloss", "ClaudSelect", "ollamaModel", "ollamaPrompt", "LMStudioWait", "apikeylara_accessKeyId","lara_accessKeySecret"], function (data) {
         let formal = toBoolean(data.ForceFormal) === true ? true : checkFormal(false);
         let OpenAItemp    = parseFloat(data.OpenAItemp);
         let deeplGlossary = localStorage.getItem('deeplGlossary');
@@ -2205,7 +2205,7 @@ function translateEntryClicked(event) {
         const postTranslationReplace = getReplaceForLocale(data.postTranslationReplace, currentLocale);
         const preTranslationReplace  = getReplaceForLocale(data.preTranslationReplace,  currentLocale);
         if (data.destlang != "undefined" && data.destlang != "") {
-            translateEntry(rowId, data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyKimi, data.apikeyNLP, data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.OpenAiGloss, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.KimiSelect, data.CerebrasSelect,koboldUrl,data.apikeylara_accessKeyId,data.lara_accessKeySecret);
+            translateEntry(rowId, data.apikey, data.apikeyCerebras, data.apikeyDeepl, data.apikeyDeepSeek, data.apikeyTranslateio, data.apikeyMicrosoft, data.apikeyOpenAI, data.apikeyMistral, data.apikeyClaude, data.apikeyKimi, data.apikeyNLP, data.OpenAIPrompt, data.ClaudePrompt, data.transsel, data.destlang, postTranslationReplace, preTranslationReplace, formal, data.convertToLower, data.DeeplFree, data.OpenAISelect, data.MistralSelect, OpenAItemp, data.spellCheckIgnore, deeplGlossary, data.OpenAITone, data.OpenAiGloss, data.ClaudSelect, data.apikeyOllama, data.LocalOllama, data.ollamaModel, data.ollamaPrompt, data.apikeyLingvanex, data.apikeyGemini, data.GeminiSelect, data.GeminiPrompt, data.LMStudioWait, data.apikeyOpenRouter, data.OpenRouterSelect, data.apikeygroq, data.groqSelect, data.KimiSelect, data.CerebrasSelect,koboldUrl,data.apikeylara_accessKeyId,data.lara_accessKeySecret,data.apikeyMeta, data.MetaSelect);
         } else {
             messageBox("error", "You need to set the parameter for Destination language");
         }
@@ -2389,6 +2389,7 @@ async function validateEntry(language, textareaElem, newurl, showHistory, rowId,
             } else {
                 let originalText = originalRaw.textContent;
                 result = await validate(language, originalText, translation, locale, false, rowId, false, DefGlossary);
+                //console.debug("validateEntry result for rowId", rowId, ":", result);
                 if (result.percent == 100) {
                     let missingVerbsButton = document.getElementById("translate-" + rowId + "-translocal-entry-missing-button");
                     if (missingVerbsButton) missingVerbsButton.style.visibility = "hidden";
@@ -2557,9 +2558,13 @@ async function updateElementStyle(checkElem, headerElem, result, oldstring, orig
         let h = document.querySelector(`#editor-${rowId} div.editor-panel__left div.panel-header`);
         current = h ? h.querySelector("span.panel-header__bubble").innerText : 'untranslated';
     }
-
+    //console.debug("updateElementStyle: current:", current, "rowId:", rowId, "result:", result)
     button_name = current == 'current' ? __('Save') : current == 'waiting' ? __('Appr') : current == 'fuzzy' ? __('Rej') : current == 'transFill' ? __('Save') : 'Undef!!';
-
+    //console.debug("updateElementStyle: button_name:", button_name, "rowId:", rowId, "current:", current)
+    if (button_name == 'Undef!!') {
+        button_name = 'reject'; 
+        checkElem.title = __("Do not save the string");
+    }
     if (showName != true) {
         if (current != null && checkElem != null) {
             SavelocalButton = document.querySelector("#preview-" + rowId + " .tf-save-button") ||
