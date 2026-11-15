@@ -143,5 +143,19 @@
   "Replace verbs done: ": "Kifejezéscsere kész: ",
   " replaced words<br>": " lecserélt szó<br>",
   "Your postreplace verbs are not populated add at least on line!": "Az utólagos csere kifejezései nincsenek kitöltve. Adjon meg legalább egy sort!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "A fordítás előtti csere kifejezései nincsenek kitöltve. Adjon meg legalább egy sort!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "A fordítás előtti csere kifejezései nincsenek kitöltve. Adjon meg legalább egy sort!",
+  "Do you want to handle the problems in one batch, or row by row?": "Szeretné egy lépésben vagy soronként kezelni a problémákat?",
+  "Glossary check is ready: no problems found": "A szójegyzék ellenőrzése kész: nem található probléma",
+  "No rows selected, nothing was changed": "Nincs kijelölt sor, semmi sem változott",
+  "Saving the bulk reject, please wait…": "A csoportos elutasítás mentése folyamatban, kérjük, várjon…",
+  "Row by row": "Soronként",
+  "Glossary check aborted": "A szójegyzék ellenőrzése megszakítva",
+  "Create changes requested": "A kért módosítások létrehozása",
+  "Glossary check aborted, nothing was changed": "A szójegyzék ellenőrzése megszakítva, semmi sem változott",
+  "Bulk reject: prepare, I save myself": "Csoportos elutasítás: előkészítés, a mentést magam végzem",
+  "Bulk reject: save now": "Csoportos elutasítás: mentés most",
+  "Glossary check: problems found": "Szójegyzék-ellenőrzés: problémák találhatók",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "Az ellenőrzött %2$s sor közül %1$s sorban hiányoznak szójegyzékbeli kifejezések — %3$s kijelölve",
+  "Note for the bulk request (you can edit it)": "Megjegyzés a csoportos kérelemhez (szerkeszthető)",
+  "Regenerate": "Újragenerálás"
 }

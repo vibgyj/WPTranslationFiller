@@ -143,5 +143,19 @@
   "Replace verbs done: ": "Ersätt verb klar: ",
   " replaced words<br>": " ersatta ord<br>",
   "Your postreplace verbs are not populated add at least on line!": "Dina postreplace-verb är inte ifyllda, lägg till minst en rad!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Dina pretranslate-verb är inte ifyllda, lägg till minst en rad!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Dina pretranslate-verb är inte ifyllda, lägg till minst en rad!",
+  "Do you want to handle the problems in one batch, or row by row?": "Vill du hantera problemen i en enda omgång eller rad för rad?",
+  "Glossary check is ready: no problems found": "Ordlistan har kontrollerats: inga problem hittades",
+  "No rows selected, nothing was changed": "Inga rader har valts, inga ändringar har gjorts",
+  "Saving the bulk reject, please wait…": "Sparar massavvisningen, vänta…",
+  "Row by row": "Rad för rad",
+  "Glossary check aborted": "Kontrollen av ordlistan avbröts",
+  "Create changes requested": "Skapa de begärda ändringarna",
+  "Glossary check aborted, nothing was changed": "Kontrollen av ordlistan avbröts, inga ändringar har gjorts",
+  "Bulk reject: prepare, I save myself": "Massavvisning: förbered, jag sparar själv",
+  "Bulk reject: save now": "Massavvisning: spara nu",
+  "Glossary check: problems found": "Kontroll av ordlistan: problem hittades",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "%1$s av %2$s kontrollerade rader saknar termer från ordlistan — %3$s valda",
+  "Note for the bulk request (you can edit it)": "Anteckning för massbegäran (du kan redigera den)",
+  "Regenerate": "Generera igen"
 }

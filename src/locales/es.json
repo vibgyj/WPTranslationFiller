@@ -142,5 +142,19 @@
   "Replace verbs done: ": "Sustitución de verbos completada: ",
   " replaced words<br>": " palabras sustituidas<br>",
   "Your postreplace verbs are not populated add at least on line!": "Los verbos de post-sustitución no están rellenados — ¡añada al menos una línea!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Los verbos de pre-sustitución no están rellenados — ¡añada al menos una línea!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Los verbos de pre-sustitución no están rellenados — ¡añada al menos una línea!",
+  "Do you want to handle the problems in one batch, or row by row?": "¿Quieres gestionar los problemas todos a la vez o fila por fila?",
+  "Glossary check is ready: no problems found": "La comprobación del glosario está lista: no se han encontrado problemas",
+  "No rows selected, nothing was changed": "No se han seleccionado filas, no se ha realizado ningún cambio",
+  "Saving the bulk reject, please wait…": "Guardando el rechazo masivo, espera…",
+  "Row by row": "Fila por fila",
+  "Glossary check aborted": "Comprobación del glosario cancelada",
+  "Create changes requested": "Crear los cambios solicitados",
+  "Glossary check aborted, nothing was changed": "Comprobación del glosario cancelada, no se ha realizado ningún cambio",
+  "Bulk reject: prepare, I save myself": "Rechazo masivo: preparar, guardaré yo mismo",
+  "Bulk reject: save now": "Rechazo masivo: guardar ahora",
+  "Glossary check: problems found": "Comprobación del glosario: se han encontrado problemas",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "%1$s de las %2$s filas comprobadas tienen términos del glosario que faltan — %3$s seleccionadas",
+  "Note for the bulk request (you can edit it)": "Nota para la solicitud masiva (puedes editarla)",
+  "Regenerate": "Regenerar"
 }

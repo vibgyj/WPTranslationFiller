@@ -143,5 +143,19 @@
   "Replace verbs done: ": "Penggantian kata kerja selesai: ",
   " replaced words<br>": " kata diganti<br>",
   "Your postreplace verbs are not populated add at least on line!": "Kata kerja postreplace Anda belum terisi, tambahkan setidaknya 1 baris!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Kata kerja pretranslate Anda belum terisi, tambahkan setidaknya 1 baris!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Kata kerja pretranslate Anda belum terisi, tambahkan setidaknya 1 baris!",
+  "Do you want to handle the problems in one batch, or row by row?": "Apakah Anda ingin menangani masalah sekaligus dalam satu batch atau baris demi baris?",
+  "Glossary check is ready: no problems found": "Pemeriksaan glosarium selesai: tidak ditemukan masalah",
+  "No rows selected, nothing was changed": "Tidak ada baris yang dipilih, tidak ada perubahan yang dilakukan",
+  "Saving the bulk reject, please wait…": "Menyimpan penolakan massal, harap tunggu…",
+  "Row by row": "Baris demi baris",
+  "Glossary check aborted": "Pemeriksaan glosarium dibatalkan",
+  "Create changes requested": "Buat perubahan yang diminta",
+  "Glossary check aborted, nothing was changed": "Pemeriksaan glosarium dibatalkan, tidak ada perubahan yang dilakukan",
+  "Bulk reject: prepare, I save myself": "Penolakan massal: siapkan, saya akan menyimpan sendiri",
+  "Bulk reject: save now": "Penolakan massal: simpan sekarang",
+  "Glossary check: problems found": "Pemeriksaan glosarium: ditemukan masalah",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "%1$s dari %2$s baris yang diperiksa tidak memiliki istilah glosarium — %3$s dipilih",
+  "Note for the bulk request (you can edit it)": "Catatan untuk permintaan massal (Anda dapat mengeditnya)",
+  "Regenerate": "Buat ulang"
 }

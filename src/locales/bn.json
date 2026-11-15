@@ -133,5 +133,19 @@
   "Replace verbs done: ": "রিপ্লেস ভার্ব সম্পন্ন হয়েছে: ",
   " replaced words<br>": "টি প্রতিস্থাপিত শব্দসমূহ<br>",
   "Your postreplace verbs are not populated add at least on line!": "আপনার পোস্ট-রিপ্লেস ভার্বগুলো পূরণ করা হয়নি, অন্তত একটি লাইন যোগ করুন!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "আপনার প্রাক-অনুবাদ রিপ্লেস ভার্বগুলো পূরণ করা হয়নি, অন্তত একটি লাইন যোগ করুন!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "আপনার প্রাক-অনুবাদ রিপ্লেস ভার্বগুলো পূরণ করা হয়নি, অন্তত একটি লাইন যোগ করুন!",
+  "Do you want to handle the problems in one batch, or row by row?": "আপনি কি সমস্যাগুলো একসঙ্গে সমাধান করতে চান, নাকি একে একে সারি অনুযায়ী?",
+  "Glossary check is ready: no problems found": "শব্দকোষ পরীক্ষা সম্পন্ন: কোনো সমস্যা পাওয়া যায়নি",
+  "No rows selected, nothing was changed": "কোনো সারি নির্বাচন করা হয়নি, কোনো পরিবর্তন করা হয়নি",
+  "Saving the bulk reject, please wait…": "একসঙ্গে প্রত্যাখ্যান সংরক্ষণ করা হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন…",
+  "Row by row": "সারি অনুযায়ী",
+  "Glossary check aborted": "শব্দকোষ পরীক্ষা বাতিল করা হয়েছে",
+  "Create changes requested": "অনুরোধ করা পরিবর্তনগুলো তৈরি করুন",
+  "Glossary check aborted, nothing was changed": "শব্দকোষ পরীক্ষা বাতিল করা হয়েছে, কোনো পরিবর্তন করা হয়নি",
+  "Bulk reject: prepare, I save myself": "একসঙ্গে প্রত্যাখ্যান: প্রস্তুত করুন, আমি নিজেই সংরক্ষণ করব",
+  "Bulk reject: save now": "একসঙ্গে প্রত্যাখ্যান: এখনই সংরক্ষণ করুন",
+  "Glossary check: problems found": "শব্দকোষ পরীক্ষা: সমস্যা পাওয়া গেছে",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "পরীক্ষিত %2$sটি সারির মধ্যে %1$sটিতে শব্দকোষের পরিভাষা অনুপস্থিত — %3$sটি নির্বাচিত",
+  "Note for the bulk request (you can edit it)": "একসঙ্গে অনুরোধের জন্য নোট (আপনি এটি সম্পাদনা করতে পারেন)",
+  "Regenerate": "আবার তৈরি করুন"
 }

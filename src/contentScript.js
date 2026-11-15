@@ -66,6 +66,52 @@ var locale = checkLocale();
 var showGlosLine;
 var parrotActive;
 
+function showGlossaryNotice(date, onClose) {
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;top:20px;right:20px;z-index:99999;background:#fff3cd;" +
+    "border:1px solid #e0b000;padding:12px 16px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:14px";
+  box.textContent = `De glossary is gewijzigd (${new Date(date).toLocaleString("nl-NL")}). `;
+
+  const btn = document.createElement("button");
+  btn.textContent = "OK";
+  btn.style.marginLeft = "8px";
+  btn.onclick = () => { onClose(); box.remove(); };
+
+  box.appendChild(btn);
+  document.body.appendChild(box);
+}
+
+const url = "https://translate.wordpress.org/locale/nl/default/glossary/-export/";
+(async () => {
+  const raw = await checkLocale();
+  console.log("Glossary-check, locale:", raw);
+  if (!raw || raw.toLowerCase() === "en") return;
+
+  const locale = raw.toLowerCase().replace(/_/g, "-"); // nl_be → nl-be
+  const url = `https://translate.wordpress.org/locale/${locale}/default/glossary/-export/`;
+  const key = `glossaryLastModified_${locale}`;
+
+  try {
+    const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+    const lastModified = res.headers.get("last-modified");
+    console.log("status:", res.status, "last-modified:", lastModified);
+    if (!res.ok || !lastModified) return;
+
+    const stored = localStorage.getItem(key);
+
+    if (stored === null) {
+      localStorage.setItem(key, lastModified);
+      console.log("Eerste keer, opgeslagen");
+    } else if (stored !== lastModified) {
+      console.log("Gewijzigd, melding tonen");
+      showGlossaryNotice(lastModified, () => localStorage.setItem(key, lastModified));
+    } else {
+      console.log("Ongewijzigd");
+    }
+  } catch (e) {
+    console.error("Glossary-check mislukt:", e);
+  }
+})();
 removeLegacyGlossaryStorage()
 function savePage() {
     var currentUrl = window.location.href;

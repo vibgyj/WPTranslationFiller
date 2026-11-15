@@ -1,28 +1,45 @@
 /**
- * GlotPress glossary QA sweep
+ * GlotPress glossary QA sweep — batch edition
  * -----------------------------------------------------------------------------
  * Walks the visible translations table. For every row whose ORIGINAL contains
  * one or more glossary words, it checks whether each glossary word is translated
  * as the glossary suggests. Glossary words WITHOUT a translation in the glossary
  * are ignored (not checked, not counted, not highlighted).
  *
- * When something is missing, a modal asks what to do with the flagged rows:
- *   - "Create" : open the editor, tick the glossary reason, write a note naming
- *                the offending term(s) and click "Request changes".
- *   - "Reject" : open the editor and hard-reject the row, WITHOUT a glossary reason.
- *   - closing the modal without a choice aborts the sweep.
+ * FIRST QUESTION (before anything happens): "Batch" or "Row by row".
+ *
+ *   ROW BY ROW — the original behaviour. A second question asks "Create"
+ *     (changes requested with glossary reason + note) or "Reject" (hard reject).
+ *     Every flagged row is handled on its own, so one mail per row.
+ *
+ *   BATCH
+ *     1. SCAN (changes nothing): all rows are checked, problems are collected.
+ *     2. REVIEW: a modal lists the problems. Each row has a checkbox, so false
+ *        positives can be unticked; the combined note is editable. Then:
+ *          - "Bulk reject: save now" : tick the selected rows in the table, choose
+ *                                  "Reject" in the bulk dropdown, click Apply,
+ *                                  paste the combined note in the text box that
+ *                                  opens and save it -> ONE action.
+ *          - "Bulk reject: prepare"  : same, but does NOT save; you check the note
+ *                                  and click save yourself.
+ *          - "Cancel" / Esc      : change nothing.
+ *
+ *   DRY RUN — no questions; scan and show the list (only "Copy note" / "Close").
  *
  * Run it from the browser console on a GlotPress translation-set page (filter to
  * waiting first: add ?filters[status]=waiting).
  *
- * SAFETY: flip the DryRun switch below. true = report only, changes nothing
- * (no modal is shown). false = ask via the modal, then act.
- *
- *   DryRun = true;  glossaryQaSweep();                  // report only (whole page)
- *   DryRun = false; glossaryQaSweep();                  // act on flagged rows
+ *   DryRun = true;  glossaryQaSweep();                  // scan + show list only
+ *   DryRun = false; glossaryQaSweep();                  // scan, show list, then act
  *   glossaryQaSweep({ onlyRow: '33706261-158682287' }); // scope to one row (testing)
  *
- * The feedback wording is the `warningText` constant at the top of the function.
+ * After a run, the findings and the combined note stay available in the console:
+ *   window.glossaryQaLast       // array of findings
+ *   window.glossaryQaLastNote   // the note that was (or would be) sent
+ *
+ * NOTE: the bulk-toolbar selectors (cfg.bulk*) are configurable. If the bulk
+ * "Reject" option, the Apply button or the text box can't be found, the note is
+ * copied to the clipboard and the rows stay ticked, so you can finish by hand.
  */
 
 // Flip this and re-run. true = dry run (safe), false = perform the actions.
@@ -33,7 +50,6 @@ var DryRun = true;
 // is locale-agnostic; each profile supplies the bits that depend on the target
 // language. To support a new locale, add an entry here — no engine changes.
 //
-//   message         : note shown to the translator (their language, or English).
 //   exactTerms      : short terms that must match as a WHOLE word, not inside a
 //                     compound (e.g. "site" must not be found in "website").
 //   singular(word)  : reduce a word to a comparison stem, i.e. strip the plural.
@@ -43,9 +59,8 @@ var DryRun = true;
 const LOCALES = {
     // Dutch — the calibrated default.
     nl: {
-        message: 'Please translate the glossary term(s) as suggested:',
         exactTerms: ['site', 'website', 'tab', 'log', 'content'],
-        singular: (w) => w.replace(/['\u2019]?s$/, ''),   // drop trailing "s" / "'s"
+        singular: (w) => w.replace(/['’]?s$/, ''),   // drop trailing "s" / "'s"
         // Dutch inflects by suffix (beschikbaar~beschikbare, deactiveer~deactivering):
         // the candidate must be almost fully a prefix of the token.
         inflectionMatch: (cand, tok, cfg) => {
@@ -57,303 +72,830 @@ const LOCALES = {
     },
 };
 
+// UI text goes through the addon's translator when it is available.
+// Fill numbered placeholders after translating: qaSprintf('%1$s of %2$s', a, b).
+// Translators may reorder %1$s / %2$s; a plain %s is filled in order.
+function qaSprintf(text, ...args) {
+    let i = 0;
+    return String(text)
+        .replace(/%(\d+)\$s/g, (m, n) => String(args[Number(n) - 1] ?? ''))
+        .replace(/%s/g, () => String(args[i++] ?? ''));
+}
+
+function notify(type, msg) {
+    if (typeof messageBox === 'function') messageBox(type, msg);
+    else console[type === 'warning' ? 'warn' : 'log']('[glossaryQA]', msg);
+}
+
+// =============================================================================
+// MAIN
+// =============================================================================
 async function glossaryQaSweep(options = {}) {
-    // Don't start while the page-open check is still running — the two overlap and
-    // cause save (403) errors. That check shows an indeterminate progress bar; wait
-    // for it to finish, and if it's still going after a timeout, warn and abort.
-    {
-        const barSelector = options.progressBarSelector || '.indeterminate-progress-bar';
-        const running = () => {
-            const bar = document.querySelector(barSelector);
-            return !!bar && getComputedStyle(bar).display !== 'none' && bar.getClientRects().length > 0;
-        };
-        const hasSpinner = typeof showTranslationSpinner === 'function'
-            && typeof hideTranslationSpinner === 'function';
+    if (!(await waitForPageCheck(options))) return [];
 
-        if (running()) {
-            // Non-blocking status while we wait (no confirmation button).
-            if (hasSpinner) showTranslationSpinner(__('Waiting for the page check to finish…'));
+    const cfg = buildConfig(options);
 
-            const cleared = await waitFor(() => !running(), options.progressWait || 60000, 250);
+    // ---- STEP 0: first choice — batch or row by row ------------------------
+    // Row by row = the original behaviour (incl. the Create / Reject question).
+    // Batch      = scan everything, show the list, then one bulk action.
+    if (!cfg.dryRun) {
+        const mode = await askChoice(
+            __('Glossary check'),
+            __('Do you want to handle the problems in one batch, or row by row?'),
+            __('Batch'), __('Row by row'));
+        if (mode === null) { notify('info', __('Glossary check aborted')); return []; }
+        cfg.mode = mode ? 'batch' : 'per-row';
 
-            if (hasSpinner) hideTranslationSpinner();
-
-            if (!cleared) {
-                const msg = 'The page check is still running — wait until it finishes, then run the glossary check again.';
-                if (typeof messageBox === 'function') messageBox('warning', msg);
-                else console.warn('[glossaryQA]', msg);
-                return [];
-            }
+        if (cfg.mode === 'per-row') {
+            const create = await askChoice(
+                __('Create changes requested'),
+                __('Do you want to request changes, or reject the translations?'),
+                __('Create'), __('Reject'));
+            if (create === null) { notify('info', __('Glossary check aborted')); return []; }
+            cfg.action = create ? 'changesrequested' : 'reject';
         }
     }
 
+    // Merge the stored brand/ignore list from settings with anything configured.
+    cfg.ignorePhrases = [...(cfg.ignorePhrases || []), ...await loadIgnoreList()];
+
+    // ---- PHASE 1: scan, change nothing -------------------------------------
+    const { findings, report, scanned } = scanRows(cfg);
+    const byId = new Map(report.map((r) => [r.row, r]));
+
+    window.glossaryQaLast = findings.map(({ row, ...rest }) => rest);
+
+    if (findings.length === 0) {
+        notify('info', __('Glossary check is ready: no problems found'));
+        return report;
+    }
+
+    // Row by row: act directly on every flagged row, like before.
+    if (cfg.mode === 'per-row') {
+        for (const item of findings) {
+            await processRow(item, cfg, byId.get(item.rowId));
+        }
+        notify('info', __('Glossary Check is ready'));
+        return report;
+    }
+
+    // ---- PHASE 2 (batch / dry run): show the problems, let the user decide --
+    const decision = await showReviewModal(findings, scanned, cfg);
+    window.glossaryQaLastNote = decision ? decision.note : '';
+
+    if (!decision || decision.action === 'cancel' || decision.action === 'close') {
+        if (!cfg.dryRun) notify('info', __('Glossary check aborted, nothing was changed'));
+        return report;
+    }
+
+    const chosen = findings.filter((f) => decision.ids.includes(f.rowId));
+    findings
+        .filter((f) => !decision.ids.includes(f.rowId))
+        .forEach((f) => { byId.get(f.rowId).status = 'skipped-by-user'; });
+
+    if (chosen.length === 0) {
+        notify('info', __('No rows selected, nothing was changed'));
+        return report;
+    }
+
+    await bulkChangesRequested(chosen, decision.note, decision.action === 'bulk-send', cfg, byId);
+    return report;
+}
+
+// Two-button question via the addon's cuteAlert.
+// Resolves true (confirm), false (cancel button) or null (closed without a choice).
+async function askChoice(title, message, confirmText, cancelText) {
+    if (typeof cuteAlert !== 'function') {
+        return confirm(`${message}\n\nOK = ${confirmText}\n${__('Cancel')} = ${cancelText}`);
+    }
+    const choice = await cuteAlert({
+        type: 'question',
+        title,
+        message,
+        confirmText,
+        cancelText,
+        myWindow: typeof currWindow !== 'undefined' ? currWindow : window,
+    });
+    console.log('[glossaryQA] modal choice:', choice);
+    // cuteAlert versions differ in what they resolve with, so accept the common forms.
+    if (choice === 'confirm' || choice === true) return true;
+    if (choice === 'cancel' || choice === false) return false;
+    const c = String(choice || '').toLowerCase();
+    if (c && c === String(confirmText).toLowerCase()) return true;
+    if (c && c === String(cancelText).toLowerCase()) return false;
+    return null;
+}
+
+// =============================================================================
+// SETUP
+// =============================================================================
+
+// Don't start while the page-open check is still running — the two overlap and
+// cause save (403) errors. That check shows an indeterminate progress bar; wait
+// for it to finish, and if it's still going after a timeout, warn and abort.
+async function waitForPageCheck(options) {
+    const barSelector = options.progressBarSelector || '.indeterminate-progress-bar';
+    const running = () => {
+        const bar = document.querySelector(barSelector);
+        return !!bar && getComputedStyle(bar).display !== 'none' && bar.getClientRects().length > 0;
+    };
+    if (!running()) return true;
+
+    const hasSpinner = typeof showTranslationSpinner === 'function'
+        && typeof hideTranslationSpinner === 'function';
+    if (hasSpinner) showTranslationSpinner(__('Waiting for the page check to finish…'));
+    const cleared = await waitFor(() => !running(), options.progressWait || 60000, 250);
+    if (hasSpinner) hideTranslationSpinner();
+
+    if (!cleared) {
+        notify('warning', __('The page check is still running — wait until it finishes, then run the glossary check again.'));
+        return false;
+    }
+    return true;
+}
+
+function buildConfig(options) {
     // Detect the current locale from the page. checkLocale() is provided by the
-    // addon; options.locale is only an override for console testing. The slug is
-    // normalized (e.g. "nl_NL" -> "nl") to match a LOCALES key.
+    // addon; options.locale is only an override for console testing.
     const rawLocale = options.locale
         || (typeof checkLocale === 'function' ? checkLocale() : null)
         || 'nl';
     const locale = String(rawLocale).toLowerCase().split(/[_-]/)[0];
     const profile = LOCALES[locale] || LOCALES.nl;
 
-    // Fixed feedback wording — comes from the active locale profile.
-    const warningText = profile.message;
-
-    const cfg = {
+    return {
         locale,
+        warningText: __('Please translate the glossary term(s) as declared within the glossary shown below:'),
 
-        // Builds the note written into the feedback box. Receives the list of
-        // untranslated glossary words, and the translator's display name (or '').
-        formatMessage: (missing, name) => {
-            const lines = missing.map((m) => {
-                const exp = (m.expected || []).join(', ');
-                const count = m.needed > 1 ? ` (${m.found}/${m.needed})` : '';
-                return exp ? `\u2022 ${m.word} \u2192 ${exp}${count}` : `\u2022 ${m.word}${count}`;
-            });
-            const greeting = name ? [`Hi ${name},`] : [];       // greeting on its own line
-            return [...greeting, warningText, ...lines].join('\n').replace(/\n{3,}/g, '\n\n');
-        },
+        // --- selectors: editor (per-row mode) -------------------------------
+        glossaryWordSelector: '.glossary-word',
+        translationTextSelector: '.translation-text',
+        glossaryCheckboxSelector: 'input[name="feedback_reason"][value="glossary"]',
+        standardTextSelector: 'textarea[name="feedback_comment"]',
+        translatorSelector: 'a[href*="profiles.wordpress.org"]',
+        rejectSelector: 'button.reject',
+        changesRequestedSelector: 'button.changesrequested',
+        editSelector: 'a.action.edit',
+        metaTabSelector: 'li.tab-meta',
+        activeTabClass: 'current',
 
-        // --- selectors ---------------------------------------------------------
-        glossaryWordSelector: '.glossary-word',                                   // words marked in the original
-        translationTextSelector: '.translation-text',                             // current translation in the preview row
-        glossaryCheckboxSelector: 'input[name="feedback_reason"][value="glossary"]', // reject-reason checkbox
-        standardTextSelector: 'textarea[name="feedback_comment"]',                // reject feedback note
-        translatorSelector: 'a[href*="profiles.wordpress.org"]',                  // link showing who translated
-        rejectSelector: 'button.reject',                                          // hard-reject button
-        changesRequestedSelector: 'button.changesrequested',                      // appears once a reason is checked
-        editSelector: 'a.action.edit',                                            // GlotPress "Details" link that opens the editor
-        metaTabSelector: 'li.tab-meta',                                           // the Meta tab holding the feedback form
-        activeTabClass: 'current',                                                // class marking the active tab
-        // -----------------------------------------------------------------------
+        // --- selectors: bulk toolbar (batch mode) ---------------------------
+        rowCheckboxSelector: 'th.checkbox input[type="checkbox"]',   // per-row tick box in the table
+        bulkFormSelector: 'form.bulk-actions, #bulk-actions-toolbar-top, #bulk-actions-toolbar-bottom',
+        bulkActionSelector: 'select[name="bulk[action]"], #bulk-action, select.bulk-action',
+        // The bulk dropdown has a "Reject" entry; "Apply" then opens a text box
+        // for the feedback, which is saved with its own button.
+        bulkActionValues: ['reject'],
+        bulkActionLabel: /^\s*(reject|afwijzen)\s*$/i,     // fallback on option text
+        bulkApplySelector: 'input[type="submit"], button[type="submit"], .button, button',
+        bulkApplyLabel: /apply|toepassen/i,
+        bulkReasonSelector: 'input[name="feedback_reason"][value="glossary"]',  // ticked if present
+        bulkCommentSelector: 'textarea',                    // the text box that opens after Apply
+        bulkSaveSelector: 'button, input[type="submit"], input[type="button"]',
+        bulkSaveLabel: /save|opslaan|submit|reject|afwijzen|send|verstuur|verzend|bevestig|confirm|ok\b/i,
+        bulkCancelLabel: /cancel|annuleer|annuleren|close|sluit|sluiten|^\s*[×x✕]\s*$/i,
+        bulkPreferBottom: true,   // use the toolbar under the table when there are two
 
-        action: 'changesrequested', // 'changesrequested' (check reason + Request changes)
-        // or 'reject' (hard reject) — set by the modal below
-        matchMode: 'prefix',        // 'includes' = substring only; 'prefix' = also allow inflectionMatch
-
-        // --- from the locale profile (see LOCALES above) -----------------------
+        // --- behaviour -------------------------------------------------------
+        action: 'changesrequested',
+        matchMode: 'prefix',
         exactTerms: profile.exactTerms,
         singular: profile.singular,
         inflectionMatch: profile.inflectionMatch,
         prefixLength: profile.prefixLength,
         stemSlack: profile.stemSlack,
-        // -----------------------------------------------------------------------
 
-        onlyRow: null,         // e.g. '33706304' -> only walk/act on rows whose id contains it
-        statuses: ['waiting'], // row statuses to process; skips 'current' (approved) and 'changesrequested'
-        // Protected phrases: brand names / fixed terms that must not be translated.
-        // A glossary word sitting inside one of these in the original is skipped, so
-        // e.g. "Search" inside "Google Search Console" is never flagged. Case-insensitive.
-        // Loaded from the "spellCheckIgnore" setting below; add extras here or via options.
+        onlyRow: null,
+        statuses: ['waiting'],
         ignorePhrases: [],
-        openTimeout: 5000,     // ms to wait for the editor to open and become visible (2 attempts)
-        buttonTimeout: 4000,   // ms to keep re-asserting the reason until the button appears
-        pollStep: 200,         // ms between re-assert/poll iterations
-        dryRun: DryRun,        // driven by the top-level DryRun switch
-        logActions: false,     // log each row id as its change-request starts/clicks (debug the 403)
-        logHighlight: false,   // log what the highlighter sees each pass (noisy; debug only)
-        highlightStep: 250,    // ms between highlight re-applies (to survive the row re-render)
-        actionDelay: 2000,     // ms to wait after acting so the AJAX can settle
+        excerptLength: 80,        // chars of the original shown in the bulk note
+        openTimeout: 5000,
+        buttonTimeout: 4000,
+        pollStep: 200,
+        dryRun: DryRun,
+        logActions: false,
+        logHighlight: false,
+        highlightStep: 250,
+        actionDelay: 2000,
+        saveTimeout: 180000,
+        bulkDialogTimeout: 60000, // ms to wait for the WordPress reject dialog after Apply      // ms to keep the spinner up while the bulk save runs
         ...options,
     };
+}
 
-    // Ask what to do with flagged rows (not needed for a dry run).
-    //   "Create" -> changes requested with glossary reason and note (original behaviour)
-    //   "Reject" -> hard reject, without glossary reason
-    //   anything else (modal closed) -> abort, change nothing
-    if (!cfg.dryRun) {
-        const choice = await cuteAlert({
-            type: "question",
-            title: __("Create changes requested"),
-            message: __("Do you want to request changes, or reject the translations?"),
-            confirmText: "Create",
-            cancelText: "Reject",
-            myWindow: currWindow
-        });
-
-        // Log the raw answer, so the button values of cuteAlert are visible in the console.
-        console.log('[glossaryQA] modal choice:', choice);
-
-        // cuteAlert versions differ in what they resolve with, so accept the common forms.
-        const isConfirm = choice === 'confirm' || choice === 'create' || choice === true;
-        const isCancel = choice === 'cancel' || choice === 'reject' || choice === false;
-
-        if (isConfirm) {
-            cfg.action = 'changesrequested';
-        } else if (isCancel) {
-            cfg.action = 'reject';
-        } else {
-            messageBox("info", __("Glossary check aborted"));
-            return [];
-        }
-    }
-
-    // Merge the stored brand/ignore list from settings with anything configured above.
-    cfg.ignorePhrases = [...(cfg.ignorePhrases || []), ...await loadIgnoreList()];
-
-    // Only process rows with a status we care about — skip approved (status-current)
-    // and already-actioned (status-changesrequested) rows. Configurable via
-    // options.statuses (array of status names without the "status-" prefix).
+// =============================================================================
+// PHASE 1 — SCAN
+// =============================================================================
+function scanRows(cfg) {
     const statuses = cfg.statuses || ['waiting'];
     const statusSelector = statuses.map((s) => `tr.preview.status-${s}`).join(', ');
     const rows = [...document.querySelectorAll(statusSelector)];
     const report = [];
+    const findings = [];
+    let scanned = 0;
 
-    for (const row of rows) {                                    // (1) walk the table
-
+    for (const row of rows) {
         if (cfg.onlyRow && !(row.id || '').includes(cfg.onlyRow)) continue;
-        let toTranslate = true;
 
-        let comment = document.querySelector("#editor-" + row.id + " .source-details__comment p");
-        if (comment != null) {
-            comment = comment.innerText;
-            toTranslate = checkComments(comment.trim());
-        }
-
-        if (toTranslate == false) {
-            continue;
-        }
+        const commentEl = document.querySelector('#editor-' + row.id + ' .source-details__comment p');
+        if (commentEl && typeof checkComments === 'function'
+            && checkComments(commentEl.innerText.trim()) === false) continue;
 
         const original = row.querySelector('td.original');
-        let glossaryWords = original
-            ? [...original.querySelectorAll(cfg.glossaryWordSelector)]
-            : [];
-
-        // Drop glossary words that fall inside a protected phrase (brand names etc.),
-        // e.g. "Search" inside "Google Search Console" — those must not be translated.
+        let glossaryWords = original ? [...original.querySelectorAll(cfg.glossaryWordSelector)] : [];
         glossaryWords = dropProtected(glossaryWords, original, cfg);
-
-        // Glossary words without a translation are not checked and not counted.
         glossaryWords = glossaryWords.filter((w) => expectedFor(w).length > 0);
+        if (glossaryWords.length === 0) continue;
 
-        if (glossaryWords.length === 0) continue;                  // (3) no glossary word to check -> skip
-
+        scanned++;
         const translation = readTranslation(row, cfg);
-        const missingInfo = unmetGlossary(glossaryWords, translation, cfg); // (4)
+        const missing = unmetGlossary(glossaryWords, translation, cfg);
 
-        if (missingInfo.length === 0) {                           // (5) all good -> skip
+        if (missing.length === 0) {
             report.push({ row: row.id, status: 'ok' });
             continue;
         }
 
-        report.push({                                              // (6) something missing
+        const editor = getEditorFor(row);
+        const originalText = ((original && (original.querySelector('.original-text') || original)).textContent || '')
+            .replace(/\s+/g, ' ').trim();
+
+        findings.push({
+            rowId: row.id,
+            row,
+            original: originalText,
+            translation,
+            missing,
+            translator: editor ? translatorName(editor, cfg) : '',
+            handle: editor ? translatorHandle(editor, cfg) : '',
+        });
+        report.push({
             row: row.id,
-            status: cfg.dryRun
-                ? (cfg.action === 'reject' ? 'would-reject' : 'would-request-changes')
-                : 'processing',
-            missing: missingInfo,
+            status: cfg.dryRun ? 'would-flag' : 'flagged',
+            missing,
             translation,
         });
-
-        if (cfg.dryRun) continue;
-
-        try {
-            // openEditor confirms this row's editor is visible (DOM only — the page's
-            // $gp isn't readable from a content script).
-            const editor = await openEditor(row, cfg);
-            if (!editor) {
-                report[report.length - 1].status = 'editor-not-active';
-                closeEditor(row, cfg);   // don't leave the editor hanging open
-                continue;
-            }
-
-            if (cfg.action === 'reject') {
-                // Hard reject without a glossary reason: just the Reject button
-                // (also under the Meta tab).
-                activateMetaTab(editor, row, cfg);
-                const rej = await waitForEl(
-                    () => visibleEl(editor.querySelector(cfg.rejectSelector)),
-                    cfg.buttonTimeout
-                );
-                if (rej) {
-                    highlightMissing(row, missingInfo, cfg);
-                    rej.click();
-                    report[report.length - 1].status = 'rejected';
-                } else {
-                    report[report.length - 1].status = 'reject-button-missing';
-                    closeEditor(row, cfg);
-                }
-                await wait(cfg.actionDelay);
-                continue;
-            }
-
-            // Changes-requested: the feedback form lives in the Meta tab and loads a
-            // moment after the editor opens. Wait for the reason checkbox to exist,
-            // then tick it EXACTLY ONCE — the native click fires its own change, and
-            // re-firing change would make GlotPress render the reason list again
-            // (that was the doubled-checkbox bug). After that, just poll for the button.
-            if (cfg.logActions) console.log('[glossaryQA] START', row.id,
-                '|', missingInfo.map((m) => m.word).join(', '));
-            activateMetaTab(editor, row, cfg);
-            const checkbox = await waitForEl(
-                () => editor.querySelector(cfg.glossaryCheckboxSelector),
-                cfg.buttonTimeout
-            );
-            if (!checkbox) {
-                report[report.length - 1].status = 'feedback-form-not-ready';
-                closeEditor(row, cfg);
-                continue;
-            }
-
-            await wait(cfg.pollStep);              // brief settle so the change handler is wired
-            activateMetaTab(editor, row, cfg);     // in case the tab switched back
-            if (!checkbox.checked) checkbox.click(); // single tick; native change does the rest
-
-            const tb = editor.querySelector(cfg.standardTextSelector);
-            if (tb) {
-                tb.value = cfg.formatMessage(missingInfo, translatorName(editor, cfg));
-                tb.dispatchEvent(new Event('input', { bubbles: true }));
-                tb.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-
-            const btn = await waitForEl(
-                () => visibleEl(editor.querySelector(cfg.changesRequestedSelector)),
-                cfg.buttonTimeout
-            );
-
-            if (btn) {
-                // Highlight the offending word(s) in the PREVIEW original BEFORE clicking,
-                // so that if GlotPress's status handler throws (e.g. a 403), the mark is
-                // already applied. Re-applied a few times below to survive the re-render.
-                highlightMissing(row, missingInfo, cfg);
-
-                // Log the row and the button's nonce right before the POST fires, so a
-                // 403 in the console can be matched to this row (and its nonce compared).
-                if (cfg.logActions) console.log('[glossaryQA] CLICK', row.id,
-                    '| nonce:', btn.getAttribute('data-nonce'));
-                try {
-                    btn.click();
-                } catch (clickErr) {
-                    if (cfg.logActions) console.warn('[glossaryQA] click threw', row.id, clickErr && clickErr.message);
-                }
-                report[report.length - 1].status = 'changes-requested';
-
-                // GlotPress recolours/re-renders the row after the POST, which can strip
-                // an early highlight — re-apply a few times over ~1.5s to land after it.
-                for (let i = 0; i < 6; i++) {
-                    await wait(cfg.highlightStep);
-                    highlightMissing(row, missingInfo, cfg);
-                }
-            } else {
-                report[report.length - 1].status = 'changesrequested-not-shown';
-                closeEditor(row, cfg);
-            }
-
-            await wait(cfg.actionDelay);                             // let the AJAX settle
-        } catch (err) {
-            report[report.length - 1].status = 'action-error';
-            report[report.length - 1].error = String(err && err.message || err);
-        }
     }
-    messageBox("info", __("Glossary Check is ready"));
-    //console.table(report);
-    //const flagged = report.filter((r) => r.status !== 'ok').length;
-    //console.log(`Scanned ${rows.length} rows, flagged ${flagged}.`);
-    return report;
+    return { findings, report, scanned };
 }
 
-// --- helpers -----------------------------------------------------------------
+// =============================================================================
+// PHASE 2a — REVIEW MODAL
+// Resolves with { action, ids, note } or null.
+// =============================================================================
+function showReviewModal(findings, scanned, cfg) {
+    return new Promise((resolve) => {
+        const el = (tag, style, text) => {
+            const n = document.createElement(tag);
+            if (style) n.style.cssText = style;
+            if (text != null) n.textContent = text;
+            return n;
+        };
 
+        const selected = new Set(findings.map((f) => f.rowId));
+        let noteEdited = false;
+
+        // --- frame ---
+        const overlay = el('div', 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:flex;align-items:center;justify-content:center;font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;');
+        const box = el('div', 'background:#fff;color:#1d2327;width:min(1100px,95vw);max-height:90vh;display:flex;flex-direction:column;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.3);');
+        overlay.appendChild(box);
+
+        const header = el('div', 'padding:14px 18px;border-bottom:1px solid #dcdcde;');
+        header.appendChild(el('h2', 'margin:0 0 4px;font-size:17px;', __('Glossary check: problems found')));
+        const summary = el('div', 'color:#50575e;');
+        header.appendChild(summary);
+        box.appendChild(header);
+
+        // --- toolbar: select all + translator filter ---
+        const toolbar = el('div', 'padding:8px 18px;display:flex;gap:16px;align-items:center;border-bottom:1px solid #f0f0f1;');
+        const allLabel = el('label', 'display:flex;gap:6px;align-items:center;cursor:pointer;');
+        const allBox = el('input');
+        allBox.type = 'checkbox';
+        allBox.checked = true;
+        allLabel.append(allBox, document.createTextNode(__('Select all')));
+        toolbar.appendChild(allLabel);
+
+        const translators = [...new Set(findings.map((f) => f.translator || ''))];
+        let filterSel = null;
+        if (translators.length > 1) {
+            const fl = el('label', 'display:flex;gap:6px;align-items:center;');
+            fl.appendChild(document.createTextNode(__('Translator') + ':'));
+            filterSel = el('select');
+            filterSel.appendChild(new Option(__('All'), '*'));
+            translators.forEach((n) => filterSel.appendChild(new Option(n || __('(unknown)'), n)));
+            fl.appendChild(filterSel);
+            toolbar.appendChild(fl);
+            toolbar.appendChild(el('span', 'color:#8c8f94;', __('Tip: one batch per translator keeps each mail personal.')));
+        }
+        box.appendChild(toolbar);
+
+        // --- findings table ---
+        const scroll = el('div', 'overflow:auto;flex:1 1 auto;min-height:120px;padding:0 18px;');
+        const table = el('table', 'width:100%;border-collapse:collapse;');
+        const thead = el('thead');
+        const hr = el('tr', 'text-align:left;position:sticky;top:0;background:#fff;');
+        ['', __('Original'), __('Translation'), __('Missing glossary term(s)'), __('Translator')]
+            .forEach((h) => hr.appendChild(el('th', 'padding:8px 6px;border-bottom:2px solid #dcdcde;', h)));
+        thead.appendChild(hr);
+        table.appendChild(thead);
+        const tbody = el('tbody');
+        table.appendChild(tbody);
+        scroll.appendChild(table);
+        box.appendChild(scroll);
+
+        const boxes = new Map();
+        const trs = new Map();
+        for (const f of findings) {
+            const tr = el('tr', 'border-bottom:1px solid #f0f0f1;vertical-align:top;');
+            const c0 = el('td', 'padding:6px;');
+            const cb = el('input');
+            cb.type = 'checkbox';
+            cb.checked = true;
+            cb.addEventListener('change', () => {
+                cb.checked ? selected.add(f.rowId) : selected.delete(f.rowId);
+                refresh();
+            });
+            c0.appendChild(cb);
+            boxes.set(f.rowId, cb);
+
+            const orig = el('td', 'padding:6px;cursor:pointer;color:#2271b1;', excerpt(f.original, 140));
+            orig.title = __('Show this row in the table');
+            orig.addEventListener('click', () => flashRow(f.row));
+
+            const tr2 = el('td', 'padding:6px;', excerpt(f.translation, 140));
+            const miss = el('td', 'padding:6px;white-space:pre-line;', f.missing.map(formatMissingLine).join('\n'));
+            const who = el('td', 'padding:6px;color:#50575e;',
+                [f.translator, f.handle ? `@${f.handle}` : ''].filter(Boolean).join('\n') || '—');
+            who.style.whiteSpace = 'pre-line';
+
+            tr.append(c0, orig, tr2, miss, who);
+            tbody.appendChild(tr);
+            trs.set(f.rowId, tr);
+        }
+
+        // --- editable note ---
+        const noteWrap = el('div', 'padding:10px 18px;border-top:1px solid #dcdcde;');
+        const noteHead = el('div', 'display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;');
+        noteHead.appendChild(el('strong', '', __('Note for the bulk request (you can edit it)')));
+        const regen = el('a', 'cursor:pointer;color:#2271b1;', __('Regenerate'));
+        regen.addEventListener('click', () => { noteEdited = false; refresh(); });
+        noteHead.appendChild(regen);
+        noteWrap.appendChild(noteHead);
+        const note = el('textarea', 'width:100%;height:130px;font:12px/1.4 monospace;box-sizing:border-box;');
+        note.addEventListener('input', () => { noteEdited = true; });
+        noteWrap.appendChild(note);
+        box.appendChild(noteWrap);
+
+        // --- buttons ---
+        const footer = el('div', 'padding:12px 18px;border-top:1px solid #dcdcde;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;');
+        box.appendChild(footer);
+        const btnBase = 'padding:6px 12px;border-radius:3px;cursor:pointer;font-size:13px;border:1px solid #2271b1;';
+        const button = (label, kind, onClick) => {
+            const styles = {
+                primary: 'background:#2271b1;color:#fff;',
+                secondary: 'background:#f6f7f7;color:#2271b1;',
+                danger: 'background:#fff;color:#b32d2e;border-color:#b32d2e;',
+            };
+            const b = el('button', btnBase + styles[kind], label);
+            b.type = 'button';
+            b.addEventListener('click', onClick);
+            footer.appendChild(b);
+            return b;
+        };
+
+        const finish = (action) => {
+            document.removeEventListener('keydown', onKey, true);
+            overlay.remove();
+            resolve({ action, ids: [...selected], note: note.value });
+        };
+        const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); finish('cancel'); } };
+        document.addEventListener('keydown', onKey, true);
+
+        const actionButtons = [];
+        if (cfg.dryRun) {
+            button(__('Copy note'), 'secondary', async () => {
+                await copyToClipboard(note.value);
+                notify('info', __('Note copied to clipboard'));
+            });
+            button(__('Close'), 'primary', () => finish('close'));
+        } else {
+            button(__('Cancel'), 'secondary', () => finish('cancel'));
+            actionButtons.push(button(__('Bulk reject: prepare, I save myself'), 'secondary', () => finish('bulk-prepare')));
+            actionButtons.push(button(__('Bulk reject: save now'), 'primary', () => finish('bulk-send')));
+        }
+
+        // --- live state ---
+        function visibleFindings() {
+            const who = filterSel ? filterSel.value : '*';
+            return findings.filter((f) => who === '*' || (f.translator || '') === who);
+        }
+        function refresh() {
+            const vis = new Set(visibleFindings().map((f) => f.rowId));
+            for (const f of findings) {
+                trs.get(f.rowId).style.display = vis.has(f.rowId) ? '' : 'none';
+                // rows hidden by the filter are never part of the batch
+                if (!vis.has(f.rowId)) { selected.delete(f.rowId); boxes.get(f.rowId).checked = false; }
+            }
+            const chosen = findings.filter((f) => selected.has(f.rowId));
+            allBox.checked = chosen.length > 0 && chosen.length === vis.size;
+            summary.textContent = qaSprintf(__('%1$s of %2$s checked rows have missing glossary terms — %3$s selected'),
+                findings.length, scanned, chosen.length)
+                + (cfg.dryRun ? ` — ${__('DRY RUN: nothing will be changed')}` : '');
+            if (!noteEdited) note.value = formatBulkMessage(chosen, cfg);
+            actionButtons.forEach((b) => { b.disabled = chosen.length === 0; b.style.opacity = chosen.length ? '1' : '.5'; });
+        }
+
+        allBox.addEventListener('change', () => {
+            for (const f of visibleFindings()) {
+                boxes.get(f.rowId).checked = allBox.checked;
+                allBox.checked ? selected.add(f.rowId) : selected.delete(f.rowId);
+            }
+            refresh();
+        });
+        if (filterSel) filterSel.addEventListener('change', () => {
+            visibleFindings().forEach((f) => { selected.add(f.rowId); boxes.get(f.rowId).checked = true; });
+            refresh();
+        });
+
+        refresh();
+        document.body.appendChild(overlay);
+    });
+}
+
+function flashRow(row) {
+    if (!row) return;
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const old = row.style.outline;
+    row.style.outline = '3px solid #dba617';
+    setTimeout(() => { row.style.outline = old; }, 2000);
+}
+
+// =============================================================================
+// PHASE 2b — BULK: tick rows, choose "Reject", Apply, paste note, (save)
+// =============================================================================
+// Wrapper: the spinner is shown from the moment the choice is made until the
+// whole bulk action is done (or handed back to the user). Messages are shown
+// only after the spinner is gone, so the two never overlap.
+async function bulkChangesRequested(items, noteText, autoSubmit, cfg, byId) {
+    const spinner = startSpinner(autoSubmit
+        ? __('Rejecting the selected rows, please wait…')
+        : __('Preparing the bulk reject, please wait…'));
+    let result;
+    try {
+        result = await bulkRun(items, noteText, autoSubmit, cfg, byId, spinner);
+    } catch (err) {
+        result = ['warning', String(err && err.message || err)];
+    } finally {
+        spinner.stop();
+    }
+    if (result && result.focus) {
+        result.focus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof result.focus.focus === 'function') result.focus.focus();
+    }
+    if (result) notify(result[0], result[1]);
+}
+
+async function bulkRun(items, noteText, autoSubmit, cfg, byId, spinner) {
+    const setStatus = (status) => items.forEach((it) => { byId.get(it.rowId).status = status; });
+
+    // 1. Tick exactly the chosen rows in the translations table.
+    document.querySelectorAll(`tr.preview ${cfg.rowCheckboxSelector}`)
+        .forEach((cb) => { if (cb.checked) cb.click(); });
+
+    let ticked = 0;
+    for (const it of items) {
+        const cb = it.row.querySelector(cfg.rowCheckboxSelector);
+        if (cb) {
+            if (!cb.checked) cb.click();
+            ticked++;
+        } else {
+            byId.get(it.rowId).status = 'no-row-checkbox';
+        }
+        highlightMissing(it.row, it.missing, cfg);
+    }
+    if (ticked === 0) {
+        await copyToClipboard(noteText);
+        return ['warning', __('Could not tick the rows in the table. The note is on your clipboard.')];
+    }
+
+    // Always keep a copy of the note on the clipboard, as a safety net.
+    await copyToClipboard(noteText);
+
+    // 2. Pick the bulk toolbar and choose "Reject" in the dropdown.
+    const form = pickBulkForm(cfg);
+    const select = form && form.querySelector(cfg.bulkActionSelector);
+    const option = select && ([...select.options].find((o) => cfg.bulkActionValues.includes(o.value))
+        || [...select.options].find((o) => cfg.bulkActionLabel.test(o.textContent)));
+
+    if (!option) {
+        setStatus('bulk-option-missing');
+        return Object.assign(['warning', __('The rows are ticked, but the bulk "Reject" option was not found. The note is on your clipboard: choose Reject, click Apply and paste it.')], { focus: form });
+    }
+    select.value = option.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+
+    // 3. Click "Apply" — that opens the feedback text box.
+    const apply = [...form.querySelectorAll(cfg.bulkApplySelector)]
+        .find((b) => b !== select && cfg.bulkApplyLabel.test(b.value || b.textContent || ''));
+    if (!apply) {
+        setStatus('bulk-apply-missing');
+        return Object.assign(['warning', __('Rows ticked and "Reject" chosen, but the Apply button was not found. Click Apply yourself; the note is on your clipboard.')], { focus: form });
+    }
+    if (cfg.logActions) console.log('[glossaryQA] BULK APPLY', items.map((i) => i.rowId));
+    apply.click();
+
+    // 4. Wait for the text box that Apply opened (a visible textarea that is not
+    //    inside a row editor), tick the glossary reason if offered, paste.
+    const comment = await waitForEl(() =>
+        [...document.querySelectorAll(cfg.bulkCommentSelector)].find((ta) =>
+            ta.getClientRects().length > 0 && !ta.closest('tr.editor, .editor')),
+        cfg.bulkDialogTimeout, 200);
+
+    if (!comment) {
+        setStatus('bulk-textbox-missing');
+        return ['warning', __('Apply was clicked, but the text box did not appear. Paste the note yourself; it is on your clipboard.')];
+    }
+
+    // The reason checkbox may sit anywhere in the dialog: search upwards too.
+    const reason = findUpwards(comment, (scope) =>
+        [...scope.querySelectorAll(cfg.bulkReasonSelector)].find((r) => !r.closest('tr.editor, .editor')));
+    if (reason && !reason.checked) reason.click();
+
+    comment.value = noteText;
+    comment.dispatchEvent(new Event('input', { bubbles: true }));
+    comment.dispatchEvent(new Event('change', { bubbles: true }));
+
+    // 5. Save, or leave it for the user.
+    //    Dialog buttons often live in a button bar OUTSIDE the form that holds
+    //    the textarea, so walk up from the textarea until a matching visible
+    //    button turns up (never the Apply button, never inside a row editor).
+    const isSave = (b) => b !== apply
+        && b.getClientRects().length > 0
+        && !b.closest('tr.editor, .editor')
+        && !b.disabled
+        && cfg.bulkSaveLabel.test(buttonLabel(b))
+        && !cfg.bulkApplyLabel.test(buttonLabel(b));
+    // The nearest group of visible buttons around the text box.
+    const nearButtons = () => findUpwards(comment, (scope) => {
+        const list = [...scope.querySelectorAll('button, input[type="submit"], input[type="button"], a.button')]
+            .filter((b) => b.getClientRects().length > 0 && b !== apply && !b.closest('tr.editor, .editor'));
+        return list.length ? list : null;
+    }) || [];
+    // One poll that tries both: a button with a known label, or — fallback —
+    // the only non-cancel button next to the text box, whatever its label.
+    const findSave = () => {
+        const byLabel = findUpwards(comment, (scope) =>
+            [...scope.querySelectorAll(cfg.bulkSaveSelector)].find(isSave));
+        if (byLabel) return byLabel;
+        const candidates = nearButtons().filter((b) => !cfg.bulkCancelLabel.test(buttonLabel(b)) && !b.disabled);
+        return candidates.length === 1 ? candidates[0] : null;
+    };
+    const save = await waitForEl(findSave, cfg.buttonTimeout, 100);
+    const near = save ? [] : nearButtons();
+
+    const describe = (b) => `"${buttonLabel(b)}" <${b.tagName.toLowerCase()}`
+        + (b.id ? ` id="${b.id}"` : '') + (b.className ? ` class="${b.className}"` : '') + '>';
+    if (save) {
+        if (cfg.logActions) console.log('[glossaryQA] save button:', describe(save));
+    } else if (autoSubmit) {
+        // Plain text, so it is readable without expanding anything.
+        console.warn('[glossaryQA] save button not found. Visible buttons near the text box:\n'
+            + (near.length ? near.map(describe).join('\n') : '(none)'));
+    }
+
+    if (autoSubmit && save) {
+        setStatus('bulk-rejected-with-note');
+        if (cfg.logActions) console.log('[glossaryQA] BULK SAVE', items.map((i) => i.rowId));
+
+        // Saving can take a while on translate.wordpress.org. Show the spinner
+        // until the text box is gone (dialog closed) or the page reloads — a
+        // reload ends this script and removes the spinner by itself.
+        spinner.update(__('Saving the bulk reject, please wait…'));
+        save.click();
+        const closed = await waitFor(
+            () => !comment.isConnected || comment.getClientRects().length === 0,
+            cfg.saveTimeout, 500);
+
+        if (closed) {
+            return ['info', __('Glossary check is ready: the selected rows were rejected with the note.')];
+        }
+        setStatus('bulk-save-slow');
+        return ['warning', __('Saving is taking longer than expected. Check the page before running the check again.')];
+    }
+
+    setStatus('bulk-prepared');
+    return Object.assign([autoSubmit ? 'warning' : 'info', autoSubmit
+        ? __('The note is filled in, but the save button was not found. Please click it yourself.')
+        : __('Everything is ready: check the ticked rows and the note, then click save yourself.')], { focus: comment });
+}
+
+// Show a waiting spinner. Uses the addon's spinner when available, otherwise a
+// small overlay of our own. Returns { stop() }.
+function startSpinner(message) {
+    if (typeof showTranslationSpinner === 'function' && typeof hideTranslationSpinner === 'function') {
+        let on = true;
+        showTranslationSpinner(message);
+        return {
+            update: (msg) => { if (on) { hideTranslationSpinner(); showTranslationSpinner(msg); } },
+            stop: () => { if (on) { on = false; hideTranslationSpinner(); } },
+        };
+    }
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,.6);z-index:100001;'
+        + 'display:flex;align-items:center;justify-content:center;font:14px sans-serif;';
+    const box = document.createElement('div');
+    box.style.cssText = 'display:flex;gap:10px;align-items:center;background:#fff;padding:14px 18px;'
+        + 'border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.2);';
+    const wheel = document.createElement('div');
+    wheel.style.cssText = 'width:18px;height:18px;border:3px solid #dcdcde;border-top-color:#2271b1;'
+        + 'border-radius:50%;';
+    wheel.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 800, iterations: Infinity });
+    const label = document.createTextNode(message);
+    box.append(wheel, label);
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    return { update: (msg) => { label.textContent = msg; }, stop: () => ov.remove() };
+}
+
+// Visible text of a button-like element (value for <input>, text otherwise).
+function buttonLabel(b) {
+    return String(b.value || b.textContent || b.getAttribute('aria-label') || b.title || '').trim();
+}
+
+// Run `finder(scope)` on the element's ancestors, nearest first, and return
+// the first truthy result. Stops at <body>.
+function findUpwards(el, finder) {
+    for (let scope = el.parentElement; scope && scope !== document.documentElement; scope = scope.parentElement) {
+        const hit = finder(scope);
+        if (hit) return hit;
+        if (scope === document.body) break;
+    }
+    return null;
+}
+
+// The bulk toolbar(s). GlotPress can render one above and one below the table.
+function pickBulkForm(cfg) {
+    const forms = [...document.querySelectorAll(cfg.bulkFormSelector)]
+        .filter((f) => !f.closest('tr.editor, .editor'));
+    const visible = forms.filter((f) => f.getClientRects().length > 0);
+    const pool = visible.length ? visible : forms;
+    return cfg.bulkPreferBottom ? pool[pool.length - 1] : pool[0];
+}
+
+// Find an element of the bulk feedback form: first inside the toolbar, then
+// anywhere on the page (a modal), but never inside a row editor.
+function findBulkEl(selector, form, mustBeVisible) {
+    const ok = (el) => !el.closest('tr.editor, .editor') && (!mustBeVisible || el.getClientRects().length > 0);
+    const inForm = form ? [...form.querySelectorAll(selector)].find(ok) : null;
+    return inForm || [...document.querySelectorAll(selector)].find(ok) || null;
+}
+
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (e2) { /* ignore */ }
+        ta.remove();
+        return ok;
+    }
+}
+
+// =============================================================================
+// PHASE 2c — PER ROW (the original behaviour)
+// =============================================================================
+async function processRow(item, cfg, entry) {
+    const { row, missing: missingInfo } = item;
+    try {
+        const editor = await openEditor(row, cfg);
+        if (!editor) {
+            entry.status = 'editor-not-active';
+            closeEditor(row, cfg);
+            return;
+        }
+
+        if (cfg.action === 'reject') {
+            activateMetaTab(editor, row, cfg);
+            const rej = await waitForEl(() => visibleEl(editor.querySelector(cfg.rejectSelector)), cfg.buttonTimeout);
+            if (rej) {
+                highlightMissing(row, missingInfo, cfg);
+                rej.click();
+                entry.status = 'rejected';
+            } else {
+                entry.status = 'reject-button-missing';
+                closeEditor(row, cfg);
+            }
+            await wait(cfg.actionDelay);
+            return;
+        }
+
+        if (cfg.logActions) console.log('[glossaryQA] START', row.id, '|', missingInfo.map((m) => m.word).join(', '));
+        activateMetaTab(editor, row, cfg);
+        const checkbox = await waitForEl(() => editor.querySelector(cfg.glossaryCheckboxSelector), cfg.buttonTimeout);
+        if (!checkbox) {
+            entry.status = 'feedback-form-not-ready';
+            closeEditor(row, cfg);
+            return;
+        }
+
+        await wait(cfg.pollStep);
+        activateMetaTab(editor, row, cfg);
+        if (!checkbox.checked) checkbox.click();   // single tick; native change does the rest
+
+        const tb = editor.querySelector(cfg.standardTextSelector);
+        if (tb) {
+            tb.value = formatRowMessage(missingInfo, translatorHandle(editor, cfg), translatorName(editor, cfg), cfg);
+            tb.dispatchEvent(new Event('input', { bubbles: true }));
+            tb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        const btn = await waitForEl(() => visibleEl(editor.querySelector(cfg.changesRequestedSelector)), cfg.buttonTimeout);
+        if (btn) {
+            highlightMissing(row, missingInfo, cfg);
+            if (cfg.logActions) console.log('[glossaryQA] CLICK', row.id, '| nonce:', btn.getAttribute('data-nonce'));
+            try { btn.click(); } catch (clickErr) {
+                if (cfg.logActions) console.warn('[glossaryQA] click threw', row.id, clickErr && clickErr.message);
+            }
+            entry.status = 'changes-requested';
+            for (let i = 0; i < 6; i++) {
+                await wait(cfg.highlightStep);
+                highlightMissing(row, missingInfo, cfg);
+            }
+        } else {
+            entry.status = 'changesrequested-not-shown';
+            closeEditor(row, cfg);
+        }
+        await wait(cfg.actionDelay);
+    } catch (err) {
+        entry.status = 'action-error';
+        entry.error = String(err && err.message || err);
+    }
+}
+
+// =============================================================================
+// MESSAGES
+// =============================================================================
+function formatMissingLine(m) {
+    const exp = (m.expected || []).join(', ');
+    const count = m.needed > 1 ? ` (${m.found}/${m.needed})` : '';
+    return exp ? `• ${m.word} → ${exp}${count}` : `• ${m.word}${count}`;
+}
+
+// "@handle" — a wordpress.org mention, so the translator gets a mail even
+// without opt-in. Falls back to "@Display Name" if no handle could be read.
+function mention(handle, name) {
+    if (handle) return `@${handle}`;
+    return name ? `@${name}` : '';
+}
+
+// Note for a single row (per-row mode).
+function formatRowMessage(missing, handle, name, cfg) {
+    const who = mention(handle, name);
+    const greeting = who ? [qaSprintf(__('Hi %s,'), who)] : [];
+    return [...greeting, cfg.warningText, ...missing.map(formatMissingLine)].join('\n');
+}
+
+// One combined note for a batch. Each string gets a short quote of the original
+// so the translator can find it. With several translators the entries are
+// grouped per translator; with one, the note opens with a personal greeting.
+function formatBulkMessage(items, cfg) {
+    if (!items.length) return '';
+    const groups = new Map();
+    for (const it of items) {
+        const k = mention(it.handle, it.translator);   // "@handle" (or '' if unknown)
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(it);
+    }
+    const single = groups.size === 1;
+    const out = [];
+    const onlyWho = [...groups.keys()][0];
+    if (single && onlyWho) out.push(qaSprintf(__('Hi %s,'), onlyWho));
+    out.push(cfg.warningText);
+
+    for (const [who, list] of groups) {
+        if (!single) out.push('', `— ${who || '?'} —`);
+        for (const it of list) {
+            out.push('', `"${excerpt(it.original, cfg.excerptLength)}"`);
+            it.missing.forEach((m) => out.push(formatMissingLine(m)));
+        }
+    }
+    return out.join('\n');
+}
+
+function excerpt(s, n) {
+    s = (s || '').replace(/\s+/g, ' ').trim();
+    return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
+}
+
+// =============================================================================
+// MATCHING ENGINE (unchanged)
+// =============================================================================
 function readTranslation(row, cfg) {
     const cell = row.querySelector('td.translation');
     if (!cell) return '';
@@ -369,34 +911,28 @@ function expectedFor(wordSpan) {
     try {
         list = JSON.parse(wordSpan.dataset.translations || '[]');
     } catch (e) {
-        return [];                       // unparseable -> treat as "no translation"
+        return [];
     }
     if (!Array.isArray(list)) return [];
     return list
         .map((e) => String((e && e.translation) || '').trim())
-        .filter((t) => t && !/^[-–—_?.\s]+$/.test(t));   // ignore placeholders like "-" or "?"
+        .filter((x) => x && !/^[-–—_?.\s]+$/.test(x));
 }
 
 // Returns a list of glossary terms that aren't translated enough times.
-// Terms are grouped by the (lower-cased) source word, so a word appearing
-// N times in the original needs N matching occurrences in the translation.
 function unmetGlossary(glossaryWords, translationText, cfg) {
     const haystack = normalize(translationText);
-    // Split on non-word chars but keep in-word hyphens, so "lay-out" stays one
-    // token (matching a glossary "lay-out") while "frontend" stays distinct from
-    // "front-end". Trim any hyphens left at token edges (e.g. Dutch "Elementor-").
     const tokens = haystack
         .split(/[^\p{L}\p{N}-]+/u)
-        .map((t) => t.replace(/^-+|-+$/g, ''))
+        .map((x) => x.replace(/^-+|-+$/g, ''))
         .filter(Boolean);
 
-    // Group spans by source word: { key -> { word, count, expectedRaw[], candidates[] } }
     const groups = new Map();
     for (const w of glossaryWords) {
         const key = normalize(w.textContent);
         if (!key) continue;
         const expected = expectedFor(w);
-        if (expected.length === 0) continue;     // no translation -> don't count this span
+        if (expected.length === 0) continue;
         if (!groups.has(key)) {
             groups.set(key, { word: w.textContent.trim(), count: 0, expectedRaw: [], candidates: [] });
         }
@@ -412,22 +948,14 @@ function unmetGlossary(glossaryWords, translationText, cfg) {
 
     const missing = [];
     for (const g of groups.values()) {
-        if (g.candidates.length === 0) continue;   // no glossary target -> can't judge
-
-        // Split candidates into single-word (matched against individual tokens) and
-        // multi-word phrases like "geheime sleutel" (matched when ALL their words are
-        // present in the translation — a single token can never equal a phrase).
+        if (g.candidates.length === 0) continue;
         const singleCands = g.candidates.filter((c) => !/\s/.test(c));
         const phraseCands = g.candidates.filter((c) => /\s/.test(c));
-
-        // A phrase candidate is satisfied if each of its words matches some token.
         const phraseSatisfied = phraseCands.some((phrase) =>
             phrase.split(/\s+/).filter(Boolean)
                 .every((wordCand) => tokens.some((tok) => tokenMatches(tok, [wordCand], g.word, cfg)))
         );
 
-        // Greedily consume one distinct translation token per required occurrence
-        // (single-word candidates), or count the phrase as satisfying one occurrence.
         const used = new Array(tokens.length).fill(false);
         let found = 0;
         for (let need = 0; need < g.count; need++) {
@@ -435,10 +963,9 @@ function unmetGlossary(glossaryWords, translationText, cfg) {
                 ? tokens.findIndex((tok, i) => !used[i] && tokenMatches(tok, singleCands, g.word, cfg))
                 : -1;
             if (idx !== -1) { used[idx] = true; found += 1; continue; }
-            if (phraseSatisfied) { found += 1; continue; }  // phrase counts once per needed occurrence
+            if (phraseSatisfied) { found += 1; continue; }
             break;
         }
-
         if (found < g.count) {
             missing.push({ word: g.word, expected: g.expectedRaw, needed: g.count, found });
         }
@@ -446,35 +973,19 @@ function unmetGlossary(glossaryWords, translationText, cfg) {
     return missing;
 }
 
-// Does one translation token satisfy any candidate? Substring handles compounds
-// and derived forms ("sleutels" in "providersleutels", "reset" in "resetten");
-// stem handles Dutch inflection ("beschikbaar" ~ "beschikbare"). Short glossary
-// terms that would match spuriously inside a compound (e.g. "tab" in "tabbladen")
-// are handled by listing a more specific form (e.g. the plural) in the glossary.
 function tokenMatches(tok, candidates, sourceWord, cfg) {
     const src = normalize(sourceWord);
     const terms = cfg.exactTerms || [];
-    const singular = cfg.singular || ((w) => w);            // plural rule (locale profile)
+    const singular = cfg.singular || ((w) => w);
     const stems = terms.map(singular);
     const isExactTerm = (w) => stems.includes(singular(w));
 
     return candidates.some((cand) => {
-        // Whole-word terms: the term must appear as its own word (or plural of it),
-        // not as a substring of a bigger word — so the target "site" isn't counted
-        // inside "website"/"websites". Triggered by the source word OR the target
-        // form, and tolerant of singular/plural on both sides.
         if (isExactTerm(cand) || isExactTerm(src)) {
             return singular(tok) === singular(cand);
         }
-
-        if (tok.includes(cand)) return true;                     // exact / compound / derived
-
-        // Keep-as-is terms (glossary target equals the English source, e.g. "format",
-        // "reset") must match exactly — no inflection tolerance, or "format" would
-        // wrongly match "formaat". Inflection is only for real translations.
+        if (tok.includes(cand)) return true;
         if (cand === src) return false;
-
-        // Inflection tolerance is supplied by the locale profile.
         if (cfg.matchMode === 'prefix' && typeof cfg.inflectionMatch === 'function') {
             return cfg.inflectionMatch(cand, tok, cfg);
         }
@@ -493,7 +1004,9 @@ function normalize(s) {
     return (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-
+// =============================================================================
+// DOM HELPERS (unchanged)
+// =============================================================================
 function getEditorFor(row) {
     if (row.id) {
         const ed = document.getElementById(row.id.replace(/^preview-/, 'editor-'));
@@ -508,15 +1021,8 @@ async function openEditor(row, cfg) {
     const editSelector = (cfg && cfg.editSelector) || 'a.action.edit';
     const timeout = (cfg && cfg.openTimeout) || 5000;
     const visible = (ed) => !!ed && ed.getClientRects().length > 0;
-    const opener = () => row.querySelector(editSelector)
-        || row.querySelector('td.translation')
-        || row;
+    const opener = () => row.querySelector(editSelector) || row.querySelector('td.translation') || row;
 
-    // Detect the editor via the DOM only. We deliberately do NOT read $gp here:
-    // in a browser-extension content script the page's $gp global isn't visible
-    // (isolated world), even though the click still drives GlotPress in the page.
-    // Only one editor is open at a time, so this row's editor being visible means
-    // GlotPress has made it current (which its own reject handler reads server-side).
     for (let attempt = 0; attempt < 2; attempt++) {
         if (!visible(getEditorFor(row))) opener().click();
         const ok = await waitFor(() => visible(getEditorFor(row)), Math.ceil(timeout / 2));
@@ -525,8 +1031,6 @@ async function openEditor(row, cfg) {
     return null;
 }
 
-// Make sure the Meta tab (which holds the feedback checkbox, note and buttons)
-// is the active one for this row; the feedback form isn't in the DOM otherwise.
 function activateMetaTab(editor, row, cfg) {
     const rowId = (row.id || '').replace(/^preview-/, '');
     const tab = editor.querySelector(cfg.metaTabSelector)
@@ -535,10 +1039,6 @@ function activateMetaTab(editor, row, cfg) {
     return tab;
 }
 
-// Remove glossary-word spans that sit inside a protected phrase (brand name,
-// fixed term). Uses the span's character offset within the original cell to test
-// containment against each phrase occurrence, so only the occurrence inside the
-// phrase is dropped — a standalone use of the same word elsewhere is still checked.
 function dropProtected(spans, cell, cfg) {
     const phrases = (cfg.ignorePhrases || []).filter(Boolean);
     if (!phrases.length || !cell || !spans.length) return spans;
@@ -564,21 +1064,14 @@ function dropProtected(spans, cell, cfg) {
             r.setEndBefore(span);
             start = r.toString().length;
         } catch (e) {
-            return true;                      // can't locate it -> keep (check it) to be safe
+            return true;
         }
         const end = start + span.textContent.length;
-        // Protect only when the word is a PROPER part of a bigger phrase (e.g. "Search"
-        // inside "Google Search Console"). If an ignore entry equals the word itself,
-        // that's a spell-check exclusion, not a reason to skip the glossary check.
-        const inside = ranges.some(([bs, be]) =>
-            bs <= start && end <= be && (be - bs) > (end - start));
-        return !inside;                     // keep only spans NOT inside a bigger protected phrase
+        const inside = ranges.some(([bs, be]) => bs <= start && end <= be && (be - bs) > (end - start));
+        return !inside;
     });
 }
 
-// Load the protected-phrase list from the extension settings. The setting
-// "spellCheckIgnore" is a single string with one phrase per line ("\n").
-// Handles both the Promise and callback forms of chrome.storage.
 async function loadIgnoreList() {
     try {
         if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) return [];
@@ -594,9 +1087,22 @@ async function loadIgnoreList() {
     }
 }
 
-// Read the translator's display name from the Meta tab, dropping the "(handle)"
-// suffix — "Marijan Karajanov (matzedoon)" -> "Marijan Karajanov". Returns ''
-// if the link isn't found.
+// The translator's wordpress.org username (handle), used for the @-mention.
+// Taken from the profile URL (profiles.wordpress.org/<handle>/), or else from
+// the "(handle)" part of the link text. Returns '' if neither is found.
+function translatorHandle(editor, cfg) {
+    try {
+        const link = editor.querySelector(cfg.translatorSelector);
+        if (!link) return '';
+        const fromUrl = (link.getAttribute('href') || '').match(/profiles\.wordpress\.org\/([^\/?#\s]+)/i);
+        if (fromUrl) return decodeURIComponent(fromUrl[1]);
+        const fromText = (link.textContent || '').match(/\(([^)\s]+)\)\s*$/);
+        return fromText ? fromText[1] : '';
+    } catch (e) {
+        return '';
+    }
+}
+
 function translatorName(editor, cfg) {
     try {
         const link = editor.querySelector(cfg.translatorSelector);
@@ -607,17 +1113,8 @@ function translatorName(editor, cfg) {
     }
 }
 
-// Add the 'highlight' class to the flagged glossary-word spans in the PREVIEW
-// row's original cell (td.original), so the word that caused the action is
-// visible at a glance in the list. Only spans WITH a glossary translation are
-// marked. Re-reads the live DOM at call time (the row re-renders after the
-// status change, so span references captured earlier are stale).
 function highlightMissing(row, missingInfo, cfg) {
     try {
-        // On a status change GlotPress renames the original row by appending "-old"
-        // and inserts a fresh row. row.id then resolves to the stale, hidden "-old"
-        // node, so highlighting it shows nothing. Prefer the current row: strip any
-        // "-old", and pick the visible one.
         const baseId = row.id.replace(/-old$/, '');
         const candidates = [
             document.getElementById(baseId),
@@ -637,13 +1134,12 @@ function highlightMissing(row, missingInfo, cfg) {
         const spans = scope ? [...scope.querySelectorAll(cfg.glossaryWordSelector)] : [];
         if (cfg.logHighlight) {
             console.log('[glossaryQA] highlight', row.id, '-> live', live.id,
-                '| wanted:', [...wanted],
-                '| spans:', spans.map((s) => (s.textContent || '').toLowerCase().trim()));
+                '| wanted:', [...wanted], '| spans:', spans.map((s) => (s.textContent || '').toLowerCase().trim()));
         }
         if (!spans.length || !wanted.size) return;
         spans.forEach((span) => {
-            const t = (span.textContent || '').toLowerCase().trim();
-            if (wanted.has(t) && expectedFor(span).length > 0) span.classList.add('highlight');
+            const x = (span.textContent || '').toLowerCase().trim();
+            if (wanted.has(x) && expectedFor(span).length > 0) span.classList.add('highlight');
         });
     } catch (e) {
         if (cfg.logHighlight) console.warn('[glossaryQA] highlight error', row.id, e && e.message);
@@ -652,8 +1148,6 @@ function highlightMissing(row, missingInfo, cfg) {
 
 function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-// Best-effort close of a row's editor (click its close control, or the opener
-// again to toggle it shut). Used when we bail out so it doesn't stay open.
 function closeEditor(row, cfg) {
     try {
         const ed = getEditorFor(row);
@@ -672,12 +1166,10 @@ async function waitFor(pred, timeout = 2000, step = 50) {
     try { return !!pred(); } catch (e) { return false; }
 }
 
-// Returns the element if it exists and is rendered (has layout), else null.
 function visibleEl(el) {
     return el && el.getClientRects().length > 0 ? el : null;
 }
 
-// Polls getter until it returns a truthy element (or times out), then returns it.
 async function waitForEl(getter, timeout = 3000, step = 150) {
     const start = Date.now();
     while (Date.now() - start < timeout) {

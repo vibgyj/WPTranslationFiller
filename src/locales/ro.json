@@ -142,5 +142,19 @@
   "Replace verbs done: ": "Înlocuirea verbelor finalizată: ",
   " replaced words<br>": " cuvinte înlocuite<br>",
   "Your postreplace verbs are not populated add at least on line!": "Verbele de post-înlocuire nu sunt completate — adăugați cel puțin o linie!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Verbele de pre-înlocuire nu sunt completate — adăugați cel puțin o linie!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Verbele de pre-înlocuire nu sunt completate — adăugați cel puțin o linie!",
+  "Do you want to handle the problems in one batch, or row by row?": "Doriți să tratați problemele dintr-o singură dată sau rând cu rând?",
+  "Glossary check is ready: no problems found": "Verificarea glosarului este gata: nu au fost găsite probleme",
+  "No rows selected, nothing was changed": "Nu a fost selectat niciun rând, nu s-a modificat nimic",
+  "Saving the bulk reject, please wait…": "Se salvează respingerea în masă, vă rugăm să așteptați…",
+  "Row by row": "Rând cu rând",
+  "Glossary check aborted": "Verificarea glosarului a fost anulată",
+  "Create changes requested": "Creați modificările solicitate",
+  "Glossary check aborted, nothing was changed": "Verificarea glosarului a fost anulată, nu s-a modificat nimic",
+  "Bulk reject: prepare, I save myself": "Respingere în masă: pregătiți, voi salva eu",
+  "Bulk reject: save now": "Respingere în masă: salvați acum",
+  "Glossary check: problems found": "Verificarea glosarului: au fost găsite probleme",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "%1$s din cele %2$s rânduri verificate au termeni lipsă din glosar — %3$s selectate",
+  "Note for the bulk request (you can edit it)": "Notă pentru solicitarea în masă (o puteți edita)",
+  "Regenerate": "Regenerați"
 }

@@ -154,10 +154,12 @@ async function translatePageOpenAI(
     apikeyMeta,
     MetaSelect
 ) {
+    //console.debug("Glossary:", openAiGloss) 
     //console.info("[" + translator + "] translatePageOpenAI version " + OPENAI_TRANSLATE_VERSION);
     var mymodel = "";
     var auth = ""
-    var PREPROCESS_MODE =""
+    var PREPROCESS_MODE = ""
+    var messages = ""
     // Only OpenAI / Cerebras are handled by this transport
     const supported = ['OpenAI', 'cerebras', 'meta'];
     if (!supported.includes(translator)) {
@@ -424,6 +426,7 @@ async function translatePageOpenAI(
     if (typeof stripPromptComments === "function") {
         OpenAIPrompt = stripPromptComments(OpenAIPrompt);
     }
+    //console.debug("Tone:",OpenAITone)
     const basePrompt = applyPromptBase(OpenAIPrompt, resolvedLanguage, OpenAITone);
 
     /****************************************************
@@ -524,10 +527,20 @@ async function translatePageOpenAI(
             ...(glossary ? { g: glossary } : {}),
             ...(context ? { c: context } : {})
         }));
-
+        //console.debug("toTranslate:",promptItems)
         const userPrompt = applyPromptBatch(basePrompt, JSON.stringify(promptItems), mergedGlossary);
-        const messages = [{ role: "user", content: userPrompt }];
-
+        //console.debug("basePrompt:\n" + basePrompt) 
+        //console.debug("userPrompt:", userPrompt)
+        if (translator == 'meta') {
+            //console.debug("I am Meta:", translator)
+            messages = [{ role: "system", content: userPrompt },
+                { role: "user", content: [{ type: "text", text: JSON.stringify(promptItems) }] }];
+        }
+        else {
+            console.debug("I am not Meta:", translator)
+            messages = [{ role: "user", content: userPrompt }];
+            }
+        //console.debug("prompt:",userPrompt)
         // Output budget: proportional to payload, with headroom. Reasoning
         // models (gpt-oss, GPT-5 family) also spend this budget on thinking,
         // so keep it generous or the JSON gets truncated. Tunable.
@@ -567,6 +580,7 @@ async function translatePageOpenAI(
             }
 
             if (attempt < maxParseRetries) {
+                console.debug("we are retrying or single")
                 messages.push({ role: "assistant", content: rawContent });
                 messages.push({
                     role: "user",
@@ -613,6 +627,7 @@ async function translatePageOpenAI(
 
                 //let translation = enforceGlossary(res.tr, item.glossary);
                 translation = res.tr
+                //console.debug("translation:", translation)
                 const finalText = await postProcessTranslation(
                     item.original, translation, replaceVerb,
                     item.original, translator, convertToLower, spellCheckIgnore, locale
@@ -657,8 +672,16 @@ async function translatePageOpenAI(
             const retryPrompt = applyPromptBatch(basePrompt, JSON.stringify(retryPayload), "");
             const retryMaxTokens = Math.max(1024, estimateMaxTokens(JSON.stringify(retryPayload)) * 2);
 
+            // Same message shape as the main batch: Meta needs system + typed user content
+            const retryMessages = (translator == 'meta')
+                ? [
+                    { role: "system", content: retryPrompt },
+                    { role: "user", content: [{ type: "text", text: JSON.stringify(retryPayload) }] }
+                ]
+                : [{ role: "user", content: retryPrompt }];
+
             const resp = await callOpenAIWithRetry(
-                [{ role: "user", content: retryPrompt }],
+                retryMessages,
                 auth, mymodel, OpenAItemp, translator, retryMaxTokens
             );
             const parsedRetry = (resp && !resp.error) ? parseGroq(resp) : null;

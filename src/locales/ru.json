@@ -144,5 +144,19 @@
   "Replace verbs done: ": "Замена глаголов завершена: ",
   " replaced words<br>": " заменённых слов<br>",
   "Your postreplace verbs are not populated add at least on line!": "Глаголы предзамены не заполнены — добавьте хотя бы одну строку!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Глаголы предзамены не заполнены — добавьте хотя бы одну строку!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Глаголы предзамены не заполнены — добавьте хотя бы одну строку!",
+  "Do you want to handle the problems in one batch, or row by row?": "Вы хотите обработать проблемы все сразу или построчно?",
+  "Glossary check is ready: no problems found": "Проверка глоссария завершена: проблем не обнаружено",
+  "No rows selected, nothing was changed": "Строки не выбраны, изменения не внесены",
+  "Saving the bulk reject, please wait…": "Сохранение массового отклонения, пожалуйста, подождите…",
+  "Row by row": "Построчно",
+  "Glossary check aborted": "Проверка глоссария прервана",
+  "Create changes requested": "Создать запрошенные изменения",
+  "Glossary check aborted, nothing was changed": "Проверка глоссария прервана, изменения не внесены",
+  "Bulk reject: prepare, I save myself": "Массовое отклонение: подготовить, я сохраню самостоятельно",
+  "Bulk reject: save now": "Массовое отклонение: сохранить сейчас",
+  "Glossary check: problems found": "Проверка глоссария: обнаружены проблемы",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "В %1$s из %2$s проверенных строк отсутствуют термины глоссария — выбрано: %3$s",
+  "Note for the bulk request (you can edit it)": "Примечание к массовому запросу (его можно изменить)",
+  "Regenerate": "Создать заново"
 }

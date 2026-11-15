@@ -142,5 +142,19 @@
   "Replace verbs done: ": "動詞の置換が完了しました：",
   " replaced words<br>": " 語を置換しました<br>",
   "Your postreplace verbs are not populated add at least on line!": "後置換動詞が入力されていません。少なくとも1行追加してください！",
-  "Your pretranslate replace verbs are not populated add at least on line!": "前置換動詞が入力されていません。少なくとも1行追加してください！"
+  "Your pretranslate replace verbs are not populated add at least on line!": "前置換動詞が入力されていません。少なくとも1行追加してください！",
+  "Do you want to handle the problems in one batch, or row by row?": "問題を一括で処理しますか、それとも1行ずつ処理しますか？",
+  "Glossary check is ready: no problems found": "用語集のチェックが完了しました：問題は見つかりませんでした",
+  "No rows selected, nothing was changed": "行が選択されていないため、変更は行われませんでした",
+  "Saving the bulk reject, please wait…": "一括却下を保存しています。しばらくお待ちください…",
+  "Row by row": "1行ずつ",
+  "Glossary check aborted": "用語集のチェックが中止されました",
+  "Create changes requested": "要求された変更を作成",
+  "Glossary check aborted, nothing was changed": "用語集のチェックが中止されました。変更は行われませんでした",
+  "Bulk reject: prepare, I save myself": "一括却下：準備する（保存は自分で行います）",
+  "Bulk reject: save now": "一括却下：今すぐ保存",
+  "Glossary check: problems found": "用語集のチェック：問題が見つかりました",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "チェックした %2$s 行のうち %1$s 行に用語集の用語が不足しています — %3$s 行が選択されています",
+  "Note for the bulk request (you can edit it)": "一括リクエスト用のメモ（編集できます）",
+  "Regenerate": "再生成"
 }

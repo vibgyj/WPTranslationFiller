@@ -166,3 +166,8 @@ Version 3.5.98 openRouter page translation did not apply the glossary properly, 
 Version 3.5.98 Wrong savebutton text when preview is changes requested
 Version 3.5.98 Fixed a problem with the glossary, when a glossary word was part of another word, it was not marked as a glossary word, now it will mark the glossary word even if it is part of another word
 Version 3.5.99 Meta API added for translation
+Version 3.6.1 Added a check if there is a new glossary entry present
+Version 3.6.2 Improved changes requested handling, it can now be done with bulk reject, so only one mail to the translator is sent instead of one mail per entry
+Version 3.6.3 Improved Meta API request handling
+Version 3.6.3 Added prompt for Meta
+Version 3.6.3 Improved openAI prompt to handle Formal better

@@ -142,5 +142,19 @@
   " replaced words<br>": " vervangen<br>",
   "Loaded:": "Geladen",
   "Your postreplace verbs are not populated add at least on line!": "Je postreplace woorden zijn niet gevuld, voeg tenminste 1 regel toe!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Je pretranslate vervan woorden is niet gevuld, voeg op zijn minst 1 regel toe!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Je pretranslate vervang woorden is niet gevuld, voeg op zijn minst 1 regel toe!",
+  "Do you want to handle the problems in one batch, or row by row?": "Wil je de problemen in één batch afhandelen, of rij per rij?",
+  "Glossary check is ready: no problems found": "Glossary check is klaar: geen problemen gevonden",
+  "No rows selected, nothing was changed": "Geen rijen geselecteerd, niets is veranderd",
+  "Saving the bulk reject, please wait…": "Opslaan van de bulk afwijzing, even geduld…",
+  "Row by row": "Rij voor rij",
+  "Glossary check aborted": "Glossary check afgebroken",
+  "Create changes requested": "Maak changes requested",
+  "Glossary check aborted, nothing was changed": "Glossary check afgebroken, niets is veranderd",
+  "Bulk reject: prepare, I save myself": "Bulk afwijzing: voorbereiden, ik sla zelf op",
+  "Bulk reject: save now": "Bulk afwijzing: nu opslaan",
+  "Glossary check: problems found": "Glossary check: problemen gevonden",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "%1$s van %2$s gecontroleerde rijen hebben ontbrekende glossary termen — %3$s geselecteerd",
+  "Note for the bulk request (you can edit it)": "Opmerking voor de bulk aanvraag (je kan het bewerken)",
+  "Regenerate": "Regenereren"
 }

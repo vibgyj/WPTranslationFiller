@@ -143,5 +143,19 @@
   "Replace verbs done: ": "Erstatning av verb fullført: ",
   " replaced words<br>": " erstattede ord<br>",
   "Your postreplace verbs are not populated add at least on line!": "Dine postreplace-verber er ikke fylt ut, legg til minst én linje!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Dine pretranslate-verber er ikke fylt ut, legg til minst én linje!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Dine pretranslate-verber er ikke fylt ut, legg til minst én linje!",
+  "Do you want to handle the problems in one batch, or row by row?": "Vil du behandle problemene samlet eller rad for rad?",
+  "Glossary check is ready: no problems found": "Ordlistekontrollen er fullført: Ingen problemer funnet",
+  "No rows selected, nothing was changed": "Ingen rader er valgt, ingen endringer ble gjort",
+  "Saving the bulk reject, please wait…": "Lagrer masseavvisningen, vennligst vent…",
+  "Row by row": "Rad for rad",
+  "Glossary check aborted": "Ordlistekontrollen ble avbrutt",
+  "Create changes requested": "Opprett de forespurte endringene",
+  "Glossary check aborted, nothing was changed": "Ordlistekontrollen ble avbrutt, ingen endringer ble gjort",
+  "Bulk reject: prepare, I save myself": "Masseavvisning: klargjør, jeg lagrer selv",
+  "Bulk reject: save now": "Masseavvisning: lagre nå",
+  "Glossary check: problems found": "Ordlistekontroll: problemer funnet",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "%1$s av %2$s kontrollerte rader mangler ordlistebegreper — %3$s valgt",
+  "Note for the bulk request (you can edit it)": "Merknad til masseforespørselen (du kan redigere den)",
+  "Regenerate": "Generer på nytt"
 }

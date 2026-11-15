@@ -701,7 +701,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     },
                     body: JSON.stringify(dataToSend)
                 });
-                console.debug("response status:", resp)
+                //console.debug("response status:", resp)
                 if (!resp.ok) {
                     const raw = await resp.text();
                     console.debug("raw error response:", raw)
@@ -723,6 +723,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                      return;
                 }
                 //console.debug("response status:", resp) 
+
                 let data;
                 const contentType = resp.headers.get("content-type") || "";
                 if (contentType.includes("application/json")) {
@@ -730,7 +731,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 } else {
                     data = await resp.text();
                 }
-
+                console.debug("OpenAI response data:", data)
                 sendResponse({ result: data });
             } catch (err) {
                 sendResponse({ error: err.toString() });
@@ -741,7 +742,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     else if (request.action === "meta") {
         (async () => {
-            console.debug("Meta request received:", request.data)
+            //console.debug("Meta request received:", request.data)
             try {
                 const dataToSend = { ...request.data }; // copy newData
                 const apiKey = dataToSend.apiKey;       // extract the key
@@ -749,6 +750,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 delete dataToSend.apiKey;               // remove it from the body.
                 delete dataToSend.URL;
                 // console.debug("URL:", myURL) 
+                //console.debug("DataToSend:", dataToSend)
                 const resp = await fetch(myURL, {
                     
                     method: "POST",
@@ -758,7 +760,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     },
                     body: JSON.stringify(dataToSend)
                 });
-                console.debug("response status:", resp)
+                //console.debug("response status:", resp)
                 if (!resp.ok) {
                     const raw = await resp.text();
                     console.debug("raw error response:", raw)

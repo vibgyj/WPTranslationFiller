@@ -141,5 +141,19 @@
   "Replace verbs done: ": "Заміну дієслів завершено: ",
   " replaced words<br>": " замінених слів<br>",
   "Your postreplace verbs are not populated add at least on line!": "Дієслова для постзаміни не заповнені — додайте принаймні один рядок!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Дієслова для постзаміни не заповнені — додайте принаймні один рядок!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Дієслова для постзаміни не заповнені — додайте принаймні один рядок!",
+  "Do you want to handle the problems in one batch, or row by row?": "Бажаєте обробити проблеми всі разом чи рядок за рядком?",
+  "Glossary check is ready: no problems found": "Перевірку глосарія завершено: проблем не виявлено",
+  "No rows selected, nothing was changed": "Не вибрано жодного рядка, змін не внесено",
+  "Saving the bulk reject, please wait…": "Збереження масового відхилення, зачекайте…",
+  "Row by row": "Рядок за рядком",
+  "Glossary check aborted": "Перевірку глосарія перервано",
+  "Create changes requested": "Створити запитані зміни",
+  "Glossary check aborted, nothing was changed": "Перевірку глосарія перервано, змін не внесено",
+  "Bulk reject: prepare, I save myself": "Масове відхилення: підготувати, я збережу самостійно",
+  "Bulk reject: save now": "Масове відхилення: зберегти зараз",
+  "Glossary check: problems found": "Перевірка глосарія: виявлено проблеми",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "У %1$s із %2$s перевірених рядків відсутні терміни глосарія — вибрано: %3$s",
+  "Note for the bulk request (you can edit it)": "Примітка до масового запиту (її можна редагувати)",
+  "Regenerate": "Згенерувати повторно"
 }

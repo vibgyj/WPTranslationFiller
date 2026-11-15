@@ -138,5 +138,19 @@
   "Replace verbs done: ": "Verbenersetzung abgeschlossen: ",
   " replaced words<br>": " ersetzte Wörter<br>",
   "Your postreplace verbs are not populated add at least on line!": "Die Nachersetzungsverben sind nicht befüllt — fügen Sie mindestens eine Zeile hinzu!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "Die Vorübersetzungsverben sind nicht befüllt — fügen Sie mindestens eine Zeile hinzu!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "Die Vorübersetzungsverben sind nicht befüllt — fügen Sie mindestens eine Zeile hinzu!",
+  "Do you want to handle the problems in one batch, or row by row?": "Möchten Sie die Probleme auf einmal oder Zeile für Zeile bearbeiten?",
+  "Glossary check is ready: no problems found": "Glossarprüfung abgeschlossen: Keine Probleme gefunden",
+  "No rows selected, nothing was changed": "Keine Zeilen ausgewählt, es wurden keine Änderungen vorgenommen",
+  "Saving the bulk reject, please wait…": "Sammelablehnung wird gespeichert, bitte warten…",
+  "Row by row": "Zeile für Zeile",
+  "Glossary check aborted": "Glossarprüfung abgebrochen",
+  "Create changes requested": "Angeforderte Änderungen erstellen",
+  "Glossary check aborted, nothing was changed": "Glossarprüfung abgebrochen, es wurden keine Änderungen vorgenommen",
+  "Bulk reject: prepare, I save myself": "Sammelablehnung: Vorbereiten, ich speichere selbst",
+  "Bulk reject: save now": "Sammelablehnung: Jetzt speichern",
+  "Glossary check: problems found": "Glossarprüfung: Probleme gefunden",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "In %1$s von %2$s geprüften Zeilen fehlen Glossarbegriffe — %3$s ausgewählt",
+  "Note for the bulk request (you can edit it)": "Hinweis zur Sammelanforderung (Sie können ihn bearbeiten)",
+  "Regenerate": "Neu generieren"
 }

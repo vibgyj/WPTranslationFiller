@@ -13,22 +13,22 @@
  * duplicated strip loop is also removed.
  */
 async function getTransOpenAI(
-  original, language, record, apikeyOpenAI, OpenAIPrompt,
-  preverbs, rowId, transtype, plural_line, formal,
-  locale, convertToLower, editor, counter, OpenAISelect,
+    original, language, record, apikeyOpenAI, OpenAIPrompt,
+    preverbs, rowId, transtype, plural_line, formal,
+    locale, convertToLower, editor, counter, OpenAISelect,
     OpenAItemp, spellCheckIgnore, OpenAITone, is_editor, openAiGloss, translator, URL, mycontext, apikeyMeta, MetaSelect
 ) {
-  var show_debug = false;
-  var myURL = "";
-  var myTtranslatedText = "";
-  let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
-  let prevstate = current ? current.innerText : "";
-  let destlang = language;
-  language = language.toUpperCase();
-  var messages;
-  var mymodel;
-  var originalPreProcessed = "";
-  var auth = ""
+    var show_debug = false;
+    var myURL = "";
+    var myTtranslatedText = "";
+    let current = document.querySelector(`#editor-${rowId} span.panel-header__bubble`);
+    let prevstate = current ? current.innerText : "";
+    let destlang = language;
+    language = language.toUpperCase();
+    var messages;
+    var mymodel;
+    var originalPreProcessed = "";
+    var auth = ""
     if (translator == 'meta') {
         originalPreProcessed = await preProcessOriginal(original, preverbs, "meta");
     }
@@ -42,59 +42,59 @@ async function getTransOpenAI(
         originalPreProcessed = await preProcessOriginal(original, preverbs, "OpenAI");
     }
     else {
-        originalPreProcessed= original
+        originalPreProcessed = original
     }
-   //console.debug("Original preprocessed:", originalPreProcessed);
-  // Strip [[COMMENT]] lines, then fill static placeholders once.
-  if (typeof stripPromptComments === "function") {
+    //console.debug("Original preprocessed:", originalPreProcessed);
+    // Strip [[COMMENT]] lines, then fill static placeholders once.
+    if (typeof stripPromptComments === "function") {
         OpenAIPrompt = stripPromptComments(OpenAIPrompt);
-  }
-  let tempPrompt = OpenAIPrompt + '\n';
-  let myprompt = "";
-
-  // Handle tone and language in prompt
-  if (OpenAITone === 'formal') {
-    if (destlang === 'nl') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
-    } else if (destlang === 'de') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
-    } else if (destlang === 'fr') {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
-    } else {
-      myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
     }
-  } else {
-    myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
-  }
+    let tempPrompt = OpenAIPrompt + '\n';
+    let myprompt = "";
 
-  /****************************************************
-   * GLOSSARY — Groq method (per line)
-   ****************************************************/
-  const prunedGlossary = pruneGlossary(openAiGloss, originalPreProcessed, record) || "";
-  const compactGloss = prunedGlossary.replace(/\n+/g, "|");
-  //  console.debug("Pruned glossary for row", rowId, ":", compactGloss);
-  myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss);
-  //  console.debug("Prompt after glossary replacement:", myprompt);
-  if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
-  else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
-  else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
-  else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian');
-  else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
-  else if (destlang === 'id') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Indonesian');
-  else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
-  else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
-  else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
-  else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
+    // Handle tone and language in prompt
+    if (OpenAITone === 'formal') {
+        if (destlang === 'nl') {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'u' instead of 'je'");
+        } else if (destlang === 'de') {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " and use 'Sie' instead of 'du'");
+        } else if (destlang === 'fr') {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone + " use 'vous' instead of 'tu'");
+        } else {
+            myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+        }
+    } else {
+        myprompt = tempPrompt.replaceAll("{{tone}}", OpenAITone);
+    }
+
+    /****************************************************
+     * GLOSSARY — Groq method (per line)
+     ****************************************************/
+    const prunedGlossary = pruneGlossary(openAiGloss, originalPreProcessed, record) || "";
+    const compactGloss = prunedGlossary.replace(/\n+/g, "|");
+    //  console.debug("Pruned glossary for row", rowId, ":", compactGloss);
+    myprompt = myprompt.replaceAll("{{OpenAiGloss}}", compactGloss);
+    //  console.debug("Prompt after glossary replacement:", myprompt);
+    if (destlang === 'nl') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Dutch');
+    else if (destlang === 'de') myprompt = myprompt.replaceAll("{{toLanguage}}", 'German');
+    else if (destlang === 'fr') myprompt = myprompt.replaceAll("{{toLanguage}}", 'French');
+    else if (destlang === 'uk') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Ukrainian');
+    else if (destlang === 'es') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Spanish');
+    else if (destlang === 'id') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Indonesian');
+    else if (destlang === 'it') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Italian');
+    else if (destlang === 'pt') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Portuguese');
+    else if (destlang === 'ru') myprompt = myprompt.replaceAll("{{toLanguage}}", 'Russian');
+    else myprompt = myprompt.replaceAll("{{toLanguage}}", destlang);
 
 
-  if (!originalPreProcessed) {
-    originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
-  }
+    if (!originalPreProcessed) {
+        originalPreProcessed = "No result of {originalPreprocessed} for original it was empty!";
+    }
 
-  /****************************************************
-   * CONTENT — Groq method
-   ****************************************************/
-    
+    /****************************************************
+     * CONTENT — Groq method
+     ****************************************************/
+
     // Context: strip any [[COMMENT]] marker, include only when non-empty.
     const cleanContext = (typeof stripPromptComments === "function")
         ? stripPromptComments(String(mycontext ?? "")).trim()
@@ -104,26 +104,36 @@ async function getTransOpenAI(
         i: rowId,
         t: originalPreProcessed,
         ...(cleanContext ? { c: cleanContext } : {}),
-    ...(prunedGlossary ? { g: compactGloss } : {})
-  }];
-  const contentPayload = JSON.stringify(promptItems);
+        ...(prunedGlossary ? { g: compactGloss } : {})
+    }];
+    const contentPayload = JSON.stringify(promptItems);
 
-  myprompt = myprompt.replaceAll("{{text}}", contentPayload);
-  //console.debug("Prompt after all replacements:", myprompt);
+    myprompt = myprompt.replaceAll("{{text}}", contentPayload);
+    //console.debug("Prompt after all replacements:", myprompt);
 
-  let maxTokens = estimateMaxTokens(originalPreProcessed);
-  max_Tokens = maxTokens;
+    let maxTokens = estimateMaxTokens(originalPreProcessed);
+    max_Tokens = maxTokens;
 
-  messages = [
-    { role: 'user', content: myprompt }
-  ];
+    if (translator == 'meta') {
+        //console.debug("I am Meta:", translator)
+        messages = [{ role: "system", content: myprompt },
+        { role: "user", content: [{ type: "text", text: JSON.stringify(promptItems) }] }];
+    }
+    else {
+        //console.debug("I am not Meta:", translator)
+        messages = [{ role: "user", content: myprompt }];
+    }
 
-  if (OpenAISelect === 'undefined' || !OpenAISelect) {
-    messageBox("error", "You did not set the OpenAI model!<br> Please check your options");
-    return "NOK";
-  }
-   
-  mymodel = OpenAISelect.toLowerCase();
+    if (OpenAISelect === 'undefined' || !OpenAISelect) {
+        messageBox("error", "You did not set the OpenAI model!<br> Please check your options");
+        return "NOK";
+    }
+    if (translator == "OpenAI") {
+        mymodel = OpenAISelect.toLowerCase();
+    }
+    else if (translator == "meta") {
+        mymodel = MetaSelect
+    }
   
   // Endpoint selection
     if (translator == 'cerebras') {

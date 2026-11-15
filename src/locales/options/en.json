@@ -138,5 +138,21 @@
   "Use local Ollama": "Use local Ollama",
   "Save": "Save",
   "Wiki documentation": "Wiki documentation",
-  "View Changelog": "View Changelog"
+  "View Changelog": "View Changelog",
+  "Your postreplace verbs are not populated add at least on line!": "Your postreplace verbs are not populated add at least on line!",
+  "Your pretranslate replace verbs are not populated add at least on line!": "Your pretranslate replace verbs are not populated add at least on line!",
+  "Do you want to handle the problems in one batch, or row by row?": "Do you want to handle the problems in one batch, or row by row?",
+  "Glossary check is ready: no problems found": "Glossary check is ready: no problems found",
+  "No rows selected, nothing was changed": "No rows selected, nothing was changed",
+  "Saving the bulk reject, please wait…": "Saving the bulk reject, please wait…",
+  "Row by row": "Row by row",
+  "Glossary check aborted": "Glossary check aborted",
+  "Create changes requested": "Create changes requested",
+  "Glossary check aborted, nothing was changed": "Glossary check aborted, nothing was changed",
+  "Bulk reject: prepare, I save myself": "Bulk reject: prepare, I save myself",
+  "Bulk reject: save now": "Bulk reject: save now",
+  "Glossary check: problems found": "Glossary check: problems found",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "%1$s of %2$s checked rows have missing glossary terms — %3$s selected",
+  "Note for the bulk request (you can edit it)": "Note for the bulk request (you can edit it)",
+  "Regenerate": "Regenerate"
 }

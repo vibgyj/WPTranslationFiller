@@ -141,5 +141,19 @@
   "Replace verbs done: ": "வினைச்சொல் மாற்று முடிந்தது: ",
   " replaced words<br>": " சொற்கள் மாற்றப்பட்டன<br>",
   "Your postreplace verbs are not populated add at least on line!": "பிந்தைய மாற்று வினைச்சொற்கள் நிரப்பப்படவில்லை — குறைந்தது ஒரு வரியாவது சேர்க்கவும்!",
-  "Your pretranslate replace verbs are not populated add at least on line!": "முந்தைய மாற்று வினைச்சொற்கள் நிரப்பப்படவில்லை — குறைந்தது ஒரு வரியாவது சேர்க்கவும்!"
+  "Your pretranslate replace verbs are not populated add at least on line!": "முந்தைய மாற்று வினைச்சொற்கள் நிரப்பப்படவில்லை — குறைந்தது ஒரு வரியாவது சேர்க்கவும்!",
+  "Do you want to handle the problems in one batch, or row by row?": "మీరు సమస్యలను ఒకేసారి పరిష్కరించాలనుకుంటున్నారా లేదా ఒక్కో వరుసగా పరిష్కరించాలనుకుంటున్నారా?",
+  "Glossary check is ready: no problems found": "పదకోశ తనిఖీ పూర్తయింది: ఎలాంటి సమస్యలు కనుగొనబడలేదు",
+  "No rows selected, nothing was changed": "ఏ వరుసలూ ఎంచుకోలేదు, ఎలాంటి మార్పులూ చేయలేదు",
+  "Saving the bulk reject, please wait…": "సమూహ తిరస్కరణను సేవ్ చేస్తోంది, దయచేసి వేచి ఉండండి…",
+  "Row by row": "ఒక్కో వరుసగా",
+  "Glossary check aborted": "పదకోశ తనిఖీ రద్దు చేయబడింది",
+  "Create changes requested": "అభ్యర్థించిన మార్పులను సృష్టించండి",
+  "Glossary check aborted, nothing was changed": "పదకోశ తనిఖీ రద్దు చేయబడింది, ఎలాంటి మార్పులూ చేయలేదు",
+  "Bulk reject: prepare, I save myself": "సమూహ తిరస్కరణ: సిద్ధం చేయండి, నేను స్వయంగా సేవ్ చేసుకుంటాను",
+  "Bulk reject: save now": "సమూహ తిరస్కరణ: ఇప్పుడే సేవ్ చేయండి",
+  "Glossary check: problems found": "పదకోశ తనిఖీ: సమస్యలు కనుగొనబడ్డాయి",
+  "%1$s of %2$s checked rows have missing glossary terms — %3$s selected": "తనిఖీ చేసిన %2$s వరుసల్లో %1$s వరుసల్లో పదకోశ పదాలు లేవు — %3$s ఎంచుకోబడ్డాయి",
+  "Note for the bulk request (you can edit it)": "సమూహ అభ్యర్థన కోసం గమనిక (మీరు దీన్ని సవరించవచ్చు)",
+  "Regenerate": "మళ్లీ రూపొందించండి"
 }
