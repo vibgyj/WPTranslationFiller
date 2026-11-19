@@ -171,3 +171,7 @@ Version 3.6.2 Improved changes requested handling, it can now be done with bulk 
 Version 3.6.3 Improved Meta API request handling
 Version 3.6.3 Added prompt for Meta
 Version 3.6.3 Improved openAI prompt to handle Formal better
+Version 3.6.3 openRouter does now also work with meta/muse-ember, and it will use the reasoning and verbosity settings for this model
+Version 3.6.3 Probem solved whith removing capitals from words that start with more then one capital
+Version 3.6.4 Improved check_hyphen to not replace the long dash
+Version 4.1.1 Increased the version number due to an incorrect version number in the previous version

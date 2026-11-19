@@ -2495,15 +2495,11 @@ function findMissingOccurrenceIndex(englishSentence, dutchSentence) {
 }
 
 // escapeRegExp – single canonical definition (covers more special chars)
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^=!:${}()|[\]\/\\]/g, '\\$&');
-}
-
-//function decodeHtmlEntities(str) {
-//    const txt = document.createElement("textarea");
-//    txt.innerHTML = str;
-//    return txt.value;
+// is present in multiple places in the codebase, but this is not the one to use
+//function escapeRegExp(string) {
+//    return string.replace(/[.*+?^=!:${}()|[\]\/\\]/g, '\\$&');
 //}
+
 
 let isProcessing       = false;
 let currentTranslation = "";

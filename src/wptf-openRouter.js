@@ -42,7 +42,9 @@ const modelConfig = {
     // OpenAI: effort tiers work as intended.
     "openai/gpt-5.5":             { reasoning: { effort: "minimal" }, verbosity: "low" },
     "openai/gpt-5.6-luna":        { reasoning: { effort: "minimal" }, verbosity: "low" },
-    "openai/gpt-chat-latest":     {},   // non-reasoning: send nothing extra
+    "openai/gpt-chat-latest": {},   // non-reasoning: send nothing extra
+    // Meta: Muse-Ember is a small model, so we can afford to request low-effort reasoning.
+    'meta/muse-ember': { reasoning: { effort: 'low' }, reasoningHeadroom: 4000 }
 };
 
 // Fallback models per primary. Keys must be the EXACT prefixed OpenRouter IDs.

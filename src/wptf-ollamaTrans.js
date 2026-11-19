@@ -53,7 +53,7 @@ const LOCALE_TO_LANGUAGE = {
     if (typeof stripPromptComments === "function") {
         ollamaPrompt = stripPromptComments(ollamaPrompt);
     }
-
+    console.debug("glossary:", convertedGlossary)
     let myprompt = await ollamaPrompt.replaceAll("{{OpenAiGloss}}", convertedGlossary);
     myprompt =  await myprompt.replaceAll("{{TEXT}}", originalPreProcessed);
     //myprompt = ollamaPrompt
@@ -119,13 +119,13 @@ const LOCALE_TO_LANGUAGE = {
                            
                             translatedText = response.translation
 							translatedText = await normalizeExtraNewlines(original, translatedText)
-                             let convertedGlossary = GLOBAL_GLOSSARY;
-                             if (convertedGlossary) {
-                                translatedText = applyOpenAiGlossary(
-                                translatedText,
-                                convertedGlossary
-                                  );
-                            }
+                            // let convertedGlossary = GLOBAL_GLOSSARY;
+                            // if (convertedGlossary) {
+                              //  translatedText = applyOpenAiGlossary(
+                              //  translatedText,
+                              //  convertedGlossary
+                             //     );
+                           // }
                                  myTranslatedText = await postProcessTranslation(
                                     original,
                                     translatedText,

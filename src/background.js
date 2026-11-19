@@ -1086,6 +1086,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             // remove sensitive field before sending
             delete dataToSend.apiKey;
+            console.debug("openRouter request payload:", dataToSend)
           //  console.debug("openRouter request payload:", dataToSend)
             const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -1118,9 +1119,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               data?.choices?.[0]?.message?.content ??
               "";
             const modelUsed = data?.model ?? "unknown";  // ✅ welk model daadwerkelijk gebruikt is
-
-           // console.debug("result:", result)
-           // console.debug("model used:", modelUsed)  // ✅ log het model
+            const ch = data.choices?.[0];
+            //console.log('finish_reason:', ch?.finish_reason, 'native:', ch?.native_finish_reason);
+            //console.log('content:', JSON.stringify(ch?.message?.content));
+            //console.log('reasoning len:', ch?.message?.reasoning?.length);
+            //console.log('usage:', data.usage);   // let op completion_tokens_details.reasoning_tokens
+            //console.log('error:', data.error ?? ch?.error);
+            //console.debug("result:", result)
+           //console.debug("model used:", modelUsed)  // ✅ log het model
 
             sendResponse({ result, modelUsed });  // ✅ stuur het mee terug
 

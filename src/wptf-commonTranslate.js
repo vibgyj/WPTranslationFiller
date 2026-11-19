@@ -308,6 +308,9 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     const verbRegex = new RegExp(replaceVerb.map(v => escapeRegex(v[0])).join('|'), 'g');
     //console.debug("postprocessOriginal:", original) 
     //console.debug("postprocesstranslation:", translatedText)
+    const traceDash = (stap, txt) => {
+        if (txt && !txt.includes("\u2014")) console.warn("— VERDWENEN na:", stap, JSON.stringify(txt));
+    };
     if (toBoolean(DebugMode)) {
         console.debug("postProc original: ", original);
         console.debug("postProc translatedText :",translatedText);
@@ -582,7 +585,7 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
                 translatedText = translatedText.substring(0, translatedText.length - 1)
         }
     }
-    //console.debug("before tag check:", translatedText)
+    if (toBoolean(DebugMode)) console.debug("before tag check:", translatedText);
     // check if there is a blank after the tag 
     pos = translatedText.indexOf("</a>");
     found = translatedText.substring(pos, pos + 5);
@@ -860,6 +863,8 @@ function postProcessTranslation(original, translatedText, replaceVerb, originalP
     //console.debug("before check hyphen:", translatedNewText)
     // removing the hyphens is also done in lower_case function, so this needs improvement in future
     translatedNewText = check_hyphen(translatedNewText, spellCheckIgnore);
+    if (toBoolean(DebugMode)) console.debug("postProcessTranslation after check_hyphen", traceDash("check_hyphen", translatedNewText));
+    
     //console.debug("after check hyphen:", translatedNewText)
     result = check_start_end(translatedNewText, translatedNewText, 0, "", original, "", 0,mycontext);
     translatedNewText = result.translatedText;
@@ -887,8 +892,10 @@ function replace_special_var(original, translatedNewText) {
         placeholderMap[`special_var${index}`] = charmatch[0];
         index++;
     }
+
     const placeholderRegex = /<x\s+id\s*=\s*"(special_var\d+)"\s*(?:\/>|><\/x>)/gi;
     return translatedNewText.replace(placeholderRegex, (match, id) => {
+        if (toBoolean(DebugMode)) console.debug("Replacing placeholder:", placeholderMap[id] ?? match)
         return placeholderMap[id] ?? match;
     });
 }
@@ -1022,9 +1029,8 @@ function isOnlyURL(text) {
     return /^(https?|ftp|file):\/\/[^\s<>"]+$/.test(text);
 }
 function check_hyphen(translatedText, spellCheckIgnore) {
-    if (toBoolean(DebugMode)) console.debug("check_hyphen:" ,translatedText);
+    if (toBoolean(DebugMode)) console.debug("check_hyphen:", translatedText);
 
-    // Build normalized ignore list
     let lines = [];
     if (typeof spellCheckIgnore !== "undefined") {
         lines = spellCheckIgnore
@@ -1033,47 +1039,37 @@ function check_hyphen(translatedText, spellCheckIgnore) {
             .filter(Boolean);
     }
 
+    const dashRegex = /[\u2010\u2011\u2012\u2013\u2014]/g;
     let capsArray = [];
-
-    // Split sentence by spaces
     let wordsArray = translatedText.split(' ');
 
     wordsArray.forEach(word => {
-        if (word === "->") {
+        // Losse streepjes/pijlen ongemoeid laten (—, –, -, --, ->)
+        if (word === "->" || /^[-\u2010-\u2014]+$/.test(word)) {
             capsArray.push(word);
             return;
         }
 
-        // Normalize all hyphens (ASCII, non-breaking, en dash, em dash)
-        word = word.replace(/[\u2010\u2011\u2012\u2013\u2014]/g, "-");
-
-        // Remove trailing punctuation for checkword
-        let strippedWord = word.replace(/[.:;!?\,]+$/g, "");
-
-        // Use first part before hyphen for checkword
+        // Genormaliseerde kopie ALLEEN voor de controle
+        let normalized = word.replace(dashRegex, "-");
+        let strippedWord = normalized.replace(/[.:;!?\,]+$/g, "");
         let firstPart = strippedWord.split("-")[0];
-
-        // Remove opening parenthesis if present
         if (firstPart.startsWith("(")) {
             firstPart = firstPart.substr(1);
         }
 
-        // Check if any ignore word matches the start of this word
         if (lines.some(ignore => firstPart === ignore)) {
-            // Replace hyphen with space (except "--" or "-")
-            if (word !== "--" && word !== "-") {
-                word = word.replace("-", " ");
-            }
+            // Alleen bij een match: eerste streepje (van welk type ook) vervangen door spatie
+            word = word.replace(/[-\u2010-\u2014]/, " ");
         }
 
         capsArray.push(word);
     });
 
     const converted = capsArray.join(' ');
-    if (toBoolean(DebugMode)) console.debug("check_hypend end:" ,converted);
+    if (toBoolean(DebugMode)) console.debug("check_hyphen end:", converted);
     return converted;
 }
-
 function capt(word) {
     return word
         .toLowerCase()
@@ -1082,7 +1078,6 @@ function capt(word) {
 
 
 function convert_lower(text, spellCheckIgnore) {
-    var myword;
     // if the word is found in spellCheckIgnore, then the uppercasing should not be applied
     // Sometimes the word contains a '-', then we only need to find the first part
     //console.debug("text:", "'" + text + "'")
@@ -1091,11 +1086,10 @@ function convert_lower(text, spellCheckIgnore) {
     //console.debug("wordsArray after split:",wordsArray)
     let capsArray = []
     var counter = 0;
-    //var myword = "";
-    var cleanword;
     var allUpper;
     var myword;
     var searchword;
+    var checkword;
     var upper;
     // We need to convert the ignore tabel in an array to find an exact match of the word
     let lines = spellCheckIgnore.split("\n");
@@ -1129,8 +1123,9 @@ function convert_lower(text, spellCheckIgnore) {
                     // convert the word to all upper
                     upper = checkword.toUpperCase();
 
-                    // console.debug("word counter !0:",cleanword,upper,(cleanword == upper))
-                    if ((checkword == upper) == true) {
+                    // Words that are all uppercase (API) or contain capitals after the
+                    // first position (WPConsent, iPhone, PayPal) must not be changed
+                    if (checkword == upper || hasInnerCapital(checkword)) {
                         allUpper = true;
                     }
                     if (lines.indexOf(checkword) === -1) {
@@ -1149,7 +1144,7 @@ function convert_lower(text, spellCheckIgnore) {
                     else {
                         //it is in the ignore list so keep the first letter as capital
                         // we could improve it by converting it to uppercase if the word found is lowercase, but in ignoren it is with uppercase
-                       // console.debug("we do not convert:",word)
+                        // console.debug("we do not convert:",word)
                         if (startsWithCapital(word)) {
                             capsArray.push(word)
                         }
@@ -1169,15 +1164,14 @@ function convert_lower(text, spellCheckIgnore) {
             // 07-01-2022 PSS fixed issue #170 undefined UpperCase error
             // first letter of the word, but do nothing with it as it is empty
             if (word != "") {
-                //if (typeof word[0] != "undefined") {
-                let lines = spellCheckIgnore.split("\n");
                 if (word.endsWith(".") || word.endsWith(",") || word.endsWith("!") || word.endsWith("?") || word.endsWith(")")) {
                     searchword = word.substr(0, (word.length) - 1)
                 }
                 else {
                     searchword = word
                 }
-                if (lines.indexOf(searchword) === -1) {
+                // do not lowercase words in the ignore list or brand names like WPConsent
+                if (lines.indexOf(searchword) === -1 && !hasInnerCapital(searchword)) {
                     capsArray.push(word[0].toLowerCase() + word.slice(1));
                 }
                 else {
@@ -1187,12 +1181,11 @@ function convert_lower(text, spellCheckIgnore) {
         }
         counter++;
     });
-    converted = capsArray.join(' ');
+    let converted = capsArray.join(' ');
     // Because now all sentences start with lowercase in longer texts, we need to put back the uppercase at the start of the sentence
     converted = applySentenceCase(converted);
     return converted
 }
-
 
 function applySentenceCase(str) {
     //25-03-2023 PSS improved capitalizing first letter in sentence
@@ -1981,7 +1974,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                 checkButton.className = "check_translation-button started"
             }
         }
-
+        
         if (postTranslationReplace.length != 0 && postTranslationReplace != "undefined") {
             //setPreTranslationReplace(preTranslationReplace);
             var translatedText = "";
@@ -2046,7 +2039,7 @@ async function checkPage(postTranslationReplace, formal, destlang, apikeyOpenAI,
                             textareaElem = record.querySelector("textarea.foreign-text");
                             //console.debug("textareaELem:", textareaElem)
                             translatedText = textareaElem.innerText;
-                            //console.debug("translatedText:",translatedText)
+                          //  console.debug("translatedText2046:",translatedText)
                             let LineNo = myPreview.getElementsByClassName("text-line-counter")[0];
                             //let LineNo = document.querySelector("#line-counter .text-line-counter");
                             if (LineNo != null && LineNo != "undefined") {

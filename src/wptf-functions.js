@@ -11,6 +11,12 @@ function setPriorityValue(cell, value) {
     }
     span.textContent = value;
 }
+
+// true als het woord na de eerste positie nog een hoofdletter bevat (bijv. WPConsent, iPhone, PayPal)
+function hasInnerCapital(word) {
+    return /\p{Lu}/u.test(word.slice(1));
+}
+
 async function stripWrappingQuotes(output, source) {
    // console.debug("stripWrappingQuotes called with output:", output, "source:", source);
   const t = output.trim();
@@ -898,6 +904,7 @@ function convertArrowGlossaryToArray(glossaryString) {
 
 function applyOpenAiGlossary(text, Gloss) {
     console.debug("Applying glossary:", text);
+    console.debug("Glossary:", Gloss);
     if (!text || !Gloss) return text;
 
     // Zet HTML-entiteiten (zoals &#235;) om naar gewone tekens (ë)

@@ -109,14 +109,18 @@ function orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp, maxTokens
         });
     }
 
-    Object.assign(dataNew, cfg);
+    // Copy model config, but keep our own keys out of the request
+    const { reasoningHeadroom, ...cfgPayload } = cfg;
+    Object.assign(dataNew, cfgPayload);
 
     if (isReasoning) {
         // Keep reasoning text out of the reply, so only the translation comes back
         dataNew.reasoning = { exclude: true, ...cfg.reasoning };
         // Reasoning shares the max_tokens pool — add headroom
         const effort = dataNew.reasoning.effort;
-        if (effort && effort !== 'none') dataNew.max_tokens = maxTokens + 1024;
+        if (effort !== 'none') {
+            dataNew.max_tokens = maxTokens + (reasoningHeadroom ?? 1024);
+        }
     }
 
     const fallbacks = (typeof fallbackMap !== 'undefined' && fallbackMap[mymodel]) || null;
@@ -146,7 +150,7 @@ async function callORWithRetry(messages, apikeyOpenRouter, model, OpenAItemp, ma
     while (true) {
         const dataNew = orBuildPayload(model, messages, apikeyOpenRouter, OpenAItemp, maxTokens);
         const result  = await callOpenRouter(dataNew);
-
+        //console.debug("dataNew:", dataNew); 
         // Success — no error field means the call worked
         if (!result.error) return result;
 
